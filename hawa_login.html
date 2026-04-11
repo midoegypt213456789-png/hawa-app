@@ -36,7 +36,6 @@
     overflow: hidden;
   }
 
-  /* Background */
   body::before {
     content: '';
     position: fixed;
@@ -56,7 +55,6 @@
     z-index: 1;
   }
 
-  /* Logo */
   .logo-wrap {
     text-align: center;
     margin-bottom: 40px;
@@ -93,7 +91,6 @@
     margin-top: 4px;
   }
 
-  /* Tabs */
   .tabs {
     display: flex;
     background: var(--dark3);
@@ -124,7 +121,6 @@
     color: var(--dark);
   }
 
-  /* Card */
   .card {
     background: var(--dark2);
     border: 1px solid var(--border);
@@ -133,9 +129,7 @@
     animation: fadeUp 0.6s ease 0.2s both;
   }
 
-  .form-group {
-    margin-bottom: 18px;
-  }
+  .form-group { margin-bottom: 18px; }
 
   label {
     display: block;
@@ -146,9 +140,7 @@
     letter-spacing: 0.5px;
   }
 
-  .input-wrap {
-    position: relative;
-  }
+  .input-wrap { position: relative; }
 
   .input-icon {
     position: absolute;
@@ -182,7 +174,6 @@
 
   input::placeholder { color: var(--text-dim); }
 
-  /* Button */
   .btn-main {
     width: 100%;
     padding: 15px;
@@ -220,7 +211,6 @@
 
   .btn-forgot:hover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
 
-  /* Alert */
   .alert {
     padding: 12px 16px;
     border-radius: 12px;
@@ -235,7 +225,6 @@
   .alert.error { background: rgba(224,85,85,0.1); border: 1px solid rgba(224,85,85,0.3); color: var(--error); display: flex; }
   .alert.success { background: rgba(76,175,125,0.1); border: 1px solid rgba(76,175,125,0.3); color: var(--success); display: flex; }
 
-  /* Register fields */
   .register-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -244,7 +233,6 @@
 
   .register-grid .form-group { margin-bottom: 0; }
 
-  /* Loading */
   .spinner {
     width: 18px;
     height: 18px;
@@ -257,11 +245,9 @@
     margin-left: 8px;
   }
 
-  /* Sections */
   .section { display: none; }
   .section.active { display: block; }
 
-  /* Divider */
   .divider {
     text-align: center;
     color: var(--text-dim);
@@ -282,7 +268,6 @@
   .divider::before { right: 0; }
   .divider::after { left: 0; }
 
-  /* Animations */
   @keyframes fadeDown {
     from { opacity: 0; transform: translateY(-20px); }
     to { opacity: 1; transform: translateY(0); }
@@ -305,35 +290,29 @@
     text-align: center;
   }
 
-  .step-title span {
-    color: var(--gold);
-  }
+  .step-title span { color: var(--gold); }
 </style>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- Logo -->
   <div class="logo-wrap">
     <div class="logo-icon">🚗</div>
     <div class="logo-title">HAWA CO</div>
     <div class="logo-sub">نظام حجز دور العربيات</div>
   </div>
 
-  <!-- Tabs -->
   <div class="tabs">
     <button class="tab active" onclick="switchTab('login')">🔑 تسجيل دخول</button>
     <button class="tab" onclick="switchTab('register')">📝 عميل جديد</button>
   </div>
 
-  <!-- Card -->
   <div class="card">
 
-    <!-- Alert -->
     <div class="alert" id="alert"></div>
 
-    <!-- LOGIN SECTION -->
+    <!-- LOGIN -->
     <div class="section active" id="login-section">
       <p class="step-title">أهلاً بك في <span>HAWA CO</span></p>
 
@@ -360,7 +339,7 @@
       <button class="btn-forgot" onclick="switchTab('forgot')">🔓 نسيت كلمة المرور؟</button>
     </div>
 
-    <!-- REGISTER SECTION -->
+    <!-- REGISTER -->
     <div class="section" id="register-section">
       <p class="step-title">إنشاء <span>حساب جديد</span></p>
 
@@ -421,7 +400,7 @@
       <button class="btn-main" onclick="doRegister()" id="register-btn">إنشاء الحساب</button>
     </div>
 
-    <!-- FORGOT SECTION -->
+    <!-- FORGOT -->
     <div class="section" id="forgot-section">
       <p class="step-title">🔓 استعادة <span>كلمة المرور</span></p>
 
@@ -450,23 +429,17 @@
 </div>
 
 <script>
-  // Telegram WebApp init
   const tg = window.Telegram?.WebApp;
-  if (tg) {
-    tg.ready();
-    tg.expand();
-  }
-
+  if (tg) { tg.ready(); tg.expand(); }
   const telegramId = tg?.initDataUnsafe?.user?.id || 'test_user';
 
-  // n8n webhook URL - هتغيره لرابط ngrok بتاعك
-  const WEBHOOK_URL = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/hawa-login';
+  const SUPABASE_URL = 'https://oqsowwtjutpjdypjpcum.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_rCmWQJCKfoJK4XiY2JKUzQ_CI9IGtP5';
 
   function switchTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
     hideAlert();
-
     if (tab === 'login') {
       document.querySelectorAll('.tab')[0].classList.add('active');
       document.getElementById('login-section').classList.add('active');
@@ -488,23 +461,6 @@
     document.getElementById('alert').className = 'alert';
   }
 
-  function setLoading(btnId, loading) {
-    const btn = document.getElementById(btnId);
-    btn.disabled = loading;
-    btn.innerHTML = loading ? 'جاري التحقق... <span class="spinner"></span>' : btn.dataset.original;
-  }
-
-async function sendToN8N(action, data) {
-    const res = await fetch(WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action, telegramId, ...data })
-    });
-    const text = await res.text();
-    console.log('Raw response:', text);
-    return JSON.parse(text);
-  }
-
   async function doLogin() {
     const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value.trim();
@@ -518,17 +474,33 @@ async function sendToN8N(action, data) {
     btn.disabled = true;
     btn.innerHTML = 'جاري التحقق... <span class="spinner"></span>';
 
-try {
-  const result = await sendToN8N('login', { username, password });
-  console.log('Result:', JSON.stringify(result));
-  if (result.success) {
-        showAlert('تم تسجيل الدخول بنجاح! 🎉', 'success');
-        setTimeout(() => tg?.close(), 1500);
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=id,name,company_code`,
+        {
+          method: 'GET',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      const data = await res.json();
+
+      if (data && data.length > 0) {
+        const user = data[0];
+        showAlert(`أهلاً ${user.name}! تم تسجيل الدخول بنجاح 🎉`, 'success');
+        localStorage.setItem('hawa_user', JSON.stringify(user));
+        setTimeout(() => {
+          if (tg) tg.close();
+        }, 2000);
       } else {
-        showAlert(result.message || 'اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
+        showAlert('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
       }
     } catch (e) {
-      showAlert('حدث خطأ، حاول مرة أخرى', 'error');
+      showAlert('حدث خطأ في الاتصال، حاول مرة أخرى', 'error');
     }
 
     btn.disabled = false;
@@ -557,15 +529,26 @@ try {
     btn.innerHTML = 'جاري التسجيل... <span class="spinner"></span>';
 
     try {
-      const result = await sendToN8N('register', data);
-      if (result.success) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
         showAlert('تم إنشاء الحساب بنجاح! 🎉', 'success');
-        setTimeout(() => tg?.close(), 1500);
+        setTimeout(() => switchTab('login'), 2000);
       } else {
-        showAlert(result.message || 'حدث خطأ في التسجيل', 'error');
+        const err = await res.json();
+        showAlert(err.message || 'حدث خطأ في التسجيل', 'error');
       }
     } catch (e) {
-      showAlert('حدث خطأ، حاول مرة أخرى', 'error');
+      showAlert('حدث خطأ في الاتصال', 'error');
     }
 
     btn.disabled = false;
@@ -573,7 +556,7 @@ try {
   }
 
   async function doForgot() {
-    showAlert('تم إرسال كلمة المرور الجديدة على رقم هاتفك', 'success');
+    showAlert('تواصل مع الإدارة لاستعادة كلمة المرور', 'error');
   }
 </script>
 </body>
