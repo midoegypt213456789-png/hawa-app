@@ -494,13 +494,15 @@
     btn.innerHTML = loading ? 'جاري التحقق... <span class="spinner"></span>' : btn.dataset.original;
   }
 
-  async function sendToN8N(action, data) {
+async function sendToN8N(action, data) {
     const res = await fetch(WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action, telegramId, ...data })
     });
-    return await res.json();
+    const text = await res.text();
+    console.log('Raw response:', text);
+    return JSON.parse(text);
   }
 
   async function doLogin() {
@@ -516,9 +518,10 @@
     btn.disabled = true;
     btn.innerHTML = 'جاري التحقق... <span class="spinner"></span>';
 
-    try {
-      const result = await sendToN8N('login', { username, password });
-      if (result.success) {
+try {
+  const result = await sendToN8N('login', { username, password });
+  console.log('Result:', JSON.stringify(result));
+  if (result.success) {
         showAlert('تم تسجيل الدخول بنجاح! 🎉', 'success');
         setTimeout(() => tg?.close(), 1500);
       } else {
