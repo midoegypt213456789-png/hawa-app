@@ -373,13 +373,13 @@ async function loadSlots() {
 
   try {
     const r = await fetch(
-      `${SB}/rest/v1/bookings?loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&select=*`,
+      `${SB}/rest/v1/bookings?select=time_slot,count&loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`,
       { headers: HDR }
     );
     const data = await r.json();
 
     const totals = {};
-    data.forEach(b => { totals[b.time_slot] = (totals[b.time_slot] || 0) + b.vehicle_count; });
+    data.forEach(b => { totals[b.time_slot] = (totals[b.time_slot] || 0) + (b.count || 0); });
 
     let html = '';
     SLOTS.forEach(sl => {
@@ -440,18 +440,18 @@ async function confirm_booking() {
     if (bd[0]?.is_blocked) { showErr('حسابك موقوف، تواصل مع الإدارة'); btn.disabled=false; btn.innerHTML='✅ تأكيد الحجز'; return; }
 
     // فحص حد اليوم (10 لكل نوع)
-    const dr = await fetch(`${SB}/rest/v1/bookings?loading_date=eq.${bk.dateStr}&company_code=eq.${encodeURIComponent(user.company_code)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&select=vehicle_count`, { headers: HDR });
+    const dr = await fetch(`${SB}/rest/v1/bookings?select=count&loading_date=eq.${bk.dateStr}&client_id=eq.${user.id}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`, { headers: HDR });
     const dd = await dr.json();
-    const dayTotal = dd.reduce((s,b) => s + b.vehicle_count, 0);
+    const dayTotal = dd.reduce((s,b) => s + (b.count || 0), 0);
     if (dayTotal + bk.count > 10) { showErr(`تجاوزت الحد اليومي! محجوز ${dayTotal} ${bk.vehicle} اليوم (الحد 10)`); btn.disabled=false; btn.innerHTML='✅ تأكيد الحجز'; return; }
 
     // فحص حد الأسبوع (20 لكل مخزن)
     const dt = new Date(bk.dateStr + 'T12:00:00');
     const ws = new Date(dt); ws.setDate(dt.getDate() - dt.getDay());
     const we = new Date(ws); we.setDate(ws.getDate() + 6);
-    const wr = await fetch(`${SB}/rest/v1/bookings?loading_date=gte.${ws.toISOString().split('T')[0]}&loading_date=lte.${we.toISOString().split('T')[0]}&company_code=eq.${encodeURIComponent(user.company_code)}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&select=vehicle_count`, { headers: HDR });
+    const wr = await fetch(`${SB}/rest/v1/bookings?select=count&loading_date=gte.${ws.toISOString().split('T')[0]}&loading_date=lte.${we.toISOString().split('T')[0]}&client_id=eq.${user.id}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&status=neq.ملغي`, { headers: HDR });
     const wd = await wr.json();
-    const weekTotal = wd.reduce((s,b) => s + b.vehicle_count, 0);
+    const weekTotal = wd.reduce((s,b) => s + (b.count || 0), 0);
     if (weekTotal + bk.count > 20) { showErr(`تجاوزت الحد الأسبوعي! محجوز ${weekTotal} في ${bk.warehouse} (الحد 20)`); btn.disabled=false; btn.innerHTML='✅ تأكيد الحجز'; return; }
 
     // حفظ الحجز
@@ -460,13 +460,13 @@ async function confirm_booking() {
       headers: { ...HDR, 'Prefer': 'return=representation' },
       body: JSON.stringify({
         client_id: user.id,
-        company_code: user.company_code,
-        client_name: user.name,
         warehouse: bk.warehouse,
         vehicle_type: bk.vehicle,
-        vehicle_count: bk.count,
+        count: bk.count,
         loading_date: bk.dateStr,
         time_slot: bk.slot,
+        phone: user.phone || null,
+        governorate: user.governorate || null,
         status: 'قيد الانتظار'
       })
     });
