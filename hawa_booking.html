@@ -373,7 +373,7 @@ async function loadSlots() {
 
   try {
     const r = await fetch(
-      `${SB}/rest/v1/bookings?loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&select=time_slot,vehicle_count`,
+      `${SB}/rest/v1/bookings?loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&select=*`,
       { headers: HDR }
     );
     const data = await r.json();
