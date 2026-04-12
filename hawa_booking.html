@@ -225,6 +225,32 @@
     font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
   }
 
+  /* Success Screen */
+  .success-screen { display: none; text-align: center; padding: 10px 0; }
+  .success-screen.show { display: block; }
+  .success-icon  { font-size: 60px; margin-bottom: 16px; }
+  .success-title { font-size: 20px; font-weight: 900; color: var(--success); margin-bottom: 8px; }
+  .success-details {
+    background: var(--dark2); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px; margin: 16px 0; text-align: right;
+  }
+  .success-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .btn-close-app {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, var(--success), #3a9660);
+    color: white; font-family: 'Cairo', sans-serif; font-size: 15px; font-weight: 700;
+    border: none; border-radius: 14px; cursor: pointer;
+  }
+  .btn-new-bk {
+    width: 100%; padding: 12px; background: transparent; color: var(--gold);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--gold); border-radius: 14px; cursor: pointer;
+  }
+  .btn-go-list {
+    width: 100%; padding: 12px; background: transparent; color: var(--text-dim);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--border); border-radius: 14px; cursor: pointer;
+  }
+
   @keyframes sp { to { transform: rotate(360deg); } }
 </style>
 </head>
@@ -332,8 +358,19 @@
         <div class="sum-row"><span class="sum-lbl">الموعد</span><span class="sum-val g" id="sSlot"></span></div>
         <div class="sum-row"><span class="sum-lbl">العدد</span><span class="sum-val g" id="sCount"></span></div>
       </div>
-      <button class="btn-gold" id="bConfirm" onclick="confirm_booking()">✅ تأكيد الحجز</button>
-      <button class="btn-back" onclick="go(4)">→ رجوع</button>
+      <!-- Form buttons (hidden after success) -->
+      <div id="formBtns">
+        <button class="btn-gold" id="bConfirm" onclick="confirm_booking()">💾 حفظ الحجز</button>
+        <button class="btn-back" onclick="go(4)">→ رجوع للموعد</button>
+      </div>
+
+      <!-- Success screen (shown after save) -->
+      <div class="success-screen" id="successScreen">
+        <div class="success-icon">🎉</div>
+        <div class="success-title" id="successTitle">تم الحفظ بنجاح!</div>
+        <div class="success-details" id="successDetails"></div>
+        <div class="success-actions" id="successActions"></div>
+      </div>
     </div>
 
   </div><!-- /viewForm -->
@@ -392,6 +429,10 @@ function switchTab(tab) {
 
 // ===================== FORM NAV =====================
 function go(n) {
+  // إخفاء شاشة النجاح لو ظاهرة
+  document.getElementById('formBtns').style.display = '';
+  document.getElementById('successScreen').classList.remove('show');
+  document.querySelector('.steps').style.display = '';
   document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
   document.getElementById('s' + n).classList.add('active');
   for (let i = 1; i <= 5; i++) {
@@ -533,7 +574,7 @@ function buildSummary() {
   document.getElementById('sSlot').textContent  = bk.slot;
   document.getElementById('sCount').textContent = bk.count + ' عربية';
   document.getElementById('cntInfo').textContent = `الحد الأقصى ${Math.min(10, bk.remaining)} عربية في هذا الموعد`;
-  document.getElementById('bConfirm').textContent = editMode ? '💾 حفظ التعديل' : '✅ تأكيد الحجز';
+  document.getElementById('bConfirm').textContent = editMode ? '💾 حفظ التعديل' : '💾 حفظ الحجز';
 }
 
 // ===================== CONFIRM =====================
@@ -585,9 +626,13 @@ async function confirm_booking() {
         })
       });
       if (res.ok) {
-        showSuccess(`✅ تم تعديل الحجز #${editMode.id} بنجاح!\n${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية | ${bk.slot}`);
+        const eid = editMode.id;
         exitEditMode();
-        setTimeout(() => switchTab('my'), 2500);
+        showSuccessScreen(
+          `تم تعديل الحجز #${eid}`,
+          `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
+          'edit'
+        );
       } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
 
     } else {
@@ -604,8 +649,11 @@ async function confirm_booking() {
       });
       if (res.ok) {
         const result = await res.json();
-        showSuccess(`✅ تم الحجز بنجاح!\nرقم الحجز: #${result[0].id}\n${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية\n${bk.slot}`);
-        setTimeout(() => { if (tg) tg.close(); }, 4000);
+        showSuccessScreen(
+          `تم الحجز بنجاح! #${result[0].id}`,
+          `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
+          'new'
+        );
       } else { showErr('حدث خطأ في الحجز، حاول مرة أخرى'); }
     }
 
@@ -616,7 +664,44 @@ async function confirm_booking() {
 function resetBtn() {
   const btn = document.getElementById('bConfirm');
   btn.disabled = false;
-  btn.textContent = editMode ? '💾 حفظ التعديل' : '✅ تأكيد الحجز';
+  btn.textContent = editMode ? '💾 حفظ التعديل' : '💾 حفظ الحجز';
+}
+
+function showSuccessScreen(title, details, mode) {
+  // إخفاء فورم الخطوة 5 وإظهار شاشة النجاح
+  document.getElementById('formBtns').style.display    = 'none';
+  document.getElementById('successScreen').classList.add('show');
+
+  // إخفاء الـ dots
+  document.querySelector('.steps').style.display = 'none';
+
+  document.getElementById('successTitle').textContent  = title;
+  document.getElementById('successDetails').innerHTML  = details;
+
+  const actions = document.getElementById('successActions');
+  if (mode === 'new') {
+    actions.innerHTML = `
+      <button class="btn-close-app" onclick="closeOrReset()">✅ حفظ وإغلاق</button>
+      <button class="btn-new-bk"   onclick="startNewBooking()">➕ حجز جديد</button>
+      <button class="btn-go-list"  onclick="switchTab('my')">📋 شوف حجوزاتي</button>`;
+  } else {
+    actions.innerHTML = `
+      <button class="btn-close-app" onclick="switchTab('my')">📋 رجوع لحجوزاتي</button>
+      <button class="btn-new-bk"   onclick="startNewBooking()">➕ حجز جديد</button>`;
+  }
+}
+
+function closeOrReset() {
+  if (tg && tg.close) { tg.close(); } else { startNewBooking(); }
+}
+
+function startNewBooking() {
+  // reset كل حاجة وابدأ من الأول
+  exitEditMode();
+  document.getElementById('formBtns').style.display    = '';
+  document.getElementById('successScreen').classList.remove('show');
+  document.querySelector('.steps').style.display = '';
+  go(1);
 }
 
 // ===================== EDIT MODE =====================
@@ -668,7 +753,7 @@ async function loadMyBookings() {
     const todayStr = today.toISOString().split('T')[0];
 
     const r = await fetch(
-      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gt.${todayStr}&status=neq.ملغي&order=loading_date.asc,time_slot.asc&select=*`,
+      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gt.${todayStr}&status=eq.قيد الانتظار&order=loading_date.asc,time_slot.asc&select=*`,
       { headers: HDR }
     );
     const data = await r.json();
