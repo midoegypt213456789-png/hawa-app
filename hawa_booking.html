@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HAWA CO - حجز دور</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --dark: #0A0A0A;
+    --dark2: #111111;
+    --dark3: #1A1A1A;
+    --text: #F0EDE8;
+    --text-dim: #8A8580;
+    --border: #2A2A2A;
+    --error: #E05555;
+    --success: #4CAF7D;
+    --blue: #4A90D9;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--dark);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 16px 16px 50px;
+    overflow-y: auto;
+  }
+
+  .container { width: 100%; max-width: 420px; margin: 0 auto; }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--dark2);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+  .header-logo {
+    font-size: 18px; font-weight: 900; letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .header-user .name { font-size: 13px; font-weight: 700; text-align: left; }
+  .header-user .code { font-size: 11px; color: var(--gold); text-align: left; }
+
+  /* Steps dots */
+  .steps { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+  .dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
+  .dot.done { background: var(--success); }
+
+  /* Alert */
+  .alert {
+    padding: 12px 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    margin-bottom: 14px; display: none; gap: 8px; line-height: 1.5; align-items: flex-start;
+  }
+  .alert.show-error { display: flex; background: rgba(224,85,85,0.1); border: 1px solid rgba(224,85,85,0.3); color: var(--error); }
+  .alert.show-success { display: flex; background: rgba(76,175,125,0.1); border: 1px solid rgba(76,175,125,0.3); color: var(--success); }
+
+  /* Card */
+  .card { background: var(--dark2); border: 1px solid var(--border); border-radius: 20px; padding: 20px 16px; margin-bottom: 14px; }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+  .card-title span { color: var(--gold); }
+
+  /* Option buttons */
+  .opts2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opts3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+  .opt {
+    padding: 14px 8px; background: var(--dark3); border: 2px solid var(--border);
+    border-radius: 14px; cursor: pointer; text-align: center; transition: all 0.25s;
+  }
+  .opt:hover { border-color: rgba(201,168,76,0.5); }
+  .opt.sel { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .opt .ic { font-size: 26px; margin-bottom: 6px; }
+  .opt .lb { font-size: 13px; font-weight: 700; color: var(--text); }
+  .opt.sel .lb { color: var(--gold); }
+
+  /* Calendar */
+  .cal-month { text-align: center; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 12px; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-hd { font-size: 10px; color: var(--text-dim); font-weight: 600; text-align: center; padding: 4px 0; }
+  .cal-d {
+    padding: 9px 2px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    text-align: center; border: 2px solid transparent; background: var(--dark3);
+    color: var(--text); cursor: pointer; transition: all 0.25s;
+  }
+  .cal-d:hover:not(.off):not(.past) { border-color: rgba(201,168,76,0.5); }
+  .cal-d.sel { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold); }
+  .cal-d.past { background: transparent; color: #333; cursor: default; }
+  .cal-d.off { background: transparent; color: #333; cursor: not-allowed; }
+  .cal-d.today { border-color: var(--blue); color: var(--blue); }
+  .cal-d.empty { background: transparent; border: none; cursor: default; }
+
+  /* Time slots */
+  .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .slot {
+    padding: 11px 8px; background: var(--dark3); border: 2px solid var(--border);
+    border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.25s;
+  }
+  .slot:hover:not(.slot-full) { border-color: rgba(201,168,76,0.5); }
+  .slot.sel { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .slot.sel .st { color: var(--gold); }
+  .slot.slot-full { opacity: 0.45; cursor: not-allowed; }
+  .slot .st { font-size: 12px; font-weight: 700; color: var(--text); }
+  .slot .av { font-size: 11px; color: var(--success); margin-top: 2px; }
+  .slot .fl { font-size: 11px; color: var(--error); margin-top: 2px; }
+  .slots-loading { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px; grid-column: span 2; }
+
+  /* Count */
+  .count-wrap { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 8px 0; }
+  .cnt-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--gold);
+    background: transparent; color: var(--gold); font-size: 24px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .cnt-btn:hover { background: rgba(201,168,76,0.1); }
+  .cnt-num { font-size: 38px; font-weight: 900; min-width: 64px; text-align: center; }
+  .cnt-info { text-align: center; font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+
+  /* Summary */
+  .sum-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .sum-row:last-child { border-bottom: none; }
+  .sum-lbl { font-size: 13px; color: var(--text-dim); }
+  .sum-val { font-size: 13px; font-weight: 700; }
+  .sum-val.g { color: var(--gold); }
+
+  /* Buttons */
+  .btn-gold {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--dark); font-family: 'Cairo', sans-serif; font-size: 15px; font-weight: 700;
+    border: none; border-radius: 14px; cursor: pointer; transition: all 0.25s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+  }
+  .btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-back {
+    width: 100%; padding: 12px; background: transparent; color: var(--text-dim);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--border); border-radius: 14px; cursor: pointer; margin-top: 10px;
+  }
+
+  .spin {
+    width: 16px; height: 16px; border: 2px solid rgba(10,10,10,0.3);
+    border-top-color: #000; border-radius: 50%; animation: sp 0.7s linear infinite;
+    display: inline-block; vertical-align: middle; margin-left: 6px;
+  }
+
+  .sec { display: none; }
+  .sec.active { display: block; }
+
+  @keyframes sp { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-logo">🚗 HAWA CO</div>
+    <div class="header-user">
+      <div class="name" id="uname">...</div>
+      <div class="code" id="ucode">...</div>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="dot active" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+    <div class="dot" id="d4"></div>
+    <div class="dot" id="d5"></div>
+  </div>
+
+  <div class="alert" id="alert"></div>
+
+  <!-- STEP 1: المخزن -->
+  <div class="sec active" id="s1">
+    <div class="card">
+      <p class="card-title">اختر <span>المخزن</span></p>
+      <div class="opts2">
+        <div class="opt" onclick="pick('warehouse','قليوب',this,'s1')">
+          <div class="ic">🏭</div><div class="lb">قليوب</div>
+        </div>
+        <div class="opt" onclick="pick('warehouse','السادات',this,'s1')">
+          <div class="ic">🏗️</div><div class="lb">السادات</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-gold" id="b1" onclick="go(2)" disabled>التالي ←</button>
+  </div>
+
+  <!-- STEP 2: النوع -->
+  <div class="sec" id="s2">
+    <div class="card">
+      <p class="card-title">نوع <span>العربية</span></p>
+      <div class="opts3">
+        <div class="opt" onclick="pickVehicle('موتسيكل',6,this)">
+          <div class="ic">🏍️</div><div class="lb">موتسيكل</div>
+        </div>
+        <div class="opt" onclick="pickVehicle('تروسكل',4,this)">
+          <div class="ic">🛺</div><div class="lb">تروسكل</div>
+        </div>
+        <div class="opt" onclick="pickVehicle('كهرباء',6,this)">
+          <div class="ic">⚡</div><div class="lb">كهرباء</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-gold" id="b2" onclick="go(3)" disabled>التالي ←</button>
+    <button class="btn-back" onclick="go(1)">→ رجوع</button>
+  </div>
+
+  <!-- STEP 3: اليوم -->
+  <div class="sec" id="s3">
+    <div class="card">
+      <p class="card-title">اختر <span>يوم التحميل</span></p>
+      <div class="cal-month" id="calMonth"></div>
+      <div class="cal-grid" id="calGrid"></div>
+    </div>
+    <button class="btn-gold" id="b3" onclick="go(4)" disabled>التالي ←</button>
+    <button class="btn-back" onclick="go(2)">→ رجوع</button>
+  </div>
+
+  <!-- STEP 4: الموعد -->
+  <div class="sec" id="s4">
+    <div class="card">
+      <p class="card-title">اختر <span>الموعد</span></p>
+      <div class="slots" id="slotsGrid"></div>
+    </div>
+    <button class="btn-gold" id="b4" onclick="go(5)" disabled>التالي ←</button>
+    <button class="btn-back" onclick="go(3)">→ رجوع</button>
+  </div>
+
+  <!-- STEP 5: العدد + تأكيد -->
+  <div class="sec" id="s5">
+    <div class="card">
+      <p class="card-title">عدد <span>العربيات</span></p>
+      <div class="count-wrap">
+        <button class="cnt-btn" onclick="chCnt(-1)">−</button>
+        <div class="cnt-num" id="cntNum">1</div>
+        <button class="cnt-btn" onclick="chCnt(1)">+</button>
+      </div>
+      <div class="cnt-info" id="cntInfo"></div>
+    </div>
+    <div class="card">
+      <p class="card-title">تأكيد <span>الحجز</span></p>
+      <div class="sum-row"><span class="sum-lbl">العميل</span><span class="sum-val" id="sName"></span></div>
+      <div class="sum-row"><span class="sum-lbl">الكود</span><span class="sum-val g" id="sCode"></span></div>
+      <div class="sum-row"><span class="sum-lbl">المخزن</span><span class="sum-val" id="sWarehouse"></span></div>
+      <div class="sum-row"><span class="sum-lbl">النوع</span><span class="sum-val" id="sVehicle"></span></div>
+      <div class="sum-row"><span class="sum-lbl">اليوم</span><span class="sum-val" id="sDate"></span></div>
+      <div class="sum-row"><span class="sum-lbl">الموعد</span><span class="sum-val g" id="sSlot"></span></div>
+      <div class="sum-row"><span class="sum-lbl">العدد</span><span class="sum-val g" id="sCount"></span></div>
+    </div>
+    <button class="btn-gold" id="bConfirm" onclick="confirm_booking()">✅ تأكيد الحجز</button>
+    <button class="btn-back" onclick="go(4)">→ رجوع</button>
+  </div>
+
+</div>
+<script>
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const SB = 'https://oqsowwtjutpjdypjpcum.supabase.co';
+const KEY = 'sb_publishable_rCmWQJCKfoJK4XiY2JKUzQ_CI9IGtP5';
+const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
+
+const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
+document.getElementById('uname').textContent = user.name || 'العميل';
+document.getElementById('ucode').textContent = user.company_code || '';
+
+const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, remaining: 10, count: 1 };
+
+const SLOTS = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00','12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
+
+// ---- Navigation ----
+function go(n) {
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  for (let i = 1; i <= 5; i++) {
+    const d = document.getElementById('d' + i);
+    d.className = 'dot' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  hideAlert();
+  if (n === 3) buildCal();
+  if (n === 4) loadSlots();
+  if (n === 5) buildSummary();
+  window.scrollTo(0, 0);
+}
+
+// ---- Pick helpers ----
+function pick(field, val, el, step) {
+  bk[field] = val;
+  document.querySelectorAll('#' + step + ' .opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  const btn = document.getElementById('b' + step.replace('s',''));
+  if (btn) btn.disabled = false;
+}
+
+function pickVehicle(v, cap, el) {
+  bk.vehicle = v; bk.cap = cap;
+  document.querySelectorAll('#s2 .opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('b2').disabled = false;
+}
+
+// ---- Calendar ----
+async function buildCal() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const maxD = new Date(today); maxD.setDate(today.getDate() + 7);
+
+  // جيب الأيام المغلقة من schedule
+  let closedDates = [];
+  try {
+    const r = await fetch(`${SB}/rest/v1/schedule?is_open=eq.false&select=date`, { headers: HDR });
+    const data = await r.json();
+    closedDates = data.map(d => d.date);
+  } catch(e) {}
+
+  document.getElementById('calMonth').textContent =
+    today.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
+
+  const days = ['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'];
+  let html = days.map(d => `<div class="cal-hd">${d}</div>`).join('');
+
+  const first = new Date(today.getFullYear(), today.getMonth(), 1);
+  for (let i = 0; i < first.getDay(); i++) html += `<div class="cal-d empty"></div>`;
+
+  const dim = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+  for (let d = 1; d <= dim; d++) {
+    const dt = new Date(today.getFullYear(), today.getMonth(), d);
+    const ds = dt.toISOString().split('T')[0];
+    const isPast = dt < today;
+    const isFuture = dt > maxD;
+    const isClosed = closedDates.includes(ds);
+    const isToday = dt.getTime() === today.getTime();
+
+    let cls = 'cal-d';
+    let click = '';
+    if (isPast) cls += ' past';
+    else if (isFuture || isClosed) cls += ' off';
+    else {
+      if (isToday) cls += ' today';
+      click = `onclick="pickDay('${ds}',this)"`;
+    }
+    html += `<div class="${cls}" ${click}>${d}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+function pickDay(ds, el) {
+  bk.dateStr = ds;
+  document.querySelectorAll('.cal-d').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('b3').disabled = false;
+  bk.slot = null;
+}
+
+// ---- Slots ----
+async function loadSlots() {
+  const g = document.getElementById('slotsGrid');
+  g.innerHTML = `<div class="slots-loading">⏳ جاري تحميل المواعيد...</div>`;
+  document.getElementById('b4').disabled = true;
+
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/bookings?loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&select=time_slot,vehicle_count`,
+      { headers: HDR }
+    );
+    const data = await r.json();
+
+    const totals = {};
+    data.forEach(b => { totals[b.time_slot] = (totals[b.time_slot] || 0) + b.vehicle_count; });
+
+    let html = '';
+    SLOTS.forEach(sl => {
+      const used = totals[sl] || 0;
+      const rem = bk.cap - used;
+      const full = rem <= 0;
+      html += `<div class="slot ${full ? 'slot-full' : ''}" ${!full ? `onclick="pickSlot('${sl}',this,${rem})"` : ''}>
+        <div class="st">${sl}</div>
+        ${full ? '<div class="fl">ممتلئ ❌</div>' : `<div class="av">متاح: ${rem} ✅</div>`}
+      </div>`;
+    });
+    g.innerHTML = html;
+  } catch(e) {
+    g.innerHTML = `<div class="slots-loading">❌ خطأ في التحميل، ارجع وحاول تاني</div>`;
+  }
+}
+
+function pickSlot(sl, el, rem) {
+  bk.slot = sl; bk.remaining = rem;
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('b4').disabled = false;
+  bk.count = Math.min(bk.count, Math.min(10, rem));
+  document.getElementById('cntNum').textContent = bk.count;
+}
+
+// ---- Count ----
+function chCnt(d) {
+  const mx = Math.min(10, bk.remaining);
+  bk.count = Math.max(1, Math.min(mx, bk.count + d));
+  document.getElementById('cntNum').textContent = bk.count;
+}
+
+// ---- Summary ----
+function buildSummary() {
+  document.getElementById('sName').textContent = user.name || '-';
+  document.getElementById('sCode').textContent = user.company_code || '-';
+  document.getElementById('sWarehouse').textContent = bk.warehouse;
+  document.getElementById('sVehicle').textContent = bk.vehicle;
+  document.getElementById('sDate').textContent =
+    new Date(bk.dateStr + 'T12:00:00').toLocaleDateString('ar-EG', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('sSlot').textContent = bk.slot;
+  document.getElementById('sCount').textContent = bk.count + ' عربية';
+  document.getElementById('cntInfo').textContent = `الحد الأقصى ${Math.min(10, bk.remaining)} عربية في هذا الموعد`;
+}
+
+// ---- Confirm ----
+async function confirm_booking() {
+  const btn = document.getElementById('bConfirm');
+  btn.disabled = true;
+  btn.innerHTML = 'جاري الحجز... <span class="spin"></span>';
+  hideAlert();
+
+  try {
+    // فحص البلوك
+    const br = await fetch(`${SB}/rest/v1/clients?company_code=eq.${encodeURIComponent(user.company_code)}&select=is_blocked`, { headers: HDR });
+    const bd = await br.json();
+    if (bd[0]?.is_blocked) { showErr('حسابك موقوف، تواصل مع الإدارة'); btn.disabled=false; btn.innerHTML='✅ تأكيد الحجز'; return; }
+
+    // فحص حد اليوم (10 لكل نوع)
+    const dr = await fetch(`${SB}/rest/v1/bookings?loading_date=eq.${bk.dateStr}&company_code=eq.${encodeURIComponent(user.company_code)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&select=vehicle_count`, { headers: HDR });
+    const dd = await dr.json();
+    const dayTotal = dd.reduce((s,b) => s + b.vehicle_count, 0);
+    if (dayTotal + bk.count > 10) { showErr(`تجاوزت الحد اليومي! محجوز ${dayTotal} ${bk.vehicle} اليوم (الحد 10)`); btn.disabled=false; btn.innerHTML='✅ تأكيد الحجز'; return; }
+
+    // فحص حد الأسبوع (20 لكل مخزن)
+    const dt = new Date(bk.dateStr + 'T12:00:00');
+    const ws = new Date(dt); ws.setDate(dt.getDate() - dt.getDay());
+    const we = new Date(ws); we.setDate(ws.getDate() + 6);
+    const wr = await fetch(`${SB}/rest/v1/bookings?loading_date=gte.${ws.toISOString().split('T')[0]}&loading_date=lte.${we.toISOString().split('T')[0]}&company_code=eq.${encodeURIComponent(user.company_code)}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&select=vehicle_count`, { headers: HDR });
+    const wd = await wr.json();
+    const weekTotal = wd.reduce((s,b) => s + b.vehicle_count, 0);
+    if (weekTotal + bk.count > 20) { showErr(`تجاوزت الحد الأسبوعي! محجوز ${weekTotal} في ${bk.warehouse} (الحد 20)`); btn.disabled=false; btn.innerHTML='✅ تأكيد الحجز'; return; }
+
+    // حفظ الحجز
+    const res = await fetch(`${SB}/rest/v1/bookings`, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        client_id: user.id,
+        company_code: user.company_code,
+        client_name: user.name,
+        warehouse: bk.warehouse,
+        vehicle_type: bk.vehicle,
+        vehicle_count: bk.count,
+        loading_date: bk.dateStr,
+        time_slot: bk.slot,
+        status: 'قيد الانتظار'
+      })
+    });
+
+    if (res.ok) {
+      const result = await res.json();
+      showSuccess(`✅ تم الحجز بنجاح!\nرقم الحجز: #${result[0].id}\n${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية\n${bk.slot}`);
+      setTimeout(() => { if (tg) tg.close(); }, 4000);
+    } else {
+      showErr('حدث خطأ في الحجز، حاول مرة أخرى');
+    }
+  } catch(e) {
+    showErr('خطأ في الاتصال بالسيرفر');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '✅ تأكيد الحجز';
+}
+
+function showErr(msg) {
+  const el = document.getElementById('alert');
+  el.textContent = '⚠️ ' + msg;
+  el.className = 'alert show-error';
+  window.scrollTo(0,0);
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.className = 'alert show-success';
+  window.scrollTo(0,0);
+}
+
+function hideAlert() {
+  document.getElementById('alert').className = 'alert';
+}
+</script>
+</body>
+</html>
