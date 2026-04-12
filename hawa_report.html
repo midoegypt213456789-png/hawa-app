@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير يومي - HAWA CO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: #f5f5f5;
+    color: #111;
+    padding: 20px;
+    direction: rtl;
+  }
+
+  /* ===== PRINT STYLES ===== */
+  @media print {
+    body { background: white; padding: 0; }
+    .no-print { display: none !important; }
+    .report-section { page-break-after: always; }
+    .report-section:last-child { page-break-after: avoid; }
+  }
+
+  /* ===== SCREEN CONTROLS ===== */
+  .controls {
+    background: #1a1a1a; color: #E8C97A;
+    padding: 14px 20px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 10px;
+  }
+  .controls .logo { font-size: 18px; font-weight: 900; letter-spacing: 3px; }
+  .controls .date-info { font-size: 13px; color: #aaa; }
+  .controls-btns { display: flex; gap: 10px; }
+  .btn-print {
+    padding: 9px 20px; border-radius: 10px; border: none; cursor: pointer;
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700;
+    background: linear-gradient(135deg, #C9A84C, #E8C97A); color: #111;
+  }
+  .btn-reload {
+    padding: 9px 20px; border-radius: 10px; border: 1.5px solid #444; cursor: pointer;
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700;
+    background: transparent; color: #aaa;
+  }
+
+  /* ===== REPORT SECTION (per warehouse) ===== */
+  .report-section {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  /* Warehouse Header */
+  .wh-header {
+    background: #111;
+    color: #E8C97A;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .wh-title {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 2px;
+  }
+  .wh-meta {
+    text-align: left;
+    font-size: 12px;
+    color: #aaa;
+    line-height: 1.8;
+  }
+  .wh-meta b { color: #E8C97A; font-size: 14px; }
+
+  /* Vehicle Type Section */
+  .vtype-section { border-bottom: 3px solid #f0f0f0; }
+  .vtype-section:last-child { border-bottom: none; }
+
+  .vtype-header {
+    background: #f8f5ee;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #e8e0d0;
+  }
+  .vtype-title {
+    font-size: 16px;
+    font-weight: 900;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .vtype-count {
+    background: #C9A84C;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 12px;
+    border-radius: 20px;
+  }
+
+  /* Slot group */
+  .slot-group { padding: 0 24px 12px; }
+  .slot-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #888;
+    padding: 10px 0 6px;
+    border-bottom: 1px dashed #e0e0e0;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Bookings table */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 4px;
+  }
+  th {
+    font-size: 11px;
+    font-weight: 700;
+    color: #999;
+    text-align: right;
+    padding: 6px 8px;
+    border-bottom: 1px solid #eee;
+  }
+  td {
+    font-size: 13px;
+    padding: 8px 8px;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fdfaf5; }
+
+  .td-num { color: #999; font-size: 12px; width: 30px; }
+  .td-name { font-weight: 700; color: #111; }
+  .td-code { color: #C9A84C; font-weight: 600; font-size: 12px; }
+  .td-count { font-weight: 900; font-size: 16px; color: #111; text-align: center; width: 60px; }
+  .td-count span { font-size: 11px; font-weight: 400; color: #999; }
+  .td-slot { color: #555; font-size: 12px; }
+
+  /* Status badge */
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-left: 4px;
+  }
+  .status-dot.pending { background: #4A90D9; }
+  .status-dot.done    { background: #4CAF7D; }
+  .status-dot.noshow  { background: #E05555; }
+
+  /* Warehouse summary footer */
+  .wh-footer {
+    background: #fafafa;
+    border-top: 2px solid #eee;
+    padding: 14px 24px;
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+  }
+  .wh-stat { display: flex; flex-direction: column; align-items: center; }
+  .wh-stat .sv { font-size: 22px; font-weight: 900; color: #C9A84C; }
+  .wh-stat .sl { font-size: 11px; color: #999; margin-top: 2px; }
+
+  /* Signature area */
+  .signature-area {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-top: 1px dashed #ddd;
+    margin-top: 8px;
+  }
+  .sig-box {
+    text-align: center;
+    width: 180px;
+  }
+  .sig-line {
+    border-bottom: 1px solid #333;
+    height: 40px;
+    margin-bottom: 6px;
+  }
+  .sig-label { font-size: 11px; color: #666; font-weight: 600; }
+
+  /* Empty */
+  .empty-section {
+    padding: 30px;
+    text-align: center;
+    color: #bbb;
+    font-size: 14px;
+  }
+
+  /* Loading */
+  .loading-wrap {
+    text-align: center;
+    padding: 60px;
+    color: #888;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Controls (hidden on print) -->
+<div class="controls no-print">
+  <div>
+    <div class="logo">🚛 HAWA CO</div>
+    <div class="date-info" id="ctrl-date">جاري التحميل...</div>
+  </div>
+  <div class="controls-btns">
+    <button class="btn-reload" onclick="loadReport()">🔄 تحديث</button>
+    <button class="btn-print" onclick="window.print()">🖨️ طباعة</button>
+  </div>
+</div>
+
+<!-- Report Container -->
+<div id="reportContainer">
+  <div class="loading-wrap">⏳ جاري تحميل تقرير اليوم...</div>
+</div>
+
+<script>
+const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
+const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}` };
+
+const WAREHOUSES = ['قليوب', 'السادات'];
+const VTYPES = ['موتسيكل', 'تروسكل', 'كهرباء'];
+const VICONS = { 'موتسيكل': '🏍️', 'تروسكل': '🛺', 'كهرباء': '⚡' };
+const SLOTS  = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00',
+                '12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
+
+// تاريخ اليوم — أو من URL param ?date=YYYY-MM-DD
+const urlDate = new URLSearchParams(location.search).get('date');
+const today   = urlDate ? new Date(urlDate + 'T12:00:00') : new Date();
+const todayStr = today.toISOString().split('T')[0];
+const todayLabel = today.toLocaleDateString('ar-EG', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+});
+
+document.getElementById('ctrl-date').textContent = '📅 ' + todayLabel;
+
+async function loadReport() {
+  document.getElementById('reportContainer').innerHTML = '<div class="loading-wrap">⏳ جاري تحميل التقرير...</div>';
+
+  try {
+    // جيب كل حجوزات اليوم
+    const r = await fetch(
+      `${SB}/rest/v1/bookings?select=*&loading_date=eq.${todayStr}&status=neq.ملغي&order=time_slot.asc`,
+      { headers: HDR }
+    );
+    const bookings = await r.json();
+
+    // جيب بيانات العملاء
+    const ids = [...new Set(bookings.map(b => b.client_id).filter(Boolean))];
+    let clientMap = {};
+    if (ids.length) {
+      const cr = await fetch(
+        `${SB}/rest/v1/clients?id=in.(${ids.join(',')})&select=id,name,company_code,phone`,
+        { headers: HDR }
+      );
+      const clients = await cr.json();
+      clients.forEach(c => clientMap[c.id] = c);
+    }
+
+    let html = '';
+    WAREHOUSES.forEach(wh => {
+      const whBks = bookings.filter(b => b.warehouse === wh);
+      html += buildWarehouseSection(wh, whBks, clientMap);
+    });
+
+    document.getElementById('reportContainer').innerHTML = html;
+
+  } catch(e) {
+    document.getElementById('reportContainer').innerHTML =
+      '<div class="loading-wrap">❌ خطأ في تحميل التقرير</div>';
+  }
+}
+
+function buildWarehouseSection(wh, bookings, clientMap) {
+  const totalCars  = bookings.reduce((s, b) => s + (b.count || 0), 0);
+  const totalBks   = bookings.length;
+  const done       = bookings.filter(b => b.status === 'تم التنفيذ').length;
+  const pending    = bookings.filter(b => b.status === 'قيد الانتظار').length;
+  const noshow     = bookings.filter(b => b.status === 'no-show').length;
+
+  let vtypesHtml = '';
+  VTYPES.forEach(vt => {
+    const vtBks = bookings.filter(b => b.vehicle_type === vt);
+    if (!vtBks.length) return;
+    vtypesHtml += buildVtypeSection(vt, vtBks, clientMap);
+  });
+
+  if (!vtypesHtml) vtypesHtml = '<div class="empty-section">لا توجد حجوزات</div>';
+
+  return `
+    <div class="report-section">
+      <div class="wh-header">
+        <div>
+          <div class="wh-title">🏭 مخزن ${wh}</div>
+          <div style="font-size:13px;color:#aaa;margin-top:4px">تقرير يوم ${todayLabel}</div>
+        </div>
+        <div class="wh-meta">
+          إجمالي الحجوزات: <b>${totalBks}</b><br>
+          إجمالي العربيات: <b>${totalCars}</b>
+        </div>
+      </div>
+
+      ${vtypesHtml}
+
+      <div class="wh-footer">
+        <div class="wh-stat"><div class="sv">${totalBks}</div><div class="sl">حجز</div></div>
+        <div class="wh-stat"><div class="sv">${totalCars}</div><div class="sl">عربية</div></div>
+        <div class="wh-stat"><div class="sv" style="color:#4A90D9">${pending}</div><div class="sl">منتظر</div></div>
+        <div class="wh-stat"><div class="sv" style="color:#4CAF7D">${done}</div><div class="sl">حضر</div></div>
+        <div class="wh-stat"><div class="sv" style="color:#E05555">${noshow}</div><div class="sl">غائب</div></div>
+      </div>
+
+      <div class="signature-area no-print">
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-label">توقيع مدير المخزن</div>
+        </div>
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-label">توقيع الأمن</div>
+        </div>
+        <div class="sig-box">
+          <div class="sig-line"></div>
+          <div class="sig-label">توقيع المشرف</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function buildVtypeSection(vtype, bookings, clientMap) {
+  const totalCars = bookings.reduce((s, b) => s + (b.count || 0), 0);
+  let slotsHtml   = '';
+  let rowCounter  = 1;
+
+  SLOTS.forEach(slot => {
+    const slotBks = bookings.filter(b => b.time_slot === slot);
+    if (!slotBks.length) return;
+
+    let rows = '';
+    slotBks.forEach(b => {
+      const c = clientMap[b.client_id] || {};
+      const statusDot = b.status === 'تم التنفيذ' ? 'done' :
+                        b.status === 'no-show'     ? 'noshow' : 'pending';
+      rows += `<tr>
+        <td class="td-num">${rowCounter++}</td>
+        <td class="td-name">
+          <span class="status-dot ${statusDot}"></span>
+          ${c.name || '-'}
+        </td>
+        <td class="td-code">${c.company_code || '-'}</td>
+        <td class="td-slot">${slot}</td>
+        <td class="td-count">${b.count}<br><span>عربية</span></td>
+      </tr>`;
+    });
+
+    slotsHtml += `
+      <div class="slot-group">
+        <div class="slot-label">⏰ ${slot} — ${slotBks.length} حجز | ${slotBks.reduce((s,b)=>s+(b.count||0),0)} عربية</div>
+        <table>
+          <thead><tr>
+            <th>#</th><th>اسم العميل</th><th>الكود</th><th>الموعد</th><th>العدد</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  });
+
+  return `
+    <div class="vtype-section">
+      <div class="vtype-header">
+        <div class="vtype-title">
+          ${VICONS[vtype]} ${vtype}
+        </div>
+        <div>
+          <span class="vtype-count">${bookings.length} حجز | ${totalCars} عربية</span>
+        </div>
+      </div>
+      ${slotsHtml}
+    </div>`;
+}
+
+// Load on start
+loadReport();
+</script>
+</body>
+</html>
