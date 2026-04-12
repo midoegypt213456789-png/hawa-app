@@ -274,11 +274,93 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     <div class="section" id="sec-schedule">
       <div class="page-hd">
         <div class="page-title">📅 <span>إدارة الأيام</span></div>
+        <button class="add-btn" onclick="openRuleModal()">+ إضافة قاعدة</button>
       </div>
+
+      <!-- القواعد الحالية -->
+      <div class="tbl-wrap" style="margin-bottom:16px">
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:700;color:var(--text-dim)">📋 قواعد الإجازات المفعّلة</div>
+        <div id="rules-list"><div class="loading-txt">⏳...</div></div>
+      </div>
+
+      <!-- معاينة التقويم -->
       <div class="tbl-wrap" style="padding:20px">
-        <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">اضغط على اليوم لفتحه أو إغلاقه. الأخضر = مفتوح ✅ | الأحمر = مغلق ❌</p>
-        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;" id="cal-headers"></div>
-        <div id="cal-grid-wrap"><div class="loading-txt">⏳...</div></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700">📆 معاينة الشهر</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="prevMonth()" style="background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 10px;cursor:pointer;font-family:Cairo,sans-serif">→</button>
+            <span id="cal-month-label" style="font-size:13px;color:var(--gold);font-weight:700"></span>
+            <button onclick="nextMonth()" style="background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px 10px;cursor:pointer;font-family:Cairo,sans-serif">←</button>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+          <div style="text-align:center;font-size:10px;color:var(--text-dim);font-weight:600">أحد</div>
+          <div style="text-align:center;font-size:10px;color:var(--text-dim);font-weight:600">اثن</div>
+          <div style="text-align:center;font-size:10px;color:var(--text-dim);font-weight:600">ثلث</div>
+          <div style="text-align:center;font-size:10px;color:var(--text-dim);font-weight:600">أرب</div>
+          <div style="text-align:center;font-size:10px;color:var(--text-dim);font-weight:600">خمس</div>
+          <div style="text-align:center;font-size:10px;color:var(--text-dim);font-weight:600">جمع</div>
+          <div style="text-align:center;font-size:10px;color:var(--text-dim);font-weight:600">سبت</div>
+        </div>
+        <div id="cal-grid-wrap" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
+        <div style="display:flex;gap:16px;margin-top:12px;font-size:11px">
+          <span style="color:var(--success)">🟢 مفتوح</span>
+          <span style="color:var(--error)">🔴 إجازة أسبوعية</span>
+          <span style="color:#E0873A">🟠 إجازة محددة</span>
+          <span style="color:var(--blue)">🔵 إجازة فترة</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RULE MODAL -->
+    <div class="modal-overlay" id="ruleModal">
+      <div class="modal">
+        <div class="modal-title">
+          <span>إضافة قاعدة إجازة</span>
+          <button class="modal-close" onclick="closeModal('ruleModal')">✕</button>
+        </div>
+
+        <div class="fg">
+          <label>نوع الإجازة</label>
+          <select id="rule-type" onchange="onRuleTypeChange()">
+            <option value="weekly">📅 يوم أسبوعي ثابت (كل أسبوع)</option>
+            <option value="range">📆 فترة من تاريخ لتاريخ</option>
+            <option value="date">🗓️ يوم واحد محدد</option>
+          </select>
+        </div>
+
+        <div class="fg" id="rule-dow-wrap">
+          <label>اليوم</label>
+          <select id="rule-dow">
+            <option value="0">الأحد</option>
+            <option value="1">الاثنين</option>
+            <option value="2">الثلاثاء</option>
+            <option value="3">الأربعاء</option>
+            <option value="4">الخميس</option>
+            <option value="5">الجمعة</option>
+            <option value="6">السبت</option>
+          </select>
+        </div>
+
+        <div class="fg" id="rule-start-wrap" style="display:none">
+          <label id="rule-start-label">من تاريخ</label>
+          <input type="date" id="rule-start">
+        </div>
+
+        <div class="fg" id="rule-end-wrap" style="display:none">
+          <label>إلى تاريخ</label>
+          <input type="date" id="rule-end">
+        </div>
+
+        <div class="fg">
+          <label>سبب الإجازة (اختياري)</label>
+          <input type="text" id="rule-reason" placeholder="مثال: إجازة رمضان، عيد الأضحى...">
+        </div>
+
+        <div class="modal-btns">
+          <button class="modal-save" onclick="saveRule()">💾 حفظ القاعدة</button>
+          <button class="modal-cancel" onclick="closeModal('ruleModal')">إلغاء</button>
+        </div>
       </div>
     </div>
 
@@ -703,51 +785,151 @@ async function blockClient(id,name){
 }
 
 // =================== SCHEDULE ===================
+let schedRules = [];
+let calViewDate = new Date();
+
 async function loadSchedule(){
-  const days=['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'];
-  document.getElementById('cal-headers').innerHTML=days.map(d=>`<div style="text-align:center;font-size:11px;color:var(--text-dim);font-weight:600">${d}</div>`).join('');
-
-  const today=new Date();today.setHours(0,0,0,0);
-  const startOfMonth=new Date(today.getFullYear(),today.getMonth(),1);
-  const endOfMonth=new Date(today.getFullYear(),today.getMonth()+1,0);
-  const s=startOfMonth.toISOString().split('T')[0];
-  const e=endOfMonth.toISOString().split('T')[0];
-
-  try{
-    const r=await fetch(`${SB}/rest/v1/schedule?date=gte.${s}&date=lte.${e}&select=date,is_open`,{headers:HDR});
-    const schedData=await r.json();
-    const schedMap={};schedData.forEach(d=>schedMap[d.date]=d.is_open);
-
-    let html='';
-    for(let i=0;i<startOfMonth.getDay();i++)html+='<div></div>';
-    const dim=endOfMonth.getDate();
-    for(let d=1;d<=dim;d++){
-      const dt=new Date(today.getFullYear(),today.getMonth(),d);
-      const ds=dt.toISOString().split('T')[0];
-      const isPast=dt<today;
-      const isOpen=schedMap[ds]!==false;
-      const cls=isPast?'cal-day past':isOpen?'cal-day open':'cal-day closed';
-      const click=isPast?'':`onclick="toggleDay('${ds}',${isOpen})"`;
-      html+=`<div class="${cls}" id="day-${ds}" ${click}>${d}</div>`;
-    }
-    document.getElementById('cal-grid-wrap').innerHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">${html}</div>`;
-  }catch(e){document.getElementById('cal-grid-wrap').innerHTML='<div class="empty-txt">❌ خطأ</div>';}
+  await loadRules();
+  renderCalendar();
 }
 
-async function toggleDay(date,isOpen){
-  const el=document.getElementById('day-'+date);
-  if(el){el.style.opacity='0.5';}
+async function loadRules(){
   try{
-    // شوف لو موجود في schedule
-    const r=await fetch(`${SB}/rest/v1/schedule?date=eq.${date}&select=id`,{headers:HDR});
-    const data=await r.json();
-    if(data.length){
-      await fetch(`${SB}/rest/v1/schedule?date=eq.${date}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_open:!isOpen})});
-    }else{
-      await fetch(`${SB}/rest/v1/schedule`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({date,is_open:!isOpen})});
+    const r=await fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&order=created_at.desc`,{headers:HDR});
+    schedRules=await r.json();
+
+    const typeLabel={'weekly':'📅 أسبوعي','range':'📆 فترة','date':'🗓️ يوم محدد'};
+    const dayNames=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+    if(!schedRules.length){
+      document.getElementById('rules-list').innerHTML='<div class="empty-txt">لا توجد قواعد إجازات</div>';
+      return;
     }
-    loadSchedule();
-  }catch(e){if(el)el.style.opacity='1';}
+
+    let html='<table><thead><tr><th>النوع</th><th>التفاصيل</th><th>السبب</th><th>إجراءات</th></tr></thead><tbody>';
+    schedRules.forEach(rule=>{
+      let details='';
+      if(rule.type==='weekly') details='كل '+dayNames[rule.day_of_week];
+      else if(rule.type==='date') details=rule.start_date;
+      else if(rule.type==='range') details=rule.start_date+' → '+rule.end_date;
+
+      html+=`<tr>
+        <td><span class="badge ${rule.type==='weekly'?'noshow':rule.type==='date'?'pending':'qalyub'}">${typeLabel[rule.type]}</span></td>
+        <td><b>${details}</b></td>
+        <td>${rule.reason||'-'}</td>
+        <td><button class="act-btn del" onclick="deleteRule(${rule.id})">🗑️ حذف</button></td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+    document.getElementById('rules-list').innerHTML=html;
+  }catch(e){document.getElementById('rules-list').innerHTML='<div class="empty-txt">❌ خطأ</div>';}
+}
+
+function renderCalendar(){
+  const year=calViewDate.getFullYear();
+  const month=calViewDate.getMonth();
+  const today=new Date();today.setHours(0,0,0,0);
+
+  const months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  document.getElementById('cal-month-label').textContent=months[month]+' '+year;
+
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+
+  let html='';
+  for(let i=0;i<firstDay;i++) html+='<div></div>';
+
+  for(let d=1;d<=daysInMonth;d++){
+    const dt=new Date(year,month,d);
+    const ds=dt.toISOString().split('T')[0];
+    const isPast=dt<today;
+    const isToday=dt.getTime()===today.getTime();
+
+    // فحص القواعد
+    const {closed,type}=isDayClosed(dt,ds);
+
+    let bg='rgba(76,175,125,0.1)';
+    let border='rgba(76,175,125,0.4)';
+    let color='var(--success)';
+
+    if(isPast){bg='transparent';border='var(--border)';color='#333';}
+    else if(closed){
+      if(type==='weekly'){bg='rgba(224,85,85,0.1)';border='rgba(224,85,85,0.4)';color='var(--error)';}
+      else if(type==='date'){bg='rgba(224,135,58,0.1)';border='rgba(224,135,58,0.4)';color='#E0873A';}
+      else{bg='rgba(74,144,217,0.1)';border='rgba(74,144,217,0.4)';color='var(--blue)';}
+    }
+
+    const todayBorder=isToday?';outline:2px solid var(--gold);outline-offset:2px':'';
+    html+=`<div style="padding:8px 2px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;border:2px solid ${border};background:${bg};color:${color}${todayBorder}">${d}</div>`;
+  }
+
+  document.getElementById('cal-grid-wrap').innerHTML=html;
+}
+
+function isDayClosed(dt,ds){
+  const dow=dt.getDay();
+  for(const rule of schedRules){
+    if(!rule.is_active) continue;
+    if(rule.type==='weekly' && rule.day_of_week===dow) return {closed:true,type:'weekly'};
+    if(rule.type==='date' && rule.start_date===ds) return {closed:true,type:'date'};
+    if(rule.type==='range' && ds>=rule.start_date && ds<=rule.end_date) return {closed:true,type:'range'};
+  }
+  return {closed:false,type:null};
+}
+
+function prevMonth(){ calViewDate.setMonth(calViewDate.getMonth()-1); renderCalendar(); }
+function nextMonth(){ calViewDate.setMonth(calViewDate.getMonth()+1); renderCalendar(); }
+
+// ---- Rule Modal ----
+function openRuleModal(){
+  document.getElementById('rule-type').value='weekly';
+  document.getElementById('rule-dow').value='5';
+  document.getElementById('rule-start').value='';
+  document.getElementById('rule-end').value='';
+  document.getElementById('rule-reason').value='';
+  onRuleTypeChange();
+  document.getElementById('ruleModal').classList.add('show');
+}
+
+function onRuleTypeChange(){
+  const type=document.getElementById('rule-type').value;
+  document.getElementById('rule-dow-wrap').style.display=type==='weekly'?'block':'none';
+  document.getElementById('rule-start-wrap').style.display=type!=='weekly'?'block':'none';
+  document.getElementById('rule-end-wrap').style.display=type==='range'?'block':'none';
+  document.getElementById('rule-start-label').textContent=type==='date'?'التاريخ':'من تاريخ';
+}
+
+async function saveRule(){
+  const type=document.getElementById('rule-type').value;
+  const reason=document.getElementById('rule-reason').value.trim();
+  const body={type,reason:reason||null};
+
+  if(type==='weekly'){
+    body.day_of_week=parseInt(document.getElementById('rule-dow').value);
+  } else if(type==='date'){
+    const d=document.getElementById('rule-start').value;
+    if(!d){alert('اختر التاريخ');return;}
+    body.start_date=d;
+  } else if(type==='range'){
+    const s=document.getElementById('rule-start').value;
+    const e=document.getElementById('rule-end').value;
+    if(!s||!e){alert('اختر تاريخ البداية والنهاية');return;}
+    if(e<s){alert('تاريخ النهاية لازم يكون بعد البداية');return;}
+    body.start_date=s;body.end_date=e;
+  }
+
+  try{
+    await fetch(`${SB}/rest/v1/schedule_rules`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    closeModal('ruleModal');
+    await loadSchedule();
+  }catch(e){alert('خطأ في الحفظ');}
+}
+
+async function deleteRule(id){
+  showConfirm('🗑️','حذف القاعدة','هتحذف قاعدة الإجازة دي؟',true,async()=>{
+    await fetch(`${SB}/rest/v1/schedule_rules?id=eq.${id}`,{method:'DELETE',headers:HDR});
+    await loadSchedule();
+  });
 }
 
 // =================== BLOCKED ===================

@@ -480,11 +480,21 @@ async function buildCal() {
   const today = new Date(); today.setHours(0,0,0,0);
   const maxD  = new Date(today); maxD.setDate(today.getDate() + 7);
 
-  let closedDates = [];
+  let rules = [];
   try {
-    const r = await fetch(`${SB}/rest/v1/schedule?is_open=eq.false&select=date`, { headers: HDR });
-    closedDates = (await r.json()).map(d => d.date);
+    const r = await fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR });
+    rules = await r.json();
   } catch(e) {}
+
+  function isDayClosed(dt, ds) {
+    const dow = dt.getDay();
+    for (const rule of rules) {
+      if (rule.type === 'weekly' && rule.day_of_week === dow) return true;
+      if (rule.type === 'date' && rule.start_date === ds) return true;
+      if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) return true;
+    }
+    return false;
+  }
 
   document.getElementById('calMonth').textContent =
     today.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
@@ -501,7 +511,7 @@ async function buildCal() {
     const ds = dt.toISOString().split('T')[0];
     const isPast   = dt < today;
     const isFuture = dt > maxD;
-    const isClosed = closedDates.includes(ds);
+    const isClosed = isDayClosed(dt, ds);
     const isToday  = dt.getTime() === today.getTime();
     const isSel    = ds === bk.dateStr;
 
