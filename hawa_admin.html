@@ -249,10 +249,19 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     <div class="section" id="sec-clients">
       <div class="page-hd">
         <div class="page-title">👥 <span>العملاء</span></div>
+        <div id="cl-count" style="font-size:13px;color:var(--text-dim)"></div>
       </div>
       <div class="tbl-wrap">
-        <div class="tbl-filters">
-          <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم أو الكود" oninput="loadClients()">
+        <div class="tbl-filters" style="flex-wrap:wrap;gap:8px">
+          <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم / كود / هاتف / مدينة / عنوان..." oninput="filterClients()" style="width:280px">
+          <select class="filter-inp" id="cl-gov" onchange="filterClients()" style="width:140px">
+            <option value="">كل المحافظات</option>
+          </select>
+          <select class="filter-inp" id="cl-status" onchange="filterClients()" style="width:130px">
+            <option value="">كل الحالات</option>
+            <option value="active">نشط ✅</option>
+            <option value="blocked">محظور 🔒</option>
+          </select>
         </div>
         <div id="cl-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       </div>
@@ -543,37 +552,83 @@ function deleteEmployee(id,name){
 }
 
 // =================== CLIENTS ===================
+let allClients = [];
+
 async function loadClients(){
-  const search=document.getElementById('cl-search').value.trim();
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    let url=`${SB}/rest/v1/clients?select=*&order=created_at.desc`;
-    const r=await fetch(url,{headers:{...HDR,'Range':'0-199'}});
-    let data=await r.json();
-    if(search){
-      const s=search.toLowerCase();
-      data=data.filter(c=>(c.name||'').toLowerCase().includes(s)||(c.company_code||'').toLowerCase().includes(s)||(c.phone||'').includes(s));
-    }
-    if(!data.length){document.getElementById('cl-table').innerHTML='<div class="empty-txt">لا يوجد عملاء</div>';return;}
-    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>الكود</th><th>الهاتف</th><th>المحافظة</th><th>no-show</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
-    data.forEach(c=>{
-      html+=`<tr>
-        <td style="color:var(--text-dim)">${c.id}</td>
-        <td><b>${c.name||'-'}</b></td>
-        <td style="color:var(--gold)">${c.company_code||'-'}</td>
-        <td>${c.phone||'-'}</td>
-        <td>${c.governorate||'-'}</td>
-        <td style="color:${(c.no_show_count||0)>=2?'var(--error)':'var(--text)'}">${c.no_show_count||0}</td>
-        <td>${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}</td>
-        <td><div class="act-btns">
-          ${c.is_blocked?`<button class="act-btn unblock" onclick="unblockClient(${c.id},'${c.name}')">🔓 فك البلوك</button>`:''}
-          ${!c.is_blocked?`<button class="act-btn del" onclick="blockClient(${c.id},'${c.name}')">🔒 بلوك</button>`:''}
-        </div></td>
-      </tr>`;
-    });
-    html+='</tbody></table>';
-    document.getElementById('cl-table').innerHTML=html;
+    const r=await fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}});
+    allClients=await r.json();
+
+    // ملي فلتر المحافظات
+    const govs=[...new Set(allClients.map(c=>c.governorate).filter(Boolean))].sort();
+    const govSel=document.getElementById('cl-gov');
+    const curGov=govSel.value;
+    govSel.innerHTML='<option value="">كل المحافظات</option>'+govs.map(g=>`<option value="${g}" ${g===curGov?'selected':''}>${g}</option>`).join('');
+
+    filterClients();
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+function filterClients(){
+  const search=(document.getElementById('cl-search').value||'').trim().toLowerCase();
+  const gov=document.getElementById('cl-gov').value;
+  const status=document.getElementById('cl-status').value;
+
+  let data=allClients;
+
+  // فلتر البحث الذكي - بيفلتر بكل الحقول
+  if(search){
+    data=data.filter(c=>{
+      const fields=[
+        c.name, c.company_code, c.phone,
+        c.governorate, c.city, c.district, c.address,
+        c.username, String(c.id)
+      ].map(f=>(f||'').toLowerCase());
+      return fields.some(f=>f.includes(search));
+    });
+  }
+  if(gov) data=data.filter(c=>c.governorate===gov);
+  if(status==='active') data=data.filter(c=>!c.is_blocked);
+  if(status==='blocked') data=data.filter(c=>c.is_blocked);
+
+  document.getElementById('cl-count').textContent=`${data.length} عميل`;
+
+  if(!data.length){document.getElementById('cl-table').innerHTML='<div class="empty-txt">لا يوجد نتائج</div>';return;}
+
+  const hl=(text,q)=>{
+    if(!q||!text)return text||'-';
+    const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    return String(text).replace(re,'<mark style="background:rgba(201,168,76,0.3);color:var(--gold);border-radius:3px">$1</mark>');
+  };
+
+  let html=`<table><thead><tr>
+    <th>#</th><th>الاسم</th><th>الكود</th><th>الهاتف</th>
+    <th>المحافظة</th><th>المدينة</th><th>الحي/المركز</th><th>العنوان</th>
+    <th>no-show</th><th>الحالة</th><th>إجراءات</th>
+  </tr></thead><tbody>`;
+
+  data.forEach(c=>{
+    const ns=c.no_show_count||0;
+    html+=`<tr>
+      <td style="color:var(--text-dim)">${c.id}</td>
+      <td><b>${hl(c.name,search)}</b></td>
+      <td style="color:var(--gold)">${hl(c.company_code,search)}</td>
+      <td>${hl(c.phone,search)}</td>
+      <td>${hl(c.governorate,search)}</td>
+      <td>${hl(c.city,search)}</td>
+      <td>${hl(c.district,search)}</td>
+      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${c.address||''}">${hl(c.address,search)}</td>
+      <td style="color:${ns>=2?'var(--error)':ns>0?'var(--orange)':'var(--text)'};font-weight:${ns>0?700:400}">${ns}</td>
+      <td>${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}</td>
+      <td><div class="act-btns">
+        ${c.is_blocked?`<button class="act-btn unblock" onclick="unblockClient(${c.id},'${(c.name||'').replace(/'/g,"\'")}')">🔓 فك البلوك</button>`:
+        `<button class="act-btn del" onclick="blockClient(${c.id},'${(c.name||'').replace(/'/g,"\'")}')">🔒 بلوك</button>`}
+      </div></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('cl-table').innerHTML=html;
 }
 
 async function unblockClient(id,name){
