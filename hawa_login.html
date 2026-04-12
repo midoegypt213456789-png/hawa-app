@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HAWA CO - تسجيل الدخول</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
@@ -23,6 +23,8 @@
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
+  html { height: 100%; }
+
   body {
     font-family: 'Cairo', sans-serif;
     background: var(--dark);
@@ -31,51 +33,48 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
-    overflow: hidden;
+    padding: 20px 16px 40px;
+    overflow-y: auto;
   }
 
   body::before {
     content: '';
     position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
     background: radial-gradient(ellipse at 30% 20%, rgba(201,168,76,0.06) 0%, transparent 50%),
                 radial-gradient(ellipse at 70% 80%, rgba(201,168,76,0.04) 0%, transparent 50%);
     pointer-events: none;
+    z-index: 0;
   }
 
   .container {
     width: 100%;
-    max-width: 380px;
+    max-width: 420px;
     position: relative;
     z-index: 1;
   }
 
   .logo-wrap {
     text-align: center;
-    margin-bottom: 40px;
-    animation: fadeDown 0.6s ease both;
+    margin-bottom: 20px;
+    padding-top: 10px;
   }
 
   .logo-icon {
-    width: 70px;
-    height: 70px;
+    width: 65px; height: 65px;
     background: linear-gradient(135deg, var(--gold), var(--gold-light));
-    border-radius: 20px;
+    border-radius: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
-    margin-bottom: 16px;
+    font-size: 30px;
+    margin-bottom: 10px;
     box-shadow: 0 8px 32px rgba(201,168,76,0.25);
   }
 
   .logo-title {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: 900;
     letter-spacing: 4px;
     background: linear-gradient(135deg, var(--gold), var(--gold-light));
@@ -85,7 +84,7 @@
   }
 
   .logo-sub {
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-dim);
     letter-spacing: 2px;
     margin-top: 4px;
@@ -96,16 +95,15 @@
     background: var(--dark3);
     border-radius: 14px;
     padding: 4px;
-    margin-bottom: 28px;
+    margin-bottom: 16px;
     border: 1px solid var(--border);
-    animation: fadeUp 0.6s ease 0.1s both;
   }
 
   .tab {
     flex: 1;
-    padding: 10px;
+    padding: 9px 6px;
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     font-family: 'Cairo', sans-serif;
     border: none;
@@ -125,29 +123,27 @@
     background: var(--dark2);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 28px 24px;
-    animation: fadeUp 0.6s ease 0.2s both;
+    padding: 22px 18px;
   }
 
-  .form-group { margin-bottom: 18px; }
+  .form-group { margin-bottom: 14px; }
 
   label {
     display: block;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--text-dim);
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
+    margin-bottom: 6px;
   }
 
   .input-wrap { position: relative; }
 
   .input-icon {
     position: absolute;
-    right: 14px;
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 16px;
+    font-size: 14px;
     pointer-events: none;
   }
 
@@ -156,14 +152,13 @@
     background: var(--dark3);
     border: 1.5px solid var(--border);
     border-radius: 12px;
-    padding: 13px 44px 13px 16px;
+    padding: 11px 38px 11px 12px;
     font-family: 'Cairo', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text);
     outline: none;
     transition: all 0.3s ease;
-    direction: ltr;
-    text-align: right;
+    direction: rtl;
   }
 
   input:focus {
@@ -174,29 +169,34 @@
 
   input::placeholder { color: var(--text-dim); }
 
+  .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
   .btn-main {
     width: 100%;
-    padding: 15px;
+    padding: 13px;
     background: linear-gradient(135deg, var(--gold), var(--gold-light));
     color: var(--dark);
     font-family: 'Cairo', sans-serif;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     border: none;
     border-radius: 14px;
     cursor: pointer;
-    margin-top: 8px;
+    margin-top: 6px;
     transition: all 0.3s ease;
     box-shadow: 0 4px 20px rgba(201,168,76,0.3);
-    letter-spacing: 0.5px;
   }
 
   .btn-main:active { transform: scale(0.98); }
   .btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
 
-  .btn-forgot {
+  .btn-secondary {
     width: 100%;
-    padding: 12px;
+    padding: 11px;
     background: transparent;
     color: var(--gold);
     font-family: 'Cairo', sans-serif;
@@ -209,40 +209,30 @@
     transition: all 0.3s ease;
   }
 
-  .btn-forgot:hover { border-color: var(--gold); background: rgba(201,168,76,0.05); }
-
   .alert {
-    padding: 12px 16px;
+    padding: 11px 14px;
     border-radius: 12px;
     font-size: 13px;
     font-weight: 600;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     display: none;
     align-items: center;
     gap: 8px;
+    line-height: 1.5;
   }
 
   .alert.error { background: rgba(224,85,85,0.1); border: 1px solid rgba(224,85,85,0.3); color: var(--error); display: flex; }
   .alert.success { background: rgba(76,175,125,0.1); border: 1px solid rgba(76,175,125,0.3); color: var(--success); display: flex; }
 
-  .register-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
-  }
-
-  .register-grid .form-group { margin-bottom: 0; }
-
   .spinner {
-    width: 18px;
-    height: 18px;
+    width: 16px; height: 16px;
     border: 2px solid rgba(10,10,10,0.3);
     border-top-color: var(--dark);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
     display: inline-block;
     vertical-align: middle;
-    margin-left: 8px;
+    margin-left: 6px;
   }
 
   .section { display: none; }
@@ -252,7 +242,7 @@
     text-align: center;
     color: var(--text-dim);
     font-size: 12px;
-    margin: 16px 0;
+    margin: 12px 0;
     position: relative;
   }
 
@@ -268,33 +258,29 @@
   .divider::before { right: 0; }
   .divider::after { left: 0; }
 
-  @keyframes fadeDown {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
   .step-title {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
-    color: var(--text);
-    margin-bottom: 20px;
+    margin-bottom: 16px;
     text-align: center;
   }
 
   .step-title span { color: var(--gold); }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 1px;
+    margin: 14px 0 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 5px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
-
 <div class="container">
 
   <div class="logo-wrap">
@@ -309,7 +295,6 @@
   </div>
 
   <div class="card">
-
     <div class="alert" id="alert"></div>
 
     <!-- LOGIN -->
@@ -333,43 +318,60 @@
       </div>
 
       <button class="btn-main" onclick="doLogin()" id="login-btn">تسجيل الدخول</button>
-
       <div class="divider">أو</div>
-
-      <button class="btn-forgot" onclick="switchTab('forgot')">🔓 نسيت كلمة المرور؟</button>
+      <button class="btn-secondary" onclick="switchTab('forgot')">🔓 نسيت كلمة المرور؟</button>
     </div>
 
     <!-- REGISTER -->
     <div class="section" id="register-section">
       <p class="step-title">إنشاء <span>حساب جديد</span></p>
 
+      <div class="section-label">📋 بيانات الشركة</div>
+
       <div class="form-group">
         <label>كود العميل في الشركة</label>
         <div class="input-wrap">
           <span class="input-icon">🏷️</span>
-          <input type="text" id="reg-code" placeholder="مثال: C001">
+          <input type="text" id="reg-code" placeholder="مثال: C001 أو 1234AB">
         </div>
       </div>
 
-      <div class="register-grid">
-        <div class="form-group">
-          <label>الاسم الكامل</label>
-          <input type="text" id="reg-name" placeholder="الاسم">
+      <div class="section-label">👤 البيانات الشخصية</div>
+
+      <div class="form-group">
+        <label>الاسم الثلاثي</label>
+        <div class="input-wrap">
+          <span class="input-icon">📛</span>
+          <input type="text" id="reg-name" placeholder="الاسم الأول والثاني والثالث">
         </div>
-        <div class="form-group">
-          <label>رقم الهاتف</label>
+      </div>
+
+      <div class="form-group">
+        <label>رقم الهاتف</label>
+        <div class="input-wrap">
+          <span class="input-icon">📱</span>
           <input type="tel" id="reg-phone" placeholder="01xxxxxxxxx">
         </div>
       </div>
 
-      <div class="register-grid">
+      <div class="section-label">📍 العنوان</div>
+
+      <div class="row2">
         <div class="form-group">
           <label>المحافظة</label>
-          <input type="text" id="reg-gov" placeholder="القاهرة">
+          <input type="text" id="reg-gov" placeholder="مثال: القاهرة">
         </div>
         <div class="form-group">
-          <label>المدينة / الحي</label>
-          <input type="text" id="reg-city" placeholder="المدينة">
+          <label>المدينة</label>
+          <input type="text" id="reg-city" placeholder="مثال: مدينة نصر">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>المركز</label>
+        <div class="input-wrap">
+          <span class="input-icon">🏙️</span>
+          <input type="text" id="reg-district" placeholder="اسم المركز">
         </div>
       </div>
 
@@ -380,6 +382,8 @@
           <input type="text" id="reg-address" placeholder="الشارع، المبنى، الشقة...">
         </div>
       </div>
+
+      <div class="section-label">🔐 بيانات الدخول</div>
 
       <div class="form-group">
         <label>اسم المستخدم</label>
@@ -398,6 +402,7 @@
       </div>
 
       <button class="btn-main" onclick="doRegister()" id="register-btn">إنشاء الحساب</button>
+      <button class="btn-secondary" onclick="switchTab('login')">← العودة لتسجيل الدخول</button>
     </div>
 
     <!-- FORGOT -->
@@ -420,9 +425,16 @@
         </div>
       </div>
 
-      <button class="btn-main" onclick="doForgot()">إرسال كلمة المرور الجديدة</button>
-      <div class="divider">أو</div>
-      <button class="btn-forgot" onclick="switchTab('login')">← العودة لتسجيل الدخول</button>
+      <div class="form-group" id="new-pass-group" style="display:none">
+        <label>كلمة المرور الجديدة</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="forgot-newpass" placeholder="أدخل كلمة المرور الجديدة">
+        </div>
+      </div>
+
+      <button class="btn-main" onclick="doForgot()" id="forgot-btn">التحقق من البيانات</button>
+      <button class="btn-secondary" onclick="switchTab('login')">← العودة لتسجيل الدخول</button>
     </div>
 
   </div>
@@ -435,6 +447,9 @@
 
   const SUPABASE_URL = 'https://oqsowwtjutpjdypjpcum.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_rCmWQJCKfoJK4XiY2JKUzQ_CI9IGtP5';
+
+  let forgotVerified = false;
+  let forgotUserId = null;
 
   function switchTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -477,25 +492,15 @@
     try {
       const res = await fetch(
         `${SUPABASE_URL}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=id,name,company_code`,
-        {
-          method: 'GET',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
       );
-
       const data = await res.json();
 
       if (data && data.length > 0) {
         const user = data[0];
         showAlert(`أهلاً ${user.name}! تم تسجيل الدخول بنجاح 🎉`, 'success');
         localStorage.setItem('hawa_user', JSON.stringify(user));
-        setTimeout(() => {
-          if (tg) tg.close();
-        }, 2000);
+        setTimeout(() => { if (tg) tg.close(); }, 2000);
       } else {
         showAlert('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
       }
@@ -514,6 +519,7 @@
       phone: document.getElementById('reg-phone').value.trim(),
       governorate: document.getElementById('reg-gov').value.trim(),
       city: document.getElementById('reg-city').value.trim(),
+      district: document.getElementById('reg-district').value.trim(),
       address: document.getElementById('reg-address').value.trim(),
       username: document.getElementById('reg-username').value.trim(),
       password: document.getElementById('reg-password').value.trim(),
@@ -521,6 +527,11 @@
 
     if (Object.values(data).some(v => !v)) {
       showAlert('من فضلك أكمل جميع الحقول', 'error');
+      return;
+    }
+
+    if (data.name.trim().split(/\s+/).length < 3) {
+      showAlert('من فضلك أدخل الاسم الثلاثي كاملاً', 'error');
       return;
     }
 
@@ -541,11 +552,15 @@
       });
 
       if (res.ok) {
-        showAlert('تم إنشاء الحساب بنجاح! 🎉', 'success');
-        setTimeout(() => switchTab('login'), 2000);
+        showAlert('تم إنشاء الحساب بنجاح! 🎉 يمكنك تسجيل الدخول الآن', 'success');
+        setTimeout(() => switchTab('login'), 2500);
       } else {
         const err = await res.json();
-        showAlert(err.message || 'حدث خطأ في التسجيل', 'error');
+        if (err.code === '23505') {
+          showAlert('اسم المستخدم أو كود العميل مسجل بالفعل', 'error');
+        } else {
+          showAlert('حدث خطأ في التسجيل، حاول مرة أخرى', 'error');
+        }
       }
     } catch (e) {
       showAlert('حدث خطأ في الاتصال', 'error');
@@ -556,7 +571,78 @@
   }
 
   async function doForgot() {
-    showAlert('تواصل مع الإدارة لاستعادة كلمة المرور', 'error');
+    if (!forgotVerified) {
+      const code = document.getElementById('forgot-code').value.trim();
+      const phone = document.getElementById('forgot-phone').value.trim();
+
+      if (!code || !phone) {
+        showAlert('من فضلك أدخل كود العميل ورقم الهاتف', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('forgot-btn');
+      btn.disabled = true;
+      btn.innerHTML = 'جاري التحقق... <span class="spinner"></span>';
+
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/clients?company_code=eq.${encodeURIComponent(code)}&phone=eq.${encodeURIComponent(phone)}&select=id,name`,
+          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+        );
+        const data = await res.json();
+
+        if (data && data.length > 0) {
+          forgotVerified = true;
+          forgotUserId = data[0].id;
+          showAlert(`تم التحقق! أهلاً ${data[0].name} - أدخل كلمة المرور الجديدة`, 'success');
+          document.getElementById('new-pass-group').style.display = 'block';
+          btn.innerHTML = 'حفظ كلمة المرور الجديدة';
+        } else {
+          showAlert('الكود أو رقم الهاتف غير صحيح', 'error');
+          btn.innerHTML = 'التحقق من البيانات';
+        }
+      } catch (e) {
+        showAlert('حدث خطأ في الاتصال', 'error');
+        btn.innerHTML = 'التحقق من البيانات';
+      }
+      btn.disabled = false;
+
+    } else {
+      const newpass = document.getElementById('forgot-newpass').value.trim();
+      if (!newpass || newpass.length < 4) {
+        showAlert('كلمة المرور لازم تكون 4 أحرف على الأقل', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('forgot-btn');
+      btn.disabled = true;
+      btn.innerHTML = 'جاري الحفظ... <span class="spinner"></span>';
+
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${forgotUserId}`, {
+          method: 'PATCH',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ password: newpass })
+        });
+
+        if (res.ok) {
+          showAlert('تم تغيير كلمة المرور بنجاح! 🎉', 'success');
+          forgotVerified = false;
+          forgotUserId = null;
+          setTimeout(() => switchTab('login'), 2000);
+        } else {
+          showAlert('حدث خطأ، حاول مرة أخرى', 'error');
+        }
+      } catch (e) {
+        showAlert('حدث خطأ في الاتصال', 'error');
+      }
+      btn.disabled = false;
+      btn.innerHTML = 'حفظ كلمة المرور الجديدة';
+    }
   }
 </script>
 </body>
