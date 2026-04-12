@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HAWA CO - موظف</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+  :root {
+    --gold:#C9A84C;--gold-light:#E8C97A;--dark:#0A0A0A;--dark2:#111111;--dark3:#1A1A1A;
+    --text:#F0EDE8;--text-dim:#8A8580;--border:#2A2A2A;--error:#E05555;--success:#4CAF7D;--blue:#4A90D9;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Cairo',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;padding:16px 16px 50px;}
+  .container{width:100%;max-width:480px;margin:0 auto;}
+  /* LOGIN */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-box{width:100%;max-width:380px;}
+  .login-logo{text-align:center;margin-bottom:28px;}
+  .login-logo .icon{width:70px;height:70px;border-radius:20px;margin:0 auto 12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:32px;box-shadow:0 8px 32px rgba(201,168,76,0.3);}
+  .login-logo .title{font-size:22px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .login-logo .sub{font-size:12px;color:var(--text-dim);margin-top:4px;letter-spacing:1px;}
+  .login-card{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:24px;}
+  .login-card h3{font-size:15px;font-weight:700;margin-bottom:18px;text-align:center;}
+  .login-card h3 span{color:var(--gold);}
+  .form-group{margin-bottom:14px;}
+  .form-group label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;}
+  .inp-wrap{position:relative;}
+  .inp-wrap .ic{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+  input{width:100%;background:var(--dark3);border:1.5px solid var(--border);border-radius:12px;padding:11px 38px 11px 12px;font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);outline:none;transition:all 0.3s;direction:rtl;}
+  input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.1);}
+  input::placeholder{color:var(--text-dim);}
+  .btn-login{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;border:none;border-radius:14px;cursor:pointer;margin-top:6px;box-shadow:0 4px 20px rgba(201,168,76,0.3);}
+  .btn-login:disabled{opacity:0.6;cursor:not-allowed;}
+  .alert{padding:11px 14px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:14px;display:none;align-items:center;gap:8px;}
+  .alert.err{display:flex;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);}
+  /* MAIN */
+  .main-view{display:none;}
+  .main-view.show{display:block;}
+  .login-view.hide{display:none;}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--dark2);border-radius:16px;border:1px solid var(--border);margin-bottom:14px;}
+  .logo{font-size:16px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .emp-name{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .header-right{display:flex;align-items:center;gap:8px;}
+  .role-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(74,144,217,0.15);color:var(--blue);}
+  .logout-btn{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Cairo',sans-serif;}
+  .wh-tabs{display:grid;gap:8px;margin-bottom:14px;}
+  .wh-tabs.two{grid-template-columns:1fr 1fr;}
+  .wh-tabs.one{grid-template-columns:1fr;}
+  .wh-btn{padding:12px;border-radius:14px;border:2px solid var(--border);background:var(--dark2);color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all 0.25s;}
+  .wh-btn.active{border-color:var(--gold);background:rgba(201,168,76,0.1);color:var(--gold);}
+  .date-bar{text-align:center;padding:10px;background:var(--dark2);border-radius:12px;border:1px solid var(--border);font-size:13px;font-weight:600;color:var(--text-dim);margin-bottom:14px;}
+  .date-bar span{color:var(--gold);}
+  .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+  .stat-card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;}
+  .stat-num{font-size:24px;font-weight:900;}
+  .stat-lbl{font-size:11px;color:var(--text-dim);margin-top:2px;}
+  .stat-num.pending{color:var(--blue);}
+  .stat-num.done{color:var(--success);}
+  .stat-num.noshow{color:var(--error);}
+  .slot-group{margin-bottom:16px;}
+  .slot-header{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--dark3);border-radius:10px;margin-bottom:8px;font-size:13px;font-weight:700;color:var(--gold);}
+  .slot-count{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:rgba(201,168,76,0.15);color:var(--gold);margin-right:auto;}
+  .bk-card{background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:all 0.25s;}
+  .bk-card.done{border-color:rgba(76,175,125,0.4);background:rgba(76,175,125,0.05);}
+  .bk-card.noshow{border-color:rgba(224,85,85,0.4);background:rgba(224,85,85,0.05);opacity:0.7;}
+  .bk-info{flex:1;}
+  .bk-name{font-size:14px;font-weight:700;margin-bottom:3px;}
+  .bk-meta{font-size:12px;color:var(--text-dim);}
+  .bk-meta span{color:var(--gold);font-weight:600;}
+  .bk-sub{font-size:12px;color:var(--text);margin-top:2px;}
+  .bk-status{font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0;}
+  .bk-status.pending{background:rgba(74,144,217,0.15);color:var(--blue);}
+  .bk-status.done{background:rgba(76,175,125,0.15);color:var(--success);}
+  .bk-status.noshow{background:rgba(224,85,85,0.15);color:var(--error);}
+  .check-btn{width:46px;height:46px;border-radius:50%;border:2px solid var(--border);background:var(--dark3);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0;}
+  .check-btn:hover:not(:disabled){border-color:var(--success);background:rgba(76,175,125,0.1);}
+  .check-btn.checked{border-color:var(--success);background:rgba(76,175,125,0.15);cursor:default;}
+  .check-btn.noshowed{border-color:var(--error);background:rgba(224,85,85,0.1);cursor:default;}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text-dim);}
+  .empty-state .ei{font-size:48px;margin-bottom:12px;}
+  .loading-state{text-align:center;padding:40px;color:var(--text-dim);font-size:14px;}
+  .noshow-all-btn{width:100%;padding:12px;border-radius:14px;margin-top:4px;border:1.5px solid rgba(224,85,85,0.4);background:transparent;color:var(--error);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+  .noshow-all-btn:hover{background:rgba(224,85,85,0.08);}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center;padding:20px;}
+  .overlay.show{display:flex;}
+  .dialog{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:340px;text-align:center;}
+  .d-icon{font-size:44px;margin-bottom:12px;}
+  .d-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+  .d-msg{font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6;}
+  .d-btns{display:flex;gap:10px;}
+  .d-yes{flex:1;padding:12px;border-radius:12px;border:none;background:var(--success);color:white;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .d-yes.danger{background:var(--error);}
+  .d-no{flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .spin{width:16px;height:16px;border:2px solid rgba(10,10,10,0.3);border-top-color:#000;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-left:6px;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div class="login-view" id="loginView">
+  <div class="login-wrap">
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="icon">🚛</div>
+        <div class="title">HAWA CO</div>
+        <div class="sub">بوابة الموظفين</div>
+      </div>
+      <div class="login-card">
+        <h3>تسجيل دخول <span>الموظف</span></h3>
+        <div class="alert" id="loginAlert"></div>
+        <div class="form-group">
+          <label>اسم المستخدم</label>
+          <div class="inp-wrap">
+            <span class="ic">👤</span>
+            <input type="text" id="empUser" placeholder="اسم المستخدم" onkeydown="if(event.key==='Enter')doLogin()">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>كلمة المرور</label>
+          <div class="inp-wrap">
+            <span class="ic">🔒</span>
+            <input type="password" id="empPass" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()">
+          </div>
+        </div>
+        <button class="btn-login" id="loginBtn" onclick="doLogin()">دخول</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main-view" id="mainView">
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="logo">🚛 HAWA CO</div>
+        <div class="emp-name" id="empNameDisplay"></div>
+      </div>
+      <div class="header-right">
+        <span class="role-badge" id="roleBadge"></span>
+        <button class="logout-btn" onclick="doLogout()">خروج</button>
+      </div>
+    </div>
+    <div class="wh-tabs" id="whTabs"></div>
+    <div class="date-bar">📅 <span id="dateLabel"></span></div>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-num pending" id="statPending">-</div><div class="stat-lbl">منتظر</div></div>
+      <div class="stat-card"><div class="stat-num done"    id="statDone">-</div><div class="stat-lbl">حضر ✅</div></div>
+      <div class="stat-card"><div class="stat-num noshow"  id="statNoshow">-</div><div class="stat-lbl">غائب ❌</div></div>
+    </div>
+    <div id="bookingsList"></div>
+    <button class="noshow-all-btn" id="noshowAllBtn" onclick="showNoshowAllDlg()" style="display:none">❌ تسجيل الغائبين تلقائياً</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="dialog">
+    <div class="d-icon"  id="dlgIcon"></div>
+    <div class="d-title" id="dlgTitle"></div>
+    <div class="d-msg"   id="dlgMsg"></div>
+    <div class="d-btns">
+      <button class="d-yes" id="dlgYes">تأكيد</button>
+      <button class="d-no"  onclick="hideDialog()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
+const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
+const SLOTS=['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00','12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
+const today=new Date();today.setHours(0,0,0,0);
+const todayStr=today.toISOString().split('T')[0];
+document.getElementById('dateLabel').textContent=today.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+let emp=null,warehouse=null,allBookings=[];
+
+async function doLogin(){
+  const u=document.getElementById('empUser').value.trim();
+  const p=document.getElementById('empPass').value.trim();
+  if(!u||!p){showLoginErr('أدخل اسم المستخدم وكلمة المرور');return;}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.innerHTML='جاري التحقق... <span class="spin"></span>';
+  try{
+    const r=await fetch(`${SB}/rest/v1/employees?username=eq.${encodeURIComponent(u)}&password=eq.${encodeURIComponent(p)}&is_active=eq.true&select=id,name,role`,{headers:HDR});
+    const data=await r.json();
+    if(data&&data.length>0){
+      emp=data[0];
+      sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
+      enterMain();
+    }else{showLoginErr('اسم المستخدم أو كلمة المرور غلط');}
+  }catch(e){showLoginErr('خطأ في الاتصال');}
+  btn.disabled=false;btn.innerHTML='دخول';
+}
+
+function showLoginErr(msg){
+  const el=document.getElementById('loginAlert');
+  el.textContent='⚠️ '+msg;el.className='alert err';
+}
+
+function enterMain(){
+  document.getElementById('loginView').classList.add('hide');
+  document.getElementById('mainView').classList.add('show');
+  document.getElementById('empNameDisplay').textContent=emp.name;
+  document.getElementById('roleBadge').textContent=emp.role==='عام'?'👷 موظف عام':'👷 موظف '+emp.role;
+
+  const tabsEl=document.getElementById('whTabs');
+  if(emp.role==='عام'){
+    tabsEl.className='wh-tabs two';
+    tabsEl.innerHTML='<button class="wh-btn active" id="wh-قليوب" onclick="selectWarehouse(\'قليوب\')">🏭 قليوب</button><button class="wh-btn" id="wh-السادات" onclick="selectWarehouse(\'السادات\')">🏗️ السادات</button>';
+    warehouse='قليوب';
+  }else{
+    tabsEl.className='wh-tabs one';
+    tabsEl.innerHTML='<button class="wh-btn active">'+(emp.role==='قليوب'?'🏭':'🏗️')+' '+emp.role+'</button>';
+    warehouse=emp.role;
+  }
+  loadBookings();
+}
+
+function doLogout(){
+  showDialog('🚪','تسجيل الخروج','هتخرج من الحساب؟',false,()=>{
+    sessionStorage.removeItem('hawa_emp');
+    emp=null;warehouse=null;allBookings=[];
+    document.getElementById('loginView').classList.remove('hide');
+    document.getElementById('mainView').classList.remove('show');
+    document.getElementById('empUser').value='';
+    document.getElementById('empPass').value='';
+    document.getElementById('loginAlert').className='alert';
+  });
+}
+
+function selectWarehouse(wh){
+  warehouse=wh;
+  document.querySelectorAll('.wh-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('wh-'+wh);
+  if(btn)btn.classList.add('active');
+  loadBookings();
+}
+
+async function loadBookings(){
+  const list=document.getElementById('bookingsList');
+  list.innerHTML='<div class="loading-state">⏳ جاري التحميل...</div>';
+  document.getElementById('noshowAllBtn').style.display='none';
+  try{
+    const r=await fetch(`${SB}/rest/v1/bookings?select=*&loading_date=eq.${todayStr}&warehouse=eq.${encodeURIComponent(warehouse)}&status=neq.ملغي&order=time_slot.asc,id.asc`,{headers:HDR});
+    allBookings=await r.json();
+    if(!allBookings.length){
+      list.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات اليوم في '+warehouse+'</p></div>';
+      updateStats();return;
+    }
+    const ids=[...new Set(allBookings.map(b=>b.client_id).filter(Boolean))];
+    if(ids.length){
+      const cr=await fetch(`${SB}/rest/v1/clients?id=in.(${ids.join(',')})&select=id,name,company_code`,{headers:HDR});
+      const clients=await cr.json();
+      const map={};clients.forEach(c=>map[c.id]=c);
+      allBookings.forEach(b=>b._client=map[b.client_id]||{});
+    }
+    renderBookings();updateStats();
+    document.getElementById('noshowAllBtn').style.display=allBookings.some(b=>b.status==='قيد الانتظار')?'block':'none';
+  }catch(e){list.innerHTML='<div class="loading-state">❌ خطأ في التحميل</div>';}
+}
+
+function renderBookings(){
+  const list=document.getElementById('bookingsList');
+  let html='';
+  SLOTS.forEach(slot=>{
+    const slotBks=allBookings.filter(b=>b.time_slot===slot);
+    if(!slotBks.length)return;
+    html+=`<div class="slot-group"><div class="slot-header">⏰ ${slot}<span class="slot-count">${slotBks.length} حجز</span></div>`;
+    slotBks.forEach(b=>{
+      const isDone=b.status==='تم التنفيذ',isNoshow=b.status==='no-show';
+      const name=b._client?.name||'عميل #'+b.client_id;
+      const code=b._client?.company_code||'-';
+      html+=`<div class="bk-card ${isDone?'done':isNoshow?'noshow':''}" id="card-${b.id}">
+        <button class="check-btn ${isDone?'checked':isNoshow?'noshowed':''}"
+          onclick="${isDone||isNoshow?'':`confirmDone(${b.id},'${name.replace(/'/g,"\'")}')`}"
+          ${isDone||isNoshow?'disabled':''}>
+          ${isDone?'✅':isNoshow?'❌':'○'}
+        </button>
+        <div class="bk-info">
+          <div class="bk-name">${name}</div>
+          <div class="bk-meta">كود: <span>${code}</span></div>
+          <div class="bk-sub">🚗 ${b.vehicle_type} — ${b.count} عربية</div>
+        </div>
+        <div class="bk-status ${isDone?'done':isNoshow?'noshow':'pending'}">
+          ${isDone?'حضر ✅':isNoshow?'غائب ❌':'منتظر'}
+        </div>
+      </div>`;
+    });
+    html+='</div>';
+  });
+  list.innerHTML=html;
+}
+
+function updateStats(){
+  document.getElementById('statPending').textContent=allBookings.filter(b=>b.status==='قيد الانتظار').length;
+  document.getElementById('statDone').textContent=allBookings.filter(b=>b.status==='تم التنفيذ').length;
+  document.getElementById('statNoshow').textContent=allBookings.filter(b=>b.status==='no-show').length;
+}
+
+function confirmDone(id,name){
+  showDialog('✅','تأكيد الحضور',`هتسجل حضور "${name}"؟`,false,async()=>{await markStatus(id,'تم التنفيذ');});
+}
+
+async function markStatus(id,status){
+  try{
+    const res=await fetch(`${SB}/rest/v1/bookings?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({status})});
+    if(res.ok){
+      const b=allBookings.find(x=>x.id===id);
+      if(b){b.status=status;}
+      if(status==='no-show'&&b?.client_id)await incrementNoshow(b.client_id);
+      renderBookings();updateStats();
+      document.getElementById('noshowAllBtn').style.display=allBookings.some(b=>b.status==='قيد الانتظار')?'block':'none';
+    }
+  }catch(e){}
+}
+
+async function incrementNoshow(clientId){
+  try{
+    const r=await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}&select=no_show_count`,{headers:HDR});
+    const d=await r.json();
+    const newCount=(d[0]?.no_show_count||0)+1;
+    await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}`,{
+      method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},
+      body:JSON.stringify({no_show_count:newCount,is_blocked:newCount>=2})
+    });
+  }catch(e){}
+}
+
+function showNoshowAllDlg(){
+  const pending=allBookings.filter(b=>b.status==='قيد الانتظار');
+  showDialog('❌','تسجيل الغائبين',`هتسجل ${pending.length} عميل كغائبين؟\nمش هتقدر ترجع!`,true,async()=>{
+    for(const b of pending)await markStatus(b.id,'no-show');
+  });
+}
+
+function showDialog(icon,title,msg,danger,onYes){
+  document.getElementById('dlgIcon').textContent=icon;
+  document.getElementById('dlgTitle').textContent=title;
+  document.getElementById('dlgMsg').textContent=msg;
+  const y=document.getElementById('dlgYes');
+  y.className=danger?'d-yes danger':'d-yes';
+  y.onclick=async()=>{hideDialog();await onYes();};
+  document.getElementById('overlay').classList.add('show');
+}
+function hideDialog(){document.getElementById('overlay').classList.remove('show');}
+
+const saved=sessionStorage.getItem('hawa_emp');
+if(saved){emp=JSON.parse(saved);enterMain();}
+setInterval(()=>{if(emp)loadBookings();},60000);
+</script>
+</body>
+</html>
