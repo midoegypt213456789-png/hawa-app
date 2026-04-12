@@ -231,6 +231,7 @@
 const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}` };
+const N8N_UPDATE = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/booking-update';
 
 const WAREHOUSES = ['قليوب', 'السادات'];
 const VTYPES = ['موتسيكل', 'تروسكل', 'كهرباء'];
@@ -254,7 +255,7 @@ async function loadReport() {
   try {
     // جيب كل حجوزات اليوم
     const r = await fetch(
-      `${SB}/rest/v1/bookings?select=*&loading_date=eq.${todayStr}&status=neq.ملغي&order=time_slot.asc`,
+      `${SB}/rest/v1/bookings?select=*&loading_date=eq.${todayStr}&status=eq.قيد الانتظار&order=time_slot.asc`,
       { headers: HDR }
     );
     const bookings = await r.json();
@@ -355,15 +356,20 @@ function buildVtypeSection(vtype, bookings, clientMap) {
       const c = clientMap[b.client_id] || {};
       const statusDot = b.status === 'تم التنفيذ' ? 'done' :
                         b.status === 'no-show'     ? 'noshow' : 'pending';
-      rows += `<tr>
+      rows += `<tr id="row-${b.id}">
         <td class="td-num">${rowCounter++}</td>
         <td class="td-name">
-          <span class="status-dot ${statusDot}"></span>
           ${c.name || '-'}
         </td>
         <td class="td-code">${c.company_code || '-'}</td>
         <td class="td-slot">${slot}</td>
         <td class="td-count">${b.count}<br><span>عربية</span></td>
+        <td class="no-print">
+          <button onclick="markDone(${b.id},'${wh}','${c.name||''}','${c.company_code||''}',${b.count},'${vtype}','${slot}')"
+            style="background:#4CAF7D;color:white;border:none;border-radius:8px;padding:6px 14px;cursor:pointer;font-family:Cairo,sans-serif;font-size:12px;font-weight:700">
+            ✅ تم التحميل
+          </button>
+        </td>
       </tr>`;
     });
 
@@ -372,7 +378,7 @@ function buildVtypeSection(vtype, bookings, clientMap) {
         <div class="slot-label">⏰ ${slot} — ${slotBks.length} حجز | ${slotBks.reduce((s,b)=>s+(b.count||0),0)} عربية</div>
         <table>
           <thead><tr>
-            <th>#</th><th>اسم العميل</th><th>الكود</th><th>الموعد</th><th>العدد</th>
+            <th>#</th><th>اسم العميل</th><th>الكود</th><th>الموعد</th><th>العدد</th><th class="no-print">إجراء</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -391,6 +397,47 @@ function buildVtypeSection(vtype, bookings, clientMap) {
       </div>
       ${slotsHtml}
     </div>`;
+}
+
+// ===== Mark Done =====
+async function markDone(id, wh, name, code, count, vtype, slot) {
+  if (!confirm(`تأكيد تحميل:\n${name} | ${code}\n${vtype} - ${count} عربية`)) return;
+
+  try {
+    // حدّث الـ status في Supabase
+    await fetch(`${SB}/rest/v1/bookings?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ status: 'تم التنفيذ' })
+    });
+
+    // شيل الصف من التقرير فوراً
+    const row = document.getElementById('row-' + id);
+    if (row) {
+      row.style.transition = 'opacity 0.4s';
+      row.style.opacity = '0';
+      setTimeout(() => row.remove(), 400);
+    }
+
+    // بعت إيميل تحديث عبر n8n
+    fetch(N8N_UPDATE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        warehouse: wh,
+        client_name: name,
+        company_code: code,
+        vehicle_type: vtype,
+        count: count,
+        time_slot: slot,
+        date: todayStr,
+        action: 'تم التحميل'
+      })
+    }).catch(() => {});
+
+  } catch(e) {
+    alert('حدث خطأ، حاول تاني');
+  }
 }
 
 // Load on start
