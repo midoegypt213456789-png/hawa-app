@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HAWA CO - لوحة التحكم</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+:root{
+  --gold:#C9A84C;--gold-light:#E8C97A;--dark:#0A0A0A;--dark2:#111111;--dark3:#1A1A1A;
+  --text:#F0EDE8;--text-dim:#8A8580;--border:#2A2A2A;--error:#E05555;--success:#4CAF7D;--blue:#4A90D9;
+  --sidebar:220px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Cairo',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;}
+
+/* LOGIN */
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{width:100%;max-width:380px;}
+.login-logo{text-align:center;margin-bottom:28px;}
+.login-logo .icon{width:72px;height:72px;border-radius:22px;margin:0 auto 12px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:34px;box-shadow:0 8px 32px rgba(201,168,76,0.3);}
+.login-logo .title{font-size:24px;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.login-logo .sub{font-size:12px;color:var(--text-dim);margin-top:4px;letter-spacing:2px;}
+.login-card{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:28px;}
+.login-card h3{font-size:15px;font-weight:700;margin-bottom:20px;text-align:center;}
+.login-card h3 span{color:var(--gold);}
+.alert-box{padding:11px 14px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:14px;display:none;align-items:center;gap:8px;}
+.alert-box.err{display:flex;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);}
+.alert-box.ok{display:flex;background:rgba(76,175,125,0.1);border:1px solid rgba(76,175,125,0.3);color:var(--success);}
+.fg{margin-bottom:14px;}
+.fg label{display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px;}
+.iw{position:relative;}
+.iw .ic{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none;}
+input,select,textarea{width:100%;background:var(--dark3);border:1.5px solid var(--border);border-radius:12px;padding:11px 38px 11px 12px;font-family:'Cairo',sans-serif;font-size:14px;color:var(--text);outline:none;transition:all 0.3s;direction:rtl;}
+select{padding-left:12px;}
+textarea{padding:11px 12px;resize:vertical;min-height:80px;}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.1);}
+input::placeholder,textarea::placeholder{color:var(--text-dim);}
+.btn-primary{width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:15px;font-weight:700;border:none;border-radius:14px;cursor:pointer;box-shadow:0 4px 20px rgba(201,168,76,0.3);}
+.btn-primary:disabled{opacity:0.6;cursor:not-allowed;}
+
+/* LAYOUT */
+.app{display:none;min-height:100vh;}
+.app.show{display:flex;}
+.sidebar{width:var(--sidebar);background:var(--dark2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:50;overflow-y:auto;}
+.main-area{margin-right:var(--sidebar);flex:1;padding:24px;overflow-y:auto;}
+
+/* SIDEBAR */
+.sb-header{padding:20px 16px;border-bottom:1px solid var(--border);}
+.sb-logo{font-size:16px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sb-admin{font-size:11px;color:var(--text-dim);margin-top:4px;}
+.sb-nav{flex:1;padding:12px 0;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;transition:all 0.2s;font-size:13px;font-weight:600;color:var(--text-dim);border-right:3px solid transparent;}
+.nav-item:hover{background:rgba(201,168,76,0.05);color:var(--text);}
+.nav-item.active{background:rgba(201,168,76,0.08);color:var(--gold);border-right-color:var(--gold);}
+.nav-item .ni{font-size:16px;width:24px;text-align:center;}
+.sb-footer{padding:16px;}
+.logout-btn{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
+.logout-btn:hover{border-color:var(--error);color:var(--error);}
+
+/* PAGE HEADER */
+.page-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.page-title{font-size:20px;font-weight:900;}
+.page-title span{color:var(--gold);}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.stat-c{background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:16px;}
+.stat-c .sv{font-size:28px;font-weight:900;margin-bottom:4px;}
+.stat-c .sl{font-size:12px;color:var(--text-dim);}
+.stat-c.gold .sv{color:var(--gold);}
+.stat-c.blue .sv{color:var(--blue);}
+.stat-c.green .sv{color:var(--success);}
+.stat-c.red .sv{color:var(--error);}
+
+/* TABLE */
+.tbl-wrap{background:var(--dark2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.tbl-filters{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filter-inp{background:var(--dark3);border:1.5px solid var(--border);border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);outline:none;width:160px;}
+.filter-inp:focus{border-color:var(--gold);}
+table{width:100%;border-collapse:collapse;}
+th{padding:12px 14px;text-align:right;font-size:12px;font-weight:700;color:var(--text-dim);border-bottom:1px solid var(--border);background:var(--dark3);white-space:nowrap;}
+td{padding:12px 14px;font-size:13px;border-bottom:1px solid rgba(42,42,42,0.5);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+.badge.pending{background:rgba(74,144,217,0.15);color:var(--blue);}
+.badge.done{background:rgba(76,175,125,0.15);color:var(--success);}
+.badge.noshow{background:rgba(224,85,85,0.15);color:var(--error);}
+.badge.cancelled{background:rgba(138,133,128,0.2);color:var(--text-dim);}
+.badge.blocked{background:rgba(224,85,85,0.15);color:var(--error);}
+.badge.active{background:rgba(76,175,125,0.15);color:var(--success);}
+.badge.qalyub{background:rgba(201,168,76,0.15);color:var(--gold);}
+.badge.sadat{background:rgba(74,144,217,0.15);color:var(--blue);}
+.badge.general{background:rgba(76,175,125,0.15);color:var(--success);}
+
+/* ACTION BUTTONS */
+.act-btns{display:flex;gap:6px;}
+.act-btn{padding:5px 12px;border-radius:8px;border:none;cursor:pointer;font-family:'Cairo',sans-serif;font-size:12px;font-weight:600;transition:all 0.2s;}
+.act-btn.edit{background:rgba(201,168,76,0.15);color:var(--gold);}
+.act-btn.edit:hover{background:rgba(201,168,76,0.25);}
+.act-btn.del{background:rgba(224,85,85,0.15);color:var(--error);}
+.act-btn.del:hover{background:rgba(224,85,85,0.25);}
+.act-btn.toggle{background:rgba(76,175,125,0.15);color:var(--success);}
+.act-btn.toggle:hover{background:rgba(76,175,125,0.25);}
+.act-btn.unblock{background:rgba(76,175,125,0.15);color:var(--success);}
+.act-btn.unblock:hover{background:rgba(76,175,125,0.25);}
+
+/* ADD BTN */
+.add-btn{padding:9px 18px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;}
+
+/* CALENDAR */
+.cal-grid-admin{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px;}
+.cal-hd-admin{font-size:11px;color:var(--text-dim);font-weight:600;text-align:center;padding:4px;}
+.cal-day{padding:10px 4px;border-radius:10px;font-size:13px;font-weight:600;text-align:center;border:2px solid var(--border);background:var(--dark3);cursor:pointer;transition:all 0.2s;}
+.cal-day.open{border-color:var(--success);background:rgba(76,175,125,0.08);color:var(--success);}
+.cal-day.closed{border-color:var(--error);background:rgba(224,85,85,0.08);color:var(--error);}
+.cal-day.past{opacity:0.3;cursor:default;}
+.cal-day.empty{background:transparent;border:none;cursor:default;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
+.modal-close{background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:18px;}
+.modal-btns{display:flex;gap:10px;margin-top:20px;}
+.modal-save{flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.modal-cancel{flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+
+/* CONFIRM DIALOG */
+.cdialog-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.cdialog-overlay.show{display:flex;}
+.cdialog{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:340px;text-align:center;}
+.cd-icon{font-size:44px;margin-bottom:12px;}
+.cd-title{font-size:16px;font-weight:700;margin-bottom:8px;}
+.cd-msg{font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6;}
+.cd-btns{display:flex;gap:10px;}
+.cd-yes{flex:1;padding:12px;border-radius:12px;border:none;background:var(--error);color:white;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+.cd-yes.ok{background:var(--success);}
+.cd-no{flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+
+.loading-txt{text-align:center;padding:40px;color:var(--text-dim);}
+.empty-txt{text-align:center;padding:30px;color:var(--text-dim);font-size:14px;}
+.spin{width:14px;height:14px;border:2px solid rgba(10,10,10,0.3);border-top-color:#000;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-left:6px;}
+@keyframes sp{to{transform:rotate(360deg);}}
+.section{display:none;}
+.section.active{display:block;}
+
+/* page indicator */
+.page-indicator{font-size:12px;color:var(--text-dim);padding:12px 16px;text-align:center;}
+
+@media(max-width:768px){
+  :root{--sidebar:0px;}
+  .sidebar{display:none;}
+  .main-area{margin-right:0;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">👑</div>
+      <div class="title">HAWA CO</div>
+      <div class="sub">لوحة تحكم الإدارة</div>
+    </div>
+    <div class="login-card">
+      <h3>دخول <span>الأدمن</span></h3>
+      <div class="alert-box" id="loginAlert"></div>
+      <div class="fg">
+        <label>اسم المستخدم</label>
+        <div class="iw"><span class="ic">👤</span><input type="text" id="aUser" placeholder="اسم المستخدم" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+      </div>
+      <div class="fg">
+        <label>كلمة المرور</label>
+        <div class="iw"><span class="ic">🔒</span><input type="password" id="aPass" placeholder="كلمة المرور" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+      </div>
+      <button class="btn-primary" id="loginBtn" onclick="doAdminLogin()">دخول</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sb-header">
+      <div class="sb-logo">👑 HAWA CO</div>
+      <div class="sb-admin" id="adminName">...</div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-item active" onclick="goTo('bookings')"><span class="ni">📋</span> الحجوزات</div>
+      <div class="nav-item" onclick="goTo('employees')"><span class="ni">👷</span> الموظفين</div>
+      <div class="nav-item" onclick="goTo('clients')"><span class="ni">👥</span> العملاء</div>
+      <div class="nav-item" onclick="goTo('schedule')"><span class="ni">📅</span> إدارة الأيام</div>
+      <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
+      <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
+    </div>
+    <div class="sb-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-area">
+
+    <!-- BOOKINGS -->
+    <div class="section active" id="sec-bookings">
+      <div class="page-hd">
+        <div class="page-title">📋 <span>الحجوزات</span></div>
+      </div>
+      <div class="stat-grid" id="bk-stats"></div>
+      <div class="tbl-wrap">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="bk-date" type="date" onchange="loadBookings()">
+          <select class="filter-inp" id="bk-wh" onchange="loadBookings()" style="width:130px">
+            <option value="">كل المخازن</option>
+            <option value="قليوب">قليوب</option>
+            <option value="السادات">السادات</option>
+          </select>
+          <select class="filter-inp" id="bk-status" onchange="loadBookings()" style="width:150px">
+            <option value="">كل الحالات</option>
+            <option value="قيد الانتظار">قيد الانتظار</option>
+            <option value="تم التنفيذ">تم التنفيذ</option>
+            <option value="no-show">no-show</option>
+            <option value="ملغي">ملغي</option>
+          </select>
+        </div>
+        <div id="bk-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- EMPLOYEES -->
+    <div class="section" id="sec-employees">
+      <div class="page-hd">
+        <div class="page-title">👷 <span>الموظفين</span></div>
+        <button class="add-btn" onclick="openEmpModal()">+ إضافة موظف</button>
+      </div>
+      <div class="tbl-wrap">
+        <div id="emp-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div class="section" id="sec-clients">
+      <div class="page-hd">
+        <div class="page-title">👥 <span>العملاء</span></div>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم أو الكود" oninput="loadClients()">
+        </div>
+        <div id="cl-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- SCHEDULE -->
+    <div class="section" id="sec-schedule">
+      <div class="page-hd">
+        <div class="page-title">📅 <span>إدارة الأيام</span></div>
+      </div>
+      <div class="tbl-wrap" style="padding:20px">
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">اضغط على اليوم لفتحه أو إغلاقه. الأخضر = مفتوح ✅ | الأحمر = مغلق ❌</p>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:8px;" id="cal-headers"></div>
+        <div id="cal-grid-wrap"><div class="loading-txt">⏳...</div></div>
+      </div>
+    </div>
+
+    <!-- BLOCKED -->
+    <div class="section" id="sec-blocked">
+      <div class="page-hd">
+        <div class="page-title">🔒 <span>المبلوكين</span></div>
+      </div>
+      <div class="tbl-wrap">
+        <div id="bl-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="section" id="sec-reports">
+      <div class="page-hd">
+        <div class="page-title">📊 <span>التقارير</span></div>
+      </div>
+      <div class="stat-grid" id="rep-stats"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="rep-wh"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- EMPLOYEE MODAL -->
+<div class="modal-overlay" id="empModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="empModalTitle">إضافة موظف</span>
+      <button class="modal-close" onclick="closeModal('empModal')">✕</button>
+    </div>
+    <div class="fg"><label>الاسم الكامل</label><div class="iw"><span class="ic">👤</span><input type="text" id="em-name" placeholder="اسم الموظف"></div></div>
+    <div class="fg"><label>اسم المستخدم</label><div class="iw"><span class="ic">🔑</span><input type="text" id="em-user" placeholder="username"></div></div>
+    <div class="fg"><label>كلمة المرور</label><div class="iw"><span class="ic">🔒</span><input type="password" id="em-pass" placeholder="كلمة المرور"></div></div>
+    <div class="fg">
+      <label>الصلاحية</label>
+      <select id="em-role">
+        <option value="قليوب">موظف قليوب</option>
+        <option value="السادات">موظف السادات</option>
+        <option value="عام">موظف عام</option>
+      </select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveEmployee()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('empModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DIALOG -->
+<div class="cdialog-overlay" id="cdialog">
+  <div class="cdialog">
+    <div class="cd-icon"  id="cd-icon"></div>
+    <div class="cd-title" id="cd-title"></div>
+    <div class="cd-msg"   id="cd-msg"></div>
+    <div class="cd-btns">
+      <button class="cd-yes" id="cd-yes">تأكيد</button>
+      <button class="cd-no"  onclick="closeConfirm()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
+const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
+
+let admin = null;
+let editEmpId = null;
+let currentSection = 'bookings';
+
+// =================== LOGIN ===================
+async function doAdminLogin(){
+  const u=document.getElementById('aUser').value.trim();
+  const p=document.getElementById('aPass').value.trim();
+  if(!u||!p){showLoginAlert('أدخل اسم المستخدم وكلمة المرور');return;}
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;btn.innerHTML='جاري التحقق... <span class="spin"></span>';
+  try{
+    const r=await fetch(`${SB}/rest/v1/admins?username=eq.${encodeURIComponent(u)}&password=eq.${encodeURIComponent(p)}&is_active=eq.true&select=id,name`,{headers:HDR});
+    const data=await r.json();
+    if(data&&data.length>0){
+      admin=data[0];
+      sessionStorage.setItem('hawa_admin',JSON.stringify(admin));
+      enterApp();
+    }else{showLoginAlert('اسم المستخدم أو كلمة المرور غلط');}
+  }catch(e){showLoginAlert('خطأ في الاتصال');}
+  btn.disabled=false;btn.innerHTML='دخول';
+}
+
+function showLoginAlert(msg){
+  const el=document.getElementById('loginAlert');
+  el.textContent='⚠️ '+msg;el.className='alert-box err';
+}
+
+function enterApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('adminName').textContent='👑 '+admin.name;
+  // set today's date filter
+  document.getElementById('bk-date').value=new Date().toISOString().split('T')[0];
+  loadBookings();
+}
+
+function doLogout(){
+  showConfirm('🚪','تسجيل الخروج','هتخرج من لوحة التحكم؟',false,()=>{
+    sessionStorage.removeItem('hawa_admin');
+    admin=null;
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('app').classList.remove('show');
+    document.getElementById('aUser').value='';
+    document.getElementById('aPass').value='';
+  });
+}
+
+// =================== NAVIGATION ===================
+function goTo(sec){
+  currentSection=sec;
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+sec).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if(sec==='bookings')loadBookings();
+  else if(sec==='employees')loadEmployees();
+  else if(sec==='clients')loadClients();
+  else if(sec==='schedule')loadSchedule();
+  else if(sec==='blocked')loadBlocked();
+  else if(sec==='reports')loadReports();
+}
+
+// =================== BOOKINGS ===================
+async function loadBookings(){
+  const date=document.getElementById('bk-date').value;
+  const wh=document.getElementById('bk-wh').value;
+  const status=document.getElementById('bk-status').value;
+  document.getElementById('bk-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+
+  let url=`${SB}/rest/v1/bookings?select=*&order=loading_date.desc,time_slot.asc`;
+  if(date)url+=`&loading_date=eq.${date}`;
+  if(wh)url+=`&warehouse=eq.${encodeURIComponent(wh)}`;
+  if(status)url+=`&status=eq.${encodeURIComponent(status)}`;
+
+  try{
+    const r=await fetch(url,{headers:{...HDR,'Range':'0-199'}});
+    const data=await r.json();
+
+    // stats
+    const allR=await fetch(`${SB}/rest/v1/bookings?select=status,count&loading_date=eq.${date||new Date().toISOString().split('T')[0]}`,{headers:HDR});
+    const allD=await allR.json();
+    const pending=allD.filter(b=>b.status==='قيد الانتظار').length;
+    const done=allD.filter(b=>b.status==='تم التنفيذ').length;
+    const noshow=allD.filter(b=>b.status==='no-show').length;
+    const total=allD.reduce((s,b)=>s+(b.count||0),0);
+    document.getElementById('bk-stats').innerHTML=`
+      <div class="stat-c gold"><div class="sv">${allD.length}</div><div class="sl">إجمالي الحجوزات</div></div>
+      <div class="stat-c blue"><div class="sv">${pending}</div><div class="sl">قيد الانتظار</div></div>
+      <div class="stat-c green"><div class="sv">${done}</div><div class="sl">تم التنفيذ</div></div>
+      <div class="stat-c red"><div class="sv">${noshow}</div><div class="sl">no-show</div></div>
+      <div class="stat-c gold"><div class="sv">${total}</div><div class="sl">إجمالي العربيات</div></div>`;
+
+    if(!data.length){document.getElementById('bk-table').innerHTML='<div class="empty-txt">لا توجد حجوزات</div>';return;}
+
+    // جيب أسماء العملاء
+    const ids=[...new Set(data.map(b=>b.client_id).filter(Boolean))];
+    let clientMap={};
+    if(ids.length){
+      const cr=await fetch(`${SB}/rest/v1/clients?id=in.(${ids.join(',')})&select=id,name,company_code`,{headers:HDR});
+      const clients=await cr.json();
+      clients.forEach(c=>clientMap[c.id]=c);
+    }
+
+    const statusBadge={
+      'قيد الانتظار':'<span class="badge pending">منتظر</span>',
+      'تم التنفيذ':'<span class="badge done">حضر ✅</span>',
+      'no-show':'<span class="badge noshow">غائب ❌</span>',
+      'ملغي':'<span class="badge cancelled">ملغي</span>'
+    };
+
+    let html=`<table><thead><tr>
+      <th>#</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th>
+    </tr></thead><tbody>`;
+    data.forEach(b=>{
+      const c=clientMap[b.client_id]||{};
+      const dateLabel=b.loading_date?new Date(b.loading_date+'T12:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'}):'-';
+      html+=`<tr>
+        <td style="color:var(--text-dim)">#${b.id}</td>
+        <td><b>${c.name||'-'}</b></td>
+        <td><span style="color:var(--gold)">${c.company_code||'-'}</span></td>
+        <td>${b.warehouse||'-'}</td>
+        <td>${b.vehicle_type||'-'}</td>
+        <td>${b.count||0}</td>
+        <td>${dateLabel}</td>
+        <td>${b.time_slot||'-'}</td>
+        <td>${statusBadge[b.status]||b.status}</td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+    document.getElementById('bk-table').innerHTML=html;
+  }catch(e){document.getElementById('bk-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+// =================== EMPLOYEES ===================
+async function loadEmployees(){
+  document.getElementById('emp-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const r=await fetch(`${SB}/rest/v1/employees?select=*&order=created_at.asc`,{headers:HDR});
+    const data=await r.json();
+    if(!data.length){document.getElementById('emp-table').innerHTML='<div class="empty-txt">لا يوجد موظفين</div>';return;}
+    const roleBadge={'قليوب':'<span class="badge qalyub">قليوب 🏭</span>','السادات':'<span class="badge sadat">السادات 🏗️</span>','عام':'<span class="badge general">عام 🌐</span>'};
+    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
+    data.forEach(e=>{
+      html+=`<tr>
+        <td style="color:var(--text-dim)">${e.id}</td>
+        <td><b>${e.name}</b></td>
+        <td style="color:var(--text-dim)">${e.username}</td>
+        <td>${roleBadge[e.role]||e.role}</td>
+        <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
+        <td><div class="act-btns">
+          <button class="act-btn edit" onclick="openEmpModal(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ تعديل</button>
+          <button class="act-btn toggle" onclick="toggleEmployee(${e.id},${e.is_active})">${e.is_active?'🔕 تعطيل':'✅ تفعيل'}</button>
+          <button class="act-btn del" onclick="deleteEmployee(${e.id},'${e.name}')">🗑️ حذف</button>
+        </div></td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+    document.getElementById('emp-table').innerHTML=html;
+  }catch(e){document.getElementById('emp-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+function openEmpModal(emp=null){
+  editEmpId=emp?emp.id:null;
+  document.getElementById('empModalTitle').textContent=emp?'تعديل موظف':'إضافة موظف جديد';
+  document.getElementById('em-name').value=emp?emp.name:'';
+  document.getElementById('em-user').value=emp?emp.username:'';
+  document.getElementById('em-pass').value='';
+  document.getElementById('em-role').value=emp?emp.role:'قليوب';
+  document.getElementById('empModal').classList.add('show');
+}
+
+async function saveEmployee(){
+  const name=document.getElementById('em-name').value.trim();
+  const username=document.getElementById('em-user').value.trim();
+  const password=document.getElementById('em-pass').value.trim();
+  const role=document.getElementById('em-role').value;
+  if(!name||!username){alert('أدخل الاسم واليوزر');return;}
+
+  const body={name,username,role};
+  if(password)body.password=password;
+
+  try{
+    if(editEmpId){
+      await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    }else{
+      if(!password){alert('أدخل كلمة المرور');return;}
+      body.password=password;
+      await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    }
+    closeModal('empModal');
+    loadEmployees();
+  }catch(e){alert('خطأ في الحفظ');}
+}
+
+async function toggleEmployee(id,isActive){
+  await fetch(`${SB}/rest/v1/employees?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:!isActive})});
+  loadEmployees();
+}
+
+function deleteEmployee(id,name){
+  showConfirm('🗑️','حذف موظف',`هتحذف "${name}"؟ مش هتقدر ترجع!`,true,async()=>{
+    await fetch(`${SB}/rest/v1/employees?id=eq.${id}`,{method:'DELETE',headers:HDR});
+    loadEmployees();
+  });
+}
+
+// =================== CLIENTS ===================
+async function loadClients(){
+  const search=document.getElementById('cl-search').value.trim();
+  document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    let url=`${SB}/rest/v1/clients?select=*&order=created_at.desc`;
+    const r=await fetch(url,{headers:{...HDR,'Range':'0-199'}});
+    let data=await r.json();
+    if(search){
+      const s=search.toLowerCase();
+      data=data.filter(c=>(c.name||'').toLowerCase().includes(s)||(c.company_code||'').toLowerCase().includes(s)||(c.phone||'').includes(s));
+    }
+    if(!data.length){document.getElementById('cl-table').innerHTML='<div class="empty-txt">لا يوجد عملاء</div>';return;}
+    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>الكود</th><th>الهاتف</th><th>المحافظة</th><th>no-show</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
+    data.forEach(c=>{
+      html+=`<tr>
+        <td style="color:var(--text-dim)">${c.id}</td>
+        <td><b>${c.name||'-'}</b></td>
+        <td style="color:var(--gold)">${c.company_code||'-'}</td>
+        <td>${c.phone||'-'}</td>
+        <td>${c.governorate||'-'}</td>
+        <td style="color:${(c.no_show_count||0)>=2?'var(--error)':'var(--text)'}">${c.no_show_count||0}</td>
+        <td>${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}</td>
+        <td><div class="act-btns">
+          ${c.is_blocked?`<button class="act-btn unblock" onclick="unblockClient(${c.id},'${c.name}')">🔓 فك البلوك</button>`:''}
+          ${!c.is_blocked?`<button class="act-btn del" onclick="blockClient(${c.id},'${c.name}')">🔒 بلوك</button>`:''}
+        </div></td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+    document.getElementById('cl-table').innerHTML=html;
+  }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+async function unblockClient(id,name){
+  showConfirm('🔓','فك البلوك',`هتفك البلوك عن "${name}"؟`,false,async()=>{
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_blocked:false,no_show_count:0})});
+    loadClients();
+  });
+}
+
+async function blockClient(id,name){
+  showConfirm('🔒','حظر عميل',`هتعمل بلوك على "${name}"؟`,true,async()=>{
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_blocked:true})});
+    loadClients();
+  });
+}
+
+// =================== SCHEDULE ===================
+async function loadSchedule(){
+  const days=['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'];
+  document.getElementById('cal-headers').innerHTML=days.map(d=>`<div style="text-align:center;font-size:11px;color:var(--text-dim);font-weight:600">${d}</div>`).join('');
+
+  const today=new Date();today.setHours(0,0,0,0);
+  const startOfMonth=new Date(today.getFullYear(),today.getMonth(),1);
+  const endOfMonth=new Date(today.getFullYear(),today.getMonth()+1,0);
+  const s=startOfMonth.toISOString().split('T')[0];
+  const e=endOfMonth.toISOString().split('T')[0];
+
+  try{
+    const r=await fetch(`${SB}/rest/v1/schedule?date=gte.${s}&date=lte.${e}&select=date,is_open`,{headers:HDR});
+    const schedData=await r.json();
+    const schedMap={};schedData.forEach(d=>schedMap[d.date]=d.is_open);
+
+    let html='';
+    for(let i=0;i<startOfMonth.getDay();i++)html+='<div></div>';
+    const dim=endOfMonth.getDate();
+    for(let d=1;d<=dim;d++){
+      const dt=new Date(today.getFullYear(),today.getMonth(),d);
+      const ds=dt.toISOString().split('T')[0];
+      const isPast=dt<today;
+      const isOpen=schedMap[ds]!==false;
+      const cls=isPast?'cal-day past':isOpen?'cal-day open':'cal-day closed';
+      const click=isPast?'':`onclick="toggleDay('${ds}',${isOpen})"`;
+      html+=`<div class="${cls}" id="day-${ds}" ${click}>${d}</div>`;
+    }
+    document.getElementById('cal-grid-wrap').innerHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">${html}</div>`;
+  }catch(e){document.getElementById('cal-grid-wrap').innerHTML='<div class="empty-txt">❌ خطأ</div>';}
+}
+
+async function toggleDay(date,isOpen){
+  const el=document.getElementById('day-'+date);
+  if(el){el.style.opacity='0.5';}
+  try{
+    // شوف لو موجود في schedule
+    const r=await fetch(`${SB}/rest/v1/schedule?date=eq.${date}&select=id`,{headers:HDR});
+    const data=await r.json();
+    if(data.length){
+      await fetch(`${SB}/rest/v1/schedule?date=eq.${date}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_open:!isOpen})});
+    }else{
+      await fetch(`${SB}/rest/v1/schedule`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({date,is_open:!isOpen})});
+    }
+    loadSchedule();
+  }catch(e){if(el)el.style.opacity='1';}
+}
+
+// =================== BLOCKED ===================
+async function loadBlocked(){
+  document.getElementById('bl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const r=await fetch(`${SB}/rest/v1/clients?is_blocked=eq.true&select=*&order=name.asc`,{headers:HDR});
+    const data=await r.json();
+    if(!data.length){document.getElementById('bl-table').innerHTML='<div class="empty-txt">✅ لا يوجد عملاء محظورين</div>';return;}
+    let html=`<table><thead><tr><th>الاسم</th><th>الكود</th><th>الهاتف</th><th>no-show</th><th>إجراءات</th></tr></thead><tbody>`;
+    data.forEach(c=>{
+      html+=`<tr>
+        <td><b>${c.name||'-'}</b></td>
+        <td style="color:var(--gold)">${c.company_code||'-'}</td>
+        <td>${c.phone||'-'}</td>
+        <td style="color:var(--error)">${c.no_show_count||0}</td>
+        <td><button class="act-btn unblock" onclick="unblockClient(${c.id},'${c.name}')">🔓 فك البلوك</button></td>
+      </tr>`;
+    });
+    html+='</tbody></table>';
+    document.getElementById('bl-table').innerHTML=html;
+  }catch(e){document.getElementById('bl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+// =================== REPORTS ===================
+async function loadReports(){
+  const today=new Date().toISOString().split('T')[0];
+  const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay());
+  const ws=weekStart.toISOString().split('T')[0];
+  const monthStart=new Date();monthStart.setDate(1);
+  const ms=monthStart.toISOString().split('T')[0];
+
+  try{
+    const [todayR,weekR,monthR,clientsR,blockedR]=await Promise.all([
+      fetch(`${SB}/rest/v1/bookings?loading_date=eq.${today}&select=count,status`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/bookings?loading_date=gte.${ws}&select=count,status`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/bookings?loading_date=gte.${ms}&select=count,status`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/clients?select=id`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/clients?is_blocked=eq.true&select=id`,{headers:HDR}).then(r=>r.json()),
+    ]);
+
+    const sum=(arr)=>arr.reduce((s,b)=>s+(b.count||0),0);
+    document.getElementById('rep-stats').innerHTML=`
+      <div class="stat-c gold"><div class="sv">${todayR.length}</div><div class="sl">حجوزات اليوم</div></div>
+      <div class="stat-c blue"><div class="sv">${sum(todayR)}</div><div class="sl">عربيات اليوم</div></div>
+      <div class="stat-c green"><div class="sv">${weekR.length}</div><div class="sl">حجوزات الأسبوع</div></div>
+      <div class="stat-c gold"><div class="sv">${monthR.length}</div><div class="sl">حجوزات الشهر</div></div>
+      <div class="stat-c blue"><div class="sv">${clientsR.length}</div><div class="sl">إجمالي العملاء</div></div>
+      <div class="stat-c red"><div class="sv">${blockedR.length}</div><div class="sl">محظورين</div></div>`;
+
+    // تقرير لكل مخزن
+    const [qR,sR]=await Promise.all([
+      fetch(`${SB}/rest/v1/bookings?loading_date=eq.${today}&warehouse=eq.قليوب&select=count,status,vehicle_type,time_slot`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/bookings?loading_date=eq.${today}&warehouse=eq.السادات&select=count,status,vehicle_type,time_slot`,{headers:HDR}).then(r=>r.json()),
+    ]);
+
+    const whCard=(name,data)=>{
+      const total=data.length;
+      const cars=sum(data);
+      const done=data.filter(b=>b.status==='تم التنفيذ').length;
+      const noshow=data.filter(b=>b.status==='no-show').length;
+      return `<div class="tbl-wrap" style="padding:16px">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px">${name}</div>
+        <div class="stat-grid" style="grid-template-columns:1fr 1fr">
+          <div class="stat-c gold"><div class="sv">${total}</div><div class="sl">حجوزات</div></div>
+          <div class="stat-c blue"><div class="sv">${cars}</div><div class="sl">عربيات</div></div>
+          <div class="stat-c green"><div class="sv">${done}</div><div class="sl">حضر</div></div>
+          <div class="stat-c red"><div class="sv">${noshow}</div><div class="sl">no-show</div></div>
+        </div>
+      </div>`;
+    };
+    document.getElementById('rep-wh').innerHTML=whCard('🏭 قليوب — اليوم',qR)+whCard('🏗️ السادات — اليوم',sR);
+  }catch(e){console.error(e);}
+}
+
+// =================== MODAL / CONFIRM ===================
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+function showConfirm(icon,title,msg,danger,onYes){
+  document.getElementById('cd-icon').textContent=icon;
+  document.getElementById('cd-title').textContent=title;
+  document.getElementById('cd-msg').textContent=msg;
+  const y=document.getElementById('cd-yes');
+  y.className=danger?'cd-yes':'cd-yes ok';
+  y.onclick=async()=>{closeConfirm();await onYes();};
+  document.getElementById('cdialog').classList.add('show');
+}
+function closeConfirm(){document.getElementById('cdialog').classList.remove('show');}
+
+// =================== AUTO LOGIN ===================
+const saved=sessionStorage.getItem('hawa_admin');
+if(saved){admin=JSON.parse(saved);enterApp();}
+</script>
+</body>
+</html>
