@@ -235,6 +235,13 @@
     padding: 16px; margin: 16px 0; text-align: right;
   }
   .success-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .notice-box {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 14px; padding: 12px 14px; margin-top: 14px; text-align: right;
+  }
+  .notice-box .ni { font-size: 20px; flex-shrink: 0; }
+  .notice-box .nt { font-size: 12px; font-weight: 600; color: var(--gold); line-height: 1.6; }
   .btn-close-app {
     width: 100%; padding: 14px; background: linear-gradient(135deg, var(--success), #3a9660);
     color: white; font-family: 'Cairo', sans-serif; font-size: 15px; font-weight: 700;
@@ -370,6 +377,10 @@
         <div class="success-title" id="successTitle">تم الحفظ بنجاح!</div>
         <div class="success-details" id="successDetails"></div>
         <div class="success-actions" id="successActions"></div>
+        <div class="notice-box">
+          <span class="ni">⏰</span>
+          <span class="nt">الرجاء الحضور قبل موعدك بـ <strong>15 دقيقة</strong>، تأخرك أكثر من نصف ساعة يؤجل تحميلك لآخر اليوم</span>
+        </div>
       </div>
     </div>
 
@@ -402,6 +413,9 @@ if (tg) { tg.ready(); tg.expand(); }
 const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
+
+// ⚙️ رابط n8n webhook — عدّله لما ngrok يتغير
+const N8N = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/booking-confirm';
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 document.getElementById('uname').textContent = user.name || 'العميل';
@@ -628,6 +642,9 @@ async function confirm_booking() {
       if (res.ok) {
         const eid = editMode.id;
         exitEditMode();
+        // بعت إشعار تعديل تليجرام
+        sendTelegramConfirm({ id: eid, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
+          count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, is_edit: true });
         showSuccessScreen(
           `تم تعديل الحجز #${eid}`,
           `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
@@ -649,8 +666,11 @@ async function confirm_booking() {
       });
       if (res.ok) {
         const result = await res.json();
+        const booking = result[0];
+        // بعت رسالة تأكيد تليجرام عبر n8n
+        sendTelegramConfirm(booking);
         showSuccessScreen(
-          `تم الحجز بنجاح! #${result[0].id}`,
+          `تم الحجز بنجاح! #${booking.id}`,
           `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
           'new'
         );
@@ -825,6 +845,48 @@ async function doCancelBooking(id) {
   } catch(e) {
     showErr('خطأ في الاتصال بالسيرفر');
   }
+}
+
+// ===================== TELEGRAM NOTIFY =====================
+async function sendTelegramConfirm(booking) {
+  const dateLabel = new Date((booking.loading_date || bk.dateStr) + 'T12:00:00')
+    .toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const isEdit = booking.is_edit || false;
+
+  // جيب telegram_id من Supabase مباشرة — مش من localStorage
+  let telegramId = user.telegram_id || null;
+  try {
+    const tr = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id`, { headers: HDR });
+    const td = await tr.json();
+    if (td[0]?.telegram_id) {
+      telegramId = td[0].telegram_id;
+      user.telegram_id = telegramId; // حدّث localStorage كمان
+      localStorage.setItem('hawa_user', JSON.stringify(user));
+    }
+  } catch(e) {}
+
+  if (!telegramId || telegramId === 'null' || telegramId === '000') return;
+
+  const payload = {
+    telegram_id:  telegramId,
+    client_name:  user.name,
+    company_code: user.company_code,
+    booking_id:   booking.id,
+    warehouse:    booking.warehouse    || bk.warehouse,
+    vehicle_type: booking.vehicle_type || bk.vehicle,
+    count:        booking.count        ?? bk.count,
+    loading_date: booking.loading_date || bk.dateStr,
+    date_label:   dateLabel,
+    time_slot:    booking.time_slot    || bk.slot,
+    is_edit:      isEdit
+  };
+
+  fetch(N8N, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
 }
 
 // ===================== HELPERS =====================
