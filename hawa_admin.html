@@ -215,19 +215,35 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       </div>
       <div class="stat-grid" id="bk-stats"></div>
       <div class="tbl-wrap">
-        <div class="tbl-filters">
-          <input class="filter-inp" id="bk-date" type="date" onchange="loadBookings()">
+        <div class="tbl-filters" style="flex-wrap:wrap;gap:8px">
+          <input class="filter-inp" id="bk-date" type="date" onchange="loadBookings()" style="width:150px">
           <select class="filter-inp" id="bk-wh" onchange="loadBookings()" style="width:130px">
             <option value="">كل المخازن</option>
-            <option value="قليوب">قليوب</option>
-            <option value="السادات">السادات</option>
+            <option value="قليوب">🏭 قليوب</option>
+            <option value="السادات">🏗️ السادات</option>
+          </select>
+          <select class="filter-inp" id="bk-vehicle" onchange="loadBookings()" style="width:130px">
+            <option value="">كل الأنواع</option>
+            <option value="موتسيكل">🏍️ موتسيكل</option>
+            <option value="تروسكل">🛺 تروسكل</option>
+            <option value="كهرباء">⚡ كهرباء</option>
           </select>
           <select class="filter-inp" id="bk-status" onchange="loadBookings()" style="width:150px">
             <option value="">كل الحالات</option>
-            <option value="قيد الانتظار">قيد الانتظار</option>
-            <option value="تم التنفيذ">تم التنفيذ</option>
-            <option value="no-show">no-show</option>
-            <option value="ملغي">ملغي</option>
+            <option value="قيد الانتظار">⏳ قيد الانتظار</option>
+            <option value="تم التنفيذ">✅ تم التنفيذ</option>
+            <option value="no-show">❌ no-show</option>
+            <option value="ملغي">🚫 ملغي</option>
+          </select>
+          <input class="filter-inp" id="bk-client" type="text" placeholder="🔍 اسم العميل أو الكود..." oninput="filterBookingsLocal()" style="width:200px">
+          <select class="filter-inp" id="bk-count" onchange="filterBookingsLocal()" style="width:130px">
+            <option value="">كل الأعداد</option>
+            <option value="1">1 عربية</option>
+            <option value="2">2 عربية</option>
+            <option value="3">3 عربيات</option>
+            <option value="4">4 عربيات</option>
+            <option value="5">5 عربيات</option>
+            <option value="6+">6+ عربيات</option>
           </select>
         </div>
         <div id="bk-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -494,23 +510,29 @@ function goTo(sec){
 }
 
 // =================== BOOKINGS ===================
+let allBookingsData = [];
+let allClientsMap = {};
+
 async function loadBookings(){
   const date=document.getElementById('bk-date').value;
   const wh=document.getElementById('bk-wh').value;
+  const vehicle=document.getElementById('bk-vehicle').value;
   const status=document.getElementById('bk-status').value;
   document.getElementById('bk-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
 
   let url=`${SB}/rest/v1/bookings?select=*&order=loading_date.desc,time_slot.asc`;
   if(date)url+=`&loading_date=eq.${date}`;
   if(wh)url+=`&warehouse=eq.${encodeURIComponent(wh)}`;
+  if(vehicle)url+=`&vehicle_type=eq.${encodeURIComponent(vehicle)}`;
   if(status)url+=`&status=eq.${encodeURIComponent(status)}`;
 
   try{
-    const r=await fetch(url,{headers:{...HDR,'Range':'0-199'}});
-    const data=await r.json();
+    const r=await fetch(url,{headers:{...HDR,'Range':'0-499'}});
+    allBookingsData=await r.json();
 
-    // stats
-    const allR=await fetch(`${SB}/rest/v1/bookings?select=status,count&loading_date=eq.${date||new Date().toISOString().split('T')[0]}`,{headers:HDR});
+    // Stats لليوم المختار
+    const todayStr=date||new Date().toISOString().split('T')[0];
+    const allR=await fetch(`${SB}/rest/v1/bookings?select=status,count&loading_date=eq.${todayStr}`,{headers:HDR});
     const allD=await allR.json();
     const pending=allD.filter(b=>b.status==='قيد الانتظار').length;
     const done=allD.filter(b=>b.status==='تم التنفيذ').length;
@@ -523,45 +545,89 @@ async function loadBookings(){
       <div class="stat-c red"><div class="sv">${noshow}</div><div class="sl">no-show</div></div>
       <div class="stat-c gold"><div class="sv">${total}</div><div class="sl">إجمالي العربيات</div></div>`;
 
-    if(!data.length){document.getElementById('bk-table').innerHTML='<div class="empty-txt">لا توجد حجوزات</div>';return;}
+    if(!allBookingsData.length){document.getElementById('bk-table').innerHTML='<div class="empty-txt">لا توجد حجوزات</div>';return;}
 
     // جيب أسماء العملاء
-    const ids=[...new Set(data.map(b=>b.client_id).filter(Boolean))];
-    let clientMap={};
+    const ids=[...new Set(allBookingsData.map(b=>b.client_id).filter(Boolean))];
+    allClientsMap={};
     if(ids.length){
       const cr=await fetch(`${SB}/rest/v1/clients?id=in.(${ids.join(',')})&select=id,name,company_code`,{headers:HDR});
       const clients=await cr.json();
-      clients.forEach(c=>clientMap[c.id]=c);
+      clients.forEach(c=>allClientsMap[c.id]=c);
     }
 
-    const statusBadge={
-      'قيد الانتظار':'<span class="badge pending">منتظر</span>',
-      'تم التنفيذ':'<span class="badge done">حضر ✅</span>',
-      'no-show':'<span class="badge noshow">غائب ❌</span>',
-      'ملغي':'<span class="badge cancelled">ملغي</span>'
-    };
-
-    let html=`<table><thead><tr>
-      <th>#</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th>
-    </tr></thead><tbody>`;
-    data.forEach(b=>{
-      const c=clientMap[b.client_id]||{};
-      const dateLabel=b.loading_date?new Date(b.loading_date+'T12:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'}):'-';
-      html+=`<tr>
-        <td style="color:var(--text-dim)">#${b.id}</td>
-        <td><b>${c.name||'-'}</b></td>
-        <td><span style="color:var(--gold)">${c.company_code||'-'}</span></td>
-        <td>${b.warehouse||'-'}</td>
-        <td>${b.vehicle_type||'-'}</td>
-        <td>${b.count||0}</td>
-        <td>${dateLabel}</td>
-        <td>${b.time_slot||'-'}</td>
-        <td>${statusBadge[b.status]||b.status}</td>
-      </tr>`;
-    });
-    html+='</tbody></table>';
-    document.getElementById('bk-table').innerHTML=html;
+    renderBookingsTable(allBookingsData);
   }catch(e){document.getElementById('bk-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+function filterBookingsLocal(){
+  const clientSearch=(document.getElementById('bk-client').value||'').trim().toLowerCase();
+  const countFilter=document.getElementById('bk-count').value;
+
+  let data=allBookingsData;
+
+  if(clientSearch){
+    data=data.filter(b=>{
+      const c=allClientsMap[b.client_id]||{};
+      return (c.name||'').toLowerCase().includes(clientSearch)||
+             (c.company_code||'').toLowerCase().includes(clientSearch);
+    });
+  }
+
+  if(countFilter){
+    if(countFilter==='6+'){
+      data=data.filter(b=>(b.count||0)>=6);
+    }else{
+      const n=parseInt(countFilter);
+      data=data.filter(b=>(b.count||0)===n);
+    }
+  }
+
+  renderBookingsTable(data);
+}
+
+function renderBookingsTable(data){
+  if(!data.length){document.getElementById('bk-table').innerHTML='<div class="empty-txt">لا توجد نتائج</div>';return;}
+
+  const statusBadge={
+    'قيد الانتظار':'<span class="badge pending">⏳ منتظر</span>',
+    'تم التنفيذ':'<span class="badge done">✅ حضر</span>',
+    'no-show':'<span class="badge noshow">❌ غائب</span>',
+    'ملغي':'<span class="badge cancelled">🚫 ملغي</span>'
+  };
+
+  const clientSearch=(document.getElementById('bk-client').value||'').trim().toLowerCase();
+  const hl=(text,q)=>{
+    if(!q||!text)return text||'-';
+    const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    return String(text).replace(re,'<mark style="background:rgba(201,168,76,0.3);color:var(--gold);border-radius:3px">$1</mark>');
+  };
+
+  let html=`<table><thead><tr>
+    <th>#</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th>
+  </tr></thead><tbody>`;
+
+  data.forEach(b=>{
+    const c=allClientsMap[b.client_id]||{};
+    const dateLabel=b.loading_date?new Date(b.loading_date+'T12:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'}):'-';
+    html+=`<tr>
+      <td style="color:var(--text-dim)">#${b.id}</td>
+      <td><b>${hl(c.name||'-',clientSearch)}</b></td>
+      <td><span style="color:var(--gold)">${hl(c.company_code||'-',clientSearch)}</span></td>
+      <td>${b.warehouse||'-'}</td>
+      <td>${b.vehicle_type||'-'}</td>
+      <td><b style="color:var(--gold)">${b.count||0}</b></td>
+      <td>${dateLabel}</td>
+      <td>${b.time_slot||'-'}</td>
+      <td>${statusBadge[b.status]||b.status}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>
+  <div style="padding:10px 16px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border)">
+    إجمالي النتائج: <b style="color:var(--gold)">${data.length}</b> حجز |
+    إجمالي العربيات: <b style="color:var(--gold)">${data.reduce((s,b)=>s+(b.count||0),0)}</b>
+  </div>`;
+  document.getElementById('bk-table').innerHTML=html;
 }
 
 // =================== EMPLOYEES ===================
