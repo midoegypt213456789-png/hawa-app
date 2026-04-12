@@ -356,23 +356,25 @@
 
       <div class="section-label">📍 العنوان</div>
 
-      <div class="row2">
-        <div class="form-group">
-          <label>المحافظة</label>
-          <input type="text" id="reg-gov" placeholder="مثال: القاهرة">
-        </div>
-        <div class="form-group">
-          <label>المدينة</label>
-          <input type="text" id="reg-city" placeholder="مثال: مدينة نصر">
-        </div>
+      <div class="form-group">
+        <label>المحافظة</label>
+        <select id="reg-gov" onchange="onGovChange()">
+          <option value="">-- اختر المحافظة --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>المدينة / المركز / الحي</label>
+        <select id="reg-city" disabled>
+          <option value="">-- اختر المحافظة أولاً --</option>
+        </select>
       </div>
 
       <div class="form-group">
         <label>المركز</label>
-        <div class="input-wrap">
-          <span class="input-icon">🏙️</span>
-          <input type="text" id="reg-district" placeholder="اسم المركز">
-        </div>
+        <select id="reg-district" disabled>
+          <option value="">-- اختر المحافظة أولاً --</option>
+        </select>
       </div>
 
       <div class="form-group">
@@ -491,27 +493,16 @@
 
     try {
       const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=id,name,company_code,phone,governorate,is_blocked`,
+        `${SUPABASE_URL}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=id,name,company_code`,
         { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
       );
       const data = await res.json();
 
       if (data && data.length > 0) {
         const user = data[0];
-
-        // فحص البلوك قبل الدخول
-        if (user.is_blocked) {
-          showAlert('حسابك موقوف، تواصل مع الإدارة لمعرفة السبب', 'error');
-          btn.disabled = false;
-          btn.innerHTML = 'تسجيل الدخول';
-          return;
-        }
-
+        showAlert(`أهلاً ${user.name}! تم تسجيل الدخول بنجاح 🎉`, 'success');
         localStorage.setItem('hawa_user', JSON.stringify(user));
-        showAlert(`أهلاً ${user.name}! تم تسجيل الدخول ✅`, 'success');
-        setTimeout(() => {
-          window.location.href = 'hawa_booking.html';
-        }, 1200);
+        setTimeout(() => { if (tg) tg.close(); }, 2000);
       } else {
         showAlert('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
       }
@@ -528,9 +519,9 @@
       company_code: document.getElementById('reg-code').value.trim(),
       name: document.getElementById('reg-name').value.trim(),
       phone: document.getElementById('reg-phone').value.trim(),
-      governorate: document.getElementById('reg-gov').value.trim(),
-      city: document.getElementById('reg-city').value.trim(),
-      district: document.getElementById('reg-district').value.trim(),
+      governorate: document.getElementById('reg-gov').value,
+      city: document.getElementById('reg-city').value,
+      district: document.getElementById('reg-district').value,
       address: document.getElementById('reg-address').value.trim(),
       username: document.getElementById('reg-username').value.trim(),
       password: document.getElementById('reg-password').value.trim(),
@@ -580,6 +571,85 @@
     btn.disabled = false;
     btn.innerHTML = 'إنشاء الحساب';
   }
+
+const EGYPT = {
+  "القاهرة": ["مدينة نصر","الزيتون","شبرا","الوايلي","المطرية","عين شمس","النزهة","المنيل","حلوان","التجمع الأول","التجمع الخامس","التجمع الثالث","الهرم","العجوزة","الدقي","المهندسين","إمبابة","المعادي","المقطم","الخليفة","السيدة زينب","الأزهر","الجمالية","باب الشعرية","بولاق الدكرور","الزمالك","وسط البلد","مصر الجديدة","مصر القديمة","الأميرية","السلام","البساتين","دار السلام","الموسكي","عابدين","روض الفرج","الشرابية","المرج","عزبة النخل","منشأة ناصر","الزهراء","15 مايو","مدينة بدر","مدينة العبور"],
+  "الجيزة": ["الجيزة","6 أكتوبر","الشيخ زايد","العياط","البدرشين","الصف","أطفيح","أوسيم","كرداسة","الحوامدية","العمرانية","بولاق الدكرور","فيصل","الهرم","الدقي","إمبابة","ومان","المنيل","الدوقي","الوراق","أبو النمرس","حوض المراشدة"],
+  "الإسكندرية": ["المنتزه","سيدي جابر","الجمرك","العطارين","الرمل","محرم بك","سموحة","الأزاريطة","كوم الدكة","كرموز","الورديان","العامرية","الدخيلة","أبو قير","برج العرب","ابو سليمان","الانفوشي","المنشية","اللبان","الدخيلة","غيط العنب","سبورتنج","فلمينج","غليون","ستانلي","مصطفى كامل","بولكلي","السيوف","المكس","العصافرة"],
+  "القليوبية": ["بنها","قليوب","شبرا الخيمة","القناطر الخيرية","طوخ","الخانكة","كفر شكر","تلا","الخصوص","العبور","قها","سرس الليان","منيوف","الجبل الأصفر","شبين القناطر"],
+  "الشرقية": ["الزقازيق","بلبيس","ديرب نجم","الإبراهيمية","أبو كبير","فاقوس","منيا القمح","أبو حماد","القنايات","هيهيا","كفر صقر","الحسينية","العاشر من رمضان","صان الحجر","مشتول السوق","ميت أبو علي","أولاد صقر","الصالحية الجديدة"],
+  "المنوفية": ["شبين الكوم","مدينة السادات","منوف","أشمون","الشهداء","بركة السبع","قويسنا","السرو","الباجور","تلا","سرس الليان","المسلمية","مطياس","بقلية"],
+  "الدقهلية": ["المنصورة","طلخا","ميت غمر","السنبلاوين","دكرنس","أجا","المطرية","بلقاس","منية النصر","شربين","تمي الأمديد","نبروه","ميت سلسيل","الجمالية","السنبلاوين","بني عبيد","ميت ابو غالب"],
+  "الغربية": ["طنطا","المحلة الكبرى","كفر الزيات","السنطة","زفتى","بسيون","سمنود","قطور","سيفين"],
+  "كفر الشيخ": ["كفر الشيخ","دسوق","فوة","الحامول","الرياض","مطوبس","قلين","سيدي سالم","بيلا","برج البرلس","الرياض","بلطيم"],
+  "البحيرة": ["دمنهور","كفر الدوار","رشيد","أبو المطامير","إيتاي البارود","حوش عيسى","شبراخيت","الدلنجات","المحمودية","الرحمانية","النوبارية","وادي النطرون","إدكو","أبو حمص","بدر","كوم حمادة"],
+  "الإسماعيلية": ["الإسماعيلية","فايد","القنطرة شرق","القنطرة غرب","أبو صوير","التل الكبير","القصاصين","الإسماعيلية الجديدة"],
+  "بورسعيد": ["بورسعيد","بورفؤاد","الزهور","الشرق","الضواحي","المناخ","العرب","المنتزه"],
+  "السويس": ["السويس","عتاقة","الجناين","فيصل","أربعين","الجناين"],
+  "دمياط": ["دمياط","رأس البر","فارسكور","الزرقا","كفر سعد","السرو","دمياط الجديدة","عزبة البرج","ميت أبو غالب"],
+  "بني سويف": ["بني سويف","ناصر","الواسطي","ببا","إهناسيا","بياض العرب","سمسطا","الفاصل"],
+  "الفيوم": ["الفيوم","سنورس","إطسا","طامية","يوسف الصديق","أبشواي","الحادقة","إبشواي"],
+  "المنيا": ["المنيا","أبو قرقاص","ملوي","سمالوط","مطاي","بني مزار","العدوة","مغاغة","دير مواس","الفشن"],
+  "أسيوط": ["أسيوط","ديروط","القوصية","منفلوط","أبنوب","أبو تيج","البداري","صدفا","الفتح","ساحل سليم","الغنايم","أسيوط الجديدة"],
+  "سوهاج": ["سوهاج","طهطا","طما","المراغة","جرجا","دار السلام","البلينا","أخميم","ساقلتة","المنشأة","الكوثر"],
+  "قنا": ["قنا","نجع حمادي","أبو تشت","نقادة","قفط","فرشوط","دشنا","قوص","الوقف","أرمنت"],
+  "الأقصر": ["الأقصر","إسنا","أرمنت","الطود","القرنة","البياضية","الزينية","إسنا"],
+  "أسوان": ["أسوان","إدفو","كوم أمبو","نصر النوبة","دراو","الكلابشة","أبو سمبل","بشلق"],
+  "البحر الأحمر": ["الغردقة","سفاجا","القصير","مرسى علم","رأس غارب","الشلاتين"],
+  "الوادي الجديد": ["الخارجة","الداخلة","الفرافرة","موط","بريس"],
+  "مطروح": ["مرسى مطروح","سيوة","الضبعة","الحمام","العلمين","النجيلة","الداب","السلوم"],
+  "شمال سيناء": ["العريش","الشيخ زويد","رفح","بئر العبد","نخل","الحسنة"],
+  "جنوب سيناء": ["الطور","شرم الشيخ","دهب","نويبع","طابا","أبو رديس","رأس سدر","سانت كاترين"]
+};
+
+
+// ===== Governorate Cascade =====
+function initGovDropdown() {
+  const govSel = document.getElementById('reg-gov');
+  if (!govSel) return;
+  Object.keys(EGYPT).sort().forEach(gov => {
+    const opt = document.createElement('option');
+    opt.value = gov; opt.textContent = gov;
+    govSel.appendChild(opt);
+  });
+}
+
+function onGovChange() {
+  const gov = document.getElementById('reg-gov').value;
+  const citySel = document.getElementById('reg-city');
+  const distSel = document.getElementById('reg-district');
+
+  citySel.innerHTML = '<option value="">-- اختر المدينة/المركز --</option>';
+  distSel.innerHTML = '<option value="">-- اختر المدينة أولاً --</option>';
+
+  if (!gov) {
+    citySel.disabled = true; distSel.disabled = true; return;
+  }
+
+  const districts = EGYPT[gov] || [];
+  districts.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    citySel.appendChild(opt);
+  });
+  citySel.disabled = false;
+  distSel.disabled = false;
+
+  // sync city → district
+  citySel.onchange = () => {
+    const city = citySel.value;
+    distSel.innerHTML = '<option value="">-- اختر --</option>';
+    if (city) {
+      const opt = document.createElement('option');
+      opt.value = city; opt.textContent = city;
+      distSel.appendChild(opt);
+      distSel.value = city;
+    }
+  };
+}
+
+// Init on load
+initGovDropdown();
 
   async function doForgot() {
     if (!forgotVerified) {

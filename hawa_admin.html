@@ -253,9 +253,12 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       </div>
       <div class="tbl-wrap">
         <div class="tbl-filters" style="flex-wrap:wrap;gap:8px">
-          <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم / كود / هاتف / مدينة / عنوان..." oninput="filterClients()" style="width:280px">
-          <select class="filter-inp" id="cl-gov" onchange="filterClients()" style="width:140px">
+          <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم / كود / هاتف / مدينة / عنوان..." oninput="filterClients()" style="width:260px">
+          <select class="filter-inp" id="cl-gov" onchange="onAdminGovChange()" style="width:140px">
             <option value="">كل المحافظات</option>
+          </select>
+          <select class="filter-inp" id="cl-district" onchange="filterClients()" style="width:140px">
+            <option value="">كل المراكز</option>
           </select>
           <select class="filter-inp" id="cl-status" onchange="filterClients()" style="width:130px">
             <option value="">كل الحالات</option>
@@ -378,6 +381,7 @@ function enterApp(){
   document.getElementById('adminName').textContent='👑 '+admin.name;
   // set today's date filter
   document.getElementById('bk-date').value=new Date().toISOString().split('T')[0];
+  initAdminGovDropdown();
   loadBookings();
 }
 
@@ -551,6 +555,62 @@ function deleteEmployee(id,name){
   });
 }
 
+const EGYPT = {
+  "القاهرة": ["مدينة نصر","الزيتون","شبرا","الوايلي","المطرية","عين شمس","النزهة","المنيل","حلوان","التجمع الأول","التجمع الخامس","التجمع الثالث","الهرم","العجوزة","الدقي","المهندسين","إمبابة","المعادي","المقطم","الخليفة","السيدة زينب","الأزهر","الجمالية","باب الشعرية","بولاق الدكرور","الزمالك","وسط البلد","مصر الجديدة","مصر القديمة","الأميرية","السلام","البساتين","دار السلام","الموسكي","عابدين","روض الفرج","الشرابية","المرج","عزبة النخل","منشأة ناصر","الزهراء","15 مايو","مدينة بدر","مدينة العبور"],
+  "الجيزة": ["الجيزة","6 أكتوبر","الشيخ زايد","العياط","البدرشين","الصف","أطفيح","أوسيم","كرداسة","الحوامدية","العمرانية","بولاق الدكرور","فيصل","الهرم","الدقي","إمبابة","ومان","المنيل","الدوقي","الوراق","أبو النمرس","حوض المراشدة"],
+  "الإسكندرية": ["المنتزه","سيدي جابر","الجمرك","العطارين","الرمل","محرم بك","سموحة","الأزاريطة","كوم الدكة","كرموز","الورديان","العامرية","الدخيلة","أبو قير","برج العرب","ابو سليمان","الانفوشي","المنشية","اللبان","الدخيلة","غيط العنب","سبورتنج","فلمينج","غليون","ستانلي","مصطفى كامل","بولكلي","السيوف","المكس","العصافرة"],
+  "القليوبية": ["بنها","قليوب","شبرا الخيمة","القناطر الخيرية","طوخ","الخانكة","كفر شكر","تلا","الخصوص","العبور","قها","سرس الليان","منيوف","الجبل الأصفر","شبين القناطر"],
+  "الشرقية": ["الزقازيق","بلبيس","ديرب نجم","الإبراهيمية","أبو كبير","فاقوس","منيا القمح","أبو حماد","القنايات","هيهيا","كفر صقر","الحسينية","العاشر من رمضان","صان الحجر","مشتول السوق","ميت أبو علي","أولاد صقر","الصالحية الجديدة"],
+  "المنوفية": ["شبين الكوم","مدينة السادات","منوف","أشمون","الشهداء","بركة السبع","قويسنا","السرو","الباجور","تلا","سرس الليان","المسلمية","مطياس","بقلية"],
+  "الدقهلية": ["المنصورة","طلخا","ميت غمر","السنبلاوين","دكرنس","أجا","المطرية","بلقاس","منية النصر","شربين","تمي الأمديد","نبروه","ميت سلسيل","الجمالية","السنبلاوين","بني عبيد","ميت ابو غالب"],
+  "الغربية": ["طنطا","المحلة الكبرى","كفر الزيات","السنطة","زفتى","بسيون","سمنود","قطور","سيفين"],
+  "كفر الشيخ": ["كفر الشيخ","دسوق","فوة","الحامول","الرياض","مطوبس","قلين","سيدي سالم","بيلا","برج البرلس","الرياض","بلطيم"],
+  "البحيرة": ["دمنهور","كفر الدوار","رشيد","أبو المطامير","إيتاي البارود","حوش عيسى","شبراخيت","الدلنجات","المحمودية","الرحمانية","النوبارية","وادي النطرون","إدكو","أبو حمص","بدر","كوم حمادة"],
+  "الإسماعيلية": ["الإسماعيلية","فايد","القنطرة شرق","القنطرة غرب","أبو صوير","التل الكبير","القصاصين","الإسماعيلية الجديدة"],
+  "بورسعيد": ["بورسعيد","بورفؤاد","الزهور","الشرق","الضواحي","المناخ","العرب","المنتزه"],
+  "السويس": ["السويس","عتاقة","الجناين","فيصل","أربعين","الجناين"],
+  "دمياط": ["دمياط","رأس البر","فارسكور","الزرقا","كفر سعد","السرو","دمياط الجديدة","عزبة البرج","ميت أبو غالب"],
+  "بني سويف": ["بني سويف","ناصر","الواسطي","ببا","إهناسيا","بياض العرب","سمسطا","الفاصل"],
+  "الفيوم": ["الفيوم","سنورس","إطسا","طامية","يوسف الصديق","أبشواي","الحادقة","إبشواي"],
+  "المنيا": ["المنيا","أبو قرقاص","ملوي","سمالوط","مطاي","بني مزار","العدوة","مغاغة","دير مواس","الفشن"],
+  "أسيوط": ["أسيوط","ديروط","القوصية","منفلوط","أبنوب","أبو تيج","البداري","صدفا","الفتح","ساحل سليم","الغنايم","أسيوط الجديدة"],
+  "سوهاج": ["سوهاج","طهطا","طما","المراغة","جرجا","دار السلام","البلينا","أخميم","ساقلتة","المنشأة","الكوثر"],
+  "قنا": ["قنا","نجع حمادي","أبو تشت","نقادة","قفط","فرشوط","دشنا","قوص","الوقف","أرمنت"],
+  "الأقصر": ["الأقصر","إسنا","أرمنت","الطود","القرنة","البياضية","الزينية","إسنا"],
+  "أسوان": ["أسوان","إدفو","كوم أمبو","نصر النوبة","دراو","الكلابشة","أبو سمبل","بشلق"],
+  "البحر الأحمر": ["الغردقة","سفاجا","القصير","مرسى علم","رأس غارب","الشلاتين"],
+  "الوادي الجديد": ["الخارجة","الداخلة","الفرافرة","موط","بريس"],
+  "مطروح": ["مرسى مطروح","سيوة","الضبعة","الحمام","العلمين","النجيلة","الداب","السلوم"],
+  "شمال سيناء": ["العريش","الشيخ زويد","رفح","بئر العبد","نخل","الحسنة"],
+  "جنوب سيناء": ["الطور","شرم الشيخ","دهب","نويبع","طابا","أبو رديس","رأس سدر","سانت كاترين"]
+};
+
+
+// Init admin gov dropdown
+function initAdminGovDropdown() {
+  const sel = document.getElementById('cl-gov');
+  if (!sel || sel.children.length > 1) return;
+  Object.keys(EGYPT).sort().forEach(gov => {
+    const opt = document.createElement('option');
+    opt.value = gov; opt.textContent = gov;
+    sel.appendChild(opt);
+  });
+}
+
+function onAdminGovChange() {
+  const gov = document.getElementById('cl-gov').value;
+  const distSel = document.getElementById('cl-district');
+  distSel.innerHTML = '<option value="">كل المراكز</option>';
+  if (gov && EGYPT[gov]) {
+    EGYPT[gov].forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d; opt.textContent = d;
+      distSel.appendChild(opt);
+    });
+  }
+  filterClients();
+}
+
 // =================== CLIENTS ===================
 let allClients = [];
 
@@ -560,12 +620,7 @@ async function loadClients(){
     const r=await fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}});
     allClients=await r.json();
 
-    // ملي فلتر المحافظات
-    const govs=[...new Set(allClients.map(c=>c.governorate).filter(Boolean))].sort();
-    const govSel=document.getElementById('cl-gov');
-    const curGov=govSel.value;
-    govSel.innerHTML='<option value="">كل المحافظات</option>'+govs.map(g=>`<option value="${g}" ${g===curGov?'selected':''}>${g}</option>`).join('');
-
+    initAdminGovDropdown();
     filterClients();
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
 }
@@ -573,6 +628,7 @@ async function loadClients(){
 function filterClients(){
   const search=(document.getElementById('cl-search').value||'').trim().toLowerCase();
   const gov=document.getElementById('cl-gov').value;
+  const district=document.getElementById('cl-district').value;
   const status=document.getElementById('cl-status').value;
 
   let data=allClients;
@@ -589,6 +645,7 @@ function filterClients(){
     });
   }
   if(gov) data=data.filter(c=>c.governorate===gov);
+  if(district) data=data.filter(c=>c.city===district||c.district===district);
   if(status==='active') data=data.filter(c=>!c.is_blocked);
   if(status==='blocked') data=data.filter(c=>c.is_blocked);
 
