@@ -415,7 +415,7 @@ const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZi
 const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
 // ⚙️ رابط n8n webhook — عدّله لما ngrok يتغير
-const N8N = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/booking-confirm';
+const N8N = 'http://72.62.134.224:5678/webhook/booking-confirm';
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 document.getElementById('uname').textContent = user.name || 'العميل';
