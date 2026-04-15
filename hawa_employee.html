@@ -189,7 +189,6 @@ async function doLogin(){
     if(data&&data.length>0){
       emp=data[0];
       sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
-      localStorage.setItem('hawa_employee',JSON.stringify(emp));
       enterMain();
     }else{showLoginErr('اسم المستخدم أو كلمة المرور غلط');}
   }catch(e){showLoginErr('خطأ في الاتصال');}
@@ -202,8 +201,7 @@ function showLoginErr(msg){
 }
 
 function goReport(){
-  // حفظ بيانات الموظف في localStorage عشان صفحة التقرير تقدر تقراها
-  localStorage.setItem('hawa_employee', JSON.stringify(emp));
+  // الـ sessionStorage اتحفظ وقت اللوجين، بس نروح للتقرير
   window.location.href = 'hawa_report.html';
 }
 
@@ -229,7 +227,6 @@ function enterMain(){
 function doLogout(){
   showDialog('🚪','تسجيل الخروج','هتخرج من الحساب؟',false,()=>{
     sessionStorage.removeItem('hawa_emp');
-    localStorage.removeItem('hawa_employee');
     emp=null;warehouse=null;allBookings=[];
     document.getElementById('loginView').classList.remove('hide');
     document.getElementById('mainView').classList.remove('show');
