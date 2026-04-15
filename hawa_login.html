@@ -502,7 +502,7 @@
         const user = data[0];
         showAlert(`أهلاً ${user.name}! تم تسجيل الدخول بنجاح 🎉`, 'success');
         localStorage.setItem('hawa_user', JSON.stringify(user));
-        setTimeout(() => { if (tg) tg.close(); }, 2000);
+        setTimeout(() => { window.location.href = 'hawa_booking.html'; }, 2000);
       } else {
         showAlert('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
       }
