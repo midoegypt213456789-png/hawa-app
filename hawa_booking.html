@@ -271,6 +271,7 @@
       <div class="name" id="uname">...</div>
       <div class="code" id="ucode">...</div>
     </div>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:20px;padding:4px 12px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer">🚪 خروج</button>
   </div>
 
   <!-- Tabs -->
@@ -418,6 +419,12 @@ const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': '
 const N8N = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/booking-confirm';
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
+if (!user || !user.id) { window.location.href = 'hawa_login.html'; }
+
+function doLogout() {
+  localStorage.removeItem('hawa_user');
+  window.location.href = 'hawa_login.html';
+}
 document.getElementById('uname').textContent = user.name || 'العميل';
 document.getElementById('ucode').textContent  = user.company_code || '';
 

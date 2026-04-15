@@ -305,7 +305,7 @@
         <label>اسم المستخدم</label>
         <div class="input-wrap">
           <span class="input-icon">👤</span>
-          <input type="text" id="login-username" placeholder="أدخل اسم المستخدم">
+          <input type="text" id="login-username" placeholder="أدخل اسم المستخدم" onkeydown="if(event.key==='Enter')doLogin()">
         </div>
       </div>
 
@@ -313,7 +313,7 @@
         <label>كلمة المرور</label>
         <div class="input-wrap">
           <span class="input-icon">🔒</span>
-          <input type="password" id="login-password" placeholder="أدخل كلمة المرور">
+          <input type="password" id="login-password" placeholder="أدخل كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()">
         </div>
       </div>
 
