@@ -138,6 +138,7 @@
       </div>
       <div class="header-right">
         <span class="role-badge" id="roleBadge"></span>
+        <button class="logout-btn" onclick="goReport()" style="background:#C9A84C;color:#111;border-color:#C9A84C;margin-left:6px">📊 التقرير</button>
         <button class="logout-btn" onclick="doLogout()">خروج</button>
       </div>
     </div>
@@ -188,6 +189,7 @@ async function doLogin(){
     if(data&&data.length>0){
       emp=data[0];
       sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
+      localStorage.setItem('hawa_employee',JSON.stringify(emp));
       enterMain();
     }else{showLoginErr('اسم المستخدم أو كلمة المرور غلط');}
   }catch(e){showLoginErr('خطأ في الاتصال');}
@@ -197,6 +199,12 @@ async function doLogin(){
 function showLoginErr(msg){
   const el=document.getElementById('loginAlert');
   el.textContent='⚠️ '+msg;el.className='alert err';
+}
+
+function goReport(){
+  // حفظ بيانات الموظف في localStorage عشان صفحة التقرير تقدر تقراها
+  localStorage.setItem('hawa_employee', JSON.stringify(emp));
+  window.location.href = 'hawa_report.html';
 }
 
 function enterMain(){
@@ -221,6 +229,7 @@ function enterMain(){
 function doLogout(){
   showDialog('🚪','تسجيل الخروج','هتخرج من الحساب؟',false,()=>{
     sessionStorage.removeItem('hawa_emp');
+    localStorage.removeItem('hawa_employee');
     emp=null;warehouse=null;allBookings=[];
     document.getElementById('loginView').classList.remove('hide');
     document.getElementById('mainView').classList.remove('show');
