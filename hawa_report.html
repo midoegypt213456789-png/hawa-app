@@ -146,25 +146,28 @@
 <body>
 
 <div class="header no-print">
-  <div class="logo">🚛 HAWA CO</div>
+  <div>
+    <div class="logo">🚛 HAWA CO</div>
+    <div id="empName" style="font-size:13px;color:#aaa;margin-top:2px"></div>
+  </div>
   <div class="header-btns">
-    <button class="btn btn-dark" onclick="loadReport()">🔄 تحديث</button>
-    <button class="btn btn-gold" onclick="window.print()">🖨️ طباعة</button>
+    <button class="btn btn-dark" onclick="window.print()">🖨️ طباعة</button>
+    <button class="btn btn-dark" onclick="logout()">🚪 خروج</button>
   </div>
 </div>
 
 <div class="filters no-print">
   <div class="filter-group">
     <label>📅 من تاريخ</label>
-    <input type="date" id="dateFrom">
+    <input type="date" id="dateFrom" onchange="loadReport()">
   </div>
   <div class="filter-group">
     <label>📅 إلى تاريخ</label>
-    <input type="date" id="dateTo">
+    <input type="date" id="dateTo" onchange="loadReport()">
   </div>
   <div class="filter-group">
     <label>🏭 المخزن</label>
-    <select id="filterWarehouse">
+    <select id="filterWarehouse" onchange="loadReport()">
       <option value="">كل المخازن</option>
       <option value="قليوب">قليوب</option>
       <option value="السادات">السادات</option>
@@ -172,7 +175,7 @@
   </div>
   <div class="filter-group">
     <label>🚗 نوع العربية</label>
-    <select id="filterVtype">
+    <select id="filterVtype" onchange="loadReport()">
       <option value="">كل الأنواع</option>
       <option value="موتسيكل">موتسيكل</option>
       <option value="تروسكل">تروسكل</option>
@@ -181,14 +184,13 @@
   </div>
   <div class="filter-group">
     <label>📋 الحالة</label>
-    <select id="filterStatus">
+    <select id="filterStatus" onchange="loadReport()">
       <option value="">كل الحالات</option>
       <option value="قيد الانتظار">قيد الانتظار</option>
       <option value="تم التنفيذ">تم التنفيذ</option>
       <option value="ملغي">ملغي</option>
     </select>
   </div>
-  <button class="btn-filter" onclick="loadReport()">🔍 عرض التقرير</button>
 </div>
 
 <div class="summary-cards no-print" id="summaryCards" style="display:none"></div>
@@ -208,7 +210,21 @@ const today = new Date().toISOString().split('T')[0];
 const urlDate = new URLSearchParams(location.search).get('date');
 document.getElementById('dateFrom').value = urlDate || today;
 document.getElementById('dateTo').value   = urlDate || today;
-if (urlDate) loadReport();
+
+// اعرض اسم الموظف
+const emp = JSON.parse(localStorage.getItem('hawa_employee') || localStorage.getItem('hawa_user') || '{}');
+if (emp && emp.name) {
+  document.getElementById('empName').textContent = '👤 ' + emp.name;
+}
+
+function logout() {
+  localStorage.removeItem('hawa_employee');
+  localStorage.removeItem('hawa_user');
+  window.location.href = 'hawa_login.html';
+}
+
+// تحميل تلقائي
+loadReport();
 
 async function loadReport() {
   const dateFrom  = document.getElementById('dateFrom').value;
