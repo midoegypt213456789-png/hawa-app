@@ -883,9 +883,8 @@ async function sendTelegramConfirm(booking) {
     }
   } catch(e) {}
 
-  if (!telegramId || telegramId === 'null' || telegramId === '000') return;
-
   const payload = {
+    action:       isEdit ? 'edit' : 'new',
     telegram_id:  telegramId,
     client_name:  user.name,
     company_code: user.company_code,
