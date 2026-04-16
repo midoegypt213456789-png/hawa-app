@@ -307,7 +307,15 @@
           <div class="opt" id="opt-w-السادات" onclick="pick('warehouse','السادات',this,'s1')"><div class="ic">🏗️</div><div class="lb">السادات</div></div>
         </div>
       </div>
-      <button class="btn-gold" id="b1" onclick="go(2)" disabled>التالي ←</button>
+      <div class="card" id="permitCard" style="display:none">
+        <p class="card-title">رقم <span>الإذن</span></p>
+        <input id="permitInput" type="text" placeholder="أدخل رقم الإذن"
+          style="width:100%;padding:12px 16px;background:var(--dark3);border:2px solid var(--border);border-radius:12px;
+          color:var(--text);font-family:Cairo,sans-serif;font-size:15px;font-weight:700;outline:none;text-align:center"
+          oninput="onPermitInput()" />
+        <div id="permitMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
+      </div>
+      <button class="btn-gold" id="b1" onclick="goStep2()" disabled>التالي ←</button>
     </div>
 
     <!-- Step 2: النوع -->
@@ -360,6 +368,7 @@
         <p class="card-title">تأكيد <span>الحجز</span></p>
         <div class="sum-row"><span class="sum-lbl">العميل</span><span class="sum-val" id="sName"></span></div>
         <div class="sum-row"><span class="sum-lbl">الكود</span><span class="sum-val g" id="sCode"></span></div>
+        <div class="sum-row"><span class="sum-lbl">رقم الإذن</span><span class="sum-val g" id="sPermit"></span></div>
         <div class="sum-row"><span class="sum-lbl">المخزن</span><span class="sum-val" id="sWarehouse"></span></div>
         <div class="sum-row"><span class="sum-lbl">النوع</span><span class="sum-val" id="sVehicle"></span></div>
         <div class="sum-row"><span class="sum-lbl">اليوم</span><span class="sum-val" id="sDate"></span></div>
@@ -433,7 +442,7 @@ const SLOTS = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00',
 const CAP   = { 'موتسيكل': 6, 'تروسكل': 4, 'كهرباء': 6 };
 
 // Booking state
-const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, remaining: 10, count: 1 };
+const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, remaining: 10, count: 1, permit: null };
 
 // Edit state: null = new | object = editing
 let editMode = null; // { id, oldCount }
@@ -472,7 +481,55 @@ function pick(field, val, el, step) {
   document.querySelectorAll('#' + step + ' .opt').forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
   const num = step.replace('s','');
-  document.getElementById('b' + num).disabled = false;
+  // لو اختار المخزن → أظهر حقل الإذن وبلّد زرار التالي لحد ما يكتب الإذن
+  if (field === 'warehouse') {
+    document.getElementById('permitCard').style.display = '';
+    document.getElementById('permitInput').value = '';
+    document.getElementById('permitMsg').textContent = '';
+    bk.permit = null;
+    document.getElementById('b1').disabled = true;
+  } else {
+    document.getElementById('b' + num).disabled = false;
+  }
+}
+
+function onPermitInput() {
+  const val = document.getElementById('permitInput').value.trim();
+  bk.permit = val || null;
+  document.getElementById('b1').disabled = !val;
+  document.getElementById('permitMsg').textContent = '';
+  document.getElementById('permitMsg').style.color = '';
+}
+
+async function goStep2() {
+  const permit = bk.permit;
+  if (!permit) { return; }
+  // فحص عدد مرات الاستخدام (أقصى 4 مرات على مستوى الشركة كلها بدون الملغيات)
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.ملغي&select=id`,
+      { headers: HDR }
+    );
+    const data = await r.json();
+    const usedCount = data.length;
+    // لو في وضع تعديل، استثني الحجز الحالي
+    const editExclude = editMode ? data.filter(b => b.id === editMode.id).length : 0;
+    const effectiveUsed = usedCount - editExclude;
+    if (effectiveUsed >= 4) {
+      document.getElementById('permitMsg').textContent = `❌ رقم الإذن ده اتاستخدم ${usedCount} مرة — الحد الأقصى 4 مرات`;
+      document.getElementById('permitMsg').style.color = 'var(--error)';
+      document.getElementById('b1').disabled = true;
+      return;
+    }
+    if (effectiveUsed > 0) {
+      document.getElementById('permitMsg').textContent = `⚠️ استُخدم ${effectiveUsed} من 4 مرات`;
+      document.getElementById('permitMsg').style.color = 'var(--gold)';
+    } else {
+      document.getElementById('permitMsg').textContent = `✅ رقم الإذن متاح`;
+      document.getElementById('permitMsg').style.color = 'var(--success)';
+    }
+  } catch(e) {}
+  go(2);
 }
 
 function pickVehicle(v, cap, el) {
@@ -515,7 +572,7 @@ async function buildCal() {
   const dim = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   for (let d = 1; d <= dim; d++) {
     const dt = new Date(today.getFullYear(), today.getMonth(), d);
-    const ds = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    const ds = dt.toISOString().split('T')[0];
     const isPast   = dt < today;
     const isFuture = dt > maxD;
     const isClosed = isDayClosed(dt, ds);
@@ -598,6 +655,7 @@ function chCnt(d) {
 function buildSummary() {
   document.getElementById('sName').textContent = user.name || '-';
   document.getElementById('sCode').textContent = user.company_code || '-';
+  document.getElementById('sPermit').textContent = bk.permit || '-';
   document.getElementById('sWarehouse').textContent = bk.warehouse;
   document.getElementById('sVehicle').textContent   = bk.vehicle;
   document.getElementById('sDate').textContent =
@@ -653,7 +711,9 @@ async function confirm_booking() {
         headers: { ...HDR, 'Prefer': 'return=minimal' },
         body: JSON.stringify({
           warehouse: bk.warehouse, vehicle_type: bk.vehicle, count: bk.count,
-          loading_date: bk.dateStr, time_slot: bk.slot, status: 'قيد الانتظار'
+          loading_date: bk.dateStr, time_slot: bk.slot,
+          permit_number: bk.permit || null,
+          status: 'قيد الانتظار'
         })
       });
       if (res.ok) {
@@ -678,6 +738,7 @@ async function confirm_booking() {
           client_id: user.id, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
           count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot,
           phone: user.phone || null, governorate: user.governorate || null,
+          permit_number: bk.permit || null,
           status: 'قيد الانتظار'
         })
       });
@@ -752,6 +813,7 @@ function startEdit(b) {
   bk.count     = b.count;
   bk.cap       = CAP[b.vehicle_type] || 6;
   bk.remaining = 10;
+  bk.permit    = b.permit_number || null;
 
   // Pre-select المخزن
   document.querySelectorAll('#s1 .opt').forEach(o => o.classList.remove('sel'));
@@ -775,9 +837,11 @@ function exitEditMode() {
   editMode = null;
   document.getElementById('editBanner').classList.remove('show');
   bk.warehouse = null; bk.vehicle = null; bk.cap = 0;
-  bk.dateStr   = null; bk.slot    = null; bk.remaining = 10; bk.count = 1;
+  bk.dateStr   = null; bk.slot    = null; bk.remaining = 10; bk.count = 1; bk.permit = null;
   document.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
   ['b1','b2','b3','b4'].forEach(id => document.getElementById(id).disabled = true);
+  document.getElementById('permitCard').style.display = 'none';
+  document.getElementById('permitInput').value = '';
 }
 
 // ===================== MY BOOKINGS =====================

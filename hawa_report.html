@@ -366,6 +366,7 @@ function buildVtypeSection(vtype, bookings, clientMap, wh, date) {
         <td class="td-num">${rowCounter++}</td>
         <td class="td-name">${c.name||'-'}</td>
         <td class="td-code">${c.company_code||'-'}</td>
+        <td style="font-size:12px;color:#C9A84C;font-weight:700">${b.permit_number||'-'}</td>
         <td style="font-size:12px;color:#555">${slot}</td>
         <td class="td-count">${b.count}<br><span>عربية</span></td>
         <td><span class="status-badge ${sc}">${sl}</span></td>
@@ -375,7 +376,7 @@ function buildVtypeSection(vtype, bookings, clientMap, wh, date) {
     });
     slotsHtml += `<div class="slot-group">
       <div class="slot-label">⏰ ${slot} — ${slotBks.length} حجز | ${slotBks.reduce((s,b)=>s+(b.count||0),0)} عربية</div>
-      <table><thead><tr><th>#</th><th>اسم العميل</th><th>الكود</th><th>الموعد</th><th>العدد</th><th>الحالة</th><th class="no-print">إجراء</th></tr></thead>
+      <table><thead><tr><th>#</th><th>اسم العميل</th><th>الكود</th><th>رقم الإذن</th><th>الموعد</th><th>العدد</th><th>الحالة</th><th class="no-print">إجراء</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
   });
 
