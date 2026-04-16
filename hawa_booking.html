@@ -515,7 +515,7 @@ async function buildCal() {
   const dim = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   for (let d = 1; d <= dim; d++) {
     const dt = new Date(today.getFullYear(), today.getMonth(), d);
-    const ds = dt.toISOString().split('T')[0];
+    const ds = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
     const isPast   = dt < today;
     const isFuture = dt > maxD;
     const isClosed = isDayClosed(dt, ds);
