@@ -537,6 +537,11 @@
       return;
     }
 
+    if (!/^01[0-9]{9}$/.test(data.phone)) {
+      showAlert('رقم الهاتف غير صحيح — لازم يبدأ بـ 01 ويكون 11 رقم بالظبط', 'error');
+      return;
+    }
+
     const btn = document.getElementById('register-btn');
     btn.disabled = true;
     btn.innerHTML = 'جاري التسجيل... <span class="spinner"></span>';
