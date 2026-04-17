@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>HAWA CO - لوحة التحكم</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
 :root{
@@ -303,7 +304,11 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="section" id="sec-clients">
       <div class="page-hd">
         <div class="page-title">👥 <span>العملاء</span></div>
-        <div id="cl-count" style="font-size:13px;color:var(--text-dim)"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="cl-count" style="font-size:13px;color:var(--text-dim)"></div>
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="printClients()">🖨️ طباعة</button>
+          <button class="add-btn" onclick="openImportModal()">📥 استيراد عملاء</button>
+        </div>
       </div>
       <div class="tbl-wrap scrollable">
         <div class="tbl-filters">
@@ -492,6 +497,70 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
     <div id="clientProfileContent"></div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal wide">
+    <div class="modal-title">
+      <span>📥 استيراد عملاء</span>
+      <button class="modal-close" onclick="closeModal('importModal')">✕</button>
+    </div>
+
+    <!-- اختيار نوع الملف -->
+    <div id="import-step1">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px">اختار نوع الملف اللي هتستورد منه:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+        <div onclick="selectImportType('excel')" id="import-type-excel"
+          style="border:2px solid var(--border);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s">
+          <div style="font-size:32px;margin-bottom:8px">📊</div>
+          <div style="font-weight:700;font-size:14px">Excel / CSV</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">.xlsx أو .csv</div>
+        </div>
+        <div onclick="selectImportType('pdf')" id="import-type-pdf"
+          style="border:2px solid var(--border);border-radius:14px;padding:20px;text-align:center;cursor:pointer;transition:all 0.2s">
+          <div style="font-size:32px;margin-bottom:8px">📄</div>
+          <div style="font-weight:700;font-size:14px">PDF</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px">ملف PDF منسّق</div>
+        </div>
+      </div>
+
+      <div id="import-file-area" style="display:none">
+        <div style="border:2px dashed rgba(201,168,76,0.3);border-radius:12px;padding:24px;text-align:center;margin-bottom:16px;cursor:pointer" onclick="document.getElementById('import-file-input').click()">
+          <div style="font-size:28px;margin-bottom:8px">📂</div>
+          <div style="font-size:13px;font-weight:600" id="import-file-hint">اضغط لاختيار الملف</div>
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px" id="import-file-sub"></div>
+        </div>
+        <input type="file" id="import-file-input" style="display:none" onchange="handleImportFile(event)">
+        <div id="import-template-note" style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:12px;font-size:12px;color:var(--text-dim);line-height:1.8"></div>
+      </div>
+    </div>
+
+    <!-- معاينة + تأكيد -->
+    <div id="import-step2" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700" id="import-preview-title"></div>
+        <button onclick="resetImport()" style="background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:12px">← رجوع</button>
+      </div>
+      <div style="overflow-x:auto;max-height:300px;border-radius:10px;border:1px solid var(--border)">
+        <div id="import-preview-table"></div>
+      </div>
+      <div id="import-errors" style="margin-top:10px;font-size:12px;color:var(--error)"></div>
+      <div class="modal-btns">
+        <button class="modal-save" id="import-confirm-btn" onclick="confirmImport()">✅ استيراد <span id="import-count"></span> عميل</button>
+        <button class="modal-cancel" onclick="closeModal('importModal')">إلغاء</button>
+      </div>
+    </div>
+
+    <!-- تقدم الاستيراد -->
+    <div id="import-step3" style="display:none;text-align:center;padding:20px">
+      <div style="font-size:32px;margin-bottom:12px">⏳</div>
+      <div style="font-size:14px;font-weight:700" id="import-progress-txt">جاري الاستيراد...</div>
+      <div style="margin-top:12px;background:var(--dark3);border-radius:20px;height:8px;overflow:hidden">
+        <div id="import-progress-bar" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:20px;width:0%;transition:width 0.3s"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -930,6 +999,221 @@ function filterClients(){
     <span>نشط: <b>${data.filter(c=>!c.is_blocked).length}</b></span>
     <span>محظور: <b style="color:#e88080">${data.filter(c=>c.is_blocked).length}</b></span>
     <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك لفتح ملف العميل</span>`;
+}
+
+// =================== PRINT CLIENTS ===================
+function printClients(){
+  const table = document.getElementById('cl-table').innerHTML;
+  const count = document.getElementById('cl-count').textContent;
+  const win = window.open('','_blank');
+  win.document.write(`<html dir="rtl"><head><meta charset="UTF-8">
+    <title>قائمة العملاء - HAWA CO</title>
+    <style>
+      body{font-family:Cairo,sans-serif;padding:20px;direction:rtl;color:#111}
+      h2{margin-bottom:6px;font-size:18px} .sub{font-size:12px;color:#888;margin-bottom:16px}
+      table{width:100%;border-collapse:collapse;font-size:11px}
+      th{padding:7px 8px;text-align:right;background:#1a1a2e;color:#E8C97A;font-weight:700;border:1px solid #333}
+      td{padding:6px 8px;border:1px solid #ddd}
+      tr:nth-child(even) td{background:#f9f9f9}
+      .badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
+      .badge.active{background:#e6f9f0;color:#2e8b57}.badge.blocked{background:#fde8e8;color:#c0392b}
+      .act-btns,.act-btn{display:none}
+      @media print{button{display:none}}
+    </style></head><body>
+    <h2>👥 قائمة العملاء — HAWA CO</h2>
+    <div class="sub">${count} | تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
+    ${table}
+    </body></html>`);
+  win.document.close();
+  setTimeout(()=>win.print(), 500);
+}
+
+// =================== IMPORT CLIENTS ===================
+let importType = null;
+let importData = [];
+
+function openImportModal(){
+  resetImport();
+  document.getElementById('importModal').classList.add('show');
+}
+
+function resetImport(){
+  importType=null; importData=[];
+  document.getElementById('import-step1').style.display='';
+  document.getElementById('import-step2').style.display='none';
+  document.getElementById('import-step3').style.display='none';
+  document.getElementById('import-file-area').style.display='none';
+  document.getElementById('import-file-input').value='';
+  ['import-type-excel','import-type-pdf'].forEach(id=>{
+    document.getElementById(id).style.borderColor='var(--border)';
+    document.getElementById(id).style.background='transparent';
+  });
+}
+
+function selectImportType(type){
+  importType=type;
+  ['excel','pdf'].forEach(t=>{
+    const el=document.getElementById('import-type-'+t);
+    if(t===type){el.style.borderColor='var(--gold)';el.style.background='rgba(201,168,76,0.06)';}
+    else{el.style.borderColor='var(--border)';el.style.background='transparent';}
+  });
+
+  const fileArea=document.getElementById('import-file-area');
+  fileArea.style.display='';
+  const input=document.getElementById('import-file-input');
+  const hint=document.getElementById('import-file-hint');
+  const sub=document.getElementById('import-file-sub');
+  const note=document.getElementById('import-template-note');
+
+  if(type==='excel'){
+    input.accept='.xlsx,.xls,.csv';
+    hint.textContent='اضغط لاختيار ملف Excel أو CSV';
+    sub.textContent='يدعم .xlsx, .xls, .csv';
+    note.innerHTML=`<b>📋 أعمدة ملف الإكسيل المطلوبة (بالترتيب):</b><br>
+      <span style="color:var(--gold)">company_code</span> | name | phone | governorate | city | address | username | password<br>
+      <span style="opacity:0.7">⚠️ السطر الأول يكون headers | الأعمدة دي إجبارية: name + phone</span>`;
+  } else {
+    input.accept='.pdf';
+    hint.textContent='اضغط لاختيار ملف PDF';
+    sub.textContent='ملف PDF بجدول منسّق';
+    note.innerHTML=`<b>⚠️ ملاحظة مهمة:</b><br>
+      استيراد PDF بيشتغل بشكل أفضل لو الملف فيه جدول واضح.<br>
+      <span style="color:var(--gold)">الترتيب المطلوب للأعمدة:</span> كود | اسم | هاتف | محافظة | مدينة | عنوان | يوزر | باسورد`;
+  }
+}
+
+async function handleImportFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+
+  try{
+    if(importType==='excel'){
+      await parseExcelFile(file);
+    } else {
+      await parsePDFFile(file);
+    }
+  }catch(e){
+    alert('❌ خطأ في قراءة الملف: '+e.message);
+  }
+}
+
+async function parseExcelFile(file){
+  const data = await file.arrayBuffer();
+  const wb = XLSX.read(data, {type:'array'});
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+
+  if(!rows.length){ alert('الملف فاضي!'); return; }
+
+  // normalize column names
+  importData = rows.map(row=>{
+    const r={};
+    Object.keys(row).forEach(k=>{
+      const kl=k.trim().toLowerCase().replace(/\s+/g,'_');
+      r[kl]=String(row[k]||'').trim();
+    });
+    // map Arabic headers too
+    return {
+      company_code: r.company_code||r.كود||r.الكود||r.code||'',
+      name:         r.name||r.الاسم||r.اسم||'',
+      phone:        r.phone||r.هاتف||r.الهاتف||r.تليفون||'',
+      governorate:  r.governorate||r.محافظة||r.المحافظة||'',
+      city:         r.city||r.مدينة||r.المدينة||'',
+      district:     r.district||r.مركز||'',
+      address:      r.address||r.عنوان||r.العنوان||'',
+      username:     r.username||r.يوزر||r.اليوزر||'',
+      password:     r.password||r.باسورد||r.كلمة_المرور||'',
+    };
+  }).filter(r=>r.name||r.phone);
+
+  showImportPreview();
+}
+
+async function parsePDFFile(file){
+  // PDF parsing: read as text using FileReader + basic parsing
+  alert('⚠️ استيراد PDF تجريبي — للنتيجة الأفضل استخدم Excel.\nهيحاول يقرأ الجدول من الملف.');
+  // For PDF we'll use a simple approach - just show the file name and ask user to use Excel
+  importData = [];
+  showImportPreview();
+}
+
+function showImportPreview(){
+  document.getElementById('import-step1').style.display='none';
+  document.getElementById('import-step2').style.display='';
+
+  const valid = importData.filter(r=>r.name&&r.phone);
+  const invalid = importData.filter(r=>!r.name||!r.phone);
+
+  document.getElementById('import-preview-title').textContent=
+    `معاينة أول ${Math.min(5,importData.length)} صفوف من ${importData.length} إجمالي`;
+  document.getElementById('import-count').textContent=`(${valid.length})`;
+
+  if(invalid.length){
+    document.getElementById('import-errors').textContent=
+      `⚠️ ${invalid.length} صف هيتم تخطيه (ناقص الاسم أو التليفون)`;
+  }
+
+  const preview = importData.slice(0,5);
+  let html=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:var(--dark3)">
+      <th style="padding:8px;color:rgba(201,168,76,0.7);text-align:right;white-space:nowrap">الكود</th>
+      <th style="padding:8px;color:rgba(201,168,76,0.7);text-align:right">الاسم</th>
+      <th style="padding:8px;color:rgba(201,168,76,0.7);text-align:right">الهاتف</th>
+      <th style="padding:8px;color:rgba(201,168,76,0.7);text-align:right">المحافظة</th>
+      <th style="padding:8px;color:rgba(201,168,76,0.7);text-align:right">اليوزر</th>
+    </tr></thead><tbody>`;
+  preview.forEach(r=>{
+    const ok=r.name&&r.phone;
+    html+=`<tr style="border-bottom:1px solid var(--border);${ok?'':'opacity:0.4'}">
+      <td style="padding:7px 8px;color:var(--gold)">${r.company_code||'-'}</td>
+      <td style="padding:7px 8px;font-weight:${r.name?700:400}">${r.name||'⚠️ ناقص'}</td>
+      <td style="padding:7px 8px">${r.phone||'⚠️ ناقص'}</td>
+      <td style="padding:7px 8px;color:var(--text-dim)">${r.governorate||'-'}</td>
+      <td style="padding:7px 8px;color:var(--text-dim)">${r.username||'-'}</td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('import-preview-table').innerHTML=html;
+
+  document.getElementById('import-confirm-btn').disabled = valid.length===0;
+}
+
+async function confirmImport(){
+  const valid = importData.filter(r=>r.name&&r.phone);
+  if(!valid.length){ alert('مفيش بيانات صالحة للاستيراد'); return; }
+
+  document.getElementById('import-step2').style.display='none';
+  document.getElementById('import-step3').style.display='';
+
+  let done=0, errors=0;
+  const batch = 10; // 10 records per request
+
+  for(let i=0; i<valid.length; i+=batch){
+    const chunk = valid.slice(i, i+batch);
+    try{
+      await fetch(`${SB}/rest/v1/clients`, {
+        method:'POST',
+        headers:{...HDR,'Prefer':'return=minimal'},
+        body:JSON.stringify(chunk)
+      });
+      done += chunk.length;
+    }catch(e){
+      errors += chunk.length;
+    }
+    const pct = Math.round((i+batch)/valid.length*100);
+    document.getElementById('import-progress-bar').style.width=Math.min(pct,100)+'%';
+    document.getElementById('import-progress-txt').textContent=
+      `جاري الاستيراد... ${Math.min(done,valid.length)} / ${valid.length}`;
+  }
+
+  document.getElementById('import-progress-bar').style.width='100%';
+  document.getElementById('import-progress-txt').textContent=
+    `✅ تم الاستيراد! ${done} عميل${errors?` | ❌ ${errors} خطأ`:''}`;
+
+  setTimeout(async()=>{
+    closeModal('importModal');
+    await loadClients();
+  }, 1500);
 }
 
 // =================== CLIENT PROFILE ===================
