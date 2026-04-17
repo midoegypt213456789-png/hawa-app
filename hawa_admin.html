@@ -930,6 +930,7 @@ function filterClients(){
     <span>نشط: <b>${data.filter(c=>!c.is_blocked).length}</b></span>
     <span>محظور: <b style="color:#e88080">${data.filter(c=>c.is_blocked).length}</b></span>
     <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك لفتح ملف العميل</span>`;
+}
 
 // =================== CLIENT PROFILE ===================
 let currentProfileClientId=null, currentProfileBookings=[];
