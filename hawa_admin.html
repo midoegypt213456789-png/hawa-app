@@ -41,10 +41,31 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .btn-primary:disabled{opacity:0.6;cursor:not-allowed;}
 
 /* LAYOUT */
-.app{display:none;min-height:100vh;}
+.app{display:none;height:100vh;overflow:hidden;}
 .app.show{display:flex;}
 .sidebar{width:var(--sidebar);background:var(--dark2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:50;overflow-y:auto;}
-.main-area{margin-right:var(--sidebar);flex:1;padding:24px;overflow-y:auto;}
+.main-area{margin-right:var(--sidebar);flex:1;padding:20px 24px;overflow-y:auto;height:100vh;display:flex;flex-direction:column;}
+.section{display:none;flex:1;flex-direction:column;min-height:0;}
+.section.active{display:flex;}
+.tbl-wrap.scrollable{flex:1;min-height:200px;display:flex;flex-direction:column;position:relative;}
+.tbl-wrap.scrollable .tbl-scroll-body{flex:1;overflow-y:auto;overflow-x:auto;min-height:0;}
+
+/* RESIZE HANDLE */
+.resize-handle{
+  height:6px;background:transparent;cursor:ns-resize;
+  display:flex;align-items:center;justify-content:center;
+  border-top:1px solid var(--border);flex-shrink:0;
+  transition:background 0.2s;
+}
+.resize-handle:hover{background:rgba(201,168,76,0.08);}
+.resize-handle::before{
+  content:'';width:40px;height:3px;
+  background:rgba(201,168,76,0.25);border-radius:2px;
+  transition:background 0.2s;
+}
+.resize-handle:hover::before{background:rgba(201,168,76,0.6);}
+.resize-handle.dragging{background:rgba(201,168,76,0.1);}
+.resize-handle.dragging::before{background:var(--gold);}
 
 /* SIDEBAR */
 .sb-header{padding:20px 16px;border-bottom:1px solid var(--border);}
@@ -183,8 +204,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .empty-txt{text-align:center;padding:30px;color:var(--text-dim);font-size:14px;}
 .spin{width:14px;height:14px;border:2px solid rgba(10,10,10,0.3);border-top-color:#000;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-left:6px;}
 @keyframes sp{to{transform:rotate(360deg);}}
-.section{display:none;}
-.section.active{display:block;}
+/* removed old .section rules - now in layout */<br>
 
 /* page indicator */
 .page-indicator{font-size:12px;color:var(--text-dim);padding:12px 16px;text-align:center;}
@@ -302,7 +322,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
     <!-- CLIENTS -->
     <div class="section" id="sec-clients">
-      <div class="page-hd">
+      <div class="page-hd" style="flex-shrink:0">
         <div class="page-title">👥 <span>العملاء</span></div>
         <div style="display:flex;gap:8px;align-items:center">
           <div id="cl-count" style="font-size:13px;color:var(--text-dim)"></div>
@@ -329,6 +349,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <div id="cl-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
         </div>
         <div class="tbl-footer" id="cl-footer" style="display:none"></div>
+        <div class="resize-handle" id="cl-resize-handle" title="اسحب لتغيير الحجم"></div>
       </div>
     </div>
 
@@ -623,10 +644,41 @@ function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('adminName').textContent='👑 '+admin.name;
-  // set today's date filter
   document.getElementById('bk-date').value=new Date().toISOString().split('T')[0];
   initAdminGovDropdown();
+  initResizeHandle();
   loadBookings();
+}
+
+function initResizeHandle(){
+  const handle = document.getElementById('cl-resize-handle');
+  if(!handle) return;
+  const wrap = handle.closest('.tbl-wrap');
+  let startY=0, startH=0, dragging=false;
+
+  handle.addEventListener('mousedown', e=>{
+    dragging=true; startY=e.clientY; startH=wrap.offsetHeight;
+    handle.classList.add('dragging');
+    document.body.style.cursor='ns-resize';
+    document.body.style.userSelect='none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e=>{
+    if(!dragging) return;
+    const dy = e.clientY - startY;
+    const newH = Math.max(200, startH+dy);
+    wrap.style.flex='none';
+    wrap.style.height=newH+'px';
+  });
+
+  document.addEventListener('mouseup', ()=>{
+    if(!dragging) return;
+    dragging=false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+  });
 }
 
 function doLogout(){
