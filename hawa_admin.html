@@ -122,6 +122,23 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;padding:20px;}
 .modal-overlay.show{display:flex;}
 .modal{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto;}
+.modal.wide{max-width:780px;}
+.profile-header{display:flex;align-items:center;gap:16px;padding:16px;background:var(--dark3);border-radius:14px;margin-bottom:16px;}
+.profile-avatar{width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.profile-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.profile-field{background:var(--dark3);border-radius:10px;padding:10px 12px;}
+.profile-field .pf-label{font-size:10px;color:var(--text-dim);font-weight:700;margin-bottom:3px;}
+.profile-field .pf-value{font-size:13px;font-weight:600;color:var(--text);}
+.profile-bk-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.profile-bk-filters input,.profile-bk-filters select{background:var(--dark3);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'Cairo',sans-serif;font-size:12px;color:var(--text);outline:none;flex:1;min-width:120px;}
+.profile-bk-filters input:focus,.profile-bk-filters select:focus{border-color:var(--gold);}
+.bk-mini-table{width:100%;border-collapse:collapse;font-size:12px;}
+.bk-mini-table th{padding:7px 8px;text-align:right;color:var(--text-dim);font-size:11px;border-bottom:1px solid var(--border);background:var(--dark3);}
+.bk-mini-table td{padding:7px 8px;border-bottom:1px solid rgba(42,42,42,0.5);}
+.profile-actions{display:flex;gap:8px;margin-top:16px;}
+.btn-profile-edit{flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--gold);background:transparent;color:var(--gold);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-profile-print{flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;}
+@media print{.no-print{display:none!important;}.print-only{display:block!important;}}
 .modal-title{font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;}
 .modal-close{background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:18px;}
 .modal-btns{display:flex;gap:10px;margin-top:20px;}
@@ -436,6 +453,42 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     <div class="cd-btns">
       <button class="cd-yes" id="cd-yes">تأكيد</button>
       <button class="cd-no"  onclick="closeConfirm()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT PROFILE MODAL -->
+<div class="modal-overlay" id="clientProfileModal">
+  <div class="modal wide">
+    <div class="modal-title no-print">
+      <span>👤 ملف العميل</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn-profile-print" onclick="printClientProfile()">🖨️ طباعة</button>
+        <button class="modal-close" onclick="closeModal('clientProfileModal')">✕</button>
+      </div>
+    </div>
+    <div id="clientProfileContent"></div>
+  </div>
+</div>
+
+<!-- CLIENT EDIT MODAL -->
+<div class="modal-overlay" id="clientEditModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>✏️ تعديل بيانات العميل</span>
+      <button class="modal-close" onclick="closeModal('clientEditModal')">✕</button>
+    </div>
+    <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ce-name" placeholder="الاسم الكامل"></div></div>
+    <div class="fg"><label>كود العميل</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ce-code" placeholder="كود العميل"></div></div>
+    <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ce-phone" placeholder="01xxxxxxxxx"></div></div>
+    <div class="fg"><label>المحافظة</label><select id="ce-gov" onchange="onEditGovChange()"><option value="">-- اختر --</option></select></div>
+    <div class="fg"><label>المدينة / المركز</label><select id="ce-city"><option value="">-- اختر المحافظة أولاً --</option></select></div>
+    <div class="fg"><label>العنوان التفصيلي</label><div class="iw"><span class="ic">📍</span><input type="text" id="ce-address" placeholder="الشارع، المبنى..."></div></div>
+    <div class="fg"><label>اسم المستخدم</label><div class="iw"><span class="ic">👤</span><input type="text" id="ce-username" placeholder="username"></div></div>
+    <div class="fg"><label>كلمة المرور الجديدة (اتركها فاضية لو مش عايز تغيرها)</label><div class="iw"><span class="ic">🔒</span><input type="password" id="ce-password" placeholder="كلمة مرور جديدة (اختياري)"></div></div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveClientEdit()">💾 حفظ التعديلات</button>
+      <button class="modal-cancel" onclick="closeModal('clientEditModal')">إلغاء</button>
     </div>
   </div>
 </div>
@@ -810,12 +863,14 @@ function filterClients(){
   let html=`<table><thead><tr>
     <th>#</th><th>الاسم</th><th>الكود</th><th>الهاتف</th>
     <th>المحافظة</th><th>المدينة</th><th>الحي/المركز</th><th>العنوان</th>
+    <th>اليوزر نيم</th><th>الباسورد</th>
     <th>no-show</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
 
   data.forEach(c=>{
     const ns=c.no_show_count||0;
-    html+=`<tr>
+    const safeC=JSON.stringify(c).replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    html+=`<tr style="cursor:pointer" ondblclick="openClientProfile(${c.id})" title="دبل كليك لفتح ملف العميل">
       <td style="color:var(--text-dim)">${c.id}</td>
       <td><b>${hl(c.name,search)}</b></td>
       <td style="color:var(--gold)">${hl(c.company_code,search)}</td>
@@ -823,17 +878,227 @@ function filterClients(){
       <td>${hl(c.governorate,search)}</td>
       <td>${hl(c.city,search)}</td>
       <td>${hl(c.district,search)}</td>
-      <td style="max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${c.address||''}">${hl(c.address,search)}</td>
-      <td style="color:${ns>=2?'var(--error)':ns>0?'var(--orange)':'var(--text)'};font-weight:${ns>0?700:400}">${ns}</td>
+      <td style="max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${c.address||''}">${hl(c.address,search)}</td>
+      <td style="color:var(--text-dim);font-size:12px">${hl(c.username,search)||'-'}</td>
+      <td style="font-size:12px;color:var(--text-dim);letter-spacing:2px">••••</td>
+      <td style="color:${ns>=2?'var(--error)':ns>0?'#E0873A':'var(--text)'};font-weight:${ns>0?700:400}">${ns}</td>
       <td>${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}</td>
       <td><div class="act-btns">
-        ${c.is_blocked?`<button class="act-btn unblock" onclick="unblockClient(${c.id},'${(c.name||'').replace(/'/g,"\'")}')">🔓 فك البلوك</button>`:
-        `<button class="act-btn del" onclick="blockClient(${c.id},'${(c.name||'').replace(/'/g,"\'")}')">🔒 بلوك</button>`}
+        <button class="act-btn edit" onclick="event.stopPropagation();openClientEdit(${c.id})">✏️ تعديل</button>
+        ${c.is_blocked?
+          `<button class="act-btn unblock" onclick="event.stopPropagation();unblockClient(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🔓 فك</button>`:
+          `<button class="act-btn del" onclick="event.stopPropagation();blockClient(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🔒 بلوك</button>`}
+        <button class="act-btn del" onclick="event.stopPropagation();deleteClient(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🗑️</button>
       </div></td>
     </tr>`;
   });
   html+='</tbody></table>';
   document.getElementById('cl-table').innerHTML=html;
+}
+
+// =================== CLIENT PROFILE ===================
+let currentProfileClientId = null;
+let currentProfileBookings = [];
+
+async function openClientProfile(id){
+  currentProfileClientId = id;
+  const c = allClients.find(x=>x.id===id);
+  if(!c) return;
+  document.getElementById('clientProfileContent').innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  document.getElementById('clientProfileModal').classList.add('show');
+
+  // جيب الحجوزات
+  try{
+    const r = await fetch(`${SB}/rest/v1/bookings?client_id=eq.${id}&select=*&order=loading_date.desc`, {headers:HDR});
+    currentProfileBookings = await r.json();
+  }catch(e){ currentProfileBookings = []; }
+
+  renderClientProfile(c);
+}
+
+function renderClientProfile(c){
+  const bks = currentProfileBookings;
+  const statusBadge={'قيد الانتظار':'<span class="badge pending">⏳ منتظر</span>','تم التنفيذ':'<span class="badge done">✅ حضر</span>','no-show':'<span class="badge noshow">❌ غائب</span>','ملغي':'<span class="badge cancelled">🚫 ملغي</span>'};
+
+  let html = `
+    <div class="profile-header">
+      <div class="profile-avatar">👤</div>
+      <div>
+        <div style="font-size:17px;font-weight:900">${c.name||'-'}</div>
+        <div style="color:var(--gold);font-size:13px;font-weight:700">${c.company_code||'-'}</div>
+        <div style="margin-top:4px">${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}</div>
+      </div>
+    </div>
+    <div class="profile-info-grid">
+      <div class="profile-field"><div class="pf-label">📱 الهاتف</div><div class="pf-value">${c.phone||'-'}</div></div>
+      <div class="profile-field"><div class="pf-label">🏷️ الكود</div><div class="pf-value" style="color:var(--gold)">${c.company_code||'-'}</div></div>
+      <div class="profile-field"><div class="pf-label">🗺️ المحافظة</div><div class="pf-value">${c.governorate||'-'}</div></div>
+      <div class="profile-field"><div class="pf-label">🏙️ المدينة</div><div class="pf-value">${c.city||'-'}</div></div>
+      <div class="profile-field"><div class="pf-label">📍 العنوان</div><div class="pf-value">${c.address||'-'}</div></div>
+      <div class="profile-field"><div class="pf-label">👤 اليوزر</div><div class="pf-value">${c.username||'-'}</div></div>
+      <div class="profile-field"><div class="pf-label">❌ no-show</div><div class="pf-value" style="color:${(c.no_show_count||0)>=2?'var(--error)':'var(--text)'}">${c.no_show_count||0}</div></div>
+      <div class="profile-field"><div class="pf-label">📊 إجمالي الحجوزات</div><div class="pf-value" style="color:var(--gold)">${bks.length}</div></div>
+    </div>
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text-dim)">📋 سجل الحجوزات</div>
+    <div class="profile-bk-filters no-print">
+      <input type="date" id="pf-from" placeholder="من تاريخ" onchange="filterProfileBookings()">
+      <input type="date" id="pf-to"   placeholder="إلى تاريخ" onchange="filterProfileBookings()">
+      <select id="pf-wh" onchange="filterProfileBookings()">
+        <option value="">كل المخازن</option>
+        <option value="قليوب">🏭 قليوب</option>
+        <option value="السادات">🏗️ السادات</option>
+      </select>
+      <select id="pf-vt" onchange="filterProfileBookings()">
+        <option value="">كل الأنواع</option>
+        <option value="موتسيكل">🏍️ موتسيكل</option>
+        <option value="تروسكل">🛺 تروسكل</option>
+        <option value="كهرباء">⚡ كهرباء</option>
+      </select>
+    </div>
+    <div id="pf-bk-table"></div>
+    <div class="profile-actions no-print">
+      <button class="btn-profile-edit" onclick="closeModal('clientProfileModal');openClientEdit(${c.id})">✏️ تعديل البيانات</button>
+      <button class="btn-profile-print" onclick="printClientProfile()">🖨️ طباعة</button>
+    </div>`;
+
+  document.getElementById('clientProfileContent').innerHTML = html;
+  filterProfileBookings();
+}
+
+function filterProfileBookings(){
+  const from = document.getElementById('pf-from')?.value||'';
+  const to   = document.getElementById('pf-to')?.value||'';
+  const wh   = document.getElementById('pf-wh')?.value||'';
+  const vt   = document.getElementById('pf-vt')?.value||'';
+
+  const statusBadge={'قيد الانتظار':'<span class="badge pending">⏳ منتظر</span>','تم التنفيذ':'<span class="badge done">✅ حضر</span>','no-show':'<span class="badge noshow">❌ غائب</span>','ملغي':'<span class="badge cancelled">🚫 ملغي</span>'};
+
+  let data = currentProfileBookings;
+  if(from) data = data.filter(b=>b.loading_date>=from);
+  if(to)   data = data.filter(b=>b.loading_date<=to);
+  if(wh)   data = data.filter(b=>b.warehouse===wh);
+  if(vt)   data = data.filter(b=>b.vehicle_type===vt);
+
+  if(!data.length){
+    document.getElementById('pf-bk-table').innerHTML='<div class="empty-txt" style="padding:20px">لا توجد حجوزات بهذه الفلاتر</div>';
+    return;
+  }
+
+  let html=`<table class="bk-mini-table"><thead><tr>
+    <th>#</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>رقم الإذن</th><th>الحالة</th>
+  </tr></thead><tbody>`;
+  data.forEach((b,i)=>{
+    const d = b.loading_date?new Date(b.loading_date+'T12:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'}):'-';
+    html+=`<tr>
+      <td style="color:var(--text-dim)">${i+1}</td>
+      <td>${b.warehouse||'-'}</td>
+      <td>${b.vehicle_type||'-'}</td>
+      <td><b style="color:var(--gold)">${b.count||0}</b></td>
+      <td>${d}</td>
+      <td>${b.time_slot||'-'}</td>
+      <td style="color:var(--gold)">${b.permit_number||'-'}</td>
+      <td>${statusBadge[b.status]||b.status}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>
+  <div style="padding:8px 0;font-size:12px;color:var(--text-dim)">
+    ${data.length} حجز | ${data.reduce((s,b)=>s+(b.count||0),0)} عربية
+  </div>`;
+  document.getElementById('pf-bk-table').innerHTML=html;
+}
+
+function printClientProfile(){
+  const content = document.getElementById('clientProfileContent').innerHTML;
+  const win = window.open('','_blank');
+  win.document.write(`<html dir="rtl"><head><meta charset="UTF-8">
+    <style>body{font-family:Cairo,sans-serif;padding:20px;direction:rtl}
+    .no-print{display:none!important}.badge{padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+    .badge.done{background:#e6f9f0;color:#4CAF7D}.badge.pending{background:#E8F0FD;color:#4A90D9}
+    .badge.noshow{background:#FDE8E8;color:#E05555}.badge.cancelled{background:#eee;color:#666}
+    .badge.active{background:#e6f9f0;color:#4CAF7D}.badge.blocked{background:#FDE8E8;color:#E05555}
+    table{width:100%;border-collapse:collapse}th,td{padding:6px 8px;border:1px solid #ddd;font-size:12px;text-align:right}
+    th{background:#f5f5f5;font-weight:700}.profile-header{display:flex;gap:16px;align-items:center;padding:12px;background:#f9f9f9;border-radius:8px;margin-bottom:12px}
+    .profile-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+    .profile-field{border:1px solid #ddd;border-radius:6px;padding:8px}.pf-label{font-size:10px;color:#888;font-weight:700}.pf-value{font-size:13px;font-weight:600}
+    </style></head><body>${content}</body></html>`);
+  win.document.close();
+  win.print();
+}
+
+// =================== CLIENT EDIT ===================
+let editClientId = null;
+
+function initEditGovDropdown(){
+  const sel = document.getElementById('ce-gov');
+  if(sel.children.length>1) return;
+  Object.keys(EGYPT).sort().forEach(gov=>{
+    const opt=document.createElement('option');
+    opt.value=gov;opt.textContent=gov;
+    sel.appendChild(opt);
+  });
+}
+
+function onEditGovChange(){
+  const gov=document.getElementById('ce-gov').value;
+  const citySel=document.getElementById('ce-city');
+  citySel.innerHTML='<option value="">-- اختر --</option>';
+  if(gov&&EGYPT[gov]){
+    EGYPT[gov].forEach(d=>{const opt=document.createElement('option');opt.value=d;opt.textContent=d;citySel.appendChild(opt);});
+  }
+}
+
+function openClientEdit(id){
+  const c = allClients.find(x=>x.id===id);
+  if(!c) return;
+  editClientId = id;
+  initEditGovDropdown();
+  document.getElementById('ce-name').value     = c.name||'';
+  document.getElementById('ce-code').value     = c.company_code||'';
+  document.getElementById('ce-phone').value    = c.phone||'';
+  document.getElementById('ce-gov').value      = c.governorate||'';
+  onEditGovChange();
+  document.getElementById('ce-city').value     = c.city||'';
+  document.getElementById('ce-address').value  = c.address||'';
+  document.getElementById('ce-username').value = c.username||'';
+  document.getElementById('ce-password').value = '';
+  document.getElementById('clientEditModal').classList.add('show');
+}
+
+async function saveClientEdit(){
+  const name     = document.getElementById('ce-name').value.trim();
+  const code     = document.getElementById('ce-code').value.trim();
+  const phone    = document.getElementById('ce-phone').value.trim();
+  const gov      = document.getElementById('ce-gov').value;
+  const city     = document.getElementById('ce-city').value;
+  const address  = document.getElementById('ce-address').value.trim();
+  const username = document.getElementById('ce-username').value.trim();
+  const password = document.getElementById('ce-password').value.trim();
+
+  if(!name||!phone||!username){alert('أدخل الاسم والتليفون واليوزر على الأقل');return;}
+  if(!/^01[0-9]{9}$/.test(phone)){alert('رقم الهاتف غير صحيح — لازم يبدأ بـ 01 ويكون 11 رقم');return;}
+
+  const body={name,company_code:code,phone,governorate:gov,city,address,username};
+  if(password) body.password=password;
+
+  try{
+    const res=await fetch(`${SB}/rest/v1/clients?id=eq.${editClientId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    if(res.ok){
+      closeModal('clientEditModal');
+      await loadClients();
+      alert('✅ تم حفظ التعديلات بنجاح');
+    }else{
+      const err=await res.json();
+      if(err.code==='23505') alert('❌ اليوزر نيم أو الكود مكرر');
+      else alert('❌ خطأ في الحفظ');
+    }
+  }catch(e){alert('❌ خطأ في الاتصال');}
+}
+
+function deleteClient(id,name){
+  showConfirm('🗑️','حذف عميل',`هتحذف "${name}" وكل بياناته؟ مش هتقدر ترجع!`,true,async()=>{
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'DELETE',headers:HDR});
+    loadClients();
+  });
 }
 
 async function unblockClient(id,name){
