@@ -258,6 +258,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="nav-item" onclick="goTo('schedule')"><span class="ni">📅</span> إدارة الأيام</div>
       <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
       <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
+      <div class="nav-item" onclick="openPermitSettings()"><span class="ni">⚙️</span> إعدادات الأذون</div>
     </div>
     <div class="sb-footer">
       <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
@@ -327,7 +328,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div style="display:flex;gap:8px;align-items:center">
           <div id="cl-count" style="font-size:13px;color:var(--text-dim)"></div>
           <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="printClients()">🖨️ طباعة</button>
-          <button class="add-btn" onclick="openImportModal()">📥 استيراد عملاء</button>
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="openImportModal()">📥 استيراد</button>
+          <button class="add-btn" onclick="openAddClientModal()">+ إضافة عميل</button>
         </div>
       </div>
       <div class="tbl-wrap scrollable">
@@ -518,6 +520,50 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
     <div id="clientProfileContent"></div>
+  </div>
+</div>
+
+<!-- ADD CLIENT MODAL -->
+<div class="modal-overlay" id="addClientModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>➕ إضافة عميل جديد</span>
+      <button class="modal-close" onclick="closeModal('addClientModal')">✕</button>
+    </div>
+    <div class="fg"><label>كود العميل في الشركة</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ac-code" placeholder="مثال: C001"></div></div>
+    <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ac-name" placeholder="الاسم الأول والثاني والثالث"></div></div>
+    <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ac-phone" placeholder="01xxxxxxxxx"></div></div>
+    <div class="fg"><label>المحافظة</label><select id="ac-gov" onchange="onAddGovChange()"><option value="">-- اختر --</option></select></div>
+    <div class="fg"><label>المدينة / المركز</label><select id="ac-city"><option value="">-- اختر المحافظة أولاً --</option></select></div>
+    <div class="fg"><label>العنوان التفصيلي</label><div class="iw"><span class="ic">📍</span><input type="text" id="ac-address" placeholder="الشارع، المبنى..."></div></div>
+    <div class="fg"><label>اسم المستخدم</label><div class="iw"><span class="ic">👤</span><input type="text" id="ac-username" placeholder="username"></div></div>
+    <div class="fg"><label>كلمة المرور</label><div class="iw"><span class="ic">🔒</span><input type="password" id="ac-password" placeholder="كلمة مرور قوية"></div></div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveNewClient()">💾 إنشاء الحساب</button>
+      <button class="modal-cancel" onclick="closeModal('addClientModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- PERMIT SETTINGS MODAL -->
+<div class="modal-overlay" id="permitSettingsModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>⚙️ نطاق أرقام الأذون</span>
+      <button class="modal-close" onclick="closeModal('permitSettingsModal')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.7">
+      العميل مش هيقدر يدخل رقم إذن خارج النطاق ده. غيّر الأرقام دي كل فترة حسب الأذون الشغالة حالياً.
+    </div>
+    <div class="fg"><label>أقل رقم مسموح</label><div class="iw"><span class="ic">⬇️</span><input type="number" id="ps-min" placeholder="14000"></div></div>
+    <div class="fg"><label>أعلى رقم مسموح</label><div class="iw"><span class="ic">⬆️</span><input type="number" id="ps-max" placeholder="15000"></div></div>
+    <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:12px;font-size:12px;color:var(--gold);line-height:1.7">
+      💡 مثال: لو النطاق من <b>14000</b> لـ <b>15000</b>، العميل هيقدر يدخل أي رقم بينهم فقط.
+    </div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="savePermitSettings()">💾 حفظ النطاق</button>
+      <button class="modal-cancel" onclick="closeModal('permitSettingsModal')">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -1051,6 +1097,77 @@ function filterClients(){
     <span>نشط: <b>${data.filter(c=>!c.is_blocked).length}</b></span>
     <span>محظور: <b style="color:#e88080">${data.filter(c=>c.is_blocked).length}</b></span>
     <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك لفتح ملف العميل</span>`;
+}
+
+// =================== ADD CLIENT ===================
+function initAddGovDropdown(){
+  const sel=document.getElementById('ac-gov');
+  if(sel.children.length>1)return;
+  Object.keys(EGYPT).sort().forEach(gov=>{const opt=document.createElement('option');opt.value=gov;opt.textContent=gov;sel.appendChild(opt);});
+}
+
+function onAddGovChange(){
+  const gov=document.getElementById('ac-gov').value;
+  const cs=document.getElementById('ac-city');
+  cs.innerHTML='<option value="">-- اختر --</option>';
+  if(gov&&EGYPT[gov])EGYPT[gov].forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;cs.appendChild(o);});
+}
+
+function openAddClientModal(){
+  initAddGovDropdown();
+  ['ac-code','ac-name','ac-phone','ac-address','ac-username','ac-password'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ac-gov').value='';
+  document.getElementById('ac-city').innerHTML='<option value="">-- اختر المحافظة أولاً --</option>';
+  document.getElementById('addClientModal').classList.add('show');
+}
+
+async function saveNewClient(){
+  const data={
+    company_code: document.getElementById('ac-code').value.trim(),
+    name:         document.getElementById('ac-name').value.trim(),
+    phone:        document.getElementById('ac-phone').value.trim(),
+    governorate:  document.getElementById('ac-gov').value,
+    city:         document.getElementById('ac-city').value,
+    district:     document.getElementById('ac-city').value,
+    address:      document.getElementById('ac-address').value.trim(),
+    username:     document.getElementById('ac-username').value.trim(),
+    password:     document.getElementById('ac-password').value.trim(),
+  };
+
+  if(Object.values(data).some(v=>!v)){alert('من فضلك أكمل جميع الحقول');return;}
+  if(data.name.split(/\s+/).length<3){alert('من فضلك أدخل الاسم الثلاثي كاملاً');return;}
+  if(!/^01[0-9]{9}$/.test(data.phone)){alert('رقم الهاتف غير صحيح — لازم يبدأ بـ 01 ويكون 11 رقم');return;}
+
+  try{
+    const res=await fetch(`${SB}/rest/v1/clients`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(data)});
+    if(res.ok){closeModal('addClientModal');await loadClients();alert('✅ تم إنشاء الحساب بنجاح');}
+    else{const err=await res.json();if(err.code==='23505')alert('❌ اليوزر نيم أو الكود مسجل بالفعل');else alert('❌ خطأ في الإنشاء');}
+  }catch(e){alert('❌ خطأ في الاتصال');}
+}
+
+// =================== PERMIT SETTINGS ===================
+async function openPermitSettings(){
+  try{
+    const r=await fetch(`${SB}/rest/v1/app_settings?key=in.(permit_min,permit_max)&select=*`,{headers:HDR});
+    const data=await r.json();
+    const map={};data.forEach(s=>map[s.key]=s.value);
+    document.getElementById('ps-min').value=map.permit_min||'14000';
+    document.getElementById('ps-max').value=map.permit_max||'15000';
+  }catch(e){}
+  document.getElementById('permitSettingsModal').classList.add('show');
+}
+
+async function savePermitSettings(){
+  const min=parseInt(document.getElementById('ps-min').value);
+  const max=parseInt(document.getElementById('ps-max').value);
+  if(isNaN(min)||isNaN(max)){alert('أدخل أرقام صحيحة');return;}
+  if(min>=max){alert('أقل رقم لازم يكون أصغر من أعلى رقم');return;}
+  try{
+    await fetch(`${SB}/rest/v1/app_settings?key=eq.permit_min`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({value:String(min),updated_at:new Date().toISOString()})});
+    await fetch(`${SB}/rest/v1/app_settings?key=eq.permit_max`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({value:String(max),updated_at:new Date().toISOString()})});
+    closeModal('permitSettingsModal');
+    alert(`✅ تم حفظ النطاق: من ${min} إلى ${max}`);
+  }catch(e){alert('❌ خطأ في الحفظ');}
 }
 
 // =================== PRINT CLIENTS ===================

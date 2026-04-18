@@ -535,27 +535,25 @@ async function goStep2() {
       return;
     }
 
-    // ③ الإذن لازم يكون في نطاق الأرقام الموجودة
-    const r2 = await fetch(
-      `${SB}/rest/v1/bookings?status=neq.ملغي&permit_number=not.is.null&select=permit_number`,
-      { headers: HDR }
-    );
-    const d2 = await r2.json();
-    const nums = d2.map(b => parseInt(b.permit_number)).filter(n => !isNaN(n) && n > 0);
-    if (nums.length > 0) {
-      const minP = Math.min(...nums);
-      const maxP = Math.max(...nums);
+    // ③ الإذن لازم يكون في النطاق اللي حدده الأدمن
+    try {
+      const rs = await fetch(`${SB}/rest/v1/app_settings?key=in.(permit_min,permit_max)&select=*`, { headers: HDR });
+      const settings = await rs.json();
+      const map = {};
+      settings.forEach(s => map[s.key] = parseInt(s.value));
+      const minP = map.permit_min;
+      const maxP = map.permit_max;
       const permitNum = parseInt(permit);
-      if (!isNaN(permitNum)) {
-        const buffer = Math.max(500, Math.round((maxP - minP) * 0.2));
-        if (permitNum < minP - 100 || permitNum > maxP + buffer) {
-          msgEl.textContent = `❌ رقم الإذن خارج النطاق المسموح (${minP} — ${maxP + buffer})`;
+
+      if (!isNaN(minP) && !isNaN(maxP) && !isNaN(permitNum)) {
+        if (permitNum < minP || permitNum > maxP) {
+          msgEl.textContent = `❌ رقم الإذن لازم يكون بين ${minP} و ${maxP}`;
           msgEl.style.color = 'var(--error)';
           document.getElementById('b1').disabled = true;
           return;
         }
       }
-    }
+    } catch(e) {}
 
     // ✅ كل حاجة تمام
     const rem = 4 - usedCount;
