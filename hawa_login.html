@@ -559,8 +559,11 @@
       });
 
       if (res.ok) {
-        showAlert('تم إنشاء الحساب بنجاح! 🎉 يمكنك تسجيل الدخول الآن', 'success');
-        setTimeout(() => switchTab('login'), 2500);
+        const created = await res.json();
+        const newUser = created[0];
+        showAlert('تم إنشاء الحساب بنجاح! 🎉 جاري الدخول...', 'success');
+        localStorage.setItem('hawa_user', JSON.stringify(newUser));
+        setTimeout(() => { window.location.href = 'hawa_booking.html'; }, 1500);
       } else {
         const err = await res.json();
         if (err.code === '23505') {
