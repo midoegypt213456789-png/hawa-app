@@ -280,6 +280,9 @@
     <button class="tab-btn"        id="tabMy"  onclick="switchTab('my')">📋 حجوزاتي</button>
   </div>
 
+  <!-- Telegram Link Banner (shown if not linked) -->
+  <div id="tgLinkBanner" style="display:none"></div>
+
   <!-- Alert -->
   <div class="alert" id="alert"></div>
 
@@ -386,6 +389,7 @@
         <div class="success-icon">🎉</div>
         <div class="success-title" id="successTitle">تم الحفظ بنجاح!</div>
         <div class="success-details" id="successDetails"></div>
+        <div id="tgBanner" style="display:none"></div>
         <div class="success-actions" id="successActions"></div>
         <div class="notice-box">
           <span class="ni">⏰</span>
@@ -436,6 +440,40 @@ function doLogout() {
 }
 document.getElementById('uname').textContent = user.name || 'العميل';
 document.getElementById('ucode').textContent  = user.company_code || '';
+
+// فحص ربط Telegram عند التحميل
+checkTelegramLink();
+
+async function checkTelegramLink(){
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id`, { headers: HDR });
+    const d = await r.json();
+    const tgId = d[0]?.telegram_id || null;
+    user.telegram_id = tgId;
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+
+    const banner = document.getElementById('tgLinkBanner');
+    if (!tgId) {
+      const code = user.company_code || '';
+      banner.style.display = 'block';
+      banner.innerHTML = `
+        <div style="background:linear-gradient(135deg,rgba(0,136,204,0.12),rgba(0,136,204,0.04));border:1.5px solid rgba(0,136,204,0.35);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:26px;flex-shrink:0">📲</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#4ab3e8;margin-bottom:2px">فعّل إشعارات Telegram</div>
+            <div style="font-size:11px;color:var(--text-dim);line-height:1.5">علشان تاكيد الحجز يوصلك على التليجرام</div>
+          </div>
+          <a href="https://t.me/Carhawa_bot?start=${encodeURIComponent(code)}" target="_blank"
+             style="background:linear-gradient(135deg,#0088cc,#4ab3e8);color:white;text-decoration:none;
+             padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;white-space:nowrap;flex-shrink:0">
+            🔔 تفعيل
+          </a>
+        </div>`;
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e){}
+}
 
 const SLOTS = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00',
                '12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
@@ -547,7 +585,7 @@ async function goStep2() {
 
       if (!isNaN(minP) && !isNaN(maxP) && !isNaN(permitNum)) {
         if (permitNum < minP || permitNum > maxP) {
-          msgEl.textContent = `❌ رقم الإذن لازم يكون بين ${minP} و ${maxP}`;
+          msgEl.textContent = `❌ رقم الإذن غير صحيح، تأكد من الرقم اللي في الإذن بتاعك`;
           msgEl.style.color = 'var(--error)';
           document.getElementById('b1').disabled = true;
           return;
@@ -812,6 +850,9 @@ function showSuccessScreen(title, details, mode) {
   document.getElementById('successTitle').textContent  = title;
   document.getElementById('successDetails').innerHTML  = details;
 
+  // Telegram activation banner - يظهر لو مش مربوط
+  checkAndShowTelegramBanner();
+
   const actions = document.getElementById('successActions');
   if (mode === 'new') {
     actions.innerHTML = `
@@ -822,6 +863,40 @@ function showSuccessScreen(title, details, mode) {
     actions.innerHTML = `
       <button class="btn-close-app" onclick="switchTab('my')">📋 رجوع لحجوزاتي</button>
       <button class="btn-new-bk"   onclick="startNewBooking()">➕ حجز جديد</button>`;
+  }
+}
+
+async function checkAndShowTelegramBanner(){
+  // شيك لو العميل مربوط بالبوت
+  let telegramId = user.telegram_id || null;
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id`, { headers: HDR });
+    const d = await r.json();
+    telegramId = d[0]?.telegram_id || null;
+    user.telegram_id = telegramId;
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+  } catch(e){}
+
+  const banner = document.getElementById('tgBanner');
+  if (!telegramId) {
+    // مش مربوط - أظهر الزرار
+    banner.style.display = 'block';
+    const code = user.company_code || '';
+    banner.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(0,136,204,0.15),rgba(0,136,204,0.05));border:1.5px solid rgba(0,136,204,0.4);border-radius:14px;padding:14px;margin-top:14px;text-align:center">
+        <div style="font-size:32px;margin-bottom:6px">📲</div>
+        <div style="font-size:14px;font-weight:700;color:#4ab3e8;margin-bottom:4px">فعّل إشعارات Telegram</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;line-height:1.6">
+          لتوصلك رسالة QR code وتفاصيل الحجز تلقائياً على Telegram
+        </div>
+        <a href="https://t.me/Carhawa_bot?start=${encodeURIComponent(code)}" target="_blank"
+           style="display:inline-block;background:linear-gradient(135deg,#0088cc,#4ab3e8);color:white;text-decoration:none;
+           padding:10px 24px;border-radius:10px;font-weight:700;font-size:13px">
+          🔔 تفعيل الإشعارات
+        </a>
+      </div>`;
+  } else {
+    banner.style.display = 'none';
   }
 }
 
