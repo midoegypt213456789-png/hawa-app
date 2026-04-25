@@ -118,9 +118,12 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .badge.cancelled{background:rgba(138,133,128,0.15);color:var(--text-dim);}
 .badge.blocked{background:rgba(224,85,85,0.12);color:#e88080;}
 .badge.active{background:rgba(76,175,125,0.12);color:#6dc49a;}
+.badge.inactive{background:rgba(138,133,128,0.2);color:var(--text-dim);}
 .badge.qalyub{background:rgba(201,168,76,0.12);color:#d4a957;}
 .badge.sadat{background:rgba(74,144,217,0.12);color:#6faee8;}
 .badge.general{background:rgba(76,175,125,0.12);color:#6dc49a;}
+.type-badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;}
+.type-dot{width:22px;height:22px;border-radius:50%;display:inline-block;vertical-align:middle;}
 
 /* ACTION BUTTONS */
 .act-btns{display:flex;gap:5px;}
@@ -133,6 +136,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .act-btn.toggle:hover{background:rgba(76,175,125,0.2);}
 .act-btn.unblock{background:rgba(76,175,125,0.1);color:#6dc49a;border:1px solid rgba(76,175,125,0.2);}
 .act-btn.unblock:hover{background:rgba(76,175,125,0.2);}
+.act-btn.silence{background:rgba(138,133,128,0.1);color:var(--text-dim);border:1px solid rgba(138,133,128,0.25);}
+.act-btn.silence:hover{background:rgba(138,133,128,0.2);color:var(--text);}
 
 /* ADD BTN */
 .add-btn{padding:9px 18px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;}
@@ -255,10 +260,16 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="nav-item active" onclick="goTo('bookings')"><span class="ni">📋</span> الحجوزات</div>
       <div class="nav-item" onclick="goTo('employees')"><span class="ni">👷</span> الموظفين</div>
       <div class="nav-item" onclick="goTo('clients')"><span class="ni">👥</span> العملاء</div>
+      <div class="nav-item" onclick="goTo('client-types')"><span class="ni">🏷️</span> أنواع العملاء</div>
+      <div class="nav-item" onclick="goTo('extra-contacts')"><span class="ni">📞</span> جهات إضافية</div>
+      <div class="nav-item" onclick="goTo('broadcast')"><span class="ni">📢</span> إرسال رسائل</div>
+      <div class="nav-item" onclick="goTo('templates')"><span class="ni">💌</span> الرسائل المحفوظة</div>
+      <div class="nav-item" onclick="goTo('unlinked')"><span class="ni">🔗</span> عملاء لم يربطوا</div>
+      <div class="nav-item" onclick="goTo('vehicle-types')"><span class="ni">🚚</span> أنواع العربيات</div>
       <div class="nav-item" onclick="goTo('schedule')"><span class="ni">📅</span> إدارة الأيام</div>
       <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
       <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
-      <div class="nav-item" onclick="openPermitSettings()"><span class="ni">⚙️</span> إعدادات الأذون</div>
+      <div class="nav-item" onclick="goTo('settings')"><span class="ni">⚙️</span> إعدادات عامة</div>
     </div>
     <div class="sb-footer">
       <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
@@ -341,10 +352,17 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <select class="filter-inp" id="cl-district" onchange="filterClients()" style="width:140px">
             <option value="">كل المراكز</option>
           </select>
-          <select class="filter-inp" id="cl-status" onchange="filterClients()" style="width:130px">
+          <select class="filter-inp" id="cl-type" onchange="filterClients()" style="width:150px">
+            <option value="">🏷️ كل الأنواع</option>
+          </select>
+          <select class="filter-inp" id="cl-religion" onchange="filterClients()" style="width:150px">
+            <option value="">🕌 كل الديانات</option>
+          </select>
+          <select class="filter-inp" id="cl-status" onchange="filterClients()" style="width:150px">
             <option value="">كل الحالات</option>
             <option value="active">نشط ✅</option>
             <option value="blocked">محظور 🔒</option>
+            <option value="inactive">لا يستقبل رسائل 🔕</option>
           </select>
         </div>
         <div class="tbl-scroll-body">
@@ -352,6 +370,149 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         </div>
         <div class="tbl-footer" id="cl-footer" style="display:none"></div>
         <div class="resize-handle" id="cl-resize-handle" title="اسحب لتغيير الحجم"></div>
+      </div>
+    </div>
+
+    <!-- CLIENT TYPES -->
+    <div class="section" id="sec-client-types">
+      <div class="page-hd">
+        <div class="page-title">🏷️ <span>أنواع العملاء</span></div>
+        <button class="add-btn" onclick="openClientTypeModal()">+ إضافة نوع جديد</button>
+      </div>
+      <div class="tbl-wrap">
+        <div id="ct-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- EXTRA CONTACTS -->
+    <div class="section" id="sec-extra-contacts">
+      <div class="page-hd">
+        <div class="page-title">📞 <span>جهات إضافية</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="ec-count" style="font-size:13px;color:var(--text-dim)"></div>
+          <button class="add-btn" onclick="openExtraContactModal()">+ إضافة جهة</button>
+        </div>
+      </div>
+      <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:12px 14px;font-size:12px;color:#6faee8;line-height:1.8;margin-bottom:14px">
+        ℹ️ الجهات الإضافية مش عملاء — دول مهندسين، مديرين، جهات اتصال بتستقبل رسائل broadcast فقط. كل جهة بتتربط بتليجرام عن طريق لينك خاص بيها.
+      </div>
+      <div class="tbl-wrap">
+        <div id="ec-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- BROADCAST -->
+    <div class="section" id="sec-broadcast">
+      <div class="page-hd">
+        <div class="page-title">📢 <span>إرسال رسائل</span></div>
+      </div>
+
+      <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--gold);line-height:1.8;margin-bottom:14px">
+        ℹ️ الرسالة بتتبعت فقط للعملاء اللي <b>ربطوا البوت</b> و <b>نشطين 🔔</b>. <b>الهيدر والفوتر</b> من صفحة "⚙️ إعدادات عامة" بيتضافوا تلقائياً.
+      </div>
+
+      <!-- Message composer -->
+      <div class="tbl-wrap" style="padding:16px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">✍️ نص الرسالة</div>
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);padding:6px 14px;font-size:12px" onclick="openTemplatePicker()">📂 من المحفوظة</button>
+        </div>
+        <textarea id="bc-message" rows="6" placeholder="اكتب الرسالة هنا، أو اختر من المحفوظة..." oninput="updateMessageCount()" style="font-size:14px;line-height:1.7"></textarea>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px">
+          <span id="bc-char-count" style="color:var(--text-dim)">0 حرف</span>
+          <span style="color:var(--text-dim)">الحد الأقصى: 4096 حرف</span>
+        </div>
+
+        <!-- Full message preview (with header/footer) -->
+        <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
+          <div style="font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:8px">👁️ معاينة الرسالة الكاملة (مع الهيدر والفوتر):</div>
+          <div id="bc-full-preview" style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--text);min-height:60px"></div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="tbl-wrap" style="padding:16px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--gold)">🎯 تحديد المستهدفين</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px">
+          <select id="bc-type" onchange="invalidateBroadcastPreview()">
+            <option value="">🏷️ كل الأنواع</option>
+          </select>
+          <select id="bc-religion" onchange="invalidateBroadcastPreview()">
+            <option value="">🕌 كل الديانات</option>
+          </select>
+          <select id="bc-gov" onchange="onBroadcastGovChange()">
+            <option value="">🏛️ كل المحافظات</option>
+          </select>
+          <select id="bc-city" disabled onchange="invalidateBroadcastPreview()">
+            <option value="">🏙️ كل المدن</option>
+          </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--dark3);border-radius:10px;border:1px solid var(--border);transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+          <input type="checkbox" id="bc-include-extra" onchange="invalidateBroadcastPreview()" style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)">
+          <span style="font-size:13px">📞 <b>تضمين الجهات الإضافية</b> <span style="color:var(--text-dim);font-size:11px">(مهندسين ومديرين — لو حددت ديانة، الجهات الإضافية مش هتدخل)</span></span>
+        </label>
+      </div>
+
+      <!-- Preview & Send -->
+      <div class="tbl-wrap" style="padding:16px">
+        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="previewBroadcast()">🔍 عرض العدد</button>
+          <button class="add-btn" onclick="openBroadcastConfirm()">📢 إرسال الرسالة</button>
+        </div>
+        <div id="bc-preview-result" style="font-size:13px"></div>
+      </div>
+    </div>
+
+    <!-- TEMPLATES -->
+    <div class="section" id="sec-templates">
+      <div class="page-hd">
+        <div class="page-title">💌 <span>الرسائل المحفوظة</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="tmpl-count" style="font-size:13px;color:var(--text-dim)"></div>
+          <button class="add-btn" onclick="openTemplateModal()">+ إضافة رسالة جديدة</button>
+        </div>
+      </div>
+      <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:12px 14px;font-size:12px;color:#6faee8;line-height:1.8;margin-bottom:14px">
+        ℹ️ احفظ الرسائل اللي بتتكرر (تهنئة عيد، إعلان قفل المخزن، إلخ) واختار منها بسرعة في صفحة "📢 إرسال رسائل". لو حددت ديانة معينة، الفلتر هيتطبق تلقائياً عند الاستخدام.
+      </div>
+      <div id="tmpl-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">
+        <div class="loading-txt">⏳ جاري التحميل...</div>
+      </div>
+    </div>
+
+    <!-- UNLINKED CLIENTS -->
+    <div class="section" id="sec-unlinked">
+      <div class="page-hd" style="flex-shrink:0">
+        <div class="page-title">🔗 <span>عملاء لم يربطوا البوت</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div id="unlinked-count" style="font-size:13px;color:var(--text-dim)"></div>
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="copyAllUnlinkedLinks()">📋 نسخ لينكات الكل</button>
+        </div>
+      </div>
+      <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:12px 14px;font-size:12px;color:#6faee8;line-height:1.8;margin-bottom:14px">
+        ℹ️ دول عملاء عندهم حسابات نشطة في النظام لكن لسه ما ضغطوش Start في البوت. ابعتلهم اللينك على واتساب عشان يربطوا ويستقبلوا رسايل الـ broadcast.
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="unlinked-search" type="text" placeholder="🔍 بحث بالاسم / الكود / الهاتف / المحافظة..." oninput="filterUnlinked()" style="width:300px">
+        </div>
+        <div class="tbl-scroll-body">
+          <div id="unlinked-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VEHICLE TYPES -->
+    <div class="section" id="sec-vehicle-types">
+      <div class="page-hd">
+        <div class="page-title">🚚 <span>أنواع العربيات</span></div>
+        <button class="add-btn" onclick="openVehicleTypeModal()">+ إضافة نوع جديد</button>
+      </div>
+      <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:12px 14px;font-size:12px;color:#6faee8;line-height:1.8;margin-bottom:14px">
+        ℹ️ كل نوع له <b>معدل تحميل ساعي خاص</b> (كم عربية تقدر تحمل في الساعة الواحدة). الأنواع المعطّلة 🚫 لا تظهر للعميل في صفحة الحجز، لكن الحجوزات القديمة بنوعها تفضل سليمة.
+      </div>
+      <div class="tbl-wrap">
+        <div id="vt-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       </div>
     </div>
 
@@ -468,6 +629,78 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="rep-wh"></div>
     </div>
 
+    <!-- SETTINGS -->
+    <div class="section" id="sec-settings">
+      <div class="page-hd">
+        <div class="page-title">⚙️ <span>إعدادات عامة</span></div>
+        <button class="add-btn" onclick="saveSettings()">💾 حفظ كل التغييرات</button>
+      </div>
+
+      <!-- Working Hours -->
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">⏰ ساعات العمل والحجز</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">بداية يوم العمل (بالساعة)</label>
+            <input type="number" id="set-work-start" min="0" max="23" placeholder="8" oninput="updateSlotsPreview()">
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">8 = 8 صباحاً</div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">نهاية يوم العمل (بالساعة)</label>
+            <input type="number" id="set-work-end" min="1" max="24" placeholder="16" oninput="updateSlotsPreview()">
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">16 = 4 مساءً (آخر slot 3-4)</div>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">قفل الحجز نفس اليوم بعد الساعة</label>
+            <input type="number" id="set-cutoff" min="0" max="24" placeholder="15">
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">15 = 3 مساءً، بعدها مينفعش حجز نفس اليوم</div>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:10px 12px;background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;font-size:12px;color:#6faee8;line-height:1.7">
+          📋 <b>المواعيد الناتجة:</b> <span id="slots-preview" style="color:var(--gold);font-weight:700">—</span>
+        </div>
+      </div>
+
+      <!-- Permit Range -->
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">🎫 نطاق أرقام الأذون</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">أقل رقم مسموح</label>
+            <input type="number" id="set-permit-min" placeholder="14000">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">أعلى رقم مسموح</label>
+            <input type="number" id="set-permit-max" placeholder="15000">
+          </div>
+        </div>
+        <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.7;margin-top:12px">
+          💡 العميل مش هيقدر يدخل رقم إذن خارج النطاق ده. غيّر الأرقام كل فترة حسب الأذون الشغالة حالياً.
+        </div>
+      </div>
+
+      <!-- Header/Footer -->
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">💬 الهيدر والفوتر للرسائل</div>
+        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:#6faee8;line-height:1.7;margin-bottom:14px">
+          ℹ️ بيتضافوا تلقائياً فوق وتحت كل رسالة broadcast. سيبهم فاضيين لو مش عاوزهم.
+        </div>
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">📤 الهيدر (فوق الرسالة)</label>
+          <textarea id="set-header" rows="3" placeholder="مثال: HAWA CO — إشعار من إدارة المخزن" style="font-family:Cairo,sans-serif"></textarea>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">📥 الفوتر (تحت الرسالة)</label>
+          <textarea id="set-footer" rows="3" placeholder="مثال: للاستفسار: 01xxxxxxxxx" style="font-family:Cairo,sans-serif"></textarea>
+        </div>
+
+        <div style="margin-top:18px">
+          <div style="font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:8px">👁️ معاينة الشكل النهائي للرسالة:</div>
+          <div id="set-preview" style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--text);min-height:80px"></div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -532,6 +765,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
     <div class="fg"><label>كود العميل في الشركة</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ac-code" placeholder="مثال: C001"></div></div>
     <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ac-name" placeholder="الاسم الأول والثاني والثالث"></div></div>
+    <div class="fg"><label>🏷️ نوع العميل</label><select id="ac-client-type"><option value="">-- جاري التحميل --</option></select></div>
+    <div class="fg"><label>🕌 الديانة</label><select id="ac-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ac-phone" placeholder="01xxxxxxxxx"></div></div>
     <div class="fg"><label>المحافظة</label><select id="ac-gov" onchange="onAddGovChange()"><option value="">-- اختر --</option></select></div>
     <div class="fg"><label>المدينة / المركز</label><select id="ac-city"><option value="">-- اختر المحافظة أولاً --</option></select></div>
@@ -541,28 +776,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="modal-btns">
       <button class="modal-save" onclick="saveNewClient()">💾 إنشاء الحساب</button>
       <button class="modal-cancel" onclick="closeModal('addClientModal')">إلغاء</button>
-    </div>
-  </div>
-</div>
-
-<!-- PERMIT SETTINGS MODAL -->
-<div class="modal-overlay" id="permitSettingsModal">
-  <div class="modal">
-    <div class="modal-title">
-      <span>⚙️ نطاق أرقام الأذون</span>
-      <button class="modal-close" onclick="closeModal('permitSettingsModal')">✕</button>
-    </div>
-    <div style="font-size:13px;color:var(--text-dim);margin-bottom:16px;line-height:1.7">
-      العميل مش هيقدر يدخل رقم إذن خارج النطاق ده. غيّر الأرقام دي كل فترة حسب الأذون الشغالة حالياً.
-    </div>
-    <div class="fg"><label>أقل رقم مسموح</label><div class="iw"><span class="ic">⬇️</span><input type="number" id="ps-min" placeholder="14000"></div></div>
-    <div class="fg"><label>أعلى رقم مسموح</label><div class="iw"><span class="ic">⬆️</span><input type="number" id="ps-max" placeholder="15000"></div></div>
-    <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:12px;font-size:12px;color:var(--gold);line-height:1.7">
-      💡 مثال: لو النطاق من <b>14000</b> لـ <b>15000</b>، العميل هيقدر يدخل أي رقم بينهم فقط.
-    </div>
-    <div class="modal-btns">
-      <button class="modal-save" onclick="savePermitSettings()">💾 حفظ النطاق</button>
-      <button class="modal-cancel" onclick="closeModal('permitSettingsModal')">إلغاء</button>
     </div>
   </div>
 </div>
@@ -639,6 +852,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <button class="modal-close" onclick="closeModal('clientEditModal')">✕</button>
     </div>
     <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ce-name" placeholder="الاسم الكامل"></div></div>
+    <div class="fg"><label>🏷️ نوع العميل</label><select id="ce-client-type"><option value="">-- جاري التحميل --</option></select></div>
+    <div class="fg"><label>🕌 الديانة</label><select id="ce-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>كود العميل</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ce-code" placeholder="كود العميل"></div></div>
     <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ce-phone" placeholder="01xxxxxxxxx"></div></div>
     <div class="fg"><label>المحافظة</label><select id="ce-gov" onchange="onEditGovChange()"><option value="">-- اختر --</option></select></div>
@@ -650,6 +865,207 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <button class="modal-save" onclick="saveClientEdit()">💾 حفظ التعديلات</button>
       <button class="modal-cancel" onclick="closeModal('clientEditModal')">إلغاء</button>
     </div>
+  </div>
+</div>
+
+<!-- CLIENT TYPE MODAL -->
+<div class="modal-overlay" id="clientTypeModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="ct-modal-title">➕ إضافة نوع عميل</span>
+      <button class="modal-close" onclick="closeModal('clientTypeModal')">✕</button>
+    </div>
+    <div class="fg">
+      <label>اسم النوع</label>
+      <div class="iw"><span class="ic">🏷️</span><input type="text" id="ct-name" placeholder="مثال: كهرباء فقط" oninput="updateTypePreview()"></div>
+    </div>
+    <div class="fg">
+      <label>لون البادج</label>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input type="color" id="ct-color" value="#4CAF7D" oninput="updateTypePreview()"
+               style="width:54px;height:42px;border-radius:10px;border:1.5px solid var(--border);background:var(--dark3);cursor:pointer;padding:3px">
+        <input type="text" id="ct-color-hex" value="#4CAF7D" oninput="syncColorFromHex()" maxlength="7"
+               style="width:110px;padding:10px 12px;direction:ltr;text-align:center;font-family:monospace;font-size:13px">
+        <span id="ct-preview" class="type-badge" style="background:rgba(76,175,125,0.12);color:#4CAF7D;border:1px solid rgba(76,175,125,0.3)">معاينة</span>
+      </div>
+    </div>
+    <div id="ct-default-info" style="display:none;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);margin-bottom:10px;line-height:1.7">
+      ⭐ ده النوع الافتراضي — بيتطبق تلقائياً على أي عميل جديد من غير ما تحدد نوع، وميتحذفش.
+    </div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveClientType()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('clientTypeModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXTRA CONTACT MODAL -->
+<div class="modal-overlay" id="extraContactModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="ec-modal-title">➕ إضافة جهة إضافية</span>
+      <button class="modal-close" onclick="closeModal('extraContactModal')">✕</button>
+    </div>
+
+    <div class="fg">
+      <label>🏷️ الكود <span style="font-size:10px;color:var(--text-dim)">(يتولد تلقائياً)</span></label>
+      <div class="iw">
+        <span class="ic">🔑</span>
+        <input type="text" id="ec-code" readonly style="background:var(--dark2);color:var(--gold);font-family:monospace;letter-spacing:2px;font-weight:700">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>الاسم</label>
+      <div class="iw"><span class="ic">👤</span><input type="text" id="ec-name" placeholder="مثال: أحمد محمد"></div>
+    </div>
+
+    <div class="fg">
+      <label>الوظيفة <span style="font-size:10px;color:var(--text-dim)">(اختياري)</span></label>
+      <div class="iw"><span class="ic">💼</span><input type="text" id="ec-job" placeholder="مثال: مدير المخزن"></div>
+    </div>
+
+    <div class="fg">
+      <label>الهاتف <span style="font-size:10px;color:var(--text-dim)">(اختياري)</span></label>
+      <div class="iw"><span class="ic">📱</span><input type="tel" id="ec-phone" placeholder="01xxxxxxxxx"></div>
+    </div>
+
+    <!-- Telegram ID section - only visible in edit mode -->
+    <div class="fg" id="ec-tg-wrap" style="display:none">
+      <label>💬 Telegram ID</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="ec-telegram" readonly style="flex:1;background:var(--dark2);direction:ltr;font-family:monospace">
+        <button type="button" class="act-btn silence" id="ec-reset-tg-btn" style="padding:10px 14px;font-size:12px;white-space:nowrap">🔄 إعادة تعيين</button>
+      </div>
+      <div id="ec-tg-status" style="margin-top:8px;font-size:11px;line-height:1.6"></div>
+    </div>
+
+    <div class="fg">
+      <label>ملاحظات <span style="font-size:10px;color:var(--text-dim)">(اختياري)</span></label>
+      <div class="iw"><span class="ic">📝</span><input type="text" id="ec-notes" placeholder="أي ملاحظات..."></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveExtraContact()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('extraContactModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- BROADCAST CONFIRM MODAL -->
+<div class="modal-overlay" id="broadcastConfirmModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>📢 تأكيد الإرسال</span>
+      <button class="modal-close" onclick="closeModal('broadcastConfirmModal')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">الرسالة اللي هتتبعت:</div>
+    <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px;max-height:240px;overflow-y:auto">
+      <div id="bc-confirm-msg" style="font-size:14px;line-height:1.8;white-space:pre-wrap;color:var(--text)"></div>
+    </div>
+    <div id="bc-confirm-breakdown" style="background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.3);border-radius:10px;padding:12px;font-size:13px;line-height:1.9;margin-bottom:12px"></div>
+    <div style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.25);border-radius:10px;padding:12px;font-size:12px;color:#e88080;line-height:1.7;margin-bottom:14px">
+      ⚠️ العملية مش قابلة للإلغاء بعد الإرسال. تأكد من الرسالة والعدد قبل الضغط.
+    </div>
+    <div class="modal-btns">
+      <button class="modal-save" id="bc-send-btn" onclick="sendBroadcast()">📢 إرسال الرسالة</button>
+      <button class="modal-cancel" onclick="closeModal('broadcastConfirmModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- VEHICLE TYPE MODAL -->
+<div class="modal-overlay" id="vehicleTypeModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="vt-modal-title">➕ إضافة نوع عربية</span>
+      <button class="modal-close" onclick="closeModal('vehicleTypeModal')">✕</button>
+    </div>
+
+    <div class="fg">
+      <label>الاسم</label>
+      <div class="iw"><span class="ic">🚛</span><input type="text" id="vt-name" placeholder="مثال: موتسيكل" oninput="updateVtPreview()"></div>
+    </div>
+
+    <div class="fg">
+      <label>الأيقونة <span style="font-size:10px;color:var(--text-dim)">(emoji واحد)</span></label>
+      <div class="iw"><span class="ic">😀</span><input type="text" id="vt-icon" maxlength="4" placeholder="🏍️" oninput="updateVtPreview()"></div>
+    </div>
+
+    <div class="fg">
+      <label>معدل التحميل في الساعة</label>
+      <div class="iw"><span class="ic">⏱️</span><input type="number" id="vt-capacity" min="1" max="50" placeholder="6"></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">كم عربية من النوع ده تقدر تحمل في الساعة الواحدة</div>
+    </div>
+
+    <div class="fg">
+      <label>ترتيب الظهور</label>
+      <div class="iw"><span class="ic">🔢</span><input type="number" id="vt-order" min="0" placeholder="1"></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">الأرقام الأصغر تظهر للعميل أولاً</div>
+    </div>
+
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--dark3);border-radius:10px;border:1px solid var(--border);margin-bottom:14px">
+      <input type="checkbox" id="vt-active" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)">
+      <span style="font-size:13px"><b>مفعّل</b> <span style="color:var(--text-dim);font-size:11px">— لو شيلت العلامة، النوع مش هيظهر للعميل في صفحة الحجز</span></span>
+    </label>
+
+    <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">معاينة:</div>
+      <div id="vt-preview" style="font-size:14px;display:flex;align-items:center;gap:10px"></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveVehicleType()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('vehicleTypeModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE MODAL -->
+<div class="modal-overlay" id="templateModal">
+  <div class="modal wide">
+    <div class="modal-title">
+      <span id="tmpl-modal-title">➕ إضافة رسالة محفوظة</span>
+      <button class="modal-close" onclick="closeModal('templateModal')">✕</button>
+    </div>
+
+    <div class="fg">
+      <label>اسم الرسالة <span style="font-size:10px;color:var(--text-dim)">(للتعريف فقط، مش بيظهر للعميل)</span></label>
+      <div class="iw"><span class="ic">🏷️</span><input type="text" id="tmpl-name" placeholder="مثال: تهنئة عيد الفطر"></div>
+    </div>
+
+    <div class="fg">
+      <label>الديانة المستهدفة</label>
+      <select id="tmpl-religion">
+        <option value="">📬 للكل (بدون فلتر ديانة)</option>
+        <option value="مسلم">🕌 المسلمين فقط</option>
+        <option value="مسيحي">✝️ المسيحيين فقط</option>
+      </select>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">لو حددت ديانة، عند استخدام الرسالة في الـ broadcast هيتم فلترة العملاء تلقائياً</div>
+    </div>
+
+    <div class="fg">
+      <label>نص الرسالة</label>
+      <textarea id="tmpl-content" rows="8" placeholder="اكتب نص الرسالة هنا..." style="font-family:Cairo,sans-serif;font-size:14px;line-height:1.8"></textarea>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">💡 الـ Header والـ Footer من صفحة الإعدادات بيتضافوا تلقائياً وقت الإرسال</div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveTemplate()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('templateModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE PICKER MODAL (used in broadcast page) -->
+<div class="modal-overlay" id="templatePickerModal">
+  <div class="modal wide">
+    <div class="modal-title">
+      <span>📂 اختار رسالة محفوظة</span>
+      <button class="modal-close" onclick="closeModal('templatePickerModal')">✕</button>
+    </div>
+    <input type="text" id="tp-search" placeholder="🔍 بحث بالاسم أو نص الرسالة..." oninput="filterTemplatePicker()" style="margin-bottom:14px">
+    <div id="tp-list" style="display:grid;grid-template-columns:1fr;gap:10px;max-height:500px;overflow-y:auto;padding-left:4px"></div>
   </div>
 </div>
 
@@ -748,9 +1164,16 @@ function goTo(sec){
   if(sec==='bookings')loadBookings();
   else if(sec==='employees')loadEmployees();
   else if(sec==='clients')loadClients();
+  else if(sec==='client-types')loadClientTypes();
+  else if(sec==='extra-contacts')loadExtraContacts();
+  else if(sec==='broadcast')loadBroadcast();
+  else if(sec==='templates')loadTemplates();
+  else if(sec==='unlinked')loadUnlinked();
+  else if(sec==='vehicle-types')loadVehicleTypes();
   else if(sec==='schedule')loadSchedule();
   else if(sec==='blocked')loadBlocked();
   else if(sec==='reports')loadReports();
+  else if(sec==='settings')loadSettings();
 }
 
 // =================== BOOKINGS ===================
@@ -1005,41 +1428,117 @@ function onAdminGovChange() {
 
 // =================== CLIENTS ===================
 let allClients = [];
+let allReligions = [];
 
 async function loadClients(){
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    const r=await fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}});
-    allClients=await r.json();
+    const [r1, r2, r3] = await Promise.all([
+      fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}}),
+      fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
+      fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR})
+    ]);
+    allClients = await r1.json();
+    allClientTypes = await r2.json();
+    allReligions = await r3.json();
 
     initAdminGovDropdown();
+    initClientTypeFilter();
+    initReligionFilter();
     filterClients();
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+function initClientTypeFilter(){
+  const sel = document.getElementById('cl-type');
+  if(!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">🏷️ كل الأنواع</option>';
+  allClientTypes.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    if(t.name === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function initReligionFilter(){
+  const sel = document.getElementById('cl-religion');
+  if(!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">🕌 كل الديانات</option>';
+  allReligions.forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.name;
+    opt.textContent = r.name === 'مسلم' ? '🕌 مسلم' : r.name === 'مسيحي' ? '✝️ مسيحي' : r.name;
+    if(r.name === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function populateClientTypeDropdown(selectId, selectedValue){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  sel.innerHTML = '';
+  allClientTypes.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name + (t.is_default ? ' (افتراضي)' : '');
+    if(t.name === selectedValue) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function populateReligionDropdown(selectId, selectedValue){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  sel.innerHTML = '';
+  (allReligions||[]).forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.name;
+    opt.textContent = r.name === 'مسلم' ? '🕌 مسلم' : r.name === 'مسيحي' ? '✝️ مسيحي' : r.name;
+    opt.textContent += r.is_default ? ' (افتراضي)' : '';
+    if(r.name === selectedValue) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function getReligionBadge(religion){
+  if(religion === 'مسلم') return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(76,175,125,0.12);color:#6dc49a">🕌 مسلم</span>';
+  if(religion === 'مسيحي') return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(74,144,217,0.12);color:#6faee8">✝️ مسيحي</span>';
+  if(religion) return `<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(138,133,128,0.15);color:var(--text-dim)">${religion}</span>`;
+  return '<span style="color:var(--text-dim);font-size:11px">-</span>';
 }
 
 function filterClients(){
   const search=(document.getElementById('cl-search').value||'').trim().toLowerCase();
   const gov=document.getElementById('cl-gov').value;
   const district=document.getElementById('cl-district').value;
+  const type=document.getElementById('cl-type').value;
+  const religion=document.getElementById('cl-religion').value;
   const status=document.getElementById('cl-status').value;
 
   let data=allClients;
 
-  // فلتر البحث الذكي - بيفلتر بكل الحقول
+  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة)
   if(search){
     data=data.filter(c=>{
       const fields=[
         c.name, c.company_code, c.phone,
         c.governorate, c.city, c.district, c.address,
-        c.username, String(c.id)
+        c.username, String(c.id), c.client_type, c.religion
       ].map(f=>(f||'').toLowerCase());
       return fields.some(f=>f.includes(search));
     });
   }
   if(gov) data=data.filter(c=>c.governorate===gov);
   if(district) data=data.filter(c=>c.city===district||c.district===district);
-  if(status==='active') data=data.filter(c=>!c.is_blocked);
+  if(type) data=data.filter(c=>(c.client_type||'عميل عام')===type);
+  if(religion) data=data.filter(c=>(c.religion||'مسلم')===religion);
+  if(status==='active') data=data.filter(c=>!c.is_blocked && c.is_active!==false);
   if(status==='blocked') data=data.filter(c=>c.is_blocked);
+  if(status==='inactive') data=data.filter(c=>c.is_active===false);
 
   document.getElementById('cl-count').textContent=`${data.length} عميل`;
 
@@ -1049,6 +1548,10 @@ function filterClients(){
     return;
   }
 
+  // Build a color map from types
+  const typeColorMap = {};
+  allClientTypes.forEach(t => { typeColorMap[t.name] = t.color; });
+
   const hl=(text,q)=>{
     if(!q||!text)return text||'-';
     const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
@@ -1057,7 +1560,10 @@ function filterClients(){
 
   let html=`<table><thead><tr>
     <th style="width:36px">#</th>
-    <th>الاسم</th><th>الكود</th><th>الهاتف</th>
+    <th>الاسم</th>
+    <th>🏷️ النوع</th>
+    <th>🕌 الديانة</th>
+    <th>الكود</th><th>الهاتف</th>
     <th>المحافظة</th><th>المدينة</th><th>العنوان</th>
     <th>اليوزر نيم</th><th>الباسورد</th>
     <th style="width:60px">no-show</th><th>الحالة</th><th>إجراءات</th>
@@ -1066,9 +1572,29 @@ function filterClients(){
   data.forEach((c,i)=>{
     const ns=c.no_show_count||0;
     const nsColor=ns>=2?'#e88080':ns>0?'#d4a030':'var(--text-dim)';
+
+    // Type badge
+    const typeName = c.client_type || 'عميل عام';
+    const typeColor = typeColorMap[typeName] || '#8A8580';
+
+    // Religion badge
+    const religionBadge = getReligionBadge(c.religion || 'مسلم');
+
+    // Status badges (can stack)
+    const isBlocked = !!c.is_blocked;
+    const isInactive = c.is_active === false;
+    let statusCell = '';
+    if(isBlocked) statusCell += '<span class="badge blocked">محظور 🔒</span> ';
+    if(isInactive) statusCell += '<span class="badge inactive">لا يستقبل 🔕</span> ';
+    if(!isBlocked && !isInactive) statusCell = '<span class="badge active">نشط ✅</span>';
+
+    const nameEsc = (c.name||'').replace(/'/g,"\\'");
+
     html+=`<tr style="cursor:pointer" ondblclick="openClientProfile(${c.id})" title="دبل كليك لفتح ملف العميل">
       <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
       <td><b style="font-size:13px">${hl(c.name,search)}</b></td>
+      <td><span class="type-badge" style="background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40">${typeName}</span></td>
+      <td>${religionBadge}</td>
       <td><span style="color:#d4a957;font-weight:700">${hl(c.company_code,search)}</span></td>
       <td style="font-size:12px;direction:ltr;text-align:right">${hl(c.phone,search)}</td>
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.governorate,search)}</td>
@@ -1077,13 +1603,16 @@ function filterClients(){
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.username,search)||'-'}</td>
       <td style="font-size:11px;color:rgba(138,133,128,0.5);letter-spacing:3px">••••</td>
       <td style="color:${nsColor};font-weight:${ns>0?700:400};text-align:center">${ns}</td>
-      <td>${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}</td>
+      <td>${statusCell}</td>
       <td><div class="act-btns">
-        <button class="act-btn edit" onclick="event.stopPropagation();openClientEdit(${c.id})">✏️ تعديل</button>
-        ${c.is_blocked?
-          `<button class="act-btn unblock" onclick="event.stopPropagation();unblockClient(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🔓</button>`:
-          `<button class="act-btn del" onclick="event.stopPropagation();blockClient(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🔒</button>`}
-        <button class="act-btn del" onclick="event.stopPropagation();deleteClient(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">🗑️</button>
+        <button class="act-btn edit" onclick="event.stopPropagation();openClientEdit(${c.id})" title="تعديل بيانات العميل">✏️</button>
+        ${isBlocked?
+          `<button class="act-btn unblock" onclick="event.stopPropagation();unblockClient(${c.id},'${nameEsc}')" title="فك الحظر من الحجز">🔓</button>`:
+          `<button class="act-btn del" onclick="event.stopPropagation();blockClient(${c.id},'${nameEsc}')" title="حظر من الحجز">🔒</button>`}
+        ${isInactive?
+          `<button class="act-btn toggle" onclick="event.stopPropagation();activateClient(${c.id},'${nameEsc}')" title="تفعيل استقبال الرسائل">🔕</button>`:
+          `<button class="act-btn silence" onclick="event.stopPropagation();deactivateClient(${c.id},'${nameEsc}')" title="إيقاف استقبال الرسائل">🔔</button>`}
+        <button class="act-btn del" onclick="event.stopPropagation();deleteClient(${c.id},'${nameEsc}')" title="حذف العميل">🗑️</button>
       </div></td>
     </tr>`;
   });
@@ -1093,9 +1622,14 @@ function filterClients(){
   // footer
   const footer=document.getElementById('cl-footer');
   footer.style.display='flex';
+  const muslimCount = data.filter(c=>(c.religion||'مسلم')==='مسلم').length;
+  const christianCount = data.filter(c=>c.religion==='مسيحي').length;
   footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
-    <span>نشط: <b>${data.filter(c=>!c.is_blocked).length}</b></span>
+    <span>🕌 مسلم: <b>${muslimCount}</b></span>
+    <span>✝️ مسيحي: <b>${christianCount}</b></span>
+    <span>نشط: <b>${data.filter(c=>!c.is_blocked && c.is_active!==false).length}</b></span>
     <span>محظور: <b style="color:#e88080">${data.filter(c=>c.is_blocked).length}</b></span>
+    <span>لا يستقبل: <b style="color:var(--text-dim)">${data.filter(c=>c.is_active===false).length}</b></span>
     <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك لفتح ملف العميل</span>`;
 }
 
@@ -1118,6 +1652,12 @@ function openAddClientModal(){
   ['ac-code','ac-name','ac-phone','ac-address','ac-username','ac-password'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ac-gov').value='';
   document.getElementById('ac-city').innerHTML='<option value="">-- اختر المحافظة أولاً --</option>';
+  // Populate client type dropdown with default pre-selected
+  const defaultType = allClientTypes.find(t=>t.is_default) || allClientTypes[0];
+  populateClientTypeDropdown('ac-client-type', defaultType ? defaultType.name : '');
+  // Populate religion dropdown with default pre-selected
+  const defaultReligion = (allReligions||[]).find(r=>r.is_default) || (allReligions||[])[0];
+  populateReligionDropdown('ac-religion', defaultReligion ? defaultReligion.name : '');
   document.getElementById('addClientModal').classList.add('show');
 }
 
@@ -1132,9 +1672,11 @@ async function saveNewClient(){
     address:      document.getElementById('ac-address').value.trim(),
     username:     document.getElementById('ac-username').value.trim(),
     password:     document.getElementById('ac-password').value.trim(),
+    client_type:  document.getElementById('ac-client-type').value,
+    religion:     document.getElementById('ac-religion').value,
   };
 
-  if(Object.values(data).some(v=>!v)){alert('من فضلك أكمل جميع الحقول');return;}
+  if(Object.values(data).some(v=>!v)){alert('من فضلك أكمل جميع الحقول (بما فيهم الديانة)');return;}
   if(data.name.split(/\s+/).length<3){alert('من فضلك أدخل الاسم الثلاثي كاملاً');return;}
   if(!/^01[0-9]{9}$/.test(data.phone)){alert('رقم الهاتف غير صحيح — لازم يبدأ بـ 01 ويكون 11 رقم');return;}
 
@@ -1145,29 +1687,104 @@ async function saveNewClient(){
   }catch(e){alert('❌ خطأ في الاتصال');}
 }
 
-// =================== PERMIT SETTINGS ===================
-async function openPermitSettings(){
+// =================== SETTINGS (GENERAL) ===================
+async function loadSettings(){
   try{
-    const r=await fetch(`${SB}/rest/v1/app_settings?key=in.(permit_min,permit_max)&select=*`,{headers:HDR});
-    const data=await r.json();
-    const map={};data.forEach(s=>map[s.key]=s.value);
-    document.getElementById('ps-min').value=map.permit_min||'14000';
-    document.getElementById('ps-max').value=map.permit_max||'15000';
-  }catch(e){}
-  document.getElementById('permitSettingsModal').classList.add('show');
+    const r = await fetch(`${SB}/rest/v1/app_settings?select=key,value`,{headers:HDR});
+    const data = await r.json();
+    const map = {};
+    data.forEach(s => map[s.key] = s.value);
+
+    document.getElementById('set-work-start').value  = map.working_hour_start || '8';
+    document.getElementById('set-work-end').value    = map.working_hour_end   || '16';
+    document.getElementById('set-cutoff').value      = map.daily_cutoff_hour  || '15';
+    document.getElementById('set-permit-min').value  = map.permit_min || '14000';
+    document.getElementById('set-permit-max').value  = map.permit_max || '15000';
+    document.getElementById('set-header').value      = map.broadcast_header || '';
+    document.getElementById('set-footer').value      = map.broadcast_footer || '';
+
+    updateMessagePreview();
+    updateSlotsPreview();
+
+    // Bind preview update on change
+    document.getElementById('set-header').oninput = updateMessagePreview;
+    document.getElementById('set-footer').oninput = updateMessagePreview;
+  }catch(e){
+    alert('❌ خطأ في تحميل الإعدادات');
+  }
 }
 
-async function savePermitSettings(){
-  const min=parseInt(document.getElementById('ps-min').value);
-  const max=parseInt(document.getElementById('ps-max').value);
-  if(isNaN(min)||isNaN(max)){alert('أدخل أرقام صحيحة');return;}
-  if(min>=max){alert('أقل رقم لازم يكون أصغر من أعلى رقم');return;}
+function updateMessagePreview(){
+  const header = (document.getElementById('set-header').value || '').trim();
+  const footer = (document.getElementById('set-footer').value || '').trim();
+  const sample = '📌 مثال على نص الرسالة اللي هتكتبها قبل الإرسال.';
+  let preview = '';
+  if(header) preview += header + '\n\n';
+  preview += sample;
+  if(footer) preview += '\n\n' + footer;
+  document.getElementById('set-preview').textContent = preview;
+}
+
+function updateSlotsPreview(){
+  const ws = parseInt(document.getElementById('set-work-start').value);
+  const we = parseInt(document.getElementById('set-work-end').value);
+  const out = document.getElementById('slots-preview');
+  if(isNaN(ws) || isNaN(we) || we <= ws){
+    out.textContent = '— أدخل أرقام صحيحة';
+    return;
+  }
+  const slots = [];
+  for(let h = ws; h < we; h++){
+    const next = h + 1;
+    // Convert 24h → 12h-friendly display
+    const fmt = x => x === 0 ? '12' : x > 12 ? String(x - 12) : String(x);
+    slots.push(`${fmt(h)}–${fmt(next)}`);
+  }
+  out.textContent = `${slots.length} مواعيد: ${slots.join(' / ')}`;
+}
+
+async function saveSettings(){
+  const ws    = parseInt(document.getElementById('set-work-start').value);
+  const we    = parseInt(document.getElementById('set-work-end').value);
+  const co    = parseInt(document.getElementById('set-cutoff').value);
+  const pmin  = parseInt(document.getElementById('set-permit-min').value);
+  const pmax  = parseInt(document.getElementById('set-permit-max').value);
+  const header = document.getElementById('set-header').value;
+  const footer = document.getElementById('set-footer').value;
+
+  // Validations
+  if(isNaN(ws) || ws<0 || ws>23){alert('❌ ساعة بداية العمل غير صحيحة (0-23)');return;}
+  if(isNaN(we) || we<1 || we>24){alert('❌ ساعة نهاية العمل غير صحيحة (1-24)');return;}
+  if(we <= ws){alert('❌ ساعة نهاية العمل لازم تكون أكبر من ساعة البداية');return;}
+  if(isNaN(co) || co<0 || co>24){alert('❌ ساعة القفل غير صحيحة');return;}
+  if(co < ws || co > we){alert('❌ ساعة القفل لازم تكون بين بداية ونهاية يوم العمل');return;}
+  if(isNaN(pmin) || isNaN(pmax)){alert('❌ نطاق الأذون غير صحيح');return;}
+  if(pmin >= pmax){alert('❌ أقل رقم إذن لازم يكون أصغر من أعلى رقم');return;}
+
+  const updates = [
+    ['working_hour_start', String(ws)],
+    ['working_hour_end',   String(we)],
+    ['daily_cutoff_hour',  String(co)],
+    ['permit_min',         String(pmin)],
+    ['permit_max',         String(pmax)],
+    ['broadcast_header',   header],
+    ['broadcast_footer',   footer]
+  ];
+
   try{
-    await fetch(`${SB}/rest/v1/app_settings?key=eq.permit_min`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({value:String(min),updated_at:new Date().toISOString()})});
-    await fetch(`${SB}/rest/v1/app_settings?key=eq.permit_max`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({value:String(max),updated_at:new Date().toISOString()})});
-    closeModal('permitSettingsModal');
-    alert(`✅ تم حفظ النطاق: من ${min} إلى ${max}`);
-  }catch(e){alert('❌ خطأ في الحفظ');}
+    const results = await Promise.all(updates.map(([key, value]) =>
+      fetch(`${SB}/rest/v1/app_settings?key=eq.${key}`,{
+        method:'PATCH',
+        headers:{...HDR,'Prefer':'return=minimal'},
+        body: JSON.stringify({value, updated_at: new Date().toISOString()})
+      })
+    ));
+    const failed = results.filter(r => !r.ok).length;
+    if(failed === 0) alert('✅ تم حفظ كل الإعدادات بنجاح');
+    else alert(`⚠️ تم حفظ ${updates.length-failed} من ${updates.length} إعدادات (${failed} فشلت)`);
+  }catch(e){
+    alert('❌ خطأ في الحفظ');
+  }
 }
 
 // =================== PRINT CLIENTS ===================
@@ -1533,6 +2150,8 @@ function openClientEdit(id){
   editClientId=id;
   initEditGovDropdown();
   document.getElementById('ce-name').value=c.name||'';
+  populateClientTypeDropdown('ce-client-type', c.client_type || 'عميل عام');
+  populateReligionDropdown('ce-religion', c.religion || 'مسلم');
   document.getElementById('ce-code').value=c.company_code||'';
   document.getElementById('ce-phone').value=c.phone||'';
   document.getElementById('ce-gov').value=c.governorate||'';
@@ -1553,9 +2172,12 @@ async function saveClientEdit(){
   const address=document.getElementById('ce-address').value.trim();
   const username=document.getElementById('ce-username').value.trim();
   const password=document.getElementById('ce-password').value.trim();
+  const clientType=document.getElementById('ce-client-type').value;
+  const religion=document.getElementById('ce-religion').value;
   if(!name||!phone||!username){alert('أدخل الاسم والتليفون واليوزر');return;}
+  if(!religion){alert('من فضلك اختار الديانة');return;}
   if(!/^01[0-9]{9}$/.test(phone)){alert('رقم الهاتف غير صحيح — 11 رقم يبدأ بـ 01');return;}
-  const body={name,company_code:code,phone,governorate:gov,city,address,username};
+  const body={name,company_code:code,phone,governorate:gov,city,address,username,client_type:clientType,religion};
   if(password)body.password=password;
   try{
     const res=await fetch(`${SB}/rest/v1/clients?id=eq.${editClientId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
@@ -1582,6 +2204,1272 @@ async function blockClient(id,name){
   showConfirm('🔒','حظر عميل',`هتعمل بلوك على "${name}"؟`,true,async()=>{
     await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_blocked:true})});
     loadClients();
+  });
+}
+
+async function deactivateClient(id,name){
+  showConfirm('🔕','إيقاف استقبال الرسائل',`هتوقف استقبال الرسائل لـ "${name}"؟\n\nمش هيوصله أي رسالة broadcast بعد كده.`,true,async()=>{
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:false})});
+    loadClients();
+  });
+}
+
+async function activateClient(id,name){
+  showConfirm('🔔','تفعيل استقبال الرسائل',`هتفعّل استقبال الرسائل لـ "${name}"؟`,false,async()=>{
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:true})});
+    loadClients();
+  });
+}
+
+// =================== CLIENT TYPES ===================
+let allClientTypes = [];
+let editCtId = null;
+
+async function loadClientTypes(){
+  document.getElementById('ct-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const [r1, r2] = await Promise.all([
+      fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
+      fetch(`${SB}/rest/v1/clients?select=client_type`,{headers:{...HDR,'Range':'0-499'}})
+    ]);
+    allClientTypes = await r1.json();
+    const clients = await r2.json();
+
+    const counts = {};
+    clients.forEach(c => {
+      const t = c.client_type || 'عميل عام';
+      counts[t] = (counts[t]||0) + 1;
+    });
+
+    renderClientTypes(counts);
+  }catch(e){
+    document.getElementById('ct-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';
+  }
+}
+
+function renderClientTypes(counts){
+  if(!allClientTypes.length){
+    document.getElementById('ct-table').innerHTML='<div class="empty-txt">مفيش أنواع — أضف نوع جديد</div>';
+    return;
+  }
+
+  let html = `<table><thead><tr>
+    <th style="width:36px">#</th>
+    <th style="width:70px;text-align:center">اللون</th>
+    <th>الاسم</th>
+    <th style="text-align:center">افتراضي</th>
+    <th style="text-align:center">عدد العملاء</th>
+    <th>تاريخ الإنشاء</th>
+    <th style="width:160px">إجراءات</th>
+  </tr></thead><tbody>`;
+
+  allClientTypes.forEach((t,i)=>{
+    const count = counts[t.name] || 0;
+    const dt = t.created_at ? new Date(t.created_at).toLocaleDateString('ar-EG') : '-';
+    const nameEsc = (t.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    html += `<tr>
+      <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
+      <td style="text-align:center"><span class="type-dot" style="background:${t.color};box-shadow:0 0 0 2px ${t.color}33"></span></td>
+      <td><span class="type-badge" style="background:${t.color}20;color:${t.color};border:1px solid ${t.color}40">${t.name}</span></td>
+      <td style="text-align:center">${t.is_default?'<span style="color:var(--gold);font-weight:700">⭐ نعم</span>':'<span style="color:var(--text-dim)">—</span>'}</td>
+      <td style="text-align:center"><b style="color:var(--gold);font-size:14px">${count}</b></td>
+      <td style="font-size:12px;color:var(--text-dim)">${dt}</td>
+      <td><div class="act-btns">
+        <button class="act-btn edit" onclick="openClientTypeModal(${t.id})">✏️ تعديل</button>
+        ${!t.is_default ? `<button class="act-btn del" onclick="deleteClientType(${t.id},'${nameEsc}',${count})">🗑️ حذف</button>` : ''}
+      </div></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('ct-table').innerHTML = html;
+}
+
+function openClientTypeModal(id=null){
+  editCtId = id;
+  const isEdit = id !== null;
+  document.getElementById('ct-modal-title').textContent = isEdit ? '✏️ تعديل نوع العميل' : '➕ إضافة نوع عميل';
+
+  if(isEdit){
+    const t = allClientTypes.find(x=>x.id===id);
+    if(!t) return;
+    document.getElementById('ct-name').value = t.name;
+    document.getElementById('ct-color').value = t.color;
+    document.getElementById('ct-color-hex').value = t.color;
+    document.getElementById('ct-default-info').style.display = t.is_default ? 'block' : 'none';
+  }else{
+    document.getElementById('ct-name').value = '';
+    document.getElementById('ct-color').value = '#4CAF7D';
+    document.getElementById('ct-color-hex').value = '#4CAF7D';
+    document.getElementById('ct-default-info').style.display = 'none';
+  }
+  updateTypePreview();
+  document.getElementById('clientTypeModal').classList.add('show');
+}
+
+function updateTypePreview(){
+  const color = document.getElementById('ct-color').value;
+  document.getElementById('ct-color-hex').value = color.toUpperCase();
+  const preview = document.getElementById('ct-preview');
+  preview.style.background = color + '20';
+  preview.style.color = color;
+  preview.style.borderColor = color + '40';
+  const name = document.getElementById('ct-name').value.trim();
+  preview.textContent = name || 'معاينة';
+}
+
+function syncColorFromHex(){
+  const hex = document.getElementById('ct-color-hex').value.trim();
+  if(/^#[0-9A-Fa-f]{6}$/.test(hex)){
+    document.getElementById('ct-color').value = hex;
+    updateTypePreview();
+  }
+}
+
+async function saveClientType(){
+  const name = document.getElementById('ct-name').value.trim();
+  const color = document.getElementById('ct-color').value;
+
+  if(!name){alert('من فضلك أدخل اسم النوع');return;}
+  if(!/^#[0-9A-Fa-f]{6}$/.test(color)){alert('اللون غير صحيح');return;}
+
+  const isEdit = editCtId !== null;
+  const body = {name, color};
+
+  try{
+    // If editing and name changed, migrate all existing clients first
+    let oldName = null;
+    if(isEdit){
+      const oldType = allClientTypes.find(x=>x.id===editCtId);
+      if(oldType && oldType.name !== name) oldName = oldType.name;
+    }
+
+    const url = isEdit ? `${SB}/rest/v1/client_types?id=eq.${editCtId}` : `${SB}/rest/v1/client_types`;
+    const method = isEdit ? 'PATCH' : 'POST';
+    const res = await fetch(url,{
+      method,
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body: JSON.stringify(body)
+    });
+
+    if(res.ok){
+      // Update all clients using the old name to the new name
+      if(oldName){
+        await fetch(`${SB}/rest/v1/clients?client_type=eq.${encodeURIComponent(oldName)}`,{
+          method:'PATCH',
+          headers:{...HDR,'Prefer':'return=minimal'},
+          body: JSON.stringify({client_type: name})
+        });
+      }
+      closeModal('clientTypeModal');
+      await loadClientTypes();
+      alert(isEdit ? '✅ تم التعديل' : '✅ تم إضافة النوع');
+    }else{
+      const err = await res.json().catch(()=>({}));
+      if(err.code==='23505') alert('❌ اسم النوع مسجل بالفعل — اختر اسم مختلف');
+      else alert('❌ خطأ في الحفظ: '+(err.message||'غير معروف'));
+    }
+  }catch(e){
+    alert('❌ خطأ في الاتصال');
+  }
+}
+
+async function deleteClientType(id, name, count){
+  // Block deletion if there are clients using this type (option A)
+  if(count > 0){
+    alert(`❌ مينفعش تحذف "${name}"\n\nفيه ${count} عميل بالنوع ده. السيستم بيرفض حذف أنواع عليها حركة.\n\nعشان تحذفه: عدّل العملاء دول ونقلهم لنوع تاني الأول، وبعدين ارجع احذف النوع.`);
+    return;
+  }
+
+  showConfirm('🗑️', 'حذف نوع العميل', `هتحذف نوع "${name}"؟ مش هتقدر ترجع!`, true, async()=>{
+    try{
+      const res = await fetch(`${SB}/rest/v1/client_types?id=eq.${id}`,{method:'DELETE',headers:HDR});
+      if(res.ok){await loadClientTypes();}
+      else alert('❌ خطأ في الحذف');
+    }catch(e){alert('❌ خطأ في الاتصال');}
+  });
+}
+
+// =================== EXTRA CONTACTS ===================
+let allExtraContacts = [];
+let editEcId = null;
+const BOT_USERNAME = 'hawa_car_bot';
+
+async function loadExtraContacts(){
+  document.getElementById('ec-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const r = await fetch(`${SB}/rest/v1/extra_contacts?select=*&order=id.asc`,{headers:HDR});
+    allExtraContacts = await r.json();
+    renderExtraContacts();
+  }catch(e){
+    document.getElementById('ec-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';
+  }
+}
+
+function renderExtraContacts(){
+  const count = allExtraContacts.length;
+  document.getElementById('ec-count').textContent = count ? `${count} جهة` : '';
+
+  if(!count){
+    document.getElementById('ec-table').innerHTML = '<div class="empty-txt">📭 مفيش جهات لسه — اضغط "إضافة جهة" لإنشاء أول واحدة</div>';
+    return;
+  }
+
+  let html = `<table><thead><tr>
+    <th style="width:36px">#</th>
+    <th>الاسم</th>
+    <th>الوظيفة</th>
+    <th>الهاتف</th>
+    <th>🏷️ الكود</th>
+    <th style="text-align:center">💬 Telegram</th>
+    <th>الحالة</th>
+    <th>تاريخ الإنشاء</th>
+    <th style="width:180px">إجراءات</th>
+  </tr></thead><tbody>`;
+
+  allExtraContacts.forEach((ec,i)=>{
+    const dt = ec.created_at ? new Date(ec.created_at).toLocaleDateString('ar-EG') : '-';
+    const hasTg = !!ec.telegram_id;
+    const isActive = ec.is_active !== false;
+    const nameEsc = (ec.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const codeEsc = (ec.code||'').replace(/'/g,"\\'");
+
+    html += `<tr>
+      <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
+      <td><b style="font-size:13px">${ec.name||'-'}</b>${ec.notes?`<div style="font-size:10px;color:var(--text-dim);margin-top:2px">${ec.notes}</div>`:''}</td>
+      <td style="font-size:12px;color:var(--text-dim)">${ec.job_title||'-'}</td>
+      <td style="font-size:12px;direction:ltr;text-align:right">${ec.phone||'-'}</td>
+      <td><span style="color:#d4a957;font-weight:700;font-family:monospace;letter-spacing:1px">${ec.code}</span></td>
+      <td style="text-align:center">${hasTg ? '<span title="مربوط بنجاح" style="color:#6dc49a;font-size:16px">✅</span>' : '<span title="لم يربط البوت بعد" style="color:var(--text-dim);font-size:16px">❌</span>'}</td>
+      <td>${isActive ? '<span class="badge active">نشط ✅</span>' : '<span class="badge inactive">موقوف 🔕</span>'}</td>
+      <td style="font-size:11px;color:var(--text-dim)">${dt}</td>
+      <td><div class="act-btns">
+        <button class="act-btn edit" onclick="copyTelegramLink('${codeEsc}')" title="نسخ لينك الربط">📋</button>
+        <button class="act-btn edit" onclick="openExtraContactModal(${ec.id})" title="تعديل">✏️</button>
+        ${isActive
+          ? `<button class="act-btn silence" onclick="deactivateExtraContact(${ec.id},'${nameEsc}')" title="إيقاف استقبال الرسائل">🔔</button>`
+          : `<button class="act-btn toggle" onclick="activateExtraContact(${ec.id},'${nameEsc}')" title="تفعيل استقبال الرسائل">🔕</button>`
+        }
+        <button class="act-btn del" onclick="deleteExtraContact(${ec.id},'${nameEsc}')" title="حذف">🗑️</button>
+      </div></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('ec-table').innerHTML = html;
+}
+
+async function generateNextCode(){
+  try{
+    const r = await fetch(`${SB}/rest/v1/extra_contacts?code=like.EXT*&select=code&order=code.desc&limit=1`,{headers:HDR});
+    const data = await r.json();
+    if(!data.length) return 'EXT001';
+    const match = String(data[0].code).match(/^EXT(\d+)$/);
+    if(!match) return 'EXT' + String(allExtraContacts.length + 1).padStart(3,'0');
+    const next = parseInt(match[1]) + 1;
+    return 'EXT' + String(next).padStart(3,'0');
+  }catch(e){
+    return 'EXT' + Date.now().toString().slice(-6);
+  }
+}
+
+async function openExtraContactModal(id=null){
+  editEcId = id;
+  const isEdit = id !== null;
+  document.getElementById('ec-modal-title').textContent = isEdit ? '✏️ تعديل جهة إضافية' : '➕ إضافة جهة إضافية';
+
+  if(isEdit){
+    const ec = allExtraContacts.find(x=>x.id===id);
+    if(!ec) return;
+    document.getElementById('ec-code').value = ec.code || '';
+    document.getElementById('ec-name').value = ec.name || '';
+    document.getElementById('ec-job').value = ec.job_title || '';
+    document.getElementById('ec-phone').value = ec.phone || '';
+    document.getElementById('ec-notes').value = ec.notes || '';
+    document.getElementById('ec-tg-wrap').style.display = 'block';
+    renderTgStatus(ec.telegram_id, ec.code);
+    document.getElementById('ec-reset-tg-btn').onclick = () => resetExtraTelegramId(id, ec.name);
+  }else{
+    document.getElementById('ec-code').value = '⏳ جاري التوليد...';
+    document.getElementById('ec-name').value = '';
+    document.getElementById('ec-job').value = '';
+    document.getElementById('ec-phone').value = '';
+    document.getElementById('ec-notes').value = '';
+    document.getElementById('ec-tg-wrap').style.display = 'none';
+    const newCode = await generateNextCode();
+    document.getElementById('ec-code').value = newCode;
+  }
+
+  document.getElementById('extraContactModal').classList.add('show');
+}
+
+function renderTgStatus(telegramId, code){
+  document.getElementById('ec-telegram').value = telegramId || '— غير مربوط —';
+  const status = document.getElementById('ec-tg-status');
+  const btn = document.getElementById('ec-reset-tg-btn');
+  if(telegramId){
+    status.innerHTML = '<span style="color:#6dc49a">✅ الجهة ربطت البوت بنجاح</span>';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+  }else{
+    status.innerHTML = `<span style="color:var(--text-dim)">❌ لم يربط البوت بعد — ابعت له لينك الربط (زرار 📋 في الجدول) علشان يضغط Start من حسابه.</span>`;
+    btn.disabled = true;
+    btn.style.opacity = '0.4';
+    btn.style.cursor = 'not-allowed';
+  }
+}
+
+async function saveExtraContact(){
+  const code = document.getElementById('ec-code').value.trim();
+  const name = document.getElementById('ec-name').value.trim();
+  const job = document.getElementById('ec-job').value.trim();
+  const phone = document.getElementById('ec-phone').value.trim();
+  const notes = document.getElementById('ec-notes').value.trim();
+
+  if(!code || code.includes('جاري')){alert('الكود مش جاهز — استنى ثانية وحاول تاني');return;}
+  if(!name){alert('من فضلك أدخل الاسم');return;}
+  if(phone && !/^01[0-9]{9}$/.test(phone)){alert('رقم الهاتف غير صحيح — 11 رقم يبدأ بـ 01، أو سيبه فاضي');return;}
+
+  const isEdit = editEcId !== null;
+  const body = {
+    code,
+    name,
+    job_title: job || null,
+    phone: phone || null,
+    notes: notes || null
+  };
+
+  try{
+    const url = isEdit ? `${SB}/rest/v1/extra_contacts?id=eq.${editEcId}` : `${SB}/rest/v1/extra_contacts`;
+    const method = isEdit ? 'PATCH' : 'POST';
+    const res = await fetch(url,{method, headers:{...HDR,'Prefer':'return=minimal'}, body:JSON.stringify(body)});
+
+    if(res.ok){
+      closeModal('extraContactModal');
+      await loadExtraContacts();
+      if(!isEdit){
+        showConfirm('✅','تمت الإضافة',`تم إضافة الجهة بنجاح بكود ${code}.\n\nتنسخ لينك الربط دلوقتي؟`, false, ()=>copyTelegramLink(code));
+      }else{
+        alert('✅ تم حفظ التعديلات');
+      }
+    }else{
+      const err = await res.json().catch(()=>({}));
+      if(err.code === '23505') alert('❌ الكود مسجل بالفعل — أعد تحميل الصفحة وحاول تاني');
+      else alert('❌ خطأ في الحفظ: '+(err.message||''));
+    }
+  }catch(e){
+    alert('❌ خطأ في الاتصال');
+  }
+}
+
+function deleteExtraContact(id, name){
+  showConfirm('🗑️','حذف جهة إضافية',`هتحذف "${name}"؟ مش هتقدر ترجع!`,true,async()=>{
+    try{
+      const res = await fetch(`${SB}/rest/v1/extra_contacts?id=eq.${id}`,{method:'DELETE',headers:HDR});
+      if(res.ok) loadExtraContacts();
+      else alert('❌ خطأ في الحذف');
+    }catch(e){alert('❌ خطأ في الاتصال');}
+  });
+}
+
+async function activateExtraContact(id, name){
+  showConfirm('🔔','تفعيل استقبال الرسائل',`هتفعّل استقبال الرسائل لـ "${name}"؟`,false,async()=>{
+    await fetch(`${SB}/rest/v1/extra_contacts?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:true})});
+    loadExtraContacts();
+  });
+}
+
+async function deactivateExtraContact(id, name){
+  showConfirm('🔕','إيقاف استقبال الرسائل',`هتوقف استقبال الرسائل لـ "${name}"؟\n\nمش هيوصله أي رسالة broadcast بعد كده.`,true,async()=>{
+    await fetch(`${SB}/rest/v1/extra_contacts?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:false})});
+    loadExtraContacts();
+  });
+}
+
+async function copyTelegramLink(code){
+  const link = `https://t.me/${BOT_USERNAME}?start=${code}`;
+  try{
+    await navigator.clipboard.writeText(link);
+    alert(`✅ تم نسخ اللينك:\n\n${link}\n\nابعته للجهة علشان تضغط Start من البوت.`);
+  }catch(err){
+    // Fallback for browsers/contexts without clipboard API
+    prompt('انسخ اللينك يدوياً:', link);
+  }
+}
+
+async function resetExtraTelegramId(id, name){
+  const ec = allExtraContacts.find(x=>x.id===id);
+  const code = ec ? ec.code : '';
+  showConfirm('🔄','إعادة تعيين Telegram',
+    `هتمسح الـ Telegram ID لـ "${name}"؟\n\nبعد كده هيحتاج يضغط Start من اللينك (${code}) تاني عشان يتربط.`,
+    true,
+    async()=>{
+      try{
+        const res = await fetch(`${SB}/rest/v1/extra_contacts?id=eq.${id}`,{
+          method:'PATCH',
+          headers:{...HDR,'Prefer':'return=minimal'},
+          body:JSON.stringify({telegram_id: null})
+        });
+        if(res.ok){
+          if(ec) ec.telegram_id = null;
+          renderTgStatus(null, code);
+          renderExtraContacts();
+        }else{
+          alert('❌ خطأ في إعادة التعيين');
+        }
+      }catch(e){alert('❌ خطأ في الاتصال');}
+    }
+  );
+}
+
+// =================== BROADCAST ===================
+const BROADCAST_WEBHOOK = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/broadcast';
+let broadcastTargets = null; // cached last preview result
+let allBroadcastTemplates = [];
+let cachedBroadcastSettings = {header:'', footer:''};
+
+async function loadBroadcast(){
+  // Parallel: client_types + religions + templates + settings
+  try{
+    const [r1, r2, r3, r4] = await Promise.all([
+      (allClientTypes && allClientTypes.length)
+        ? Promise.resolve({json: async () => allClientTypes})
+        : fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
+      (allReligions && allReligions.length)
+        ? Promise.resolve({json: async () => allReligions})
+        : fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
+      fetch(`${SB}/rest/v1/message_templates?select=*&order=id.desc`,{headers:HDR}),
+      fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(broadcast_header,broadcast_footer)`,{headers:HDR})
+    ]);
+    allClientTypes = await r1.json();
+    allReligions = await r2.json();
+    allBroadcastTemplates = await r3.json();
+    const settings = await r4.json();
+    cachedBroadcastSettings = {header:'', footer:''};
+    settings.forEach(s => {
+      if(s.key === 'broadcast_header') cachedBroadcastSettings.header = s.value || '';
+      if(s.key === 'broadcast_footer') cachedBroadcastSettings.footer = s.value || '';
+    });
+  }catch(e){}
+
+  initBroadcastFilters();
+
+  // Reset form state
+  document.getElementById('bc-message').value = '';
+  document.getElementById('bc-type').value = '';
+  document.getElementById('bc-religion').value = '';
+  document.getElementById('bc-gov').value = '';
+  const citySel = document.getElementById('bc-city');
+  citySel.innerHTML = '<option value="">🏙️ كل المدن</option>';
+  citySel.disabled = true;
+  document.getElementById('bc-include-extra').checked = false;
+  document.getElementById('bc-preview-result').innerHTML = '';
+  updateMessageCount();
+  broadcastTargets = null;
+}
+
+function initBroadcastFilters(){
+  // Type dropdown
+  const typeSel = document.getElementById('bc-type');
+  const currentType = typeSel.value;
+  typeSel.innerHTML = '<option value="">🏷️ كل الأنواع</option>';
+  (allClientTypes||[]).forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    if(t.name === currentType) opt.selected = true;
+    typeSel.appendChild(opt);
+  });
+
+  // Religion dropdown
+  const relSel = document.getElementById('bc-religion');
+  const currentRel = relSel.value;
+  relSel.innerHTML = '<option value="">🕌 كل الديانات</option>';
+  (allReligions||[]).forEach(r => {
+    const opt = document.createElement('option');
+    opt.value = r.name;
+    opt.textContent = r.name === 'مسلم' ? '🕌 مسلم' : r.name === 'مسيحي' ? '✝️ مسيحي' : r.name;
+    if(r.name === currentRel) opt.selected = true;
+    relSel.appendChild(opt);
+  });
+
+  // Governorate dropdown (from EGYPT constant)
+  const govSel = document.getElementById('bc-gov');
+  if(govSel.children.length <= 1){
+    Object.keys(EGYPT).sort().forEach(gov => {
+      const opt = document.createElement('option');
+      opt.value = gov;
+      opt.textContent = gov;
+      govSel.appendChild(opt);
+    });
+  }
+}
+
+function onBroadcastGovChange(){
+  const gov = document.getElementById('bc-gov').value;
+  const citySel = document.getElementById('bc-city');
+  citySel.innerHTML = '<option value="">🏙️ كل المدن</option>';
+  if(gov && EGYPT[gov]){
+    EGYPT[gov].forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      citySel.appendChild(opt);
+    });
+    citySel.disabled = false;
+  }else{
+    citySel.disabled = true;
+  }
+  invalidateBroadcastPreview();
+}
+
+function invalidateBroadcastPreview(){
+  broadcastTargets = null;
+  const el = document.getElementById('bc-preview-result');
+  if(el) el.innerHTML = '<div style="color:var(--text-dim);font-size:12px">الفلاتر اتغيرت — اضغط "عرض العدد" لتحديث الحساب</div>';
+}
+
+function updateMessageCount(){
+  const msg = document.getElementById('bc-message').value;
+  const len = msg.length;
+  const counter = document.getElementById('bc-char-count');
+  counter.textContent = `${len} حرف`;
+  if(len > 4096){
+    counter.style.color = 'var(--error)';
+    counter.innerHTML = `<b>${len} حرف ⚠️ تجاوزت الحد الأقصى!</b>`;
+  }else if(len > 3500){
+    counter.style.color = '#d4a030';
+    counter.innerHTML = `${len} حرف ⚠️ اقتربت من الحد`;
+  }else{
+    counter.style.color = 'var(--text-dim)';
+  }
+  updateBroadcastFullPreview();
+}
+
+function buildFullMessage(content){
+  const header = (cachedBroadcastSettings?.header || '').trim();
+  const footer = (cachedBroadcastSettings?.footer || '').trim();
+  const body = (content || '').trim();
+  const parts = [];
+  if(header) parts.push(header);
+  if(body)   parts.push(body);
+  if(footer) parts.push(footer);
+  return parts.join('\n\n');
+}
+
+function updateBroadcastFullPreview(){
+  const previewEl = document.getElementById('bc-full-preview');
+  if(!previewEl) return;
+  const content = (document.getElementById('bc-message').value || '').trim();
+  if(!content){
+    previewEl.innerHTML = '<span style="color:var(--text-dim);font-style:italic">اكتب الرسالة عشان تشوف المعاينة الكاملة هنا...</span>';
+    return;
+  }
+  const fullMsg = buildFullMessage(content);
+  // escape HTML to prevent any injection from user input
+  previewEl.textContent = fullMsg;
+}
+
+// =================== TEMPLATE PICKER (in broadcast page) ===================
+function openTemplatePicker(){
+  if(!allBroadcastTemplates || !allBroadcastTemplates.length){
+    alert('مفيش رسائل محفوظة لسه — اضف من صفحة "💌 الرسائل المحفوظة" أولاً');
+    return;
+  }
+  document.getElementById('tp-search').value = '';
+  filterTemplatePicker();
+  document.getElementById('templatePickerModal').classList.add('show');
+}
+
+function filterTemplatePicker(){
+  const search = (document.getElementById('tp-search').value || '').trim().toLowerCase();
+  const data = search
+    ? allBroadcastTemplates.filter(t =>
+        ((t.name||'').toLowerCase().includes(search)) ||
+        ((t.content||'').toLowerCase().includes(search)))
+    : allBroadcastTemplates;
+
+  const list = document.getElementById('tp-list');
+  if(!data.length){
+    list.innerHTML = '<div class="empty-txt">لا يوجد نتائج</div>';
+    return;
+  }
+
+  let html = '';
+  data.forEach(t => {
+    const religion = t.target_religion;
+    let religionBadge = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(138,133,128,0.15);color:var(--text-dim)">📬 للكل</span>';
+    if(religion === 'مسلم') religionBadge = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(76,175,125,0.12);color:#6dc49a">🕌 المسلمين</span>';
+    else if(religion === 'مسيحي') religionBadge = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(74,144,217,0.12);color:#6faee8">✝️ المسيحيين</span>';
+
+    const preview = (t.content || '').length > 200 ? t.content.substring(0,200)+'…' : (t.content || '');
+    const safePreview = preview.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    html += `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:all 0.2s" onclick="applyTemplate(${t.id})" onmouseover="this.style.borderColor='rgba(201,168,76,0.5)';this.style.background='rgba(201,168,76,0.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--dark3)'">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <b style="font-size:13px;color:var(--gold)">${t.name||'-'}</b>
+        ${religionBadge}
+      </div>
+      <div style="font-size:12px;color:var(--text);line-height:1.6;white-space:pre-wrap">${safePreview || '<span style="color:var(--text-dim)">(فاضي)</span>'}</div>
+      <div style="font-size:11px;color:var(--gold);text-align:left;font-weight:700">اضغط لاستخدام ←</div>
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+
+function applyTemplate(id){
+  const t = allBroadcastTemplates.find(x => x.id === id);
+  if(!t) return;
+
+  // Apply content to textarea
+  document.getElementById('bc-message').value = t.content || '';
+
+  // Apply target religion if set on the template
+  let religionApplied = null;
+  if(t.target_religion){
+    document.getElementById('bc-religion').value = t.target_religion;
+    religionApplied = t.target_religion;
+  }
+
+  updateMessageCount();
+  invalidateBroadcastPreview();
+  closeModal('templatePickerModal');
+
+  // Show toast/notice (delayed slightly so modal closes first)
+  if(religionApplied){
+    setTimeout(() => alert(`✅ تم استخدام رسالة "${t.name}"\n\n🕌 تم تحديد فلتر الديانة تلقائياً: ${religionApplied}`), 100);
+  }
+}
+
+async function calculateBroadcastTargets(){
+  const type = document.getElementById('bc-type').value;
+  const religion = document.getElementById('bc-religion').value;
+  const gov = document.getElementById('bc-gov').value;
+  const city = document.getElementById('bc-city').value;
+  const includeExtra = document.getElementById('bc-include-extra').checked;
+
+  // Build base filter (without telegram_id check, to count not-linked separately)
+  let baseFilter = `is_active=eq.true`;
+  if(type)     baseFilter += `&client_type=eq.${encodeURIComponent(type)}`;
+  if(religion) baseFilter += `&religion=eq.${encodeURIComponent(religion)}`;
+  if(gov)      baseFilter += `&governorate=eq.${encodeURIComponent(gov)}`;
+  if(city)     baseFilter += `&city=eq.${encodeURIComponent(city)}`;
+
+  // Fetch ALL matching clients (linked + not linked) in one request
+  const r0 = await fetch(`${SB}/rest/v1/clients?select=id,name,telegram_id&${baseFilter}`, {headers:{...HDR,'Range':'0-999'}});
+  const allMatching = await r0.json();
+
+  const linkedClients = allMatching.filter(c => c.telegram_id);
+  const notLinkedCount = allMatching.length - linkedClients.length;
+
+  // Skip extras if religion filter is on (extras have no religion field)
+  let extras = [];
+  let extrasSkippedDueToReligion = false;
+  if(includeExtra){
+    if(religion){
+      extrasSkippedDueToReligion = true;
+    }else{
+      const r2 = await fetch(`${SB}/rest/v1/extra_contacts?select=id,name,code,telegram_id&is_active=eq.true&telegram_id=not.is.null`,{headers:HDR});
+      extras = await r2.json();
+    }
+  }
+
+  const recipients = [
+    ...linkedClients.map(c => ({telegram_id: String(c.telegram_id), name: c.name, source: 'client', source_id: c.id})),
+    ...extras.map(e => ({telegram_id: String(e.telegram_id), name: e.name, source: 'extra', source_id: e.id}))
+  ];
+
+  // Dedupe by telegram_id
+  const seen = new Set();
+  const deduped = recipients.filter(r => {
+    if(!r.telegram_id || seen.has(r.telegram_id)) return false;
+    seen.add(r.telegram_id);
+    return true;
+  });
+
+  const duplicatesMerged = recipients.length - deduped.length;
+
+  return {
+    clients_count: linkedClients.length,
+    extras_count: extras.length,
+    extras_skipped: extrasSkippedDueToReligion,
+    not_linked_count: notLinkedCount,
+    duplicates_merged: duplicatesMerged,
+    total: deduped.length,
+    recipients: deduped
+  };
+}
+
+async function previewBroadcast(){
+  const resultEl = document.getElementById('bc-preview-result');
+  resultEl.innerHTML = '<span style="color:var(--text-dim)">⏳ جاري الحساب...</span>';
+  try{
+    const result = await calculateBroadcastTargets();
+    broadcastTargets = result;
+
+    if(result.total === 0){
+      let hint = '';
+      if(result.not_linked_count > 0){
+        hint = `<div style="margin-top:10px;padding-top:10px;border-top:1px dashed rgba(224,85,85,0.25);font-size:12px;color:var(--text-dim);font-weight:normal">ℹ️ فيه <b style="color:var(--gold)">${result.not_linked_count}</b> عميل مطابق للفلاتر لكن لسه ما ضغطش Start في البوت — شوفهم في صفحة <b style="color:var(--gold)">🔗 عملاء لم يربطوا</b></div>`;
+      }
+      resultEl.innerHTML = `<div style="background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.3);border-radius:12px;padding:14px 16px">
+        <div style="color:#e88080;font-weight:700;font-size:14px">⚠️ مفيش مستهدفين مربوطين البوت</div>
+        ${hint}
+      </div>`;
+      return;
+    }
+
+    const includeExtra = document.getElementById('bc-include-extra').checked;
+
+    let rows = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;font-size:12px;margin-top:10px;padding-top:10px;border-top:1px dashed rgba(76,175,125,0.25)">`;
+    rows += `<div style="color:var(--text-dim)">👥 عملاء مربوطين: <b style="color:var(--gold)">${result.clients_count}</b></div>`;
+    if(includeExtra && !result.extras_skipped){
+      rows += `<div style="color:var(--text-dim)">📞 جهات إضافية: <b style="color:var(--gold)">${result.extras_count}</b></div>`;
+    }
+    if(result.duplicates_merged > 0){
+      rows += `<div style="color:var(--text-dim)">🔄 مكررات مدموجة: <b style="color:#d4a030">${result.duplicates_merged}</b></div>`;
+    }
+    if(result.not_linked_count > 0){
+      rows += `<div style="color:var(--text-dim)">🚫 غير مربوطين: <b style="color:var(--text-dim)">${result.not_linked_count}</b></div>`;
+    }
+    rows += `</div>`;
+
+    let extrasNotice = '';
+    if(result.extras_skipped){
+      extrasNotice = `<div style="margin-top:8px;font-size:11px;color:#d4a030">⚠️ الجهات الإضافية اتجاهلت لأن فيه فلتر ديانة مفعّل (الجهات الإضافية مش عندها ديانة محددة).</div>`;
+    }
+
+    let footerHint = '';
+    if(result.not_linked_count > 0){
+      footerHint = `<div style="margin-top:8px;font-size:11px;color:var(--text-dim);opacity:0.9">💡 فيه ${result.not_linked_count} عميل مطابق للفلاتر مش مربوط البوت — شوفهم في صفحة <b style="color:var(--gold)">🔗 عملاء لم يربطوا</b></div>`;
+    }
+
+    resultEl.innerHTML = `<div style="background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.35);border-radius:12px;padding:14px 16px">
+      <div style="font-size:15px;font-weight:700;color:#6dc49a">✅ هيوصل لـ ${result.total} شخص فريد</div>
+      ${rows}
+      ${extrasNotice}
+      ${footerHint}
+    </div>`;
+  }catch(e){
+    resultEl.innerHTML = `<div style="color:var(--error)">❌ خطأ في حساب المستهدفين: ${e.message||''}</div>`;
+  }
+}
+
+function openBroadcastConfirm(){
+  const content = document.getElementById('bc-message').value.trim();
+  if(!content){alert('اكتب الرسالة الأول');return;}
+  const fullMsg = buildFullMessage(content);
+  if(fullMsg.length > 4096){alert(`الرسالة الكاملة (مع الهيدر والفوتر) ${fullMsg.length} حرف — تجاوزت الحد الأقصى 4096`);return;}
+  if(!broadcastTargets){alert('اضغط "🔍 عرض العدد" الأول للتأكد من عدد المستهدفين');return;}
+  if(broadcastTargets.total === 0){alert('مفيش مستهدفين — غيّر الفلاتر');return;}
+
+  const includeExtra = document.getElementById('bc-include-extra').checked;
+  const religion = document.getElementById('bc-religion').value;
+
+  document.getElementById('bc-confirm-msg').textContent = fullMsg;
+
+  let breakdownHtml = `
+    <div style="font-size:14px;font-weight:700;color:#6dc49a;margin-bottom:6px">📊 ملخص الإرسال:</div>
+    <div>👥 عملاء مستهدفين: <b style="color:var(--gold)">${broadcastTargets.clients_count}</b></div>`;
+  if(includeExtra && !broadcastTargets.extras_skipped){
+    breakdownHtml += `<div>📞 جهات إضافية: <b style="color:var(--gold)">${broadcastTargets.extras_count}</b></div>`;
+  }
+  if(religion){
+    const relLabel = religion === 'مسلم' ? '🕌 المسلمين' : religion === 'مسيحي' ? '✝️ المسيحيين' : religion;
+    breakdownHtml += `<div style="color:var(--gold)">🎯 فلتر ديانة مفعّل: <b>${relLabel}</b></div>`;
+  }
+  breakdownHtml += `<div style="margin-top:4px;padding-top:6px;border-top:1px solid rgba(76,175,125,0.2)">📬 إجمالي: <b style="color:#6dc49a;font-size:15px">${broadcastTargets.total}</b> شخص فريد</div>`;
+  document.getElementById('bc-confirm-breakdown').innerHTML = breakdownHtml;
+
+  // Reset send button state
+  const sendBtn = document.getElementById('bc-send-btn');
+  sendBtn.disabled = false;
+  sendBtn.textContent = '📢 إرسال الرسالة';
+
+  document.getElementById('broadcastConfirmModal').classList.add('show');
+}
+
+async function sendBroadcast(){
+  const content = document.getElementById('bc-message').value.trim();
+  const fullMsg = buildFullMessage(content);
+  const sendBtn = document.getElementById('bc-send-btn');
+  sendBtn.disabled = true;
+  sendBtn.textContent = '⏳ جاري الإرسال...';
+
+  try{
+    const payload = {
+      message: fullMsg,
+      total: broadcastTargets.total,
+      recipients: broadcastTargets.recipients,
+      sent_at: new Date().toISOString()
+    };
+
+    const res = await fetch(BROADCAST_WEBHOOK, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    if(res.ok){
+      closeModal('broadcastConfirmModal');
+      alert(`✅ تم إرسال الطلب لـ n8n بنجاح\n\n📬 هيتم توصيل الرسالة لـ ${broadcastTargets.total} شخص خلال دقايق.`);
+      // Reset form
+      document.getElementById('bc-message').value = '';
+      updateMessageCount();
+      broadcastTargets = null;
+      document.getElementById('bc-preview-result').innerHTML = '';
+    }else{
+      let errTxt = '';
+      try{errTxt = await res.text();}catch(e){}
+      alert(`❌ فشل الإرسال (HTTP ${res.status})\n\nتأكد إن:\n1. ngrok شغال\n2. n8n شغال على port 5678\n3. workflow "HAWA Broadcast" Active\n\n${errTxt ? 'التفاصيل: '+errTxt.slice(0,200) : ''}`);
+      sendBtn.disabled = false;
+      sendBtn.textContent = '📢 إرسال الرسالة';
+    }
+  }catch(e){
+    alert(`❌ مش قادر أوصل للـ webhook\n\nده غالباً معناه إن ngrok أو n8n مش شغالين.\n\nالتفاصيل: ${e.message}`);
+    sendBtn.disabled = false;
+    sendBtn.textContent = '📢 إرسال الرسالة';
+  }
+}
+
+// =================== TEMPLATES ===================
+let allTemplates = [];
+let editTmplId = null;
+
+async function loadTemplates(){
+  document.getElementById('tmpl-grid').innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const r = await fetch(`${SB}/rest/v1/message_templates?select=*&order=id.desc`,{headers:HDR});
+    allTemplates = await r.json();
+    renderTemplates();
+  }catch(e){
+    document.getElementById('tmpl-grid').innerHTML = '<div class="empty-txt">❌ خطأ في التحميل</div>';
+  }
+}
+
+function renderTemplates(){
+  const grid = document.getElementById('tmpl-grid');
+  const count = allTemplates.length;
+  document.getElementById('tmpl-count').textContent = count ? `${count} رسالة` : '';
+
+  if(!count){
+    grid.innerHTML = '<div class="empty-txt" style="grid-column:1/-1;padding:40px">📭 مفيش رسائل محفوظة لسه — اضغط "إضافة رسالة جديدة" لتبدأ</div>';
+    return;
+  }
+
+  let html = '';
+  allTemplates.forEach(t => {
+    const dt = t.created_at ? new Date(t.created_at).toLocaleDateString('ar-EG') : '-';
+    const nameEsc = (t.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const religion = t.target_religion;
+    let religionBadge = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(138,133,128,0.15);color:var(--text-dim)">📬 للكل</span>';
+    if(religion === 'مسلم') religionBadge = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(76,175,125,0.12);color:#6dc49a">🕌 المسلمين</span>';
+    else if(religion === 'مسيحي') religionBadge = '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(74,144,217,0.12);color:#6faee8">✝️ المسيحيين</span>';
+
+    const preview = (t.content || '').length > 240 ? t.content.substring(0, 240) + '…' : (t.content || '');
+    // Escape HTML in preview to prevent injection
+    const safePreview = preview.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    html += `<div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:8px">
+        <b style="font-size:14px;color:var(--gold);flex:1;line-height:1.5">${t.name||'-'}</b>
+        ${religionBadge}
+      </div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7;background:var(--dark3);border-radius:8px;padding:10px;white-space:pre-wrap;min-height:60px;max-height:140px;overflow-y:auto">${safePreview || '<span style="color:var(--text-dim)">(فاضي)</span>'}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-dim);padding-top:6px;border-top:1px solid var(--border)">
+        <span>📅 ${dt}</span>
+        <div class="act-btns">
+          <button class="act-btn edit" onclick="openTemplateModal(${t.id})" title="تعديل">✏️ تعديل</button>
+          <button class="act-btn del" onclick="deleteTemplate(${t.id},'${nameEsc}')" title="حذف">🗑️</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  grid.innerHTML = html;
+}
+
+function openTemplateModal(id=null){
+  editTmplId = id;
+  const isEdit = id !== null;
+  document.getElementById('tmpl-modal-title').textContent = isEdit ? '✏️ تعديل رسالة محفوظة' : '➕ إضافة رسالة محفوظة';
+
+  if(isEdit){
+    const t = allTemplates.find(x=>x.id===id);
+    if(!t) return;
+    document.getElementById('tmpl-name').value = t.name || '';
+    document.getElementById('tmpl-religion').value = t.target_religion || '';
+    document.getElementById('tmpl-content').value = t.content || '';
+  }else{
+    document.getElementById('tmpl-name').value = '';
+    document.getElementById('tmpl-religion').value = '';
+    document.getElementById('tmpl-content').value = '';
+  }
+  document.getElementById('templateModal').classList.add('show');
+}
+
+async function saveTemplate(){
+  const name = document.getElementById('tmpl-name').value.trim();
+  const religion = document.getElementById('tmpl-religion').value;
+  const content = document.getElementById('tmpl-content').value.trim();
+
+  if(!name){alert('من فضلك أدخل اسم للرسالة');return;}
+  if(!content){alert('من فضلك أدخل نص الرسالة');return;}
+  if(content.length > 4096){alert('نص الرسالة طويل جداً — الحد الأقصى 4096 حرف');return;}
+
+  const isEdit = editTmplId !== null;
+  const body = {
+    name,
+    content,
+    target_religion: religion || null
+  };
+
+  try{
+    const url = isEdit ? `${SB}/rest/v1/message_templates?id=eq.${editTmplId}` : `${SB}/rest/v1/message_templates`;
+    const method = isEdit ? 'PATCH' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body: JSON.stringify(body)
+    });
+
+    if(res.ok){
+      closeModal('templateModal');
+      await loadTemplates();
+      alert(isEdit ? '✅ تم التعديل' : '✅ تم إضافة الرسالة');
+    }else{
+      const err = await res.json().catch(()=>({}));
+      alert('❌ خطأ في الحفظ: '+(err.message||''));
+    }
+  }catch(e){
+    alert('❌ خطأ في الاتصال');
+  }
+}
+
+function deleteTemplate(id, name){
+  showConfirm('🗑️','حذف رسالة محفوظة',`هتحذف "${name}"؟ مش هتقدر ترجع!`,true,async()=>{
+    try{
+      const res = await fetch(`${SB}/rest/v1/message_templates?id=eq.${id}`,{method:'DELETE',headers:HDR});
+      if(res.ok) loadTemplates();
+      else alert('❌ خطأ في الحذف');
+    }catch(e){alert('❌ خطأ في الاتصال');}
+  });
+}
+
+// =================== UNLINKED CLIENTS ===================
+let allUnlinked = [];
+
+async function loadUnlinked(){
+  document.getElementById('unlinked-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const r = await fetch(`${SB}/rest/v1/clients?select=id,name,company_code,phone,governorate,city,client_type,created_at&telegram_id=is.null&is_active=eq.true&is_blocked=eq.false&order=name.asc`,{headers:{...HDR,'Range':'0-499'}});
+    allUnlinked = await r.json();
+    filterUnlinked();
+  }catch(e){
+    document.getElementById('unlinked-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';
+  }
+}
+
+function filterUnlinked(){
+  const search = (document.getElementById('unlinked-search').value||'').trim().toLowerCase();
+  let data = allUnlinked;
+
+  if(search){
+    data = data.filter(c => {
+      const fields = [c.name, c.company_code, c.phone, c.governorate, c.city].map(f=>(f||'').toLowerCase());
+      return fields.some(f=>f.includes(search));
+    });
+  }
+
+  document.getElementById('unlinked-count').textContent = `${data.length} عميل`;
+
+  if(!data.length){
+    const msg = search ? 'لا يوجد نتائج' : '🎉 كل العملاء النشطين ربطوا البوت!';
+    document.getElementById('unlinked-table').innerHTML = `<div class="empty-txt">${msg}</div>`;
+    return;
+  }
+
+  let html = `<table><thead><tr>
+    <th style="width:36px">#</th>
+    <th>الاسم</th>
+    <th>🏷️ الكود</th>
+    <th>الهاتف</th>
+    <th>المحافظة / المدينة</th>
+    <th>تاريخ التسجيل</th>
+    <th style="width:200px">إجراءات</th>
+  </tr></thead><tbody>`;
+
+  data.forEach((c,i)=>{
+    const dt = c.created_at ? new Date(c.created_at).toLocaleDateString('ar-EG') : '-';
+    const codeEsc = (c.company_code||'').replace(/'/g,"\\'");
+    const phoneEsc = (c.phone||'').replace(/'/g,"\\'");
+    const nameEsc = (c.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+    const cityLine = [c.governorate, c.city].filter(x=>x).join(' / ') || '-';
+    const hasPhone = !!c.phone;
+
+    html += `<tr>
+      <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
+      <td><b style="font-size:13px">${c.name||'-'}</b></td>
+      <td><span style="color:#d4a957;font-weight:700">${c.company_code||'-'}</span></td>
+      <td style="font-size:12px;direction:ltr;text-align:right">${c.phone||'-'}</td>
+      <td style="font-size:12px;color:var(--text-dim)">${cityLine}</td>
+      <td style="font-size:11px;color:var(--text-dim)">${dt}</td>
+      <td><div class="act-btns">
+        <button class="act-btn edit" onclick="copyClientLink('${codeEsc}','${nameEsc}')" title="نسخ لينك الربط">📋 لينك</button>
+        ${hasPhone
+          ? `<button class="act-btn toggle" onclick="openWhatsAppWithLink('${codeEsc}','${phoneEsc}')" title="فتح واتساب مع الرسالة جاهزة">💬 واتساب</button>`
+          : `<button class="act-btn silence" disabled title="مفيش تليفون">💬 واتساب</button>`}
+      </div></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('unlinked-table').innerHTML = html;
+}
+
+async function copyClientLink(code, name){
+  const link = `https://t.me/${BOT_USERNAME}?start=${code}`;
+  try{
+    await navigator.clipboard.writeText(link);
+    alert(`✅ تم نسخ لينك الربط لـ "${name||code}":\n\n${link}\n\nابعته له على أي قناة (واتساب / SMS / إلخ).`);
+  }catch(err){
+    prompt('انسخ اللينك يدوياً:', link);
+  }
+}
+
+function openWhatsAppWithLink(code, phone){
+  // Clean & format phone for WhatsApp (international format, no +)
+  let cleanPhone = String(phone).replace(/\D/g,'');
+  if(cleanPhone.startsWith('01') && cleanPhone.length === 11){
+    cleanPhone = '2' + cleanPhone; // Egypt country code 20, but leading 0 becomes part of number → actually should be 20 + 10 digits
+    // Fix: 01XXXXXXXXX → remove leading 0, prepend 20
+    cleanPhone = '20' + cleanPhone.substring(2); // '2' + '01XXXXXXXXX' → '201XXXXXXXXX' — wait this is wrong. Let me redo.
+  }
+  // Actually, the correct transform for Egyptian numbers:
+  //   01012345678 (11 digits starting with 01) → 201012345678 (prepend '2' to make 12 digits with country code 20)
+  // Original line did: '2' + '01012345678' = '201012345678' ✓ which is correct!
+  // So the re-assignment above broke it. Simplify:
+  cleanPhone = String(phone).replace(/\D/g,'');
+  if(cleanPhone.startsWith('01') && cleanPhone.length === 11){
+    cleanPhone = '2' + cleanPhone; // → 201XXXXXXXXX (12 digits = country code 20 + local 10 digits)
+  }
+
+  const link = `https://t.me/${BOT_USERNAME}?start=${code}`;
+  const msg = `أهلاً،\n\nعشان تستقبل إشعارات HAWA CO على تليجرام، اضغط على اللينك ده واضغط Start:\n\n${link}\n\nشكراً 🙏`;
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
+  window.open(whatsappUrl, '_blank');
+}
+
+async function copyAllUnlinkedLinks(){
+  const search = (document.getElementById('unlinked-search').value||'').trim().toLowerCase();
+  let data = allUnlinked;
+  if(search){
+    data = data.filter(c => {
+      const fields = [c.name, c.company_code, c.phone, c.governorate, c.city].map(f=>(f||'').toLowerCase());
+      return fields.some(f=>f.includes(search));
+    });
+  }
+
+  if(!data.length){alert('مفيش عملاء لنسخ لينكاتهم');return;}
+
+  const lines = data.map(c => {
+    const link = `https://t.me/${BOT_USERNAME}?start=${c.company_code}`;
+    return `${c.name || '-'} (${c.company_code}) — ${c.phone || 'بدون تليفون'}\n${link}`;
+  });
+  const text = lines.join('\n\n');
+
+  try{
+    await navigator.clipboard.writeText(text);
+    alert(`✅ تم نسخ ${data.length} عميل بلينكاتهم.\n\nالصقهم في أي مكان (Ctrl+V).`);
+  }catch(err){
+    prompt(`انسخ القائمة يدوياً (${data.length} عميل):`, text);
+  }
+}
+
+// =================== VEHICLE TYPES ===================
+let allVehicleTypes = [];
+let editVtId = null;
+
+async function loadVehicleTypes(){
+  document.getElementById('vt-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const [r1, r2] = await Promise.all([
+      fetch(`${SB}/rest/v1/vehicle_types?select=*&order=display_order.asc,id.asc`,{headers:HDR}),
+      fetch(`${SB}/rest/v1/bookings?select=vehicle_type&status=neq.ملغي`,{headers:{...HDR,'Range':'0-9999'}})
+    ]);
+    allVehicleTypes = await r1.json();
+    const bookings = await r2.json();
+
+    const counts = {};
+    bookings.forEach(b => {
+      const t = b.vehicle_type || 'غير محدد';
+      counts[t] = (counts[t]||0) + 1;
+    });
+
+    renderVehicleTypes(counts);
+  }catch(e){
+    document.getElementById('vt-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';
+  }
+}
+
+function renderVehicleTypes(counts){
+  if(!allVehicleTypes.length){
+    document.getElementById('vt-table').innerHTML='<div class="empty-txt">📭 مفيش أنواع — أضف أول نوع</div>';
+    return;
+  }
+
+  let html = `<table><thead><tr>
+    <th style="width:36px">#</th>
+    <th style="width:60px;text-align:center">الأيقونة</th>
+    <th>الاسم</th>
+    <th style="text-align:center">معدل/ساعة</th>
+    <th style="text-align:center">الترتيب</th>
+    <th style="text-align:center">الحالة</th>
+    <th style="text-align:center">حجوزات</th>
+    <th>تاريخ الإنشاء</th>
+    <th style="width:160px">إجراءات</th>
+  </tr></thead><tbody>`;
+
+  allVehicleTypes.forEach((v,i)=>{
+    const count = counts[v.name] || 0;
+    const dt = v.created_at ? new Date(v.created_at).toLocaleDateString('ar-EG') : '-';
+    const isActive = v.is_active !== false;
+    const nameEsc = (v.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
+
+    html += `<tr style="${!isActive ? 'opacity:0.55' : ''}">
+      <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
+      <td style="text-align:center;font-size:22px">${v.icon || '🚛'}</td>
+      <td><b style="font-size:13px">${v.name}</b></td>
+      <td style="text-align:center"><b style="color:var(--gold);font-size:14px">${v.capacity_per_hour}</b></td>
+      <td style="text-align:center;color:var(--text-dim)">${v.display_order || 0}</td>
+      <td style="text-align:center">${isActive ? '<span class="badge active">مفعّل ✅</span>' : '<span class="badge inactive">معطّل 🚫</span>'}</td>
+      <td style="text-align:center"><b style="color:${count>0?'var(--gold)':'var(--text-dim)'}">${count}</b></td>
+      <td style="font-size:12px;color:var(--text-dim)">${dt}</td>
+      <td><div class="act-btns">
+        <button class="act-btn edit" onclick="openVehicleTypeModal(${v.id})" title="تعديل">✏️</button>
+        ${isActive
+          ? `<button class="act-btn silence" onclick="toggleVehicleTypeActive(${v.id},'${nameEsc}',false)" title="تعطيل">🚫</button>`
+          : `<button class="act-btn toggle" onclick="toggleVehicleTypeActive(${v.id},'${nameEsc}',true)" title="تفعيل">✅</button>`}
+        <button class="act-btn del" onclick="deleteVehicleType(${v.id},'${nameEsc}',${count})" title="حذف">🗑️</button>
+      </div></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('vt-table').innerHTML = html;
+}
+
+function openVehicleTypeModal(id=null){
+  editVtId = id;
+  const isEdit = id !== null;
+  document.getElementById('vt-modal-title').textContent = isEdit ? '✏️ تعديل نوع العربية' : '➕ إضافة نوع عربية';
+
+  if(isEdit){
+    const v = allVehicleTypes.find(x=>x.id===id);
+    if(!v) return;
+    document.getElementById('vt-name').value = v.name || '';
+    document.getElementById('vt-icon').value = v.icon || '🚛';
+    document.getElementById('vt-capacity').value = v.capacity_per_hour || '';
+    document.getElementById('vt-order').value = v.display_order || 0;
+    document.getElementById('vt-active').checked = v.is_active !== false;
+  }else{
+    document.getElementById('vt-name').value = '';
+    document.getElementById('vt-icon').value = '🚛';
+    document.getElementById('vt-capacity').value = '5';
+    const maxOrder = Math.max(0, ...allVehicleTypes.map(x => x.display_order||0));
+    document.getElementById('vt-order').value = maxOrder + 1;
+    document.getElementById('vt-active').checked = true;
+  }
+  updateVtPreview();
+  document.getElementById('vehicleTypeModal').classList.add('show');
+}
+
+function updateVtPreview(){
+  const name = (document.getElementById('vt-name').value || '').trim() || 'اسم النوع';
+  const icon = (document.getElementById('vt-icon').value || '').trim() || '🚛';
+  document.getElementById('vt-preview').innerHTML =
+    `<span style="font-size:24px">${icon}</span><b style="font-size:14px">${name}</b>`;
+}
+
+async function saveVehicleType(){
+  const name = document.getElementById('vt-name').value.trim();
+  const icon = document.getElementById('vt-icon').value.trim() || '🚛';
+  const capacity = parseInt(document.getElementById('vt-capacity').value);
+  const order = parseInt(document.getElementById('vt-order').value) || 0;
+  const isActive = document.getElementById('vt-active').checked;
+
+  if(!name){alert('من فضلك أدخل اسم النوع');return;}
+  if(isNaN(capacity) || capacity<1){alert('معدل التحميل لازم يكون رقم >= 1');return;}
+
+  const isEdit = editVtId !== null;
+  const body = {name, icon, capacity_per_hour: capacity, display_order: order, is_active: isActive};
+
+  try{
+    let oldName = null;
+    if(isEdit){
+      const oldType = allVehicleTypes.find(x=>x.id===editVtId);
+      if(oldType && oldType.name !== name) oldName = oldType.name;
+    }
+
+    const url = isEdit ? `${SB}/rest/v1/vehicle_types?id=eq.${editVtId}` : `${SB}/rest/v1/vehicle_types`;
+    const method = isEdit ? 'PATCH' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body: JSON.stringify(body)
+    });
+
+    if(res.ok){
+      // Migrate old bookings if name changed
+      if(oldName){
+        await fetch(`${SB}/rest/v1/bookings?vehicle_type=eq.${encodeURIComponent(oldName)}`,{
+          method:'PATCH',
+          headers:{...HDR,'Prefer':'return=minimal'},
+          body: JSON.stringify({vehicle_type: name})
+        });
+      }
+      closeModal('vehicleTypeModal');
+      await loadVehicleTypes();
+      alert(isEdit ? '✅ تم التعديل' : '✅ تم إضافة النوع');
+    }else{
+      const err = await res.json().catch(()=>({}));
+      if(err.code === '23505') alert('❌ اسم النوع مسجل بالفعل — اختر اسم مختلف');
+      else alert('❌ خطأ في الحفظ: '+(err.message||''));
+    }
+  }catch(e){
+    alert('❌ خطأ في الاتصال');
+  }
+}
+
+async function toggleVehicleTypeActive(id, name, newState){
+  const action = newState ? 'تفعيل' : 'تعطيل';
+  const icon = newState ? '✅' : '🚫';
+  const danger = !newState;
+  const msg = newState
+    ? `هتفعّل نوع "${name}"؟\n\nهيظهر للعميل في صفحة الحجز.`
+    : `هتعطّل نوع "${name}"؟\n\nالنوع مش هيظهر للعميل في صفحة الحجز، لكن الحجوزات السابقة بنوعه تفضل سليمة.`;
+
+  showConfirm(icon, action+' نوع العربية', msg, danger, async()=>{
+    try{
+      const res = await fetch(`${SB}/rest/v1/vehicle_types?id=eq.${id}`,{
+        method:'PATCH',
+        headers:{...HDR,'Prefer':'return=minimal'},
+        body: JSON.stringify({is_active: newState})
+      });
+      if(res.ok) loadVehicleTypes();
+      else alert('❌ خطأ في الحفظ');
+    }catch(e){alert('❌ خطأ في الاتصال');}
+  });
+}
+
+async function deleteVehicleType(id, name, count){
+  if(count > 0){
+    alert(`❌ مينفعش تحذف "${name}"\n\nفيه ${count} حجز بالنوع ده. السيستم بيرفض حذف أنواع عليها حركة.\n\nلو عاوز توقفه عن الظهور للعملاء، استخدم زرار 🚫 (تعطيل) بدل الحذف.`);
+    return;
+  }
+
+  showConfirm('🗑️','حذف نوع العربية',`هتحذف نوع "${name}"؟ مش هتقدر ترجع!`,true,async()=>{
+    try{
+      const res = await fetch(`${SB}/rest/v1/vehicle_types?id=eq.${id}`,{method:'DELETE',headers:HDR});
+      if(res.ok) loadVehicleTypes();
+      else alert('❌ خطأ في الحذف');
+    }catch(e){alert('❌ خطأ في الاتصال');}
   });
 }
 
