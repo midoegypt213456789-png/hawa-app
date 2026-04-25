@@ -81,7 +81,7 @@
 
   /* Options */
   .opts2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .opts3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .opts3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 8px; }
   .opt {
     padding: 14px 8px; background: var(--dark3); border: 2px solid var(--border);
     border-radius: 14px; cursor: pointer; text-align: center; transition: all 0.25s;
@@ -107,6 +107,8 @@
   .cal-d.off   { background: transparent; color: #333; cursor: not-allowed; }
   .cal-d.today { border-color: var(--blue); color: var(--blue); }
   .cal-d.empty { background: transparent; border: none; cursor: default; }
+  .cal-d.full   { background: rgba(224,85,85,0.08); border-color: rgba(224,85,85,0.5); color: #e88080; cursor: not-allowed; opacity: 0.85; }
+  .cal-d.cutoff { background: rgba(138,133,128,0.08); border-color: rgba(138,133,128,0.4); color: var(--text-dim); cursor: not-allowed; opacity: 0.7; }
 
   /* Slots */
   .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -325,10 +327,8 @@
     <div class="sec" id="s2">
       <div class="card">
         <p class="card-title">نوع <span>العربية</span></p>
-        <div class="opts3">
-          <div class="opt" id="opt-v-موتسيكل" onclick="pickVehicle('موتسيكل',6,this)"><div class="ic">🏍️</div><div class="lb">موتسيكل</div></div>
-          <div class="opt" id="opt-v-تروسكل"  onclick="pickVehicle('تروسكل',4,this)"><div class="ic">🛺</div><div class="lb">تروسكل</div></div>
-          <div class="opt" id="opt-v-كهرباء"  onclick="pickVehicle('كهرباء',6,this)"><div class="ic">⚡</div><div class="lb">كهرباء</div></div>
+        <div class="opts3" id="vehicleOpts">
+          <div class="slots-loading" style="grid-column:1/-1">⏳ جاري تحميل الأنواع...</div>
         </div>
       </div>
       <button class="btn-gold" id="b2" onclick="go(3)" disabled>التالي ←</button>
@@ -475,9 +475,73 @@ async function checkTelegramLink(){
   } catch(e){}
 }
 
-const SLOTS = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00',
-               '12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
-const CAP   = { 'موتسيكل': 6, 'تروسكل': 4, 'كهرباء': 6 };
+// ===================== DYNAMIC SETTINGS / HELPERS =====================
+let SLOTS = [];                      // Filled from app_settings (working_hour_start/end)
+let allVehicleTypes = [];            // Filled from vehicle_types table
+let cachedAppSettings = null;        // {permit_min, permit_max, working_hour_start, ...}
+
+// Convert Arabic-Indic / Persian-Indic digits to ASCII digits
+function arabicToEnglish(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+}
+
+function generateSlots(workStart, workEnd){
+  const slots = [];
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  for(let h = workStart; h < workEnd; h++){
+    slots.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+  }
+  return slots;
+}
+
+async function ensureSettingsLoaded(force=false){
+  if(cachedAppSettings && !force) return cachedAppSettings;
+  try{
+    const r = await fetch(`${SB}/rest/v1/app_settings?select=key,value`, {headers: HDR});
+    const data = await r.json();
+    cachedAppSettings = {};
+    data.forEach(s => cachedAppSettings[s.key] = s.value);
+  }catch(e){
+    cachedAppSettings = cachedAppSettings || {};
+  }
+  // Generate SLOTS from working hours
+  const ws = parseInt(cachedAppSettings.working_hour_start) || 8;
+  const we = parseInt(cachedAppSettings.working_hour_end)   || 16;
+  SLOTS = generateSlots(ws, we);
+  return cachedAppSettings;
+}
+
+async function loadVehicleTypesData(force=false){
+  if(allVehicleTypes.length && !force) return allVehicleTypes;
+  try{
+    const r = await fetch(`${SB}/rest/v1/vehicle_types?select=*&is_active=eq.true&order=display_order.asc,id.asc`, {headers: HDR});
+    allVehicleTypes = await r.json();
+  }catch(e){}
+  return allVehicleTypes;
+}
+
+function renderVehicleOptions(){
+  const container = document.getElementById('vehicleOpts');
+  if(!container) return;
+  if(!allVehicleTypes.length){
+    container.innerHTML = '<div class="slots-loading" style="grid-column:1/-1">⚠️ مفيش أنواع متاحة دلوقتي</div>';
+    return;
+  }
+  let html = '';
+  allVehicleTypes.forEach(v => {
+    const nameEsc = (v.name||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const cap = v.capacity_per_hour || 5;
+    html += `<div class="opt" id="opt-v-${v.id}" onclick="pickVehicle('${nameEsc}',${cap},this)"><div class="ic">${v.icon||'🚛'}</div><div class="lb">${v.name}</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+// 🚀 Warm-up: pre-fetch settings + vehicle types in the background so step 2 is instant
+ensureSettingsLoaded();
+loadVehicleTypesData();
 
 // Booking state
 const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, remaining: 10, count: 1, permit: null };
@@ -531,79 +595,95 @@ function pick(field, val, el, step) {
 }
 
 function onPermitInput() {
-  const val = document.getElementById('permitInput').value.trim();
-  bk.permit = val || null;
-  document.getElementById('b1').disabled = !val;
+  const inp = document.getElementById('permitInput');
+  const original = inp.value;
+  // Convert Arabic-Indic digits to ASCII, then strip non-digits
+  const cleaned = arabicToEnglish(original).replace(/[^\d]/g, '');
+  if(original !== cleaned){
+    const cursor = inp.selectionStart;
+    inp.value = cleaned;
+    try { inp.setSelectionRange(cursor, cursor); } catch(e){}
+  }
+  bk.permit = cleaned || null;
+  document.getElementById('b1').disabled = !cleaned;
   document.getElementById('permitMsg').textContent = '';
   document.getElementById('permitMsg').style.color = '';
 }
 
 async function goStep2() {
-  const permit = bk.permit;
+  let permit = bk.permit;
   if (!permit) return;
+  // Belt-and-suspenders: convert Arabic digits in case any slipped through
+  permit = arabicToEnglish(permit);
+  bk.permit = permit;
 
   const msgEl = document.getElementById('permitMsg');
   msgEl.textContent = '⏳ جاري التحقق...';
   msgEl.style.color = 'var(--text-dim)';
   document.getElementById('b1').disabled = true;
 
+  let success = false;
   try {
-    // ① فحص عدد مرات الاستخدام (أقصى 4)
-    const r1 = await fetch(
-      `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.ملغي&select=id,client_id`,
-      { headers: HDR }
-    );
+    // ⚡ Parallel: permit-check + cached settings + vehicle types (3 in flight at once)
+    const [r1, settings, _vt] = await Promise.all([
+      fetch(
+        `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.ملغي&select=id,client_id`,
+        { headers: HDR }
+      ),
+      ensureSettingsLoaded(),
+      loadVehicleTypesData()
+    ]);
     const d1 = await r1.json();
     const editExclude = editMode ? d1.filter(b => b.id === editMode.id).length : 0;
     const usedCount = d1.length - editExclude;
 
+    // ① Max 4 uses
     if (usedCount >= 4) {
       msgEl.textContent = `❌ رقم الإذن ده وصل الحد الأقصى (4 مرات)`;
       msgEl.style.color = 'var(--error)';
-      document.getElementById('b1').disabled = true;
+      document.getElementById('b1').disabled = false;
       return;
     }
 
-    // ② مينفعش نفس الإذن يتستخدم من عميل تاني
+    // ② No cross-client sharing
     const otherClients = d1.filter(b => b.client_id !== user.id && b.id !== (editMode?.id));
     if (otherClients.length > 0) {
       msgEl.textContent = '❌ رقم الإذن ده مستخدم من عميل تاني';
       msgEl.style.color = 'var(--error)';
-      document.getElementById('b1').disabled = true;
+      document.getElementById('b1').disabled = false;
       return;
     }
 
-    // ③ الإذن لازم يكون في النطاق اللي حدده الأدمن
-    try {
-      const rs = await fetch(`${SB}/rest/v1/app_settings?key=in.(permit_min,permit_max)&select=*`, { headers: HDR });
-      const settings = await rs.json();
-      const map = {};
-      settings.forEach(s => map[s.key] = parseInt(s.value));
-      const minP = map.permit_min;
-      const maxP = map.permit_max;
-      const permitNum = parseInt(permit);
-
-      if (!isNaN(minP) && !isNaN(maxP) && !isNaN(permitNum)) {
-        if (permitNum < minP || permitNum > maxP) {
-          msgEl.textContent = `❌ رقم الإذن غير صحيح، تأكد من الرقم اللي في الإذن بتاعك`;
-          msgEl.style.color = 'var(--error)';
-          document.getElementById('b1').disabled = true;
-          return;
-        }
+    // ③ Permit range validation (using cached settings)
+    const minP = parseInt(settings.permit_min);
+    const maxP = parseInt(settings.permit_max);
+    const permitNum = parseInt(permit);
+    if (!isNaN(minP) && !isNaN(maxP) && !isNaN(permitNum)) {
+      if (permitNum < minP || permitNum > maxP) {
+        msgEl.textContent = `❌ رقم الإذن غير صحيح، تأكد من الرقم اللي في الإذن بتاعك`;
+        msgEl.style.color = 'var(--error)';
+        document.getElementById('b1').disabled = false;
+        return;
       }
-    } catch(e) {}
+    }
 
-    // ✅ كل حاجة تمام
+    // ✅ Success
     const rem = 4 - usedCount;
     msgEl.textContent = usedCount > 0 ? `⚠️ استُخدم ${usedCount} من 4 مرات — متبقي ${rem}` : '✅ رقم الإذن صحيح';
     msgEl.style.color = usedCount > 0 ? 'var(--gold)' : 'var(--success)';
     document.getElementById('b1').disabled = false;
 
+    // Render vehicle options now that we have the data
+    renderVehicleOptions();
+
+    success = true;
   } catch(e) {
-    msgEl.textContent = '';
+    msgEl.textContent = '❌ خطأ في التحقق، حاول تاني';
+    msgEl.style.color = 'var(--error)';
     document.getElementById('b1').disabled = false;
   }
-  go(2);
+  // 🔧 Bug fix: only advance to step 2 if validation actually succeeded
+  if (success) go(2);
 }
 
 function pickVehicle(v, cap, el) {
@@ -618,10 +698,36 @@ async function buildCal() {
   const today = new Date(); today.setHours(0,0,0,0);
   const maxD  = new Date(today); maxD.setDate(today.getDate() + 7);
 
+  // Ensure settings + slots are loaded
+  const settings = await ensureSettingsLoaded();
+  const cutoffHour = parseInt(settings.daily_cutoff_hour) || 15;
+  const totalSlotsCount = SLOTS.length || 8;
+
+  // Has the daily cutoff passed for today?
+  const now = new Date();
+  const isCutoffPassedToday = now.getHours() >= cutoffHour;
+
+  // Format helpers
+  const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  const todayStr = fmtDate(today);
+  const maxStr   = fmtDate(maxD);
+
+  // ⚡ Parallel fetch: schedule_rules + bookings for the next 7 days
   let rules = [];
+  const bookingsByDate = {};
   try {
-    const r = await fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR });
-    rules = await r.json();
+    const [rulesRes, bookingsRes] = await Promise.all([
+      fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&loading_date=gte.${todayStr}&loading_date=lte.${maxStr}&status=neq.ملغي&select=loading_date,time_slot,count,id`, { headers: HDR })
+    ]);
+    rules = await rulesRes.json();
+    const bookings = await bookingsRes.json();
+    bookings.forEach(b => {
+      if (editMode && b.id === editMode.id) return; // exclude the booking being edited
+      if (!bookingsByDate[b.loading_date]) bookingsByDate[b.loading_date] = {};
+      bookingsByDate[b.loading_date][b.time_slot] =
+        (bookingsByDate[b.loading_date][b.time_slot] || 0) + (b.count || 0);
+    });
   } catch(e) {}
 
   function isDayClosed(dt, ds) {
@@ -632,6 +738,15 @@ async function buildCal() {
       if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) return true;
     }
     return false;
+  }
+
+  function isDayFull(ds) {
+    const dayData = bookingsByDate[ds] || {};
+    let fullSlots = 0;
+    for (const slot of SLOTS) {
+      if ((dayData[slot] || 0) >= bk.cap) fullSlots++;
+    }
+    return totalSlotsCount > 0 && fullSlots >= totalSlotsCount;
   }
 
   document.getElementById('calMonth').textContent =
@@ -646,16 +761,32 @@ async function buildCal() {
   const dim = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
   for (let d = 1; d <= dim; d++) {
     const dt = new Date(today.getFullYear(), today.getMonth(), d);
-    const ds = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-    const isPast   = dt < today;
-    const isFuture = dt > maxD;
-    const isClosed = isDayClosed(dt, ds);
-    const isToday  = dt.getTime() === today.getTime();
-    const isSel    = ds === bk.dateStr;
+    const ds = fmtDate(dt);
+    const isPast    = dt < today;
+    const isFuture  = dt > maxD;
+    const isClosed  = isDayClosed(dt, ds);
+    const isToday   = dt.getTime() === today.getTime();
+    const isCutoff  = isToday && isCutoffPassedToday;
+    const isFull    = !isPast && !isFuture && !isClosed && !isCutoff && isDayFull(ds);
+    const isSel     = ds === bk.dateStr;
+    const isDisabled = isPast || isFuture || isClosed || isCutoff || isFull;
 
-    let cls = 'cal-d' + (isPast ? ' past' : isFuture || isClosed ? ' off' : (isToday ? ' today' : '') + (isSel ? ' sel' : ''));
-    const click = (!isPast && !isFuture && !isClosed) ? `onclick="pickDay('${ds}',this)"` : '';
-    html += `<div class="${cls}" ${click}>${d}</div>`;
+    let cls = 'cal-d';
+    if (isPast) cls += ' past';
+    else if (isFuture || isClosed) cls += ' off';
+    else if (isCutoff) cls += ' cutoff';
+    else if (isFull)   cls += ' full';
+    else {
+      if (isToday) cls += ' today';
+      if (isSel)   cls += ' sel';
+    }
+
+    let label = String(d);
+    if (isCutoff)    label += '<div style="font-size:9px;margin-top:1px">انتهى الدور</div>';
+    else if (isFull) label += '<div style="font-size:9px;margin-top:1px">مكتمل</div>';
+
+    const click = !isDisabled ? `onclick="pickDay('${ds}',this)"` : '';
+    html += `<div class="${cls}" ${click}>${label}</div>`;
   }
   document.getElementById('calGrid').innerHTML = html;
   if (bk.dateStr) document.getElementById('b3').disabled = false;
@@ -675,6 +806,9 @@ async function loadSlots() {
   g.innerHTML = `<div class="slots-loading">⏳ جاري تحميل المواعيد...</div>`;
   document.getElementById('b4').disabled = true;
 
+  // Make sure SLOTS is up to date with current settings
+  await ensureSettingsLoaded();
+
   try {
     const r = await fetch(
       `${SB}/rest/v1/bookings?select=time_slot,count,id&loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`,
@@ -682,7 +816,7 @@ async function loadSlots() {
     );
     const data = await r.json();
 
-    // المجموع — مع استثناء الحجز اللي بنعدله
+    // Sum used per slot, excluding the booking being edited
     const totals = {};
     data.forEach(b => {
       if (editMode && b.id === editMode.id) return;
@@ -690,18 +824,26 @@ async function loadSlots() {
     });
 
     let html = '';
+    let availableCount = 0;
     SLOTS.forEach(sl => {
       const used = totals[sl] || 0;
       const rem  = bk.cap - used;
-      const full = rem <= 0;
-      const sel  = sl === bk.slot && !full;
-      html += `<div class="slot ${full?'slot-full':''} ${sel?'sel':''}"
-        ${!full ? `onclick="pickSlot('${sl}',this,${rem})"` : ''}>
+      // 🚫 Hide full slots completely (used to show "ممتلئ ❌")
+      if (rem <= 0) return;
+      availableCount++;
+      const sel = sl === bk.slot;
+      html += `<div class="slot ${sel?'sel':''}"
+        onclick="pickSlot('${sl}',this,${rem})">
         <div class="st">${sl}</div>
-        ${full ? '<div class="fl">ممتلئ ❌</div>' : `<div class="av">متاح: ${rem} ✅</div>`}
+        <div class="av">متاح: ${rem} ✅</div>
       </div>`;
     });
-    g.innerHTML = html;
+
+    if (availableCount === 0) {
+      g.innerHTML = `<div class="slots-loading">😞 مفيش مواعيد متاحة في اليوم ده — ارجع واختار يوم تاني</div>`;
+    } else {
+      g.innerHTML = html;
+    }
     if (bk.slot) document.getElementById('b4').disabled = false;
 
   } catch(e) {
