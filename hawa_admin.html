@@ -47,6 +47,8 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .main-area{margin-right:var(--sidebar);flex:1;padding:20px 24px;overflow-y:auto;height:100vh;display:flex;flex-direction:column;}
 .section{display:none;flex:1;flex-direction:column;min-height:0;}
 .section.active{display:flex;}
+/* form-style sections: constrain width on wide screens for better composition */
+#sec-broadcast.active, #sec-settings.active, #sec-types.active, #sec-vehicles.active, #sec-templates.active{max-width:1100px;width:100%;margin-right:auto;margin-left:auto;}
 .tbl-wrap.scrollable{flex:1;min-height:200px;display:flex;flex-direction:column;position:relative;}
 .tbl-wrap.scrollable .tbl-scroll-body{flex:1;overflow-y:auto;overflow-x:auto;min-height:0;}
 
