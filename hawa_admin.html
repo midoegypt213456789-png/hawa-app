@@ -422,13 +422,28 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <textarea id="bc-message" rows="6" placeholder="اكتب الرسالة هنا، أو اختر من المحفوظة..." oninput="updateMessageCount()" style="font-size:14px;line-height:1.7"></textarea>
         <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px">
           <span id="bc-char-count" style="color:var(--text-dim)">0 حرف</span>
-          <span style="color:var(--text-dim)">الحد الأقصى: 4096 حرف</span>
+          <span style="color:var(--text-dim)">📏 الرسائل الطويلة هتتقسم تلقائياً</span>
         </div>
 
         <!-- Full message preview (with header/footer) -->
         <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
           <div style="font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:8px">👁️ معاينة الرسالة الكاملة (مع الهيدر والفوتر):</div>
           <div id="bc-full-preview" style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--text);min-height:60px"></div>
+        </div>
+
+        <!-- Media attachments -->
+        <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+            <div style="font-size:13px;font-weight:700;color:var(--gold)">📎 ملفات مرفقة <span style="font-size:10px;color:var(--text-dim);font-weight:normal">(صور / فيديو / PDF / Word / Excel / صوت — حتى 50MB لكل ملف)</span></div>
+            <label class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);padding:6px 14px;font-size:12px;cursor:pointer;margin:0">
+              ➕ اختر ملفات
+              <input type="file" id="bc-files-input" multiple
+                accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip"
+                onchange="onBroadcastFilesPicked(event)" style="display:none">
+            </label>
+          </div>
+          <div id="bc-files-list" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div id="bc-files-summary" style="font-size:11px;color:var(--text-dim);margin-top:6px;display:none"></div>
         </div>
       </div>
 
@@ -2665,6 +2680,9 @@ async function loadBroadcast(){
   citySel.disabled = true;
   document.getElementById('bc-include-extra').checked = false;
   document.getElementById('bc-preview-result').innerHTML = '';
+  // Reset attached files
+  broadcastFiles = [];
+  renderBroadcastFiles();
   updateMessageCount();
   broadcastTargets = null;
 }
@@ -2734,17 +2752,156 @@ function updateMessageCount(){
   const msg = document.getElementById('bc-message').value;
   const len = msg.length;
   const counter = document.getElementById('bc-char-count');
-  counter.textContent = `${len} حرف`;
+  // Show count + chunk info if > 4096 (auto-split)
   if(len > 4096){
-    counter.style.color = 'var(--error)';
-    counter.innerHTML = `<b>${len} حرف ⚠️ تجاوزت الحد الأقصى!</b>`;
-  }else if(len > 3500){
-    counter.style.color = '#d4a030';
-    counter.innerHTML = `${len} حرف ⚠️ اقتربت من الحد`;
+    const chunks = Math.ceil(len / 4096);
+    counter.innerHTML = `${len} حرف <span style="color:#d4a957">📤 هتتقسم لـ ${chunks} رسائل</span>`;
+    counter.style.color = 'var(--text-dim)';
   }else{
+    counter.textContent = `${len} حرف`;
     counter.style.color = 'var(--text-dim)';
   }
   updateBroadcastFullPreview();
+}
+
+// ===================== BROADCAST MEDIA UPLOAD =====================
+let broadcastFiles = []; // {file, type, icon, status:'pending'|'uploading'|'done'|'error', path, url, size}
+
+function classifyFile(file){
+  const t = (file.type || '').toLowerCase();
+  const ext = (file.name.split('.').pop() || '').toLowerCase();
+  if(t.startsWith('image/')) return {type: 'photo', icon: '🖼️'};
+  if(t.startsWith('video/')) return {type: 'video', icon: '🎥'};
+  if(t.startsWith('audio/')) return {type: 'audio', icon: '🎵'};
+  if(['mp3','wav','m4a','ogg','flac'].includes(ext)) return {type: 'audio', icon: '🎵'};
+  return {type: 'document', icon: '📄'};
+}
+
+function fmtBytes(bytes){
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1024/1024).toFixed(2) + ' MB';
+}
+
+function onBroadcastFilesPicked(ev){
+  const files = Array.from(ev.target.files || []);
+  for(const f of files){
+    if(f.size > 52428800){ // 50MB
+      alert(`❌ الملف "${f.name}" أكبر من 50MB — مش هيتقبل من Telegram`);
+      continue;
+    }
+    const c = classifyFile(f);
+    broadcastFiles.push({
+      file: f,
+      type: c.type,
+      icon: c.icon,
+      filename: f.name,
+      size: f.size,
+      mime: f.type || 'application/octet-stream',
+      status: 'pending'
+    });
+  }
+  // Reset input so picking same file again works
+  ev.target.value = '';
+  renderBroadcastFiles();
+  invalidateBroadcastPreview();
+}
+
+function removeBroadcastFile(idx){
+  broadcastFiles.splice(idx, 1);
+  renderBroadcastFiles();
+  invalidateBroadcastPreview();
+}
+
+function renderBroadcastFiles(){
+  const list = document.getElementById('bc-files-list');
+  const summary = document.getElementById('bc-files-summary');
+  if(!broadcastFiles.length){
+    list.innerHTML = '';
+    summary.style.display = 'none';
+    return;
+  }
+  let html = '';
+  let totalSize = 0;
+  broadcastFiles.forEach((f, idx) => {
+    totalSize += f.size;
+    const statusBadge = f.status === 'uploading' ? '<span style="color:#d4a957;font-size:10px">⏳ جاري الرفع...</span>'
+      : f.status === 'done' ? '<span style="color:#6dc49a;font-size:10px">✓ تم</span>'
+      : f.status === 'error' ? '<span style="color:#e88080;font-size:10px">❌ فشل</span>'
+      : '';
+    html += `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--dark3);border:1px solid var(--border);border-radius:10px">
+      <span style="font-size:18px">${f.icon}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.filename}</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${fmtBytes(f.size)} ${statusBadge}</div>
+      </div>
+      <button onclick="removeBroadcastFile(${idx})" style="background:transparent;border:none;color:#e88080;cursor:pointer;font-size:16px;padding:4px 8px" title="حذف">✕</button>
+    </div>`;
+  });
+  list.innerHTML = html;
+
+  // Summary
+  const types = {photo:0, video:0, audio:0, document:0};
+  broadcastFiles.forEach(f => types[f.type] = (types[f.type]||0) + 1);
+  const parts = [];
+  if(types.photo) parts.push(`🖼️ ${types.photo} صور`);
+  if(types.video) parts.push(`🎥 ${types.video} فيديو`);
+  if(types.audio) parts.push(`🎵 ${types.audio} صوتي`);
+  if(types.document) parts.push(`📄 ${types.document} مستند`);
+  summary.style.display = 'block';
+  summary.textContent = `الإجمالي: ${broadcastFiles.length} ملف (${fmtBytes(totalSize)}) — ${parts.join(' + ')}`;
+}
+
+async function uploadBroadcastFile(idx){
+  const item = broadcastFiles[idx];
+  if(item.status === 'done') return item;
+  item.status = 'uploading';
+  renderBroadcastFiles();
+
+  const safeName = item.filename.replace(/[^\w.\-]/g, '_').substring(0, 100);
+  const path = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}_${safeName}`;
+
+  const res = await fetch(`${SB}/storage/v1/object/broadcast_media/${encodeURIComponent(path)}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${KEY}`,
+      'apikey': KEY,
+      'Content-Type': item.mime,
+      'x-upsert': 'true'
+    },
+    body: item.file
+  });
+
+  if(!res.ok){
+    item.status = 'error';
+    renderBroadcastFiles();
+    const errTxt = await res.text().catch(() => '');
+    throw new Error(`Upload failed for ${item.filename}: ${res.status} ${errTxt.slice(0,200)}`);
+  }
+
+  item.path = path;
+  item.url = `${SB}/storage/v1/object/public/broadcast_media/${encodeURIComponent(path)}`;
+  item.status = 'done';
+  renderBroadcastFiles();
+  return item;
+}
+
+async function uploadAllBroadcastFiles(){
+  if(!broadcastFiles.length) return [];
+  // Upload sequentially to avoid hammering Storage
+  for(let i = 0; i < broadcastFiles.length; i++){
+    if(broadcastFiles[i].status !== 'done'){
+      await uploadBroadcastFile(i);
+    }
+  }
+  return broadcastFiles.map(f => ({
+    url: f.url,
+    path: f.path,
+    type: f.type,
+    filename: f.filename,
+    size: f.size,
+    mime: f.mime
+  }));
 }
 
 function buildFullMessage(content){
@@ -2958,16 +3115,16 @@ async function previewBroadcast(){
 
 function openBroadcastConfirm(){
   const content = document.getElementById('bc-message').value.trim();
-  if(!content){alert('اكتب الرسالة الأول');return;}
+  // Allow if either content OR files attached
+  if(!content && !broadcastFiles.length){alert('اكتب رسالة أو ارفق ملف على الأقل');return;}
   const fullMsg = buildFullMessage(content);
-  if(fullMsg.length > 4096){alert(`الرسالة الكاملة (مع الهيدر والفوتر) ${fullMsg.length} حرف — تجاوزت الحد الأقصى 4096`);return;}
   if(!broadcastTargets){alert('اضغط "🔍 عرض العدد" الأول للتأكد من عدد المستهدفين');return;}
   if(broadcastTargets.total === 0){alert('مفيش مستهدفين — غيّر الفلاتر');return;}
 
   const includeExtra = document.getElementById('bc-include-extra').checked;
   const religion = document.getElementById('bc-religion').value;
 
-  document.getElementById('bc-confirm-msg').textContent = fullMsg;
+  document.getElementById('bc-confirm-msg').textContent = fullMsg || '(بدون نص — ملفات فقط)';
 
   let breakdownHtml = `
     <div style="font-size:14px;font-weight:700;color:#6dc49a;margin-bottom:6px">📊 ملخص الإرسال:</div>
@@ -2978,6 +3135,16 @@ function openBroadcastConfirm(){
   if(religion){
     const relLabel = religion === 'مسلم' ? '🕌 المسلمين' : religion === 'مسيحي' ? '✝️ المسيحيين' : religion;
     breakdownHtml += `<div style="color:var(--gold)">🎯 فلتر ديانة مفعّل: <b>${relLabel}</b></div>`;
+  }
+  // Show attached files info
+  if(broadcastFiles.length){
+    const totalMb = (broadcastFiles.reduce((s,f)=>s+f.size,0)/1024/1024).toFixed(2);
+    breakdownHtml += `<div style="color:var(--gold)">📎 ملفات مرفقة: <b>${broadcastFiles.length}</b> ملف (${totalMb} MB)</div>`;
+  }
+  // Show split info if message > 4096
+  if(fullMsg.length > 4096){
+    const chunks = Math.ceil(fullMsg.length / 4096);
+    breakdownHtml += `<div style="color:#d4a957">📤 الرسالة طويلة (${fullMsg.length} حرف) — هتتقسم لـ <b>${chunks}</b> رسائل</div>`;
   }
   breakdownHtml += `<div style="margin-top:4px;padding-top:6px;border-top:1px solid rgba(76,175,125,0.2)">📬 إجمالي: <b style="color:#6dc49a;font-size:15px">${broadcastTargets.total}</b> شخص فريد</div>`;
   document.getElementById('bc-confirm-breakdown').innerHTML = breakdownHtml;
@@ -2998,10 +3165,29 @@ async function sendBroadcast(){
   sendBtn.textContent = '⏳ جاري الإرسال...';
 
   try{
+    // Step 1: Upload all files (if any)
+    let mediaFiles = [];
+    if(broadcastFiles.length){
+      sendBtn.textContent = `⏳ جاري رفع ${broadcastFiles.length} ملف...`;
+      try{
+        mediaFiles = await uploadAllBroadcastFiles();
+      }catch(uploadErr){
+        alert(`❌ فشل رفع الملفات\n\n${uploadErr.message}\n\nجرّب تاني أو شيل بعض الملفات.`);
+        sendBtn.disabled = false;
+        sendBtn.textContent = '📢 إرسال الرسالة';
+        return;
+      }
+    }
+
+    // Step 2: Build payload + send to webhook
+    sendBtn.textContent = '⏳ جاري الإرسال للبوت...';
     const payload = {
       message: fullMsg,
       total: broadcastTargets.total,
       recipients: broadcastTargets.recipients,
+      media_files: mediaFiles,
+      supabase_url: SB,
+      supabase_key: KEY,
       sent_at: new Date().toISOString()
     };
 
@@ -3013,16 +3199,19 @@ async function sendBroadcast(){
 
     if(res.ok){
       closeModal('broadcastConfirmModal');
-      alert(`✅ تم إرسال الطلب لـ n8n بنجاح\n\n📬 هيتم توصيل الرسالة لـ ${broadcastTargets.total} شخص خلال دقايق.`);
+      const filesInfo = mediaFiles.length ? `\n📎 مع ${mediaFiles.length} ملف مرفق` : '';
+      alert(`✅ تم إرسال الطلب لـ n8n بنجاح\n\n📬 هيتم توصيل الرسالة لـ ${broadcastTargets.total} شخص خلال دقايق.${filesInfo}\n\n💡 الملفات هتتمسح تلقائياً من Storage بعد الإرسال.`);
       // Reset form
       document.getElementById('bc-message').value = '';
+      broadcastFiles = [];
+      renderBroadcastFiles();
       updateMessageCount();
       broadcastTargets = null;
       document.getElementById('bc-preview-result').innerHTML = '';
     }else{
       let errTxt = '';
       try{errTxt = await res.text();}catch(e){}
-      alert(`❌ فشل الإرسال (HTTP ${res.status})\n\nتأكد إن:\n1. ngrok شغال\n2. n8n شغال على port 5678\n3. workflow "HAWA Broadcast" Active\n\n${errTxt ? 'التفاصيل: '+errTxt.slice(0,200) : ''}`);
+      alert(`❌ فشل الإرسال (HTTP ${res.status})\n\nتأكد إن:\n1. ngrok شغال\n2. n8n شغال على port 5678\n3. workflow "HAWA Broadcast V3" Active\n\n${errTxt ? 'التفاصيل: '+errTxt.slice(0,200) : ''}`);
       sendBtn.disabled = false;
       sendBtn.textContent = '📢 إرسال الرسالة';
     }
