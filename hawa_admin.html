@@ -699,6 +699,69 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         </div>
       </div>
 
+      <!-- Default Admin Page -->
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">🏠 الصفحة الافتراضية عند فتح الأدمن</div>
+        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:#6faee8;line-height:1.7;margin-bottom:14px">
+          ℹ️ كل ما تفتح صفحة الأدمن، هتفتح على الصفحة دي تلقائياً.
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">اختر الصفحة</label>
+          <select id="set-default-page">
+            <option value="bookings">📋 الحجوزات</option>
+            <option value="employees">👷 الموظفين</option>
+            <option value="clients">👥 العملاء</option>
+            <option value="client-types">🏷️ أنواع العملاء</option>
+            <option value="extra-contacts">📞 جهات إضافية</option>
+            <option value="broadcast">📢 إرسال رسائل</option>
+            <option value="templates">💌 الرسائل المحفوظة</option>
+            <option value="unlinked">🔗 عملاء لم يربطوا</option>
+            <option value="vehicle-types">🚚 أنواع العربيات</option>
+            <option value="schedule">📅 إدارة الأيام</option>
+            <option value="blocked">🔒 المبلوكين</option>
+            <option value="reports">📊 التقارير</option>
+            <option value="settings">⚙️ إعدادات عامة</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Email Reports Schedule -->
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">📧 جدولة إيميلات التقارير</div>
+        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:#6faee8;line-height:1.7;margin-bottom:14px">
+          ℹ️ النظام بيبعت تقرير يومي للحجوزات لمديرين المخزن. هنا تتحكم في توقيت الإرسال.
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">نوع الإرسال</label>
+            <select id="set-report-type" onchange="onReportTypeChange()">
+              <option value="manual">❌ يدوي (مفيش جدولة)</option>
+              <option value="daily">📅 يومي</option>
+              <option value="every_2_days">⏰ كل يومين</option>
+              <option value="weekly">📆 أسبوعي (أيام محددة)</option>
+            </select>
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">ساعة الإرسال</label>
+            <input type="number" id="set-report-hour" min="0" max="23" placeholder="1">
+            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">1 = 1 صباحاً، 14 = 2 مساءً</div>
+          </div>
+        </div>
+        <div id="set-report-days-wrap" style="margin-top:14px;display:none">
+          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:8px">أيام الإرسال (للأسبوعي)</label>
+          <div id="set-report-days" style="display:flex;flex-wrap:wrap;gap:8px">
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="0" style="accent-color:var(--gold)"> أحد</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="1" style="accent-color:var(--gold)"> اثنين</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="2" style="accent-color:var(--gold)"> ثلاثاء</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="3" style="accent-color:var(--gold)"> أربعاء</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="4" style="accent-color:var(--gold)"> خميس</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="5" style="accent-color:var(--gold)"> جمعة</label>
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="6" style="accent-color:var(--gold)"> سبت</label>
+          </div>
+        </div>
+        <div id="set-report-summary" style="margin-top:14px;padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;font-size:12px;color:var(--gold);line-height:1.7"></div>
+      </div>
+
       <!-- Header/Footer -->
       <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
         <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">💬 الهيدر والفوتر للرسائل</div>
@@ -1129,7 +1192,26 @@ function enterApp(){
   document.getElementById('bk-date').value=new Date().toISOString().split('T')[0];
   initAdminGovDropdown();
   initResizeHandle();
-  loadBookings();
+  // 🆕 Load the user's preferred default page (fallback to bookings)
+  goToDefaultPage();
+}
+
+// 🆕 Read default page from settings and navigate there
+async function goToDefaultPage(){
+  let target = 'bookings';
+  try {
+    const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.default_admin_page&select=value`,{headers:HDR});
+    const data = await r.json();
+    if (Array.isArray(data) && data[0] && data[0].value) {
+      // Verify the section exists in the DOM (in case the setting points to a removed page)
+      if (document.getElementById('sec-' + data[0].value)) {
+        target = data[0].value;
+      }
+    }
+  } catch(e) {
+    // Network/parse failure — fall back silently
+  }
+  goTo(target);
 }
 
 function initResizeHandle(){
@@ -1178,9 +1260,30 @@ function doLogout(){
 function goTo(sec){
   currentSection=sec;
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById('sec-'+sec).classList.add('active');
+  const target = document.getElementById('sec-'+sec);
+  if(!target){
+    // Section doesn't exist — fall back to bookings
+    document.getElementById('sec-bookings').classList.add('active');
+    sec = 'bookings';
+    currentSection = 'bookings';
+  } else {
+    target.classList.add('active');
+  }
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+
+  // Highlight the matching nav item — works whether triggered by click or programmatically
+  let highlighted = false;
+  if(typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.classList){
+    event.currentTarget.classList.add('active');
+    highlighted = true;
+  }
+  if(!highlighted){
+    document.querySelectorAll('.nav-item').forEach(n => {
+      const oc = n.getAttribute('onclick') || '';
+      if(oc.includes(`'${sec}'`)) n.classList.add('active');
+    });
+  }
+
   if(sec==='bookings')loadBookings();
   else if(sec==='employees')loadEmployees();
   else if(sec==='clients')loadClients();
@@ -1723,15 +1826,67 @@ async function loadSettings(){
     document.getElementById('set-header').value      = map.broadcast_header || '';
     document.getElementById('set-footer').value      = map.broadcast_footer || '';
 
+    // 🆕 Default Admin Page
+    document.getElementById('set-default-page').value = map.default_admin_page || 'bookings';
+
+    // 🆕 Email Schedule
+    document.getElementById('set-report-type').value = map.report_schedule_type || 'daily';
+    document.getElementById('set-report-hour').value = map.report_schedule_hour || '1';
+    const reportDays = (map.report_schedule_days || '0,1,2,3,4,5,6').split(',').map(s => s.trim());
+    document.querySelectorAll('#set-report-days input[type="checkbox"]').forEach(cb => {
+      cb.checked = reportDays.includes(cb.dataset.day);
+    });
+    onReportTypeChange();
+
     updateMessagePreview();
     updateSlotsPreview();
+    updateReportSummary();
 
     // Bind preview update on change
     document.getElementById('set-header').oninput = updateMessagePreview;
     document.getElementById('set-footer').oninput = updateMessagePreview;
+    document.getElementById('set-report-hour').oninput = updateReportSummary;
+    document.querySelectorAll('#set-report-days input[type="checkbox"]').forEach(cb => {
+      cb.onchange = updateReportSummary;
+    });
   }catch(e){
     alert('❌ خطأ في تحميل الإعدادات');
   }
+}
+
+// 🆕 Show/hide weekly days picker based on report type
+function onReportTypeChange(){
+  const type = document.getElementById('set-report-type').value;
+  const wrap = document.getElementById('set-report-days-wrap');
+  wrap.style.display = (type === 'weekly') ? 'block' : 'none';
+  updateReportSummary();
+}
+
+// 🆕 Friendly summary of the report schedule
+function updateReportSummary(){
+  const type = document.getElementById('set-report-type').value;
+  const hour = parseInt(document.getElementById('set-report-hour').value);
+  const out = document.getElementById('set-report-summary');
+  if (type === 'manual') {
+    out.innerHTML = '⚙️ <b>الجدولة معطلة</b> — مفيش إيميلات هتتبعت تلقائياً.';
+    return;
+  }
+  if (isNaN(hour) || hour < 0 || hour > 23) {
+    out.innerHTML = '⚠️ ساعة الإرسال غير صحيحة (لازم تكون من 0 لـ 23)';
+    return;
+  }
+  const fmtH = hour === 0 ? '12 صباحاً' : hour === 12 ? '12 ظهراً' : hour < 12 ? `${hour} صباحاً` : `${hour - 12} مساءً`;
+  let msg = '';
+  if (type === 'daily') msg = `📧 هيتبعت إيميل <b>كل يوم</b> الساعة <b>${fmtH}</b>.`;
+  else if (type === 'every_2_days') msg = `📧 هيتبعت إيميل <b>كل يومين</b> الساعة <b>${fmtH}</b>.`;
+  else if (type === 'weekly') {
+    const dayNames = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+    const checked = [...document.querySelectorAll('#set-report-days input[type="checkbox"]:checked')]
+      .map(cb => dayNames[parseInt(cb.dataset.day)]);
+    if (checked.length === 0) msg = '⚠️ لازم تختار يوم واحد على الأقل من أيام الأسبوع';
+    else msg = `📧 هيتبعت إيميل أيام <b>${checked.join(' / ')}</b> الساعة <b>${fmtH}</b>.`;
+  }
+  out.innerHTML = msg;
 }
 
 function updateMessagePreview(){
@@ -1772,6 +1927,13 @@ async function saveSettings(){
   const header = document.getElementById('set-header').value;
   const footer = document.getElementById('set-footer').value;
 
+  // 🆕 Default page + Report schedule
+  const defaultPage = document.getElementById('set-default-page').value;
+  const reportType  = document.getElementById('set-report-type').value;
+  const reportHour  = parseInt(document.getElementById('set-report-hour').value);
+  const reportDays  = [...document.querySelectorAll('#set-report-days input[type="checkbox"]:checked')]
+    .map(cb => cb.dataset.day).join(',');
+
   // Validations
   if(isNaN(ws) || ws<0 || ws>23){alert('❌ ساعة بداية العمل غير صحيحة (0-23)');return;}
   if(isNaN(we) || we<1 || we>24){alert('❌ ساعة نهاية العمل غير صحيحة (1-24)');return;}
@@ -1781,6 +1943,16 @@ async function saveSettings(){
   if(isNaN(pmin) || isNaN(pmax)){alert('❌ نطاق الأذون غير صحيح');return;}
   if(pmin >= pmax){alert('❌ أقل رقم إذن لازم يكون أصغر من أعلى رقم');return;}
 
+  // 🆕 Report schedule validation
+  if (reportType !== 'manual') {
+    if (isNaN(reportHour) || reportHour < 0 || reportHour > 23) {
+      alert('❌ ساعة إرسال التقرير غير صحيحة (0-23)'); return;
+    }
+    if (reportType === 'weekly' && !reportDays) {
+      alert('❌ اختر يوم واحد على الأقل لإرسال التقرير الأسبوعي'); return;
+    }
+  }
+
   const updates = [
     ['working_hour_start', String(ws)],
     ['working_hour_end',   String(we)],
@@ -1788,7 +1960,12 @@ async function saveSettings(){
     ['permit_min',         String(pmin)],
     ['permit_max',         String(pmax)],
     ['broadcast_header',   header],
-    ['broadcast_footer',   footer]
+    ['broadcast_footer',   footer],
+    // 🆕 New settings
+    ['default_admin_page',     defaultPage],
+    ['report_schedule_type',   reportType],
+    ['report_schedule_hour',   isNaN(reportHour) ? '1' : String(reportHour)],
+    ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6']
   ];
 
   try{
