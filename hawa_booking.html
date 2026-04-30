@@ -94,7 +94,8 @@
 
   /* Calendar */
   .cal-month { text-align: center; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 12px; }
-  .cal-grid  { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+  .cal-month + .cal-month { margin-top: 24px; padding-top: 16px; border-top: 1px dashed rgba(201,168,76,0.2); }
+  .cal-grid  { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
   .cal-hd    { font-size: 10px; color: var(--text-dim); font-weight: 600; text-align: center; padding: 4px 0; }
   .cal-d {
     padding: 9px 2px; border-radius: 10px; font-size: 12px; font-weight: 600;
@@ -339,8 +340,7 @@
     <div class="sec" id="s3">
       <div class="card">
         <p class="card-title">اختر <span>يوم التحميل</span></p>
-        <div class="cal-month" id="calMonth"></div>
-        <div class="cal-grid"  id="calGrid"></div>
+        <div id="calContainer"></div>
       </div>
       <button class="btn-gold" id="b3" onclick="go(4)" disabled>التالي ←</button>
       <button class="btn-back" onclick="go(2)">→ رجوع</button>
@@ -749,46 +749,63 @@ async function buildCal() {
     return totalSlotsCount > 0 && fullSlots >= totalSlotsCount;
   }
 
-  document.getElementById('calMonth').textContent =
-    today.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
-
   const days = ['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'];
-  let html = days.map(d => `<div class="cal-hd">${d}</div>`).join('');
 
-  const first = new Date(today.getFullYear(), today.getMonth(), 1);
-  for (let i = 0; i < first.getDay(); i++) html += `<div class="cal-d empty"></div>`;
+  // 🆕 Builds HTML for ONE month (header + grid). Used 1 or 2 times based on whether maxD crosses into next month.
+  function buildMonthSection(year, month) {
+    const monthDate = new Date(year, month, 1);
+    const monthName = monthDate.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
 
-  const dim = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
-  for (let d = 1; d <= dim; d++) {
-    const dt = new Date(today.getFullYear(), today.getMonth(), d);
-    const ds = fmtDate(dt);
-    const isPast    = dt < today;
-    const isFuture  = dt > maxD;
-    const isClosed  = isDayClosed(dt, ds);
-    const isToday   = dt.getTime() === today.getTime();
-    const isCutoff  = isToday && isCutoffPassedToday;
-    const isFull    = !isPast && !isFuture && !isClosed && !isCutoff && isDayFull(ds);
-    const isSel     = ds === bk.dateStr;
-    const isDisabled = isPast || isFuture || isClosed || isCutoff || isFull;
+    let h = `<div class="cal-month">${monthName}</div>`;
+    h += `<div class="cal-grid">`;
+    h += days.map(d => `<div class="cal-hd">${d}</div>`).join('');
 
-    let cls = 'cal-d';
-    if (isPast) cls += ' past';
-    else if (isFuture || isClosed) cls += ' off';
-    else if (isCutoff) cls += ' cutoff';
-    else if (isFull)   cls += ' full';
-    else {
-      if (isToday) cls += ' today';
-      if (isSel)   cls += ' sel';
+    const first = new Date(year, month, 1);
+    for (let i = 0; i < first.getDay(); i++) h += `<div class="cal-d empty"></div>`;
+
+    const dim = new Date(year, month + 1, 0).getDate();
+    for (let d = 1; d <= dim; d++) {
+      const dt = new Date(year, month, d);
+      const ds = fmtDate(dt);
+      const isPast    = dt < today;
+      const isFuture  = dt > maxD;
+      const isClosed  = isDayClosed(dt, ds);
+      const isToday   = dt.getTime() === today.getTime();
+      const isCutoff  = isToday && isCutoffPassedToday;
+      const isFull    = !isPast && !isFuture && !isClosed && !isCutoff && isDayFull(ds);
+      const isSel     = ds === bk.dateStr;
+      const isDisabled = isPast || isFuture || isClosed || isCutoff || isFull;
+
+      let cls = 'cal-d';
+      if (isPast) cls += ' past';
+      else if (isFuture || isClosed) cls += ' off';
+      else if (isCutoff) cls += ' cutoff';
+      else if (isFull)   cls += ' full';
+      else {
+        if (isToday) cls += ' today';
+        if (isSel)   cls += ' sel';
+      }
+
+      let label = String(d);
+      if (isCutoff)    label += '<div style="font-size:9px;margin-top:1px">انتهى الدور</div>';
+      else if (isFull) label += '<div style="font-size:9px;margin-top:1px">مكتمل</div>';
+
+      const click = !isDisabled ? `onclick="pickDay('${ds}',this)"` : '';
+      h += `<div class="${cls}" ${click}>${label}</div>`;
     }
-
-    let label = String(d);
-    if (isCutoff)    label += '<div style="font-size:9px;margin-top:1px">انتهى الدور</div>';
-    else if (isFull) label += '<div style="font-size:9px;margin-top:1px">مكتمل</div>';
-
-    const click = !isDisabled ? `onclick="pickDay('${ds}',this)"` : '';
-    html += `<div class="${cls}" ${click}>${label}</div>`;
+    h += `</div>`;
+    return h;
   }
-  document.getElementById('calGrid').innerHTML = html;
+
+  // Render current month
+  let allHtml = buildMonthSection(today.getFullYear(), today.getMonth());
+
+  // 🆕 If maxD crosses into the next month, render that month too
+  if (maxD.getMonth() !== today.getMonth() || maxD.getFullYear() !== today.getFullYear()) {
+    allHtml += buildMonthSection(maxD.getFullYear(), maxD.getMonth());
+  }
+
+  document.getElementById('calContainer').innerHTML = allHtml;
   if (bk.dateStr) document.getElementById('b3').disabled = false;
 }
 
