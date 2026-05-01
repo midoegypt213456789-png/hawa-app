@@ -428,8 +428,12 @@ const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
-// ⚙️ رابط n8n webhook — عدّله لما ngrok يتغير
-const N8N = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/booking-confirm';
+// ⚙️ ربط n8n: السيرفر الخارجى الـ default
+//    لو السيرفر الخارجى وقع لأى سبب، فعّل السطر التانى بدل الأول وارفع التعديل
+const N8N_BASE = 'https://n8n.gladiatorverse.net';
+// const N8N_BASE = 'https://unhatched-lashaunda-inductive.ngrok-free.dev';  // local fallback
+
+const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 if (!user || !user.id) { window.location.href = 'hawa_login.html'; }

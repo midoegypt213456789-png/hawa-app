@@ -2819,7 +2819,12 @@ async function resetExtraTelegramId(id, name){
 }
 
 // =================== BROADCAST ===================
-const BROADCAST_WEBHOOK = 'https://unhatched-lashaunda-inductive.ngrok-free.dev/webhook/broadcast';
+// ⚙️ ربط n8n: السيرفر الخارجى الـ default
+//    لو السيرفر الخارجى وقع لأى سبب، فعّل السطر التانى بدل الأول وارفع التعديل
+const N8N_BASE = 'https://n8n.gladiatorverse.net';
+// const N8N_BASE = 'https://unhatched-lashaunda-inductive.ngrok-free.dev';  // local fallback
+
+const BROADCAST_WEBHOOK = `${N8N_BASE}/webhook/broadcast`;
 let broadcastTargets = null; // cached last preview result
 let allBroadcastTemplates = [];
 let cachedBroadcastSettings = {header:'', footer:''};
@@ -3409,12 +3414,12 @@ async function sendBroadcast(){
     }else{
       let errTxt = '';
       try{errTxt = await res.text();}catch(e){}
-      alert(`❌ فشل الإرسال (HTTP ${res.status})\n\nتأكد إن:\n1. ngrok شغال\n2. n8n شغال على port 5678\n3. workflow "HAWA Broadcast V3" Active\n\n${errTxt ? 'التفاصيل: '+errTxt.slice(0,200) : ''}`);
+      alert(`❌ فشل الإرسال (HTTP ${res.status})\n\nتأكد إن:\n1. السيرفر شغّال (n8n.gladiatorverse.net)\n2. workflow "HAWA Broadcast" Active\n\n${errTxt ? 'التفاصيل: '+errTxt.slice(0,200) : ''}`);
       sendBtn.disabled = false;
       sendBtn.textContent = '📢 إرسال الرسالة';
     }
   }catch(e){
-    alert(`❌ مش قادر أوصل للـ webhook\n\nده غالباً معناه إن ngrok أو n8n مش شغالين.\n\nالتفاصيل: ${e.message}`);
+    alert(`❌ مش قادر أوصل للـ webhook\n\nده غالباً معناه إن السيرفر مش شغّال أو فيه مشكلة فى الشبكة.\n\nالتفاصيل: ${e.message}`);
     sendBtn.disabled = false;
     sendBtn.textContent = '📢 إرسال الرسالة';
   }
