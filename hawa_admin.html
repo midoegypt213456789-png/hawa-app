@@ -110,6 +110,125 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .section.active::-webkit-scrollbar-thumb:hover{background:var(--gold);}
 /* ⚙️ FIX: allow ms-panel dropdown to escape tbl-wrap overflow:hidden */
 #sec-broadcast .tbl-wrap{overflow:visible;}
+
+/* ═══════════════════════════════════════════════════════════
+   WAREHOUSE CARDS (إيميلات المخازن)
+   ═══════════════════════════════════════════════════════════ */
+.warehouse-card{
+  background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);
+  border:1px solid #2A2620;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:14px;
+  transition:border-color 0.2s;
+}
+.warehouse-card:hover{border-color:rgba(201,168,76,0.25);}
+.warehouse-card .wh-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(201,168,76,0.15);
+  gap:8px;
+}
+.warehouse-card .wh-id-badge{
+  background:rgba(201,168,76,0.1);
+  border:1px solid rgba(201,168,76,0.3);
+  color:var(--gold);
+  padding:5px 12px;
+  border-radius:8px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.5px;
+}
+.warehouse-card label{
+  display:block;
+  font-size:13px;
+  font-weight:700;
+  color:#D8D3CE;
+  margin-bottom:8px;
+  margin-top:6px;
+}
+.warehouse-card input[type="text"],
+.warehouse-card input[type="email"]{
+  width:100% !important;
+  background:#1E1E1E !important;
+  border:2px solid #4A4540 !important;
+  color:#FFFFFF !important;
+  padding:13px 16px !important;
+  font-size:15px !important;
+  font-weight:600 !important;
+  border-radius:10px !important;
+  font-family:'Cairo',sans-serif !important;
+  outline:none !important;
+  box-sizing:border-box !important;
+  margin-bottom:12px;
+  transition:all 0.2s;
+}
+.warehouse-card input[type="email"]{direction:ltr;text-align:left;}
+.warehouse-card input:focus{
+  border-color:var(--gold) !important;
+  background:#262420 !important;
+  box-shadow:0 0 0 4px rgba(201,168,76,0.18) !important;
+}
+.warehouse-card .wh-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:14px;
+}
+.warehouse-card .wh-actions button{
+  flex:1;
+  min-width:120px;
+  padding:11px 16px;
+  border-radius:10px;
+  font-family:'Cairo',sans-serif;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+  border:2px solid;
+  background:transparent;
+}
+.wh-save{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.4);color:var(--gold);}
+.wh-save:hover{background:var(--gold);color:var(--dark);}
+.wh-test{background:rgba(74,144,217,0.1);border-color:rgba(74,144,217,0.4);color:var(--blue);}
+.wh-test:hover{background:var(--blue);color:#FFF;}
+.wh-test:disabled{opacity:0.5;cursor:wait;}
+.wh-delete-small{
+  background:rgba(224,85,85,0.08);
+  border:1.5px solid rgba(224,85,85,0.3);
+  color:#E05555;
+  padding:6px 14px;
+  border-radius:8px;
+  font-family:'Cairo',sans-serif;
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.wh-delete-small:hover{background:#E05555;color:#FFF;border-color:#E05555;}
+.wh-cancel{background:rgba(150,150,150,0.08);border-color:rgba(150,150,150,0.3);color:#A8A39E;}
+.wh-cancel:hover{background:rgba(150,150,150,0.2);}
+.wh-toast{
+  position:fixed;
+  bottom:30px;
+  left:50%;
+  transform:translateX(-50%);
+  background:var(--gold);
+  color:var(--dark);
+  padding:12px 28px;
+  border-radius:12px;
+  font-family:'Cairo',sans-serif;
+  font-weight:700;
+  font-size:14px;
+  z-index:1000;
+  box-shadow:0 12px 40px rgba(0,0,0,0.6),0 0 0 1px rgba(201,168,76,0.3);
+  animation:wh-toast-in 0.3s ease;
+}
+.wh-toast.error{background:#E05555;color:#FFF;}
+@keyframes wh-toast-in{from{opacity:0;transform:translate(-50%,20px);}to{opacity:1;transform:translate(-50%,0);}}
 .tbl-wrap.scrollable{display:flex;flex-direction:column;max-height:calc(100vh - 200px);}
 .tbl-filters{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;}
 .tbl-scroll-body{overflow-y:auto;overflow-x:auto;flex:1;}
@@ -555,6 +674,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="nav-item" onclick="goTo('schedule')"><span class="ni">📅</span> إدارة الأيام</div>
       <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
       <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
+      <div class="nav-item" onclick="goTo('warehouses')"><span class="ni">📦</span> إيميلات المخازن</div>
       <div class="nav-item" onclick="goTo('settings')"><span class="ni">⚙️</span> إعدادات عامة</div>
     </div>
     <div class="sb-footer">
@@ -1007,6 +1127,42 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="rep-wh"></div>
     </div>
 
+    <!-- WAREHOUSES (إيميلات المخازن) -->
+    <div class="section" id="sec-warehouses">
+      <div class="page-hd">
+        <div class="page-title">📦 <span>إيميلات المخازن</span></div>
+        <button class="add-btn" onclick="showAddWarehouseForm()">➕ إضافة مخزن</button>
+      </div>
+
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px;background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2)">
+        <div style="font-size:13px;color:#7fb8e8;line-height:1.8">
+          ℹ️ الإيميلات دى بتستقبل: <b>التقارير اليومية للحجوزات</b> و<b>إشعارات check-in</b> الفورية. تأكد من صحة كل إيميل واستخدم زرار <b>📧 اختبار الإيميل</b> للتحقق من إنه شغّال.
+        </div>
+      </div>
+
+      <!-- Add new warehouse form (hidden by default) -->
+      <div id="wh-add-form" style="display:none">
+        <div class="warehouse-card" style="border-color:var(--gold)">
+          <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.2)">
+            ➕ إضافة مخزن جديد
+          </div>
+          <label>📛 اسم المخزن</label>
+          <input type="text" id="wh-new-name" placeholder="مثال: السادات" maxlength="100">
+          <label>📧 الإيميل</label>
+          <input type="email" id="wh-new-email" placeholder="example@gmail.com" maxlength="200">
+          <div class="wh-actions">
+            <button class="wh-save" onclick="confirmAddWarehouse()">✅ إضافة</button>
+            <button class="wh-cancel" onclick="hideAddWarehouseForm()">إلغاء</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warehouses list -->
+      <div id="wh-list">
+        <div class="loading-txt">⏳ جاري التحميل...</div>
+      </div>
+    </div>
+
     <!-- SETTINGS -->
     <div class="section" id="sec-settings">
       <div class="page-hd">
@@ -1078,6 +1234,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="schedule">📅 إدارة الأيام</option>
             <option value="blocked">🔒 المبلوكين</option>
             <option value="reports">📊 التقارير</option>
+            <option value="warehouses">📦 إيميلات المخازن</option>
             <option value="settings">⚙️ إعدادات عامة</option>
           </select>
         </div>
@@ -1654,6 +1811,7 @@ function goTo(sec){
   else if(sec==='schedule')loadSchedule();
   else if(sec==='blocked')loadBlocked();
   else if(sec==='reports')loadReports();
+  else if(sec==='warehouses')loadWarehouses();
   else if(sec==='settings')loadSettings();
 }
 
@@ -4622,6 +4780,170 @@ function showConfirm(icon,title,msg,danger,onYes){
   document.getElementById('cdialog').classList.add('show');
 }
 function closeConfirm(){document.getElementById('cdialog').classList.remove('show');}
+
+// =================== WAREHOUSES (إيميلات المخازن) ===================
+let allWarehousesData = [];
+const TEST_EMAIL_WEBHOOK = `${N8N_BASE}/webhook/test-warehouse-email`;
+
+async function loadWarehouses(){
+  const c = document.getElementById('wh-list');
+  c.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try {
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=*&order=id.asc`, {headers: HDR});
+    if (!r.ok) throw new Error('فشل الاتصال بقاعدة البيانات');
+    allWarehousesData = await r.json();
+    renderWarehouses();
+  } catch(e) {
+    c.innerHTML = `<div class="loading-txt" style="color:var(--error)">❌ ${e.message}</div>`;
+  }
+}
+
+function renderWarehouses(){
+  const c = document.getElementById('wh-list');
+  if (!allWarehousesData.length) {
+    c.innerHTML = '<div class="loading-txt">— مفيش مخازن. اضغط "➕ إضافة مخزن" —</div>';
+    return;
+  }
+  c.innerHTML = allWarehousesData.map(w => `
+    <div class="warehouse-card" data-id="${w.id}">
+      <div class="wh-header">
+        <span class="wh-id-badge">ID #${w.id}</span>
+        <button class="wh-delete-small" onclick="deleteWarehouse(${w.id})">🗑️ حذف</button>
+      </div>
+      <label>📛 اسم المخزن</label>
+      <input type="text" class="wh-name" value="${whEscape(w.name || '')}" placeholder="اسم المخزن" maxlength="100">
+      <label>📧 الإيميل</label>
+      <input type="email" class="wh-email" value="${whEscape(w.email || '')}" placeholder="example@gmail.com" maxlength="200">
+      <div class="wh-actions">
+        <button class="wh-save" onclick="saveWarehouse(${w.id})">💾 حفظ التغييرات</button>
+        <button class="wh-test" onclick="testWarehouseEmail(${w.id})">📧 اختبار الإيميل</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function showAddWarehouseForm(){
+  document.getElementById('wh-add-form').style.display = 'block';
+  document.getElementById('wh-new-name').value = '';
+  document.getElementById('wh-new-email').value = '';
+  document.getElementById('wh-new-name').focus();
+}
+
+function hideAddWarehouseForm(){
+  document.getElementById('wh-add-form').style.display = 'none';
+}
+
+async function confirmAddWarehouse(){
+  const name = document.getElementById('wh-new-name').value.trim();
+  const email = document.getElementById('wh-new-email').value.trim();
+  if (!name) { showWHToast('⚠️ اسم المخزن مطلوب', 'error'); return; }
+  if (email && !whValidEmail(email)) { showWHToast('⚠️ صيغة الإيميل غير صحيحة', 'error'); return; }
+  try {
+    const r = await fetch(`${SB}/rest/v1/warehouses`, {
+      method: 'POST',
+      headers: {...HDR, 'Prefer': 'return=representation'},
+      body: JSON.stringify({name, email: email || null})
+    });
+    if (!r.ok) throw new Error(await r.text());
+    hideAddWarehouseForm();
+    await loadWarehouses();
+    showWHToast('✅ تم إضافة المخزن');
+  } catch(e) {
+    showWHToast('❌ خطأ: ' + (e.message || e), 'error');
+  }
+}
+
+async function saveWarehouse(id){
+  const card = document.querySelector(`.warehouse-card[data-id="${id}"]`);
+  if (!card) return;
+  const name = card.querySelector('.wh-name').value.trim();
+  const email = card.querySelector('.wh-email').value.trim();
+  if (!name) { showWHToast('⚠️ اسم المخزن مطلوب', 'error'); return; }
+  if (email && !whValidEmail(email)) { showWHToast('⚠️ صيغة الإيميل غير صحيحة', 'error'); return; }
+  try {
+    const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: HDR,
+      body: JSON.stringify({name, email: email || null})
+    });
+    if (!r.ok) throw new Error(await r.text());
+    // Update local cache
+    const idx = allWarehousesData.findIndex(w => w.id === id);
+    if (idx >= 0) {
+      allWarehousesData[idx].name = name;
+      allWarehousesData[idx].email = email || null;
+    }
+    showWHToast('✅ تم حفظ التغييرات');
+  } catch(e) {
+    showWHToast('❌ خطأ في الحفظ', 'error');
+  }
+}
+
+async function deleteWarehouse(id){
+  const wh = allWarehousesData.find(w => w.id === id);
+  if (!wh) return;
+  if (!confirm(`🗑️ متأكد إنك عاوز تحذف مخزن "${wh.name}"؟\n\nالحجوزات اللى عليه مش هتتمسح، بس مش هيوصلها إيميلات تانى.`)) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: HDR
+    });
+    if (!r.ok) throw new Error(await r.text());
+    await loadWarehouses();
+    showWHToast('✅ تم الحذف');
+  } catch(e) {
+    showWHToast('❌ خطأ في الحذف', 'error');
+  }
+}
+
+async function testWarehouseEmail(id){
+  const wh = allWarehousesData.find(w => w.id === id);
+  if (!wh) return;
+  if (!wh.email) { showWHToast('⚠️ المخزن ده مش متسجلله إيميل', 'error'); return; }
+  if (!confirm(`📧 إرسال إيميل اختبار لـ:\n\n${wh.email}\n\nهل تريد المتابعة؟`)) return;
+
+  const card = document.querySelector(`.warehouse-card[data-id="${id}"]`);
+  const btn = card ? card.querySelector('.wh-test') : null;
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) { btn.innerHTML = '⏳ جاري الإرسال...'; btn.disabled = true; }
+
+  try {
+    const r = await fetch(TEST_EMAIL_WEBHOOK, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({warehouse_id: id, name: wh.name, email: wh.email})
+    });
+    if (r.status === 404) {
+      showWHToast('⚠️ Webhook غير موجود فى n8n. اعمل webhook اسمه: test-warehouse-email', 'error');
+    } else if (!r.ok) {
+      throw new Error(`HTTP ${r.status}`);
+    } else {
+      showWHToast(`✅ تم الإرسال لـ ${wh.email}`);
+    }
+  } catch(e) {
+    showWHToast('❌ فشل الإرسال — تأكد من إعداد n8n', 'error');
+  } finally {
+    if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+  }
+}
+
+function whValidEmail(s){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+function whEscape(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function showWHToast(msg, type){
+  // Remove any existing toast
+  document.querySelectorAll('.wh-toast').forEach(t => t.remove());
+  const t = document.createElement('div');
+  t.className = 'wh-toast' + (type === 'error' ? ' error' : '');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
 
 // =================== AUTO LOGIN ===================
 const saved=sessionStorage.getItem('hawa_admin');
