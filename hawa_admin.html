@@ -101,7 +101,15 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .stat-c.red .sv{color:var(--error);}
 
 /* TABLE */
-.tbl-wrap{background:var(--dark2);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.tbl-wrap{background:var(--dark2);border:1px solid var(--border);border-radius:16px;overflow:hidden;flex-shrink:0;}
+/* ⚙️ FIX: prevent flex-column children from being compressed; let section scroll instead */
+.section.active{overflow-y:auto;overflow-x:hidden;}
+.section.active::-webkit-scrollbar{width:8px;}
+.section.active::-webkit-scrollbar-track{background:transparent;}
+.section.active::-webkit-scrollbar-thumb{background:#2A2A2A;border-radius:4px;}
+.section.active::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+/* ⚙️ FIX: allow ms-panel dropdown to escape tbl-wrap overflow:hidden */
+#sec-broadcast .tbl-wrap{overflow:visible;}
 .tbl-wrap.scrollable{display:flex;flex-direction:column;max-height:calc(100vh - 200px);}
 .tbl-filters{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;}
 .tbl-scroll-body{overflow-y:auto;overflow-x:auto;flex:1;}
