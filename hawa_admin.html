@@ -246,6 +246,85 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .tbl-wrap input::placeholder,
 .tbl-wrap textarea::placeholder{color:#6A6560;opacity:1;}
 
+/* ══════════════════════════════════════════════════════════
+   FORCED VISIBILITY for Settings page (override all)
+   ══════════════════════════════════════════════════════════ */
+#sec-settings input[type="number"],
+#sec-settings input[type="text"],
+#sec-settings input[type="email"],
+#sec-settings input[type="password"],
+#sec-settings input[type="tel"],
+#sec-settings select,
+#sec-settings textarea{
+  background:#1E1E1E !important;
+  border:2px solid #4A4540 !important;
+  color:#FFFFFF !important;
+  padding:13px 16px !important;
+  font-size:15px !important;
+  font-weight:600 !important;
+  border-radius:10px !important;
+  min-height:48px !important;
+  width:100% !important;
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  box-sizing:border-box !important;
+  font-family:'Cairo',sans-serif !important;
+  outline:none !important;
+  transition:all 0.2s !important;
+  letter-spacing:0.3px !important;
+}
+#sec-settings textarea{
+  min-height:90px !important;
+  padding:12px 16px !important;
+  line-height:1.7 !important;
+  resize:vertical !important;
+}
+#sec-settings input::placeholder,
+#sec-settings textarea::placeholder{
+  color:#9A9590 !important;
+  opacity:1 !important;
+  font-weight:500 !important;
+}
+#sec-settings input:hover,
+#sec-settings select:hover,
+#sec-settings textarea:hover{
+  border-color:#6A6560 !important;
+  background:#222222 !important;
+}
+#sec-settings input:focus,
+#sec-settings select:focus,
+#sec-settings textarea:focus{
+  border-color:var(--gold) !important;
+  background:#262420 !important;
+  box-shadow:0 0 0 4px rgba(201,168,76,0.18) !important;
+}
+#sec-settings select option{
+  background:#1A1A1A !important;
+  color:#FFFFFF !important;
+  padding:10px !important;
+}
+
+/* Settings cards: Better spacing */
+#sec-settings .tbl-wrap{
+  background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%) !important;
+  border:1px solid #2A2620 !important;
+  padding:24px !important;
+  margin-bottom:18px !important;
+}
+#sec-settings .tbl-wrap:hover{
+  border-color:rgba(201,168,76,0.3) !important;
+}
+
+/* Settings labels */
+#sec-settings label{
+  font-size:13px !important;
+  font-weight:700 !important;
+  color:#D8D3CE !important;
+  margin-bottom:8px !important;
+  letter-spacing:0.2px !important;
+}
+
 /* Section card with hover effect */
 .settings-card{
   background:linear-gradient(180deg,var(--dark2) 0%,#0E0E0E 100%);
@@ -928,57 +1007,57 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
 
       <!-- Working Hours -->
-      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
-        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">⏰ ساعات العمل والحجز</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">⏰ ساعات العمل والحجز</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">بداية يوم العمل (بالساعة)</label>
-            <input type="number" id="set-work-start" min="0" max="23" placeholder="8" oninput="updateSlotsPreview()">
-            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">8 = 8 صباحاً</div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">بداية يوم العمل (بالساعة)</label>
+            <input type="number" id="set-work-start" min="0" max="23" placeholder="مثال: 8" oninput="updateSlotsPreview()" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
+            <div style="font-size:11px;color:#9A9590;margin-top:6px">8 = 8 صباحاً</div>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">نهاية يوم العمل (بالساعة)</label>
-            <input type="number" id="set-work-end" min="1" max="24" placeholder="16" oninput="updateSlotsPreview()">
-            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">16 = 4 مساءً (آخر slot 3-4)</div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">نهاية يوم العمل (بالساعة)</label>
+            <input type="number" id="set-work-end" min="1" max="24" placeholder="مثال: 16" oninput="updateSlotsPreview()" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
+            <div style="font-size:11px;color:#9A9590;margin-top:6px">16 = 4 مساءً (آخر slot 3-4)</div>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">قفل الحجز نفس اليوم بعد الساعة</label>
-            <input type="number" id="set-cutoff" min="0" max="24" placeholder="15">
-            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">15 = 3 مساءً، بعدها مينفعش حجز نفس اليوم</div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">قفل الحجز نفس اليوم بعد الساعة</label>
+            <input type="number" id="set-cutoff" min="0" max="24" placeholder="مثال: 15" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
+            <div style="font-size:11px;color:#9A9590;margin-top:6px">15 = 3 مساءً، بعدها مينفعش حجز نفس اليوم</div>
           </div>
         </div>
-        <div style="margin-top:14px;padding:10px 12px;background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;font-size:12px;color:#6faee8;line-height:1.7">
+        <div style="margin-top:16px;padding:12px 14px;background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;font-size:13px;color:#7fb8e8;line-height:1.7">
           📋 <b>المواعيد الناتجة:</b> <span id="slots-preview" style="color:var(--gold);font-weight:700">—</span>
         </div>
       </div>
 
       <!-- Permit Range -->
-      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
-        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">🎫 نطاق أرقام الأذون</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🎫 نطاق أرقام الأذون</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">أقل رقم مسموح</label>
-            <input type="number" id="set-permit-min" placeholder="14000">
+            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">أقل رقم مسموح</label>
+            <input type="number" id="set-permit-min" placeholder="مثال: 14000" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">أعلى رقم مسموح</label>
-            <input type="number" id="set-permit-max" placeholder="15000">
+            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">أعلى رقم مسموح</label>
+            <input type="number" id="set-permit-max" placeholder="مثال: 15000" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
           </div>
         </div>
-        <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--gold);line-height:1.7;margin-top:12px">
+        <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--gold);line-height:1.7;margin-top:14px">
           💡 العميل مش هيقدر يدخل رقم إذن خارج النطاق ده. غيّر الأرقام كل فترة حسب الأذون الشغالة حالياً.
         </div>
       </div>
 
       <!-- Default Admin Page -->
-      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
-        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">🏠 الصفحة الافتراضية عند فتح الأدمن</div>
-        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:#6faee8;line-height:1.7;margin-bottom:14px">
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🏠 الصفحة الافتراضية عند فتح الأدمن</div>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
           ℹ️ كل ما تفتح صفحة الأدمن، هتفتح على الصفحة دي تلقائياً.
         </div>
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">اختر الصفحة</label>
-          <select id="set-default-page">
+          <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">اختر الصفحة</label>
+          <select id="set-default-page" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px;cursor:pointer">
             <option value="bookings">📋 الحجوزات</option>
             <option value="employees">👷 الموظفين</option>
             <option value="clients">👥 العملاء</option>
@@ -997,60 +1076,60 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
 
       <!-- Email Reports Schedule -->
-      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
-        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">📧 جدولة إيميلات التقارير</div>
-        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:#6faee8;line-height:1.7;margin-bottom:14px">
-          ℹ️ النظام بيبعت تقرير يومي للحجوزات لمديرين المخزن. هنا تتحكم في توقيت الإرسال.
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">📧 جدولة إيميلات التقارير</div>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
+          ℹ️ النظام بيبعت تقرير يومى للحجوزات لمديرين المخزن. هنا تتحكم فى توقيت الإرسال.
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">نوع الإرسال</label>
-            <select id="set-report-type" onchange="onReportTypeChange()">
-              <option value="manual">❌ يدوي (مفيش جدولة)</option>
-              <option value="daily">📅 يومي</option>
+            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">نوع الإرسال</label>
+            <select id="set-report-type" onchange="onReportTypeChange()" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px;cursor:pointer">
+              <option value="manual">❌ يدوى (مفيش جدولة)</option>
+              <option value="daily">📅 يومى</option>
               <option value="every_2_days">⏰ كل يومين</option>
-              <option value="weekly">📆 أسبوعي (أيام محددة)</option>
+              <option value="weekly">📆 أسبوعى (أيام محددة)</option>
             </select>
           </div>
           <div>
-            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">ساعة الإرسال</label>
-            <input type="number" id="set-report-hour" min="0" max="23" placeholder="1">
-            <div style="font-size:11px;color:var(--text-dim);margin-top:4px">1 = 1 صباحاً، 14 = 2 مساءً</div>
+            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">ساعة الإرسال</label>
+            <input type="number" id="set-report-hour" min="0" max="23" placeholder="مثال: 1" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
+            <div style="font-size:11px;color:#9A9590;margin-top:6px">1 = 1 صباحاً، 14 = 2 مساءً</div>
           </div>
         </div>
-        <div id="set-report-days-wrap" style="margin-top:14px;display:none">
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:8px">أيام الإرسال (للأسبوعي)</label>
+        <div id="set-report-days-wrap" style="margin-top:16px;display:none">
+          <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:10px">أيام الإرسال (للأسبوعى)</label>
           <div id="set-report-days" style="display:flex;flex-wrap:wrap;gap:8px">
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="0" style="accent-color:var(--gold)"> أحد</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="1" style="accent-color:var(--gold)"> اثنين</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="2" style="accent-color:var(--gold)"> ثلاثاء</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="3" style="accent-color:var(--gold)"> أربعاء</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="4" style="accent-color:var(--gold)"> خميس</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="5" style="accent-color:var(--gold)"> جمعة</label>
-            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px"><input type="checkbox" data-day="6" style="accent-color:var(--gold)"> سبت</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#1E1E1E;border:2px solid #4A4540;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FFF;font-weight:600;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#4A4540'"><input type="checkbox" data-day="0" style="accent-color:var(--gold);width:16px;height:16px"> أحد</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#1E1E1E;border:2px solid #4A4540;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FFF;font-weight:600;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#4A4540'"><input type="checkbox" data-day="1" style="accent-color:var(--gold);width:16px;height:16px"> اثنين</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#1E1E1E;border:2px solid #4A4540;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FFF;font-weight:600;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#4A4540'"><input type="checkbox" data-day="2" style="accent-color:var(--gold);width:16px;height:16px"> ثلاثاء</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#1E1E1E;border:2px solid #4A4540;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FFF;font-weight:600;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#4A4540'"><input type="checkbox" data-day="3" style="accent-color:var(--gold);width:16px;height:16px"> أربعاء</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#1E1E1E;border:2px solid #4A4540;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FFF;font-weight:600;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#4A4540'"><input type="checkbox" data-day="4" style="accent-color:var(--gold);width:16px;height:16px"> خميس</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#1E1E1E;border:2px solid #4A4540;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FFF;font-weight:600;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#4A4540'"><input type="checkbox" data-day="5" style="accent-color:var(--gold);width:16px;height:16px"> جمعة</label>
+            <label style="display:inline-flex;align-items:center;gap:8px;background:#1E1E1E;border:2px solid #4A4540;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:13px;color:#FFF;font-weight:600;transition:all 0.2s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='#4A4540'"><input type="checkbox" data-day="6" style="accent-color:var(--gold);width:16px;height:16px"> سبت</label>
           </div>
         </div>
-        <div id="set-report-summary" style="margin-top:14px;padding:10px 12px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:10px;font-size:12px;color:var(--gold);line-height:1.7"></div>
+        <div id="set-report-summary" style="margin-top:16px;padding:12px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;font-size:13px;color:var(--gold);line-height:1.7"></div>
       </div>
 
       <!-- Header/Footer -->
-      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
-        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:14px">💬 الهيدر والفوتر للرسائل</div>
-        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 12px;font-size:12px;color:#6faee8;line-height:1.7;margin-bottom:14px">
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">💬 الهيدر والفوتر للرسائل</div>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
           ℹ️ بيتضافوا تلقائياً فوق وتحت كل رسالة broadcast. سيبهم فاضيين لو مش عاوزهم.
         </div>
-        <div style="margin-bottom:14px">
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">📤 الهيدر (فوق الرسالة)</label>
-          <textarea id="set-header" rows="3" placeholder="مثال: HAWA CO — إشعار من إدارة المخزن" style="font-family:Cairo,sans-serif"></textarea>
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">📤 الهيدر (فوق الرسالة)</label>
+          <textarea id="set-header" rows="3" placeholder="مثال: HAWA CO — إشعار من إدارة المخزن" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:500;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:90px;resize:vertical;line-height:1.7"></textarea>
         </div>
         <div>
-          <label style="display:block;font-size:12px;font-weight:600;color:var(--text-dim);margin-bottom:6px">📥 الفوتر (تحت الرسالة)</label>
-          <textarea id="set-footer" rows="3" placeholder="مثال: للاستفسار: 01xxxxxxxxx" style="font-family:Cairo,sans-serif"></textarea>
+          <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">📥 الفوتر (تحت الرسالة)</label>
+          <textarea id="set-footer" rows="3" placeholder="مثال: للاستفسار: 01xxxxxxxxx" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:500;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:90px;resize:vertical;line-height:1.7"></textarea>
         </div>
 
-        <div style="margin-top:18px">
-          <div style="font-size:12px;font-weight:700;color:var(--text-dim);margin-bottom:8px">👁️ معاينة الشكل النهائي للرسالة:</div>
-          <div id="set-preview" style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--text);min-height:80px"></div>
+        <div style="margin-top:20px">
+          <div style="font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:10px">👁️ معاينة الشكل النهائى للرسالة:</div>
+          <div id="set-preview" style="background:#0A0A0A;border:2px dashed #3A3A3A;border-radius:12px;padding:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:#E8E5E0;min-height:90px"></div>
         </div>
       </div>
     </div>
