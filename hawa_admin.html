@@ -219,6 +219,200 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 /* page indicator */
 .page-indicator{font-size:12px;color:var(--text-dim);padding:12px 16px;text-align:center;}
 
+/* ══════════════════════════════════════════════════════════
+   ENHANCED INPUT VISIBILITY (Settings page contrast fix)
+   ══════════════════════════════════════════════════════════ */
+.tbl-wrap input[type="number"],
+.tbl-wrap input[type="text"],
+.tbl-wrap input[type="email"],
+.tbl-wrap input[type="password"],
+.tbl-wrap input[type="tel"],
+.tbl-wrap select,
+.tbl-wrap textarea{
+  background:#0F0F0F;
+  border:1.5px solid #3A3A3A;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.tbl-wrap input:hover,
+.tbl-wrap select:hover,
+.tbl-wrap textarea:hover{border-color:#4A4A4A;}
+.tbl-wrap input:focus,
+.tbl-wrap select:focus,
+.tbl-wrap textarea:focus{
+  border-color:var(--gold);
+  background:#0A0A0A;
+  box-shadow:0 0 0 3px rgba(201,168,76,0.12),inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.tbl-wrap input::placeholder,
+.tbl-wrap textarea::placeholder{color:#6A6560;opacity:1;}
+
+/* Section card with hover effect */
+.settings-card{
+  background:linear-gradient(180deg,var(--dark2) 0%,#0E0E0E 100%);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:14px;
+  transition:border-color 0.3s ease;
+}
+.settings-card:hover{border-color:rgba(201,168,76,0.25);}
+.settings-card-title{
+  font-size:14px;
+  font-weight:700;
+  color:var(--gold);
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(201,168,76,0.15);
+}
+
+/* ══════════════════════════════════════════════════════════
+   MULTI-SELECT COMPONENT (Broadcast targeting)
+   ══════════════════════════════════════════════════════════ */
+.ms-wrap{position:relative;width:100%;}
+.ms-trigger{
+  width:100%;
+  background:#0F0F0F;
+  border:1.5px solid #3A3A3A;
+  border-radius:12px;
+  padding:11px 14px;
+  font-family:'Cairo',sans-serif;
+  font-size:13px;
+  color:var(--text);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  transition:all 0.2s;
+  text-align:right;
+  direction:rtl;
+}
+.ms-trigger:hover{border-color:rgba(201,168,76,0.35);background:#121212;}
+.ms-trigger.has-selection{border-color:rgba(201,168,76,0.45);background:rgba(201,168,76,0.04);}
+.ms-trigger:disabled{opacity:0.5;cursor:not-allowed;}
+.ms-trigger .ms-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ms-trigger .ms-count{
+  background:var(--gold);
+  color:var(--dark);
+  font-size:11px;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:10px;
+  min-width:20px;
+  text-align:center;
+}
+.ms-trigger .ms-arrow{font-size:10px;color:var(--text-dim);transition:transform 0.2s;}
+.ms-wrap.open .ms-arrow{transform:rotate(180deg);}
+
+.ms-panel{
+  display:none;
+  position:absolute;
+  top:calc(100% + 4px);
+  right:0;
+  left:0;
+  background:#0E0E0E;
+  border:1.5px solid rgba(201,168,76,0.4);
+  border-radius:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.6),0 0 0 1px rgba(201,168,76,0.1);
+  z-index:100;
+  max-height:340px;
+  overflow:hidden;
+  flex-direction:column;
+}
+.ms-wrap.open .ms-panel{display:flex;}
+
+.ms-search{padding:10px;border-bottom:1px solid var(--border);}
+.ms-search input{
+  width:100%;
+  background:#1A1A1A;
+  border:1px solid #2A2A2A;
+  border-radius:8px;
+  padding:8px 12px;
+  font-family:'Cairo',sans-serif;
+  font-size:12px;
+  color:var(--text);
+  outline:none;
+}
+.ms-search input:focus{border-color:var(--gold);}
+
+.ms-actions{
+  display:flex;
+  gap:6px;
+  padding:8px 10px;
+  border-bottom:1px solid var(--border);
+  background:rgba(201,168,76,0.03);
+}
+.ms-actions button{
+  flex:1;
+  background:transparent;
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:5px 8px;
+  font-family:'Cairo',sans-serif;
+  font-size:11px;
+  color:var(--text-dim);
+  cursor:pointer;
+  transition:all 0.15s;
+}
+.ms-actions button:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.05);}
+
+.ms-options{flex:1;overflow-y:auto;padding:4px;}
+.ms-options::-webkit-scrollbar{width:6px;}
+.ms-options::-webkit-scrollbar-track{background:transparent;}
+.ms-options::-webkit-scrollbar-thumb{background:#2A2A2A;border-radius:3px;}
+.ms-options::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+
+.ms-option{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:13px;
+  color:var(--text);
+  transition:background 0.15s;
+  user-select:none;
+}
+.ms-option:hover{background:rgba(201,168,76,0.06);}
+.ms-option input[type="checkbox"]{
+  width:16px;
+  height:16px;
+  accent-color:var(--gold);
+  cursor:pointer;
+  flex-shrink:0;
+}
+.ms-option.checked{background:rgba(201,168,76,0.08);color:var(--gold);}
+.ms-option .ms-opt-label{flex:1;}
+.ms-option.hidden{display:none;}
+.ms-empty{padding:20px;text-align:center;font-size:12px;color:var(--text-dim);}
+
+/* Backdrop for closing dropdown */
+.ms-backdrop{
+  display:none;
+  position:fixed;
+  top:0;left:0;right:0;bottom:0;
+  z-index:99;
+}
+.ms-backdrop.active{display:block;}
+
+/* Filter group label */
+.filter-group-label{
+  font-size:11px;
+  font-weight:600;
+  color:var(--text-dim);
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.filter-group-label .req-dot{
+  width:6px;height:6px;border-radius:50%;background:var(--gold);
+}
+
 @media(max-width:768px){
   :root{--sidebar:0px;}
   .sidebar{display:none;}
@@ -451,27 +645,104 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
 
       <!-- Filters -->
-      <div class="tbl-wrap" style="padding:16px;margin-bottom:14px">
-        <div style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--gold)">🎯 تحديد المستهدفين</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px">
-          <select id="bc-type" onchange="invalidateBroadcastPreview()">
-            <option value="">🏷️ كل الأنواع</option>
-          </select>
-          <select id="bc-religion" onchange="invalidateBroadcastPreview()">
-            <option value="">🕌 كل الديانات</option>
-          </select>
-          <select id="bc-gov" onchange="onBroadcastGovChange()">
-            <option value="">🏛️ كل المحافظات</option>
-          </select>
-          <select id="bc-city" disabled onchange="invalidateBroadcastPreview()">
-            <option value="">🏙️ كل المدن</option>
-          </select>
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px;color:var(--gold);display:flex;align-items:center;gap:8px">
+          🎯 تحديد المستهدفين
+          <span style="font-size:11px;color:var(--text-dim);font-weight:400">— اختار أكتر من قيمة لو حابب، أو سيب فاضى لاختيار الكل</span>
         </div>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--dark3);border-radius:10px;border:1px solid var(--border);transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px">
+          <!-- Types Multi-select -->
+          <div>
+            <div class="filter-group-label">🏷️ نوع العميل</div>
+            <div class="ms-wrap" id="bc-type-wrap">
+              <button type="button" class="ms-trigger" onclick="toggleMS('bc-type')">
+                <span class="ms-label">🏷️ كل الأنواع</span>
+                <span class="ms-count" style="display:none">0</span>
+                <span class="ms-arrow">▼</span>
+              </button>
+              <div class="ms-panel">
+                <div class="ms-actions">
+                  <button type="button" onclick="msSelectAll('bc-type')">✓ الكل</button>
+                  <button type="button" onclick="msClearAll('bc-type')">✕ مسح</button>
+                </div>
+                <div class="ms-options" id="bc-type-options"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Religions Multi-select -->
+          <div>
+            <div class="filter-group-label">🕌 الديانة</div>
+            <div class="ms-wrap" id="bc-religion-wrap">
+              <button type="button" class="ms-trigger" onclick="toggleMS('bc-religion')">
+                <span class="ms-label">🕌 كل الديانات</span>
+                <span class="ms-count" style="display:none">0</span>
+                <span class="ms-arrow">▼</span>
+              </button>
+              <div class="ms-panel">
+                <div class="ms-actions">
+                  <button type="button" onclick="msSelectAll('bc-religion')">✓ الكل</button>
+                  <button type="button" onclick="msClearAll('bc-religion')">✕ مسح</button>
+                </div>
+                <div class="ms-options" id="bc-religion-options"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Governorates Multi-select -->
+          <div>
+            <div class="filter-group-label">🏛️ المحافظة</div>
+            <div class="ms-wrap" id="bc-gov-wrap">
+              <button type="button" class="ms-trigger" onclick="toggleMS('bc-gov')">
+                <span class="ms-label">🏛️ كل المحافظات</span>
+                <span class="ms-count" style="display:none">0</span>
+                <span class="ms-arrow">▼</span>
+              </button>
+              <div class="ms-panel">
+                <div class="ms-search">
+                  <input type="text" placeholder="🔍 ابحث عن محافظة..." oninput="filterMS('bc-gov', this.value)">
+                </div>
+                <div class="ms-actions">
+                  <button type="button" onclick="msSelectAll('bc-gov')">✓ الكل</button>
+                  <button type="button" onclick="msClearAll('bc-gov')">✕ مسح</button>
+                </div>
+                <div class="ms-options" id="bc-gov-options"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cities Multi-select -->
+          <div>
+            <div class="filter-group-label">🏙️ المدينة / الحى</div>
+            <div class="ms-wrap" id="bc-city-wrap">
+              <button type="button" class="ms-trigger" onclick="toggleMS('bc-city')" id="bc-city-trigger">
+                <span class="ms-label">🏙️ كل المدن</span>
+                <span class="ms-count" style="display:none">0</span>
+                <span class="ms-arrow">▼</span>
+              </button>
+              <div class="ms-panel">
+                <div class="ms-search">
+                  <input type="text" placeholder="🔍 ابحث عن مدينة..." oninput="filterMS('bc-city', this.value)">
+                </div>
+                <div class="ms-actions">
+                  <button type="button" onclick="msSelectAll('bc-city')">✓ الكل</button>
+                  <button type="button" onclick="msClearAll('bc-city')">✕ مسح</button>
+                </div>
+                <div class="ms-options" id="bc-city-options"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:11px 14px;background:var(--dark3);border-radius:10px;border:1px solid var(--border);transition:all 0.2s" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
           <input type="checkbox" id="bc-include-extra" onchange="invalidateBroadcastPreview()" style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)">
           <span style="font-size:13px">📞 <b>تضمين الجهات الإضافية</b> <span style="color:var(--text-dim);font-size:11px">(مهندسين ومديرين — لو حددت ديانة، الجهات الإضافية مش هتدخل)</span></span>
         </label>
       </div>
+
+      <!-- Backdrop for closing dropdowns -->
+      <div class="ms-backdrop" id="ms-backdrop" onclick="closeAllMS()"></div>
 
       <!-- Preview & Send -->
       <div class="tbl-wrap" style="padding:16px">
@@ -2829,6 +3100,150 @@ let broadcastTargets = null; // cached last preview result
 let allBroadcastTemplates = [];
 let cachedBroadcastSettings = {header:'', footer:''};
 
+// ═══════════════════════════════════════════════════════════
+// MULTI-SELECT COMPONENT (Reusable for any filter)
+// ═══════════════════════════════════════════════════════════
+const MS_STATE = {}; // { 'bc-type': { options: [{value, label}], selected: Set, defaultLabel: '...' } }
+
+function initMS(id, options, defaultLabel){
+  MS_STATE[id] = {
+    options: options || [],
+    selected: new Set(),
+    defaultLabel: defaultLabel || 'اختار'
+  };
+  renderMSOptions(id);
+  updateMSTrigger(id);
+}
+
+function renderMSOptions(id){
+  const state = MS_STATE[id];
+  if(!state) return;
+  const container = document.getElementById(id + '-options');
+  if(!container) return;
+  if(state.options.length === 0){
+    container.innerHTML = '<div class="ms-empty">— مفيش خيارات —</div>';
+    return;
+  }
+  let html = '';
+  state.options.forEach(opt => {
+    const checked = state.selected.has(opt.value);
+    html += `<label class="ms-option ${checked?'checked':''}" data-search="${(opt.label||'').toLowerCase()}" onclick="event.stopPropagation()">
+      <input type="checkbox" ${checked?'checked':''} onchange="toggleMSValue('${id}', '${String(opt.value).replace(/'/g,"\\'")}', this.checked)">
+      <span class="ms-opt-label">${opt.label}</span>
+    </label>`;
+  });
+  container.innerHTML = html;
+}
+
+function toggleMSValue(id, value, checked){
+  const state = MS_STATE[id];
+  if(!state) return;
+  if(checked) state.selected.add(value);
+  else state.selected.delete(value);
+  renderMSOptions(id);
+  updateMSTrigger(id);
+  if(typeof onMSChange === 'function') onMSChange(id);
+}
+
+function updateMSTrigger(id){
+  const state = MS_STATE[id];
+  if(!state) return;
+  const wrap = document.getElementById(id + '-wrap');
+  if(!wrap) return;
+  const labelEl = wrap.querySelector('.ms-label');
+  const countEl = wrap.querySelector('.ms-count');
+  const trigger = wrap.querySelector('.ms-trigger');
+  const count = state.selected.size;
+  if(count === 0){
+    labelEl.textContent = state.defaultLabel;
+    countEl.style.display = 'none';
+    trigger.classList.remove('has-selection');
+  } else if(count === 1){
+    const val = [...state.selected][0];
+    const opt = state.options.find(o => String(o.value) === String(val));
+    labelEl.textContent = opt ? opt.label : val;
+    countEl.style.display = 'none';
+    trigger.classList.add('has-selection');
+  } else {
+    labelEl.textContent = `تم اختيار ${count} عنصر`;
+    countEl.textContent = count;
+    countEl.style.display = 'inline-block';
+    trigger.classList.add('has-selection');
+  }
+}
+
+function toggleMS(id){
+  const wrap = document.getElementById(id + '-wrap');
+  if(!wrap) return;
+  if(wrap.classList.contains('disabled-ms')) return;
+  // Close all others first
+  document.querySelectorAll('.ms-wrap.open').forEach(w => {
+    if(w !== wrap) w.classList.remove('open');
+  });
+  wrap.classList.toggle('open');
+  const backdrop = document.getElementById('ms-backdrop');
+  if(backdrop){
+    backdrop.classList.toggle('active', wrap.classList.contains('open'));
+  }
+}
+
+function closeAllMS(){
+  document.querySelectorAll('.ms-wrap.open').forEach(w => w.classList.remove('open'));
+  const backdrop = document.getElementById('ms-backdrop');
+  if(backdrop) backdrop.classList.remove('active');
+}
+
+function msSelectAll(id){
+  const state = MS_STATE[id];
+  if(!state) return;
+  state.options.forEach(o => state.selected.add(o.value));
+  renderMSOptions(id);
+  updateMSTrigger(id);
+  if(typeof onMSChange === 'function') onMSChange(id);
+}
+
+function msClearAll(id){
+  const state = MS_STATE[id];
+  if(!state) return;
+  state.selected.clear();
+  renderMSOptions(id);
+  updateMSTrigger(id);
+  if(typeof onMSChange === 'function') onMSChange(id);
+}
+
+function filterMS(id, query){
+  const q = (query || '').toLowerCase().trim();
+  const container = document.getElementById(id + '-options');
+  if(!container) return;
+  container.querySelectorAll('.ms-option').forEach(opt => {
+    const search = opt.getAttribute('data-search') || '';
+    opt.classList.toggle('hidden', q && !search.includes(q));
+  });
+}
+
+function getMSValues(id){
+  const state = MS_STATE[id];
+  if(!state) return [];
+  return [...state.selected];
+}
+
+function setMSValues(id, values){
+  const state = MS_STATE[id];
+  if(!state) return;
+  state.selected = new Set((values || []).map(String));
+  renderMSOptions(id);
+  updateMSTrigger(id);
+}
+
+// Hook called whenever any multi-select changes
+function onMSChange(id){
+  if(id === 'bc-gov'){
+    onBroadcastGovChange();
+  } else if(id === 'bc-type' || id === 'bc-religion' || id === 'bc-city'){
+    invalidateBroadcastPreview();
+  }
+}
+
 async function loadBroadcast(){
   // Parallel: client_types + religions + templates + settings
   try{
@@ -2857,12 +3272,12 @@ async function loadBroadcast(){
 
   // Reset form state
   document.getElementById('bc-message').value = '';
-  document.getElementById('bc-type').value = '';
-  document.getElementById('bc-religion').value = '';
-  document.getElementById('bc-gov').value = '';
-  const citySel = document.getElementById('bc-city');
-  citySel.innerHTML = '<option value="">🏙️ كل المدن</option>';
-  citySel.disabled = true;
+  msClearAll('bc-type');
+  msClearAll('bc-religion');
+  msClearAll('bc-gov');
+  msClearAll('bc-city');
+  // Disable city until governorate is selected
+  setCityMSDisabled(true);
   document.getElementById('bc-include-extra').checked = false;
   document.getElementById('bc-preview-result').innerHTML = '';
   // Reset attached files
@@ -2872,57 +3287,69 @@ async function loadBroadcast(){
   broadcastTargets = null;
 }
 
-function initBroadcastFilters(){
-  // Type dropdown
-  const typeSel = document.getElementById('bc-type');
-  const currentType = typeSel.value;
-  typeSel.innerHTML = '<option value="">🏷️ كل الأنواع</option>';
-  (allClientTypes||[]).forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.name;
-    opt.textContent = t.name;
-    if(t.name === currentType) opt.selected = true;
-    typeSel.appendChild(opt);
-  });
-
-  // Religion dropdown
-  const relSel = document.getElementById('bc-religion');
-  const currentRel = relSel.value;
-  relSel.innerHTML = '<option value="">🕌 كل الديانات</option>';
-  (allReligions||[]).forEach(r => {
-    const opt = document.createElement('option');
-    opt.value = r.name;
-    opt.textContent = r.name === 'مسلم' ? '🕌 مسلم' : r.name === 'مسيحي' ? '✝️ مسيحي' : r.name;
-    if(r.name === currentRel) opt.selected = true;
-    relSel.appendChild(opt);
-  });
-
-  // Governorate dropdown (from EGYPT constant)
-  const govSel = document.getElementById('bc-gov');
-  if(govSel.children.length <= 1){
-    Object.keys(EGYPT).sort().forEach(gov => {
-      const opt = document.createElement('option');
-      opt.value = gov;
-      opt.textContent = gov;
-      govSel.appendChild(opt);
-    });
+function setCityMSDisabled(disabled){
+  const trigger = document.getElementById('bc-city-trigger');
+  const wrap = document.getElementById('bc-city-wrap');
+  if(!trigger || !wrap) return;
+  trigger.disabled = disabled;
+  wrap.classList.toggle('disabled-ms', disabled);
+  if(disabled){
+    wrap.classList.remove('open');
+    const labelEl = wrap.querySelector('.ms-label');
+    if(labelEl && (!MS_STATE['bc-city'] || MS_STATE['bc-city'].selected.size === 0)){
+      labelEl.textContent = '🏙️ اختار محافظة أولاً';
+    }
   }
 }
 
+function initBroadcastFilters(){
+  // Types multi-select
+  const typeOptions = (allClientTypes || []).map(t => ({
+    value: t.name,
+    label: t.name
+  }));
+  initMS('bc-type', typeOptions, '🏷️ كل الأنواع');
+
+  // Religions multi-select
+  const relOptions = (allReligions || []).map(r => ({
+    value: r.name,
+    label: r.name === 'مسلم' ? '🕌 مسلم' : r.name === 'مسيحي' ? '✝️ مسيحي' : r.name
+  }));
+  initMS('bc-religion', relOptions, '🕌 كل الديانات');
+
+  // Governorates multi-select
+  const govOptions = Object.keys(EGYPT).sort().map(g => ({
+    value: g,
+    label: g
+  }));
+  initMS('bc-gov', govOptions, '🏛️ كل المحافظات');
+
+  // Cities multi-select (empty initially)
+  initMS('bc-city', [], '🏙️ اختار محافظة أولاً');
+  setCityMSDisabled(true);
+}
+
 function onBroadcastGovChange(){
-  const gov = document.getElementById('bc-gov').value;
-  const citySel = document.getElementById('bc-city');
-  citySel.innerHTML = '<option value="">🏙️ كل المدن</option>';
-  if(gov && EGYPT[gov]){
-    EGYPT[gov].forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      opt.textContent = c;
-      citySel.appendChild(opt);
-    });
-    citySel.disabled = false;
-  }else{
-    citySel.disabled = true;
+  const selectedGovs = getMSValues('bc-gov');
+  // Build merged list of cities from all selected govs
+  const citiesSet = new Set();
+  selectedGovs.forEach(gov => {
+    if(EGYPT[gov]){
+      EGYPT[gov].forEach(c => citiesSet.add(c));
+    }
+  });
+  const cityOptions = [...citiesSet].sort().map(c => ({value: c, label: c}));
+  // Preserve existing valid selections
+  const currentSelected = getMSValues('bc-city');
+  const validSelected = currentSelected.filter(c => citiesSet.has(c));
+
+  if(selectedGovs.length === 0){
+    initMS('bc-city', [], '🏙️ اختار محافظة أولاً');
+    setCityMSDisabled(true);
+  } else {
+    initMS('bc-city', cityOptions, '🏙️ كل المدن');
+    setMSValues('bc-city', validSelected);
+    setCityMSDisabled(false);
   }
   invalidateBroadcastPreview();
 }
@@ -3188,7 +3615,7 @@ function applyTemplate(id){
   // Apply target religion if set on the template
   let religionApplied = null;
   if(t.target_religion){
-    document.getElementById('bc-religion').value = t.target_religion;
+    setMSValues('bc-religion', [t.target_religion]);
     religionApplied = t.target_religion;
   }
 
@@ -3203,18 +3630,25 @@ function applyTemplate(id){
 }
 
 async function calculateBroadcastTargets(){
-  const type = document.getElementById('bc-type').value;
-  const religion = document.getElementById('bc-religion').value;
-  const gov = document.getElementById('bc-gov').value;
-  const city = document.getElementById('bc-city').value;
+  const types     = getMSValues('bc-type');
+  const religions = getMSValues('bc-religion');
+  const govs      = getMSValues('bc-gov');
+  const cities    = getMSValues('bc-city');
   const includeExtra = document.getElementById('bc-include-extra').checked;
+
+  // Helper to escape values for Supabase in() filter
+  const esc = v => encodeURIComponent(String(v));
 
   // Build base filter (without telegram_id check, to count not-linked separately)
   let baseFilter = `is_active=eq.true`;
-  if(type)     baseFilter += `&client_type=eq.${encodeURIComponent(type)}`;
-  if(religion) baseFilter += `&religion=eq.${encodeURIComponent(religion)}`;
-  if(gov)      baseFilter += `&governorate=eq.${encodeURIComponent(gov)}`;
-  if(city)     baseFilter += `&city=eq.${encodeURIComponent(city)}`;
+  if(types.length === 1)        baseFilter += `&client_type=eq.${esc(types[0])}`;
+  else if(types.length > 1)     baseFilter += `&client_type=in.(${types.map(esc).join(',')})`;
+  if(religions.length === 1)    baseFilter += `&religion=eq.${esc(religions[0])}`;
+  else if(religions.length > 1) baseFilter += `&religion=in.(${religions.map(esc).join(',')})`;
+  if(govs.length === 1)         baseFilter += `&governorate=eq.${esc(govs[0])}`;
+  else if(govs.length > 1)      baseFilter += `&governorate=in.(${govs.map(esc).join(',')})`;
+  if(cities.length === 1)       baseFilter += `&city=eq.${esc(cities[0])}`;
+  else if(cities.length > 1)    baseFilter += `&city=in.(${cities.map(esc).join(',')})`;
 
   // Fetch ALL matching clients (linked + not linked) in one request
   const r0 = await fetch(`${SB}/rest/v1/clients?select=id,name,telegram_id&${baseFilter}`, {headers:{...HDR,'Range':'0-999'}});
@@ -3223,11 +3657,11 @@ async function calculateBroadcastTargets(){
   const linkedClients = allMatching.filter(c => c.telegram_id);
   const notLinkedCount = allMatching.length - linkedClients.length;
 
-  // Skip extras if religion filter is on (extras have no religion field)
+  // Skip extras if any religion filter is on (extras have no religion field)
   let extras = [];
   let extrasSkippedDueToReligion = false;
   if(includeExtra){
-    if(religion){
+    if(religions.length > 0){
       extrasSkippedDueToReligion = true;
     }else{
       const r2 = await fetch(`${SB}/rest/v1/extra_contacts?select=id,name,code,telegram_id&is_active=eq.true&telegram_id=not.is.null`,{headers:HDR});
@@ -3325,7 +3759,7 @@ function openBroadcastConfirm(){
   if(broadcastTargets.total === 0){alert('مفيش مستهدفين — غيّر الفلاتر');return;}
 
   const includeExtra = document.getElementById('bc-include-extra').checked;
-  const religion = document.getElementById('bc-religion').value;
+  const religions = getMSValues('bc-religion');
 
   document.getElementById('bc-confirm-msg').textContent = fullMsg || '(بدون نص — ملفات فقط)';
 
@@ -3335,9 +3769,9 @@ function openBroadcastConfirm(){
   if(includeExtra && !broadcastTargets.extras_skipped){
     breakdownHtml += `<div>📞 جهات إضافية: <b style="color:var(--gold)">${broadcastTargets.extras_count}</b></div>`;
   }
-  if(religion){
-    const relLabel = religion === 'مسلم' ? '🕌 المسلمين' : religion === 'مسيحي' ? '✝️ المسيحيين' : religion;
-    breakdownHtml += `<div style="color:var(--gold)">🎯 فلتر ديانة مفعّل: <b>${relLabel}</b></div>`;
+  if(religions.length > 0){
+    const relLabels = religions.map(r => r === 'مسلم' ? '🕌 المسلمين' : r === 'مسيحي' ? '✝️ المسيحيين' : r).join(' / ');
+    breakdownHtml += `<div style="color:var(--gold)">🎯 فلتر ديانة مفعّل: <b>${relLabels}</b></div>`;
   }
   // Show attached files info
   if(broadcastFiles.length){
