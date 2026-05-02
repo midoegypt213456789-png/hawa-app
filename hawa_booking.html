@@ -958,13 +958,15 @@ async function confirm_booking() {
       });
       if (res.ok) {
         const eid = editMode.id;
-        exitEditMode();
-        // بعت إشعار تعديل تليجرام
+        // بعت إشعار تعديل تليجرام **قبل** exitEditMode (لإن exitEditMode بيمسح bk)
         sendTelegramConfirm({ id: eid, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
           count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, is_edit: true });
+        // اخرج من وضع التعديل (يعمل reset لـ bk + يخفى الباجر)
+        const editSnapshot = { warehouse: bk.warehouse, vehicle: bk.vehicle, count: bk.count, slot: bk.slot };
+        exitEditMode();
         showSuccessScreen(
           `تم تعديل الحجز #${eid}`,
-          `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
+          `${editSnapshot.warehouse} | ${editSnapshot.vehicle} | ${editSnapshot.count} عربية<br>${editSnapshot.slot}`,
           'edit'
         );
       } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
