@@ -1188,6 +1188,21 @@ function decodeBooking(str) {
 }
 
 // ===================== CANCEL =====================
+// إشعار العميل بإلغاء الحجز عبر التليجرام (webhook → n8n)
+async function notifyClientCancellation(bookingIds) {
+  if (!Array.isArray(bookingIds)) bookingIds = [bookingIds];
+  if (!bookingIds.length) return;
+  try {
+    await fetch('https://n8n.gladiatorverse.net/webhook/cancel-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_ids: bookingIds })
+    });
+  } catch(e) {
+    console.warn('Cancel notification webhook failed:', e);
+  }
+}
+
 function showCancelDlg(id, dateLabel, vehicleType) {
   document.getElementById('cancelMsg').textContent =
     `هتلغي حجز ${vehicleType} يوم ${dateLabel}.\nمش هتقدر ترجع للحجز ده!`;
@@ -1210,6 +1225,8 @@ async function doCancelBooking(id) {
       body: JSON.stringify({ status: 'ملغي' })
     });
     if (res.ok) {
+      // إشعار العميل على التليجرام (الحجز اتلغى من الموبايل)
+      notifyClientCancellation([id]);
       showSuccess(`✅ تم إلغاء الحجز #${id} بنجاح`);
       await loadMyBookings();
     } else {

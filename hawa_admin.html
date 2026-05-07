@@ -2692,6 +2692,22 @@ function filterBookingsLocal(){
   renderBookingsTable(data);
 }
 
+// ─── إشعار العميل بإلغاء الحجز (webhook → n8n → Telegram) ───
+async function notifyClientCancellation(bookingIds){
+  if (!Array.isArray(bookingIds)) bookingIds = [bookingIds];
+  if (!bookingIds.length) return;
+  try {
+    await fetch('https://n8n.gladiatorverse.net/webhook/cancel-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_ids: bookingIds })
+    });
+  } catch(e) {
+    // الإلغاء تم بنجاح — الإشعار بس هو اللى فشل، مش لازم نزعج الأدمن
+    console.warn('Cancel notification webhook failed:', e);
+  }
+}
+
 // ─── إلغاء حجز من الأدمن (يخلّى الموعد متاح تانى) ───
 async function adminCancelBooking(id, clientName, dateLabel){
   const msg = `هتلغى حجز رقم #${id}؟\n\n👤 العميل: ${clientName||'—'}\n📅 اليوم: ${dateLabel||'—'}\n\n⚠️ الموعد هيرجع متاح لعملاء تانيين.\nالعملية مش هترجع.`;
@@ -2703,6 +2719,8 @@ async function adminCancelBooking(id, clientName, dateLabel){
       body: JSON.stringify({ status: 'ملغي' })
     });
     if (res.ok) {
+      // إشعار العميل على التليجرام (مش هنستنى الرد، بنبعت ونكمل)
+      notifyClientCancellation([id]);
       // إعادة تحميل الحجوزات بنفس الفلترة الحالية
       if (typeof loadBookings === 'function') loadBookings();
       alert(`✅ تم إلغاء الحجز #${id}`);
@@ -2773,6 +2791,8 @@ async function bulkCancelBookings(ids, label){
       body: JSON.stringify({ status: 'ملغي' })
     });
     if (res.ok) {
+      // إشعار العملاء على التليجرام (لكل الـ bookings اللى اتلغت)
+      notifyClientCancellation(ids);
       if (typeof loadBookings === 'function') loadBookings();
       alert(`✅ تم إلغاء ${ids.length} حجز بنجاح`);
     } else {
