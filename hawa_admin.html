@@ -5523,13 +5523,30 @@ function updatePendingBadge(count){
 let notificationsList = [];
 let notifPanelOpen = false;
 
+// تتبّع آخر عدد مرئى لكل نوع تنبيه (مخزن فى localStorage)
+// عشان لما الأدمن يفتح الجرس، الـ counts الحالية تتسجّل كـ "مرئية"
+// والـ alert يطلع تانى بس لما العدد يزيد عن آخر مرة شافها
+let notifSeenCounts = {};
+try { notifSeenCounts = JSON.parse(localStorage.getItem('hawa_notif_seen') || '{}'); } catch(e) {}
+
+function markAllNotificationsAsSeen(){
+  notificationsList.forEach(n => { notifSeenCounts[n.key] = n.count || 0; });
+  try { localStorage.setItem('hawa_notif_seen', JSON.stringify(notifSeenCounts)); } catch(e){}
+}
+
 function toggleNotifPanel(){
   notifPanelOpen = !notifPanelOpen;
   const panel = document.getElementById('notifPanel');
   if (!panel) return;
   if (notifPanelOpen){
     panel.classList.add('show');
-    refreshNotifications(); // re-fetch on open للتأكد إنها live
+    // ✨ إزالة المؤشّرات على الجرس فوراً (شعور سريع بالاستجابة)
+    const bell = document.getElementById('notifBell');
+    const countEl = document.getElementById('notifCount');
+    if (bell) bell.classList.remove('has-notifications');
+    if (countEl) countEl.classList.remove('show');
+    // اعمل refresh وعلّم اللى ظاهر دلوقتى كـ "مرئى"
+    refreshNotifications().then(() => markAllNotificationsAsSeen());
   } else {
     panel.classList.remove('show');
   }
@@ -5581,6 +5598,8 @@ async function refreshNotifications(){
       if (enabled && data.length > 0){
         const noun = data.length === 1 ? 'عميل' : 'عملاء';
         newList.push({
+          key: 'pending_clients',
+          count: data.length,
           icon: '⏳',
           title: `${data.length} ${noun} تحت المراجعة`,
           subtitle: data.length === 1 ? 'استنى الموافقة منك' : 'استنوا الموافقة منك',
@@ -5605,6 +5624,8 @@ async function refreshNotifications(){
         if (data.length > 0){
           const noun = data.length === 1 ? 'حجز' : 'حجوزات';
           newList.push({
+            key: 'today_bookings',
+            count: data.length,
             icon: '🎫',
             title: `${data.length} ${noun} اليوم`,
             subtitle: data.length === 1 ? 'حجز اتعمل النهاردة' : 'حجوزات اتعملت النهاردة',
@@ -5638,7 +5659,16 @@ function renderNotifications(){
 
   const total = notificationsList.length;
 
-  if (total > 0){
+  // ─── منطق "مرئى/غير مرئى" ───
+  // التنبيه يعتبر "غير مرئى" لو الـ count بتاعه أكتر من آخر مرة الأدمن شافه
+  // ولو الـ panel مفتوح حالياً، كل اللى ظاهر بيتعامل كـ "مرئى" تلقائياً
+  if (notifPanelOpen){
+    markAllNotificationsAsSeen();
+  }
+  const hasUnseen = notificationsList.some(n => (n.count || 0) > (notifSeenCounts[n.key] || 0));
+  const showAlert = total > 0 && hasUnseen && !notifPanelOpen;
+
+  if (showAlert){
     count.textContent = total;
     count.classList.add('show');
     bell.classList.add('has-notifications');
