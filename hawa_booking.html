@@ -1262,6 +1262,7 @@ async function sendTelegramConfirm(booking) {
     client_name:  user.name,
     company_code: user.company_code,
     booking_id:   booking.id,
+    seq_number:   booking.seq_number || null,
     warehouse:    booking.warehouse    || bk.warehouse,
     vehicle_type: booking.vehicle_type || bk.vehicle,
     count:        booking.count        ?? bk.count,
