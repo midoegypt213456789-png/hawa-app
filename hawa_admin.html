@@ -498,6 +498,87 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 @media (max-width:768px){
   .notif-panel{right:16px;left:16px;width:auto;}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   NOTIFICATION SETTINGS TOGGLES (في صفحة الإعدادات)
+   ═══════════════════════════════════════════════════════════ */
+.notif-toggle-row{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 16px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:12px;
+  margin-bottom:10px;
+  transition:all 0.2s;
+}
+.notif-toggle-row:hover{background:rgba(201,168,76,0.04);border-color:rgba(201,168,76,0.15);}
+.notif-toggle-icon{
+  font-size:24px;
+  width:48px;
+  height:48px;
+  background:rgba(224,135,58,0.1);
+  border:1px solid rgba(224,135,58,0.25);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.notif-toggle-text{flex:1;min-width:0;}
+.notif-toggle-title{
+  font-size:15px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:3px;
+}
+.notif-toggle-sub{
+  font-size:12px;
+  color:var(--text-dim);
+  line-height:1.6;
+}
+
+/* iOS-style toggle switch */
+.switch{
+  position:relative;
+  display:inline-block;
+  width:50px;
+  height:28px;
+  flex-shrink:0;
+  cursor:pointer;
+}
+.switch input{opacity:0;width:0;height:0;position:absolute;}
+.switch .slider{
+  position:absolute;
+  inset:0;
+  background:#3A3A3A;
+  border:1.5px solid #4A4540;
+  border-radius:28px;
+  transition:all 0.25s;
+  cursor:pointer;
+}
+.switch .slider:before{
+  content:'';
+  position:absolute;
+  height:20px;
+  width:20px;
+  right:3px;
+  top:2px;
+  background:#888;
+  border-radius:50%;
+  transition:all 0.25s;
+}
+.switch input:checked + .slider{
+  background:rgba(76,175,125,0.25);
+  border-color:#4CAF7D;
+}
+.switch input:checked + .slider:before{
+  background:#4CAF7D;
+  transform:translateX(-22px);
+  box-shadow:0 2px 8px rgba(76,175,125,0.4);
+}
+.switch:hover .slider{border-color:rgba(201,168,76,0.4);}
 .tbl-wrap.scrollable{display:flex;flex-direction:column;max-height:calc(100vh - 200px);}
 .tbl-filters{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;}
 .tbl-scroll-body{overflow-y:auto;overflow-x:auto;flex:1;}
@@ -1589,6 +1670,42 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div id="set-report-summary" style="margin-top:16px;padding:12px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;font-size:13px;color:var(--gold);line-height:1.7"></div>
       </div>
 
+      <!-- إعدادات التنبيهات -->
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🔔 إعدادات التنبيهات</div>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
+          ℹ️ اختار الأنواع اللى عاوز تشوف تنبيهات عنها فى الجرس 🔔. لو وقّفت نوع، التنبيهات بتاعته مش هتظهر، لكن الـ badge فى الـ sidebar هيفضل ظاهر.
+        </div>
+
+        <!-- Notification type: Pending clients -->
+        <div class="notif-toggle-row">
+          <div class="notif-toggle-icon">⏳</div>
+          <div class="notif-toggle-text">
+            <div class="notif-toggle-title">عملاء جداد تحت المراجعة</div>
+            <div class="notif-toggle-sub">يطلع تنبيه لما عميل جديد يسجّل ويستنى الموافقة</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="notif-pending-clients">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- Notification type: Today bookings -->
+        <div class="notif-toggle-row">
+          <div class="notif-toggle-icon" style="background:rgba(76,175,125,0.1);border-color:rgba(76,175,125,0.25)">🎫</div>
+          <div class="notif-toggle-text">
+            <div class="notif-toggle-title">عدد الحجوزات اليوم</div>
+            <div class="notif-toggle-sub">يطلع تنبيه بعدد الحجوزات اللى اتعملت من بداية اليوم (يصفّر يومياً)</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="notif-today-bookings">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <!-- المزيد من أنواع التنبيهات هتيجى هنا فى المستقبل -->
+      </div>
+
       <!-- Header/Footer -->
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
         <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">💬 الهيدر والفوتر للرسائل</div>
@@ -2658,6 +2775,10 @@ async function loadSettings(){
     // 🆕 Default Admin Page
     document.getElementById('set-default-page').value = map.default_admin_page || 'bookings';
 
+    // 🆕 Notification toggles
+    document.getElementById('notif-pending-clients').checked = (map.notif_pending_clients !== 'false');
+    document.getElementById('notif-today-bookings').checked  = (map.notif_today_bookings !== 'false');
+
     // 🆕 Email Schedule
     document.getElementById('set-report-type').value = map.report_schedule_type || 'daily';
     document.getElementById('set-report-hour').value = map.report_schedule_hour || '1';
@@ -2794,7 +2915,10 @@ async function saveSettings(){
     ['default_admin_page',     defaultPage],
     ['report_schedule_type',   reportType],
     ['report_schedule_hour',   isNaN(reportHour) ? '1' : String(reportHour)],
-    ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6']
+    ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6'],
+    // 🔔 Notification toggles
+    ['notif_pending_clients',  document.getElementById('notif-pending-clients').checked ? 'true' : 'false'],
+    ['notif_today_bookings',   document.getElementById('notif-today-bookings').checked  ? 'true' : 'false']
   ];
 
   try{
@@ -2808,6 +2932,8 @@ async function saveSettings(){
     const failed = results.filter(r => !r.ok).length;
     if(failed === 0) alert('✅ تم حفظ كل الإعدادات بنجاح');
     else alert(`⚠️ تم حفظ ${updates.length-failed} من ${updates.length} إعدادات (${failed} فشلت)`);
+    // 🔔 إعادة تحميل التنبيهات بعد حفظ الإعدادات (عشان التوجلز تشتغل فوراً)
+    if (typeof refreshNotifications === 'function') refreshNotifications();
   }catch(e){
     alert('❌ خطأ في الحفظ');
   }
@@ -5429,7 +5555,19 @@ document.addEventListener('click', (e) => {
 async function refreshNotifications(){
   const newList = [];
 
+  // 🔔 اقرا إعدادات التنبيهات الأول (cached settings)
+  let notifSettings = {};
+  try {
+    const sr = await fetch(`${SB}/rest/v1/app_settings?key=like.notif_*&select=key,value`, {headers: HDR});
+    if (sr.ok) {
+      const arr = await sr.json();
+      arr.forEach(s => { notifSettings[s.key] = s.value; });
+    }
+  } catch(e){}
+
   // ─── 1. عملاء تحت المراجعة ───
+  // الـ badge فى الـ sidebar بيتحدّث دايماً (مهم يفضل ظاهر حتى لو التنبيه متعطّل)
+  // لكن البلاغ فى الجرس بيظهر بس لو الإعداد مفعّل
   try {
     const r = await fetch(
       `${SB}/rest/v1/clients?approval_status=eq.pending&select=id`,
@@ -5438,10 +5576,13 @@ async function refreshNotifications(){
     if (r.ok){
       const data = await r.json();
       updatePendingBadge(data.length);
-      if (data.length > 0){
+      // اظهر فى الجرس فقط لو الإعداد مفعّل (default = true)
+      const enabled = (notifSettings.notif_pending_clients !== 'false');
+      if (enabled && data.length > 0){
+        const noun = data.length === 1 ? 'عميل' : 'عملاء';
         newList.push({
           icon: '⏳',
-          title: `${data.length} عميل تحت المراجعة`,
+          title: `${data.length} ${noun} تحت المراجعة`,
           subtitle: data.length === 1 ? 'استنى الموافقة منك' : 'استنوا الموافقة منك',
           action: () => goTo('pending-clients'),
         });
@@ -5449,12 +5590,41 @@ async function refreshNotifications(){
     }
   } catch(e){}
 
+  // ─── 2. عدد الحجوزات اليوم (Cairo timezone) ───
+  if (notifSettings.notif_today_bookings !== 'false') {
+    try {
+      // احسب بداية اليوم بتوقيت القاهرة كـ UTC ISO
+      const cairoDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Africa/Cairo' }).format(new Date());
+      const cairoMidnightUTC = new Date(`${cairoDate}T00:00:00+03:00`).toISOString();
+      const r = await fetch(
+        `${SB}/rest/v1/bookings?created_at=gte.${cairoMidnightUTC}&status=neq.${encodeURIComponent('ملغي')}&select=id`,
+        {headers: HDR}
+      );
+      if (r.ok){
+        const data = await r.json();
+        if (data.length > 0){
+          const noun = data.length === 1 ? 'حجز' : 'حجوزات';
+          newList.push({
+            icon: '🎫',
+            title: `${data.length} ${noun} اليوم`,
+            subtitle: data.length === 1 ? 'حجز اتعمل النهاردة' : 'حجوزات اتعملت النهاردة',
+            action: () => goTo('bookings'),
+          });
+        }
+      }
+    } catch(e){}
+  }
+
   // ─── (مستقبلاً: أضف أنواع تنبيهات جديدة هنا) ───
   // مثلاً:
   // - حجوزات قديمة محتاجة موافقة
   // - مخازن من غير إيميل
   // - عملاء ذوى حجوزات اليوم بدون permit_number
   // إلخ.
+  // كل نوع جديد لازم:
+  //   1. يضاف فى صفحة الإعدادات كـ toggle
+  //   2. يضاف key فى app_settings (مع notif_ prefix)
+  //   3. يقرا الإعداد من notifSettings قبل ما يضيف لـ newList
 
   notificationsList = newList;
   renderNotifications();
