@@ -2509,6 +2509,28 @@ function filterBookingsLocal(){
   renderBookingsTable(data);
 }
 
+// ─── إلغاء حجز من الأدمن (يخلّى الموعد متاح تانى) ───
+async function adminCancelBooking(id, clientName, dateLabel){
+  const msg = `هتلغى حجز رقم #${id}؟\n\n👤 العميل: ${clientName||'—'}\n📅 اليوم: ${dateLabel||'—'}\n\n⚠️ الموعد هيرجع متاح لعملاء تانيين.\nالعملية مش هترجع.`;
+  if (!confirm(msg)) return;
+  try {
+    const res = await fetch(`${SB}/rest/v1/bookings?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: {...HDR, 'Prefer':'return=minimal'},
+      body: JSON.stringify({ status: 'ملغي' })
+    });
+    if (res.ok) {
+      // إعادة تحميل الحجوزات بنفس الفلترة الحالية
+      if (typeof loadBookings === 'function') loadBookings();
+      alert(`✅ تم إلغاء الحجز #${id}`);
+    } else {
+      alert('❌ خطأ فى الإلغاء — حاول تانى');
+    }
+  } catch(e) {
+    alert('❌ خطأ فى الاتصال');
+  }
+}
+
 function renderBookingsTable(data){
   if(!data.length){document.getElementById('bk-table').innerHTML='<div class="empty-txt">لا توجد نتائج</div>';return;}
 
@@ -2527,12 +2549,17 @@ function renderBookingsTable(data){
   };
 
   let html=`<table><thead><tr>
-    <th>#</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th>
+    <th>#</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
 
   data.forEach(b=>{
     const c=allClientsMap[b.client_id]||{};
     const dateLabel=b.loading_date?new Date(b.loading_date+'T12:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'}):'-';
+    // زرار إلغاء يظهر بس لو الحجز "قيد الانتظار" — مش يظهر للى اتنفّذ أو متلغى أصلاً
+    const canCancel = b.status === 'قيد الانتظار';
+    const actionsCell = canCancel
+      ? `<button class="act-btn del" onclick="adminCancelBooking(${b.id}, ${JSON.stringify(c.name||'').replace(/"/g,'&quot;')}, ${JSON.stringify(dateLabel).replace(/"/g,'&quot;')})">🚫 إلغاء</button>`
+      : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
     html+=`<tr>
       <td style="color:var(--text-dim)">#${b.id}</td>
       <td><b>${hl(c.name||'-',clientSearch)}</b></td>
@@ -2543,6 +2570,7 @@ function renderBookingsTable(data){
       <td>${dateLabel}</td>
       <td>${b.time_slot||'-'}</td>
       <td>${statusBadge[b.status]||b.status}</td>
+      <td>${actionsCell}</td>
     </tr>`;
   });
   html+=`</tbody></table>
