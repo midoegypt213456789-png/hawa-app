@@ -342,6 +342,162 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .pc-empty-icon{font-size:64px;margin-bottom:12px;opacity:0.5;}
 .pc-empty-title{font-size:18px;font-weight:700;color:#D8D3CE;margin-bottom:6px;}
 .pc-empty-sub{font-size:13px;color:#8A8580;}
+
+/* ═══════════════════════════════════════════════════════════
+   NOTIFICATIONS SYSTEM
+   ═══════════════════════════════════════════════════════════ */
+.notif-bell{
+  position:relative;
+  background:rgba(201,168,76,0.08);
+  border:1.5px solid rgba(201,168,76,0.25);
+  color:var(--gold);
+  width:38px;
+  height:38px;
+  border-radius:10px;
+  cursor:pointer;
+  font-size:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:all 0.2s;
+  flex-shrink:0;
+}
+.notif-bell:hover{background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.5);}
+.notif-bell.has-notifications{
+  background:rgba(224,135,58,0.12);
+  border-color:rgba(224,135,58,0.4);
+  color:#E0873A;
+  animation:bell-shake 2.5s ease-in-out infinite;
+}
+@keyframes bell-shake{
+  0%, 88%, 100% { transform: rotate(0); }
+  90% { transform: rotate(-12deg); }
+  92% { transform: rotate(12deg); }
+  94% { transform: rotate(-10deg); }
+  96% { transform: rotate(8deg); }
+  98% { transform: rotate(-4deg); }
+}
+.notif-count{
+  display:none;
+  position:absolute;
+  top:-6px;
+  left:-6px;
+  background:#E05555;
+  color:#FFF;
+  font-size:10px;
+  font-weight:800;
+  border-radius:10px;
+  padding:1px 6px;
+  min-width:18px;
+  text-align:center;
+  border:2px solid var(--dark2);
+  font-family:'Cairo',sans-serif;
+}
+.notif-count.show{display:block;}
+
+.notif-panel{
+  display:none;
+  position:fixed;
+  top:78px;
+  right:230px;
+  width:340px;
+  max-width:calc(100vw - 32px);
+  max-height:calc(100vh - 100px);
+  background:linear-gradient(180deg,#161616 0%,#0F0F0F 100%);
+  border:1px solid rgba(201,168,76,0.3);
+  border-radius:14px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,168,76,0.1);
+  z-index:200;
+  overflow:hidden;
+  animation:notif-pop 0.2s ease-out;
+}
+.notif-panel.show{display:flex;flex-direction:column;}
+@keyframes notif-pop{
+  from{opacity:0;transform:translateY(-8px) scale(0.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.notif-panel-header{
+  padding:14px 20px;
+  font-weight:800;
+  color:var(--gold);
+  border-bottom:1px solid rgba(201,168,76,0.15);
+  font-size:15px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  background:rgba(201,168,76,0.04);
+}
+.notif-close{
+  background:transparent;
+  border:none;
+  color:var(--text-dim);
+  font-size:16px;
+  cursor:pointer;
+  padding:4px 8px;
+  border-radius:6px;
+  transition:all 0.2s;
+  font-family:'Cairo',sans-serif;
+}
+.notif-close:hover{background:rgba(255,255,255,0.06);color:var(--text);}
+#notifList{
+  overflow-y:auto;
+  flex:1;
+  min-height:120px;
+}
+.notif-item{
+  padding:14px 18px;
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  transition:background 0.15s;
+}
+.notif-item:hover{background:rgba(201,168,76,0.06);}
+.notif-item:last-child{border-bottom:none;}
+.notif-item-icon{
+  font-size:22px;
+  width:42px;
+  height:42px;
+  background:rgba(224,135,58,0.1);
+  border:1px solid rgba(224,135,58,0.25);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.notif-item-text{flex:1;min-width:0;text-align:right;}
+.notif-item-title{
+  font-size:14px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:3px;
+  line-height:1.4;
+}
+.notif-item-sub{
+  font-size:12px;
+  color:var(--text-dim);
+  line-height:1.5;
+}
+.notif-item-arrow{
+  color:var(--gold);
+  font-size:18px;
+  opacity:0.5;
+  flex-shrink:0;
+}
+.notif-empty{
+  padding:50px 20px;
+  text-align:center;
+  color:var(--text-dim);
+}
+.notif-empty-icon{font-size:48px;margin-bottom:10px;opacity:0.4;}
+.notif-empty-title{font-size:15px;font-weight:700;color:#D8D3CE;margin-bottom:4px;}
+.notif-empty-sub{font-size:12px;}
+
+@media (max-width:768px){
+  .notif-panel{right:16px;left:16px;width:auto;}
+}
 .tbl-wrap.scrollable{display:flex;flex-direction:column;max-height:calc(100vh - 200px);}
 .tbl-filters{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;}
 .tbl-scroll-body{overflow-y:auto;overflow-x:auto;flex:1;}
@@ -768,10 +924,31 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 <!-- APP -->
 <div class="app" id="app">
 
+  <!-- NOTIFICATIONS PANEL -->
+  <div class="notif-panel" id="notifPanel">
+    <div class="notif-panel-header">
+      <span>🔔 التنبيهات</span>
+      <button class="notif-close" onclick="closeNotifPanel()">✕</button>
+    </div>
+    <div id="notifList">
+      <div class="notif-empty">
+        <div class="notif-empty-icon">✨</div>
+        <div class="notif-empty-title">مفيش تنبيهات</div>
+        <div class="notif-empty-sub">كل حاجة تحت السيطرة</div>
+      </div>
+    </div>
+  </div>
+
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sb-header">
-      <div class="sb-logo">👑 HAWA CO</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div class="sb-logo">👑 HAWA CO</div>
+        <button class="notif-bell" id="notifBell" onclick="event.stopPropagation();toggleNotifPanel()" title="التنبيهات">
+          🔔
+          <span class="notif-count" id="notifCount">0</span>
+        </button>
+      </div>
       <div class="sb-admin" id="adminName">...</div>
     </div>
     <div class="sb-nav">
@@ -5216,21 +5393,122 @@ function updatePendingBadge(count){
   }
 }
 
-async function refreshPendingBadge(){
+// =================== NOTIFICATIONS SYSTEM ===================
+let notificationsList = [];
+let notifPanelOpen = false;
+
+function toggleNotifPanel(){
+  notifPanelOpen = !notifPanelOpen;
+  const panel = document.getElementById('notifPanel');
+  if (!panel) return;
+  if (notifPanelOpen){
+    panel.classList.add('show');
+    refreshNotifications(); // re-fetch on open للتأكد إنها live
+  } else {
+    panel.classList.remove('show');
+  }
+}
+
+function closeNotifPanel(){
+  notifPanelOpen = false;
+  const panel = document.getElementById('notifPanel');
+  if (panel) panel.classList.remove('show');
+}
+
+// Click outside to close
+document.addEventListener('click', (e) => {
+  if (!notifPanelOpen) return;
+  const panel = document.getElementById('notifPanel');
+  const bell = document.getElementById('notifBell');
+  if (panel && bell && !panel.contains(e.target) && !bell.contains(e.target)){
+    closeNotifPanel();
+  }
+});
+
+// Refresh all notifications (extensible — أضف أنواع تنبيهات جديدة هنا)
+async function refreshNotifications(){
+  const newList = [];
+
+  // ─── 1. عملاء تحت المراجعة ───
   try {
     const r = await fetch(
       `${SB}/rest/v1/clients?approval_status=eq.pending&select=id`,
       {headers: HDR}
     );
-    if (!r.ok) return;
-    const data = await r.json();
-    updatePendingBadge(data.length);
-  } catch(e) {}
+    if (r.ok){
+      const data = await r.json();
+      updatePendingBadge(data.length);
+      if (data.length > 0){
+        newList.push({
+          icon: '⏳',
+          title: `${data.length} عميل تحت المراجعة`,
+          subtitle: data.length === 1 ? 'استنى الموافقة منك' : 'استنوا الموافقة منك',
+          action: () => goTo('pending-clients'),
+        });
+      }
+    }
+  } catch(e){}
+
+  // ─── (مستقبلاً: أضف أنواع تنبيهات جديدة هنا) ───
+  // مثلاً:
+  // - حجوزات قديمة محتاجة موافقة
+  // - مخازن من غير إيميل
+  // - عملاء ذوى حجوزات اليوم بدون permit_number
+  // إلخ.
+
+  notificationsList = newList;
+  renderNotifications();
 }
 
-// شغّل تحديث الـ badge أول ما الـ admin يدخل + كل دقيقة
-setInterval(refreshPendingBadge, 60000);
-setTimeout(refreshPendingBadge, 1500);
+function renderNotifications(){
+  const list = document.getElementById('notifList');
+  const bell = document.getElementById('notifBell');
+  const count = document.getElementById('notifCount');
+  if (!list || !bell || !count) return;
+
+  const total = notificationsList.length;
+
+  if (total > 0){
+    count.textContent = total;
+    count.classList.add('show');
+    bell.classList.add('has-notifications');
+  } else {
+    count.classList.remove('show');
+    bell.classList.remove('has-notifications');
+  }
+
+  if (total === 0){
+    list.innerHTML = `
+      <div class="notif-empty">
+        <div class="notif-empty-icon">✨</div>
+        <div class="notif-empty-title">مفيش تنبيهات</div>
+        <div class="notif-empty-sub">كل حاجة تحت السيطرة</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = notificationsList.map((n, i) => `
+    <div class="notif-item" onclick="handleNotifClick(${i})">
+      <div class="notif-item-icon">${n.icon}</div>
+      <div class="notif-item-text">
+        <div class="notif-item-title">${n.title}</div>
+        <div class="notif-item-sub">${n.subtitle}</div>
+      </div>
+      <div class="notif-item-arrow">←</div>
+    </div>
+  `).join('');
+}
+
+function handleNotifClick(i){
+  const n = notificationsList[i];
+  if (!n) return;
+  closeNotifPanel();
+  if (typeof n.action === 'function') n.action();
+}
+
+// شغّل تحديث التنبيهات أول ما الـ admin يدخل + كل دقيقة
+setInterval(refreshNotifications, 60000);
+setTimeout(refreshNotifications, 1500);
 
 // =================== AUTO LOGIN ===================
 const saved=sessionStorage.getItem('hawa_admin');
