@@ -2930,15 +2930,20 @@ async function saveNewClient(){
     password:     document.getElementById('ac-password').value.trim(),
     client_type:  document.getElementById('ac-client-type').value,
     religion:     document.getElementById('ac-religion').value,
+    // ✅ العميل اللى الأدمن بيضيفه بإيده موافق عليه تلقائياً
+    approval_status: 'approved',
+    is_active: true,
   };
 
-  if(Object.values(data).some(v=>!v)){alert('من فضلك أكمل جميع الحقول (بما فيهم الديانة)');return;}
+  // التحقق من البيانات (مش فاحص approval_status / is_active لأنها set مسبقاً)
+  const required = ['company_code','name','phone','governorate','city','district','address','username','password','client_type','religion'];
+  if(required.some(k => !data[k])){alert('من فضلك أكمل جميع الحقول (بما فيهم الديانة)');return;}
   if(data.name.split(/\s+/).length<3){alert('من فضلك أدخل الاسم الثلاثي كاملاً');return;}
   if(!/^01[0-9]{9}$/.test(data.phone)){alert('رقم الهاتف غير صحيح — لازم يبدأ بـ 01 ويكون 11 رقم');return;}
 
   try{
     const res=await fetch(`${SB}/rest/v1/clients`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(data)});
-    if(res.ok){closeModal('addClientModal');await loadClients();alert('✅ تم إنشاء الحساب بنجاح');}
+    if(res.ok){closeModal('addClientModal');await loadClients();alert('✅ تم إنشاء الحساب بنجاح (موافق عليه تلقائياً)');}
     else{const err=await res.json();if(err.code==='23505')alert('❌ اليوزر نيم أو الكود مسجل بالفعل');else alert('❌ خطأ في الإنشاء');}
   }catch(e){alert('❌ خطأ في الاتصال');}
 }
