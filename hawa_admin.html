@@ -802,6 +802,60 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .act-btn.edit{background:rgba(201,168,76,0.1);color:#d4a957;border:1px solid rgba(201,168,76,0.2);}
 .act-btn.edit:hover{background:rgba(201,168,76,0.2);}
 .act-btn.del{background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.2);}
+
+/* ═══════════════════════════════════════════════════════════
+   BULK ACTIONS BAR (شريط الإجراءات الجماعية فى صفحة الحجوزات)
+   ═══════════════════════════════════════════════════════════ */
+.bulk-actions-bar{
+  display:flex;
+  gap:10px;
+  padding:14px 16px;
+  margin-bottom:12px;
+  background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);
+  border:1px solid rgba(224,85,85,0.15);
+  border-radius:12px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.bulk-btn{
+  padding:10px 16px;
+  border-radius:9px;
+  font-family:'Cairo',sans-serif;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+  border:1.5px solid;
+}
+.bulk-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.bulk-btn.cancel{
+  background:rgba(224,85,85,0.08);
+  border-color:rgba(224,85,85,0.3);
+  color:#E88080;
+}
+.bulk-btn.cancel:hover:not(:disabled){background:#E05555;color:#FFF;border-color:#E05555;}
+.bulk-btn.cancel-all{
+  background:rgba(224,135,58,0.1);
+  border-color:rgba(224,135,58,0.4);
+  color:#E0A874;
+}
+.bulk-btn.cancel-all:hover:not(:disabled){background:#E0873A;color:#0A0A0A;border-color:#E0873A;}
+.bulk-info{
+  margin-right:auto;
+  font-size:12px;
+  color:var(--text-dim);
+  padding:6px 12px;
+  background:rgba(255,255,255,0.03);
+  border-radius:6px;
+}
+.bk-checkbox{
+  width:18px;
+  height:18px;
+  cursor:pointer;
+  accent-color:var(--gold);
+  vertical-align:middle;
+}
+.bk-checkbox:disabled{cursor:not-allowed;opacity:0.4;}
 .act-btn.del:hover{background:rgba(224,85,85,0.2);}
 .act-btn.toggle{background:rgba(76,175,125,0.1);color:#6dc49a;border:1px solid rgba(76,175,125,0.2);}
 .act-btn.toggle:hover{background:rgba(76,175,125,0.2);}
@@ -2531,6 +2585,89 @@ async function adminCancelBooking(id, clientName, dateLabel){
   }
 }
 
+// ─── إلغاء جماعى (الـ checkboxes والـ "Cancel All") ───
+
+function getCheckedBookingIds(){
+  return Array.from(document.querySelectorAll('.bk-row-checkbox:checked'))
+    .map(cb => parseInt(cb.dataset.id))
+    .filter(n => !isNaN(n));
+}
+
+function getAllCancellableBookingIds(){
+  return Array.from(document.querySelectorAll('.bk-row-checkbox'))
+    .map(cb => parseInt(cb.dataset.id))
+    .filter(n => !isNaN(n));
+}
+
+function toggleAllBookings(checked){
+  document.querySelectorAll('.bk-row-checkbox').forEach(cb => { cb.checked = checked; });
+  updateBulkButtons();
+}
+
+function updateBulkButtons(){
+  const checkedCount = getCheckedBookingIds().length;
+  const totalCount = getAllCancellableBookingIds().length;
+  const btnSelected = document.getElementById('bulk-cancel-selected');
+  const cnt = document.getElementById('bulk-selected-count');
+  if (btnSelected) {
+    if (checkedCount > 0) {
+      btnSelected.disabled = false;
+      if (cnt) cnt.textContent = `(${checkedCount})`;
+    } else {
+      btnSelected.disabled = true;
+      if (cnt) cnt.textContent = '';
+    }
+  }
+  // sync select-all checkbox
+  const selectAll = document.getElementById('bk-select-all');
+  if (selectAll && totalCount > 0) {
+    selectAll.checked = (checkedCount === totalCount);
+    selectAll.indeterminate = (checkedCount > 0 && checkedCount < totalCount);
+  }
+}
+
+async function bulkCancelBookings(ids, label){
+  if (!ids.length) return;
+  const msg = `هتلغى ${ids.length} ${ids.length === 1 ? 'حجز' : 'حجز'} ${label}؟\n\n⚠️ المواعيد كلها هترجع متاحة. العملية مش هترجع.`;
+  if (!confirm(msg)) return;
+
+  // Disable buttons during operation
+  const b1 = document.getElementById('bulk-cancel-selected');
+  const b2 = document.getElementById('bulk-cancel-all');
+  if (b1) b1.disabled = true;
+  if (b2) b2.disabled = true;
+
+  try {
+    const res = await fetch(`${SB}/rest/v1/bookings?id=in.(${ids.join(',')})`, {
+      method: 'PATCH',
+      headers: {...HDR, 'Prefer':'return=minimal'},
+      body: JSON.stringify({ status: 'ملغي' })
+    });
+    if (res.ok) {
+      if (typeof loadBookings === 'function') loadBookings();
+      alert(`✅ تم إلغاء ${ids.length} حجز بنجاح`);
+    } else {
+      alert('❌ خطأ فى الإلغاء — حاول تانى');
+      if (typeof loadBookings === 'function') loadBookings();
+    }
+  } catch(e) {
+    alert('❌ خطأ فى الاتصال');
+    if (typeof loadBookings === 'function') loadBookings();
+  }
+}
+
+function bulkCancelSelected(){
+  const ids = getCheckedBookingIds();
+  if (!ids.length) { alert('اختار حجز واحد على الأقل الأول'); return; }
+  bulkCancelBookings(ids, ids.length === 1 ? 'محدد' : 'محددين');
+}
+
+function bulkCancelAll(){
+  const ids = getAllCancellableBookingIds();
+  if (!ids.length) { alert('مفيش حجوزات قابلة للإلغاء فى الفلترة الحالية'); return; }
+  bulkCancelBookings(ids, 'فى القائمة');
+}
+
 function renderBookingsTable(data){
   if(!data.length){document.getElementById('bk-table').innerHTML='<div class="empty-txt">لا توجد نتائج</div>';return;}
 
@@ -2548,19 +2685,39 @@ function renderBookingsTable(data){
     return String(text).replace(re,'<mark style="background:rgba(201,168,76,0.3);color:var(--gold);border-radius:3px">$1</mark>');
   };
 
-  let html=`<table><thead><tr>
+  // عدد الحجوزات اللى يمكن إلغاؤها (قيد الانتظار)
+  const cancellableCount = data.filter(b => b.status === 'قيد الانتظار').length;
+
+  // ─── شريط الإجراءات الجماعية فوق الجدول ───
+  let html = `
+    <div class="bulk-actions-bar">
+      <button id="bulk-cancel-selected" class="bulk-btn cancel" onclick="bulkCancelSelected()" disabled>
+        🚫 إلغاء المحدد <span id="bulk-selected-count"></span>
+      </button>
+      <button id="bulk-cancel-all" class="bulk-btn cancel-all" onclick="bulkCancelAll()" ${cancellableCount === 0 ? 'disabled' : ''}>
+        🚫 إلغاء الكل ${cancellableCount > 0 ? `(${cancellableCount})` : ''}
+      </button>
+      <span class="bulk-info">${cancellableCount > 0 ? `${cancellableCount} حجز قابل للإلغاء` : 'مفيش حجوزات قابلة للإلغاء'}</span>
+    </div>
+  `;
+
+  html+=`<table><thead><tr>
+    <th style="width:40px;text-align:center"><input type="checkbox" id="bk-select-all" class="bk-checkbox" onchange="toggleAllBookings(this.checked)" ${cancellableCount === 0 ? 'disabled' : ''}></th>
     <th>#</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
 
   data.forEach(b=>{
     const c=allClientsMap[b.client_id]||{};
     const dateLabel=b.loading_date?new Date(b.loading_date+'T12:00:00').toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'}):'-';
-    // زرار إلغاء يظهر بس لو الحجز "قيد الانتظار" — مش يظهر للى اتنفّذ أو متلغى أصلاً
     const canCancel = b.status === 'قيد الانتظار';
+    const checkboxCell = canCancel
+      ? `<input type="checkbox" class="bk-checkbox bk-row-checkbox" data-id="${b.id}" onchange="updateBulkButtons()">`
+      : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
     const actionsCell = canCancel
       ? `<button class="act-btn del" onclick="adminCancelBooking(${b.id}, ${JSON.stringify(c.name||'').replace(/"/g,'&quot;')}, ${JSON.stringify(dateLabel).replace(/"/g,'&quot;')})">🚫 إلغاء</button>`
       : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
     html+=`<tr>
+      <td style="text-align:center">${checkboxCell}</td>
       <td style="color:var(--text-dim)">#${b.id}</td>
       <td><b>${hl(c.name||'-',clientSearch)}</b></td>
       <td><span style="color:var(--gold)">${hl(c.company_code||'-',clientSearch)}</span></td>
