@@ -579,6 +579,193 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
   box-shadow:0 2px 8px rgba(76,175,125,0.4);
 }
 .switch:hover .slider{border-color:rgba(201,168,76,0.4);}
+
+/* ═══════════════════════════════════════════════════════════
+   NOTIFICATION SUBSCRIPTIONS (enabled list + add modal)
+   ═══════════════════════════════════════════════════════════ */
+.enabled-notif-card{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 16px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:12px;
+  margin-bottom:10px;
+  transition:all 0.2s;
+}
+.enabled-notif-card:hover{background:rgba(201,168,76,0.04);border-color:rgba(201,168,76,0.2);}
+.enabled-notif-card .en-icon{
+  font-size:22px;
+  width:46px;
+  height:46px;
+  background:rgba(224,135,58,0.1);
+  border:1px solid rgba(224,135,58,0.25);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.enabled-notif-card .en-text{flex:1;min-width:0;}
+.enabled-notif-card .en-name{
+  font-size:15px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:3px;
+}
+.enabled-notif-card .en-desc{
+  font-size:12px;
+  color:var(--text-dim);
+  line-height:1.6;
+}
+.enabled-notif-card .en-remove{
+  background:rgba(224,85,85,0.08);
+  border:1.5px solid rgba(224,85,85,0.3);
+  color:#E05555;
+  width:38px;
+  height:38px;
+  border-radius:10px;
+  font-size:16px;
+  cursor:pointer;
+  font-family:'Cairo',sans-serif;
+  flex-shrink:0;
+  transition:all 0.2s;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.enabled-notif-card .en-remove:hover{background:#E05555;color:#FFF;}
+.enabled-notif-empty{
+  text-align:center;
+  padding:30px 16px;
+  background:rgba(255,255,255,0.02);
+  border:1px dashed rgba(255,255,255,0.1);
+  border-radius:12px;
+  color:var(--text-dim);
+}
+.enabled-notif-empty-icon{font-size:36px;margin-bottom:8px;opacity:0.5;}
+.enabled-notif-empty-title{font-size:14px;font-weight:700;color:#D8D3CE;margin-bottom:4px;}
+.enabled-notif-empty-sub{font-size:12px;}
+
+/* Add modal */
+.add-notif-overlay{
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.7);
+  backdrop-filter:blur(4px);
+  z-index:300;
+  align-items:flex-start;
+  justify-content:center;
+  padding:40px 20px;
+  overflow-y:auto;
+}
+.add-notif-overlay.show{display:flex;}
+.add-notif-modal{
+  background:linear-gradient(180deg,#161616 0%,#0F0F0F 100%);
+  border:1px solid rgba(201,168,76,0.3);
+  border-radius:16px;
+  width:100%;
+  max-width:560px;
+  box-shadow:0 24px 70px rgba(0,0,0,0.7);
+  overflow:hidden;
+  animation:notif-pop 0.25s ease-out;
+}
+.add-notif-header{
+  padding:18px 24px;
+  font-size:17px;
+  font-weight:800;
+  color:var(--gold);
+  border-bottom:1px solid rgba(201,168,76,0.15);
+  background:rgba(201,168,76,0.05);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.add-notif-close{
+  background:transparent;
+  border:none;
+  color:var(--text-dim);
+  font-size:18px;
+  cursor:pointer;
+  padding:6px 10px;
+  border-radius:8px;
+  font-family:'Cairo',sans-serif;
+  transition:all 0.2s;
+}
+.add-notif-close:hover{background:rgba(255,255,255,0.06);color:var(--text);}
+.add-notif-info{
+  margin:16px 20px 8px 20px;
+  background:rgba(74,144,217,0.08);
+  border:1px solid rgba(74,144,217,0.25);
+  border-radius:10px;
+  padding:12px 14px;
+  font-size:13px;
+  color:#7fb8e8;
+  line-height:1.7;
+}
+.add-notif-list{
+  padding:8px 20px 24px 20px;
+  max-height:65vh;
+  overflow-y:auto;
+}
+.add-notif-item{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:14px 16px;
+  background:rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.05);
+  border-radius:12px;
+  margin-bottom:10px;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+.add-notif-item:hover:not(.disabled){background:rgba(201,168,76,0.06);border-color:rgba(201,168,76,0.3);}
+.add-notif-item.disabled{opacity:0.45;cursor:not-allowed;}
+.add-notif-item .ai-icon{
+  font-size:22px;
+  width:46px;
+  height:46px;
+  background:rgba(224,135,58,0.1);
+  border:1px solid rgba(224,135,58,0.25);
+  border-radius:10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.add-notif-item .ai-text{flex:1;min-width:0;}
+.add-notif-item .ai-name{
+  font-size:15px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:3px;
+}
+.add-notif-item .ai-desc{
+  font-size:12px;
+  color:var(--text-dim);
+  line-height:1.6;
+}
+.add-notif-item .ai-status{
+  flex-shrink:0;
+  font-size:12px;
+  font-weight:700;
+  padding:6px 12px;
+  border-radius:8px;
+  font-family:'Cairo',sans-serif;
+}
+.add-notif-item .ai-status.added{
+  background:rgba(76,175,125,0.15);
+  border:1px solid rgba(76,175,125,0.4);
+  color:#4CAF7D;
+}
+.add-notif-item .ai-status.add{
+  background:rgba(201,168,76,0.1);
+  border:1px solid rgba(201,168,76,0.4);
+  color:var(--gold);
+}
 .tbl-wrap.scrollable{display:flex;flex-direction:column;max-height:calc(100vh - 200px);}
 .tbl-filters{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;}
 .tbl-scroll-body{overflow-y:auto;overflow-x:auto;flex:1;}
@@ -1016,6 +1203,22 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div class="notif-empty-icon">✨</div>
         <div class="notif-empty-title">مفيش تنبيهات</div>
         <div class="notif-empty-sub">كل حاجة تحت السيطرة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD NOTIFICATION MODAL -->
+  <div class="add-notif-overlay" id="addNotifOverlay" onclick="if(event.target===this)closeAddNotifModal()">
+    <div class="add-notif-modal">
+      <div class="add-notif-header">
+        <span>➕ إضافة تنبيه جديد</span>
+        <button class="add-notif-close" onclick="closeAddNotifModal()">✕</button>
+      </div>
+      <div class="add-notif-info">
+        ℹ️ اختار نوع التنبيه اللى عاوز تضيفه. اللى مفعّل بالفعل ظاهر مش قابل للضغط.
+      </div>
+      <div class="add-notif-list" id="addNotifList">
+        <!-- يتعبى من JS -->
       </div>
     </div>
   </div>
@@ -1674,36 +1877,18 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
         <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🔔 إعدادات التنبيهات</div>
         <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
-          ℹ️ اختار الأنواع اللى عاوز تشوف تنبيهات عنها فى الجرس 🔔. لو وقّفت نوع، التنبيهات بتاعته مش هتظهر، لكن الـ badge فى الـ sidebar هيفضل ظاهر.
+          ℹ️ اختار التنبيهات اللى عاوز تشوفها فى الجرس 🔔. تقدر تضيف نوع جديد أو تشيل أى تنبيه بحرية. التغييرات بتتطبّق فوراً.
         </div>
 
-        <!-- Notification type: Pending clients -->
-        <div class="notif-toggle-row">
-          <div class="notif-toggle-icon">⏳</div>
-          <div class="notif-toggle-text">
-            <div class="notif-toggle-title">عملاء جداد تحت المراجعة</div>
-            <div class="notif-toggle-sub">يطلع تنبيه لما عميل جديد يسجّل ويستنى الموافقة</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="notif-pending-clients">
-            <span class="slider"></span>
-          </label>
+        <!-- قائمة التنبيهات المفعّلة دلوقتى -->
+        <div id="enabled-notifs-list" style="margin-bottom:16px">
+          <div style="text-align:center;padding:20px;color:var(--text-dim);font-size:13px">⏳ جاري التحميل...</div>
         </div>
 
-        <!-- Notification type: Today bookings -->
-        <div class="notif-toggle-row">
-          <div class="notif-toggle-icon" style="background:rgba(76,175,125,0.1);border-color:rgba(76,175,125,0.25)">🎫</div>
-          <div class="notif-toggle-text">
-            <div class="notif-toggle-title">عدد الحجوزات اليوم</div>
-            <div class="notif-toggle-sub">يطلع تنبيه بعدد الحجوزات اللى اتعملت من بداية اليوم (يصفّر يومياً)</div>
-          </div>
-          <label class="switch">
-            <input type="checkbox" id="notif-today-bookings">
-            <span class="slider"></span>
-          </label>
-        </div>
-
-        <!-- المزيد من أنواع التنبيهات هتيجى هنا فى المستقبل -->
+        <!-- زرار إضافة تنبيه جديد -->
+        <button onclick="openAddNotifModal()" style="width:100%;padding:14px;background:rgba(201,168,76,0.08);border:2px dashed rgba(201,168,76,0.35);border-radius:12px;color:var(--gold);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px" onmouseover="this.style.background='rgba(201,168,76,0.15)';this.style.borderColor='rgba(201,168,76,0.6)'" onmouseout="this.style.background='rgba(201,168,76,0.08)';this.style.borderColor='rgba(201,168,76,0.35)'">
+          ➕ إضافة تنبيه جديد
+        </button>
       </div>
 
       <!-- Header/Footer -->
@@ -2775,9 +2960,8 @@ async function loadSettings(){
     // 🆕 Default Admin Page
     document.getElementById('set-default-page').value = map.default_admin_page || 'bookings';
 
-    // 🆕 Notification toggles
-    document.getElementById('notif-pending-clients').checked = (map.notif_pending_clients !== 'false');
-    document.getElementById('notif-today-bookings').checked  = (map.notif_today_bookings !== 'false');
+    // 🔔 عرض قائمة التنبيهات المفعّلة
+    renderEnabledNotifsList();
 
     // 🆕 Email Schedule
     document.getElementById('set-report-type').value = map.report_schedule_type || 'daily';
@@ -2915,10 +3099,7 @@ async function saveSettings(){
     ['default_admin_page',     defaultPage],
     ['report_schedule_type',   reportType],
     ['report_schedule_hour',   isNaN(reportHour) ? '1' : String(reportHour)],
-    ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6'],
-    // 🔔 Notification toggles
-    ['notif_pending_clients',  document.getElementById('notif-pending-clients').checked ? 'true' : 'false'],
-    ['notif_today_bookings',   document.getElementById('notif-today-bookings').checked  ? 'true' : 'false']
+    ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6']
   ];
 
   try{
@@ -5520,12 +5701,138 @@ function updatePendingBadge(count){
 }
 
 // =================== NOTIFICATIONS SYSTEM ===================
+// كاتالوج كل أنواع التنبيهات المتاحة. كل entry فيه:
+//   icon, name, description: للعرض فى الـ UI
+//   query (string) أو queryFn (function): الـ PostgREST URL المطلوب جلبه
+//                                          (لازم يرجّع id بس عشان نعدّ النتايج)
+//   titleFn(n): نص العنوان فى الجرس
+//   subtitleFn(n): نص التوضيح فى الجرس
+//   page: صفحة الأدمن اللى الضغط على التنبيه ينقلك ليها
+//
+// لإضافة نوع جديد: ضيف entry هنا + entry فى الـ DB لو محتاج إعداد عام.
+const NOTIF_CATALOG = {
+  pending_clients: {
+    icon: '⏳',
+    name: 'عملاء تحت المراجعة',
+    description: 'عملاء جداد بيستنوا الموافقة منك',
+    query: `clients?approval_status=eq.pending&select=id`,
+    titleFn: n => `${n} ${n===1?'عميل':'عملاء'} تحت المراجعة`,
+    subtitleFn: n => n===1 ? 'استنى الموافقة منك' : 'استنوا الموافقة منك',
+    page: 'pending-clients',
+  },
+  new_clients_today: {
+    icon: '🆕',
+    name: 'عملاء سجّلوا اليوم',
+    description: 'عملاء جداد سجّلوا فى السيستم النهاردة',
+    queryFn: () => {
+      const cairoDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Africa/Cairo'}).format(new Date());
+      const utc = new Date(`${cairoDate}T00:00:00+03:00`).toISOString();
+      return `clients?created_at=gte.${utc}&select=id`;
+    },
+    titleFn: n => `${n} ${n===1?'عميل':'عملاء'} سجّلوا اليوم`,
+    subtitleFn: n => n===1 ? 'تسجيل جديد النهاردة' : 'تسجيلات جديدة النهاردة',
+    page: 'clients',
+  },
+  clients_no_telegram: {
+    icon: '📵',
+    name: 'عملاء بدون تليجرام',
+    description: 'عملاء نشطين لكن مش مربوطين بالبوت (مش يستقبلوا رسائل)',
+    query: `clients?telegram_id=is.null&is_active=eq.true&approval_status=eq.approved&select=id`,
+    titleFn: n => `${n} ${n===1?'عميل':'عملاء'} بدون تليجرام`,
+    subtitleFn: n => 'مش مربوطين بالبوت',
+    page: 'unlinked',
+  },
+  today_bookings: {
+    icon: '🎫',
+    name: 'حجوزات اتعملت اليوم',
+    description: 'الحجوزات اللى اتعملت من بداية اليوم (يصفّر يومياً)',
+    queryFn: () => {
+      const cairoDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Africa/Cairo'}).format(new Date());
+      const utc = new Date(`${cairoDate}T00:00:00+03:00`).toISOString();
+      return `bookings?created_at=gte.${utc}&status=neq.${encodeURIComponent('ملغي')}&select=id`;
+    },
+    titleFn: n => `${n} ${n===1?'حجز':'حجوزات'} اليوم`,
+    subtitleFn: n => n===1 ? 'حجز اتعمل النهاردة' : 'حجوزات اتعملت النهاردة',
+    page: 'bookings',
+  },
+  pending_bookings: {
+    icon: '📋',
+    name: 'حجوزات قيد الانتظار',
+    description: 'إجمالى الحجوزات اللى لسه قيد الانتظار',
+    query: `bookings?status=eq.${encodeURIComponent('قيد الانتظار')}&select=id`,
+    titleFn: n => `${n} ${n===1?'حجز':'حجوزات'} قيد الانتظار`,
+    subtitleFn: n => 'محتاجة متابعة من المخزن',
+    page: 'bookings',
+  },
+  completed_today: {
+    icon: '✅',
+    name: 'حجوزات اتنفّذت اليوم',
+    description: 'الحجوزات اللى اتعمل ليها check-in من المخزن النهاردة',
+    queryFn: () => {
+      const cairoDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Africa/Cairo'}).format(new Date());
+      return `bookings?status=eq.${encodeURIComponent('تم التنفيذ')}&loading_date=eq.${cairoDate}&select=id`;
+    },
+    titleFn: n => `${n} ${n===1?'حجز اتنفّذ':'حجوزات اتنفّذت'} اليوم`,
+    subtitleFn: n => 'تم التحميل بنجاح',
+    page: 'bookings',
+  },
+  cancelled_today: {
+    icon: '❌',
+    name: 'حجوزات ملغية اليوم',
+    description: 'الحجوزات اللى اتلغت النهاردة',
+    queryFn: () => {
+      const cairoDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Africa/Cairo'}).format(new Date());
+      const utc = new Date(`${cairoDate}T00:00:00+03:00`).toISOString();
+      return `bookings?status=eq.${encodeURIComponent('ملغي')}&created_at=gte.${utc}&select=id`;
+    },
+    titleFn: n => `${n} ${n===1?'حجز ملغى':'حجوزات ملغية'} اليوم`,
+    subtitleFn: n => 'حصل عليها إلغاء',
+    page: 'bookings',
+  },
+  bookings_tomorrow: {
+    icon: '📅',
+    name: 'حجوزات بكرة',
+    description: 'حجوزات تحميل بتاع اليوم اللى بعده',
+    queryFn: () => {
+      const cairoToday = new Intl.DateTimeFormat('sv-SE', {timeZone:'Africa/Cairo'}).format(new Date());
+      const tomorrow = new Date(cairoToday + 'T12:00:00Z');
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      const tomorrowStr = tomorrow.toISOString().split('T')[0];
+      return `bookings?loading_date=eq.${tomorrowStr}&status=neq.${encodeURIComponent('ملغي')}&select=id`;
+    },
+    titleFn: n => `${n} ${n===1?'حجز':'حجوزات'} بكرة`,
+    subtitleFn: n => 'تحميل بكرة',
+    page: 'bookings',
+  },
+  bookings_no_permit: {
+    icon: '🆔',
+    name: 'حجوزات اليوم بدون إذن',
+    description: 'حجوزات اتعملت النهاردة من غير ما يكون فيها رقم إذن',
+    queryFn: () => {
+      const cairoDate = new Intl.DateTimeFormat('sv-SE', {timeZone:'Africa/Cairo'}).format(new Date());
+      const utc = new Date(`${cairoDate}T00:00:00+03:00`).toISOString();
+      return `bookings?created_at=gte.${utc}&permit_number=is.null&status=neq.${encodeURIComponent('ملغي')}&select=id`;
+    },
+    titleFn: n => `${n} ${n===1?'حجز':'حجوزات'} بدون إذن`,
+    subtitleFn: n => 'محتاجة استكمال بيانات',
+    page: 'bookings',
+  },
+  warehouses_no_email: {
+    icon: '📦',
+    name: 'مخازن بدون إيميل',
+    description: 'مخازن مش مسجَّل لها إيميل (مش هيستقبلوا تقارير)',
+    query: `warehouses?email=is.null&select=id`,
+    titleFn: n => `${n} ${n===1?'مخزن':'مخازن'} بدون إيميل`,
+    subtitleFn: n => 'مش هيستقبلوا تقارير',
+    page: 'warehouses',
+  },
+};
+
 let notificationsList = [];
 let notifPanelOpen = false;
+let enabledNotifKeys = []; // الأنواع المفعّلة (من DB)
 
 // تتبّع آخر عدد مرئى لكل نوع تنبيه (مخزن فى localStorage)
-// عشان لما الأدمن يفتح الجرس، الـ counts الحالية تتسجّل كـ "مرئية"
-// والـ alert يطلع تانى بس لما العدد يزيد عن آخر مرة شافها
 let notifSeenCounts = {};
 try { notifSeenCounts = JSON.parse(localStorage.getItem('hawa_notif_seen') || '{}'); } catch(e) {}
 
@@ -5540,12 +5847,10 @@ function toggleNotifPanel(){
   if (!panel) return;
   if (notifPanelOpen){
     panel.classList.add('show');
-    // ✨ إزالة المؤشّرات على الجرس فوراً (شعور سريع بالاستجابة)
     const bell = document.getElementById('notifBell');
     const countEl = document.getElementById('notifCount');
     if (bell) bell.classList.remove('has-notifications');
     if (countEl) countEl.classList.remove('show');
-    // اعمل refresh وعلّم اللى ظاهر دلوقتى كـ "مرئى"
     refreshNotifications().then(() => markAllNotificationsAsSeen());
   } else {
     panel.classList.remove('show');
@@ -5568,87 +5873,148 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Refresh all notifications (extensible — أضف أنواع تنبيهات جديدة هنا)
+// Refresh all notifications — يقرا enabledNotifKeys ويستدعى الكاتالوج لكل نوع
 async function refreshNotifications(){
+  // ─── 1. تأكد إن قائمة المفعّلين متحدّثة (من DB) ───
+  await loadEnabledNotifKeys();
+
+  // ─── 2. عدّ عدد العملاء تحت المراجعة (دايماً، بغض النظر عن إعدادات الجرس)
+  //       عشان الـ badge فى الـ sidebar يظل ظاهر دايماً ───
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?approval_status=eq.pending&select=id`, {headers:HDR});
+    if (r.ok){ const d = await r.json(); updatePendingBadge(d.length); }
+  } catch(e){}
+
+  // ─── 3. كل نوع مفعّل: نفّذ الـ query واحسب العدد ───
   const newList = [];
-
-  // 🔔 اقرا إعدادات التنبيهات الأول (cached settings)
-  let notifSettings = {};
-  try {
-    const sr = await fetch(`${SB}/rest/v1/app_settings?key=like.notif_*&select=key,value`, {headers: HDR});
-    if (sr.ok) {
-      const arr = await sr.json();
-      arr.forEach(s => { notifSettings[s.key] = s.value; });
-    }
-  } catch(e){}
-
-  // ─── 1. عملاء تحت المراجعة ───
-  // الـ badge فى الـ sidebar بيتحدّث دايماً (مهم يفضل ظاهر حتى لو التنبيه متعطّل)
-  // لكن البلاغ فى الجرس بيظهر بس لو الإعداد مفعّل
-  try {
-    const r = await fetch(
-      `${SB}/rest/v1/clients?approval_status=eq.pending&select=id`,
-      {headers: HDR}
-    );
-    if (r.ok){
-      const data = await r.json();
-      updatePendingBadge(data.length);
-      // اظهر فى الجرس فقط لو الإعداد مفعّل (default = true)
-      const enabled = (notifSettings.notif_pending_clients !== 'false');
-      if (enabled && data.length > 0){
-        const noun = data.length === 1 ? 'عميل' : 'عملاء';
-        newList.push({
-          key: 'pending_clients',
-          count: data.length,
-          icon: '⏳',
-          title: `${data.length} ${noun} تحت المراجعة`,
-          subtitle: data.length === 1 ? 'استنى الموافقة منك' : 'استنوا الموافقة منك',
-          action: () => goTo('pending-clients'),
-        });
-      }
-    }
-  } catch(e){}
-
-  // ─── 2. عدد الحجوزات اليوم (Cairo timezone) ───
-  if (notifSettings.notif_today_bookings !== 'false') {
+  for (const key of enabledNotifKeys){
+    const cfg = NOTIF_CATALOG[key];
+    if (!cfg) continue; // النوع مش موجود فى الكاتالوج (مهمل)
     try {
-      // احسب بداية اليوم بتوقيت القاهرة كـ UTC ISO
-      const cairoDate = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Africa/Cairo' }).format(new Date());
-      const cairoMidnightUTC = new Date(`${cairoDate}T00:00:00+03:00`).toISOString();
-      const r = await fetch(
-        `${SB}/rest/v1/bookings?created_at=gte.${cairoMidnightUTC}&status=neq.${encodeURIComponent('ملغي')}&select=id`,
-        {headers: HDR}
-      );
-      if (r.ok){
-        const data = await r.json();
-        if (data.length > 0){
-          const noun = data.length === 1 ? 'حجز' : 'حجوزات';
-          newList.push({
-            key: 'today_bookings',
-            count: data.length,
-            icon: '🎫',
-            title: `${data.length} ${noun} اليوم`,
-            subtitle: data.length === 1 ? 'حجز اتعمل النهاردة' : 'حجوزات اتعملت النهاردة',
-            action: () => goTo('bookings'),
-          });
-        }
+      const path = typeof cfg.queryFn === 'function' ? cfg.queryFn() : cfg.query;
+      const r = await fetch(`${SB}/rest/v1/${path}`, {headers:HDR});
+      if (!r.ok) continue;
+      const data = await r.json();
+      const n = data.length;
+      if (n > 0){
+        newList.push({
+          key: key,
+          count: n,
+          icon: cfg.icon,
+          title: cfg.titleFn(n),
+          subtitle: cfg.subtitleFn(n),
+          action: () => goTo(cfg.page),
+        });
       }
     } catch(e){}
   }
 
-  // ─── (مستقبلاً: أضف أنواع تنبيهات جديدة هنا) ───
-  // مثلاً:
-  // - حجوزات قديمة محتاجة موافقة
-  // - مخازن من غير إيميل
-  // - عملاء ذوى حجوزات اليوم بدون permit_number
-  // إلخ.
-  // كل نوع جديد لازم:
-  //   1. يضاف فى صفحة الإعدادات كـ toggle
-  //   2. يضاف key فى app_settings (مع notif_ prefix)
-  //   3. يقرا الإعداد من notifSettings قبل ما يضيف لـ newList
-
   notificationsList = newList;
   renderNotifications();
+}
+
+// ─── يقرا قائمة الـ keys المفعّلة من app_settings ───
+async function loadEnabledNotifKeys(){
+  try {
+    const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.notifications_enabled&select=value`, {headers:HDR});
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data.length) return;
+    enabledNotifKeys = JSON.parse(data[0].value || '[]');
+  } catch(e){
+    enabledNotifKeys = [];
+  }
+}
+
+// ─── يحفظ قائمة الـ keys المفعّلة فى app_settings ───
+async function saveEnabledNotifKeys(){
+  try {
+    const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.notifications_enabled`, {
+      method: 'PATCH',
+      headers: {...HDR, 'Prefer':'return=minimal'},
+      body: JSON.stringify({value: JSON.stringify(enabledNotifKeys), updated_at: new Date().toISOString()})
+    });
+    return r.ok;
+  } catch(e){ return false; }
+}
+
+// ─── عرض قائمة التنبيهات المفعّلة فى صفحة الإعدادات ───
+async function renderEnabledNotifsList(){
+  await loadEnabledNotifKeys();
+  const c = document.getElementById('enabled-notifs-list');
+  if (!c) return;
+  if (!enabledNotifKeys.length){
+    c.innerHTML = `
+      <div class="enabled-notif-empty">
+        <div class="enabled-notif-empty-icon">🔕</div>
+        <div class="enabled-notif-empty-title">مفيش تنبيهات مفعّلة</div>
+        <div class="enabled-notif-empty-sub">اضغط "إضافة تنبيه" تحت لتفعيل أنواع التنبيهات</div>
+      </div>`;
+    return;
+  }
+  c.innerHTML = enabledNotifKeys.map(key => {
+    const cfg = NOTIF_CATALOG[key];
+    if (!cfg) return ''; // مهمل لو مش موجود فى الكاتالوج
+    return `
+      <div class="enabled-notif-card">
+        <div class="en-icon">${cfg.icon}</div>
+        <div class="en-text">
+          <div class="en-name">${cfg.name}</div>
+          <div class="en-desc">${cfg.description}</div>
+        </div>
+        <button class="en-remove" onclick="removeEnabledNotif('${key}')" title="حذف">✕</button>
+      </div>`;
+  }).join('');
+}
+
+async function removeEnabledNotif(key){
+  if (!confirm(`هتشيل التنبيه "${NOTIF_CATALOG[key]?.name||key}"؟`)) return;
+  enabledNotifKeys = enabledNotifKeys.filter(k => k !== key);
+  const ok = await saveEnabledNotifKeys();
+  if (ok) {
+    renderEnabledNotifsList();
+    refreshNotifications();
+  } else {
+    alert('❌ خطأ فى حفظ التغييرات');
+  }
+}
+
+// ─── Modal إضافة تنبيه جديد ───
+function openAddNotifModal(){
+  const list = document.getElementById('addNotifList');
+  if (!list) return;
+  const allKeys = Object.keys(NOTIF_CATALOG);
+  list.innerHTML = allKeys.map(key => {
+    const cfg = NOTIF_CATALOG[key];
+    const isEnabled = enabledNotifKeys.includes(key);
+    return `
+      <div class="add-notif-item ${isEnabled?'disabled':''}" ${isEnabled ? '' : `onclick="addEnabledNotif('${key}')"`}>
+        <div class="ai-icon">${cfg.icon}</div>
+        <div class="ai-text">
+          <div class="ai-name">${cfg.name}</div>
+          <div class="ai-desc">${cfg.description}</div>
+        </div>
+        <span class="ai-status ${isEnabled?'added':'add'}">${isEnabled?'✓ مفعّل':'➕ إضافة'}</span>
+      </div>`;
+  }).join('');
+  document.getElementById('addNotifOverlay').classList.add('show');
+}
+
+function closeAddNotifModal(){
+  document.getElementById('addNotifOverlay').classList.remove('show');
+}
+
+async function addEnabledNotif(key){
+  if (enabledNotifKeys.includes(key)) return;
+  enabledNotifKeys.push(key);
+  const ok = await saveEnabledNotifKeys();
+  if (ok){
+    closeAddNotifModal();
+    renderEnabledNotifsList();
+    refreshNotifications();
+  } else {
+    alert('❌ خطأ فى حفظ التغييرات');
+  }
 }
 
 function renderNotifications(){
