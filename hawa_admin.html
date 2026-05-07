@@ -595,6 +595,8 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
   transition:all 0.2s;
 }
 .enabled-notif-card:hover{background:rgba(201,168,76,0.04);border-color:rgba(201,168,76,0.2);}
+.enabled-notif-card.is-off{opacity:0.55;}
+.enabled-notif-card.is-off .en-icon{filter:grayscale(0.6);}
 .enabled-notif-card .en-icon{
   font-size:22px;
   width:46px;
@@ -5885,10 +5887,11 @@ async function refreshNotifications(){
     if (r.ok){ const d = await r.json(); updatePendingBadge(d.length); }
   } catch(e){}
 
-  // ─── 3. كل نوع مفعّل: نفّذ الـ query واحسب العدد ───
+  // ─── 3. كل نوع مفعّل (on=true): نفّذ الـ query واحسب العدد ───
   const newList = [];
-  for (const key of enabledNotifKeys){
-    const cfg = NOTIF_CATALOG[key];
+  for (const entry of enabledNotifKeys){
+    if (!entry.on) continue; // مش مفعّل دلوقتى → اتجاهله
+    const cfg = NOTIF_CATALOG[entry.key];
     if (!cfg) continue; // النوع مش موجود فى الكاتالوج (مهمل)
     try {
       const path = typeof cfg.queryFn === 'function' ? cfg.queryFn() : cfg.query;
@@ -5898,7 +5901,7 @@ async function refreshNotifications(){
       const n = data.length;
       if (n > 0){
         newList.push({
-          key: key,
+          key: entry.key,
           count: n,
           icon: cfg.icon,
           title: cfg.titleFn(n),
@@ -5914,13 +5917,20 @@ async function refreshNotifications(){
 }
 
 // ─── يقرا قائمة الـ keys المفعّلة من app_settings ───
+// الشكل: [{key, on}, ...]
+// مع backward compat للشكل القديم (array of strings)
 async function loadEnabledNotifKeys(){
   try {
     const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.notifications_enabled&select=value`, {headers:HDR});
     if (!r.ok) return;
     const data = await r.json();
-    if (!data.length) return;
-    enabledNotifKeys = JSON.parse(data[0].value || '[]');
+    if (!data.length) { enabledNotifKeys = []; return; }
+    const raw = JSON.parse(data[0].value || '[]');
+    // backward compat: لو الشكل القديم (مجرد strings) حوّله لـ objects بـ on=true
+    enabledNotifKeys = raw.map(item => {
+      if (typeof item === 'string') return { key: item, on: true };
+      return { key: item.key, on: item.on !== false };
+    }).filter(x => x.key);
   } catch(e){
     enabledNotifKeys = [];
   }
@@ -5952,24 +5962,44 @@ async function renderEnabledNotifsList(){
       </div>`;
     return;
   }
-  c.innerHTML = enabledNotifKeys.map(key => {
-    const cfg = NOTIF_CATALOG[key];
+  c.innerHTML = enabledNotifKeys.map(entry => {
+    const cfg = NOTIF_CATALOG[entry.key];
     if (!cfg) return ''; // مهمل لو مش موجود فى الكاتالوج
     return `
-      <div class="enabled-notif-card">
+      <div class="enabled-notif-card${entry.on ? '' : ' is-off'}">
         <div class="en-icon">${cfg.icon}</div>
         <div class="en-text">
           <div class="en-name">${cfg.name}</div>
           <div class="en-desc">${cfg.description}</div>
         </div>
-        <button class="en-remove" onclick="removeEnabledNotif('${key}')" title="حذف">✕</button>
+        <label class="switch" title="${entry.on ? 'تشغيل / إيقاف' : 'تشغيل / إيقاف'}">
+          <input type="checkbox" ${entry.on ? 'checked' : ''} onchange="toggleEnabledNotif('${entry.key}')">
+          <span class="slider"></span>
+        </label>
+        <button class="en-remove" onclick="removeEnabledNotif('${entry.key}')" title="حذف نهائى">✕</button>
       </div>`;
   }).join('');
 }
 
+// ─── تشغيل/إيقاف نوع موجود فى ليستى (من غير ما يتشال) ───
+async function toggleEnabledNotif(key){
+  const entry = enabledNotifKeys.find(e => e.key === key);
+  if (!entry) return;
+  entry.on = !entry.on;
+  const ok = await saveEnabledNotifKeys();
+  if (ok) {
+    refreshNotifications();
+    // مش لازم نـ re-render الكارت — الـ checkbox state اتغيّر بالفعل
+  } else {
+    entry.on = !entry.on; // rollback
+    alert('❌ خطأ فى حفظ التغييرات');
+    renderEnabledNotifsList();
+  }
+}
+
 async function removeEnabledNotif(key){
-  if (!confirm(`هتشيل التنبيه "${NOTIF_CATALOG[key]?.name||key}"؟`)) return;
-  enabledNotifKeys = enabledNotifKeys.filter(k => k !== key);
+  if (!confirm(`هتشيل التنبيه "${NOTIF_CATALOG[key]?.name||key}" نهائياً؟\n\nتقدر تضيفه تانى من زرار "إضافة تنبيه".`)) return;
+  enabledNotifKeys = enabledNotifKeys.filter(e => e.key !== key);
   const ok = await saveEnabledNotifKeys();
   if (ok) {
     renderEnabledNotifsList();
@@ -5984,17 +6014,18 @@ function openAddNotifModal(){
   const list = document.getElementById('addNotifList');
   if (!list) return;
   const allKeys = Object.keys(NOTIF_CATALOG);
+  const enabledKeys = enabledNotifKeys.map(e => e.key);
   list.innerHTML = allKeys.map(key => {
     const cfg = NOTIF_CATALOG[key];
-    const isEnabled = enabledNotifKeys.includes(key);
+    const isAdded = enabledKeys.includes(key);
     return `
-      <div class="add-notif-item ${isEnabled?'disabled':''}" ${isEnabled ? '' : `onclick="addEnabledNotif('${key}')"`}>
+      <div class="add-notif-item ${isAdded?'disabled':''}" ${isAdded ? '' : `onclick="addEnabledNotif('${key}')"`}>
         <div class="ai-icon">${cfg.icon}</div>
         <div class="ai-text">
           <div class="ai-name">${cfg.name}</div>
           <div class="ai-desc">${cfg.description}</div>
         </div>
-        <span class="ai-status ${isEnabled?'added':'add'}">${isEnabled?'✓ مفعّل':'➕ إضافة'}</span>
+        <span class="ai-status ${isAdded?'added':'add'}">${isAdded?'✓ مضاف':'➕ إضافة'}</span>
       </div>`;
   }).join('');
   document.getElementById('addNotifOverlay').classList.add('show');
@@ -6005,8 +6036,8 @@ function closeAddNotifModal(){
 }
 
 async function addEnabledNotif(key){
-  if (enabledNotifKeys.includes(key)) return;
-  enabledNotifKeys.push(key);
+  if (enabledNotifKeys.find(e => e.key === key)) return;
+  enabledNotifKeys.push({ key: key, on: true });
   const ok = await saveEnabledNotifKeys();
   if (ok){
     closeAddNotifModal();
