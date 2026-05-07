@@ -553,9 +553,6 @@ const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, 
 // Edit state: null = new | object = editing
 let editMode = null; // { id, oldCount }
 
-// Cache for "my bookings" — stored by id so edit/cancel buttons just need the id
-let myBookingsCache = {};
-
 // ===================== TABS =====================
 function switchTab(tab) {
   ['new','my'].forEach(t => {
@@ -634,7 +631,7 @@ async function goStep2() {
     // ⚡ Parallel: permit-check + cached settings + vehicle types (3 in flight at once)
     const [r1, settings, _vt] = await Promise.all([
       fetch(
-        `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.%D9%85%D9%84%D8%BA%D9%8A&select=id,client_id`,
+        `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.ملغي&select=id,client_id`,
         { headers: HDR }
       ),
       ensureSettingsLoaded(),
@@ -725,7 +722,7 @@ async function buildCal() {
   try {
     const [rulesRes, bookingsRes] = await Promise.all([
       fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&loading_date=gte.${todayStr}&loading_date=lte.${maxStr}&status=neq.%D9%85%D9%84%D8%BA%D9%8A&select=loading_date,time_slot,count,id`, { headers: HDR })
+      fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&loading_date=gte.${todayStr}&loading_date=lte.${maxStr}&status=neq.ملغي&select=loading_date,time_slot,count,id`, { headers: HDR })
     ]);
     rules = await rulesRes.json();
     const bookings = await bookingsRes.json();
@@ -740,6 +737,15 @@ async function buildCal() {
   function isDayClosed(dt, ds) {
     const dow = dt.getDay();
     for (const rule of rules) {
+      // ✨ احترم فلتر المخازن (لو مش متعرّف، يتطبّق على الكل)
+      if (rule.warehouses && rule.warehouses.length > 0) {
+        if (!rule.warehouses.includes(bk.warehouse)) continue;
+      }
+      // ✨ احترم فلتر الأقسام (أنواع العربيات)
+      if (rule.vehicle_types && rule.vehicle_types.length > 0) {
+        if (!rule.vehicle_types.includes(bk.vehicle)) continue;
+      }
+      // فحص التاريخ
       if (rule.type === 'weekly' && rule.day_of_week === dow) return true;
       if (rule.type === 'date' && rule.start_date === ds) return true;
       if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) return true;
@@ -835,7 +841,7 @@ async function loadSlots() {
 
   try {
     const r = await fetch(
-      `${SB}/rest/v1/bookings?select=time_slot,count,id&loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.%D9%85%D9%84%D8%BA%D9%8A`,
+      `${SB}/rest/v1/bookings?select=time_slot,count,id&loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`,
       { headers: HDR }
     );
     const data = await r.json();
@@ -924,7 +930,7 @@ async function confirm_booking() {
     } catch(e) {}
 
     // حد اليوم (10) — نستثني الحجز القديم في التعديل
-    const dr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=eq.${bk.dateStr}&client_id=eq.${user.id}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.%D9%85%D9%84%D8%BA%D9%8A`, { headers: HDR });
+    const dr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=eq.${bk.dateStr}&client_id=eq.${user.id}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`, { headers: HDR });
     const dd  = await dr.json();
     const dayTotal = dd.reduce((s, b) => (editMode && b.id === editMode.id) ? s : s + (b.count||0), 0);
     if (dayTotal + bk.count > 10) {
@@ -936,7 +942,7 @@ async function confirm_booking() {
     const dt = new Date(bk.dateStr + 'T12:00:00');
     const ws = new Date(dt); ws.setDate(dt.getDate() - dt.getDay());
     const we = new Date(ws); we.setDate(ws.getDate() + 6);
-    const wr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=gte.${ws.toISOString().split('T')[0]}&loading_date=lte.${we.toISOString().split('T')[0]}&client_id=eq.${user.id}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&status=neq.%D9%85%D9%84%D8%BA%D9%8A`, { headers: HDR });
+    const wr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=gte.${ws.toISOString().split('T')[0]}&loading_date=lte.${we.toISOString().split('T')[0]}&client_id=eq.${user.id}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&status=neq.ملغي`, { headers: HDR });
     const wd  = await wr.json();
     const weekTotal = wd.reduce((s, b) => (editMode && b.id === editMode.id) ? s : s + (b.count||0), 0);
     if (weekTotal + bk.count > 20) {
@@ -958,15 +964,13 @@ async function confirm_booking() {
       });
       if (res.ok) {
         const eid = editMode.id;
-        // بعت إشعار تعديل تليجرام **قبل** exitEditMode (لإن exitEditMode بيمسح bk)
+        exitEditMode();
+        // بعت إشعار تعديل تليجرام
         sendTelegramConfirm({ id: eid, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
           count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, is_edit: true });
-        // اخرج من وضع التعديل (يعمل reset لـ bk + يخفى الباجر)
-        const editSnapshot = { warehouse: bk.warehouse, vehicle: bk.vehicle, count: bk.count, slot: bk.slot };
-        exitEditMode();
         showSuccessScreen(
           `تم تعديل الحجز #${eid}`,
-          `${editSnapshot.warehouse} | ${editSnapshot.vehicle} | ${editSnapshot.count} عربية<br>${editSnapshot.slot}`,
+          `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
           'edit'
         );
       } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
@@ -1082,20 +1086,7 @@ function startNewBooking() {
 }
 
 // ===================== EDIT MODE =====================
-async function startEdit(b) {
-  // Ensure vehicle types are loaded before edit (needed for capacity + DOM id)
-  if (!allVehicleTypes || !allVehicleTypes.length) {
-    try {
-      await loadVehicleTypesData();
-    } catch(e) {
-      showErr('فشل تحميل أنواع العربيات، حاول تاني');
-      return;
-    }
-  }
-
-  // Make sure the vehicle options are rendered in DOM (so we can pre-select)
-  renderVehicleOptions();
-
+function startEdit(b) {
   editMode = { id: b.id, oldCount: b.count };
 
   bk.warehouse = b.warehouse;
@@ -1103,30 +1094,19 @@ async function startEdit(b) {
   bk.dateStr   = b.loading_date;
   bk.slot      = b.time_slot;
   bk.count     = b.count;
-  bk.permit    = b.permit_number || null;
+  bk.cap       = CAP[b.vehicle_type] || 6;
   bk.remaining = 10;
+  bk.permit    = b.permit_number || null;
 
-  // Look up vehicle type by name to get capacity + database id (used for DOM id "opt-v-<id>")
-  const vt = allVehicleTypes.find(v => v.name === b.vehicle_type);
-  bk.cap = vt ? (vt.capacity_per_hour || 5) : 6;
-
-  // Pre-select المخزن (warehouse opt id is "opt-w-<name>")
+  // Pre-select المخزن
   document.querySelectorAll('#s1 .opt').forEach(o => o.classList.remove('sel'));
   const wOpt = document.getElementById('opt-w-' + b.warehouse);
-  if (wOpt) { wOpt.classList.add('sel'); }
+  if (wOpt) { wOpt.classList.add('sel'); document.getElementById('b1').disabled = false; }
 
-  // Show permit card pre-filled with existing permit
-  document.getElementById('permitCard').style.display = '';
-  document.getElementById('permitInput').value = bk.permit || '';
-  document.getElementById('permitMsg').textContent = '';
-  document.getElementById('b1').disabled = !bk.permit;
-
-  // Pre-select النوع (vehicle opt id is "opt-v-<vehicle_type_id>")
+  // Pre-select النوع
   document.querySelectorAll('#s2 .opt').forEach(o => o.classList.remove('sel'));
-  if (vt) {
-    const vOpt = document.getElementById('opt-v-' + vt.id);
-    if (vOpt) { vOpt.classList.add('sel'); document.getElementById('b2').disabled = false; }
-  }
+  const vOpt = document.getElementById('opt-v-' + b.vehicle_type);
+  if (vOpt) { vOpt.classList.add('sel'); document.getElementById('b2').disabled = false; }
 
   // بانر التعديل
   document.getElementById('editBanner').classList.add('show');
@@ -1157,27 +1137,20 @@ async function loadMyBookings() {
     const todayStr = today.toISOString().split('T')[0];
 
     const r = await fetch(
-      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gt.${todayStr}&status=eq.${encodeURIComponent('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`,
+      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gt.${todayStr}&status=eq.قيد الانتظار&order=loading_date.asc,time_slot.asc&select=*`,
       { headers: HDR }
     );
     const data = await r.json();
 
     if (!data.length) {
       container.innerHTML = `<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات قادمة</p></div>`;
-      myBookingsCache = {};
       return;
     }
-
-    // Cache bookings by id so action buttons can reference them by id only
-    myBookingsCache = {};
-    data.forEach(b => { myBookingsCache[b.id] = b; });
 
     container.innerHTML = data.map(b => {
       const dateLabel = new Date(b.loading_date + 'T12:00:00')
         .toLocaleDateString('ar-EG', { weekday:'short', day:'numeric', month:'long' });
-      // Escape dateLabel for use inside single-quoted onclick attribute
-      const safeDate = dateLabel.replace(/'/g, "\\'");
-      const safeVehicle = (b.vehicle_type || '').replace(/'/g, "\\'");
+      const bStr = encodeURIComponent(JSON.stringify(b));
       return `
         <div class="bk-card">
           <div class="bk-header">
@@ -1190,8 +1163,8 @@ async function loadMyBookings() {
           <div class="bk-row"><span class="bk-lbl">الموعد</span><span class="bk-val gold">${b.time_slot}</span></div>
           <div class="bk-row"><span class="bk-lbl">العدد</span><span class="bk-val">${b.count} عربية</span></div>
           <div class="bk-actions">
-            <button class="bk-btn-edit"   onclick="startEditById(${b.id})">✏️ تعديل</button>
-            <button class="bk-btn-cancel" onclick="showCancelDlg(${b.id},'${safeDate}','${safeVehicle}')">❌ إلغاء</button>
+            <button class="bk-btn-edit"   onclick="startEdit(decodeBooking('${bStr}'))">✏️ تعديل</button>
+            <button class="bk-btn-cancel" onclick="showCancelDlg(${b.id},'${dateLabel}','${b.vehicle_type}')">❌ إلغاء</button>
           </div>
         </div>`;
     }).join('');
@@ -1201,18 +1174,7 @@ async function loadMyBookings() {
   }
 }
 
-// Edit handler: looks up the cached booking by id and starts edit mode
-function startEditById(id) {
-  const b = myBookingsCache[id];
-  if (!b) {
-    showErr('الحجز ده مش موجود — حدّث الصفحة');
-    return;
-  }
-  startEdit(b);
-}
-
 function decodeBooking(str) {
-  // Kept for backward compatibility; new code uses startEditById
   return JSON.parse(decodeURIComponent(str));
 }
 

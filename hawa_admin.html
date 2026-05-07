@@ -856,6 +856,45 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   vertical-align:middle;
 }
 .bk-checkbox:disabled{cursor:not-allowed;opacity:0.4;}
+
+/* ═══════════════════════════════════════════════════════════
+   RULE SCOPE (warehouses + vehicle types في modal الإجازات)
+   ═══════════════════════════════════════════════════════════ */
+.scope-row{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:background 0.15s;
+  font-size:13px;
+}
+.scope-row:hover{background:rgba(201,168,76,0.06);}
+.scope-row input[type="checkbox"]{
+  width:18px;
+  height:18px;
+  cursor:pointer;
+  accent-color:var(--gold);
+  flex-shrink:0;
+}
+.scope-row label{
+  cursor:pointer;
+  font-weight:600;
+  color:var(--text);
+  flex:1;
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.scope-row.master{
+  background:rgba(201,168,76,0.05);
+  border:1px dashed rgba(201,168,76,0.2);
+  margin-bottom:4px;
+}
+.scope-row.master label{color:var(--gold);font-weight:700;}
+.scope-row.is-disabled{opacity:0.5;pointer-events:none;}
 .act-btn.del:hover{background:rgba(224,85,85,0.2);}
 .act-btn.toggle{background:rgba(76,175,125,0.1);color:#6dc49a;border:1px solid rgba(76,175,125,0.2);}
 .act-btn.toggle:hover{background:rgba(76,175,125,0.2);}
@@ -1750,6 +1789,24 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div class="fg">
           <label>سبب الإجازة (اختياري)</label>
           <input type="text" id="rule-reason" placeholder="مثال: إجازة رمضان، عيد الأضحى...">
+        </div>
+
+        <!-- ─── المخازن المتأثرة ─── -->
+        <div class="fg">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>📦 المخازن المتأثرة</span>
+            <span style="font-size:11px;color:var(--text-dim);font-weight:400">اختار المخازن اللى الإجازة تطبّق عليها</span>
+          </label>
+          <div id="rule-warehouses-list" style="display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px"></div>
+        </div>
+
+        <!-- ─── الأقسام (أنواع العربيات) ─── -->
+        <div class="fg">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>🚛 الأقسام المتأثرة (أنواع العربيات)</span>
+            <span style="font-size:11px;color:var(--text-dim);font-weight:400">تقدر تختار قسم واحد أو أكتر</span>
+          </label>
+          <div id="rule-vtypes-list" style="display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px"></div>
         </div>
 
         <div class="modal-btns">
@@ -5380,16 +5437,26 @@ async function loadRules(){
       return;
     }
 
-    let html='<table><thead><tr><th>النوع</th><th>التفاصيل</th><th>السبب</th><th>إجراءات</th></tr></thead><tbody>';
+    let html='<table><thead><tr><th>النوع</th><th>التفاصيل</th><th>📦 المخازن</th><th>🚛 الأقسام</th><th>السبب</th><th>إجراءات</th></tr></thead><tbody>';
     schedRules.forEach(rule=>{
       let details='';
       if(rule.type==='weekly') details='كل '+dayNames[rule.day_of_week];
       else if(rule.type==='date') details=rule.start_date;
       else if(rule.type==='range') details=rule.start_date+' → '+rule.end_date;
 
+      // عرض المخازن والأقسام (null أو [] يعنى الكل)
+      const whText = (!rule.warehouses || !rule.warehouses.length)
+        ? '<span style="color:var(--text-dim);font-size:11px">الكل</span>'
+        : rule.warehouses.map(w => `<span class="badge qalyub" style="margin:1px">${w}</span>`).join(' ');
+      const vtText = (!rule.vehicle_types || !rule.vehicle_types.length)
+        ? '<span style="color:var(--text-dim);font-size:11px">الكل</span>'
+        : rule.vehicle_types.map(v => `<span class="badge sadat" style="margin:1px">${v}</span>`).join(' ');
+
       html+=`<tr>
         <td><span class="badge ${rule.type==='weekly'?'noshow':rule.type==='date'?'pending':'qalyub'}">${typeLabel[rule.type]}</span></td>
         <td><b>${details}</b></td>
+        <td>${whText}</td>
+        <td>${vtText}</td>
         <td>${rule.reason||'-'}</td>
         <td><button class="act-btn del" onclick="deleteRule(${rule.id})">🗑️ حذف</button></td>
       </tr>`;
@@ -5455,14 +5522,119 @@ function prevMonth(){ calViewDate.setMonth(calViewDate.getMonth()-1); renderCale
 function nextMonth(){ calViewDate.setMonth(calViewDate.getMonth()+1); renderCalendar(); }
 
 // ---- Rule Modal ----
-function openRuleModal(){
+async function openRuleModal(){
   document.getElementById('rule-type').value='weekly';
   document.getElementById('rule-dow').value='5';
   document.getElementById('rule-start').value='';
   document.getElementById('rule-end').value='';
   document.getElementById('rule-reason').value='';
   onRuleTypeChange();
+  // حمّل المخازن والأنواع كـ checkboxes
+  await loadRuleScopeOptions();
   document.getElementById('ruleModal').classList.add('show');
+}
+
+// يحمّل المخازن وأنواع العربيات ويعرضهم كـ checkboxes فى الـ modal
+async function loadRuleScopeOptions(selectedWarehouses, selectedVTypes){
+  selectedWarehouses = selectedWarehouses || [];
+  selectedVTypes = selectedVTypes || [];
+
+  // المخازن
+  let warehouses = [];
+  try {
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name&order=id.asc`, {headers:HDR});
+    if (r.ok) warehouses = await r.json();
+  } catch(e){}
+
+  const whWrap = document.getElementById('rule-warehouses-list');
+  if (whWrap) {
+    whWrap.innerHTML = `
+      <div class="scope-row master">
+        <input type="checkbox" id="rule-wh-all" onchange="toggleScopeAll('rule-wh-all','rule-wh-')">
+        <label for="rule-wh-all">✅ كل المخازن</label>
+      </div>
+    ` + warehouses.map(w => `
+      <div class="scope-row">
+        <input type="checkbox" class="rule-wh-item" id="rule-wh-${w.id}" data-name="${pcEscape(w.name)}" onchange="syncScopeMaster('rule-wh-all','rule-wh-')">
+        <label for="rule-wh-${w.id}">📦 ${pcEscape(w.name)}</label>
+      </div>
+    `).join('');
+
+    // افتراضياً كل المخازن متشيّكة (يعنى الإجازة تطبّق على الكل) إلا لو فى selection
+    if (selectedWarehouses.length === 0) {
+      document.getElementById('rule-wh-all').checked = true;
+      toggleScopeAll('rule-wh-all', 'rule-wh-');
+    } else {
+      warehouses.forEach(w => {
+        const cb = document.getElementById('rule-wh-' + w.id);
+        if (cb && selectedWarehouses.includes(w.name)) cb.checked = true;
+      });
+      syncScopeMaster('rule-wh-all', 'rule-wh-');
+    }
+  }
+
+  // أنواع العربيات (الأقسام)
+  let vtypes = [];
+  try {
+    const r = await fetch(`${SB}/rest/v1/vehicle_types?select=id,name,icon&is_active=eq.true&order=display_order.asc,id.asc`, {headers:HDR});
+    if (r.ok) vtypes = await r.json();
+  } catch(e){}
+
+  const vtWrap = document.getElementById('rule-vtypes-list');
+  if (vtWrap) {
+    vtWrap.innerHTML = `
+      <div class="scope-row master">
+        <input type="checkbox" id="rule-vt-all" onchange="toggleScopeAll('rule-vt-all','rule-vt-')">
+        <label for="rule-vt-all">✅ كل الأقسام</label>
+      </div>
+    ` + vtypes.map(v => `
+      <div class="scope-row">
+        <input type="checkbox" class="rule-vt-item" id="rule-vt-${v.id}" data-name="${pcEscape(v.name)}" onchange="syncScopeMaster('rule-vt-all','rule-vt-')">
+        <label for="rule-vt-${v.id}">${v.icon||'🚛'} ${pcEscape(v.name)}</label>
+      </div>
+    `).join('');
+
+    if (selectedVTypes.length === 0) {
+      document.getElementById('rule-vt-all').checked = true;
+      toggleScopeAll('rule-vt-all', 'rule-vt-');
+    } else {
+      vtypes.forEach(v => {
+        const cb = document.getElementById('rule-vt-' + v.id);
+        if (cb && selectedVTypes.includes(v.name)) cb.checked = true;
+      });
+      syncScopeMaster('rule-vt-all', 'rule-vt-');
+    }
+  }
+}
+
+// لما الـ master checkbox يتغيّر — يفعّل/يعطّل ويشيّك/يفك الـ items
+function toggleScopeAll(masterId, itemPrefix){
+  const master = document.getElementById(masterId);
+  if (!master) return;
+  const items = document.querySelectorAll(`[id^="${itemPrefix}"]:not(#${masterId})`);
+  items.forEach(item => {
+    item.checked = master.checked;
+    const row = item.closest('.scope-row');
+    if (row) row.classList.toggle('is-disabled', master.checked);
+  });
+}
+
+// لما item يتغيّر — يحدّث حالة الـ master
+function syncScopeMaster(masterId, itemPrefix){
+  const items = Array.from(document.querySelectorAll(`[id^="${itemPrefix}"]:not(#${masterId})`));
+  if (!items.length) return;
+  const allChecked = items.every(i => i.checked);
+  const noneChecked = items.every(i => !i.checked);
+  const master = document.getElementById(masterId);
+  if (master) {
+    master.checked = allChecked;
+    master.indeterminate = !allChecked && !noneChecked;
+  }
+  // الـ rows مش disabled لما الـ master مش متشيّك
+  items.forEach(i => {
+    const row = i.closest('.scope-row');
+    if (row) row.classList.toggle('is-disabled', allChecked);
+  });
 }
 
 function onRuleTypeChange(){
@@ -5490,6 +5662,26 @@ async function saveRule(){
     if(!s||!e){alert('اختر تاريخ البداية والنهاية');return;}
     if(e<s){alert('تاريخ النهاية لازم يكون بعد البداية');return;}
     body.start_date=s;body.end_date=e;
+  }
+
+  // 🆕 المخازن المتأثرة (null = كل المخازن)
+  const whAll = document.getElementById('rule-wh-all');
+  if (whAll && whAll.checked) {
+    body.warehouses = null;
+  } else {
+    const selected = Array.from(document.querySelectorAll('.rule-wh-item:checked')).map(cb => cb.dataset.name);
+    if (!selected.length) { alert('اختار مخزن واحد على الأقل أو علّم "كل المخازن"'); return; }
+    body.warehouses = selected;
+  }
+
+  // 🆕 الأقسام المتأثرة (null = كل الأقسام)
+  const vtAll = document.getElementById('rule-vt-all');
+  if (vtAll && vtAll.checked) {
+    body.vehicle_types = null;
+  } else {
+    const selected = Array.from(document.querySelectorAll('.rule-vt-item:checked')).map(cb => cb.dataset.name);
+    if (!selected.length) { alert('اختار قسم واحد على الأقل أو علّم "كل الأقسام"'); return; }
+    body.vehicle_types = selected;
   }
 
   try{
