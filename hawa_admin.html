@@ -1986,6 +1986,46 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div id="set-report-summary" style="margin-top:16px;padding:12px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;font-size:13px;color:var(--gold);line-height:1.7"></div>
       </div>
 
+      <!-- مسلسل الحجز الشهرى -->
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🔢 مسلسل الحجز الشهرى</div>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
+          ℹ️ كل حجز جديد بيـاخد <b>رقم مسلسل بسيط</b> (1، 2، 3...) بدل الـ id الطويل. المسلسل يـبدا من 1 من جديد فى أول <b>{يوم محدد}</b> من كل شهر.<br/>
+          📅 الحجوزات قبل تاريخ التطبيق هتفضل بالـ id بتاعها (مفيش مسلسل). الإعدادات بتأثر على الحجوزات الجديدة بس.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="fg" style="margin:0">
+            <label>📆 يوم بداية الـ cycle (تصفير المسلسل)</label>
+            <select id="set-seq-dow" onchange="updateSeqSummary()">
+              <option value="0">الأحد</option>
+              <option value="1">الاثنين</option>
+              <option value="2">الثلاثاء</option>
+              <option value="3">الأربعاء</option>
+              <option value="4">الخميس</option>
+              <option value="5">الجمعة</option>
+              <option value="6">السبت</option>
+            </select>
+          </div>
+          <div class="fg" style="margin:0">
+            <label>🚀 المسلسل يبدأ من</label>
+            <input type="number" id="set-seq-start" min="1" max="9999" placeholder="مثال: 1" oninput="updateSeqSummary()">
+          </div>
+        </div>
+
+        <div class="fg" style="margin:0">
+          <label>📅 تاريخ بداية تطبيق المسلسل</label>
+          <input type="date" id="set-seq-from" onchange="updateSeqSummary()">
+          <small style="color:var(--text-dim);font-size:11px;margin-top:6px;display:block">
+            الحجوزات اللى تاريخ تحميلها قبل التاريخ ده هتفضل بدون مسلسل.
+          </small>
+        </div>
+
+        <div id="seq-summary" style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:12px;color:var(--text-dim);line-height:1.7;margin-top:12px">
+          <span style="color:var(--text)">⏳ جاري الحساب...</span>
+        </div>
+      </div>
+
       <!-- إدارة نشاط العملاء -->
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
         <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">💤 إدارة نشاط العملاء</div>
@@ -2807,7 +2847,7 @@ function renderBookingsTable(data){
       : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
     html+=`<tr>
       <td style="text-align:center">${checkboxCell}</td>
-      <td style="color:var(--text-dim)">#${b.id}</td>
+      <td style="color:var(--text-dim)" title="ID: ${b.id}">${b.seq_number ? `<b style="color:var(--gold)">#${b.seq_number}</b>` : `#${b.id}`}</td>
       <td><b>${hl(c.name||'-',clientSearch)}</b></td>
       <td><span style="color:var(--gold)">${hl(c.company_code||'-',clientSearch)}</span></td>
       <td>${b.warehouse||'-'}</td>
@@ -3246,6 +3286,12 @@ async function loadSettings(){
     document.getElementById('set-inactive-unit').value  = map.inactive_period_unit  || 'day';
     updateInactiveSummary();
 
+    // 🔢 إعدادات مسلسل الحجز
+    document.getElementById('set-seq-dow').value   = map.seq_reset_day_of_week || '1';
+    document.getElementById('set-seq-from').value  = map.seq_apply_from_date    || '2026-06-01';
+    document.getElementById('set-seq-start').value = map.seq_starting_value     || '1';
+    updateSeqSummary();
+
     // 🔔 عرض قائمة التنبيهات المفعّلة
     renderEnabledNotifsList();
 
@@ -3388,7 +3434,11 @@ async function saveSettings(){
     ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6'],
     // 💤 إعدادات نشاط العملاء
     ['inactive_period_value',  String(parseInt(document.getElementById('set-inactive-value').value) || 30)],
-    ['inactive_period_unit',   document.getElementById('set-inactive-unit').value || 'day']
+    ['inactive_period_unit',   document.getElementById('set-inactive-unit').value || 'day'],
+    // 🔢 إعدادات مسلسل الحجز
+    ['seq_reset_day_of_week',  document.getElementById('set-seq-dow').value || '1'],
+    ['seq_apply_from_date',    document.getElementById('set-seq-from').value || '2026-06-01'],
+    ['seq_starting_value',     String(parseInt(document.getElementById('set-seq-start').value) || 1)]
   ];
 
   try{
@@ -6579,6 +6629,39 @@ async function refreshClientActivityNow(){
   // لو صفحة العملاء معروضة، أعد تحميلها برضه
   if (typeof loadClients === 'function' && document.getElementById('sec-clients').classList.contains('active')) {
     loadClients();
+  }
+}
+
+// =================== SEQ NUMBER (مسلسل الحجز) ===================
+async function updateSeqSummary(){
+  const dowEl  = document.getElementById('set-seq-dow');
+  const fromEl = document.getElementById('set-seq-from');
+  const startEl = document.getElementById('set-seq-start');
+  const sumEl  = document.getElementById('seq-summary');
+  if (!dowEl || !fromEl || !startEl || !sumEl) return;
+  const dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const dow = dayNames[parseInt(dowEl.value)] || '—';
+  const from = fromEl.value || '—';
+  const start = parseInt(startEl.value) || 1;
+  // عدّ كم حجز عنده seq_number ومن غير
+  try {
+    const r1 = await fetch(`${SB}/rest/v1/bookings?seq_number=not.is.null&select=id`, {headers:{...HDR,'Prefer':'count=exact'}, method:'HEAD'});
+    const r2 = await fetch(`${SB}/rest/v1/bookings?seq_number=is.null&select=id`,    {headers:{...HDR,'Prefer':'count=exact'}, method:'HEAD'});
+    const withSeq = parseInt(r1.headers.get('content-range')?.split('/')[1] || '0');
+    const withoutSeq = parseInt(r2.headers.get('content-range')?.split('/')[1] || '0');
+    sumEl.innerHTML = `
+      📅 <b>التطبيق من:</b> <span style="color:var(--gold)">${from}</span> &nbsp;|&nbsp;
+      🔄 <b>تصفير كل:</b> أول ${dow} من الشهر &nbsp;|&nbsp;
+      🚀 <b>يبدأ من:</b> ${start}<br/>
+      <span style="color:#4CAF7D">✅ حجوزات بمسلسل: <b>${withSeq}</b></span> &nbsp;|&nbsp;
+      <span style="color:var(--text-dim)">📋 بدون مسلسل (قديمة): <b>${withoutSeq}</b></span>
+    `;
+  } catch(e) {
+    sumEl.innerHTML = `
+      📅 <b>التطبيق من:</b> <span style="color:var(--gold)">${from}</span> &nbsp;|&nbsp;
+      🔄 <b>تصفير كل:</b> أول ${dow} من الشهر &nbsp;|&nbsp;
+      🚀 <b>يبدأ من:</b> ${start}
+    `;
   }
 }
 

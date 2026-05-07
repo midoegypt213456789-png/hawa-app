@@ -964,12 +964,14 @@ async function confirm_booking() {
       });
       if (res.ok) {
         const eid = editMode.id;
+        const eseq = editMode.seq_number;
+        const displayId = eseq || eid;
         exitEditMode();
         // بعت إشعار تعديل تليجرام
-        sendTelegramConfirm({ id: eid, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
+        sendTelegramConfirm({ id: eid, seq_number: eseq, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
           count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, is_edit: true });
         showSuccessScreen(
-          `تم تعديل الحجز #${eid}`,
+          `تم تعديل الحجز #${displayId}`,
           `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
           'edit'
         );
@@ -991,6 +993,7 @@ async function confirm_booking() {
       if (res.ok) {
         const result = await res.json();
         const booking = result[0];
+        const displayId = booking.seq_number || booking.id;
         // 💤 لو العميل كان غير نشط — رجّعه نشط (fire-and-forget)
         fetch(`${SB}/rest/v1/clients?id=eq.${user.id}`, {
           method: 'PATCH',
@@ -1000,7 +1003,7 @@ async function confirm_booking() {
         // بعت رسالة تأكيد تليجرام عبر n8n
         sendTelegramConfirm(booking);
         showSuccessScreen(
-          `تم الحجز بنجاح! #${booking.id}`,
+          `تم الحجز بنجاح! #${displayId}`,
           `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
           'new'
         );
@@ -1093,7 +1096,7 @@ function startNewBooking() {
 
 // ===================== EDIT MODE =====================
 function startEdit(b) {
-  editMode = { id: b.id, oldCount: b.count };
+  editMode = { id: b.id, seq_number: b.seq_number || null, oldCount: b.count };
 
   bk.warehouse = b.warehouse;
   bk.vehicle   = b.vehicle_type;
@@ -1114,9 +1117,9 @@ function startEdit(b) {
   const vOpt = document.getElementById('opt-v-' + b.vehicle_type);
   if (vOpt) { vOpt.classList.add('sel'); document.getElementById('b2').disabled = false; }
 
-  // بانر التعديل
+  // بانر التعديل (يعرض الـ seq_number لو موجود، وإلا الـ id)
   document.getElementById('editBanner').classList.add('show');
-  document.getElementById('editBannerNum').textContent = b.id;
+  document.getElementById('editBannerNum').textContent = b.seq_number || b.id;
 
   switchTab('new');
   go(1);
@@ -1160,7 +1163,7 @@ async function loadMyBookings() {
       return `
         <div class="bk-card">
           <div class="bk-header">
-            <span class="bk-id">حجز #${b.id}</span>
+            <span class="bk-id" title="ID: ${b.id}">حجز #${b.seq_number || b.id}</span>
             <span class="bk-status pending">قيد الانتظار</span>
           </div>
           <div class="bk-row"><span class="bk-lbl">المخزن</span><span class="bk-val">${b.warehouse}</span></div>
