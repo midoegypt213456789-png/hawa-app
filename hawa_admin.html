@@ -1986,6 +1986,38 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div id="set-report-summary" style="margin-top:16px;padding:12px 14px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;font-size:13px;color:var(--gold);line-height:1.7"></div>
       </div>
 
+      <!-- إدارة نشاط العملاء -->
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">💤 إدارة نشاط العملاء</div>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
+          ℹ️ الـ DB بتعد من تاريخ آخر حجز للعميل. لو فات المدة دى بدون حجز جديد → يتحوّل تلقائياً لـ "غير نشط" (مش يستقبل broadcast).<br/>
+          🔁 لما يعمل حجز جديد → يرجع نشط على طول.
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="fg" style="margin:0">
+            <label>المدة (رقم)</label>
+            <input type="number" id="set-inactive-value" min="1" max="999" placeholder="مثال: 30" oninput="updateInactiveSummary()">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>الوحدة</label>
+            <select id="set-inactive-unit" onchange="updateInactiveSummary()">
+              <option value="day">يوم</option>
+              <option value="week">أسبوع</option>
+              <option value="month">شهر</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:12px;color:var(--text-dim);line-height:1.7">
+          <span id="inactive-summary" style="color:var(--text)">⏳ جاري الحساب...</span>
+        </div>
+
+        <button onclick="refreshClientActivityNow()" style="width:100%;margin-top:12px;padding:11px;background:rgba(76,175,125,0.1);border:1.5px solid rgba(76,175,125,0.4);border-radius:10px;color:#4CAF7D;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s">
+          🔄 تحديث حالة كل العملاء دلوقتى
+        </button>
+      </div>
+
       <!-- إعدادات التنبيهات -->
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
         <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🔔 إعدادات التنبيهات</div>
@@ -2528,10 +2560,10 @@ function goTo(sec){
 
   if(sec==='bookings')loadBookings();
   else if(sec==='employees')loadEmployees();
-  else if(sec==='clients')loadClients();
+  else if(sec==='clients'){ refreshClientActivity(true).then(()=>loadClients()); }
   else if(sec==='client-types')loadClientTypes();
   else if(sec==='extra-contacts')loadExtraContacts();
-  else if(sec==='broadcast')loadBroadcast();
+  else if(sec==='broadcast'){ refreshClientActivity(true).then(()=>loadBroadcast()); }
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='vehicle-types')loadVehicleTypes();
@@ -3209,6 +3241,11 @@ async function loadSettings(){
     // 🆕 Default Admin Page
     document.getElementById('set-default-page').value = map.default_admin_page || 'bookings';
 
+    // 💤 إعدادات نشاط العملاء
+    document.getElementById('set-inactive-value').value = map.inactive_period_value || '30';
+    document.getElementById('set-inactive-unit').value  = map.inactive_period_unit  || 'day';
+    updateInactiveSummary();
+
     // 🔔 عرض قائمة التنبيهات المفعّلة
     renderEnabledNotifsList();
 
@@ -3348,7 +3385,10 @@ async function saveSettings(){
     ['default_admin_page',     defaultPage],
     ['report_schedule_type',   reportType],
     ['report_schedule_hour',   isNaN(reportHour) ? '1' : String(reportHour)],
-    ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6']
+    ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6'],
+    // 💤 إعدادات نشاط العملاء
+    ['inactive_period_value',  String(parseInt(document.getElementById('set-inactive-value').value) || 30)],
+    ['inactive_period_unit',   document.getElementById('set-inactive-unit').value || 'day']
   ];
 
   try{
@@ -6488,6 +6528,59 @@ function handleNotifClick(i){
 // شغّل تحديث التنبيهات أول ما الـ admin يدخل + كل دقيقة
 setInterval(refreshNotifications, 60000);
 setTimeout(refreshNotifications, 1500);
+
+// =================== CLIENT ACTIVITY ===================
+// يعرض الـ summary فى صفحة الإعدادات + يعدّ كم عميل نشط/غير نشط
+async function updateInactiveSummary(){
+  const valEl = document.getElementById('set-inactive-value');
+  const unitEl = document.getElementById('set-inactive-unit');
+  const summaryEl = document.getElementById('inactive-summary');
+  if (!valEl || !unitEl || !summaryEl) return;
+  const val = parseInt(valEl.value) || 30;
+  const unitMap = { day: 'يوم', week: 'أسبوع', month: 'شهر' };
+  const unit = unitMap[unitEl.value] || 'يوم';
+
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?approval_status=eq.approved&select=is_active`, {headers: HDR});
+    if (!r.ok) throw new Error();
+    const data = await r.json();
+    const active = data.filter(c => c.is_active).length;
+    const inactive = data.length - active;
+    summaryEl.innerHTML = `
+      📅 <b>المدة الحالية:</b> ${val} ${unit} بدون حجز<br/>
+      <span style="color:#4CAF7D">✅ نشطين: <b>${active}</b></span> &nbsp;|&nbsp;
+      <span style="color:var(--text-dim)">💤 غير نشطين: <b>${inactive}</b></span> &nbsp;|&nbsp;
+      📊 الإجمالى: ${data.length}
+    `;
+  } catch(e) {
+    summaryEl.textContent = '⚠️ فشل تحميل الإحصاءات';
+  }
+}
+
+// يستدعى الـ Postgres function لتحديث is_active لكل العملاء
+async function refreshClientActivity(silent){
+  try {
+    await fetch(`${SB}/rest/v1/rpc/refresh_client_activity`, {
+      method: 'POST',
+      headers: {...HDR, 'Content-Type':'application/json'},
+      body: JSON.stringify({})
+    });
+  } catch(e){}
+  if (!silent) await updateInactiveSummary();
+}
+
+// زرار "تحديث حالة كل العملاء دلوقتى"
+async function refreshClientActivityNow(){
+  const btn = event && event.target;
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري التحديث...'; }
+  await refreshClientActivity(false);
+  if (btn) { btn.disabled = false; btn.textContent = orig || '🔄 تحديث حالة كل العملاء دلوقتى'; }
+  // لو صفحة العملاء معروضة، أعد تحميلها برضه
+  if (typeof loadClients === 'function' && document.getElementById('sec-clients').classList.contains('active')) {
+    loadClients();
+  }
+}
 
 // =================== AUTO LOGIN ===================
 const saved=sessionStorage.getItem('hawa_admin');

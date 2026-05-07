@@ -991,6 +991,12 @@ async function confirm_booking() {
       if (res.ok) {
         const result = await res.json();
         const booking = result[0];
+        // 💤 لو العميل كان غير نشط — رجّعه نشط (fire-and-forget)
+        fetch(`${SB}/rest/v1/clients?id=eq.${user.id}`, {
+          method: 'PATCH',
+          headers: { ...HDR, 'Prefer':'return=minimal' },
+          body: JSON.stringify({ is_active: true })
+        }).catch(()=>{});
         // بعت رسالة تأكيد تليجرام عبر n8n
         sendTelegramConfirm(booking);
         showSuccessScreen(
