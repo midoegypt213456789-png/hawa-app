@@ -229,6 +229,119 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 }
 .wh-toast.error{background:#E05555;color:#FFF;}
 @keyframes wh-toast-in{from{opacity:0;transform:translate(-50%,20px);}to{opacity:1;transform:translate(-50%,0);}}
+
+/* ═══════════════════════════════════════════════════════════
+   PENDING CLIENTS (عملاء تحت الانتظار)
+   ═══════════════════════════════════════════════════════════ */
+.pending-badge{
+  display:none;
+  background:#E0873A;
+  color:#FFF;
+  font-size:11px;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:10px;
+  margin-right:6px;
+  min-width:20px;
+  text-align:center;
+  animation:pulse-badge 2s ease-in-out infinite;
+}
+.pending-badge.show{display:inline-block;}
+@keyframes pulse-badge{
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,135,58,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(224,135,58,0); }
+}
+.pending-card{
+  background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);
+  border:1px solid #2A2620;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:14px;
+  transition:border-color 0.2s;
+}
+.pending-card:hover{border-color:rgba(224,135,58,0.35);}
+.pending-card .pc-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(224,135,58,0.2);
+  gap:8px;
+  flex-wrap:wrap;
+}
+.pending-card .pc-name{
+  font-size:18px;
+  font-weight:800;
+  color:var(--gold-light);
+}
+.pending-card .pc-time{
+  font-size:11px;
+  color:#888;
+  background:rgba(255,255,255,0.04);
+  padding:4px 10px;
+  border-radius:6px;
+}
+.pending-card .pc-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+  gap:12px;
+  margin-bottom:14px;
+}
+.pending-card .pc-field{
+  background:rgba(255,255,255,0.02);
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid rgba(255,255,255,0.05);
+}
+.pending-card .pc-field-lbl{
+  font-size:11px;
+  color:#8A8580;
+  font-weight:600;
+  margin-bottom:3px;
+}
+.pending-card .pc-field-val{
+  font-size:14px;
+  color:#F0EDE8;
+  font-weight:600;
+  word-break:break-word;
+}
+.pending-card .pc-field-val.code{
+  font-family:Consolas,Monaco,monospace;
+  color:var(--gold);
+}
+.pending-card .pc-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  padding-top:6px;
+  border-top:1px dashed rgba(255,255,255,0.08);
+}
+.pending-card .pc-actions button{
+  flex:1;
+  min-width:130px;
+  padding:12px 16px;
+  border-radius:10px;
+  font-family:'Cairo',sans-serif;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+  border:2px solid;
+  background:transparent;
+}
+.pc-approve{background:rgba(76,175,125,0.1);border-color:rgba(76,175,125,0.4);color:#4CAF7D;}
+.pc-approve:hover{background:#4CAF7D;color:#0A0A0A;}
+.pc-reject{background:rgba(224,85,85,0.08);border-color:rgba(224,85,85,0.3);color:#E05555;}
+.pc-reject:hover{background:#E05555;color:#FFF;}
+.pc-empty{
+  text-align:center;
+  padding:60px 20px;
+  color:#8A8580;
+}
+.pc-empty-icon{font-size:64px;margin-bottom:12px;opacity:0.5;}
+.pc-empty-title{font-size:18px;font-weight:700;color:#D8D3CE;margin-bottom:6px;}
+.pc-empty-sub{font-size:13px;color:#8A8580;}
 .tbl-wrap.scrollable{display:flex;flex-direction:column;max-height:calc(100vh - 200px);}
 .tbl-filters{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex-shrink:0;}
 .tbl-scroll-body{overflow-y:auto;overflow-x:auto;flex:1;}
@@ -665,6 +778,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="nav-item active" onclick="goTo('bookings')"><span class="ni">📋</span> الحجوزات</div>
       <div class="nav-item" onclick="goTo('employees')"><span class="ni">👷</span> الموظفين</div>
       <div class="nav-item" onclick="goTo('clients')"><span class="ni">👥</span> العملاء</div>
+      <div class="nav-item" onclick="goTo('pending-clients')"><span class="ni">⏳</span> عملاء تحت الانتظار <span class="pending-badge" id="pendingBadge">0</span></div>
       <div class="nav-item" onclick="goTo('client-types')"><span class="ni">🏷️</span> أنواع العملاء</div>
       <div class="nav-item" onclick="goTo('extra-contacts')"><span class="ni">📞</span> جهات إضافية</div>
       <div class="nav-item" onclick="goTo('broadcast')"><span class="ni">📢</span> إرسال رسائل</div>
@@ -735,6 +849,26 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
       <div class="tbl-wrap">
         <div id="emp-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- PENDING CLIENTS (عملاء تحت الانتظار) -->
+    <div class="section" id="sec-pending-clients">
+      <div class="page-hd">
+        <div class="page-title">⏳ <span>عملاء تحت الانتظار</span></div>
+        <button class="add-btn" onclick="loadPendingClients()" style="background:rgba(255,255,255,0.05);color:var(--text-dim);border-color:var(--border)">🔄 تحديث</button>
+      </div>
+
+      <div class="tbl-wrap" style="padding:18px;margin-bottom:14px;background:rgba(224,135,58,0.06);border:1px solid rgba(224,135,58,0.2)">
+        <div style="font-size:13px;color:#E0A874;line-height:1.8">
+          ℹ️ العملاء اللى سجّلوا لسه لكن مش موافق عليهم. راجع بياناتهم واضغط <b>✅ موافقة</b> عشان يقدروا يدخلوا، أو <b>❌ رفض</b> لو فيه مشكلة.
+          <br/>
+          ⚠️ <b>الرفض نهائى</b> — العميل المرفوض مش هيقدر يسجّل تانى بنفس الـ username أو رقم الهاتف.
+        </div>
+      </div>
+
+      <div id="pending-list">
+        <div class="loading-txt">⏳ جاري التحميل...</div>
       </div>
     </div>
 
@@ -1225,6 +1359,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="bookings">📋 الحجوزات</option>
             <option value="employees">👷 الموظفين</option>
             <option value="clients">👥 العملاء</option>
+            <option value="pending-clients">⏳ عملاء تحت الانتظار</option>
             <option value="client-types">🏷️ أنواع العملاء</option>
             <option value="extra-contacts">📞 جهات إضافية</option>
             <option value="broadcast">📢 إرسال رسائل</option>
@@ -1812,6 +1947,7 @@ function goTo(sec){
   else if(sec==='blocked')loadBlocked();
   else if(sec==='reports')loadReports();
   else if(sec==='warehouses')loadWarehouses();
+  else if(sec==='pending-clients')loadPendingClients();
   else if(sec==='settings')loadSettings();
 }
 
@@ -4944,6 +5080,157 @@ function showWHToast(msg, type){
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
+// =================== PENDING CLIENTS (عملاء تحت الانتظار) ===================
+let allPendingClientsData = [];
+
+async function loadPendingClients(){
+  const c = document.getElementById('pending-list');
+  c.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/clients?approval_status=eq.pending&select=*&order=created_at.desc`,
+      {headers: HDR}
+    );
+    if (!r.ok) throw new Error('فشل الاتصال بقاعدة البيانات');
+    allPendingClientsData = await r.json();
+    renderPendingClients();
+    updatePendingBadge(allPendingClientsData.length);
+  } catch(e) {
+    c.innerHTML = `<div class="loading-txt" style="color:var(--error)">❌ ${e.message}</div>`;
+  }
+}
+
+function renderPendingClients(){
+  const c = document.getElementById('pending-list');
+  if (!allPendingClientsData.length) {
+    c.innerHTML = `
+      <div class="pc-empty">
+        <div class="pc-empty-icon">✨</div>
+        <div class="pc-empty-title">مفيش عملاء تحت الانتظار</div>
+        <div class="pc-empty-sub">كل العملاء الجداد اتمت مراجعتهم</div>
+      </div>`;
+    return;
+  }
+  c.innerHTML = allPendingClientsData.map(cl => {
+    const created = cl.created_at ? new Date(cl.created_at).toLocaleString('ar-EG', { 
+      timeZone: 'Africa/Cairo', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' 
+    }) : '—';
+    return `
+      <div class="pending-card" data-id="${cl.id}">
+        <div class="pc-header">
+          <div class="pc-name">👤 ${pcEscape(cl.name || '—')}</div>
+          <div class="pc-time">📅 ${created}</div>
+        </div>
+
+        <div class="pc-grid">
+          <div class="pc-field">
+            <div class="pc-field-lbl">🏢 كود الشركة</div>
+            <div class="pc-field-val code">${pcEscape(cl.company_code || '—')}</div>
+          </div>
+          <div class="pc-field">
+            <div class="pc-field-lbl">📞 الهاتف</div>
+            <div class="pc-field-val">${pcEscape(cl.phone || '—')}</div>
+          </div>
+          <div class="pc-field">
+            <div class="pc-field-lbl">🔑 اسم المستخدم</div>
+            <div class="pc-field-val code">${pcEscape(cl.username || '—')}</div>
+          </div>
+          <div class="pc-field">
+            <div class="pc-field-lbl">🏛️ المحافظة</div>
+            <div class="pc-field-val">${pcEscape(cl.governorate || '—')}</div>
+          </div>
+          <div class="pc-field">
+            <div class="pc-field-lbl">🏙️ المدينة</div>
+            <div class="pc-field-val">${pcEscape(cl.city || '—')}</div>
+          </div>
+          <div class="pc-field">
+            <div class="pc-field-lbl">📍 الحي</div>
+            <div class="pc-field-val">${pcEscape(cl.district || '—')}</div>
+          </div>
+          <div class="pc-field" style="grid-column:1/-1">
+            <div class="pc-field-lbl">🏠 العنوان</div>
+            <div class="pc-field-val">${pcEscape(cl.address || '—')}</div>
+          </div>
+        </div>
+
+        <div class="pc-actions">
+          <button class="pc-approve" onclick="approvePendingClient(${cl.id})">✅ موافقة</button>
+          <button class="pc-reject" onclick="rejectPendingClient(${cl.id})">❌ رفض</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function approvePendingClient(id){
+  const cl = allPendingClientsData.find(c => c.id === id);
+  if (!cl) return;
+  if (!confirm(`✅ هتوافق على العميل "${cl.name}"؟\n\nهيقدر يدخل ويعمل حجوزات على طول.`)) return;
+
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: HDR,
+      body: JSON.stringify({ approval_status: 'approved', is_active: true })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    await loadPendingClients();
+    showWHToast(`✅ تم الموافقة على ${cl.name}`);
+  } catch(e) {
+    showWHToast('❌ خطأ في الموافقة', 'error');
+  }
+}
+
+async function rejectPendingClient(id){
+  const cl = allPendingClientsData.find(c => c.id === id);
+  if (!cl) return;
+  if (!confirm(`❌ هترفض العميل "${cl.name}"؟\n\n⚠️ ده قرار نهائى — مش هيقدر يسجّل تانى بنفس الـ username أو الهاتف.`)) return;
+
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: HDR,
+      body: JSON.stringify({ approval_status: 'rejected', is_active: false })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    await loadPendingClients();
+    showWHToast(`✅ تم رفض ${cl.name}`);
+  } catch(e) {
+    showWHToast('❌ خطأ في الرفض', 'error');
+  }
+}
+
+function pcEscape(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ─── Pending count badge — يحدّث الرقم اللى جنب اسم القسم فى الـ sidebar ───
+function updatePendingBadge(count){
+  const badge = document.getElementById('pendingBadge');
+  if (!badge) return;
+  if (count > 0) {
+    badge.textContent = count;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+}
+
+async function refreshPendingBadge(){
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/clients?approval_status=eq.pending&select=id`,
+      {headers: HDR}
+    );
+    if (!r.ok) return;
+    const data = await r.json();
+    updatePendingBadge(data.length);
+  } catch(e) {}
+}
+
+// شغّل تحديث الـ badge أول ما الـ admin يدخل + كل دقيقة
+setInterval(refreshPendingBadge, 60000);
+setTimeout(refreshPendingBadge, 1500);
 
 // =================== AUTO LOGIN ===================
 const saved=sessionStorage.getItem('hawa_admin');

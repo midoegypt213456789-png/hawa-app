@@ -500,6 +500,32 @@
 
       if (data && data.length > 0) {
         const user = data[0];
+
+        // ═══ التحقق من حالة الموافقة ═══
+        const approval = user.approval_status || 'approved'; // default للحسابات القديمة
+
+        if (approval === 'pending') {
+          showAlert('⏳ حسابك تحت المراجعة من الإدارة، استنى الموافقة قبل ما تقدر تدخل', 'error');
+          btn.disabled = false;
+          btn.innerHTML = 'تسجيل الدخول';
+          return;
+        }
+
+        if (approval === 'rejected') {
+          showAlert('❌ تم رفض حسابك من الإدارة. للاستفسار تواصل مع الإدارة', 'error');
+          btn.disabled = false;
+          btn.innerHTML = 'تسجيل الدخول';
+          return;
+        }
+
+        // ═══ التحقق من إن الحساب مش متبلوك ═══
+        if (user.is_blocked) {
+          showAlert('🚫 حسابك متوقف، تواصل مع الإدارة', 'error');
+          btn.disabled = false;
+          btn.innerHTML = 'تسجيل الدخول';
+          return;
+        }
+
         showAlert(`أهلاً ${user.name}! تم تسجيل الدخول بنجاح 🎉`, 'success');
         localStorage.setItem('hawa_user', JSON.stringify(user));
         setTimeout(() => { window.location.href = 'hawa_booking.html'; }, 2000);
@@ -525,9 +551,10 @@
       address: document.getElementById('reg-address').value.trim(),
       username: document.getElementById('reg-username').value.trim(),
       password: document.getElementById('reg-password').value.trim(),
+      approval_status: 'pending',
     };
 
-    if (Object.values(data).some(v => !v)) {
+    if (Object.entries(data).some(([k, v]) => k !== 'approval_status' && !v)) {
       showAlert('من فضلك أكمل جميع الحقول', 'error');
       return;
     }
@@ -559,15 +586,12 @@
       });
 
       if (res.ok) {
-        const created = await res.json();
-        const newUser = created[0];
-        showAlert('تم إنشاء الحساب بنجاح! 🎉 جاري الدخول...', 'success');
-        localStorage.setItem('hawa_user', JSON.stringify(newUser));
-        setTimeout(() => { window.location.href = 'hawa_booking.html'; }, 1500);
+        // ✨ بدلاً من تسجيل الدخول التلقائى، نعرض شاشة "فى انتظار الموافقة"
+        showPendingApprovalScreen(data.name);
       } else {
         const err = await res.json();
         if (err.code === '23505') {
-          showAlert('اسم المستخدم أو كود العميل مسجل بالفعل', 'error');
+          showAlert('اسم المستخدم أو كود العميل أو رقم الهاتف مسجل بالفعل', 'error');
         } else {
           showAlert('حدث خطأ في التسجيل، حاول مرة أخرى', 'error');
         }
@@ -578,6 +602,36 @@
 
     btn.disabled = false;
     btn.innerHTML = 'إنشاء الحساب';
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // شاشة انتظار الموافقة بعد التسجيل
+  // ═══════════════════════════════════════════════════════════
+  function showPendingApprovalScreen(name) {
+    const root = document.querySelector('.container') || document.body;
+    root.innerHTML = `
+      <div style="max-width:480px;margin:50px auto;padding:40px 28px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid rgba(201,168,76,0.3);border-radius:20px;text-align:center;font-family:Cairo,sans-serif">
+        <div style="font-size:72px;margin-bottom:16px">⏳</div>
+        <h2 style="color:#C9A84C;font-size:24px;font-weight:800;margin:0 0 12px 0">حسابك تحت المراجعة</h2>
+        <p style="color:#D8D3CE;font-size:16px;line-height:1.9;margin:0 0 20px 0">
+          أهلاً <b style="color:#C9A84C">${escapeHtmlSimple(name)}</b>،<br/>
+          تم إستلام طلب تسجيلك بنجاح ✅
+        </p>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:16px;margin:20px 0;color:#7fb8e8;font-size:14px;line-height:1.9">
+          📋 الإدارة هتراجع بياناتك وتوافق على حسابك<br/>
+          🔐 لما تتم الموافقة، تقدر تدخل بنفس اسم المستخدم وكلمة المرور
+        </div>
+        <p style="color:#8A8580;font-size:13px;margin:16px 0 24px 0">
+          ⏰ المراجعة بتاخد عادةً من ساعات لـ يوم واحد كحد أقصى
+        </p>
+        <button onclick="window.location.reload()" style="background:rgba(201,168,76,0.1);border:2px solid rgba(201,168,76,0.4);color:#C9A84C;padding:12px 28px;border-radius:10px;font-family:Cairo;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s">
+          ← العودة للرئيسية
+        </button>
+      </div>`;
+  }
+
+  function escapeHtmlSimple(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
 
 const EGYPT = {
