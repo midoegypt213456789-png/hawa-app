@@ -1363,7 +1363,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="stat-grid" id="bk-stats"></div>
       <div class="tbl-wrap">
         <div class="tbl-filters" style="flex-wrap:wrap;gap:8px">
-          <input class="filter-inp" id="bk-date" type="date" onchange="loadBookings()" style="width:150px">
+          <input class="filter-inp" id="bk-date-from" type="date" onchange="loadBookings()" style="width:140px" title="من تاريخ">
+          <span style="color:var(--text-dim);font-size:14px;align-self:center;padding:0 4px">←</span>
+          <input class="filter-inp" id="bk-date-to" type="date" onchange="loadBookings()" style="width:140px" title="إلى تاريخ">
           <select class="filter-inp" id="bk-wh" onchange="loadBookings()" style="width:130px">
             <option value="">كل المخازن</option>
             <option value="قليوب">🏭 قليوب</option>
@@ -2503,7 +2505,9 @@ function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('adminName').textContent='👑 '+admin.name;
-  document.getElementById('bk-date').value=new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toISOString().split('T')[0];
+  document.getElementById('bk-date-from').value=todayStr;
+  document.getElementById('bk-date-to').value=todayStr;
   initAdminGovDropdown();
   initResizeHandle();
   // 🆕 Load the user's preferred default page (fallback to bookings)
@@ -2620,14 +2624,22 @@ let allBookingsData = [];
 let allClientsMap = {};
 
 async function loadBookings(){
-  const date=document.getElementById('bk-date').value;
+  const dateFrom=document.getElementById('bk-date-from').value;
+  const dateTo=document.getElementById('bk-date-to').value;
   const wh=document.getElementById('bk-wh').value;
   const vehicle=document.getElementById('bk-vehicle').value;
   const status=document.getElementById('bk-status').value;
   document.getElementById('bk-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
 
+  // Validate range
+  if(dateFrom && dateTo && dateFrom > dateTo){
+    document.getElementById('bk-table').innerHTML='<div class="empty-txt">⚠️ تاريخ البداية أحدث من تاريخ النهاية</div>';
+    return;
+  }
+
   let url=`${SB}/rest/v1/bookings?select=*&order=loading_date.desc,time_slot.asc`;
-  if(date)url+=`&loading_date=eq.${date}`;
+  if(dateFrom)url+=`&loading_date=gte.${dateFrom}`;
+  if(dateTo)url+=`&loading_date=lte.${dateTo}`;
   if(wh)url+=`&warehouse=eq.${encodeURIComponent(wh)}`;
   if(vehicle)url+=`&vehicle_type=eq.${encodeURIComponent(vehicle)}`;
   if(status)url+=`&status=eq.${encodeURIComponent(status)}`;
@@ -2636,9 +2648,15 @@ async function loadBookings(){
     const r=await fetch(url,{headers:{...HDR,'Range':'0-499'}});
     allBookingsData=await r.json();
 
-    // Stats لليوم المختار
-    const todayStr=date||new Date().toISOString().split('T')[0];
-    const allR=await fetch(`${SB}/rest/v1/bookings?select=status,count&loading_date=eq.${todayStr}`,{headers:HDR});
+    // Stats للفترة المختارة (أو اليوم لو مفيش فترة)
+    let statsUrl=`${SB}/rest/v1/bookings?select=status,count`;
+    if(dateFrom)statsUrl+=`&loading_date=gte.${dateFrom}`;
+    if(dateTo)statsUrl+=`&loading_date=lte.${dateTo}`;
+    if(!dateFrom && !dateTo){
+      const todayStr=new Date().toISOString().split('T')[0];
+      statsUrl+=`&loading_date=eq.${todayStr}`;
+    }
+    const allR=await fetch(statsUrl,{headers:HDR});
     const allD=await allR.json();
     const pending=allD.filter(b=>b.status==='قيد الانتظار').length;
     const done=allD.filter(b=>b.status==='تم التنفيذ').length;
