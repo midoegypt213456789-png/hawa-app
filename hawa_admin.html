@@ -2637,7 +2637,7 @@ async function loadBookings(){
     return;
   }
 
-  let url=`${SB}/rest/v1/bookings?select=*&order=loading_date.desc,time_slot.asc`;
+  let url=`${SB}/rest/v1/bookings?select=*&order=loading_date.asc,time_slot.asc`;
   if(dateFrom)url+=`&loading_date=gte.${dateFrom}`;
   if(dateTo)url+=`&loading_date=lte.${dateTo}`;
   if(wh)url+=`&warehouse=eq.${encodeURIComponent(wh)}`;
