@@ -135,6 +135,7 @@
       <div>
         <div class="logo">🚛 HAWA CO</div>
         <div class="emp-name" id="empNameDisplay"></div>
+        <div id="refreshIndicator" style="font-size:11px;color:var(--text-dim);margin-top:4px"></div>
       </div>
       <div class="header-right">
         <span class="role-badge" id="roleBadge"></span>
@@ -213,15 +214,17 @@ function enterMain(){
 
   const tabsEl=document.getElementById('whTabs');
   if(emp.role==='عام'){
-    tabsEl.className='wh-tabs two';
-    tabsEl.innerHTML='<button class="wh-btn active" id="wh-قليوب" onclick="selectWarehouse(\'قليوب\')">🏭 قليوب</button><button class="wh-btn" id="wh-السادات" onclick="selectWarehouse(\'السادات\')">🏗️ السادات</button>';
-    warehouse='قليوب';
+    // الموظف العام يشوف الاتنين معاً بدون tabs
+    tabsEl.style.display='none';
+    warehouse='ALL';
   }else{
+    tabsEl.style.display='';
     tabsEl.className='wh-tabs one';
     tabsEl.innerHTML='<button class="wh-btn active">'+(emp.role==='قليوب'?'🏭':'🏗️')+' '+emp.role+'</button>';
     warehouse=emp.role;
   }
   loadBookings();
+  startRefreshIndicator();
 }
 
 function doLogout(){
@@ -246,13 +249,19 @@ function selectWarehouse(wh){
 
 async function loadBookings(){
   const list=document.getElementById('bookingsList');
-  list.innerHTML='<div class="loading-state">⏳ جاري التحميل...</div>';
+  if(!allBookings.length) list.innerHTML='<div class="loading-state">⏳ جاري التحميل...</div>';
   document.getElementById('noshowAllBtn').style.display='none';
   try{
-    const r=await fetch(`${SB}/rest/v1/bookings?select=*&loading_date=eq.${todayStr}&warehouse=eq.${encodeURIComponent(warehouse)}&status=neq.ملغي&order=time_slot.asc,id.asc`,{headers:HDR});
+    let url=`${SB}/rest/v1/bookings?select=*&loading_date=eq.${todayStr}&status=neq.ملغي&order=time_slot.asc,id.asc`;
+    if(warehouse !== 'ALL'){
+      url += `&warehouse=eq.${encodeURIComponent(warehouse)}`;
+    }
+    const r=await fetch(url,{headers:HDR});
     allBookings=await r.json();
+    lastRefreshTime=Date.now();  // 📌 سجّل وقت آخر تحديث
     if(!allBookings.length){
-      list.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات اليوم في '+warehouse+'</p></div>';
+      const whLabel = warehouse === 'ALL' ? 'المخزنين' : warehouse;
+      list.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات اليوم في '+whLabel+'</p></div>';
       updateStats();return;
     }
     const ids=[...new Set(allBookings.map(b=>b.client_id).filter(Boolean))];
@@ -269,6 +278,7 @@ async function loadBookings(){
 
 function renderBookings(){
   const list=document.getElementById('bookingsList');
+  const isAllMode = warehouse === 'ALL';
   let html='';
   SLOTS.forEach(slot=>{
     const slotBks=allBookings.filter(b=>b.time_slot===slot);
@@ -278,6 +288,10 @@ function renderBookings(){
       const isDone=b.status==='تم التنفيذ',isNoshow=b.status==='no-show';
       const name=b._client?.name||'عميل #'+b.client_id;
       const code=b._client?.company_code||'-';
+      // فى ALL mode، اعرض badge للمخزن
+      const whBadge = isAllMode
+        ? `<span style="background:${b.warehouse==='قليوب'?'rgba(74,144,217,0.15)':'rgba(180,140,40,0.15)'};border:1px solid ${b.warehouse==='قليوب'?'rgba(74,144,217,0.5)':'rgba(180,140,40,0.5)'};color:${b.warehouse==='قليوب'?'#4A90D9':'#E0B040'};padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;margin-right:6px">${b.warehouse==='قليوب'?'🏭':'🏗️'} ${b.warehouse}</span>`
+        : '';
       html+=`<div class="bk-card ${isDone?'done':isNoshow?'noshow':''}" id="card-${b.id}">
         <button class="check-btn ${isDone?'checked':isNoshow?'noshowed':''}"
           onclick="${isDone||isNoshow?'':`confirmDone(${b.id},'${name.replace(/'/g,"\'")}')`}"
@@ -285,7 +299,7 @@ function renderBookings(){
           ${isDone?'✅':isNoshow?'❌':'○'}
         </button>
         <div class="bk-info">
-          <div class="bk-name">${b.seq_number ? `<span style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:#E0B040;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;margin-left:6px">#${b.seq_number}</span>` : ''}${name}</div>
+          <div class="bk-name">${b.seq_number ? `<span style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:#E0B040;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;margin-left:6px">#${b.seq_number}</span>` : ''}${whBadge}${name}</div>
           <div class="bk-meta">كود: <span>${code}</span></div>
           <div class="bk-sub">🚗 ${b.vehicle_type} — ${b.count} عربية</div>
         </div>
@@ -352,9 +366,29 @@ function showDialog(icon,title,msg,danger,onYes){
 }
 function hideDialog(){document.getElementById('overlay').classList.remove('show');}
 
+// 📌 متغيرات الـ auto-refresh + indicator
+let lastRefreshTime=Date.now();
+let refreshIndicatorTimer=null;
+
+function startRefreshIndicator(){
+  if(refreshIndicatorTimer)clearInterval(refreshIndicatorTimer);
+  const el=document.getElementById('refreshIndicator');
+  if(!el)return;
+  refreshIndicatorTimer=setInterval(()=>{
+    if(!emp){clearInterval(refreshIndicatorTimer);return;}
+    const sec=Math.floor((Date.now()-lastRefreshTime)/1000);
+    let txt;
+    if(sec<5)      txt='✨ تم التحديث';
+    else if(sec<60)  txt='🕐 آخر تحديث: '+sec+' ثانية';
+    else             txt='🕐 آخر تحديث: '+Math.floor(sec/60)+' دقيقة';
+    el.textContent=txt;
+  },1000);
+}
+
 const saved=sessionStorage.getItem('hawa_emp');
 if(saved){emp=JSON.parse(saved);enterMain();}
-setInterval(()=>{if(emp)loadBookings();},60000);
+// ⏰ Auto-refresh كل دقيقتين (120 ثانية)
+setInterval(()=>{if(emp)loadBookings();},120000);
 </script>
 </body>
 </html>
