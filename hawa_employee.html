@@ -145,7 +145,12 @@
       </div>
     </div>
     <div class="wh-tabs" id="whTabs"></div>
-    <div class="date-bar">📅 <span id="dateLabel"></span></div>
+    <div class="date-bar" style="display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px">
+      <span style="font-size:18px">📅</span>
+      <input type="date" id="datePicker" onchange="changeDate()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--gold);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark">
+      <span id="dateLabel" style="color:var(--gold);font-weight:700"></span>
+      <button onclick="resetToToday()" id="todayBtn" style="background:rgba(201,168,76,0.15);color:#E0B040;border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:4px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:none">🔄 اليوم</button>
+    </div>
     <div class="stats">
       <div class="stat-card"><div class="stat-num pending" id="statPending">-</div><div class="stat-lbl">منتظر</div></div>
       <div class="stat-card"><div class="stat-num done"    id="statDone">-</div><div class="stat-lbl">حضر ✅</div></div>
@@ -173,9 +178,39 @@ const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
 const SLOTS=['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00','12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
-const today=new Date();today.setHours(0,0,0,0);
-const todayStr=today.toISOString().split('T')[0];
-document.getElementById('dateLabel').textContent=today.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+// 📅 الـ date الـ selected (default = اليوم) + helpers
+let selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
+
+function getDateStr(d){ return d.toISOString().split('T')[0]; }
+function getTodayStr(){ const t=new Date(); t.setHours(0,0,0,0); return getDateStr(t); }
+
+function updateDateUI(){
+  const dateStr = getDateStr(selectedDate);
+  const todayStr = getTodayStr();
+  document.getElementById('datePicker').value = dateStr;
+  document.getElementById('dateLabel').textContent = selectedDate.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  // زر "اليوم" يظهر فقط لو الـ selected date مش اليوم
+  document.getElementById('todayBtn').style.display = (dateStr === todayStr) ? 'none' : 'inline-block';
+}
+
+function changeDate(){
+  const v = document.getElementById('datePicker').value;
+  if(!v) return;
+  selectedDate = new Date(v + 'T00:00:00');
+  selectedDate.setHours(0,0,0,0);
+  updateDateUI();
+  allBookings = [];  // امسح الـ cache عشان يظهر loading للـ تاريخ الجديد
+  if(emp) loadBookings();
+}
+
+function resetToToday(){
+  selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
+  updateDateUI();
+  allBookings = [];
+  if(emp) loadBookings();
+}
+
+updateDateUI();
 
 let emp=null,warehouse=null,allBookings=[];
 
@@ -259,7 +294,8 @@ async function loadBookings(){
   if(!allBookings.length) list.innerHTML='<div class="loading-state">⏳ جاري التحميل...</div>';
   document.getElementById('noshowAllBtn').style.display='none';
   try{
-    let url=`${SB}/rest/v1/bookings?select=*&loading_date=eq.${todayStr}&status=neq.ملغي&order=time_slot.asc,id.asc`;
+    const dateStr = getDateStr(selectedDate);
+    let url=`${SB}/rest/v1/bookings?select=*&loading_date=eq.${dateStr}&status=neq.ملغي&order=time_slot.asc,id.asc`;
     if(warehouse !== 'ALL'){
       url += `&warehouse=eq.${encodeURIComponent(warehouse)}`;
     }
@@ -268,7 +304,9 @@ async function loadBookings(){
     lastRefreshTime=Date.now();  // 📌 سجّل وقت آخر تحديث
     if(!allBookings.length){
       const whLabel = warehouse === 'ALL' ? 'المخزنين' : warehouse;
-      list.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات اليوم في '+whLabel+'</p></div>';
+      const isToday = getDateStr(selectedDate) === getTodayStr();
+      const dayLabel = isToday ? 'اليوم' : selectedDate.toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'long'});
+      list.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات '+dayLabel+' في '+whLabel+'</p></div>';
       updateStats();return;
     }
     const ids=[...new Set(allBookings.map(b=>b.client_id).filter(Boolean))];
