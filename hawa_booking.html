@@ -942,7 +942,7 @@ async function confirm_booking() {
     const dt = new Date(bk.dateStr + 'T12:00:00');
     const ws = new Date(dt); ws.setDate(dt.getDate() - dt.getDay());
     const we = new Date(ws); we.setDate(ws.getDate() + 6);
-    const wr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=gte.${ws.toISOString().split('T')[0]}&loading_date=lte.${we.toISOString().split('T')[0]}&client_id=eq.${user.id}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&status=neq.ملغي`, { headers: HDR });
+    const wr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=gte.${fmtDate(ws)}&loading_date=lte.${fmtDate(we)}&client_id=eq.${user.id}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&status=neq.ملغي`, { headers: HDR });
     const wd  = await wr.json();
     const weekTotal = wd.reduce((s, b) => (editMode && b.id === editMode.id) ? s : s + (b.count||0), 0);
     if (weekTotal + bk.count > 20) {
@@ -1167,7 +1167,7 @@ async function loadMyBookings() {
 
   try {
     const today    = new Date(); today.setHours(0,0,0,0);
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = fmtDate(today);
 
     const r = await fetch(
       `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gte.${todayStr}&status=eq.${encodeURIComponent('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`,

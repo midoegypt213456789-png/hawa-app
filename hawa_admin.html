@@ -2473,6 +2473,10 @@ const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
 
+// 📅 Helper: تنسيق التاريخ بـ local time (Cairo) — مش UTC
+//    عشان مصر UTC+2/+3، toISOString بترجع تاريخ غلط بعد منتصف الليل
+const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+
 let admin = null;
 let editEmpId = null;
 let currentSection = 'bookings';
@@ -2505,7 +2509,7 @@ function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('adminName').textContent='👑 '+admin.name;
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = fmtDate(new Date());
   document.getElementById('bk-date-from').value=todayStr;
   document.getElementById('bk-date-to').value=todayStr;
   initAdminGovDropdown();
@@ -2653,7 +2657,7 @@ async function loadBookings(){
     if(dateFrom)statsUrl+=`&loading_date=gte.${dateFrom}`;
     if(dateTo)statsUrl+=`&loading_date=lte.${dateTo}`;
     if(!dateFrom && !dateTo){
-      const todayStr=new Date().toISOString().split('T')[0];
+      const todayStr=fmtDate(new Date());
       statsUrl+=`&loading_date=eq.${todayStr}`;
     }
     const allR=await fetch(statsUrl,{headers:HDR});
@@ -3730,7 +3734,7 @@ async function openClientProfile(id){
 
 function renderClientProfile(c){
   const bks=currentProfileBookings;
-  const today=new Date().toISOString().split('T')[0];
+  const today=fmtDate(new Date());
   const pending=bks.filter(b=>b.status==='قيد الانتظار'&&b.loading_date>=today);
   const statusBadge={'قيد الانتظار':'<span class="badge pending">⏳ منتظر</span>','تم التنفيذ':'<span class="badge done">✅ حضر</span>','no-show':'<span class="badge noshow">❌ غائب</span>','ملغي':'<span class="badge cancelled">🚫 ملغي</span>'};
 
@@ -5610,7 +5614,7 @@ function renderCalendar(){
 
   for(let d=1;d<=daysInMonth;d++){
     const dt=new Date(year,month,d);
-    const ds=dt.toISOString().split('T')[0];
+    const ds=fmtDate(dt);
     const isPast=dt<today;
     const isToday=dt.getTime()===today.getTime();
 
@@ -5850,11 +5854,11 @@ async function loadBlocked(){
 
 // =================== REPORTS ===================
 async function loadReports(){
-  const today=new Date().toISOString().split('T')[0];
+  const today=fmtDate(new Date());
   const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay());
-  const ws=weekStart.toISOString().split('T')[0];
+  const ws=fmtDate(weekStart);
   const monthStart=new Date();monthStart.setDate(1);
-  const ms=monthStart.toISOString().split('T')[0];
+  const ms=fmtDate(monthStart);
 
   try{
     const [todayR,weekR,monthR,clientsR,blockedR]=await Promise.all([
