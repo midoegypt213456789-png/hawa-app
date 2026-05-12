@@ -181,8 +181,15 @@ const SLOTS=['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00','12:00
 // 📅 الـ date الـ selected (default = اليوم) + helpers
 let selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
 
-function getDateStr(d){ return d.toISOString().split('T')[0]; }
-function getTodayStr(){ const t=new Date(); t.setHours(0,0,0,0); return getDateStr(t); }
+// 📌 مهم: نستخدم local date methods (مش toISOString اللى بترجع UTC)
+//    عشان مصر UTC+2/+3 يختلف عن UTC، اللى كان يسبب فرق يوم
+function getDateStr(d){
+  const y  = d.getFullYear();
+  const m  = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dd}`;
+}
+function getTodayStr(){ return getDateStr(new Date()); }
 
 function updateDateUI(){
   const dateStr = getDateStr(selectedDate);
