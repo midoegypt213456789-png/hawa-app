@@ -1168,6 +1168,8 @@ async function loadMyBookings() {
 
       const dateLabel = new Date(b.loading_date + 'T12:00:00')
         .toLocaleDateString('ar-EG', { weekday:'short', day:'numeric', month:'long' });
+      const safeDate = (dateLabel || '').replace(/"/g, '&quot;');
+      const safeVehicle = (b.vehicle_type || '').replace(/"/g, '&quot;');
       return `
         <div class="bk-card">
           <div class="bk-header">
@@ -1180,11 +1182,27 @@ async function loadMyBookings() {
           <div class="bk-row"><span class="bk-lbl">الموعد</span><span class="bk-val gold">${b.time_slot}</span></div>
           <div class="bk-row"><span class="bk-lbl">العدد</span><span class="bk-val">${b.count} عربية</span></div>
           <div class="bk-actions">
-            <button class="bk-btn-edit"   onclick="startEditById(${b.id})">✏️ تعديل</button>
-            <button class="bk-btn-cancel" onclick="showCancelDlg(${b.id},'${dateLabel.replace(/'/g, '&#39;')}','${(b.vehicle_type||'').replace(/'/g, '&#39;')}')">❌ إلغاء</button>
+            <button class="bk-btn-edit"   data-action="edit"   data-id="${b.id}">✏️ تعديل</button>
+            <button class="bk-btn-cancel" data-action="cancel" data-id="${b.id}" data-date="${safeDate}" data-vehicle="${safeVehicle}">❌ إلغاء</button>
           </div>
         </div>`;
     }).join('');
+
+    // ربط الـ buttons بالـ event listeners (أكثر reliability من onclick attributes)
+    console.log('[loadMyBookings] cached', Object.keys(myBookingsCache).length, 'bookings');
+    container.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.id, 10);
+        console.log('[edit clicked] id=', id, 'cached?', !!myBookingsCache[id]);
+        startEditById(id);
+      });
+    });
+    container.querySelectorAll('button[data-action="cancel"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.id, 10);
+        showCancelDlg(id, btn.dataset.date || '', btn.dataset.vehicle || '');
+      });
+    });
 
   } catch(e) {
     console.error('loadMyBookings error:', e);
