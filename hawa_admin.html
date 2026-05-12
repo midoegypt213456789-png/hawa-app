@@ -1345,6 +1345,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
       <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
       <div class="nav-item" onclick="goTo('warehouses')"><span class="ni">📦</span> إيميلات المخازن</div>
+      <div class="nav-item" onclick="goTo('activity-log')"><span class="ni">📜</span> سجل الأنشطة</div>
       <div class="nav-item" onclick="goTo('settings')"><span class="ni">⚙️</span> إعدادات عامة</div>
     </div>
     <div class="sb-footer">
@@ -2100,6 +2101,44 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
 
+    <!-- ========== ACTIVITY LOG SECTION ========== -->
+    <div class="section" id="sec-activity-log">
+      <div class="page-header">
+        <div class="page-title">📜 <span>سجل الأنشطة</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="log-count-badge" style="background:rgba(201,168,76,0.15);color:#E0B040;border:1px solid rgba(201,168,76,0.4);padding:6px 12px;border-radius:8px;font-size:12px;font-weight:700">0 نشاط</span>
+          <button class="btn-add" onclick="exportActivityLog()" style="background:#1A2B1A;color:#4CAF7D;border-color:#4CAF7D">📊 تصدير Excel</button>
+        </div>
+      </div>
+
+      <!-- Tabs: تجار / موظفين -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <button class="tab-pill active" id="alog-tab-client" onclick="alogSetTab('client')" style="padding:12px;background:rgba(74,144,217,0.15);border:1px solid rgba(74,144,217,0.4);color:#4A90D9;border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">👥 التجار (العملاء)</button>
+        <button class="tab-pill"        id="alog-tab-employee" onclick="alogSetTab('employee')" style="padding:12px;background:var(--dark3);border:1px solid var(--border);color:var(--text-dim);border-radius:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer">👷 الموظفين</button>
+      </div>
+
+      <!-- View Mode: مختصر / تفصيلى -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;justify-content:center">
+        <button id="alog-view-summary" onclick="alogSetView('summary')" class="active" style="padding:8px 16px;background:rgba(201,168,76,0.15);border:1px solid var(--gold);color:var(--gold);border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">📊 مختصر</button>
+        <button id="alog-view-detail"  onclick="alogSetView('detail')"  style="padding:8px 16px;background:var(--dark3);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">📋 تفصيلى</button>
+      </div>
+
+      <!-- Filters -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <input type="date" id="alog-from" onchange="loadActivityLog()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--gold);border-radius:8px;padding:8px;font-family:inherit;font-size:13px;color-scheme:dark" title="من تاريخ">
+        <input type="date" id="alog-to" onchange="loadActivityLog()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--gold);border-radius:8px;padding:8px;font-family:inherit;font-size:13px;color-scheme:dark" title="إلى تاريخ">
+        <input type="text" id="alog-search-name" placeholder="🔍 ابحث باسم المستخدم..." oninput="alogDebounce()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--border);border-radius:8px;padding:8px;font-family:inherit;font-size:13px">
+        <select id="alog-action-filter" onchange="loadActivityLog()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--border);border-radius:8px;padding:8px;font-family:inherit;font-size:13px">
+          <option value="">كل الأنشطة</option>
+        </select>
+      </div>
+
+      <!-- Result area -->
+      <div id="alog-content" style="background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:16px;min-height:200px">
+        <div class="loading-txt">⏳ جاري التحميل...</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -2621,6 +2660,20 @@ function goTo(sec){
   else if(sec==='warehouses')loadWarehouses();
   else if(sec==='pending-clients')loadPendingClients();
   else if(sec==='settings')loadSettings();
+  else if(sec==='activity-log'){
+    // Initialize on first visit
+    const fromInp = document.getElementById('alog-from');
+    const toInp = document.getElementById('alog-to');
+    if(!fromInp.value){
+      // default: last 7 days
+      const today = new Date();
+      const weekAgo = new Date(); weekAgo.setDate(today.getDate()-7);
+      fromInp.value = fmtDate(weekAgo);
+      toInp.value   = fmtDate(today);
+    }
+    alogPopulateActionFilter();
+    loadActivityLog();
+  }
 }
 
 // =================== BOOKINGS ===================
@@ -6705,6 +6758,215 @@ async function updateSeqSummary(){
       🚀 <b>يبدأ من:</b> ${start}
     `;
   }
+}
+
+// =================== ACTIVITY LOG ===================
+let alogCurrentTab = 'client';     // 'client' | 'employee'
+let alogCurrentView = 'summary';   // 'summary' | 'detail'
+let alogData = [];
+let alogDebounceTimer = null;
+
+const ALOG_ACTION_LABELS = {
+  // Client
+  'cl_open_app':       '🚪 فتح التطبيق',
+  'cl_logout':         '🚪 خرج',
+  'cl_create_booking': '➕ حجز جديد',
+  'cl_edit_booking':   '✏️ تعديل حجز',
+  'cl_cancel_booking': '🚫 إلغاء حجز',
+  'cl_view_bookings':  '📋 فتح حجوزاتى',
+  // Employee
+  'emp_login':           '🚪 سجل دخول',
+  'emp_logout':          '🚪 خرج',
+  'emp_view_warehouse':  '🏭 فتح مخزن',
+  'emp_change_date':     '📅 غير التاريخ',
+  'emp_checkin':         '✅ سجل حضور',
+  'emp_noshow':          '❌ سجل غياب',
+  'emp_noshow_bulk':     '❌ سجل غائبين تلقائياً',
+  'emp_view_report':     '📊 فتح التقرير',
+  'login_failed':        '⚠️ محاولة دخول فاشلة',
+};
+
+function alogSetTab(tab){
+  alogCurrentTab = tab;
+  // Update UI
+  document.getElementById('alog-tab-client').style.background = tab==='client' ? 'rgba(74,144,217,0.15)' : 'var(--dark3)';
+  document.getElementById('alog-tab-client').style.borderColor = tab==='client' ? 'rgba(74,144,217,0.4)' : 'var(--border)';
+  document.getElementById('alog-tab-client').style.color = tab==='client' ? '#4A90D9' : 'var(--text-dim)';
+  document.getElementById('alog-tab-employee').style.background = tab==='employee' ? 'rgba(74,144,217,0.15)' : 'var(--dark3)';
+  document.getElementById('alog-tab-employee').style.borderColor = tab==='employee' ? 'rgba(74,144,217,0.4)' : 'var(--border)';
+  document.getElementById('alog-tab-employee').style.color = tab==='employee' ? '#4A90D9' : 'var(--text-dim)';
+  alogPopulateActionFilter();
+  loadActivityLog();
+}
+
+function alogSetView(view){
+  alogCurrentView = view;
+  // Update UI
+  const summBtn = document.getElementById('alog-view-summary');
+  const detBtn  = document.getElementById('alog-view-detail');
+  if(view==='summary'){
+    summBtn.style.background='rgba(201,168,76,0.15)';summBtn.style.borderColor='var(--gold)';summBtn.style.color='var(--gold)';
+    detBtn.style.background='var(--dark3)';detBtn.style.borderColor='var(--border)';detBtn.style.color='var(--text-dim)';
+  } else {
+    detBtn.style.background='rgba(201,168,76,0.15)';detBtn.style.borderColor='var(--gold)';detBtn.style.color='var(--gold)';
+    summBtn.style.background='var(--dark3)';summBtn.style.borderColor='var(--border)';summBtn.style.color='var(--text-dim)';
+  }
+  renderActivityLog();
+}
+
+function alogPopulateActionFilter(){
+  const sel = document.getElementById('alog-action-filter');
+  sel.innerHTML = '<option value="">كل الأنشطة</option>';
+  const prefix = alogCurrentTab === 'client' ? 'cl_' : 'emp_';
+  Object.entries(ALOG_ACTION_LABELS).forEach(([k,v])=>{
+    if(k.startsWith(prefix)) sel.innerHTML += `<option value="${k}">${v}</option>`;
+  });
+}
+
+function alogDebounce(){
+  clearTimeout(alogDebounceTimer);
+  alogDebounceTimer = setTimeout(loadActivityLog, 400);
+}
+
+async function loadActivityLog(){
+  const content = document.getElementById('alog-content');
+  content.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const from = document.getElementById('alog-from').value;
+    const to   = document.getElementById('alog-to').value;
+    const nameSearch = document.getElementById('alog-search-name').value.trim();
+    const actionFilter = document.getElementById('alog-action-filter').value;
+
+    let url = `${SB}/rest/v1/activity_log?select=*&user_type=eq.${alogCurrentTab}&order=created_at.desc`;
+    if(from) url += `&created_at=gte.${from}T00:00:00`;
+    if(to)   url += `&created_at=lte.${to}T23:59:59`;
+    if(nameSearch) url += `&user_name=ilike.*${encodeURIComponent(nameSearch)}*`;
+    if(actionFilter) url += `&action=eq.${actionFilter}`;
+
+    const r = await fetch(url, {headers:{...HDR,'Range':'0-999'}});
+    alogData = await r.json();
+    document.getElementById('log-count-badge').textContent = alogData.length + ' نشاط';
+    renderActivityLog();
+  }catch(e){
+    content.innerHTML = '<div class="empty-txt">❌ خطأ فى التحميل</div>';
+  }
+}
+
+function renderActivityLog(){
+  const content = document.getElementById('alog-content');
+  if(!alogData.length){
+    content.innerHTML = '<div class="empty-txt">📭 مفيش أنشطة فى الفترة دى</div>';
+    return;
+  }
+  if(alogCurrentView === 'summary') renderActivitySummary();
+  else renderActivityDetail();
+}
+
+function renderActivitySummary(){
+  // Group by user → count by action
+  const byUser = {};
+  alogData.forEach(a=>{
+    const key = a.user_id || ('anon-'+a.user_name);
+    if(!byUser[key]) byUser[key] = {name:a.user_name||'غير معروف', extra:a.user_extra||'', actions:{}, firstSeen:a.created_at, lastSeen:a.created_at, count:0};
+    byUser[key].actions[a.action] = (byUser[key].actions[a.action] || 0) + 1;
+    byUser[key].count++;
+    if(a.created_at < byUser[key].firstSeen) byUser[key].firstSeen = a.created_at;
+    if(a.created_at > byUser[key].lastSeen)  byUser[key].lastSeen = a.created_at;
+  });
+
+  const users = Object.values(byUser).sort((a,b)=>b.count-a.count);
+  const isClient = alogCurrentTab === 'client';
+
+  let html = `<table class="data-tbl"><thead><tr>
+    <th>${isClient?'العميل':'الموظف'}</th>
+    <th>${isClient?'كود':'الدور'}</th>
+    <th>إجمالى الأنشطة</th>
+    <th>التفاصيل</th>
+    <th>آخر نشاط</th>
+  </tr></thead><tbody>`;
+
+  users.forEach(u=>{
+    const actionsStr = Object.entries(u.actions)
+      .map(([a,c])=>`<span style="background:rgba(201,168,76,0.1);color:#E0B040;padding:2px 8px;border-radius:6px;font-size:11px;margin:2px;display:inline-block">${ALOG_ACTION_LABELS[a]||a}: ${c}</span>`)
+      .join(' ');
+    const lastSeen = new Date(u.lastSeen).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    html += `<tr>
+      <td><strong>${u.name}</strong></td>
+      <td>${u.extra||'-'}</td>
+      <td><span style="background:rgba(74,144,217,0.15);color:#4A90D9;padding:4px 10px;border-radius:6px;font-weight:700">${u.count}</span></td>
+      <td>${actionsStr}</td>
+      <td style="font-size:12px;color:var(--text-dim)">${lastSeen}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('alog-content').innerHTML = html;
+}
+
+function renderActivityDetail(){
+  const isClient = alogCurrentTab === 'client';
+  let html = `<table class="data-tbl"><thead><tr>
+    <th>الوقت</th>
+    <th>${isClient?'العميل':'الموظف'}</th>
+    <th>${isClient?'كود':'الدور'}</th>
+    <th>النشاط</th>
+    <th>التفاصيل</th>
+  </tr></thead><tbody>`;
+
+  alogData.forEach(a=>{
+    const t = new Date(a.created_at);
+    const timeStr = t.toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    let detailsStr = '-';
+    if(a.details){
+      const d = typeof a.details === 'string' ? JSON.parse(a.details) : a.details;
+      const parts = [];
+      if(d.seq_number) parts.push('#'+d.seq_number);
+      if(d.warehouse) parts.push('🏭 '+d.warehouse);
+      if(d.vehicle_type) parts.push('🚗 '+d.vehicle_type);
+      if(d.count) parts.push(d.count+' عربية');
+      if(d.loading_date) parts.push('📅 '+d.loading_date);
+      if(d.time_slot) parts.push('⏰ '+d.time_slot);
+      if(d.client_name) parts.push('👤 '+d.client_name);
+      if(d.date && !d.loading_date) parts.push('📅 '+d.date);
+      if(typeof d.count === 'number' && d.role === undefined && !d.vehicle_type) {/* skip dup */}
+      detailsStr = parts.length ? parts.join(' | ') : '-';
+    }
+    html += `<tr>
+      <td style="font-size:11px;color:var(--text-dim);white-space:nowrap">${timeStr}</td>
+      <td><strong>${a.user_name||'-'}</strong></td>
+      <td style="font-size:12px">${a.user_extra||'-'}</td>
+      <td>${a.action_label||a.action}</td>
+      <td style="font-size:12px;color:#D8D3CE">${detailsStr}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('alog-content').innerHTML = html;
+}
+
+async function exportActivityLog(){
+  if(!alogData.length){ alert('مفيش بيانات للتصدير'); return; }
+  // Build worksheet
+  const rows = alogData.map(a=>{
+    const t = new Date(a.created_at).toLocaleString('ar-EG',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const d = a.details ? (typeof a.details === 'string' ? JSON.parse(a.details) : a.details) : {};
+    return {
+      'الوقت': t,
+      'المستخدم': a.user_name || '-',
+      'تفاصيل المستخدم': a.user_extra || '-',
+      'النشاط': a.action_label || a.action,
+      'رقم الحجز': d.seq_number || d.booking_id || '-',
+      'المخزن': d.warehouse || '-',
+      'نوع العربية': d.vehicle_type || '-',
+      'العدد': d.count || '-',
+      'تاريخ التحميل': d.loading_date || d.date || '-',
+      'الموعد': d.time_slot || '-',
+      'العميل': d.client_name || '-',
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, alogCurrentTab === 'client' ? 'التجار' : 'الموظفين');
+  const fname = `سجل_الأنشطة_${alogCurrentTab==='client'?'تجار':'موظفين'}_${fmtDate(new Date())}.xlsx`;
+  XLSX.writeFile(wb, fname);
 }
 
 // =================== AUTO LOGIN ===================

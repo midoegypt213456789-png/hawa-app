@@ -438,7 +438,29 @@ const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 if (!user || !user.id) { window.location.href = 'hawa_login.html'; }
 
+// 📜 Activity Logging — تسجل كل حركة العميل فى DB
+async function logActivity(action, label, details={}){
+  if(!user || !user.id) return;
+  try{
+    fetch(`${SB}/rest/v1/activity_log`,{
+      method:'POST',
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        user_type:'client',
+        user_id:user.id,
+        user_name:user.name,
+        user_extra:user.company_code,
+        action, action_label:label, details
+      })
+    });
+  }catch(e){/* silent */}
+}
+
+// log أول دخول للصفحة (يعد كـ login event)
+logActivity('cl_open_app','🚪 فتح التطبيق');
+
 function doLogout() {
+  logActivity('cl_logout','🚪 خرج من التطبيق');
   localStorage.removeItem('hawa_user');
   window.location.href = 'hawa_login.html';
 }
@@ -560,7 +582,10 @@ function switchTab(tab) {
     document.getElementById('view' + (t==='new'?'Form':'My')).classList.toggle('active', t === tab);
   });
   hideAlert();
-  if (tab === 'my') loadMyBookings();
+  if (tab === 'my') {
+    logActivity('cl_view_bookings','📋 فتح صفحة حجوزاتى');
+    loadMyBookings();
+  }
 }
 
 // ===================== FORM NAV =====================
@@ -979,6 +1004,13 @@ async function confirm_booking() {
         // دلوقتى ممكن نـ reset بأمان — كل الـ values محفوظة فى snap
         exitEditMode();
 
+        // 📜 سجل التعديل
+        logActivity('cl_edit_booking','✏️ عدل حجز #'+displayId,{
+          booking_id:snap.id, seq_number:snap.seq_number,
+          warehouse:snap.warehouse, vehicle_type:snap.vehicle_type,
+          count:snap.count, loading_date:snap.loading_date, time_slot:snap.time_slot
+        });
+
         sendTelegramConfirm({
           id:           snap.id,
           seq_number:   snap.seq_number,
@@ -1019,6 +1051,12 @@ async function confirm_booking() {
           headers: { ...HDR, 'Prefer':'return=minimal' },
           body: JSON.stringify({ is_active: true })
         }).catch(()=>{});
+        // 📜 سجل الحجز الجديد
+        logActivity('cl_create_booking','➕ حجز جديد #'+displayId,{
+          booking_id:booking.id, seq_number:booking.seq_number,
+          warehouse:booking.warehouse, vehicle_type:booking.vehicle_type,
+          count:booking.count, loading_date:booking.loading_date, time_slot:booking.time_slot
+        });
         // بعت رسالة تأكيد تليجرام عبر n8n
         sendTelegramConfirm(booking);
         showSuccessScreen(
@@ -1278,12 +1316,20 @@ function hideCancelDlg() {
 
 async function doCancelBooking(id) {
   try {
+    // اجلب الـ booking details قبل الإلغاء عشان نـ log
+    const cached = myBookingsCache && myBookingsCache[id];
     const res = await fetch(`${SB}/rest/v1/bookings?id=eq.${id}`, {
       method: 'PATCH',
       headers: { ...HDR, 'Prefer': 'return=minimal' },
       body: JSON.stringify({ status: 'ملغي' })
     });
     if (res.ok) {
+      // 📜 سجل الإلغاء
+      logActivity('cl_cancel_booking','🚫 ألغى حجز #'+(cached?.seq_number || id),{
+        booking_id:id, seq_number:cached?.seq_number,
+        warehouse:cached?.warehouse, vehicle_type:cached?.vehicle_type,
+        loading_date:cached?.loading_date, time_slot:cached?.time_slot
+      });
       // إشعار العميل على التليجرام (الحجز اتلغى من الموبايل)
       notifyClientCancellation([id]);
       showSuccess(`✅ تم إلغاء الحجز #${id} بنجاح`);

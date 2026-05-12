@@ -206,7 +206,8 @@ function changeDate(){
   selectedDate = new Date(v + 'T00:00:00');
   selectedDate.setHours(0,0,0,0);
   updateDateUI();
-  allBookings = [];  // امسح الـ cache عشان يظهر loading للـ تاريخ الجديد
+  logActivity('emp_change_date','📅 غير تاريخ العرض إلى '+v,{date:v});
+  allBookings = [];
   if(emp) loadBookings();
 }
 
@@ -221,6 +222,25 @@ updateDateUI();
 
 let emp=null,warehouse=null,allBookings=[];
 
+// 📜 Activity Logging — تسجل كل حركة الموظف فى DB
+//    fire-and-forget: لو فشل، الـ UI ميتعطلش
+async function logActivity(action, label, details={}){
+  if(!emp) return;
+  try{
+    fetch(`${SB}/rest/v1/activity_log`,{
+      method:'POST',
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        user_type:'employee',
+        user_id:emp.id,
+        user_name:emp.name,
+        user_extra:emp.role,
+        action, action_label:label, details
+      })
+    });
+  }catch(e){/* silent */}
+}
+
 async function doLogin(){
   const u=document.getElementById('empUser').value.trim();
   const p=document.getElementById('empPass').value.trim();
@@ -233,8 +253,15 @@ async function doLogin(){
     if(data&&data.length>0){
       emp=data[0];
       sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
+      logActivity('emp_login','🚪 سجل دخول',{role:emp.role});
       enterMain();
-    }else{showLoginErr('اسم المستخدم أو كلمة المرور غلط');}
+    }else{
+      // log failed login attempt
+      fetch(`${SB}/rest/v1/activity_log`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({
+        user_type:'employee',user_id:null,user_name:u,action:'login_failed',action_label:'⚠️ محاولة دخول فاشلة',details:{username:u}
+      })}).catch(()=>{});
+      showLoginErr('اسم المستخدم أو كلمة المرور غلط');
+    }
   }catch(e){showLoginErr('خطأ في الاتصال');}
   btn.disabled=false;btn.innerHTML='دخول';
 }
@@ -245,7 +272,7 @@ function showLoginErr(msg){
 }
 
 function goReport(){
-  // الـ sessionStorage اتحفظ وقت اللوجين، بس نروح للتقرير
+  logActivity('emp_view_report','📊 فتح صفحة التقرير');
   window.location.href = 'hawa_report.html';
 }
 
@@ -278,6 +305,7 @@ function enterMain(){
 
 function doLogout(){
   showDialog('🚪','تسجيل الخروج','هتخرج من الحساب؟',false,()=>{
+    logActivity('emp_logout','🚪 خرج من النظام');
     sessionStorage.removeItem('hawa_emp');
     emp=null;warehouse=null;allBookings=[];
     document.getElementById('loginView').classList.remove('hide');
@@ -293,6 +321,8 @@ function selectWarehouse(wh){
   document.querySelectorAll('.wh-btn').forEach(b=>b.classList.remove('active'));
   const btn=document.getElementById('wh-'+wh);
   if(btn)btn.classList.add('active');
+  const whLabel = wh === 'ALL' ? 'كل المخازن' : wh;
+  logActivity('emp_view_warehouse','🏭 فتح '+whLabel,{warehouse:wh});
   loadBookings();
 }
 
@@ -382,6 +412,15 @@ async function markStatus(id,status){
       const b=allBookings.find(x=>x.id===id);
       if(b){b.status=status;}
       if(status==='no-show'&&b?.client_id)await incrementNoshow(b.client_id);
+      // 📜 سجّل الحركة
+      if(b){
+        const clientName = b._client?.name || 'عميل #'+b.client_id;
+        if(status==='تم التنفيذ'){
+          logActivity('emp_checkin','✅ سجل حضور: '+clientName,{booking_id:id,seq_number:b.seq_number,client_name:clientName,warehouse:b.warehouse,time_slot:b.time_slot});
+        }else if(status==='no-show'){
+          logActivity('emp_noshow','❌ سجل غياب: '+clientName,{booking_id:id,seq_number:b.seq_number,client_name:clientName,warehouse:b.warehouse,time_slot:b.time_slot});
+        }
+      }
       renderBookings();updateStats();
       document.getElementById('noshowAllBtn').style.display=allBookings.some(b=>b.status==='قيد الانتظار')?'block':'none';
     }
@@ -403,6 +442,7 @@ async function incrementNoshow(clientId){
 function showNoshowAllDlg(){
   const pending=allBookings.filter(b=>b.status==='قيد الانتظار');
   showDialog('❌','تسجيل الغائبين',`هتسجل ${pending.length} عميل كغائبين؟\nمش هتقدر ترجع!`,true,async()=>{
+    logActivity('emp_noshow_bulk','❌ سجل غائبين تلقائياً ('+pending.length+' عميل)',{count:pending.length,date:getDateStr(selectedDate),warehouse});
     for(const b of pending)await markStatus(b.id,'no-show');
   });
 }
