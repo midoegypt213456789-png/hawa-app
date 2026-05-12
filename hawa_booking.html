@@ -966,8 +966,9 @@ async function confirm_booking() {
         const eid = editMode.id;
         const eseq = editMode.seq_number;
         const displayId = eseq || eid;
-        exitEditMode();
-        // بعت إشعار تعديل تليجرام
+
+        // ⚠️ ابعت الـ webhook + اعرض النجاح قبل الـ exitEditMode
+        //    (exitEditMode بيـ reset كل bk.* فلازم نستخدمهم الأول)
         sendTelegramConfirm({ id: eid, seq_number: eseq, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
           count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, is_edit: true });
         showSuccessScreen(
@@ -975,6 +976,9 @@ async function confirm_booking() {
           `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
           'edit'
         );
+
+        // دلوقتى ممكن نـ reset الـ state بأمان
+        exitEditMode();
       } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
 
     } else {
