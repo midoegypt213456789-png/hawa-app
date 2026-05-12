@@ -1103,7 +1103,9 @@ function startEdit(b) {
   bk.dateStr   = b.loading_date;
   bk.slot      = b.time_slot;
   bk.count     = b.count;
-  bk.cap       = CAP[b.vehicle_type] || 6;
+  // جيب الـ capacity من allVehicleTypes (اللى محمّلة من DB)
+  const veh = (allVehicleTypes || []).find(v => v.name === b.vehicle_type);
+  bk.cap       = veh ? (veh.capacity_per_hour || 5) : 6;
   bk.remaining = 10;
   bk.permit    = b.permit_number || null;
 
