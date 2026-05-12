@@ -963,22 +963,37 @@ async function confirm_booking() {
         })
       });
       if (res.ok) {
-        const eid = editMode.id;
-        const eseq = editMode.seq_number;
-        const displayId = eseq || eid;
+        // 📸 Snapshot: التقط القيم قبل أى reset عشان مهما اتغير الترتيب الكود يفضل شغّال
+        const snap = {
+          id:            editMode.id,
+          seq_number:    editMode.seq_number,
+          warehouse:     bk.warehouse,
+          vehicle_type:  bk.vehicle,
+          count:         bk.count,
+          loading_date:  bk.dateStr,
+          time_slot:     bk.slot,
+          permit_number: bk.permit
+        };
+        const displayId = snap.seq_number || snap.id;
 
-        // ⚠️ ابعت الـ webhook + اعرض النجاح قبل الـ exitEditMode
-        //    (exitEditMode بيـ reset كل bk.* فلازم نستخدمهم الأول)
-        sendTelegramConfirm({ id: eid, seq_number: eseq, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
-          count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, is_edit: true });
+        // دلوقتى ممكن نـ reset بأمان — كل الـ values محفوظة فى snap
+        exitEditMode();
+
+        sendTelegramConfirm({
+          id:           snap.id,
+          seq_number:   snap.seq_number,
+          warehouse:    snap.warehouse,
+          vehicle_type: snap.vehicle_type,
+          count:        snap.count,
+          loading_date: snap.loading_date,
+          time_slot:    snap.time_slot,
+          is_edit:      true
+        });
         showSuccessScreen(
           `تم تعديل الحجز #${displayId}`,
-          `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
+          `${snap.warehouse} | ${snap.vehicle_type} | ${snap.count} عربية<br>${snap.time_slot}`,
           'edit'
         );
-
-        // دلوقتى ممكن نـ reset الـ state بأمان
-        exitEditMode();
       } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
 
     } else {
