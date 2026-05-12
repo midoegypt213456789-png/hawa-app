@@ -45,6 +45,7 @@
   .role-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(74,144,217,0.15);color:var(--blue);}
   .logout-btn{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;font-family:'Cairo',sans-serif;}
   .wh-tabs{display:grid;gap:8px;margin-bottom:14px;}
+  .wh-tabs.three{grid-template-columns:1fr 1fr 1fr;}
   .wh-tabs.two{grid-template-columns:1fr 1fr;}
   .wh-tabs.one{grid-template-columns:1fr;}
   .wh-btn{padding:12px;border-radius:14px;border:2px solid var(--border);background:var(--dark2);color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;text-align:center;transition:all 0.25s;}
@@ -214,10 +215,16 @@ function enterMain(){
 
   const tabsEl=document.getElementById('whTabs');
   if(emp.role==='عام'){
-    // الموظف العام يشوف الاتنين معاً بدون tabs
-    tabsEl.style.display='none';
+    // الموظف العام: 3 tabs (الكل، قليوب، السادات) — يقدر يـ filter لو حب
+    tabsEl.style.display='';
+    tabsEl.className='wh-tabs three';
+    tabsEl.innerHTML=
+      '<button class="wh-btn active" id="wh-ALL"     onclick="selectWarehouse(\'ALL\')">🌐 الكل</button>'+
+      '<button class="wh-btn"        id="wh-قليوب"  onclick="selectWarehouse(\'قليوب\')">🏭 قليوب</button>'+
+      '<button class="wh-btn"        id="wh-السادات" onclick="selectWarehouse(\'السادات\')">🏗️ السادات</button>';
     warehouse='ALL';
   }else{
+    // موظف مخزن معين: tab واحد لمخزنه فقط (مايقدرش يشوف الباقى)
     tabsEl.style.display='';
     tabsEl.className='wh-tabs one';
     tabsEl.innerHTML='<button class="wh-btn active">'+(emp.role==='قليوب'?'🏭':'🏗️')+' '+emp.role+'</button>';
