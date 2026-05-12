@@ -1137,6 +1137,9 @@ function exitEditMode() {
 }
 
 // ===================== MY BOOKINGS =====================
+// Cache للحجوزات الـ pending (مفتاحها id)
+const myBookingsCache = {};
+
 async function loadMyBookings() {
   const container = document.getElementById('myList');
   container.innerHTML = `<div class="loading-state">⏳ جاري التحميل...</div>`;
@@ -1146,7 +1149,7 @@ async function loadMyBookings() {
     const todayStr = today.toISOString().split('T')[0];
 
     const r = await fetch(
-      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gt.${todayStr}&status=eq.قيد الانتظار&order=loading_date.asc,time_slot.asc&select=*`,
+      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gte.${todayStr}&status=eq.${encodeURIComponent('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`,
       { headers: HDR }
     );
     const data = await r.json();
@@ -1156,10 +1159,15 @@ async function loadMyBookings() {
       return;
     }
 
+    // امسح الـ cache القديم وحدّثه
+    Object.keys(myBookingsCache).forEach(k => delete myBookingsCache[k]);
+
     container.innerHTML = data.map(b => {
+      // خزّن الحجز فى الـ cache بدل ما نـ embed الـ JSON فى الـ HTML
+      myBookingsCache[b.id] = b;
+
       const dateLabel = new Date(b.loading_date + 'T12:00:00')
         .toLocaleDateString('ar-EG', { weekday:'short', day:'numeric', month:'long' });
-      const bStr = encodeURIComponent(JSON.stringify(b));
       return `
         <div class="bk-card">
           <div class="bk-header">
@@ -1172,17 +1180,29 @@ async function loadMyBookings() {
           <div class="bk-row"><span class="bk-lbl">الموعد</span><span class="bk-val gold">${b.time_slot}</span></div>
           <div class="bk-row"><span class="bk-lbl">العدد</span><span class="bk-val">${b.count} عربية</span></div>
           <div class="bk-actions">
-            <button class="bk-btn-edit"   onclick="startEdit(decodeBooking('${bStr}'))">✏️ تعديل</button>
-            <button class="bk-btn-cancel" onclick="showCancelDlg(${b.id},'${dateLabel}','${b.vehicle_type}')">❌ إلغاء</button>
+            <button class="bk-btn-edit"   onclick="startEditById(${b.id})">✏️ تعديل</button>
+            <button class="bk-btn-cancel" onclick="showCancelDlg(${b.id},'${dateLabel.replace(/'/g, '&#39;')}','${(b.vehicle_type||'').replace(/'/g, '&#39;')}')">❌ إلغاء</button>
           </div>
         </div>`;
     }).join('');
 
   } catch(e) {
+    console.error('loadMyBookings error:', e);
     container.innerHTML = `<div class="loading-state">❌ خطأ في التحميل</div>`;
   }
 }
 
+// helper: يجيب الحجز من الـ cache ويـ startEdit
+function startEditById(id) {
+  const b = myBookingsCache[id];
+  if (!b) {
+    showErr('الحجز مش لاقيه — افتح الصفحة من جديد');
+    return;
+  }
+  startEdit(b);
+}
+
+// لسه محتفظ بيها للـ backward compatibility (لو فى أى مكان تانى بيناديها)
 function decodeBooking(str) {
   return JSON.parse(decodeURIComponent(str));
 }
