@@ -745,6 +745,100 @@ function onPermitInput() {
   document.getElementById('permitMsg').style.color = '';
 }
 
+// 🚨 تسجيل محاولة تكرار رقم إذن لعميل تانى — fire-and-forget
+async function reportDuplicatePermitAttempt(permit, conflictBooking) {
+  try {
+    // 1. هات بيانات العميل الأصلى (صاحب رقم الإذن الأصلى)
+    let originalClient = null;
+    try {
+      const r = await fetch(
+        `${SB}/rest/v1/clients?id=eq.${conflictBooking.client_id}&select=id,name,phone,company_code,governorate,city,district,address,client_type,telegram_id,created_at`,
+        { headers: HDR }
+      );
+      if (r.ok) {
+        const d = await r.json();
+        originalClient = d[0] || null;
+      }
+    } catch(e){ /* silent */ }
+
+    // 2. بيانات العميل المحاول — من الـ local user object
+    const attemptingClientData = {
+      id: user.id,
+      name: user.name || null,
+      phone: user.phone || null,
+      company_code: user.company_code || null,
+      governorate: user.governorate || null,
+      city: user.city || null,
+      district: user.district || null,
+      address: user.address || null,
+      client_type: user.client_type || null,
+      telegram_id: user.telegram_id || null
+    };
+
+    // 3. بيانات المحاولة (الحجز اللى كان بيتعمل) — partial لأن المستخدم اتمنع فى step 1
+    const attemptingBookingData = {
+      permit_number: permit,
+      warehouse: bk.warehouse || null,
+      attempted_at: new Date().toISOString(),
+      edit_mode_booking_id: editMode?.id || null,
+      stage: 'permit_validation_step_2',
+      blocked_by: 'cross_client_permit_duplicate'
+    };
+
+    // 4. بيانات العميل الأصلى — لو الـ fetch فشل، نحط placeholder
+    const originalClientData = originalClient || {
+      id: conflictBooking.client_id,
+      _fetch_failed: true,
+      _note: 'تعذّر جلب بيانات العميل الأصلى من DB'
+    };
+
+    // 5. بيانات الحجز الأصلى — من الـ conflict row
+    const originalBookingData = {
+      id: conflictBooking.id,
+      seq_number: conflictBooking.seq_number || null,
+      permit_number: conflictBooking.permit_number,
+      warehouse: conflictBooking.warehouse || null,
+      vehicle_type: conflictBooking.vehicle_type || null,
+      count: conflictBooking.count || null,
+      loading_date: conflictBooking.loading_date || null,
+      time_slot: conflictBooking.time_slot || null,
+      status: conflictBooking.status || null,
+      created_at: conflictBooking.created_at || null
+    };
+
+    // 6. POST لـ duplicate_permit_alerts — fire-and-forget
+    fetch(`${SB}/rest/v1/duplicate_permit_alerts`, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        permit_number: String(permit),
+        attempting_client_id: user.id,
+        attempting_client_data: attemptingClientData,
+        attempting_booking_data: attemptingBookingData,
+        original_client_id: conflictBooking.client_id,
+        original_client_data: originalClientData,
+        original_booking_id: conflictBooking.id,
+        original_booking_data: originalBookingData
+        // status بياخد default 'new' من الـ schema
+      })
+    }).catch(()=>{});
+
+    // 7. سجّل event موازى فى activity_log للـ audit trail
+    logActivity(
+      'cl_permit_duplicate_attempt',
+      `🚨 حاول يستخدم رقم إذن لعميل تانى: ${permit}`,
+      {
+        permit_number: permit,
+        original_booking_id: conflictBooking.id,
+        original_client_id: conflictBooking.client_id,
+        warehouse: bk.warehouse
+      }
+    );
+  } catch(e) {
+    // silent — مش هنوقف flow الرفض
+  }
+}
+
 async function goStep2() {
   let permit = bk.permit;
   if (!permit) return;
@@ -762,7 +856,7 @@ async function goStep2() {
     // ⚡ Parallel: permit-check + cached settings + vehicle types (3 in flight at once)
     const [r1, settings, _vt] = await Promise.all([
       fetch(
-        `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.ملغي&select=id,client_id`,
+        `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.${encodeURIComponent('ملغي')}&select=id,client_id,warehouse,vehicle_type,count,loading_date,time_slot,permit_number,status,seq_number,created_at`,
         { headers: HDR }
       ),
       ensureSettingsLoaded(),
@@ -783,7 +877,10 @@ async function goStep2() {
     // ② No cross-client sharing
     const otherClients = d1.filter(b => b.client_id !== user.id && b.id !== (editMode?.id));
     if (otherClients.length > 0) {
-      msgEl.textContent = '❌ رقم الإذن ده مستخدم من عميل تاني';
+      // 🚨 سجّل الـ alert فى DB (fire-and-forget — مش هيوقف الرفض)
+      reportDuplicatePermitAttempt(permit, otherClients[0]);
+
+      msgEl.innerHTML = '❌ رقم الإذن ده مستخدم من عميل تانى<br><span style="font-size:11px;color:var(--text-dim);font-weight:400">تم إرسال بياناتك للأدمن للمراجعة</span>';
       msgEl.style.color = 'var(--error)';
       document.getElementById('b1').disabled = false;
       return;
@@ -1549,19 +1646,20 @@ async function sendTelegramConfirm(booking) {
   } catch(e) {}
 
   const payload = {
-    action:       isEdit ? 'edit' : 'new',
-    telegram_id:  telegramId,
-    client_name:  user.name,
-    company_code: user.company_code,
-    booking_id:   booking.id,
-    seq_number:   booking.seq_number || null,
-    warehouse:    booking.warehouse    || bk.warehouse,
-    vehicle_type: booking.vehicle_type || bk.vehicle,
-    count:        booking.count        ?? bk.count,
-    loading_date: booking.loading_date || bk.dateStr,
-    date_label:   dateLabel,
-    time_slot:    booking.time_slot    || bk.slot,
-    is_edit:      isEdit
+    action:        isEdit ? 'edit' : 'new',
+    telegram_id:   telegramId,
+    client_name:   user.name,
+    company_code:  user.company_code,
+    booking_id:    booking.id,
+    seq_number:    booking.seq_number || null,
+    warehouse:     booking.warehouse    || bk.warehouse,
+    vehicle_type:  booking.vehicle_type || bk.vehicle,
+    count:         booking.count        ?? bk.count,
+    loading_date:  booking.loading_date || bk.dateStr,
+    date_label:    dateLabel,
+    time_slot:     booking.time_slot    || bk.slot,
+    permit_number: booking.permit_number || bk.permit || null,
+    is_edit:       isEdit
   };
 
   fetch(N8N, {
