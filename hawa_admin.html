@@ -1256,6 +1256,216 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   .sidebar{display:none;}
   .main-area{margin-right:0;}
 }
+
+/* ═══════════════════════════════════════════════════════════
+   REFINED COMPONENTS — luxe-dark + gold accent
+   ═══════════════════════════════════════════════════════════ */
+
+/* — animations — */
+@keyframes wh-fade-slide-down{
+  from{opacity:0;transform:translateY(-6px);}
+  to  {opacity:1;transform:translateY(0);}
+}
+@keyframes wh-fade-in{
+  from{opacity:0;} to{opacity:1;}
+}
+@keyframes wh-pulse-gold{
+  0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0.4);}
+  50%    {box-shadow:0 0 0 6px rgba(201,168,76,0);}
+}
+
+/* ── Warehouse hours card (refined) ── */
+.wh-card{
+  position:relative;background:linear-gradient(180deg,#0F0E0C 0%,#0A0A0A 100%);
+  border:1px solid rgba(201,168,76,0.10);border-radius:16px;padding:0;margin-bottom:14px;
+  overflow:hidden;transition:border-color 0.35s ease,transform 0.35s ease;
+}
+.wh-card:hover{border-color:rgba(201,168,76,0.22);}
+.wh-card::before{
+  content:'';position:absolute;top:0;right:0;left:0;height:1px;
+  background:linear-gradient(90deg,transparent 0%,rgba(201,168,76,0.45) 50%,transparent 100%);
+}
+.wh-card__head{
+  display:flex;align-items:center;gap:12px;padding:16px 20px 14px 20px;
+  border-bottom:1px solid rgba(201,168,76,0.07);
+}
+.wh-card__icon{
+  width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:20px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.12);
+}
+.wh-card__name{
+  font-size:16px;font-weight:700;color:var(--gold-light);letter-spacing:0.5px;
+}
+.wh-card__body{padding:16px 20px 18px 20px;}
+.wh-card__grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;}
+.wh-field label{
+  display:block;font-size:11px;font-weight:700;color:#C5C0B8;
+  margin-bottom:6px;letter-spacing:0.3px;text-transform:none;
+}
+.wh-field input{
+  width:100%;background:#161514;border:1.5px solid #3A3530;color:#FFFFFF;
+  padding:12px 14px;font-size:14px;font-weight:600;border-radius:11px;
+  font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;
+  transition:border-color 0.25s ease,box-shadow 0.25s ease,background 0.25s ease;
+}
+.wh-field input:focus{
+  border-color:var(--gold);background:#1A1816;
+  box-shadow:0 0 0 3px rgba(201,168,76,0.12);
+}
+.wh-field .hint{font-size:10.5px;color:#7A746B;margin-top:5px;letter-spacing:0.2px;}
+.wh-card__slots-preview{
+  margin:0 20px 16px 20px;padding:11px 14px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(74,144,217,0.07) 0%,rgba(74,144,217,0.03) 100%);
+  border:1px solid rgba(74,144,217,0.18);
+  font-size:12px;color:#86bdee;line-height:1.7;
+}
+.wh-card__slots-preview b{color:#a0c8f0;font-weight:700;}
+.wh-card__slots-preview .slots-val{color:var(--gold-light);font-weight:700;letter-spacing:0.4px;}
+
+/* ── Pending banner (animated) ── */
+.wh-pending{
+  margin:14px 20px 0 20px;
+  background:linear-gradient(135deg,rgba(74,144,217,0.13) 0%,rgba(74,144,217,0.04) 100%);
+  border:1px solid rgba(74,144,217,0.38);border-radius:12px;
+  padding:12px 14px;display:flex;align-items:center;gap:12px;
+  animation:wh-fade-slide-down 0.45s ease-out;
+}
+.wh-pending__icon{
+  flex-shrink:0;width:34px;height:34px;border-radius:9px;
+  background:linear-gradient(135deg,rgba(74,144,217,0.30) 0%,rgba(74,144,217,0.10) 100%);
+  border:1px solid rgba(74,144,217,0.40);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.wh-pending__txt{flex:1;font-size:12.5px;color:#9fc7ee;line-height:1.65;min-width:0;}
+.wh-pending__txt .lbl{font-weight:700;color:#c1ddf6;}
+.wh-pending__txt .val{color:var(--gold-light);font-weight:700;letter-spacing:0.4px;display:inline-block;margin-top:2px;}
+.wh-cancel-btn{
+  flex-shrink:0;background:rgba(224,85,85,0.10);border:1px solid rgba(224,85,85,0.42);
+  color:#e87878;padding:8px 14px;border-radius:9px;font-size:11.5px;font-weight:700;
+  cursor:pointer;font-family:Cairo,sans-serif;letter-spacing:0.3px;
+  transition:all 0.22s ease;white-space:nowrap;
+}
+.wh-cancel-btn:hover{
+  background:rgba(224,85,85,0.18);border-color:rgba(224,85,85,0.65);color:#ee9090;
+  transform:translateY(-1px);
+}
+
+/* ── Rule modal: optional hour-range block ── */
+.rule-hours-block{
+  margin-top:6px;
+  background:linear-gradient(180deg,rgba(201,168,76,0.035) 0%,rgba(201,168,76,0.01) 100%);
+  border:1.5px dashed rgba(201,168,76,0.32);border-radius:13px;padding:14px 16px;
+  position:relative;
+}
+.rule-hours-block__head{
+  display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  padding-bottom:10px;border-bottom:1px solid rgba(201,168,76,0.10);
+}
+.rule-hours-block__icon{
+  width:30px;height:30px;border-radius:8px;background:rgba(201,168,76,0.10);
+  border:1px solid rgba(201,168,76,0.22);display:flex;align-items:center;justify-content:center;
+  font-size:15px;flex-shrink:0;
+}
+.rule-hours-block__title{flex:1;font-size:13px;font-weight:700;color:var(--gold-light);letter-spacing:0.3px;}
+.rule-hours-block__opt{font-size:10.5px;color:var(--text-dim);font-weight:500;}
+.rule-hours-block__grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.rule-hours-block input{
+  width:100%;background:#161514;border:1.5px solid #3A3530;color:var(--text);
+  padding:10px 13px;font-size:14px;font-weight:600;border-radius:10px;
+  font-family:Cairo,sans-serif;outline:none;text-align:center;
+  transition:border-color 0.25s ease,box-shadow 0.25s ease;
+}
+.rule-hours-block input:focus{
+  border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.12);
+}
+.rule-hours-block label{
+  display:block;font-size:11px;font-weight:600;color:#B6B0A6;margin-bottom:5px;letter-spacing:0.3px;
+}
+.rule-hours-block .hint{
+  font-size:10.5px;color:#7A746B;margin-top:5px;text-align:center;letter-spacing:0.2px;
+}
+.rule-hours-block__example{
+  margin-top:10px;font-size:11.5px;color:#7fb8e8;line-height:1.7;
+  padding:8px 11px;background:rgba(74,144,217,0.06);border-radius:7px;
+}
+.rule-hours-block__example b{color:#a0c8f0;}
+
+/* ── Vehicle type modal: warehouse picker ── */
+.wh-picker{margin-top:6px;}
+.wh-picker__mode{
+  display:flex;gap:8px;background:#0F0E0C;border:1px solid var(--border);
+  border-radius:11px;padding:4px;margin-bottom:14px;
+}
+.wh-picker__mode-btn{
+  flex:1;padding:10px 12px;border:none;background:transparent;
+  color:var(--text-dim);font-family:Cairo,sans-serif;font-size:12.5px;font-weight:700;
+  border-radius:8px;cursor:pointer;transition:all 0.25s ease;letter-spacing:0.3px;
+}
+.wh-picker__mode-btn:hover{color:var(--text);}
+.wh-picker__mode-btn.active{
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  color:var(--dark);box-shadow:0 2px 12px rgba(201,168,76,0.25);
+}
+.wh-picker__grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:11px;
+  animation:wh-fade-in 0.35s ease-out;
+}
+.wh-picker__grid.disabled{opacity:0.40;pointer-events:none;filter:grayscale(0.4);}
+.wh-pick{
+  position:relative;background:#0F0E0C;border:1.5px solid #2A2620;
+  border-radius:13px;padding:16px 12px;cursor:pointer;text-align:center;
+  transition:all 0.28s cubic-bezier(0.4,0,0.2,1);overflow:hidden;
+}
+.wh-pick::before{
+  content:'';position:absolute;inset:0;border-radius:13px;
+  background:radial-gradient(circle at 50% 0%,rgba(201,168,76,0.12) 0%,transparent 70%);
+  opacity:0;transition:opacity 0.35s ease;pointer-events:none;
+}
+.wh-pick:hover{border-color:rgba(201,168,76,0.30);transform:translateY(-2px);}
+.wh-pick:hover::before{opacity:1;}
+.wh-pick.selected{
+  border-color:var(--gold);background:linear-gradient(180deg,#1A1612 0%,#0F0D0A 100%);
+  box-shadow:0 4px 24px rgba(201,168,76,0.18),inset 0 1px 0 rgba(232,201,122,0.20);
+}
+.wh-pick.selected::before{opacity:1;}
+.wh-pick__icon{
+  font-size:26px;margin-bottom:8px;line-height:1;filter:grayscale(0.3);
+  transition:filter 0.28s ease,transform 0.28s ease;
+}
+.wh-pick.selected .wh-pick__icon{filter:grayscale(0);transform:scale(1.08);}
+.wh-pick__name{
+  font-size:13px;font-weight:700;color:var(--text-dim);
+  letter-spacing:0.4px;transition:color 0.28s ease;
+}
+.wh-pick.selected .wh-pick__name{color:var(--gold-light);}
+.wh-pick__check{
+  position:absolute;top:8px;left:8px;width:20px;height:20px;border-radius:50%;
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  color:var(--dark);font-size:12px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transform:scale(0.5);transition:all 0.32s cubic-bezier(0.34,1.56,0.64,1);
+}
+.wh-pick.selected .wh-pick__check{opacity:1;transform:scale(1);}
+.wh-picker__hint{
+  font-size:11.5px;color:var(--text-dim);margin-top:10px;
+  text-align:center;line-height:1.6;letter-spacing:0.2px;
+}
+
+/* ── Warehouse availability chips (in vehicle types table) ── */
+.wh-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  background:linear-gradient(135deg,rgba(201,168,76,0.10) 0%,rgba(201,168,76,0.04) 100%);
+  border:1px solid rgba(201,168,76,0.28);color:var(--gold-light);
+  padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700;
+  margin:1px;letter-spacing:0.3px;
+}
+.wh-chip-all{
+  display:inline-flex;align-items:center;gap:5px;
+  background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.28);
+  color:#7dc89f;padding:3px 9px;border-radius:7px;font-size:11px;font-weight:700;
+  letter-spacing:0.3px;
+}
+
 </style>
 </head>
 <body>
@@ -1791,24 +2001,28 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
         <!-- 🕐 ساعات معيّنة (اختيارى) -->
         <div class="fg">
-          <label style="display:flex;align-items:center;justify-content:space-between">
-            <span>🕐 قفل ساعات معيّنة جوا اليوم (اختيارى)</span>
-            <span style="font-size:11px;color:var(--text-dim);font-weight:400">سيب فاضى لقفل اليوم كله</span>
-          </label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px">
-            <div>
-              <label style="display:block;font-size:11px;color:var(--text-dim);margin-bottom:4px">من ساعة</label>
-              <input type="number" id="rule-start-hour" min="0" max="23" placeholder="مثلاً 14" style="width:100%">
-              <div style="font-size:10px;color:var(--text-dim);margin-top:3px">24 ساعة (14 = 2 ظهراً)</div>
+          <div class="rule-hours-block">
+            <div class="rule-hours-block__head">
+              <div class="rule-hours-block__icon">🕐</div>
+              <div class="rule-hours-block__title">قفل ساعات معيّنة جوا اليوم</div>
+              <div class="rule-hours-block__opt">اختيارى</div>
             </div>
-            <div>
-              <label style="display:block;font-size:11px;color:var(--text-dim);margin-bottom:4px">إلى ساعة</label>
-              <input type="number" id="rule-end-hour" min="1" max="24" placeholder="مثلاً 15" style="width:100%">
-              <div style="font-size:10px;color:var(--text-dim);margin-top:3px">24 ساعة (15 = 3 عصراً)</div>
+            <div class="rule-hours-block__grid">
+              <div>
+                <label>من ساعة</label>
+                <input type="number" id="rule-start-hour" min="0" max="23" placeholder="—">
+                <div class="hint">24 ساعة · 14 = 2 ظهراً</div>
+              </div>
+              <div>
+                <label>إلى ساعة</label>
+                <input type="number" id="rule-end-hour" min="1" max="24" placeholder="—">
+                <div class="hint">24 ساعة · 15 = 3 عصراً</div>
+              </div>
             </div>
-          </div>
-          <div style="font-size:11px;color:#7fb8e8;margin-top:6px;line-height:1.6">
-            💡 مثال: <b>الجمعة</b> + من <b>14</b> إلى <b>15</b> = صلاة الجمعة، كل أسبوع يقفل slot 2:00-3:00 بس
+            <div class="rule-hours-block__example">
+              💡 مثال: <b>الجمعة</b> + من <b>14</b> إلى <b>15</b> = صلاة الجمعة، كل أسبوع يقفل slot 2:00–3:00 بس<br>
+              <span style="opacity:0.75">سيب الخانتين فاضيين لقفل اليوم كله</span>
+            </div>
           </div>
         </div>
 
@@ -2452,6 +2666,21 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <input type="checkbox" id="vt-active" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)">
       <span style="font-size:13px"><b>مفعّل</b> <span style="color:var(--text-dim);font-size:11px">— لو شيلت العلامة، النوع مش هيظهر للعميل في صفحة الحجز</span></span>
     </label>
+
+    <!-- 📦 المخازن المتاح فيها هذا النوع -->
+    <div class="fg">
+      <label style="display:flex;align-items:center;justify-content:space-between">
+        <span>📦 المخازن المتاح فيها هذا النوع</span>
+      </label>
+      <div class="wh-picker">
+        <div class="wh-picker__mode" id="vt-wh-mode">
+          <button type="button" class="wh-picker__mode-btn active" data-mode="all"      onclick="setVehicleWhMode('all')">🌐 كل المخازن</button>
+          <button type="button" class="wh-picker__mode-btn"        data-mode="specific" onclick="setVehicleWhMode('specific')">📍 مخازن محددة</button>
+        </div>
+        <div class="wh-picker__grid disabled" id="vt-wh-grid"></div>
+        <div class="wh-picker__hint" id="vt-wh-hint">يتاح للعميل فى كل المخازن بدون استثناء</div>
+      </div>
+    </div>
 
     <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
       <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">معاينة:</div>
@@ -3557,48 +3786,49 @@ function renderWarehouseHoursCard(w){
     const pwe = w.pending_working_hour_end;
     const pco = w.pending_daily_cutoff_hour;
     banner = `
-      <div style="background:rgba(74,144,217,0.10);border:1px solid rgba(74,144,217,0.40);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
-        <div style="color:#7fb8e8;font-size:13px;line-height:1.7;flex:1;min-width:200px">
-          ⏰ <b>تغيير مجدول من ${w.pending_effective_from}:</b>
-          <span style="color:var(--gold);font-weight:700"> ${pws}:00 → ${pwe}:00 (قفل ${pco}:00)</span>
+      <div class="wh-pending">
+        <div class="wh-pending__icon">⏰</div>
+        <div class="wh-pending__txt">
+          <span class="lbl">تغيير مجدول من ${w.pending_effective_from}</span><br>
+          <span class="val">${pws}:00 → ${pwe}:00 · قفل ${pco}:00</span>
         </div>
-        <button onclick="cancelPendingHours(${w.id})" style="background:rgba(224,85,85,0.15);border:1px solid rgba(224,85,85,0.45);color:#E05555;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;white-space:nowrap">
-          ✕ إلغاء التغيير
-        </button>
+        <button class="wh-cancel-btn" onclick="cancelPendingHours(${w.id})">✕ إلغاء</button>
       </div>`;
   }
 
   return `
-    <div style="background:#0E0E0E;border:1px solid #2A2620;border-radius:14px;padding:18px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(201,168,76,0.1)">
-        <span style="font-size:20px">${icon}</span>
-        <span style="font-size:15px;font-weight:700;color:var(--gold)">${w.name}</span>
+    <div class="wh-card">
+      <div class="wh-card__head">
+        <div class="wh-card__icon">${icon}</div>
+        <div class="wh-card__name">${w.name}</div>
       </div>
       ${banner}
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
-        <div>
-          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">بداية يوم العمل</label>
-          <input type="number" id="wh-ws-${w.id}" value="${w.working_hour_start ?? 8}" min="0" max="23" oninput="updateWarehouseSlotsPreview(${w.id})" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
-          <div style="font-size:11px;color:#9A9590;margin-top:4px">8 = 8 صباحاً</div>
-        </div>
-        <div>
-          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">نهاية يوم العمل</label>
-          <input type="number" id="wh-we-${w.id}" value="${w.working_hour_end ?? 16}" min="1" max="24" oninput="updateWarehouseSlotsPreview(${w.id})" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
-          <div style="font-size:11px;color:#9A9590;margin-top:4px">16 = 4 مساءً</div>
-        </div>
-        <div>
-          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">قفل الحجز نفس اليوم</label>
-          <input type="number" id="wh-co-${w.id}" value="${w.daily_cutoff_hour ?? 15}" min="0" max="24" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
-          <div style="font-size:11px;color:#9A9590;margin-top:4px">15 = 3 مساءً</div>
-        </div>
-        <div>
-          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">📅 يطبّق من تاريخ</label>
-          <input type="date" id="wh-from-${w.id}" value="${today}" min="${today}" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
-          <div style="font-size:11px;color:#9A9590;margin-top:4px">اليوم = فورى | تاريخ مستقبلى = مجدول</div>
+      <div class="wh-card__body">
+        <div class="wh-card__grid">
+          <div class="wh-field">
+            <label>بداية يوم العمل</label>
+            <input type="number" id="wh-ws-${w.id}" value="${w.working_hour_start ?? 8}" min="0" max="23" oninput="updateWarehouseSlotsPreview(${w.id})">
+            <div class="hint">8 = 8 صباحاً</div>
+          </div>
+          <div class="wh-field">
+            <label>نهاية يوم العمل</label>
+            <input type="number" id="wh-we-${w.id}" value="${w.working_hour_end ?? 16}" min="1" max="24" oninput="updateWarehouseSlotsPreview(${w.id})">
+            <div class="hint">16 = 4 مساءً</div>
+          </div>
+          <div class="wh-field">
+            <label>قفل الحجز نفس اليوم</label>
+            <input type="number" id="wh-co-${w.id}" value="${w.daily_cutoff_hour ?? 15}" min="0" max="24">
+            <div class="hint">15 = 3 مساءً</div>
+          </div>
+          <div class="wh-field">
+            <label>📅 يطبّق من تاريخ</label>
+            <input type="date" id="wh-from-${w.id}" value="${today}" min="${today}">
+            <div class="hint">اليوم = فورى · مستقبل = مجدول</div>
+          </div>
         </div>
       </div>
-      <div style="margin-top:12px;padding:10px 12px;background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:8px;font-size:12px;color:#7fb8e8;line-height:1.7">
-        📋 <b>المواعيد:</b> <span id="slots-preview-${w.id}" style="color:var(--gold);font-weight:700">—</span>
+      <div class="wh-card__slots-preview">
+        📋 <b>المواعيد:</b> <span id="slots-preview-${w.id}" class="slots-val">—</span>
       </div>
     </div>`;
 }
@@ -5730,6 +5960,7 @@ function renderVehicleTypes(counts){
     <th>الاسم</th>
     <th style="text-align:center">معدل/ساعة</th>
     <th style="text-align:center">الترتيب</th>
+    <th style="text-align:center">📦 المخازن</th>
     <th style="text-align:center">الحالة</th>
     <th style="text-align:center">حجوزات</th>
     <th>تاريخ الإنشاء</th>
@@ -5742,12 +5973,18 @@ function renderVehicleTypes(counts){
     const isActive = v.is_active !== false;
     const nameEsc = (v.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
 
+    // 📦 عرض المخازن (NULL أو [] = الكل)
+    const whCol = (!v.warehouses || !v.warehouses.length)
+      ? '<span class="wh-chip-all">🌐 الكل</span>'
+      : v.warehouses.map(w => `<span class="wh-chip">${w}</span>`).join(' ');
+
     html += `<tr style="${!isActive ? 'opacity:0.55' : ''}">
       <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
       <td style="text-align:center;font-size:22px">${v.icon || '🚛'}</td>
       <td><b style="font-size:13px">${v.name}</b></td>
       <td style="text-align:center"><b style="color:var(--gold);font-size:14px">${v.capacity_per_hour}</b></td>
       <td style="text-align:center;color:var(--text-dim)">${v.display_order || 0}</td>
+      <td style="text-align:center">${whCol}</td>
       <td style="text-align:center">${isActive ? '<span class="badge active">مفعّل ✅</span>' : '<span class="badge inactive">معطّل 🚫</span>'}</td>
       <td style="text-align:center"><b style="color:${count>0?'var(--gold)':'var(--text-dim)'}">${count}</b></td>
       <td style="font-size:12px;color:var(--text-dim)">${dt}</td>
@@ -5764,11 +6001,89 @@ function renderVehicleTypes(counts){
   document.getElementById('vt-table').innerHTML = html;
 }
 
-function openVehicleTypeModal(id=null){
+// 🏭 Warehouse picker state for vehicle type modal
+let _vtAllWarehouses = [];          // [{id, name}] — fetched on open
+let _vtSelectedWarehouses = new Set();  // Set<string> of names
+
+async function loadVehicleWarehousePicker(selected){
+  // selected: array of warehouse names OR null/empty for "all"
+  const grid = document.getElementById('vt-wh-grid');
+  if(!_vtAllWarehouses.length){
+    try{
+      const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name&order=id.asc`, {headers:HDR});
+      _vtAllWarehouses = await r.json();
+    }catch(e){
+      _vtAllWarehouses = [];
+    }
+  }
+  if(!_vtAllWarehouses.length){
+    grid.innerHTML = '<div class="empty-txt" style="grid-column:1/-1">📭 مفيش مخازن مسجلة</div>';
+    return;
+  }
+  _vtSelectedWarehouses = new Set(selected || []);
+  grid.innerHTML = _vtAllWarehouses.map(w => {
+    const sel = _vtSelectedWarehouses.has(w.name);
+    const icon = w.name === 'قليوب' ? '🏭' : w.name === 'السادات' ? '🏗️' : '📦';
+    return `
+      <div class="wh-pick ${sel?'selected':''}" data-name="${w.name}" onclick="toggleVehicleWh('${w.name.replace(/'/g,"\\'")}')">
+        <div class="wh-pick__check">✓</div>
+        <div class="wh-pick__icon">${icon}</div>
+        <div class="wh-pick__name">${w.name}</div>
+      </div>`;
+  }).join('');
+}
+
+function toggleVehicleWh(name){
+  if(_vtSelectedWarehouses.has(name)) _vtSelectedWarehouses.delete(name);
+  else                                _vtSelectedWarehouses.add(name);
+  // Update UI
+  document.querySelectorAll('#vt-wh-grid .wh-pick').forEach(el => {
+    if(el.dataset.name === name){
+      el.classList.toggle('selected', _vtSelectedWarehouses.has(name));
+    }
+  });
+  updateVtWhHint();
+}
+
+function setVehicleWhMode(mode){
+  document.querySelectorAll('#vt-wh-mode .wh-picker__mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  const grid = document.getElementById('vt-wh-grid');
+  if(mode === 'all'){
+    grid.classList.add('disabled');
+    _vtSelectedWarehouses.clear();
+    document.querySelectorAll('#vt-wh-grid .wh-pick').forEach(el => el.classList.remove('selected'));
+  } else {
+    grid.classList.remove('disabled');
+  }
+  updateVtWhHint();
+}
+
+function updateVtWhHint(){
+  const hint = document.getElementById('vt-wh-hint');
+  const activeMode = document.querySelector('#vt-wh-mode .wh-picker__mode-btn.active')?.dataset.mode;
+  if(activeMode === 'all'){
+    hint.innerHTML = 'يتاح للعميل فى كل المخازن بدون استثناء';
+    hint.style.color = 'var(--text-dim)';
+  } else {
+    const n = _vtSelectedWarehouses.size;
+    if(n === 0){
+      hint.innerHTML = '⚠️ اختار مخزن واحد على الأقل';
+      hint.style.color = 'var(--error)';
+    } else {
+      hint.innerHTML = `✅ يتاح للعميل فى <b>${n}</b> ${n===1?'مخزن':'مخازن'}`;
+      hint.style.color = 'var(--success)';
+    }
+  }
+}
+
+async function openVehicleTypeModal(id=null){
   editVtId = id;
   const isEdit = id !== null;
   document.getElementById('vt-modal-title').textContent = isEdit ? '✏️ تعديل نوع العربية' : '➕ إضافة نوع عربية';
 
+  let currentWh = null;
   if(isEdit){
     const v = allVehicleTypes.find(x=>x.id===id);
     if(!v) return;
@@ -5777,6 +6092,7 @@ function openVehicleTypeModal(id=null){
     document.getElementById('vt-capacity').value = v.capacity_per_hour || '';
     document.getElementById('vt-order').value = v.display_order || 0;
     document.getElementById('vt-active').checked = v.is_active !== false;
+    currentWh = v.warehouses;
   }else{
     document.getElementById('vt-name').value = '';
     document.getElementById('vt-icon').value = '🚛';
@@ -5785,6 +6101,12 @@ function openVehicleTypeModal(id=null){
     document.getElementById('vt-order').value = maxOrder + 1;
     document.getElementById('vt-active').checked = true;
   }
+
+  // 📦 Warehouse picker: default = "all"، otherwise specific selection
+  const mode = (currentWh && currentWh.length) ? 'specific' : 'all';
+  await loadVehicleWarehousePicker(currentWh);
+  setVehicleWhMode(mode);
+
   updateVtPreview();
   document.getElementById('vehicleTypeModal').classList.add('show');
 }
@@ -5806,13 +6128,66 @@ async function saveVehicleType(){
   if(!name){alert('من فضلك أدخل اسم النوع');return;}
   if(isNaN(capacity) || capacity<1){alert('معدل التحميل لازم يكون رقم >= 1');return;}
 
+  // 📦 Warehouse selection
+  const mode = document.querySelector('#vt-wh-mode .wh-picker__mode-btn.active')?.dataset.mode;
+  let warehouses;
+  if(mode === 'all'){
+    warehouses = null;  // = الكل
+  } else {
+    if(_vtSelectedWarehouses.size === 0){
+      alert('❌ اختار مخزن واحد على الأقل فى وضع "مخازن محددة"');
+      return;
+    }
+    warehouses = Array.from(_vtSelectedWarehouses);
+  }
+
   const isEdit = editVtId !== null;
-  const body = {name, icon, capacity_per_hour: capacity, display_order: order, is_active: isActive};
+  const oldType = isEdit ? allVehicleTypes.find(x => x.id === editVtId) : null;
+
+  // 🛡️ Orphan check: لو edit و قلّلنا المخازن، افحص هل فيه حجوزات موجودة فى مخزن اتشال
+  if(isEdit && oldType){
+    const oldWhSet = new Set(oldType.warehouses || []);   // empty = ALL
+    const newWhSet = (warehouses === null) ? null : new Set(warehouses);
+    // مخازن كانت متاحة وبعد التعديل اتشالت
+    let removedWh = [];
+    if(newWhSet !== null){
+      if(oldWhSet.size === 0){
+        // كانت "الكل" والآن قيّدنا — أى مخزن مش فى newWhSet يبقى ممنوع
+        // محتاج نعرف كل المخازن الموجودة
+        removedWh = _vtAllWarehouses.map(w => w.name).filter(n => !newWhSet.has(n));
+      } else {
+        removedWh = [...oldWhSet].filter(n => !newWhSet.has(n));
+      }
+    }
+    if(removedWh.length){
+      const todayStr = new Date().toISOString().slice(0,10);
+      const oldName = oldType.name;
+      const r = await fetch(
+        `${SB}/rest/v1/bookings?vehicle_type=eq.${encodeURIComponent(oldName)}&warehouse=in.(${removedWh.map(w => `"${encodeURIComponent(w)}"`).join(',')})&loading_date=gte.${todayStr}&status=neq.${encodeURIComponent('ملغي')}&select=id,loading_date,warehouse,time_slot`,
+        {headers:HDR}
+      );
+      if(r.ok){
+        const conflicts = await r.json();
+        if(conflicts.length){
+          const sample = conflicts.slice(0,3).map(c => `${c.loading_date} (${c.warehouse} · ${c.time_slot})`).join('، ');
+          const more = conflicts.length > 3 ? ` وكمان ${conflicts.length - 3} حجز` : '';
+          alert(
+            `❌ مش ممكن تشيل المخازن دى من النوع "${oldName}".\n\n` +
+            `فيه ${conflicts.length} حجز قائم فى المخازن: ${removedWh.join('، ')}\n\n` +
+            `${sample}${more}\n\n` +
+            `لازم تلغى أو تعدّل الحجوزات دى الأول.`
+          );
+          return;
+        }
+      }
+    }
+  }
+
+  const body = {name, icon, capacity_per_hour: capacity, display_order: order, is_active: isActive, warehouses};
 
   try{
     let oldName = null;
     if(isEdit){
-      const oldType = allVehicleTypes.find(x=>x.id===editVtId);
       if(oldType && oldType.name !== name) oldName = oldType.name;
     }
 

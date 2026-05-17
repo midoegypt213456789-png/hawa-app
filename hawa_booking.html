@@ -616,8 +616,17 @@ function renderVehicleOptions(){
     container.innerHTML = '<div class="slots-loading" style="grid-column:1/-1">⚠️ مفيش أنواع متاحة دلوقتي</div>';
     return;
   }
+  // 📦 فلتر حسب المخزن المختار: NULL/empty warehouses = متاح فى الكل
+  const visibleTypes = allVehicleTypes.filter(v => {
+    if(!v.warehouses || !v.warehouses.length) return true;
+    return v.warehouses.includes(bk.warehouse);
+  });
+  if(!visibleTypes.length){
+    container.innerHTML = `<div class="slots-loading" style="grid-column:1/-1">😞 مفيش أنواع عربيات متاحة فى مخزن ${bk.warehouse} دلوقتى</div>`;
+    return;
+  }
   let html = '';
-  allVehicleTypes.forEach(v => {
+  visibleTypes.forEach(v => {
     const nameEsc = (v.name||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     const cap = v.capacity_per_hour || 5;
     html += `<div class="opt" id="opt-v-${v.id}" onclick="pickVehicle('${nameEsc}',${cap},this)"><div class="ic">${v.icon||'🚛'}</div><div class="lb">${v.name}</div></div>`;
