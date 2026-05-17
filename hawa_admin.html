@@ -7331,10 +7331,26 @@ async function confirmAddWarehouse(){
       headers: {...HDR, 'Prefer': 'return=representation'},
       body: JSON.stringify({name, email: email || null})
     });
-    if (!r.ok) throw new Error(await r.text());
+    if (!r.ok) {
+      const err = await r.text();
+      if (err.includes('23505')) { showWHToast('❌ اسم المخزن موجود بالفعل', 'error'); return; }
+      throw new Error(err);
+    }
     hideAddWarehouseForm();
     await loadWarehouses();
     showWHToast('✅ تم إضافة المخزن');
+    // 💡 Hint: المخزن الجديد محتاج setup إضافى
+    setTimeout(() => {
+      alert(
+        `✅ مخزن "${name}" اتضاف بنجاح\n\n` +
+        `📋 خطوات إكمال الـ setup (اختيارى):\n\n` +
+        `1️⃣ ساعات العمل — تاب "ساعات المخازن"\n` +
+        `   (لو سيبتها فاضية، هيستخدم الإعدادات الافتراضية)\n\n` +
+        `2️⃣ أنواع العربيات — تاب "أنواع العربيات"\n` +
+        `   (مهم — من غير ده العميل مش هيقدر يحجز على المخزن)\n\n` +
+        `3️⃣ قواعد الإجازات — لو فيه حاجة خاصة بالمخزن ده`
+      );
+    }, 600);
   } catch(e) {
     showWHToast('❌ خطأ: ' + (e.message || e), 'error');
   }
@@ -7343,24 +7359,80 @@ async function confirmAddWarehouse(){
 async function saveWarehouse(id){
   const card = document.querySelector(`.warehouse-card[data-id="${id}"]`);
   if (!card) return;
-  const name = card.querySelector('.wh-name').value.trim();
-  const email = card.querySelector('.wh-email').value.trim();
-  if (!name) { showWHToast('⚠️ اسم المخزن مطلوب', 'error'); return; }
-  if (email && !whValidEmail(email)) { showWHToast('⚠️ صيغة الإيميل غير صحيحة', 'error'); return; }
+  const newName = card.querySelector('.wh-name').value.trim();
+  const newEmail = card.querySelector('.wh-email').value.trim();
+  if (!newName) { showWHToast('⚠️ اسم المخزن مطلوب', 'error'); return; }
+  if (newEmail && !whValidEmail(newEmail)) { showWHToast('⚠️ صيغة الإيميل غير صحيحة', 'error'); return; }
+
+  const old = allWarehousesData.find(w => w.id === id);
+  const oldName = old?.name;
+  const nameChanged = oldName && oldName !== newName;
+
+  // ⚠️ تغيير الاسم → cascade rename عبر الـ bookings والـ schedule_rules
+  if (nameChanged) {
+    // عد الـ rows اللى هتتأثر علشان نوضّح للأدمن
+    try {
+      const [r1, r2] = await Promise.all([
+        fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(oldName)}&select=id`, {headers:{...HDR,'Prefer':'count=exact','Range':'0-0'}}),
+        fetch(`${SB}/rest/v1/schedule_rules?warehouses=cs.%7B%22${encodeURIComponent(oldName)}%22%7D&select=id&limit=1`, {headers:HDR})
+      ]);
+      const bookingsCount = parseInt((r1.headers.get('content-range') || '*/0').split('/')[1]) || 0;
+      const r2j = r2.ok ? await r2.json() : [];
+      let msg = `⚠️ هتغيّر اسم المخزن من "${oldName}" لـ "${newName}".\n\nده هيحدّث:\n`;
+      if (bookingsCount) msg += `• ${bookingsCount} حجز (قديم + جديد)\n`;
+      if (r2j.length)   msg += `• قواعد جدول بتشير لاسم المخزن\n`;
+      if (!bookingsCount && !r2j.length) msg += `• مفيش حجوزات أو قواعد مرتبطة\n`;
+      msg += `\nأكمل؟`;
+      if (!confirm(msg)) return;
+    } catch(e){}
+  }
+
   try {
+    // 1) PATCH the warehouse
     const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`, {
       method: 'PATCH',
       headers: HDR,
-      body: JSON.stringify({name, email: email || null})
+      body: JSON.stringify({name: newName, email: newEmail || null})
     });
-    if (!r.ok) throw new Error(await r.text());
-    // Update local cache
+    if (!r.ok) {
+      const err = await r.text();
+      if (err.includes('23505')) { showWHToast('❌ الاسم موجود بالفعل', 'error'); return; }
+      throw new Error(err);
+    }
+
+    // 2) Migrate dependent data لو الاسم اتغير
+    if (nameChanged) {
+      // Bookings
+      await fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(oldName)}`, {
+        method: 'PATCH',
+        headers: {...HDR, 'Prefer': 'return=minimal'},
+        body: JSON.stringify({warehouse: newName})
+      });
+      // schedule_rules.warehouses[]: لازم نقرا الـ array، نبدّل، ونرجّع
+      const r3 = await fetch(
+        `${SB}/rest/v1/schedule_rules?warehouses=cs.%7B%22${encodeURIComponent(oldName)}%22%7D&select=id,warehouses`,
+        {headers:HDR}
+      );
+      if (r3.ok) {
+        const rules = await r3.json();
+        for (const rule of rules) {
+          const updated = (rule.warehouses || []).map(n => n === oldName ? newName : n);
+          await fetch(`${SB}/rest/v1/schedule_rules?id=eq.${rule.id}`, {
+            method: 'PATCH',
+            headers: {...HDR, 'Prefer': 'return=minimal'},
+            body: JSON.stringify({warehouses: updated})
+          });
+        }
+      }
+    }
+
+    // 3) Update local cache
     const idx = allWarehousesData.findIndex(w => w.id === id);
     if (idx >= 0) {
-      allWarehousesData[idx].name = name;
-      allWarehousesData[idx].email = email || null;
+      allWarehousesData[idx].name = newName;
+      allWarehousesData[idx].email = newEmail || null;
     }
-    showWHToast('✅ تم حفظ التغييرات');
+    showWHToast(nameChanged ? '✅ تم الحفظ + تحديث البيانات المرتبطة' : '✅ تم حفظ التغييرات');
   } catch(e) {
     showWHToast('❌ خطأ في الحفظ', 'error');
   }
@@ -7369,17 +7441,64 @@ async function saveWarehouse(id){
 async function deleteWarehouse(id){
   const wh = allWarehousesData.find(w => w.id === id);
   if (!wh) return;
-  if (!confirm(`🗑️ متأكد إنك عاوز تحذف مخزن "${wh.name}"؟\n\nالحجوزات اللى عليه مش هتتمسح، بس مش هيوصلها إيميلات تانى.`)) return;
+  const today = new Date().toISOString().slice(0,10);
+
+  showWHToast('⏳ بفحص الحجوزات...');
+
   try {
-    const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`, {
-      method: 'DELETE',
-      headers: HDR
-    });
-    if (!r.ok) throw new Error(await r.text());
+    // 1️⃣ Orphan check — future bookings تمنع الحذف نهائياً
+    const r1 = await fetch(
+      `${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(wh.name)}&loading_date=gte.${today}&status=neq.${encodeURIComponent('ملغي')}&select=id,loading_date,time_slot&order=loading_date.asc&limit=10`,
+      {headers: HDR}
+    );
+    const future = r1.ok ? await r1.json() : [];
+    if (future.length) {
+      const sample = future.slice(0,3).map(b => `${b.loading_date} ${b.time_slot}`).join('، ');
+      const more = future.length > 3 ? ` وكمان ${future.length - 3}` : '';
+      alert(`❌ مينفعش تحذف "${wh.name}".\n\nفيه ${future.length}${future.length===10?'+':''} حجز قائم على المخزن:\n${sample}${more}\n\nلازم تلغى أو تعدّل الحجوزات دى الأول.`);
+      return;
+    }
+
+    // 2️⃣ Check past bookings + dependent data (for warning)
+    const [r2, r3] = await Promise.all([
+      fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(wh.name)}&select=id&limit=1`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/schedule_rules?warehouses=cs.%7B%22${encodeURIComponent(wh.name)}%22%7D&select=id,reason,warehouses`, {headers:HDR})
+    ]);
+    const hasPast = r2.ok ? (await r2.json()).length > 0 : false;
+    const rulesUsing = r3.ok ? await r3.json() : [];
+
+    // WVTs from cache (سيتم cascade delete)
+    const wvtsInWh = (_vtState?.wvts || []).filter(x => x.warehouse_id === id);
+
+    let msg = `🗑️ هتحذف مخزن "${wh.name}"؟\n\n`;
+    if (wvtsInWh.length) msg += `• ${wvtsInWh.length} نوع عربية مرتبطين بالمخزن هيتشالوا (الكتالوج العام يفضل سليم)\n`;
+    if (rulesUsing.length) msg += `• ${rulesUsing.length} قاعدة جدول هيتنضف منها اسم المخزن (والقاعدة هتترفع لو اتفضّت)\n`;
+    if (hasPast) msg += `• الحجوزات القديمة هتفضل بنفس الاسم كنص (للأرشيف)\n`;
+    msg += `\nأكمل؟`;
+
+    if (!confirm(msg)) return;
+
+    // 3️⃣ Cleanup schedule_rules.warehouses[]
+    for (const rule of rulesUsing) {
+      const remaining = (rule.warehouses || []).filter(n => n !== wh.name);
+      const patch = remaining.length
+        ? { warehouses: remaining }
+        : { warehouses: null, is_active: false };  // فاضى → null + تعطيل
+      await fetch(`${SB}/rest/v1/schedule_rules?id=eq.${rule.id}`, {
+        method: 'PATCH',
+        headers: {...HDR, 'Prefer': 'return=minimal'},
+        body: JSON.stringify(patch)
+      });
+    }
+
+    // 4️⃣ Delete warehouse (FK CASCADE هيشيل warehouse_vehicle_types تلقائياً)
+    const r4 = await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`, {method:'DELETE', headers:HDR});
+    if (!r4.ok) throw new Error(await r4.text());
+
     await loadWarehouses();
-    showWHToast('✅ تم الحذف');
+    showWHToast('✅ تم الحذف بأمان');
   } catch(e) {
-    showWHToast('❌ خطأ في الحذف', 'error');
+    showWHToast('❌ خطأ: ' + (e.message||e), 'error');
   }
 }
 
