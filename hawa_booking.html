@@ -1289,14 +1289,15 @@ async function confirm_booking() {
         });
 
         sendTelegramConfirm({
-          id:           snap.id,
-          seq_number:   snap.seq_number,
-          warehouse:    snap.warehouse,
-          vehicle_type: snap.vehicle_type,
-          count:        snap.count,
-          loading_date: snap.loading_date,
-          time_slot:    snap.time_slot,
-          is_edit:      true
+          id:            snap.id,
+          seq_number:    snap.seq_number,
+          warehouse:     snap.warehouse,
+          vehicle_type:  snap.vehicle_type,
+          count:         snap.count,
+          loading_date:  snap.loading_date,
+          time_slot:     snap.time_slot,
+          permit_number: snap.permit_number,
+          is_edit:       true
         });
         showSuccessScreen(
           `تم تعديل الحجز #${displayId}`,
