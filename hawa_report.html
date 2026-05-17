@@ -270,9 +270,6 @@ const urlDate = new URLSearchParams(location.search).get('date');
 document.getElementById('dateFrom').value = urlDate || today;
 document.getElementById('dateTo').value   = urlDate || today;
 
-// تحميل تلقائي
-loadWarehouseVehicleTypes().then(() => { rebuildVehicleFilter(); loadReport(); });
-
 // 🚛 الـ vehicle types المتاحة لكل مخزن (يـ load مرة واحدة من DB)
 let vehicleTypesByWarehouse = null;
 const VEHICLE_ICONS = {
@@ -281,6 +278,9 @@ const VEHICLE_ICONS = {
   'كهرباء':  '⚡',
   'ZONTOS':  '🚗'
 };
+
+// تحميل تلقائي
+loadWarehouseVehicleTypes().then(() => { rebuildVehicleFilter(); loadReport(); });
 
 async function loadWarehouseVehicleTypes(){
   if(vehicleTypesByWarehouse) return; // cached
