@@ -1512,6 +1512,107 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   letter-spacing:0.3px;
 }
 
+/* ── Vehicle types per-warehouse tabs ── */
+.vt-tabs{
+  display:flex;gap:8px;background:#0F0E0C;border:1px solid var(--border);
+  border-radius:13px;padding:6px;margin-bottom:16px;overflow-x:auto;
+}
+.vt-tab{
+  flex:1;min-width:140px;padding:12px 16px;border:none;background:transparent;
+  color:var(--text-dim);font-family:Cairo,sans-serif;font-size:13px;font-weight:700;
+  border-radius:9px;cursor:pointer;transition:all 0.28s ease;letter-spacing:0.3px;
+  display:flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;
+}
+.vt-tab:hover{color:var(--text);}
+.vt-tab.active{
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  color:var(--dark);box-shadow:0 2px 14px rgba(201,168,76,0.25);
+}
+.vt-tab__count{
+  background:rgba(0,0,0,0.18);padding:1px 7px;border-radius:10px;font-size:11px;
+}
+.vt-tab.active .vt-tab__count{background:rgba(0,0,0,0.25);}
+
+.vt-tab-body{animation:wh-fade-in 0.35s ease-out;}
+.vt-tab-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin-bottom:14px;padding:0 2px;flex-wrap:wrap;
+}
+.vt-tab-toolbar__title{font-size:14px;font-weight:700;color:var(--gold-light);letter-spacing:0.3px;}
+.vt-add-btn{
+  background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));
+  border:1px solid rgba(201,168,76,0.40);color:var(--gold-light);
+  padding:9px 16px;border-radius:10px;font-size:12.5px;font-weight:700;
+  cursor:pointer;font-family:Cairo,sans-serif;letter-spacing:0.3px;
+  transition:all 0.22s ease;
+}
+.vt-add-btn:hover{
+  background:linear-gradient(135deg,rgba(201,168,76,0.25),rgba(201,168,76,0.10));
+  border-color:var(--gold);transform:translateY(-1px);
+}
+
+.vt-card-list{display:flex;flex-direction:column;gap:10px;}
+.vt-card{
+  display:flex;align-items:center;gap:14px;padding:14px 18px;
+  background:linear-gradient(180deg,#0F0E0C 0%,#0A0A0A 100%);
+  border:1px solid rgba(201,168,76,0.10);border-radius:13px;
+  transition:border-color 0.3s ease,transform 0.3s ease;
+}
+.vt-card:hover{border-color:rgba(201,168,76,0.22);}
+.vt-card[data-inactive="1"]{opacity:0.5;}
+.vt-card__icon{
+  width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.12);
+  flex-shrink:0;
+}
+.vt-card__info{flex:1;min-width:0;}
+.vt-card__name{font-size:15px;font-weight:700;color:var(--gold-light);letter-spacing:0.3px;margin-bottom:3px;}
+.vt-card__meta{font-size:11.5px;color:var(--text-dim);display:flex;gap:11px;flex-wrap:wrap;}
+.vt-card__meta b{color:var(--gold);font-weight:700;}
+.vt-card__usage{
+  background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.22);
+  color:#7fb8e8;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:700;
+}
+.vt-card__actions{display:flex;gap:8px;flex-shrink:0;}
+.vt-card__btn{
+  width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+  background:transparent;cursor:pointer;font-size:14px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s ease;
+}
+.vt-card__btn:hover{transform:scale(1.06);}
+.vt-card__btn.edit{color:#7fb8e8;border-color:rgba(74,144,217,0.30);}
+.vt-card__btn.edit:hover{background:rgba(74,144,217,0.10);border-color:rgba(74,144,217,0.55);}
+.vt-card__btn.toggle{color:#e0b380;border-color:rgba(224,135,58,0.30);}
+.vt-card__btn.toggle:hover{background:rgba(224,135,58,0.10);}
+.vt-card__btn.del{color:#e88080;border-color:rgba(224,85,85,0.30);}
+.vt-card__btn.del:hover{background:rgba(224,85,85,0.10);border-color:rgba(224,85,85,0.55);}
+
+.vt-empty{
+  padding:36px 20px;text-align:center;color:var(--text-dim);font-size:13px;line-height:1.8;
+  background:#0F0E0C;border:1.5px dashed rgba(201,168,76,0.18);border-radius:13px;
+}
+.vt-empty__icon{font-size:36px;margin-bottom:10px;}
+.vt-empty__hint{font-size:11px;color:#7A746B;margin-top:6px;}
+
+/* ── Catalog modal: list of types globally ── */
+.vt-catalog-list{display:flex;flex-direction:column;gap:9px;margin-bottom:14px;}
+.vt-cat-row{
+  display:flex;align-items:center;gap:11px;padding:11px 14px;
+  background:#0F0E0C;border:1px solid rgba(201,168,76,0.08);border-radius:11px;
+  transition:border-color 0.25s ease;
+}
+.vt-cat-row:hover{border-color:rgba(201,168,76,0.18);}
+.vt-cat-row__icon{font-size:22px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,0.05);border-radius:9px;}
+.vt-cat-row__name{flex:1;font-weight:700;color:var(--gold-light);font-size:13.5px;}
+.vt-cat-row__usage{font-size:10.5px;color:var(--text-dim);}
+.vt-cat-row__btn{
+  width:28px;height:28px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;cursor:pointer;font-size:12px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s ease;
+}
+
 </style>
 </head>
 <body>
@@ -1953,14 +2054,19 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="section" id="sec-vehicle-types">
       <div class="page-hd">
         <div class="page-title">🚚 <span>أنواع العربيات</span></div>
-        <button class="add-btn" onclick="openVehicleTypeModal()">+ إضافة نوع جديد</button>
+        <button class="add-btn" onclick="openCatalogModal()">📚 الكتالوج العام</button>
       </div>
       <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:12px 14px;font-size:12px;color:#6faee8;line-height:1.8;margin-bottom:14px">
-        ℹ️ كل نوع له <b>معدل تحميل ساعي خاص</b> (كم عربية تقدر تحمل في الساعة الواحدة). الأنواع المعطّلة 🚫 لا تظهر للعميل في صفحة الحجز، لكن الحجوزات القديمة بنوعها تفضل سليمة.
+        ℹ️ كل مخزن له <b>أنواعه وcapacity الخاصة بيه</b>. ضيف/شيل/عدّل من جوا الـ tab بتاع كل مخزن. الـ <b>📚 الكتالوج العام</b> لإدارة أسماء وأيقونات الأنواع globally.
       </div>
-      <div class="tbl-wrap">
-        <div id="vt-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+
+      <!-- Tabs per warehouse -->
+      <div class="vt-tabs" id="vt-tabs">
+        <div class="loading-txt">⏳ جاري التحميل...</div>
       </div>
+
+      <!-- Container للأنواع بتاع الـ tab الحالى -->
+      <div class="vt-tab-body" id="vt-tab-body"></div>
     </div>
 
     <!-- SCHEDULE -->
@@ -2692,63 +2798,124 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 </div>
 
 <!-- VEHICLE TYPE MODAL -->
-<div class="modal-overlay" id="vehicleTypeModal">
+<!-- ➕ ADD TYPE TO WAREHOUSE MODAL -->
+<div class="modal-overlay" id="addToWarehouseModal">
   <div class="modal">
     <div class="modal-title">
-      <span id="vt-modal-title">➕ إضافة نوع عربية</span>
-      <button class="modal-close" onclick="closeModal('vehicleTypeModal')">✕</button>
+      <span id="addToWh-title">➕ إضافة نوع للمخزن</span>
+      <button class="modal-close" onclick="closeModal('addToWarehouseModal')">✕</button>
     </div>
 
     <div class="fg">
-      <label>الاسم</label>
-      <div class="iw"><span class="ic">🚛</span><input type="text" id="vt-name" placeholder="مثال: موتسيكل" oninput="updateVtPreview()"></div>
-    </div>
+      <label>النوع</label>
+      <div class="wh-picker__mode" style="margin-bottom:12px">
+        <button type="button" class="wh-picker__mode-btn active" data-mode="existing" onclick="setAddMode('existing')">📚 من الكتالوج</button>
+        <button type="button" class="wh-picker__mode-btn" data-mode="new" onclick="setAddMode('new')">✨ إنشاء نوع جديد</button>
+      </div>
 
-    <div class="fg">
-      <label>الأيقونة <span style="font-size:10px;color:var(--text-dim)">(emoji واحد)</span></label>
-      <div class="iw"><span class="ic">😀</span><input type="text" id="vt-icon" maxlength="4" placeholder="🏍️" oninput="updateVtPreview()"></div>
-    </div>
+      <!-- Existing type picker -->
+      <div id="addToWh-existing-wrap">
+        <div class="wh-picker__grid" id="addToWh-grid"></div>
+        <div class="wh-picker__hint" id="addToWh-hint">اختار نوع من الكتالوج</div>
+      </div>
 
-    <div class="fg">
-      <label>معدل التحميل في الساعة</label>
-      <div class="iw"><span class="ic">⏱️</span><input type="number" id="vt-capacity" min="1" max="50" placeholder="6"></div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">كم عربية من النوع ده تقدر تحمل في الساعة الواحدة</div>
-    </div>
-
-    <div class="fg">
-      <label>ترتيب الظهور</label>
-      <div class="iw"><span class="ic">🔢</span><input type="number" id="vt-order" min="0" placeholder="1"></div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">الأرقام الأصغر تظهر للعميل أولاً</div>
-    </div>
-
-    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;background:var(--dark3);border-radius:10px;border:1px solid var(--border);margin-bottom:14px">
-      <input type="checkbox" id="vt-active" checked style="width:18px;height:18px;cursor:pointer;accent-color:var(--gold)">
-      <span style="font-size:13px"><b>مفعّل</b> <span style="color:var(--text-dim);font-size:11px">— لو شيلت العلامة، النوع مش هيظهر للعميل في صفحة الحجز</span></span>
-    </label>
-
-    <!-- 📦 المخازن المتاح فيها هذا النوع -->
-    <div class="fg">
-      <label style="display:flex;align-items:center;justify-content:space-between">
-        <span>📦 المخازن المتاح فيها هذا النوع</span>
-      </label>
-      <div class="wh-picker">
-        <div class="wh-picker__mode" id="vt-wh-mode">
-          <button type="button" class="wh-picker__mode-btn active" data-mode="all"      onclick="setVehicleWhMode('all')">🌐 كل المخازن</button>
-          <button type="button" class="wh-picker__mode-btn"        data-mode="specific" onclick="setVehicleWhMode('specific')">📍 مخازن محددة</button>
+      <!-- New type fields -->
+      <div id="addToWh-new-wrap" style="display:none">
+        <div class="fg">
+          <label>اسم النوع</label>
+          <div class="iw"><span class="ic">🚛</span><input type="text" id="addToWh-new-name" placeholder="مثال: عجل"></div>
         </div>
-        <div class="wh-picker__grid disabled" id="vt-wh-grid"></div>
-        <div class="wh-picker__hint" id="vt-wh-hint">يتاح للعميل فى كل المخازن بدون استثناء</div>
+        <div class="fg">
+          <label>الأيقونة <span style="font-size:10px;color:var(--text-dim)">(emoji واحد)</span></label>
+          <div class="iw"><span class="ic">😀</span><input type="text" id="addToWh-new-icon" maxlength="4" placeholder="🚲"></div>
+        </div>
       </div>
     </div>
 
-    <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px">
-      <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">معاينة:</div>
-      <div id="vt-preview" style="font-size:14px;display:flex;align-items:center;gap:10px"></div>
+    <div class="fg">
+      <label>⏱️ معدل التحميل ساعى للمخزن ده</label>
+      <div class="iw"><span class="ic">⏱️</span><input type="number" id="addToWh-capacity" min="1" max="50" value="5" placeholder="5"></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">كم عربية فى الساعة فى المخزن ده تحديداً</div>
+    </div>
+
+    <div class="fg">
+      <label>🔢 ترتيب الظهور</label>
+      <div class="iw"><span class="ic">🔢</span><input type="number" id="addToWh-order" min="0" placeholder="1"></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">الأرقام الأصغر تظهر للعميل أولاً</div>
     </div>
 
     <div class="modal-btns">
-      <button class="modal-save" onclick="saveVehicleType()">💾 حفظ</button>
-      <button class="modal-cancel" onclick="closeModal('vehicleTypeModal')">إلغاء</button>
+      <button class="modal-save" onclick="confirmAddToWarehouse()">💾 إضافة</button>
+      <button class="modal-cancel" onclick="closeModal('addToWarehouseModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✏️ EDIT WAREHOUSE-TYPE MODAL -->
+<div class="modal-overlay" id="editWVTModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="editWVT-title">✏️ تعديل النوع</span>
+      <button class="modal-close" onclick="closeModal('editWVTModal')">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:14px;padding:14px;background:#0F0E0C;border:1px solid rgba(201,168,76,0.1);border-radius:13px;margin-bottom:16px">
+      <div id="editWVT-icon" style="font-size:32px;width:54px;height:54px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.15);border-radius:12px"></div>
+      <div>
+        <div id="editWVT-name" style="font-size:16px;font-weight:700;color:var(--gold-light);letter-spacing:0.3px"></div>
+        <div id="editWVT-wh" style="font-size:12px;color:var(--text-dim);margin-top:3px"></div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>⏱️ معدل التحميل ساعى</label>
+      <div class="iw"><span class="ic">⏱️</span><input type="number" id="editWVT-capacity" min="1" max="50"></div>
+    </div>
+
+    <div class="fg">
+      <label>🔢 ترتيب الظهور</label>
+      <div class="iw"><span class="ic">🔢</span><input type="number" id="editWVT-order" min="0"></div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-save" onclick="confirmEditWVT()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('editWVTModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- 📚 CATALOG MODAL -->
+<div class="modal-overlay" id="catalogModal">
+  <div class="modal wide">
+    <div class="modal-title">
+      <span>📚 الكتالوج العام للأنواع</span>
+      <button class="modal-close" onclick="closeModal('catalogModal')">✕</button>
+    </div>
+
+    <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:11px 14px;font-size:12px;color:#6faee8;line-height:1.7;margin-bottom:14px">
+      ℹ️ الكتالوج العام بيخزّن أسماء وأيقونات الأنواع. التعديل هنا بيأثر على كل المخازن وعلى الحجوزات الموجودة.
+    </div>
+
+    <div class="vt-catalog-list" id="catalog-list"></div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:6px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold-light);margin-bottom:8px">➕ إضافة نوع للكتالوج</div>
+      <div style="display:grid;grid-template-columns:1fr 80px auto;gap:8px;align-items:end">
+        <div>
+          <label style="display:block;font-size:11px;color:var(--text-dim);margin-bottom:4px">الاسم</label>
+          <input type="text" id="catalog-new-name" placeholder="مثال: عجل">
+        </div>
+        <div>
+          <label style="display:block;font-size:11px;color:var(--text-dim);margin-bottom:4px">الأيقونة</label>
+          <input type="text" id="catalog-new-icon" maxlength="4" placeholder="🚲" style="text-align:center">
+        </div>
+        <button class="vt-add-btn" onclick="addToCatalog()">➕ إضافة</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:6px">إضافة للكتالوج فقط — تخصيصه للمخزن من tab المخزن نفسه.</div>
+    </div>
+
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('catalogModal')">إغلاق</button>
     </div>
   </div>
 </div>
@@ -5985,335 +6152,499 @@ async function copyAllUnlinkedLinks(){
 let allVehicleTypes = [];
 let editVtId = null;
 
+// =========================================================
+// 🚚 VEHICLE TYPES per WAREHOUSE (refactored)
+// =========================================================
+let _vtState = {
+  warehouses: [],   // [{id, name}]
+  types: [],        // [{id, name, icon, is_active}]
+  wvts: [],         // [{id, warehouse_id, vehicle_type_id, capacity_per_hour, display_order, is_active}]
+  bookingCounts: {} // {"warehouse_id|vehicle_type_id": count}
+};
+let _currentVTTab = null;     // warehouse_id of active tab
+let _editWVTId    = null;
+let _addMode      = 'existing';  // 'existing' | 'new'
+let _addSelectedTypeId = null;   // id of type picked in "existing" mode
+
 async function loadVehicleTypes(){
-  document.getElementById('vt-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+  document.getElementById('vt-tabs').innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  document.getElementById('vt-tab-body').innerHTML = '';
   try{
-    const [r1, r2] = await Promise.all([
-      fetch(`${SB}/rest/v1/vehicle_types?select=*&order=display_order.asc,id.asc`,{headers:HDR}),
-      fetch(`${SB}/rest/v1/bookings?select=vehicle_type&status=neq.ملغي`,{headers:{...HDR,'Range':'0-9999'}})
+    const [r1, r2, r3, r4] = await Promise.all([
+      fetch(`${SB}/rest/v1/warehouses?select=id,name&order=id.asc`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/vehicle_types?select=id,name,icon,is_active&order=id.asc`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/warehouse_vehicle_types?select=*&order=display_order.asc`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/bookings?select=warehouse,vehicle_type&status=neq.${encodeURIComponent('ملغي')}`, {headers:{...HDR,'Range':'0-9999'}})
     ]);
-    allVehicleTypes = await r1.json();
-    const bookings = await r2.json();
+    _vtState.warehouses = await r1.json();
+    _vtState.types      = await r2.json();
+    _vtState.wvts       = await r3.json();
+    const bookings      = await r4.json();
 
-    const counts = {};
+    // Build (warehouse_name|vehicle_type_name) → count
+    const nameCounts = {};
     bookings.forEach(b => {
-      const t = b.vehicle_type || 'غير محدد';
-      counts[t] = (counts[t]||0) + 1;
+      const k = `${b.warehouse}|${b.vehicle_type}`;
+      nameCounts[k] = (nameCounts[k] || 0) + 1;
     });
+    // Map to (warehouse_id|vehicle_type_id) → count
+    _vtState.bookingCounts = {};
+    for(const w of _vtState.warehouses){
+      for(const vt of _vtState.types){
+        const c = nameCounts[`${w.name}|${vt.name}`] || 0;
+        if(c > 0) _vtState.bookingCounts[`${w.id}|${vt.id}`] = c;
+      }
+    }
+    allVehicleTypes = _vtState.types;  // backward compat for older code paths
 
-    renderVehicleTypes(counts);
+    // اختار default tab
+    if(_currentVTTab == null && _vtState.warehouses.length){
+      _currentVTTab = _vtState.warehouses[0].id;
+    }
+    renderVTTabs();
+    renderVTTabBody();
   }catch(e){
-    document.getElementById('vt-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';
+    document.getElementById('vt-tabs').innerHTML = '<div class="empty-txt">❌ خطأ في التحميل</div>';
   }
 }
 
-function renderVehicleTypes(counts){
-  if(!allVehicleTypes.length){
-    document.getElementById('vt-table').innerHTML='<div class="empty-txt">📭 مفيش أنواع — أضف أول نوع</div>';
+function renderVTTabs(){
+  const container = document.getElementById('vt-tabs');
+  if(!_vtState.warehouses.length){
+    container.innerHTML = '<div class="empty-txt">📭 مفيش مخازن — ضيف مخزن من تاب "إيميلات المخازن" الأول</div>';
+    return;
+  }
+  const iconFor = n => n === 'قليوب' ? '🏭' : n === 'السادات' ? '🏗️' : '📦';
+  container.innerHTML = _vtState.warehouses.map(w => {
+    const count = _vtState.wvts.filter(x => x.warehouse_id === w.id).length;
+    const active = (w.id === _currentVTTab) ? ' active' : '';
+    return `<button class="vt-tab${active}" onclick="switchVTTab(${w.id})">
+      <span>${iconFor(w.name)}</span>
+      <span>${w.name}</span>
+      <span class="vt-tab__count">${count}</span>
+    </button>`;
+  }).join('');
+}
+
+function switchVTTab(warehouseId){
+  _currentVTTab = warehouseId;
+  renderVTTabs();
+  renderVTTabBody();
+}
+
+function renderVTTabBody(){
+  const body = document.getElementById('vt-tab-body');
+  if(_currentVTTab == null){
+    body.innerHTML = '';
+    return;
+  }
+  const w = _vtState.warehouses.find(x => x.id === _currentVTTab);
+  if(!w){ body.innerHTML = ''; return; }
+
+  // Get all WVTs for this warehouse, sorted by display_order
+  const rows = _vtState.wvts
+    .filter(x => x.warehouse_id === _currentVTTab)
+    .map(x => ({...x, type: _vtState.types.find(t => t.id === x.vehicle_type_id)}))
+    .filter(x => x.type)
+    .sort((a,b) => (a.display_order||0) - (b.display_order||0) || a.id - b.id);
+
+  const toolbar = `
+    <div class="vt-tab-toolbar">
+      <div class="vt-tab-toolbar__title">📦 ${w.name} — ${rows.length} ${rows.length===1?'نوع':'أنواع'}</div>
+      <button class="vt-add-btn" onclick="openAddToWarehouseModal()">+ إضافة نوع للمخزن</button>
+    </div>`;
+
+  if(!rows.length){
+    body.innerHTML = toolbar + `
+      <div class="vt-empty">
+        <div class="vt-empty__icon">📭</div>
+        <div>مفيش أنواع متاحة فى ${w.name}</div>
+        <div class="vt-empty__hint">اضغط "إضافة نوع للمخزن" علشان تبدأ</div>
+      </div>`;
     return;
   }
 
-  let html = `<table><thead><tr>
-    <th style="width:36px">#</th>
-    <th style="width:60px;text-align:center">الأيقونة</th>
-    <th>الاسم</th>
-    <th style="text-align:center">معدل/ساعة</th>
-    <th style="text-align:center">الترتيب</th>
-    <th style="text-align:center">📦 المخازن</th>
-    <th style="text-align:center">الحالة</th>
-    <th style="text-align:center">حجوزات</th>
-    <th>تاريخ الإنشاء</th>
-    <th style="width:160px">إجراءات</th>
-  </tr></thead><tbody>`;
+  const cards = rows.map(r => {
+    const count = _vtState.bookingCounts[`${_currentVTTab}|${r.vehicle_type_id}`] || 0;
+    const inactiveAttr = r.is_active ? '' : ' data-inactive="1"';
+    const usage = count > 0 ? `<span class="vt-card__usage">📊 ${count} حجز</span>` : '';
+    const toggleIcon = r.is_active ? '🚫' : '✅';
+    const toggleTitle = r.is_active ? 'تعطيل' : 'تفعيل';
+    return `
+      <div class="vt-card"${inactiveAttr}>
+        <div class="vt-card__icon">${r.type.icon || '🚛'}</div>
+        <div class="vt-card__info">
+          <div class="vt-card__name">${r.type.name}</div>
+          <div class="vt-card__meta">
+            <span>⏱️ <b>${r.capacity_per_hour}</b> عربية/ساعة</span>
+            <span>🔢 ترتيب: <b>${r.display_order || 0}</b></span>
+            ${!r.is_active ? '<span style="color:#e88080">🚫 معطّل</span>' : ''}
+            ${usage}
+          </div>
+        </div>
+        <div class="vt-card__actions">
+          <button class="vt-card__btn edit" title="تعديل" onclick="openEditWVTModal(${r.id})">✏️</button>
+          <button class="vt-card__btn toggle" title="${toggleTitle}" onclick="toggleWVTActive(${r.id})">${toggleIcon}</button>
+          <button class="vt-card__btn del" title="حذف من المخزن" onclick="removeFromWarehouse(${r.id})">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
 
-  allVehicleTypes.forEach((v,i)=>{
-    const count = counts[v.name] || 0;
-    const dt = v.created_at ? new Date(v.created_at).toLocaleDateString('ar-EG') : '-';
-    const isActive = v.is_active !== false;
-    const nameEsc = (v.name||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');
-
-    // 📦 عرض المخازن (NULL أو [] = الكل)
-    const whCol = (!v.warehouses || !v.warehouses.length)
-      ? '<span class="wh-chip-all">🌐 الكل</span>'
-      : v.warehouses.map(w => `<span class="wh-chip">${w}</span>`).join(' ');
-
-    html += `<tr style="${!isActive ? 'opacity:0.55' : ''}">
-      <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
-      <td style="text-align:center;font-size:22px">${v.icon || '🚛'}</td>
-      <td><b style="font-size:13px">${v.name}</b></td>
-      <td style="text-align:center"><b style="color:var(--gold);font-size:14px">${v.capacity_per_hour}</b></td>
-      <td style="text-align:center;color:var(--text-dim)">${v.display_order || 0}</td>
-      <td style="text-align:center">${whCol}</td>
-      <td style="text-align:center">${isActive ? '<span class="badge active">مفعّل ✅</span>' : '<span class="badge inactive">معطّل 🚫</span>'}</td>
-      <td style="text-align:center"><b style="color:${count>0?'var(--gold)':'var(--text-dim)'}">${count}</b></td>
-      <td style="font-size:12px;color:var(--text-dim)">${dt}</td>
-      <td><div class="act-btns">
-        <button class="act-btn edit" onclick="openVehicleTypeModal(${v.id})" title="تعديل">✏️</button>
-        ${isActive
-          ? `<button class="act-btn silence" onclick="toggleVehicleTypeActive(${v.id},'${nameEsc}',false)" title="تعطيل">🚫</button>`
-          : `<button class="act-btn toggle" onclick="toggleVehicleTypeActive(${v.id},'${nameEsc}',true)" title="تفعيل">✅</button>`}
-        <button class="act-btn del" onclick="deleteVehicleType(${v.id},'${nameEsc}',${count})" title="حذف">🗑️</button>
-      </div></td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('vt-table').innerHTML = html;
+  body.innerHTML = toolbar + `<div class="vt-card-list">${cards}</div>`;
 }
 
-// 🏭 Warehouse picker state for vehicle type modal
-let _vtAllWarehouses = [];          // [{id, name}] — fetched on open
-let _vtSelectedWarehouses = new Set();  // Set<string> of names
+// ─── Add modal ───
+function openAddToWarehouseModal(){
+  if(_currentVTTab == null) return;
+  const w = _vtState.warehouses.find(x => x.id === _currentVTTab);
+  document.getElementById('addToWh-title').textContent = `➕ إضافة نوع لـ ${w.name}`;
+  _addMode = 'existing';
+  _addSelectedTypeId = null;
+  setAddMode('existing');
+  document.getElementById('addToWh-new-name').value = '';
+  document.getElementById('addToWh-new-icon').value = '🚛';
+  document.getElementById('addToWh-capacity').value = '5';
+  // ترتيب افتراضى = max + 1 فى المخزن ده
+  const inThisWh = _vtState.wvts.filter(x => x.warehouse_id === _currentVTTab);
+  const maxOrder = Math.max(0, ...inThisWh.map(x => x.display_order || 0));
+  document.getElementById('addToWh-order').value = String(maxOrder + 1);
+  renderAddExistingGrid();
+  document.getElementById('addToWarehouseModal').classList.add('show');
+}
 
-async function loadVehicleWarehousePicker(selected){
-  // selected: array of warehouse names OR null/empty for "all"
-  const grid = document.getElementById('vt-wh-grid');
-  if(!_vtAllWarehouses.length){
+function setAddMode(mode){
+  _addMode = mode;
+  document.querySelectorAll('#addToWarehouseModal .wh-picker__mode-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+  document.getElementById('addToWh-existing-wrap').style.display = mode === 'existing' ? 'block' : 'none';
+  document.getElementById('addToWh-new-wrap').style.display = mode === 'new' ? 'block' : 'none';
+}
+
+function renderAddExistingGrid(){
+  const grid = document.getElementById('addToWh-grid');
+  // الأنواع اللى مش موجودة فى المخزن ده (متاح إضافتها)
+  const inThisWh = new Set(_vtState.wvts.filter(x => x.warehouse_id === _currentVTTab).map(x => x.vehicle_type_id));
+  const candidates = _vtState.types.filter(t => !inThisWh.has(t.id));
+  if(!candidates.length){
+    grid.innerHTML = '<div class="vt-empty" style="grid-column:1/-1;padding:24px"><div class="vt-empty__icon">✅</div>كل الأنواع موجودة فى المخزن ده. اعمل "إنشاء نوع جديد"</div>';
+    document.getElementById('addToWh-hint').textContent = '';
+    return;
+  }
+  grid.innerHTML = candidates.map(t => {
+    const sel = (t.id === _addSelectedTypeId);
+    return `<div class="wh-pick${sel?' selected':''}" data-id="${t.id}" onclick="pickAddExistingType(${t.id})">
+      <div class="wh-pick__check">✓</div>
+      <div class="wh-pick__icon">${t.icon || '🚛'}</div>
+      <div class="wh-pick__name">${t.name}</div>
+    </div>`;
+  }).join('');
+  updateAddHint();
+}
+
+function pickAddExistingType(typeId){
+  _addSelectedTypeId = typeId;
+  document.querySelectorAll('#addToWh-grid .wh-pick').forEach(el => {
+    el.classList.toggle('selected', parseInt(el.dataset.id) === typeId);
+  });
+  updateAddHint();
+}
+
+function updateAddHint(){
+  const hint = document.getElementById('addToWh-hint');
+  if(_addSelectedTypeId){
+    const t = _vtState.types.find(x => x.id === _addSelectedTypeId);
+    hint.innerHTML = `✅ <b>${t.name}</b> هيتضاف`;
+    hint.style.color = 'var(--success)';
+  } else {
+    hint.textContent = 'اختار نوع من الكتالوج';
+    hint.style.color = 'var(--text-dim)';
+  }
+}
+
+async function confirmAddToWarehouse(){
+  if(_currentVTTab == null) return;
+  const capacity = parseInt(document.getElementById('addToWh-capacity').value);
+  const order    = parseInt(document.getElementById('addToWh-order').value) || 0;
+  if(isNaN(capacity) || capacity < 1){ alert('❌ معدل التحميل لازم رقم >= 1'); return; }
+
+  let typeId;
+
+  if(_addMode === 'existing'){
+    if(!_addSelectedTypeId){ alert('❌ اختار نوع من الكتالوج أولاً'); return; }
+    typeId = _addSelectedTypeId;
+  } else {
+    // إنشاء نوع جديد فى الكتالوج + إضافة للمخزن
+    const name = document.getElementById('addToWh-new-name').value.trim();
+    const icon = document.getElementById('addToWh-new-icon').value.trim() || '🚛';
+    if(!name){ alert('❌ اسم النوع مطلوب'); return; }
     try{
-      const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name&order=id.asc`, {headers:HDR});
-      _vtAllWarehouses = await r.json();
+      const res = await fetch(`${SB}/rest/v1/vehicle_types`, {
+        method: 'POST',
+        headers: {...HDR, 'Prefer': 'return=representation'},
+        body: JSON.stringify({name, icon, is_active: true})
+      });
+      if(!res.ok){
+        const err = await res.json().catch(()=>({}));
+        if(err.code === '23505'){ alert('❌ اسم النوع موجود فى الكتالوج بالفعل'); return; }
+        throw new Error(err.message || 'فشل الإضافة');
+      }
+      const created = await res.json();
+      typeId = Array.isArray(created) ? created[0].id : created.id;
     }catch(e){
-      _vtAllWarehouses = [];
+      alert('❌ خطأ فى إنشاء النوع: ' + e.message);
+      return;
     }
   }
-  if(!_vtAllWarehouses.length){
-    grid.innerHTML = '<div class="empty-txt" style="grid-column:1/-1">📭 مفيش مخازن مسجلة</div>';
+
+  // أضف للـ join table
+  try{
+    const res = await fetch(`${SB}/rest/v1/warehouse_vehicle_types`, {
+      method: 'POST',
+      headers: {...HDR, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({
+        warehouse_id: _currentVTTab,
+        vehicle_type_id: typeId,
+        capacity_per_hour: capacity,
+        display_order: order,
+        is_active: true
+      })
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      if(err.code === '23505'){ alert('❌ النوع ده موجود فى المخزن بالفعل'); return; }
+      throw new Error(err.message || 'فشل الإضافة');
+    }
+    closeModal('addToWarehouseModal');
+    await loadVehicleTypes();
+    alert('✅ تم إضافة النوع للمخزن');
+  }catch(e){
+    alert('❌ خطأ: ' + e.message);
+  }
+}
+
+// ─── Edit modal ───
+function openEditWVTModal(wvtId){
+  const wvt = _vtState.wvts.find(x => x.id === wvtId);
+  if(!wvt) return;
+  const type = _vtState.types.find(x => x.id === wvt.vehicle_type_id);
+  const w = _vtState.warehouses.find(x => x.id === wvt.warehouse_id);
+  _editWVTId = wvtId;
+  document.getElementById('editWVT-icon').textContent = type.icon || '🚛';
+  document.getElementById('editWVT-name').textContent = type.name;
+  document.getElementById('editWVT-wh').textContent   = `فى مخزن: ${w.name}`;
+  document.getElementById('editWVT-capacity').value   = wvt.capacity_per_hour;
+  document.getElementById('editWVT-order').value      = wvt.display_order || 0;
+  document.getElementById('editWVTModal').classList.add('show');
+}
+
+async function confirmEditWVT(){
+  if(_editWVTId == null) return;
+  const capacity = parseInt(document.getElementById('editWVT-capacity').value);
+  const order    = parseInt(document.getElementById('editWVT-order').value) || 0;
+  if(isNaN(capacity) || capacity < 1){ alert('❌ معدل التحميل لازم رقم >= 1'); return; }
+  try{
+    const res = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${_editWVTId}`, {
+      method: 'PATCH',
+      headers: {...HDR, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({capacity_per_hour: capacity, display_order: order})
+    });
+    if(!res.ok) throw new Error('فشل الحفظ');
+    closeModal('editWVTModal');
+    await loadVehicleTypes();
+    alert('✅ تم التعديل');
+  }catch(e){
+    alert('❌ خطأ: ' + e.message);
+  }
+}
+
+async function toggleWVTActive(wvtId){
+  const wvt = _vtState.wvts.find(x => x.id === wvtId);
+  if(!wvt) return;
+  const type = _vtState.types.find(x => x.id === wvt.vehicle_type_id);
+  const w = _vtState.warehouses.find(x => x.id === wvt.warehouse_id);
+  const newState = !wvt.is_active;
+
+  if(!newState){
+    // عند التعطيل: orphan check على حجوزات قائمة فى نفس (warehouse, type)
+    const todayStr = new Date().toISOString().slice(0,10);
+    const r = await fetch(
+      `${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(w.name)}&vehicle_type=eq.${encodeURIComponent(type.name)}&loading_date=gte.${todayStr}&status=neq.${encodeURIComponent('ملغي')}&select=id`,
+      {headers:HDR}
+    );
+    if(r.ok){
+      const list = await r.json();
+      if(list.length){
+        if(!confirm(`⚠️ "${type.name}" فى مخزن ${w.name} عنده ${list.length} حجز قائم.\n\nالتعطيل هيخلى العميل ميشوفش النوع ده هنا، لكن الحجوزات الموجودة هتفضل سليمة.\n\nأكمل؟`)) return;
+      }
+    }
+  }
+
+  try{
+    const res = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${wvtId}`, {
+      method: 'PATCH',
+      headers: {...HDR, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({is_active: newState})
+    });
+    if(!res.ok) throw new Error('فشل');
+    await loadVehicleTypes();
+  }catch(e){ alert('❌ خطأ: ' + e.message); }
+}
+
+async function removeFromWarehouse(wvtId){
+  const wvt = _vtState.wvts.find(x => x.id === wvtId);
+  if(!wvt) return;
+  const type = _vtState.types.find(x => x.id === wvt.vehicle_type_id);
+  const w = _vtState.warehouses.find(x => x.id === wvt.warehouse_id);
+
+  // Orphan check
+  const todayStr = new Date().toISOString().slice(0,10);
+  const r = await fetch(
+    `${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(w.name)}&vehicle_type=eq.${encodeURIComponent(type.name)}&loading_date=gte.${todayStr}&status=neq.${encodeURIComponent('ملغي')}&select=id,loading_date,time_slot`,
+    {headers:HDR}
+  );
+  if(r.ok){
+    const list = await r.json();
+    if(list.length){
+      const sample = list.slice(0,3).map(b => `${b.loading_date} ${b.time_slot}`).join('، ');
+      alert(`❌ مينفعش تشيل "${type.name}" من ${w.name}.\n\nفيه ${list.length} حجز قائم:\n${sample}${list.length>3?` وكمان ${list.length-3}`:''}\n\nلازم تلغى/تعدّل الحجوزات دى الأول، أو استخدم زرار "تعطيل" 🚫.`);
+      return;
+    }
+  }
+
+  if(!confirm(`🗑️ هتشيل "${type.name}" من مخزن ${w.name}؟\n\nالنوع هيفضل موجود فى الكتالوج العام، بس مش هيظهر للعميل فى المخزن ده تانى.`)) return;
+  try{
+    const res = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${wvtId}`, {
+      method: 'DELETE',
+      headers: HDR
+    });
+    if(!res.ok) throw new Error('فشل الحذف');
+    await loadVehicleTypes();
+    alert('✅ تم الحذف');
+  }catch(e){ alert('❌ خطأ: ' + e.message); }
+}
+
+// ─── Catalog modal ───
+async function openCatalogModal(){
+  // اضمن إن البيانات محمّلة
+  if(!_vtState.types.length) await loadVehicleTypes();
+  document.getElementById('catalog-new-name').value = '';
+  document.getElementById('catalog-new-icon').value = '🚛';
+  renderCatalog();
+  document.getElementById('catalogModal').classList.add('show');
+}
+
+function renderCatalog(){
+  const list = document.getElementById('catalog-list');
+  if(!_vtState.types.length){
+    list.innerHTML = '<div class="empty-txt">📭 الكتالوج فاضى</div>';
     return;
   }
-  _vtSelectedWarehouses = new Set(selected || []);
-  grid.innerHTML = _vtAllWarehouses.map(w => {
-    const sel = _vtSelectedWarehouses.has(w.name);
-    const icon = w.name === 'قليوب' ? '🏭' : w.name === 'السادات' ? '🏗️' : '📦';
+  list.innerHTML = _vtState.types.map(t => {
+    const inWh = _vtState.wvts.filter(x => x.vehicle_type_id === t.id);
+    const whNames = inWh.map(x => {
+      const w = _vtState.warehouses.find(y => y.id === x.warehouse_id);
+      return w ? w.name : '?';
+    });
+    const usage = whNames.length
+      ? whNames.map(n => `<span class="wh-chip">${n}</span>`).join(' ')
+      : '<span style="color:var(--text-dim);font-size:11px">مش موجود فى أى مخزن</span>';
     return `
-      <div class="wh-pick ${sel?'selected':''}" data-name="${w.name}" onclick="toggleVehicleWh('${w.name.replace(/'/g,"\\'")}')">
-        <div class="wh-pick__check">✓</div>
-        <div class="wh-pick__icon">${icon}</div>
-        <div class="wh-pick__name">${w.name}</div>
+      <div class="vt-cat-row">
+        <div class="vt-cat-row__icon">${t.icon || '🚛'}</div>
+        <div class="vt-cat-row__name">${t.name}</div>
+        <div class="vt-cat-row__usage" style="display:flex;gap:3px;flex-wrap:wrap">${usage}</div>
+        <button class="vt-cat-row__btn" title="تعديل الاسم والأيقونة" onclick="editCatalogItem(${t.id})" style="color:#7fb8e8;border-color:rgba(74,144,217,0.30)">✏️</button>
+        <button class="vt-cat-row__btn" title="حذف من الكتالوج" onclick="deleteCatalogItem(${t.id})" style="color:#e88080;border-color:rgba(224,85,85,0.30)">🗑️</button>
       </div>`;
   }).join('');
 }
 
-function toggleVehicleWh(name){
-  if(_vtSelectedWarehouses.has(name)) _vtSelectedWarehouses.delete(name);
-  else                                _vtSelectedWarehouses.add(name);
-  // Update UI
-  document.querySelectorAll('#vt-wh-grid .wh-pick').forEach(el => {
-    if(el.dataset.name === name){
-      el.classList.toggle('selected', _vtSelectedWarehouses.has(name));
-    }
-  });
-  updateVtWhHint();
-}
-
-function setVehicleWhMode(mode){
-  document.querySelectorAll('#vt-wh-mode .wh-picker__mode-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.mode === mode);
-  });
-  const grid = document.getElementById('vt-wh-grid');
-  if(mode === 'all'){
-    grid.classList.add('disabled');
-    _vtSelectedWarehouses.clear();
-    document.querySelectorAll('#vt-wh-grid .wh-pick').forEach(el => el.classList.remove('selected'));
-  } else {
-    grid.classList.remove('disabled');
-  }
-  updateVtWhHint();
-}
-
-function updateVtWhHint(){
-  const hint = document.getElementById('vt-wh-hint');
-  const activeMode = document.querySelector('#vt-wh-mode .wh-picker__mode-btn.active')?.dataset.mode;
-  if(activeMode === 'all'){
-    hint.innerHTML = 'يتاح للعميل فى كل المخازن بدون استثناء';
-    hint.style.color = 'var(--text-dim)';
-  } else {
-    const n = _vtSelectedWarehouses.size;
-    if(n === 0){
-      hint.innerHTML = '⚠️ اختار مخزن واحد على الأقل';
-      hint.style.color = 'var(--error)';
-    } else {
-      hint.innerHTML = `✅ يتاح للعميل فى <b>${n}</b> ${n===1?'مخزن':'مخازن'}`;
-      hint.style.color = 'var(--success)';
-    }
-  }
-}
-
-async function openVehicleTypeModal(id=null){
-  editVtId = id;
-  const isEdit = id !== null;
-  document.getElementById('vt-modal-title').textContent = isEdit ? '✏️ تعديل نوع العربية' : '➕ إضافة نوع عربية';
-
-  let currentWh = null;
-  if(isEdit){
-    const v = allVehicleTypes.find(x=>x.id===id);
-    if(!v) return;
-    document.getElementById('vt-name').value = v.name || '';
-    document.getElementById('vt-icon').value = v.icon || '🚛';
-    document.getElementById('vt-capacity').value = v.capacity_per_hour || '';
-    document.getElementById('vt-order').value = v.display_order || 0;
-    document.getElementById('vt-active').checked = v.is_active !== false;
-    currentWh = v.warehouses;
-  }else{
-    document.getElementById('vt-name').value = '';
-    document.getElementById('vt-icon').value = '🚛';
-    document.getElementById('vt-capacity').value = '5';
-    const maxOrder = Math.max(0, ...allVehicleTypes.map(x => x.display_order||0));
-    document.getElementById('vt-order').value = maxOrder + 1;
-    document.getElementById('vt-active').checked = true;
-  }
-
-  // 📦 Warehouse picker: default = "all"، otherwise specific selection
-  const mode = (currentWh && currentWh.length) ? 'specific' : 'all';
-  await loadVehicleWarehousePicker(currentWh);
-  setVehicleWhMode(mode);
-
-  updateVtPreview();
-  document.getElementById('vehicleTypeModal').classList.add('show');
-}
-
-function updateVtPreview(){
-  const name = (document.getElementById('vt-name').value || '').trim() || 'اسم النوع';
-  const icon = (document.getElementById('vt-icon').value || '').trim() || '🚛';
-  document.getElementById('vt-preview').innerHTML =
-    `<span style="font-size:24px">${icon}</span><b style="font-size:14px">${name}</b>`;
-}
-
-async function saveVehicleType(){
-  const name = document.getElementById('vt-name').value.trim();
-  const icon = document.getElementById('vt-icon').value.trim() || '🚛';
-  const capacity = parseInt(document.getElementById('vt-capacity').value);
-  const order = parseInt(document.getElementById('vt-order').value) || 0;
-  const isActive = document.getElementById('vt-active').checked;
-
-  if(!name){alert('من فضلك أدخل اسم النوع');return;}
-  if(isNaN(capacity) || capacity<1){alert('معدل التحميل لازم يكون رقم >= 1');return;}
-
-  // 📦 Warehouse selection
-  const mode = document.querySelector('#vt-wh-mode .wh-picker__mode-btn.active')?.dataset.mode;
-  let warehouses;
-  if(mode === 'all'){
-    warehouses = null;  // = الكل
-  } else {
-    if(_vtSelectedWarehouses.size === 0){
-      alert('❌ اختار مخزن واحد على الأقل فى وضع "مخازن محددة"');
-      return;
-    }
-    warehouses = Array.from(_vtSelectedWarehouses);
-  }
-
-  const isEdit = editVtId !== null;
-  const oldType = isEdit ? allVehicleTypes.find(x => x.id === editVtId) : null;
-
-  // 🛡️ Orphan check: لو edit و قلّلنا المخازن، افحص هل فيه حجوزات موجودة فى مخزن اتشال
-  if(isEdit && oldType){
-    const oldWhSet = new Set(oldType.warehouses || []);   // empty = ALL
-    const newWhSet = (warehouses === null) ? null : new Set(warehouses);
-    // مخازن كانت متاحة وبعد التعديل اتشالت
-    let removedWh = [];
-    if(newWhSet !== null){
-      if(oldWhSet.size === 0){
-        // كانت "الكل" والآن قيّدنا — أى مخزن مش فى newWhSet يبقى ممنوع
-        // محتاج نعرف كل المخازن الموجودة
-        removedWh = _vtAllWarehouses.map(w => w.name).filter(n => !newWhSet.has(n));
-      } else {
-        removedWh = [...oldWhSet].filter(n => !newWhSet.has(n));
-      }
-    }
-    if(removedWh.length){
-      const todayStr = new Date().toISOString().slice(0,10);
-      const oldName = oldType.name;
-      const r = await fetch(
-        `${SB}/rest/v1/bookings?vehicle_type=eq.${encodeURIComponent(oldName)}&warehouse=in.(${removedWh.map(w => `"${encodeURIComponent(w)}"`).join(',')})&loading_date=gte.${todayStr}&status=neq.${encodeURIComponent('ملغي')}&select=id,loading_date,warehouse,time_slot`,
-        {headers:HDR}
-      );
-      if(r.ok){
-        const conflicts = await r.json();
-        if(conflicts.length){
-          const sample = conflicts.slice(0,3).map(c => `${c.loading_date} (${c.warehouse} · ${c.time_slot})`).join('، ');
-          const more = conflicts.length > 3 ? ` وكمان ${conflicts.length - 3} حجز` : '';
-          alert(
-            `❌ مش ممكن تشيل المخازن دى من النوع "${oldName}".\n\n` +
-            `فيه ${conflicts.length} حجز قائم فى المخازن: ${removedWh.join('، ')}\n\n` +
-            `${sample}${more}\n\n` +
-            `لازم تلغى أو تعدّل الحجوزات دى الأول.`
-          );
-          return;
-        }
-      }
-    }
-  }
-
-  const body = {name, icon, capacity_per_hour: capacity, display_order: order, is_active: isActive, warehouses};
+async function editCatalogItem(typeId){
+  const t = _vtState.types.find(x => x.id === typeId);
+  if(!t) return;
+  const newName = prompt(`✏️ اسم النوع (يأثر على كل المخازن والحجوزات الموجودة):`, t.name);
+  if(newName === null) return;
+  const trimmed = newName.trim();
+  if(!trimmed){ alert('❌ الاسم مينفعش يكون فاضى'); return; }
+  const newIcon = prompt('الأيقونة (emoji واحد):', t.icon || '🚛');
+  if(newIcon === null) return;
+  const iconTrim = newIcon.trim() || '🚛';
 
   try{
-    let oldName = null;
-    if(isEdit){
-      if(oldType && oldType.name !== name) oldName = oldType.name;
-    }
-
-    const url = isEdit ? `${SB}/rest/v1/vehicle_types?id=eq.${editVtId}` : `${SB}/rest/v1/vehicle_types`;
-    const method = isEdit ? 'PATCH' : 'POST';
-    const res = await fetch(url, {
-      method,
-      headers:{...HDR,'Prefer':'return=minimal'},
-      body: JSON.stringify(body)
+    // PATCH the catalog
+    const res = await fetch(`${SB}/rest/v1/vehicle_types?id=eq.${typeId}`, {
+      method: 'PATCH',
+      headers: {...HDR, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({name: trimmed, icon: iconTrim})
     });
-
-    if(res.ok){
-      // Migrate old bookings if name changed
-      if(oldName){
-        await fetch(`${SB}/rest/v1/bookings?vehicle_type=eq.${encodeURIComponent(oldName)}`,{
-          method:'PATCH',
-          headers:{...HDR,'Prefer':'return=minimal'},
-          body: JSON.stringify({vehicle_type: name})
-        });
-      }
-      closeModal('vehicleTypeModal');
-      await loadVehicleTypes();
-      alert(isEdit ? '✅ تم التعديل' : '✅ تم إضافة النوع');
-    }else{
+    if(!res.ok){
       const err = await res.json().catch(()=>({}));
-      if(err.code === '23505') alert('❌ اسم النوع مسجل بالفعل — اختر اسم مختلف');
-      else alert('❌ خطأ في الحفظ: '+(err.message||''));
+      if(err.code === '23505'){ alert('❌ الاسم ده موجود فى الكتالوج بالفعل'); return; }
+      throw new Error(err.message || 'فشل');
     }
-  }catch(e){
-    alert('❌ خطأ في الاتصال');
-  }
-}
-
-async function toggleVehicleTypeActive(id, name, newState){
-  const action = newState ? 'تفعيل' : 'تعطيل';
-  const icon = newState ? '✅' : '🚫';
-  const danger = !newState;
-  const msg = newState
-    ? `هتفعّل نوع "${name}"؟\n\nهيظهر للعميل في صفحة الحجز.`
-    : `هتعطّل نوع "${name}"؟\n\nالنوع مش هيظهر للعميل في صفحة الحجز، لكن الحجوزات السابقة بنوعه تفضل سليمة.`;
-
-  showConfirm(icon, action+' نوع العربية', msg, danger, async()=>{
-    try{
-      const res = await fetch(`${SB}/rest/v1/vehicle_types?id=eq.${id}`,{
-        method:'PATCH',
-        headers:{...HDR,'Prefer':'return=minimal'},
-        body: JSON.stringify({is_active: newState})
+    // Migrate existing bookings if name changed
+    if(t.name !== trimmed){
+      await fetch(`${SB}/rest/v1/bookings?vehicle_type=eq.${encodeURIComponent(t.name)}`, {
+        method: 'PATCH',
+        headers: {...HDR, 'Prefer': 'return=minimal'},
+        body: JSON.stringify({vehicle_type: trimmed})
       });
-      if(res.ok) loadVehicleTypes();
-      else alert('❌ خطأ في الحفظ');
-    }catch(e){alert('❌ خطأ في الاتصال');}
-  });
+    }
+    await loadVehicleTypes();
+    renderCatalog();
+    alert('✅ تم التعديل');
+  }catch(e){ alert('❌ خطأ: ' + e.message); }
 }
 
-async function deleteVehicleType(id, name, count){
-  if(count > 0){
-    alert(`❌ مينفعش تحذف "${name}"\n\nفيه ${count} حجز بالنوع ده. السيستم بيرفض حذف أنواع عليها حركة.\n\nلو عاوز توقفه عن الظهور للعملاء، استخدم زرار 🚫 (تعطيل) بدل الحذف.`);
+async function deleteCatalogItem(typeId){
+  const t = _vtState.types.find(x => x.id === typeId);
+  if(!t) return;
+  // ميتمسحش لو موجود فى أى مخزن
+  const inWh = _vtState.wvts.filter(x => x.vehicle_type_id === typeId);
+  if(inWh.length){
+    alert(`❌ مينفعش تحذف "${t.name}" من الكتالوج.\n\nهو لسه موجود فى ${inWh.length} مخزن. شيله من كل المخازن الأول من tab كل مخزن.`);
     return;
   }
+  // Orphan check على حجوزات قديمة
+  const r = await fetch(`${SB}/rest/v1/bookings?vehicle_type=eq.${encodeURIComponent(t.name)}&select=id&limit=1`, {headers:HDR});
+  if(r.ok){
+    const list = await r.json();
+    if(list.length){
+      if(!confirm(`⚠️ فيه حجوزات قديمة بالنوع "${t.name}". الحذف من الكتالوج هيخلى الحجوزات دى تشير لاسم نوع مش موجود.\n\nأكمل برغم ذلك؟`)) return;
+    }
+  }
+  if(!confirm(`🗑️ هتمسح "${t.name}" من الكتالوج تماماً؟`)) return;
+  try{
+    const res = await fetch(`${SB}/rest/v1/vehicle_types?id=eq.${typeId}`, {method:'DELETE', headers:HDR});
+    if(!res.ok) throw new Error('فشل الحذف');
+    await loadVehicleTypes();
+    renderCatalog();
+    alert('✅ تم الحذف من الكتالوج');
+  }catch(e){ alert('❌ خطأ: ' + e.message); }
+}
 
-  showConfirm('🗑️','حذف نوع العربية',`هتحذف نوع "${name}"؟ مش هتقدر ترجع!`,true,async()=>{
-    try{
-      const res = await fetch(`${SB}/rest/v1/vehicle_types?id=eq.${id}`,{method:'DELETE',headers:HDR});
-      if(res.ok) loadVehicleTypes();
-      else alert('❌ خطأ في الحذف');
-    }catch(e){alert('❌ خطأ في الاتصال');}
-  });
+async function addToCatalog(){
+  const name = document.getElementById('catalog-new-name').value.trim();
+  const icon = document.getElementById('catalog-new-icon').value.trim() || '🚛';
+  if(!name){ alert('❌ اسم النوع مطلوب'); return; }
+  try{
+    const res = await fetch(`${SB}/rest/v1/vehicle_types`, {
+      method: 'POST',
+      headers: {...HDR, 'Prefer': 'return=minimal'},
+      body: JSON.stringify({name, icon, is_active: true})
+    });
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      if(err.code === '23505'){ alert('❌ الاسم موجود بالفعل'); return; }
+      throw new Error(err.message || 'فشل');
+    }
+    document.getElementById('catalog-new-name').value = '';
+    document.getElementById('catalog-new-icon').value = '🚛';
+    await loadVehicleTypes();
+    renderCatalog();
+    alert('✅ تم الإضافة للكتالوج. لتخصيصه لمخزن، روح tab المخزن واضغط "+ إضافة نوع للمخزن"');
+  }catch(e){ alert('❌ خطأ: ' + e.message); }
 }
 
 // =================== SCHEDULE ===================

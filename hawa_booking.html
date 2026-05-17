@@ -602,8 +602,24 @@ async function ensureSettingsLoaded(force=false){
 async function loadVehicleTypesData(force=false){
   if(allVehicleTypes.length && !force) return allVehicleTypes;
   try{
-    const r = await fetch(`${SB}/rest/v1/vehicle_types?select=*&is_active=eq.true&order=display_order.asc,id.asc`, {headers: HDR});
-    allVehicleTypes = await r.json();
+    // الجلب من الـ join table مع join للـ vehicle_types catalog
+    const r = await fetch(
+      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
+      {headers: HDR}
+    );
+    const data = await r.json();
+    // Flatten + filter: نسيب اللى الـ wvt active + الـ type active
+    allVehicleTypes = data
+      .filter(x => x.vehicle_types && x.vehicle_types.is_active !== false && x.warehouses)
+      .map(x => ({
+        id: x.vehicle_type_id,
+        name: x.vehicle_types.name,
+        icon: x.vehicle_types.icon,
+        capacity_per_hour: x.capacity_per_hour,
+        display_order: x.display_order,
+        warehouse_name: x.warehouses.name,
+        warehouse_id: x.warehouse_id
+      }));
   }catch(e){}
   return allVehicleTypes;
 }
@@ -615,20 +631,19 @@ function renderVehicleOptions(){
     container.innerHTML = '<div class="slots-loading" style="grid-column:1/-1">⚠️ مفيش أنواع متاحة دلوقتي</div>';
     return;
   }
-  // 📦 فلتر حسب المخزن المختار: NULL/empty warehouses = متاح فى الكل
-  const visibleTypes = allVehicleTypes.filter(v => {
-    if(!v.warehouses || !v.warehouses.length) return true;
-    return v.warehouses.includes(bk.warehouse);
-  });
+  // 📦 فلتر للـ warehouse المختار
+  const visibleTypes = allVehicleTypes.filter(v => v.warehouse_name === bk.warehouse);
   if(!visibleTypes.length){
     container.innerHTML = `<div class="slots-loading" style="grid-column:1/-1">😞 مفيش أنواع عربيات متاحة فى مخزن ${bk.warehouse} دلوقتى</div>`;
     return;
   }
+  // Sort by display_order
+  visibleTypes.sort((a,b) => (a.display_order||0) - (b.display_order||0) || a.id - b.id);
   let html = '';
   visibleTypes.forEach(v => {
     const nameEsc = (v.name||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
     const cap = v.capacity_per_hour || 5;
-    html += `<div class="opt" id="opt-v-${v.id}" onclick="pickVehicle('${nameEsc}',${cap},this)"><div class="ic">${v.icon||'🚛'}</div><div class="lb">${v.name}</div></div>`;
+    html += `<div class="opt" data-name="${nameEsc}" onclick="pickVehicle('${nameEsc}',${cap},this)"><div class="ic">${v.icon||'🚛'}</div><div class="lb">${v.name}</div></div>`;
   });
   container.innerHTML = html;
 }
@@ -1326,7 +1341,9 @@ function startEdit(b) {
   bk.slot      = b.time_slot;
   bk.count     = b.count;
   // جيب الـ capacity من allVehicleTypes (اللى محمّلة من DB)
-  const veh = (allVehicleTypes || []).find(v => v.name === b.vehicle_type);
+  // جيب الـ capacity من الـ join data — لازم warehouse + type match
+  const veh = (allVehicleTypes || []).find(v => v.name === b.vehicle_type && v.warehouse_name === b.warehouse)
+           || (allVehicleTypes || []).find(v => v.name === b.vehicle_type); // fallback لو warehouse مش متاح
   bk.cap       = veh ? (veh.capacity_per_hour || 5) : 6;
   bk.remaining = 10;
   bk.permit    = b.permit_number || null;
@@ -1337,9 +1354,10 @@ function startEdit(b) {
             || document.getElementById('opt-w-' + b.warehouse);  // fallback لأى hardcoded قديم
   if (wOpt) { wOpt.classList.add('sel'); document.getElementById('b1').disabled = false; }
 
-  // Pre-select النوع
+  // Pre-select النوع (يستخدم data-name علشان أى نوع جديد يشتغل تلقائياً)
   document.querySelectorAll('#s2 .opt').forEach(o => o.classList.remove('sel'));
-  const vOpt = document.getElementById('opt-v-' + b.vehicle_type);
+  const vOpt = document.querySelector(`#s2 .opt[data-name="${(b.vehicle_type||'').replace(/"/g,'\\"')}"]`)
+            || document.getElementById('opt-v-' + b.vehicle_type);  // fallback
   if (vOpt) { vOpt.classList.add('sel'); document.getElementById('b2').disabled = false; }
 
   // بانر التعديل (يعرض الـ seq_number لو موجود، وإلا الـ id)
