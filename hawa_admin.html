@@ -1883,26 +1883,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
       <!-- Working Hours -->
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
-        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">⏰ ساعات العمل والحجز</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px">
-          <div>
-            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">بداية يوم العمل (بالساعة)</label>
-            <input type="number" id="set-work-start" min="0" max="23" placeholder="مثال: 8" oninput="updateSlotsPreview()" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
-            <div style="font-size:11px;color:#9A9590;margin-top:6px">8 = 8 صباحاً</div>
-          </div>
-          <div>
-            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">نهاية يوم العمل (بالساعة)</label>
-            <input type="number" id="set-work-end" min="1" max="24" placeholder="مثال: 16" oninput="updateSlotsPreview()" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
-            <div style="font-size:11px;color:#9A9590;margin-top:6px">16 = 4 مساءً (آخر slot 3-4)</div>
-          </div>
-          <div>
-            <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">قفل الحجز نفس اليوم بعد الساعة</label>
-            <input type="number" id="set-cutoff" min="0" max="24" placeholder="مثال: 15" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:48px">
-            <div style="font-size:11px;color:#9A9590;margin-top:6px">15 = 3 مساءً، بعدها مينفعش حجز نفس اليوم</div>
-          </div>
-        </div>
-        <div style="margin-top:16px;padding:12px 14px;background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;font-size:13px;color:#7fb8e8;line-height:1.7">
-          📋 <b>المواعيد الناتجة:</b> <span id="slots-preview" style="color:var(--gold);font-weight:700">—</span>
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">⏰ ساعات العمل والحجز <span style="font-size:11px;color:#9A9590;font-weight:400">— لكل مخزن لوحده</span></div>
+        <div id="warehouse-hours-container">
+          <div class="loading-txt">⏳ جارى التحميل...</div>
         </div>
       </div>
 
@@ -3365,9 +3348,9 @@ async function loadSettings(){
     const map = {};
     data.forEach(s => map[s.key] = s.value);
 
-    document.getElementById('set-work-start').value  = map.working_hour_start || '8';
-    document.getElementById('set-work-end').value    = map.working_hour_end   || '16';
-    document.getElementById('set-cutoff').value      = map.daily_cutoff_hour  || '15';
+    // ⏰ ساعات العمل دلوقتى لكل مخزن لوحده — يتـ load من جدول warehouses
+    loadWarehouseHours();
+
     document.getElementById('set-permit-min').value  = map.permit_min || '14000';
     document.getElementById('set-permit-max').value  = map.permit_max || '15000';
     document.getElementById('set-header').value      = map.broadcast_header || '';
@@ -3461,10 +3444,63 @@ function updateMessagePreview(){
   document.getElementById('set-preview').textContent = preview;
 }
 
-function updateSlotsPreview(){
-  const ws = parseInt(document.getElementById('set-work-start').value);
-  const we = parseInt(document.getElementById('set-work-end').value);
-  const out = document.getElementById('slots-preview');
+// 🏭 Per-Warehouse working hours
+let _warehouseHoursCache = [];
+
+async function loadWarehouseHours(){
+  const container = document.getElementById('warehouse-hours-container');
+  try{
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour&order=id.asc`,{headers:HDR});
+    const data = await r.json();
+    _warehouseHoursCache = data;
+    if(!data.length){
+      container.innerHTML = '<div class="empty-txt">📭 مفيش مخازن — اضف مخزن من تاب "إيميلات المخازن" الأول</div>';
+      return;
+    }
+    container.innerHTML = data.map(w => renderWarehouseHoursCard(w)).join('');
+    // Update slots preview لكل مخزن
+    data.forEach(w => updateWarehouseSlotsPreview(w.id));
+  }catch(e){
+    container.innerHTML = '<div class="empty-txt">❌ خطأ في تحميل ساعات المخازن</div>';
+  }
+}
+
+function renderWarehouseHoursCard(w){
+  const icon = w.name === 'قليوب' ? '🏭' : w.name === 'السادات' ? '🏗️' : '📦';
+  return `
+    <div style="background:#0E0E0E;border:1px solid #2A2620;border-radius:14px;padding:18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(201,168,76,0.1)">
+        <span style="font-size:20px">${icon}</span>
+        <span style="font-size:15px;font-weight:700;color:var(--gold)">${w.name}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">بداية يوم العمل</label>
+          <input type="number" id="wh-ws-${w.id}" value="${w.working_hour_start ?? 8}" min="0" max="23" oninput="updateWarehouseSlotsPreview(${w.id})" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
+          <div style="font-size:11px;color:#9A9590;margin-top:4px">8 = 8 صباحاً</div>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">نهاية يوم العمل</label>
+          <input type="number" id="wh-we-${w.id}" value="${w.working_hour_end ?? 16}" min="1" max="24" oninput="updateWarehouseSlotsPreview(${w.id})" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
+          <div style="font-size:11px;color:#9A9590;margin-top:4px">16 = 4 مساءً</div>
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">قفل الحجز نفس اليوم</label>
+          <input type="number" id="wh-co-${w.id}" value="${w.daily_cutoff_hour ?? 15}" min="0" max="24" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
+          <div style="font-size:11px;color:#9A9590;margin-top:4px">15 = 3 مساءً</div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px 12px;background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:8px;font-size:12px;color:#7fb8e8;line-height:1.7">
+        📋 <b>المواعيد:</b> <span id="slots-preview-${w.id}" style="color:var(--gold);font-weight:700">—</span>
+      </div>
+    </div>`;
+}
+
+function updateWarehouseSlotsPreview(whId){
+  const ws = parseInt(document.getElementById('wh-ws-'+whId)?.value);
+  const we = parseInt(document.getElementById('wh-we-'+whId)?.value);
+  const out = document.getElementById('slots-preview-'+whId);
+  if(!out) return;
   if(isNaN(ws) || isNaN(we) || we <= ws){
     out.textContent = '— أدخل أرقام صحيحة';
     return;
@@ -3472,17 +3508,50 @@ function updateSlotsPreview(){
   const slots = [];
   for(let h = ws; h < we; h++){
     const next = h + 1;
-    // Convert 24h → 12h-friendly display
     const fmt = x => x === 0 ? '12' : x > 12 ? String(x - 12) : String(x);
     slots.push(`${fmt(h)}–${fmt(next)}`);
   }
   out.textContent = `${slots.length} مواعيد: ${slots.join(' / ')}`;
 }
 
+async function saveWarehouseHours(){
+  // اجمع القيم لكل مخزن وحدّث الـ DB
+  const updates = [];
+  for(const w of _warehouseHoursCache){
+    const ws = parseInt(document.getElementById('wh-ws-'+w.id)?.value);
+    const we = parseInt(document.getElementById('wh-we-'+w.id)?.value);
+    const co = parseInt(document.getElementById('wh-co-'+w.id)?.value);
+    if(isNaN(ws) || ws<0 || ws>23) throw new Error(`❌ بداية يوم العمل لـ${w.name} غلط`);
+    if(isNaN(we) || we<1 || we>24) throw new Error(`❌ نهاية يوم العمل لـ${w.name} غلط`);
+    if(we <= ws) throw new Error(`❌ نهاية العمل لازم تكون أكبر من البداية فى ${w.name}`);
+    if(isNaN(co) || co<0 || co>24) throw new Error(`❌ ساعة القفل لـ${w.name} غلط`);
+    if(co < ws || co > we) throw new Error(`❌ ساعة القفل لازم تكون بين بداية ونهاية اليوم فى ${w.name}`);
+    updates.push({id:w.id, ws, we, co});
+  }
+  // PATCH each warehouse
+  for(const u of updates){
+    await fetch(`${SB}/rest/v1/warehouses?id=eq.${u.id}`,{
+      method:'PATCH',
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        working_hour_start: u.ws,
+        working_hour_end:   u.we,
+        daily_cutoff_hour:  u.co
+      })
+    });
+  }
+}
+
 async function saveSettings(){
-  const ws    = parseInt(document.getElementById('set-work-start').value);
-  const we    = parseInt(document.getElementById('set-work-end').value);
-  const co    = parseInt(document.getElementById('set-cutoff').value);
+  // ⏰ ساعات العمل دلوقتى لكل مخزن لوحده — تتحفظ فى جدول warehouses
+  // (مش فى app_settings زى الأول)
+  try {
+    await saveWarehouseHours();
+  } catch(e) {
+    alert(e.message);
+    return;
+  }
+
   const pmin  = parseInt(document.getElementById('set-permit-min').value);
   const pmax  = parseInt(document.getElementById('set-permit-max').value);
   const header = document.getElementById('set-header').value;
@@ -3496,11 +3565,6 @@ async function saveSettings(){
     .map(cb => cb.dataset.day).join(',');
 
   // Validations
-  if(isNaN(ws) || ws<0 || ws>23){alert('❌ ساعة بداية العمل غير صحيحة (0-23)');return;}
-  if(isNaN(we) || we<1 || we>24){alert('❌ ساعة نهاية العمل غير صحيحة (1-24)');return;}
-  if(we <= ws){alert('❌ ساعة نهاية العمل لازم تكون أكبر من ساعة البداية');return;}
-  if(isNaN(co) || co<0 || co>24){alert('❌ ساعة القفل غير صحيحة');return;}
-  if(co < ws || co > we){alert('❌ ساعة القفل لازم تكون بين بداية ونهاية يوم العمل');return;}
   if(isNaN(pmin) || isNaN(pmax)){alert('❌ نطاق الأذون غير صحيح');return;}
   if(pmin >= pmax){alert('❌ أقل رقم إذن لازم يكون أصغر من أعلى رقم');return;}
 
@@ -3515,9 +3579,6 @@ async function saveSettings(){
   }
 
   const updates = [
-    ['working_hour_start', String(ws)],
-    ['working_hour_end',   String(we)],
-    ['daily_cutoff_hour',  String(co)],
     ['permit_min',         String(pmin)],
     ['permit_max',         String(pmax)],
     ['broadcast_header',   header],
