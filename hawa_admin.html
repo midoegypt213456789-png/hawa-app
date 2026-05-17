@@ -1451,7 +1451,53 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   text-align:center;line-height:1.6;letter-spacing:0.2px;
 }
 
-/* ── Warehouse availability chips (in vehicle types table) ── */
+/* ── Rule modal: effective_from block (auto-suggest) ── */
+.rule-effective-block{
+  background:linear-gradient(180deg,rgba(74,144,217,0.06) 0%,rgba(74,144,217,0.015) 100%);
+  border:1.5px solid rgba(74,144,217,0.30);border-radius:13px;padding:14px 16px;
+  animation:wh-fade-slide-down 0.35s ease-out;
+}
+.rule-effective-block__head{
+  display:flex;align-items:center;gap:10px;margin-bottom:11px;
+  padding-bottom:10px;border-bottom:1px solid rgba(74,144,217,0.15);
+}
+.rule-effective-block__icon{
+  width:30px;height:30px;border-radius:8px;
+  background:linear-gradient(135deg,rgba(74,144,217,0.18) 0%,rgba(74,144,217,0.06) 100%);
+  border:1px solid rgba(74,144,217,0.32);
+  display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;
+}
+.rule-effective-block__title{flex:1;font-size:13px;font-weight:700;color:#a0c8f0;letter-spacing:0.3px;}
+.rule-effective-block__auto{
+  background:rgba(201,168,76,0.10);border:1px solid rgba(201,168,76,0.30);
+  color:var(--gold-light);padding:6px 11px;border-radius:8px;font-size:11px;font-weight:700;
+  cursor:pointer;font-family:Cairo,sans-serif;letter-spacing:0.3px;
+  transition:all 0.2s ease;white-space:nowrap;
+}
+.rule-effective-block__auto:hover{
+  background:rgba(201,168,76,0.18);border-color:rgba(201,168,76,0.55);
+}
+.rule-effective-block input[type="date"]{
+  width:100%;background:#161514;border:1.5px solid #3A3530;color:var(--text);
+  padding:11px 13px;font-size:14px;font-weight:600;border-radius:10px;
+  font-family:Cairo,sans-serif;outline:none;
+  transition:border-color 0.25s ease,box-shadow 0.25s ease;
+}
+.rule-effective-block input[type="date"]:focus{
+  border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.12);
+}
+.rule-effective-block__hint{
+  margin-top:8px;padding:8px 11px;border-radius:7px;
+  font-size:11.5px;line-height:1.7;
+  background:rgba(74,144,217,0.06);color:#9fc7ee;
+}
+.rule-effective-block__hint.warn{
+  background:rgba(224,135,58,0.08);color:#e0b380;
+}
+.rule-effective-block__hint.danger{
+  background:rgba(224,85,85,0.08);color:#ee9090;
+}
+.rule-effective-block__hint b{color:var(--gold-light);font-weight:700;}
 .wh-chip{
   display:inline-flex;align-items:center;gap:5px;
   background:linear-gradient(135deg,rgba(201,168,76,0.10) 0%,rgba(201,168,76,0.04) 100%);
@@ -1978,7 +2024,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
         <div class="fg" id="rule-dow-wrap">
           <label>اليوم</label>
-          <select id="rule-dow">
+          <select id="rule-dow" onchange="recomputeRuleEffectiveFrom()">
             <option value="0">الأحد</option>
             <option value="1">الاثنين</option>
             <option value="2">الثلاثاء</option>
@@ -2010,12 +2056,12 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <div class="rule-hours-block__grid">
               <div>
                 <label>من ساعة</label>
-                <input type="number" id="rule-start-hour" min="0" max="23" placeholder="—">
+                <input type="number" id="rule-start-hour" min="0" max="23" placeholder="—" onchange="recomputeRuleEffectiveFrom()">
                 <div class="hint">24 ساعة · 14 = 2 ظهراً</div>
               </div>
               <div>
                 <label>إلى ساعة</label>
-                <input type="number" id="rule-end-hour" min="1" max="24" placeholder="—">
+                <input type="number" id="rule-end-hour" min="1" max="24" placeholder="—" onchange="recomputeRuleEffectiveFrom()">
                 <div class="hint">24 ساعة · 15 = 3 عصراً</div>
               </div>
             </div>
@@ -2023,6 +2069,19 @@ tr:hover td{background:rgba(201,168,76,0.03);}
               💡 مثال: <b>الجمعة</b> + من <b>14</b> إلى <b>15</b> = صلاة الجمعة، كل أسبوع يقفل slot 2:00–3:00 بس<br>
               <span style="opacity:0.75">سيب الخانتين فاضيين لقفل اليوم كله</span>
             </div>
+          </div>
+        </div>
+
+        <!-- 📅 يطبق من تاريخ (للـ weekly+hours rules) — يظهر تلقائياً -->
+        <div class="fg" id="rule-effective-wrap" style="display:none">
+          <div class="rule-effective-block">
+            <div class="rule-effective-block__head">
+              <div class="rule-effective-block__icon">📅</div>
+              <div class="rule-effective-block__title">يطبّق من تاريخ</div>
+              <button type="button" class="rule-effective-block__auto" onclick="applyAutoEffectiveFrom()">↻ احسب تلقائياً</button>
+            </div>
+            <input type="date" id="rule-effective-from">
+            <div class="rule-effective-block__hint" id="rule-effective-hint">جارى الحساب…</div>
           </div>
         </div>
 
@@ -6295,9 +6354,16 @@ async function loadRules(){
         : rule.vehicle_types.map(v => `<span class="badge sadat" style="margin:1px">${v}</span>`).join(' ');
 
       // 🕐 الساعات (NULL = يوم كامل، otherwise hour-range)
-      const hoursText = (rule.start_hour == null)
-        ? '<span style="color:#E05555;font-size:11px;font-weight:700">يوم كامل</span>'
-        : `<span class="badge" style="background:rgba(74,144,217,0.15);color:#7fb8e8">${String(rule.start_hour).padStart(2,'0')}:00 → ${String(rule.end_hour).padStart(2,'0')}:00</span>`;
+      let hoursText;
+      if(rule.start_hour == null){
+        hoursText = '<span style="color:#E05555;font-size:11px;font-weight:700">يوم كامل</span>';
+      } else {
+        const hRange = `${String(rule.start_hour).padStart(2,'0')}:00 → ${String(rule.end_hour).padStart(2,'0')}:00`;
+        const effFrom = (rule.type === 'weekly' && rule.effective_from)
+          ? `<div style="font-size:10px;color:#9fc7ee;margin-top:3px">من ${rule.effective_from}</div>`
+          : '';
+        hoursText = `<span class="badge" style="background:rgba(74,144,217,0.15);color:#7fb8e8">${hRange}</span>${effFrom}`;
+      }
 
       html+=`<tr>
         <td><span class="badge ${rule.type==='weekly'?'noshow':rule.type==='date'?'pending':'qalyub'}">${typeLabel[rule.type]}</span></td>
@@ -6371,6 +6437,9 @@ function isDayClosed(dt,ds){
       (rule.type==='range' && ds>=rule.start_date && ds<=rule.end_date);
     if(!dateMatches) continue;
 
+    // 📅 lo فيه effective_from، التاريخ ده لازم يبقى ≥ effective_from
+    if(rule.effective_from && ds < rule.effective_from) continue;
+
     if(rule.start_hour == null){
       // قاعدة يوم كامل
       return {closed:true, type:rule.type, partial:false};
@@ -6394,9 +6463,19 @@ async function openRuleModal(){
   document.getElementById('rule-reason').value='';
   document.getElementById('rule-start-hour').value='';
   document.getElementById('rule-end-hour').value='';
+  document.getElementById('rule-effective-from').value='';
+  document.getElementById('rule-effective-wrap').style.display='none';
   onRuleTypeChange();
   // حمّل المخازن والأنواع كـ checkboxes
   await loadRuleScopeOptions();
+  // 🆕 ربط change events على نطاق المخازن/الأنواع لإعادة حساب effective_from
+  ['rule-warehouses-list','rule-vtypes-list'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && !el.dataset.recomputeBound){
+      el.addEventListener('change', () => recomputeRuleEffectiveFrom());
+      el.dataset.recomputeBound = '1';
+    }
+  });
   document.getElementById('ruleModal').classList.add('show');
 }
 
@@ -6509,6 +6588,100 @@ function onRuleTypeChange(){
   document.getElementById('rule-start-wrap').style.display=type!=='weekly'?'block':'none';
   document.getElementById('rule-end-wrap').style.display=type==='range'?'block':'none';
   document.getElementById('rule-start-label').textContent=type==='date'?'التاريخ':'من تاريخ';
+  recomputeRuleEffectiveFrom();
+}
+
+// 🆕 يحسب أقرب تاريخ آمن لتطبيق قاعدة hour-range (weekly) بدون orphan bookings
+async function recomputeRuleEffectiveFrom(){
+  const wrap = document.getElementById('rule-effective-wrap');
+  const dateInput = document.getElementById('rule-effective-from');
+  const hint = document.getElementById('rule-effective-hint');
+  if(!wrap || !dateInput || !hint) return;
+
+  const type = document.getElementById('rule-type').value;
+  const sh = parseInt(document.getElementById('rule-start-hour').value);
+  const eh = parseInt(document.getElementById('rule-end-hour').value);
+
+  // الـ effective_from مهم بس لـ weekly + hours (مع تاريخ مفتوح من الناحية المستقبلية)
+  const isWeeklyHoursRule = (type === 'weekly' && !isNaN(sh) && !isNaN(eh) && eh > sh);
+  if(!isWeeklyHoursRule){
+    wrap.style.display = 'none';
+    dateInput.value = '';
+    return;
+  }
+
+  wrap.style.display = 'block';
+  hint.className = 'rule-effective-block__hint';
+  hint.textContent = '⏳ جارى حساب أقرب تاريخ آمن…';
+
+  try{
+    // Build affected slot strings
+    const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+    const blockedSlots = [];
+    for(let h = sh; h < eh; h++) blockedSlots.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+
+    // Read modal selections
+    const dow = parseInt(document.getElementById('rule-dow').value);
+    const whAll = document.getElementById('rule-wh-all')?.checked;
+    const selectedWh = whAll ? null : Array.from(document.querySelectorAll('.rule-wh-item:checked')).map(cb => cb.dataset.name);
+    const vtAll = document.getElementById('rule-vt-all')?.checked;
+    const selectedVt = vtAll ? null : Array.from(document.querySelectorAll('.rule-vt-item:checked')).map(cb => cb.dataset.name);
+
+    // Build query
+    const today = new Date().toISOString().slice(0,10);
+    const filters = [
+      `status=neq.${encodeURIComponent('ملغي')}`,
+      `loading_date=gte.${today}`,
+      `time_slot=in.(${blockedSlots.map(s => `"${encodeURIComponent(s)}"`).join(',')})`,
+      'select=loading_date',
+      'order=loading_date.desc',
+      'limit=1000'
+    ];
+    if(selectedWh && selectedWh.length) filters.push(`warehouse=in.(${selectedWh.map(w => `"${encodeURIComponent(w)}"`).join(',')})`);
+    if(selectedVt && selectedVt.length) filters.push(`vehicle_type=in.(${selectedVt.map(v => `"${encodeURIComponent(v)}"`).join(',')})`);
+
+    const r = await fetch(`${SB}/rest/v1/bookings?${filters.join('&')}`, {headers:HDR});
+    if(!r.ok) throw new Error('فشل قراءة الحجوزات');
+    const all = await r.json();
+
+    // JS-filter by day_of_week
+    const matching = all.filter(b => {
+      const d = new Date(b.loading_date + 'T12:00:00');
+      return d.getDay() === dow;
+    });
+
+    let suggested, hintText, hintClass = '';
+    if(matching.length === 0){
+      suggested = today;
+      hintText = `✅ مفيش حجوزات قائمة فى الـ slot ده — القاعدة ممكن تبدأ من اليوم`;
+    } else {
+      // أقرب يوم آمن = آخر حجز + 7 أيام (أقرب نفس يوم الأسبوع بعده)
+      const maxStr = matching[0].loading_date;
+      const maxDate = new Date(maxStr + 'T12:00:00');
+      maxDate.setDate(maxDate.getDate() + 7);
+      suggested = maxDate.toISOString().slice(0,10);
+      hintText = `📌 آخر حجز فى الـ slot ده: <b>${maxStr}</b> — أقرب ${dayNameAr(dow)} آمن: <b>${suggested}</b><br>`+
+                 `<span style="opacity:0.8">${matching.length} حجز قائم. لو اخترت تاريخ أقرب → الحفظ هيترفض</span>`;
+      hintClass = 'warn';
+    }
+
+    dateInput.value = suggested;
+    dateInput.min = today;
+    hint.className = 'rule-effective-block__hint' + (hintClass ? ' ' + hintClass : '');
+    hint.innerHTML = hintText;
+  } catch(e){
+    hint.className = 'rule-effective-block__hint danger';
+    hint.textContent = '❌ ' + e.message;
+  }
+}
+
+function dayNameAr(dow){
+  return ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'][dow] || '';
+}
+
+function applyAutoEffectiveFrom(){
+  // Just trigger recompute (overwrites manual value with auto-suggestion)
+  recomputeRuleEffectiveFrom();
 }
 
 async function saveRule(){
@@ -6556,6 +6729,7 @@ async function saveRule(){
   if(shRaw === '' && ehRaw === ''){
     body.start_hour = null;
     body.end_hour   = null;
+    body.effective_from = null;
   } else if(shRaw === '' || ehRaw === ''){
     alert('❌ لازم تحدد الساعتين الاتنين، أو سيبهم فاضيين الاتنين');
     return;
@@ -6567,6 +6741,20 @@ async function saveRule(){
     if(eh <= sh){ alert('❌ ساعة النهاية لازم تكون بعد ساعة البداية'); return; }
     body.start_hour = sh;
     body.end_hour   = eh;
+
+    // 📅 effective_from: للـ weekly+hours rules فقط
+    if(body.type === 'weekly'){
+      const ef = document.getElementById('rule-effective-from').value;
+      if(!ef){
+        alert('❌ اختار "يطبق من تاريخ" أو اضغط "احسب تلقائياً"');
+        return;
+      }
+      const today = new Date().toISOString().slice(0,10);
+      if(ef < today){ alert('❌ تاريخ التطبيق لازم يكون اليوم أو فى المستقبل'); return; }
+      body.effective_from = ef;
+    } else {
+      body.effective_from = null;
+    }
   }
 
   // 🛡️ Orphan check: لو فيه ساعات → افحص حجوزات موجودة فى الـ slots دى
@@ -6580,7 +6768,7 @@ async function saveRule(){
           `❌ مش ممكن تضيف القاعدة دى.\n\n` +
           `فيه ${conflicts.length} حجز قائم فى الساعات اللى هتتقفل:\n` +
           `${sample}${more}\n\n` +
-          `لازم تلغى أو تعدّل الحجوزات دى الأول.`
+          `لازم تلغى/تعدّل الحجوزات دى، أو اختار تاريخ تطبيق بعدها.`
         );
         return;
       }
@@ -6611,11 +6799,12 @@ async function findRuleOrphanBookings(rule){
   }
   if(!blockedSlots.length) return [];
 
-  // 2) Build query filters
-  const todayStr = new Date().toISOString().slice(0,10);
+  // 2) أقرب تاريخ نبدأ منه الفحص = effective_from لو موجود، otherwise اليوم
+  const today = new Date().toISOString().slice(0,10);
+  const fromDate = rule.effective_from || today;
   const filters = [
     `status=neq.${encodeURIComponent('ملغي')}`,
-    `loading_date=gte.${todayStr}`,
+    `loading_date=gte.${fromDate}`,
     `time_slot=in.(${blockedSlots.map(s => `"${encodeURIComponent(s)}"`).join(',')})`,
     'select=id,loading_date,time_slot,warehouse,vehicle_type'
   ];
@@ -6624,7 +6813,9 @@ async function findRuleOrphanBookings(rule){
   if(rule.type === 'date'){
     filters.push(`loading_date=eq.${rule.start_date}`);
   } else if(rule.type === 'range'){
-    filters.push(`loading_date=gte.${rule.start_date}`);
+    // ابدأ من max(start_date, fromDate) — effective_from قد يكون أبعد
+    const startEffective = rule.start_date > fromDate ? rule.start_date : fromDate;
+    filters.push(`loading_date=gte.${startEffective}`);
     filters.push(`loading_date=lte.${rule.end_date}`);
   }
   // weekly → no extra date filter (we'll JS-filter by day_of_week)

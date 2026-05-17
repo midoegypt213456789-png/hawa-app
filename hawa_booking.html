@@ -855,6 +855,8 @@ async function buildCal() {
     const blockedHours = new Set();
     for (const rule of rules) {
       if (rule.start_hour == null) continue;  // skip whole-day rules
+      // 📅 احترم effective_from لو موجود
+      if (rule.effective_from && ds < rule.effective_from) continue;
       if (rule.warehouses && rule.warehouses.length > 0) {
         if (!rule.warehouses.includes(bk.warehouse)) continue;
       }
@@ -993,6 +995,8 @@ async function loadSlots() {
     const blockedHours = new Set();
     for(const rule of rules){
       if(rule.start_hour == null) continue;  // skip whole-day rules
+      // 📅 احترم effective_from
+      if(rule.effective_from && bk.dateStr < rule.effective_from) continue;
       if(rule.warehouses && rule.warehouses.length && !rule.warehouses.includes(bk.warehouse)) continue;
       if(rule.vehicle_types && rule.vehicle_types.length && !rule.vehicle_types.includes(bk.vehicle)) continue;
       let applies = false;
