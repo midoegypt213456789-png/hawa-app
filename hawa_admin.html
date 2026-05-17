@@ -3450,8 +3450,36 @@ let _warehouseHoursCache = [];
 async function loadWarehouseHours(){
   const container = document.getElementById('warehouse-hours-container');
   try{
-    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour&order=id.asc`,{headers:HDR});
-    const data = await r.json();
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=id.asc`,{headers:HDR});
+    let data = await r.json();
+
+    // 🚀 Auto-promote: أى pending وصل تاريخ تطبيقه → ينقل للقيم الحالية ويتمسح
+    const today = new Date().toISOString().slice(0,10);
+    const toPromote = data.filter(w =>
+      w.pending_effective_from && w.pending_effective_from <= today &&
+      w.pending_working_hour_start != null
+    );
+    if(toPromote.length){
+      await Promise.all(toPromote.map(w =>
+        fetch(`${SB}/rest/v1/warehouses?id=eq.${w.id}`,{
+          method:'PATCH',
+          headers:{...HDR,'Prefer':'return=minimal'},
+          body: JSON.stringify({
+            working_hour_start: w.pending_working_hour_start,
+            working_hour_end:   w.pending_working_hour_end,
+            daily_cutoff_hour:  w.pending_daily_cutoff_hour,
+            pending_working_hour_start: null,
+            pending_working_hour_end:   null,
+            pending_daily_cutoff_hour:  null,
+            pending_effective_from:     null
+          })
+        })
+      ));
+      // Re-fetch بعد الترقية
+      const r2 = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=id.asc`,{headers:HDR});
+      data = await r2.json();
+    }
+
     _warehouseHoursCache = data;
     if(!data.length){
       container.innerHTML = '<div class="empty-txt">📭 مفيش مخازن — اضف مخزن من تاب "إيميلات المخازن" الأول</div>';
@@ -3467,13 +3495,35 @@ async function loadWarehouseHours(){
 
 function renderWarehouseHoursCard(w){
   const icon = w.name === 'قليوب' ? '🏭' : w.name === 'السادات' ? '🏗️' : '📦';
+  const today = new Date().toISOString().slice(0,10);
+
+  // ⏰ Banner لو فيه تغيير مجدول للمستقبل
+  const hasPending = w.pending_effective_from && w.pending_working_hour_start != null && w.pending_effective_from > today;
+  let banner = '';
+  if(hasPending){
+    const pws = w.pending_working_hour_start;
+    const pwe = w.pending_working_hour_end;
+    const pco = w.pending_daily_cutoff_hour;
+    banner = `
+      <div style="background:rgba(74,144,217,0.10);border:1px solid rgba(74,144,217,0.40);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="color:#7fb8e8;font-size:13px;line-height:1.7;flex:1;min-width:200px">
+          ⏰ <b>تغيير مجدول من ${w.pending_effective_from}:</b>
+          <span style="color:var(--gold);font-weight:700"> ${pws}:00 → ${pwe}:00 (قفل ${pco}:00)</span>
+        </div>
+        <button onclick="cancelPendingHours(${w.id})" style="background:rgba(224,85,85,0.15);border:1px solid rgba(224,85,85,0.45);color:#E05555;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo,sans-serif;white-space:nowrap">
+          ✕ إلغاء التغيير
+        </button>
+      </div>`;
+  }
+
   return `
     <div style="background:#0E0E0E;border:1px solid #2A2620;border-radius:14px;padding:18px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(201,168,76,0.1)">
         <span style="font-size:20px">${icon}</span>
         <span style="font-size:15px;font-weight:700;color:var(--gold)">${w.name}</span>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+      ${banner}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
         <div>
           <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">بداية يوم العمل</label>
           <input type="number" id="wh-ws-${w.id}" value="${w.working_hour_start ?? 8}" min="0" max="23" oninput="updateWarehouseSlotsPreview(${w.id})" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
@@ -3489,11 +3539,39 @@ function renderWarehouseHoursCard(w){
           <input type="number" id="wh-co-${w.id}" value="${w.daily_cutoff_hour ?? 15}" min="0" max="24" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
           <div style="font-size:11px;color:#9A9590;margin-top:4px">15 = 3 مساءً</div>
         </div>
+        <div>
+          <label style="display:block;font-size:12px;font-weight:700;color:#D8D3CE;margin-bottom:6px">📅 يطبّق من تاريخ</label>
+          <input type="date" id="wh-from-${w.id}" value="${today}" min="${today}" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14px;font-weight:600;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box">
+          <div style="font-size:11px;color:#9A9590;margin-top:4px">اليوم = فورى | تاريخ مستقبلى = مجدول</div>
+        </div>
       </div>
       <div style="margin-top:12px;padding:10px 12px;background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:8px;font-size:12px;color:#7fb8e8;line-height:1.7">
         📋 <b>المواعيد:</b> <span id="slots-preview-${w.id}" style="color:var(--gold);font-weight:700">—</span>
       </div>
     </div>`;
+}
+
+async function cancelPendingHours(id){
+  const w = _warehouseHoursCache.find(x => x.id === id);
+  const name = w ? w.name : '';
+  if(!confirm(`إلغاء التغيير المجدول لـ ${name}؟`)) return;
+  try{
+    const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`,{
+      method:'PATCH',
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body: JSON.stringify({
+        pending_working_hour_start: null,
+        pending_working_hour_end:   null,
+        pending_daily_cutoff_hour:  null,
+        pending_effective_from:     null
+      })
+    });
+    if(!r.ok) throw new Error('فشل الإلغاء');
+    alert('✅ تم إلغاء التغيير المجدول');
+    loadWarehouseHours();
+  }catch(e){
+    alert('❌ ' + e.message);
+  }
 }
 
 function updateWarehouseSlotsPreview(whId){
@@ -3515,38 +3593,88 @@ function updateWarehouseSlotsPreview(whId){
 }
 
 async function saveWarehouseHours(){
-  // اجمع القيم لكل مخزن وحدّث الـ DB
-  const updates = [];
+  // اجمع القيم لكل مخزن + تاريخ التطبيق وقرّر current ولا pending
+  const today = new Date().toISOString().slice(0,10);
+  const plans = [];
+
   for(const w of _warehouseHoursCache){
     const ws = parseInt(document.getElementById('wh-ws-'+w.id)?.value);
     const we = parseInt(document.getElementById('wh-we-'+w.id)?.value);
     const co = parseInt(document.getElementById('wh-co-'+w.id)?.value);
+    const fromVal = document.getElementById('wh-from-'+w.id)?.value || today;
+
+    // Validations
     if(isNaN(ws) || ws<0 || ws>23) throw new Error(`❌ بداية يوم العمل لـ${w.name} غلط`);
     if(isNaN(we) || we<1 || we>24) throw new Error(`❌ نهاية يوم العمل لـ${w.name} غلط`);
     if(we <= ws) throw new Error(`❌ نهاية العمل لازم تكون أكبر من البداية فى ${w.name}`);
     if(isNaN(co) || co<0 || co>24) throw new Error(`❌ ساعة القفل لـ${w.name} غلط`);
     if(co < ws || co > we) throw new Error(`❌ ساعة القفل لازم تكون بين بداية ونهاية اليوم فى ${w.name}`);
-    updates.push({id:w.id, ws, we, co});
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(fromVal)) throw new Error(`❌ تاريخ التطبيق لـ${w.name} غلط`);
+
+    const isFuture = fromVal > today;
+    const currentSame = (ws === w.working_hour_start && we === w.working_hour_end && co === w.daily_cutoff_hour);
+    const pendingSame = (
+      ws === w.pending_working_hour_start &&
+      we === w.pending_working_hour_end &&
+      co === w.pending_daily_cutoff_hour &&
+      fromVal === w.pending_effective_from
+    );
+
+    if(isFuture){
+      // → save فى pending
+      if(pendingSame) continue; // مفيش تغيير
+      plans.push({
+        id: w.id, name: w.name,
+        body: {
+          pending_working_hour_start: ws,
+          pending_working_hour_end:   we,
+          pending_daily_cutoff_hour:  co,
+          pending_effective_from:     fromVal
+        },
+        summary: `📅 ${w.name}: ${ws}:00–${we}:00 (قفل ${co}:00) — مجدول من ${fromVal}`
+      });
+    } else {
+      // → save current + مسح pending لو موجود
+      const hadPending = w.pending_effective_from && w.pending_working_hour_start != null;
+      if(currentSame && !hadPending) continue; // مفيش تغيير على الإطلاق
+      plans.push({
+        id: w.id, name: w.name,
+        body: {
+          working_hour_start: ws,
+          working_hour_end:   we,
+          daily_cutoff_hour:  co,
+          pending_working_hour_start: null,
+          pending_working_hour_end:   null,
+          pending_daily_cutoff_hour:  null,
+          pending_effective_from:     null
+        },
+        summary: currentSame
+          ? `🗑️ ${w.name}: تم إلغاء التغيير المجدول`
+          : `✅ ${w.name}: ${ws}:00–${we}:00 (قفل ${co}:00) — فورى`
+      });
+    }
   }
-  // PATCH each warehouse
-  for(const u of updates){
-    await fetch(`${SB}/rest/v1/warehouses?id=eq.${u.id}`,{
+
+  // طبّق التغييرات
+  const summary = [];
+  for(const p of plans){
+    const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${p.id}`,{
       method:'PATCH',
       headers:{...HDR,'Prefer':'return=minimal'},
-      body:JSON.stringify({
-        working_hour_start: u.ws,
-        working_hour_end:   u.we,
-        daily_cutoff_hour:  u.co
-      })
+      body:JSON.stringify(p.body)
     });
+    if(!r.ok) throw new Error(`❌ فشل حفظ ${p.name}`);
+    summary.push(p.summary);
   }
+  return summary;
 }
 
 async function saveSettings(){
   // ⏰ ساعات العمل دلوقتى لكل مخزن لوحده — تتحفظ فى جدول warehouses
   // (مش فى app_settings زى الأول)
+  let hoursSummary = [];
   try {
-    await saveWarehouseHours();
+    hoursSummary = await saveWarehouseHours();
   } catch(e) {
     alert(e.message);
     return;
@@ -3606,8 +3734,19 @@ async function saveSettings(){
       })
     ));
     const failed = results.filter(r => !r.ok).length;
-    if(failed === 0) alert('✅ تم حفظ كل الإعدادات بنجاح');
-    else alert(`⚠️ تم حفظ ${updates.length-failed} من ${updates.length} إعدادات (${failed} فشلت)`);
+
+    // 📋 ملخص نهائى للحفظ — يدمج تغييرات ساعات المخازن + إعدادات app_settings
+    let msg;
+    if(failed === 0) msg = '✅ تم حفظ كل الإعدادات بنجاح';
+    else msg = `⚠️ تم حفظ ${updates.length-failed} من ${updates.length} إعدادات (${failed} فشلت)`;
+
+    if(hoursSummary.length){
+      msg += '\n\n⏰ ساعات العمل:\n' + hoursSummary.join('\n');
+      // اعمل reload للكروت لو فيه pending جديد أو تم إلغاء
+      loadWarehouseHours();
+    }
+    alert(msg);
+
     // 🔔 إعادة تحميل التنبيهات بعد حفظ الإعدادات (عشان التوجلز تشتغل فوراً)
     if (typeof refreshNotifications === 'function') refreshNotifications();
   }catch(e){
