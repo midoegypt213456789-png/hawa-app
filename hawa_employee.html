@@ -145,11 +145,35 @@
       </div>
     </div>
     <div class="wh-tabs" id="whTabs"></div>
-    <div class="date-bar" style="display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px">
+    <div class="date-bar" style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px">
       <span style="font-size:18px">📅</span>
-      <input type="date" id="datePicker" onchange="changeDate()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--gold);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark">
-      <span id="dateLabel" style="color:var(--gold);font-weight:700"></span>
+      <input type="date" id="datePickerFrom" onchange="changeDate()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--gold);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark" title="من تاريخ">
+      <span style="color:var(--gold);font-weight:700;font-size:14px">←</span>
+      <input type="date" id="datePickerTo" onchange="changeDate()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid var(--gold);border-radius:8px;padding:6px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark" title="إلى تاريخ">
       <button onclick="resetToToday()" id="todayBtn" style="background:rgba(201,168,76,0.15);color:#E0B040;border:1px solid rgba(201,168,76,0.4);border-radius:6px;padding:4px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:none">🔄 اليوم</button>
+      <div id="dateLabel" style="color:var(--gold);font-weight:700;width:100%;text-align:center;margin-top:4px"></div>
+    </div>
+
+    <div class="filter-bar" style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 10px 10px">
+      <select id="filterVehicle" onchange="applyFilters()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark;min-width:140px">
+        <option value="">🚛 كل الأنواع</option>
+        <option value="موتسيكل">🏍️ موتسيكل</option>
+        <option value="تروسكل">🛺 تروسكل</option>
+        <option value="كهرباء">⚡ كهرباء</option>
+        <option value="ZONTOS">🚗 ZONTOS</option>
+      </select>
+      <select id="filterSlot" onchange="applyFilters()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark;min-width:140px">
+        <option value="">⏰ كل المواعيد</option>
+        <option value="8:00 - 9:00">⏰ 8:00 - 9:00</option>
+        <option value="9:00 - 10:00">⏰ 9:00 - 10:00</option>
+        <option value="10:00 - 11:00">⏰ 10:00 - 11:00</option>
+        <option value="11:00 - 12:00">⏰ 11:00 - 12:00</option>
+        <option value="12:00 - 1:00">⏰ 12:00 - 1:00</option>
+        <option value="1:00 - 2:00">⏰ 1:00 - 2:00</option>
+        <option value="2:00 - 3:00">⏰ 2:00 - 3:00</option>
+        <option value="3:00 - 4:00">⏰ 3:00 - 4:00</option>
+      </select>
+      <button onclick="resetFilters()" id="filterResetBtn" style="background:rgba(138,133,128,0.15);color:#A8A39E;border:1px solid rgba(138,133,128,0.4);border-radius:6px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:none">✖️ مسح</button>
     </div>
     <div class="stats">
       <div class="stat-card"><div class="stat-num pending" id="statPending">-</div><div class="stat-lbl">منتظر</div></div>
@@ -178,8 +202,9 @@ const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
 const SLOTS=['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00','12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
-// 📅 الـ date الـ selected (default = اليوم) + helpers
-let selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
+// 📅 الـ date range الـ selected (default = اليوم إلى اليوم) + helpers
+let selectedDateFrom = new Date(); selectedDateFrom.setHours(0,0,0,0);
+let selectedDateTo   = new Date(); selectedDateTo.setHours(0,0,0,0);
 
 // 📌 مهم: نستخدم local date methods (مش toISOString اللى بترجع UTC)
 //    عشان مصر UTC+2/+3 يختلف عن UTC، اللى كان يسبب فرق يوم
@@ -191,31 +216,79 @@ function getDateStr(d){
 }
 function getTodayStr(){ return getDateStr(new Date()); }
 
+function fmtArDate(d){
+  return d.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
 function updateDateUI(){
-  const dateStr = getDateStr(selectedDate);
+  const fromStr = getDateStr(selectedDateFrom);
+  const toStr   = getDateStr(selectedDateTo);
   const todayStr = getTodayStr();
-  document.getElementById('datePicker').value = dateStr;
-  document.getElementById('dateLabel').textContent = selectedDate.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  // زر "اليوم" يظهر فقط لو الـ selected date مش اليوم
-  document.getElementById('todayBtn').style.display = (dateStr === todayStr) ? 'none' : 'inline-block';
+  document.getElementById('datePickerFrom').value = fromStr;
+  document.getElementById('datePickerTo').value   = toStr;
+
+  // لو نفس اليوم، نعرض تاريخ واحد. لو range، نعرض من...إلى
+  if(fromStr === toStr){
+    document.getElementById('dateLabel').textContent = fmtArDate(selectedDateFrom);
+  } else {
+    document.getElementById('dateLabel').textContent = `${fmtArDate(selectedDateFrom)}  ←  ${fmtArDate(selectedDateTo)}`;
+  }
+
+  // زر "اليوم" يظهر فقط لو الـ range مش يوم النهاردة بس
+  const isOnlyToday = (fromStr === todayStr && toStr === todayStr);
+  document.getElementById('todayBtn').style.display = isOnlyToday ? 'none' : 'inline-block';
 }
 
 function changeDate(){
-  const v = document.getElementById('datePicker').value;
-  if(!v) return;
-  selectedDate = new Date(v + 'T00:00:00');
-  selectedDate.setHours(0,0,0,0);
+  const vFrom = document.getElementById('datePickerFrom').value;
+  const vTo   = document.getElementById('datePickerTo').value;
+  if(!vFrom || !vTo) return;
+  selectedDateFrom = new Date(vFrom + 'T00:00:00'); selectedDateFrom.setHours(0,0,0,0);
+  selectedDateTo   = new Date(vTo   + 'T00:00:00'); selectedDateTo.setHours(0,0,0,0);
   updateDateUI();
-  logActivity('emp_change_date','📅 غير تاريخ العرض إلى '+v,{date:v});
+  logActivity('emp_change_date','📅 غير فترة العرض '+vFrom+' → '+vTo,{from:vFrom,to:vTo});
   allBookings = [];
   if(emp) loadBookings();
 }
 
 function resetToToday(){
-  selectedDate = new Date(); selectedDate.setHours(0,0,0,0);
+  selectedDateFrom = new Date(); selectedDateFrom.setHours(0,0,0,0);
+  selectedDateTo   = new Date(); selectedDateTo.setHours(0,0,0,0);
   updateDateUI();
   allBookings = [];
   if(emp) loadBookings();
+}
+
+// 🔍 الفلاتر المحلية (نوع + ساعة) — بـ يـ apply على الـ data الموجودة بدون extra fetch
+let filterVehicle = '';
+let filterSlot    = '';
+
+function getFilteredBookings(){
+  return allBookings.filter(b => {
+    if(filterVehicle && b.vehicle_type !== filterVehicle) return false;
+    if(filterSlot && b.time_slot !== filterSlot) return false;
+    return true;
+  });
+}
+
+function applyFilters(){
+  filterVehicle = document.getElementById('filterVehicle').value;
+  filterSlot    = document.getElementById('filterSlot').value;
+  // زر المسح يظهر لو فيه فلتر مفعّل
+  const hasFilter = filterVehicle || filterSlot;
+  document.getElementById('filterResetBtn').style.display = hasFilter ? 'inline-block' : 'none';
+
+  renderBookings();
+  updateStats();
+  const filtered = getFilteredBookings();
+  document.getElementById('noshowAllBtn').style.display =
+    filtered.some(b => b.status === 'قيد الانتظار') ? 'block' : 'none';
+}
+
+function resetFilters(){
+  document.getElementById('filterVehicle').value = '';
+  document.getElementById('filterSlot').value    = '';
+  applyFilters();
 }
 
 updateDateUI();
@@ -331,8 +404,17 @@ async function loadBookings(){
   if(!allBookings.length) list.innerHTML='<div class="loading-state">⏳ جاري التحميل...</div>';
   document.getElementById('noshowAllBtn').style.display='none';
   try{
-    const dateStr = getDateStr(selectedDate);
-    let url=`${SB}/rest/v1/bookings?select=*&loading_date=eq.${dateStr}&status=neq.ملغي&order=time_slot.asc,id.asc`;
+    const fromStr = getDateStr(selectedDateFrom);
+    const toStr   = getDateStr(selectedDateTo);
+
+    // ⚠️ Validation: from > to
+    if(fromStr > toStr){
+      list.innerHTML='<div class="empty-state"><div class="ei">⚠️</div><p>تاريخ البداية أحدث من تاريخ النهاية</p></div>';
+      allBookings = []; updateStats();
+      return;
+    }
+
+    let url=`${SB}/rest/v1/bookings?select=*&loading_date=gte.${fromStr}&loading_date=lte.${toStr}&status=neq.${encodeURIComponent('ملغي')}&order=loading_date.asc,time_slot.asc,id.asc`;
     if(warehouse !== 'ALL'){
       url += `&warehouse=eq.${encodeURIComponent(warehouse)}`;
     }
@@ -341,8 +423,12 @@ async function loadBookings(){
     lastRefreshTime=Date.now();  // 📌 سجّل وقت آخر تحديث
     if(!allBookings.length){
       const whLabel = warehouse === 'ALL' ? 'المخزنين' : warehouse;
-      const isToday = getDateStr(selectedDate) === getTodayStr();
-      const dayLabel = isToday ? 'اليوم' : selectedDate.toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'long'});
+      const isOnlyToday = (fromStr === getTodayStr() && toStr === getTodayStr());
+      const dayLabel = isOnlyToday
+        ? 'اليوم'
+        : (fromStr === toStr
+            ? selectedDateFrom.toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'long'})
+            : `الفترة دى`);
       list.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات '+dayLabel+' في '+whLabel+'</p></div>';
       updateStats();return;
     }
@@ -354,16 +440,28 @@ async function loadBookings(){
       allBookings.forEach(b=>b._client=map[b.client_id]||{});
     }
     renderBookings();updateStats();
-    document.getElementById('noshowAllBtn').style.display=allBookings.some(b=>b.status==='قيد الانتظار')?'block':'none';
+    document.getElementById('noshowAllBtn').style.display=getFilteredBookings().some(b=>b.status==='قيد الانتظار')?'block':'none';
   }catch(e){list.innerHTML='<div class="loading-state">❌ خطأ في التحميل</div>';}
 }
 
 function renderBookings(){
   const list=document.getElementById('bookingsList');
   const isAllMode = warehouse === 'ALL';
+  const filtered = getFilteredBookings();
+
+  // empty state لو فيه فلتر مفعّل و 0 results
+  if(allBookings.length && !filtered.length){
+    const hasFilter = filterVehicle || filterSlot;
+    const reasons = [];
+    if(filterVehicle) reasons.push(`النوع: ${filterVehicle}`);
+    if(filterSlot)    reasons.push(`الموعد: ${filterSlot}`);
+    list.innerHTML = `<div class="empty-state"><div class="ei">🔍</div><p>مفيش حجوزات بالفلاتر دى</p>${reasons.length?`<p style="font-size:12px;color:var(--text-dim);margin-top:6px">${reasons.join(' | ')}</p>`:''}</div>`;
+    return;
+  }
+
   let html='';
   SLOTS.forEach(slot=>{
-    const slotBks=allBookings.filter(b=>b.time_slot===slot);
+    const slotBks=filtered.filter(b=>b.time_slot===slot);
     if(!slotBks.length)return;
     html+=`<div class="slot-group"><div class="slot-header">⏰ ${slot}<span class="slot-count">${slotBks.length} حجز</span></div>`;
     slotBks.forEach(b=>{
@@ -396,9 +494,10 @@ function renderBookings(){
 }
 
 function updateStats(){
-  document.getElementById('statPending').textContent=allBookings.filter(b=>b.status==='قيد الانتظار').length;
-  document.getElementById('statDone').textContent=allBookings.filter(b=>b.status==='تم التنفيذ').length;
-  document.getElementById('statNoshow').textContent=allBookings.filter(b=>b.status==='no-show').length;
+  const filtered = getFilteredBookings();
+  document.getElementById('statPending').textContent=filtered.filter(b=>b.status==='قيد الانتظار').length;
+  document.getElementById('statDone').textContent=filtered.filter(b=>b.status==='تم التنفيذ').length;
+  document.getElementById('statNoshow').textContent=filtered.filter(b=>b.status==='no-show').length;
 }
 
 function confirmDone(id,name){
@@ -422,7 +521,7 @@ async function markStatus(id,status){
         }
       }
       renderBookings();updateStats();
-      document.getElementById('noshowAllBtn').style.display=allBookings.some(b=>b.status==='قيد الانتظار')?'block':'none';
+      document.getElementById('noshowAllBtn').style.display=getFilteredBookings().some(b=>b.status==='قيد الانتظار')?'block':'none';
     }
   }catch(e){}
 }
@@ -440,9 +539,11 @@ async function incrementNoshow(clientId){
 }
 
 function showNoshowAllDlg(){
-  const pending=allBookings.filter(b=>b.status==='قيد الانتظار');
-  showDialog('❌','تسجيل الغائبين',`هتسجل ${pending.length} عميل كغائبين؟\nمش هتقدر ترجع!`,true,async()=>{
-    logActivity('emp_noshow_bulk','❌ سجل غائبين تلقائياً ('+pending.length+' عميل)',{count:pending.length,date:getDateStr(selectedDate),warehouse});
+  const pending=getFilteredBookings().filter(b=>b.status==='قيد الانتظار');
+  const hasFilter = filterVehicle || filterSlot;
+  const filterNote = hasFilter ? '\n(الفلاتر الحالية فقط)' : '';
+  showDialog('❌','تسجيل الغائبين',`هتسجل ${pending.length} عميل كغائبين؟${filterNote}\nمش هتقدر ترجع!`,true,async()=>{
+    logActivity('emp_noshow_bulk','❌ سجل غائبين تلقائياً ('+pending.length+' عميل)',{count:pending.length,date_from:getDateStr(selectedDateFrom),date_to:getDateStr(selectedDateTo),warehouse,filter_vehicle:filterVehicle||null,filter_slot:filterSlot||null});
     for(const b of pending)await markStatus(b.id,'no-show');
   });
 }
