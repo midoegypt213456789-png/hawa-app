@@ -303,22 +303,30 @@ const VEHICLE_ICONS = {
 async function loadWarehouseVehicleTypes(){
   if(vehicleTypesByWarehouse) return; // cached
   try {
-    const r = await fetch(
-      `${SB}/rest/v1/warehouse_vehicle_types?select=display_order,warehouses(name),vehicle_types(name)&is_active=eq.true&order=display_order.asc`,
-      { headers: HDR }
-    );
-    const data = await r.json();
+    // 3 fetches منفصلة (أكثر reliability من الـ embed)
+    const [whResp, vtResp, mapResp] = await Promise.all([
+      fetch(`${SB}/rest/v1/warehouses?select=id,name`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/vehicle_types?select=id,name`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouse_vehicle_types?is_active=eq.true&select=warehouse_id,vehicle_type_id,display_order&order=display_order.asc`, { headers: HDR })
+    ]);
+    const [warehouses, vehicleTypes, mappings] = await Promise.all([whResp.json(), vtResp.json(), mapResp.json()]);
+
+    const whMap = {}; (warehouses || []).forEach(w => whMap[w.id] = w.name);
+    const vtMap = {}; (vehicleTypes || []).forEach(v => vtMap[v.id] = v.name);
+
     vehicleTypesByWarehouse = {};
-    for(const row of (data || [])){
-      const whName = row.warehouses && row.warehouses.name;
-      const vtName = row.vehicle_types && row.vehicle_types.name;
+    for(const m of (mappings || [])){
+      const whName = whMap[m.warehouse_id];
+      const vtName = vtMap[m.vehicle_type_id];
       if(!whName || !vtName) continue;
       if(!vehicleTypesByWarehouse[whName]) vehicleTypesByWarehouse[whName] = [];
       if(!vehicleTypesByWarehouse[whName].includes(vtName)){
         vehicleTypesByWarehouse[whName].push(vtName);
       }
     }
+    console.log('[vehicle-filter] loaded:', vehicleTypesByWarehouse);
   } catch(e){
+    console.error('[vehicle-filter] load failed:', e);
     vehicleTypesByWarehouse = {}; // fallback — rebuildVehicleFilter بـ يستخدم default
   }
 }
