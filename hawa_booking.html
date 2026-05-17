@@ -505,9 +505,9 @@ async function checkTelegramLink(){
 }
 
 // ===================== DYNAMIC SETTINGS / HELPERS =====================
-let SLOTS = [];                      // Filled from app_settings (working_hour_start/end)
 let allVehicleTypes = [];            // Filled from vehicle_types table
-let cachedAppSettings = null;        // {permit_min, permit_max, working_hour_start, ...}
+let cachedAppSettings = null;        // {permit_min, permit_max, ...}
+let cachedWarehouses = null;         // [{id, name, working_hour_*, pending_*, ...}]
 
 // Convert Arabic-Indic / Persian-Indic digits to ASCII digits
 function arabicToEnglish(str){
@@ -526,20 +526,77 @@ function generateSlots(workStart, workEnd){
   return slots;
 }
 
+// 🏭 Returns effective hours for a specific date + warehouse,
+// honoring pending changes (pending applied if dateStr >= pending_effective_from).
+function applyWarehouseHours(dateStr, warehouseName){
+  const fallback = { ws:8, we:16, co:15, slots:generateSlots(8,16), source:'fallback' };
+  if(!cachedWarehouses || !warehouseName) return fallback;
+  const w = cachedWarehouses.find(x => x.name === warehouseName);
+  if(!w) return fallback;
+
+  const usePending = w.pending_effective_from &&
+                     w.pending_working_hour_start != null &&
+                     dateStr >= w.pending_effective_from;
+
+  const ws = (usePending ? w.pending_working_hour_start : w.working_hour_start) ?? 8;
+  const we = (usePending ? w.pending_working_hour_end   : w.working_hour_end)   ?? 16;
+  const co = (usePending ? w.pending_daily_cutoff_hour  : w.daily_cutoff_hour)  ?? 15;
+
+  return { ws, we, co, slots: generateSlots(ws, we), source: usePending ? 'pending' : 'current' };
+}
+
 async function ensureSettingsLoaded(force=false){
-  if(cachedAppSettings && !force) return cachedAppSettings;
+  if(cachedAppSettings && cachedWarehouses && !force) return cachedAppSettings;
   try{
-    const r = await fetch(`${SB}/rest/v1/app_settings?select=key,value`, {headers: HDR});
-    const data = await r.json();
+    // Parallel: app_settings + warehouses
+    const [r1, r2] = await Promise.all([
+      fetch(`${SB}/rest/v1/app_settings?select=key,value`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from`, { headers: HDR })
+    ]);
+    const settingsData = await r1.json();
     cachedAppSettings = {};
-    data.forEach(s => cachedAppSettings[s.key] = s.value);
+    settingsData.forEach(s => cachedAppSettings[s.key] = s.value);
+    cachedWarehouses = await r2.json();
+
+    // 🚀 Phase 5: Auto-promote أى pending وصل تاريخ تطبيقه
+    const today = new Date().toISOString().slice(0,10);
+    const toPromote = cachedWarehouses.filter(w =>
+      w.pending_effective_from && w.pending_effective_from <= today &&
+      w.pending_working_hour_start != null
+    );
+    if(toPromote.length){
+      await Promise.all(toPromote.map(async w => {
+        try{
+          const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${w.id}`, {
+            method: 'PATCH',
+            headers: { ...HDR, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+              working_hour_start: w.pending_working_hour_start,
+              working_hour_end:   w.pending_working_hour_end,
+              daily_cutoff_hour:  w.pending_daily_cutoff_hour,
+              pending_working_hour_start: null,
+              pending_working_hour_end:   null,
+              pending_daily_cutoff_hour:  null,
+              pending_effective_from:     null
+            })
+          });
+          if(r.ok){
+            // حدّث local cache فوراً علشان الـ session الحالى يستخدم القيم الجديدة
+            w.working_hour_start = w.pending_working_hour_start;
+            w.working_hour_end   = w.pending_working_hour_end;
+            w.daily_cutoff_hour  = w.pending_daily_cutoff_hour;
+            w.pending_working_hour_start = null;
+            w.pending_working_hour_end   = null;
+            w.pending_daily_cutoff_hour  = null;
+            w.pending_effective_from     = null;
+          }
+        }catch(e){}
+      }));
+    }
   }catch(e){
     cachedAppSettings = cachedAppSettings || {};
+    cachedWarehouses  = cachedWarehouses  || [];
   }
-  // Generate SLOTS from working hours
-  const ws = parseInt(cachedAppSettings.working_hour_start) || 8;
-  const we = parseInt(cachedAppSettings.working_hour_end)   || 16;
-  SLOTS = generateSlots(ws, we);
   return cachedAppSettings;
 }
 
@@ -568,7 +625,7 @@ function renderVehicleOptions(){
   container.innerHTML = html;
 }
 
-// 🚀 Warm-up: pre-fetch settings + vehicle types in the background so step 2 is instant
+// 🚀 Warm-up: pre-fetch settings + warehouses + vehicle types in the background
 ensureSettingsLoaded();
 loadVehicleTypesData();
 
@@ -730,19 +787,19 @@ async function buildCal() {
   const today = new Date(); today.setHours(0,0,0,0);
   const maxD  = new Date(today); maxD.setDate(today.getDate() + 7);
 
-  // Ensure settings + slots are loaded
-  const settings = await ensureSettingsLoaded();
-  const cutoffHour = parseInt(settings.daily_cutoff_hour) || 15;
-  const totalSlotsCount = SLOTS.length || 8;
-
-  // Has the daily cutoff passed for today?
-  const now = new Date();
-  const isCutoffPassedToday = now.getHours() >= cutoffHour;
+  // Ensure settings + warehouses are loaded (auto-promote pending too)
+  await ensureSettingsLoaded();
 
   // Format helpers
   const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
   const todayStr = fmtDate(today);
   const maxStr   = fmtDate(maxD);
+
+  // 🏭 Cutoff hour لـ "اليوم" للمخزن المختار (per-warehouse)
+  const todayHours = applyWarehouseHours(todayStr, bk.warehouse);
+  const cutoffHour = todayHours.co;
+  const now = new Date();
+  const isCutoffPassedToday = now.getHours() >= cutoffHour;
 
   // ⚡ Parallel fetch: schedule_rules + bookings for the next 7 days
   let rules = [];
@@ -781,13 +838,17 @@ async function buildCal() {
     return false;
   }
 
+  // 🏭 Per-day fullness (per-warehouse hours قد تختلف عبر الأيام لو فيه pending change)
   function isDayFull(ds) {
+    const hours = applyWarehouseHours(ds, bk.warehouse);
+    const slots = hours.slots;
+    if (!slots.length) return false;
     const dayData = bookingsByDate[ds] || {};
     let fullSlots = 0;
-    for (const slot of SLOTS) {
+    for (const slot of slots) {
       if ((dayData[slot] || 0) >= bk.cap) fullSlots++;
     }
-    return totalSlotsCount > 0 && fullSlots >= totalSlotsCount;
+    return fullSlots >= slots.length;
   }
 
   const days = ['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'];
@@ -864,8 +925,12 @@ async function loadSlots() {
   g.innerHTML = `<div class="slots-loading">⏳ جاري تحميل المواعيد...</div>`;
   document.getElementById('b4').disabled = true;
 
-  // Make sure SLOTS is up to date with current settings
+  // Make sure settings + warehouses are loaded
   await ensureSettingsLoaded();
+
+  // 🏭 Per-warehouse + per-date slots (Phase 4)
+  const hours = applyWarehouseHours(bk.dateStr, bk.warehouse);
+  const slots = hours.slots;
 
   try {
     const r = await fetch(
@@ -883,7 +948,7 @@ async function loadSlots() {
 
     let html = '';
     let availableCount = 0;
-    SLOTS.forEach(sl => {
+    slots.forEach(sl => {
       const used = totals[sl] || 0;
       const rem  = bk.cap - used;
       // 🚫 Hide full slots completely (used to show "ممتلئ ❌")
