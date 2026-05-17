@@ -182,7 +182,7 @@
   </div>
   <div class="filter-group">
     <label>🏭 المخزن</label>
-    <select id="filterWarehouse" onchange="loadReport()">
+    <select id="filterWarehouse" onchange="onWarehouseChange()">
       <option value="">كل المخازن</option>
       <option value="قليوب">قليوب</option>
       <option value="السادات">السادات</option>
@@ -271,7 +271,82 @@ document.getElementById('dateFrom').value = urlDate || today;
 document.getElementById('dateTo').value   = urlDate || today;
 
 // تحميل تلقائي
-loadReport();
+loadWarehouseVehicleTypes().then(() => { rebuildVehicleFilter(); loadReport(); });
+
+// 🚛 الـ vehicle types المتاحة لكل مخزن (يـ load مرة واحدة من DB)
+let vehicleTypesByWarehouse = null;
+const VEHICLE_ICONS = {
+  'موتسيكل': '🏍️',
+  'تروسكل':  '🛺',
+  'كهرباء':  '⚡',
+  'ZONTOS':  '🚗'
+};
+
+async function loadWarehouseVehicleTypes(){
+  if(vehicleTypesByWarehouse) return; // cached
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/warehouse_vehicle_types?select=display_order,warehouses(name),vehicle_types(name)&is_active=eq.true&order=display_order.asc`,
+      { headers: HDR }
+    );
+    const data = await r.json();
+    vehicleTypesByWarehouse = {};
+    for(const row of (data || [])){
+      const whName = row.warehouses && row.warehouses.name;
+      const vtName = row.vehicle_types && row.vehicle_types.name;
+      if(!whName || !vtName) continue;
+      if(!vehicleTypesByWarehouse[whName]) vehicleTypesByWarehouse[whName] = [];
+      if(!vehicleTypesByWarehouse[whName].includes(vtName)){
+        vehicleTypesByWarehouse[whName].push(vtName);
+      }
+    }
+  } catch(e){
+    vehicleTypesByWarehouse = {}; // fallback — rebuildVehicleFilter بـ يستخدم default
+  }
+}
+
+function rebuildVehicleFilter(){
+  const sel = document.getElementById('filterVtype');
+  if(!sel) return;
+  const currentValue = sel.value;
+  const currentWarehouse = document.getElementById('filterWarehouse').value;
+
+  let types = [];
+  if(!currentWarehouse){
+    // "كل المخازن" → union من كل الـ types
+    const set = new Set();
+    if(vehicleTypesByWarehouse){
+      Object.values(vehicleTypesByWarehouse).forEach(arr => arr.forEach(t => set.add(t)));
+    }
+    types = [...set];
+  } else if(vehicleTypesByWarehouse && vehicleTypesByWarehouse[currentWarehouse]){
+    types = [...vehicleTypesByWarehouse[currentWarehouse]];
+  } else {
+    // fallback: data لسه ما اتحملتش — اعرض الكل
+    types = ['موتسيكل','تروسكل','كهرباء','ZONTOS'];
+  }
+
+  // ابنى الـ HTML
+  let html = '<option value="">كل الأنواع</option>';
+  for(const t of types){
+    const icon = VEHICLE_ICONS[t] || '🚛';
+    html += `<option value="${t}">${icon} ${t}</option>`;
+  }
+  sel.innerHTML = html;
+
+  // استرجع الـ selection لو متاح فى الـ list الجديدة
+  if(currentValue && types.includes(currentValue)){
+    sel.value = currentValue;
+  } else {
+    sel.value = '';
+  }
+}
+
+// لما يتغير الـ warehouse → rebuild الـ vehicle filter ثم load
+function onWarehouseChange(){
+  rebuildVehicleFilter();
+  loadReport();
+}
 
 async function loadReport() {
   const dateFrom  = document.getElementById('dateFrom').value;
