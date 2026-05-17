@@ -251,6 +251,122 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
   0%, 100% { box-shadow: 0 0 0 0 rgba(224,135,58,0.4); }
   50% { box-shadow: 0 0 0 6px rgba(224,135,58,0); }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   🚨 تنبيهات الأذونات (Permit Duplicate Alerts)
+   ═══════════════════════════════════════════════════════════ */
+.alert-badge{
+  display:none;
+  background:#E05555;
+  color:#FFF;
+  font-size:11px;
+  font-weight:700;
+  padding:2px 8px;
+  border-radius:10px;
+  margin-right:6px;
+  min-width:20px;
+  text-align:center;
+  animation:pulse-alert-badge 1.5s ease-in-out infinite;
+}
+.alert-badge.show{display:inline-block;}
+@keyframes pulse-alert-badge{
+  0%, 100% { box-shadow: 0 0 0 0 rgba(224,85,85,0.5); }
+  50% { box-shadow: 0 0 0 8px rgba(224,85,85,0); }
+}
+.alert-tabs{
+  display:flex;gap:6px;background:var(--dark2);
+  border:1px solid var(--border);border-radius:14px;padding:5px;margin-bottom:16px;
+}
+.alert-tab-btn{
+  flex:1;padding:11px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
+  background:transparent;color:var(--text-dim);transition:all 0.25s;
+}
+.alert-tab-btn.active{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);}
+.alert-tab-btn .count{
+  display:inline-block;background:rgba(255,255,255,0.18);color:inherit;
+  padding:1px 8px;border-radius:8px;font-size:11px;margin-right:4px;min-width:18px;
+}
+.alert-tab-btn:not(.active) .count{background:rgba(224,85,85,0.15);color:#E05555;}
+.permit-alert-card{
+  background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);
+  border:1px solid #2A2620;border-radius:16px;padding:18px;margin-bottom:14px;
+  transition:border-color 0.2s;
+}
+.permit-alert-card.new{border-color:rgba(224,85,85,0.35);box-shadow:0 0 0 1px rgba(224,85,85,0.1);}
+.permit-alert-head{
+  display:flex;justify-content:space-between;align-items:center;
+  padding-bottom:12px;margin-bottom:14px;border-bottom:1px solid rgba(201,168,76,0.12);
+  flex-wrap:wrap;gap:8px;
+}
+.permit-alert-id{font-size:12px;color:var(--text-dim);}
+.permit-alert-id b{color:var(--gold);}
+.permit-alert-time{font-size:11px;color:var(--text-dim);}
+.permit-alert-pair{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;}
+.permit-pair-card{
+  background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;
+  min-height:160px;
+}
+.permit-pair-card.attempting{border-color:rgba(224,85,85,0.3);background:rgba(224,85,85,0.04);}
+.permit-pair-card.original{border-color:rgba(76,175,125,0.3);background:rgba(76,175,125,0.04);}
+.permit-pair-label{
+  font-size:11px;font-weight:700;letter-spacing:0.5px;
+  margin-bottom:10px;padding-bottom:8px;border-bottom:1px dashed rgba(255,255,255,0.06);
+}
+.permit-pair-card.attempting .permit-pair-label{color:#E05555;}
+.permit-pair-card.original .permit-pair-label{color:#4CAF7D;}
+.permit-pair-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.permit-pair-code{font-size:12px;color:var(--gold);margin-bottom:8px;}
+.permit-pair-row{font-size:11.5px;color:var(--text-dim);line-height:1.7;}
+.permit-pair-row b{color:var(--text);font-weight:600;}
+.permit-pair-row .v{color:var(--text);}
+.permit-number-center{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:0 8px;min-width:90px;
+}
+.permit-number-center .lbl{
+  font-size:10px;color:var(--text-dim);letter-spacing:1.5px;margin-bottom:6px;
+}
+.permit-number-center .num{
+  font-size:24px;font-weight:900;color:var(--gold);
+  background:linear-gradient(135deg,rgba(201,168,76,0.15),rgba(201,168,76,0.05));
+  padding:10px 14px;border-radius:12px;border:1px solid rgba(201,168,76,0.3);
+  letter-spacing:1px;
+}
+.permit-number-center .arr{font-size:16px;color:var(--text-dim);margin:6px 0;}
+.permit-alert-notes{
+  width:100%;margin-top:14px;padding:10px 12px;
+  background:var(--dark3);border:1px solid var(--border);border-radius:10px;
+  font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);
+  resize:vertical;min-height:60px;
+}
+.permit-alert-notes:focus{outline:none;border-color:var(--gold);}
+.permit-alert-actions{display:flex;gap:8px;margin-top:12px;}
+.permit-alert-actions button{
+  flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;
+  font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;transition:all 0.2s;
+}
+.permit-alert-actions .approve{
+  background:rgba(76,175,125,0.12);color:#4CAF7D;border:1px solid rgba(76,175,125,0.35);
+}
+.permit-alert-actions .approve:hover{background:#4CAF7D;color:#FFF;}
+.permit-alert-actions .dismiss{
+  background:rgba(138,133,128,0.12);color:var(--text-dim);border:1px solid var(--border);
+}
+.permit-alert-actions .dismiss:hover{background:rgba(138,133,128,0.2);color:var(--text);}
+.permit-alert-archived-meta{
+  margin-top:12px;padding:10px 12px;background:rgba(74,144,217,0.05);
+  border:1px solid rgba(74,144,217,0.2);border-radius:10px;font-size:12px;color:#7fb8e8;line-height:1.7;
+}
+.permit-alert-archived-meta .status-reviewed{color:#4CAF7D;font-weight:700;}
+.permit-alert-archived-meta .status-dismissed{color:var(--text-dim);font-weight:700;}
+/* Mobile: stack the pair vertically */
+@media (max-width:780px){
+  .permit-alert-pair{grid-template-columns:1fr;}
+  .permit-number-center{padding:8px 0;flex-direction:row;gap:10px;}
+  .permit-number-center .arr{transform:rotate(90deg);margin:0;}
+  .permit-number-center .lbl{margin-bottom:0;}
+}
 .pending-card{
   background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);
   border:1px solid #2A2620;
@@ -1692,6 +1808,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="nav-item" onclick="goTo('employees')"><span class="ni">👷</span> الموظفين</div>
       <div class="nav-item" onclick="goTo('clients')"><span class="ni">👥</span> العملاء</div>
       <div class="nav-item" onclick="goTo('pending-clients')"><span class="ni">⏳</span> عملاء تحت الانتظار <span class="pending-badge" id="pendingBadge">0</span></div>
+      <div class="nav-item" onclick="goTo('permit-alerts')"><span class="ni">🚨</span> تنبيهات الأذونات <span class="alert-badge" id="alertBadge">0</span></div>
       <div class="nav-item" onclick="goTo('client-types')"><span class="ni">🏷️</span> أنواع العملاء</div>
       <div class="nav-item" onclick="goTo('extra-contacts')"><span class="ni">📞</span> جهات إضافية</div>
       <div class="nav-item" onclick="goTo('broadcast')"><span class="ni">📢</span> إرسال رسائل</div>
@@ -1754,6 +1871,33 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           </select>
         </div>
         <div id="bk-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- 🚨 PERMIT ALERTS -->
+    <div class="section" id="sec-permit-alerts">
+      <div class="page-hd">
+        <div class="page-title">🚨 <span>تنبيهات الأذونات</span></div>
+        <button class="add-btn" onclick="loadPermitAlerts()" style="background:rgba(201,168,76,0.1);color:var(--gold)">🔄 تحديث</button>
+      </div>
+
+      <div class="tbl-wrap" style="padding:14px 18px;margin-bottom:14px;background:rgba(224,85,85,0.04);border:1px solid rgba(224,85,85,0.18)">
+        <div style="font-size:12.5px;color:#E5908C;line-height:1.8">
+          ℹ️ هنا بتظهر محاولات استخدام رقم إذن لعميل تانى. راجع كل تنبيه واتخذ القرار: <b>تمت المراجعة</b> (هتروح للأرشيف) أو <b>تجاهل</b> (مش هتظهر تانى).
+        </div>
+      </div>
+
+      <div class="alert-tabs">
+        <button class="alert-tab-btn active" id="alert-tab-new" onclick="switchAlertTab('new')">
+          🆕 الجديد <span class="count" id="alert-count-new">0</span>
+        </button>
+        <button class="alert-tab-btn" id="alert-tab-archive" onclick="switchAlertTab('archive')">
+          🗂️ الأرشيف <span class="count" id="alert-count-archive">0</span>
+        </button>
+      </div>
+
+      <div id="permit-alerts-list">
+        <div class="loading-txt">⏳ جاري التحميل...</div>
       </div>
     </div>
 
@@ -3016,6 +3160,10 @@ function enterApp(){
   initResizeHandle();
   // 🆕 Load the user's preferred default page (fallback to bookings)
   goToDefaultPage();
+  // 🚨 تحديث الـ badge بتاع تنبيهات الأذونات
+  refreshAlertBadge();
+  // كل دقيقتين، حدّث الـ badge تلقائياً (لو فيه alerts جديدة)
+  setInterval(refreshAlertBadge, 120000);
 }
 
 // 🆕 Read default page from settings and navigate there
@@ -3107,6 +3255,7 @@ function goTo(sec){
   }
 
   if(sec==='bookings')loadBookings();
+  else if(sec==='permit-alerts')loadPermitAlerts();
   else if(sec==='employees')loadEmployees();
   else if(sec==='clients'){ refreshClientActivity(true).then(()=>loadClients()); }
   else if(sec==='client-types')loadClientTypes();
@@ -3134,6 +3283,255 @@ function goTo(sec){
     }
     alogPopulateActionFilter();
     loadActivityLog();
+  }
+}
+
+// =================== 🚨 PERMIT ALERTS ===================
+let permitAlertsData = { new: [], reviewed: [], dismissed: [] };
+let currentAlertTab = 'new';
+
+// 📜 Helper: سجّل event للأدمن فى activity_log (inline since no global function)
+function adminLogActivity(action, label, details = {}) {
+  if (!admin || !admin.id) return;
+  try {
+    fetch(`${SB}/rest/v1/activity_log`, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        user_type: 'admin',
+        user_id: admin.id,
+        user_name: admin.name,
+        user_extra: 'admin',
+        action,
+        action_label: label,
+        details
+      })
+    }).catch(() => {});
+  } catch (e) {}
+}
+
+// تحديث الـ badge فى الـ sidebar (count الـ alerts الجديدة)
+async function refreshAlertBadge() {
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/duplicate_permit_alerts?status=eq.new&select=id`,
+      { headers: { ...HDR, 'Prefer': 'count=exact' } }
+    );
+    if (!r.ok) return;
+    // الـ count بـ header Content-Range: "0-N/total"
+    const cr = r.headers.get('content-range') || '';
+    const total = parseInt(cr.split('/')[1] || '0', 10);
+    const badge = document.getElementById('alertBadge');
+    if (!badge) return;
+    if (total > 0) {
+      badge.textContent = total > 99 ? '99+' : total;
+      badge.classList.add('show');
+    } else {
+      badge.classList.remove('show');
+    }
+  } catch (e) { /* silent */ }
+}
+
+function switchAlertTab(tab) {
+  currentAlertTab = tab;
+  document.getElementById('alert-tab-new').classList.toggle('active', tab === 'new');
+  document.getElementById('alert-tab-archive').classList.toggle('active', tab === 'archive');
+  renderPermitAlerts();
+}
+
+async function loadPermitAlerts() {
+  const list = document.getElementById('permit-alerts-list');
+  list.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/duplicate_permit_alerts?select=*&order=created_at.desc`,
+      { headers: HDR }
+    );
+    if (!r.ok) {
+      list.innerHTML = '<div class="empty-txt">⚠️ تعذّر تحميل التنبيهات</div>';
+      return;
+    }
+    const data = await r.json();
+
+    permitAlertsData = { new: [], reviewed: [], dismissed: [] };
+    for (const a of (data || [])) {
+      if (a.status === 'new') permitAlertsData.new.push(a);
+      else if (a.status === 'reviewed') permitAlertsData.reviewed.push(a);
+      else if (a.status === 'dismissed') permitAlertsData.dismissed.push(a);
+    }
+
+    // update counts in tabs
+    document.getElementById('alert-count-new').textContent = permitAlertsData.new.length;
+    const archiveCount = permitAlertsData.reviewed.length + permitAlertsData.dismissed.length;
+    document.getElementById('alert-count-archive').textContent = archiveCount;
+
+    renderPermitAlerts();
+    refreshAlertBadge();
+  } catch (e) {
+    list.innerHTML = '<div class="empty-txt">❌ خطأ فى الاتصال</div>';
+  }
+}
+
+function renderPermitAlerts() {
+  const list = document.getElementById('permit-alerts-list');
+  const items = currentAlertTab === 'new'
+    ? permitAlertsData.new
+    : [...permitAlertsData.reviewed, ...permitAlertsData.dismissed]
+        .sort((a, b) => new Date(b.reviewed_at || b.created_at) - new Date(a.reviewed_at || a.created_at));
+
+  if (!items.length) {
+    const msg = currentAlertTab === 'new'
+      ? '✨ مفيش تنبيهات جديدة — كله تمام'
+      : '🗂️ الأرشيف فاضى';
+    list.innerHTML = `<div class="empty-txt">${msg}</div>`;
+    return;
+  }
+
+  list.innerHTML = items.map(a => renderPermitAlertCard(a)).join('');
+}
+
+function escAttr(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function renderPermitAlertCard(a) {
+  const attempting = a.attempting_client_data || {};
+  const attemptingBk = a.attempting_booking_data || {};
+  const original = a.original_client_data || {};
+  const originalBk = a.original_booking_data || {};
+
+  const createdAt = a.created_at
+    ? new Date(a.created_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })
+    : '—';
+
+  // العميل المحاول
+  const attemptingHtml = `
+    <div class="permit-pair-card attempting">
+      <div class="permit-pair-label">🚫 حاول يستخدم الرقم</div>
+      <div class="permit-pair-name">${escAttr(attempting.name || '—')}</div>
+      <div class="permit-pair-code">كود: ${escAttr(attempting.company_code || '—')}</div>
+      <div class="permit-pair-row">📞 <b>الهاتف:</b> <span class="v">${escAttr(attempting.phone || '—')}</span></div>
+      <div class="permit-pair-row">📍 <b>المحافظة:</b> <span class="v">${escAttr(attempting.governorate || '—')}</span></div>
+      <div class="permit-pair-row">🏘️ <b>المدينة:</b> <span class="v">${escAttr(attempting.city || '—')}</span></div>
+      <div class="permit-pair-row">🏪 <b>المخزن المحاول:</b> <span class="v">${escAttr(attemptingBk.warehouse || '—')}</span></div>
+      ${attemptingBk.attempted_at ? `<div class="permit-pair-row">🕐 <b>وقت المحاولة:</b> <span class="v">${escAttr(new Date(attemptingBk.attempted_at).toLocaleString('ar-EG'))}</span></div>` : ''}
+    </div>`;
+
+  // الرقم فى الوسط
+  const centerHtml = `
+    <div class="permit-number-center">
+      <div class="lbl">رقم الإذن</div>
+      <div class="num">${escAttr(a.permit_number)}</div>
+      <div class="arr">⟷</div>
+    </div>`;
+
+  // العميل الأصلى
+  const originalDateLabel = originalBk.loading_date
+    ? new Date(originalBk.loading_date + 'T12:00:00').toLocaleDateString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short' })
+    : '—';
+  const originalIdLabel = originalBk.seq_number
+    ? `#${originalBk.seq_number}`
+    : (originalBk.id ? `#${originalBk.id}` : '—');
+  const originalHtml = `
+    <div class="permit-pair-card original">
+      <div class="permit-pair-label">✅ صاحب الرقم الأصلى</div>
+      ${original._fetch_failed
+        ? `<div class="permit-pair-name" style="color:var(--text-dim)">⚠️ تعذّر جلب البيانات</div>
+           <div class="permit-pair-row">العميل ID: <b>${escAttr(original.id || '—')}</b></div>`
+        : `<div class="permit-pair-name">${escAttr(original.name || '—')}</div>
+           <div class="permit-pair-code">كود: ${escAttr(original.company_code || '—')}</div>
+           <div class="permit-pair-row">📞 <b>الهاتف:</b> <span class="v">${escAttr(original.phone || '—')}</span></div>
+           <div class="permit-pair-row">📍 <b>المحافظة:</b> <span class="v">${escAttr(original.governorate || '—')}</span></div>
+           <div class="permit-pair-row">🏘️ <b>المدينة:</b> <span class="v">${escAttr(original.city || '—')}</span></div>`}
+      <div class="permit-pair-row">📋 <b>حجز ${originalIdLabel}:</b> <span class="v">${escAttr(originalBk.warehouse || '—')} | ${escAttr(originalBk.vehicle_type || '—')} | ${originalBk.count || '—'} عربية</span></div>
+      <div class="permit-pair-row">📅 <b>اليوم:</b> <span class="v">${escAttr(originalDateLabel)} - ${escAttr(originalBk.time_slot || '—')}</span></div>
+      <div class="permit-pair-row">🚦 <b>الحالة:</b> <span class="v">${escAttr(originalBk.status || '—')}</span></div>
+    </div>`;
+
+  // الـ footer: لو جديد → notes + buttons. لو archived → metadata
+  let footerHtml = '';
+  if (a.status === 'new') {
+    footerHtml = `
+      <textarea class="permit-alert-notes" id="alert-notes-${a.id}"
+                placeholder="ملاحظات الأدمن (اختيارى)... مثلاً: تم التواصل مع العميل، اتفقنا على كذا"></textarea>
+      <div class="permit-alert-actions">
+        <button class="approve" onclick="approvePermitAlert(${a.id})">✅ تمت المراجعة</button>
+        <button class="dismiss" onclick="dismissPermitAlert(${a.id})">🗑️ تجاهل</button>
+      </div>`;
+  } else {
+    const statusLabel = a.status === 'reviewed' ? '✅ تمت المراجعة' : '🗑️ تم التجاهل';
+    const statusClass = a.status === 'reviewed' ? 'status-reviewed' : 'status-dismissed';
+    const reviewedAt = a.reviewed_at
+      ? new Date(a.reviewed_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' })
+      : '—';
+    footerHtml = `
+      <div class="permit-alert-archived-meta">
+        <div><b>الحالة:</b> <span class="${statusClass}">${statusLabel}</span></div>
+        <div><b>بواسطة:</b> ${escAttr(a.reviewed_by || '—')} <span style="color:var(--text-dim);margin-right:8px">— ${escAttr(reviewedAt)}</span></div>
+        ${a.admin_notes ? `<div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(74,144,217,0.2)"><b>📝 ملاحظات:</b> ${escAttr(a.admin_notes)}</div>` : ''}
+      </div>`;
+  }
+
+  return `
+    <div class="permit-alert-card ${a.status === 'new' ? 'new' : ''}">
+      <div class="permit-alert-head">
+        <div class="permit-alert-id">تنبيه <b>#${a.id}</b></div>
+        <div class="permit-alert-time">📅 ${escAttr(createdAt)}</div>
+      </div>
+      <div class="permit-alert-pair">
+        ${attemptingHtml}
+        ${centerHtml}
+        ${originalHtml}
+      </div>
+      ${footerHtml}
+    </div>`;
+}
+
+async function approvePermitAlert(id) {
+  const notesEl = document.getElementById('alert-notes-' + id);
+  const notes = notesEl ? notesEl.value.trim() : '';
+  await patchPermitAlert(id, 'reviewed', notes, '✅ تمت المراجعة');
+}
+
+async function dismissPermitAlert(id) {
+  const notesEl = document.getElementById('alert-notes-' + id);
+  const notes = notesEl ? notesEl.value.trim() : '';
+  if (!confirm('متأكد من تجاهل التنبيه ده؟ هيتنقل للأرشيف بدون مراجعة.')) return;
+  await patchPermitAlert(id, 'dismissed', notes, '🗑️ تم التجاهل');
+}
+
+async function patchPermitAlert(id, newStatus, notes, successLabel) {
+  try {
+    const body = {
+      status: newStatus,
+      reviewed_at: new Date().toISOString(),
+      reviewed_by: admin?.name || 'أدمن',
+      admin_notes: notes || null
+    };
+    const r = await fetch(`${SB}/rest/v1/duplicate_permit_alerts?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify(body)
+    });
+    if (!r.ok) {
+      alert('❌ تعذّر تحديث التنبيه. حاول تانى.');
+      return;
+    }
+
+    // 📜 سجّل event الأدمن
+    adminLogActivity(
+      newStatus === 'reviewed' ? 'admin_review_permit_alert' : 'admin_dismiss_permit_alert',
+      `${successLabel} — تنبيه #${id}`,
+      { alert_id: id, status: newStatus, has_notes: !!notes }
+    );
+
+    // أعد التحميل لتحديث القوائم والـ badge
+    await loadPermitAlerts();
+  } catch (e) {
+    alert('❌ خطأ فى الاتصال');
   }
 }
 
@@ -3388,7 +3786,7 @@ function renderBookingsTable(data){
 
   html+=`<table><thead><tr>
     <th style="width:40px;text-align:center"><input type="checkbox" id="bk-select-all" class="bk-checkbox" onchange="toggleAllBookings(this.checked)" ${cancellableCount === 0 ? 'disabled' : ''}></th>
-    <th>#</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
+    <th>#</th><th>🎫 رقم الإذن</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
 
   data.forEach(b=>{
@@ -3404,6 +3802,7 @@ function renderBookingsTable(data){
     html+=`<tr>
       <td style="text-align:center">${checkboxCell}</td>
       <td style="color:var(--text-dim)" title="ID: ${b.id}">${b.seq_number ? `<b style="color:var(--gold)">#${b.seq_number}</b>` : `#${b.id}`}</td>
+      <td>${b.permit_number ? `<b style="color:var(--gold-light);letter-spacing:0.3px">🎫 ${b.permit_number}</b>` : `<span style="color:var(--text-dim);font-size:11px">—</span>`}</td>
       <td><b>${hl(c.name||'-',clientSearch)}</b></td>
       <td><span style="color:var(--gold)">${hl(c.company_code||'-',clientSearch)}</span></td>
       <td>${b.warehouse||'-'}</td>
