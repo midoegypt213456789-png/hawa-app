@@ -110,6 +110,21 @@
   .td-num { color: #999; font-size: 12px; width: 30px; }
   .td-name { font-weight: 700; color: #111; }
   .td-code { color: #C9A84C; font-weight: 600; font-size: 12px; }
+  .td-permit {
+    font-size: 13px; font-weight: 800; color: #8B6F2A;
+    background: rgba(201,168,76,0.10); border: 1px dashed rgba(201,168,76,0.45);
+    border-radius: 6px; padding: 4px 8px; text-align: center;
+    letter-spacing: 0.5px; white-space: nowrap; min-width: 70px;
+  }
+  .td-permit.empty { color: #BBB; background: transparent; border-style: dotted; font-weight: 600; }
+  @media print {
+    .td-permit {
+      color: #000 !important; background: #FFF8E5 !important;
+      border: 1px solid #B8941F !important; font-weight: 900 !important;
+      font-size: 13px !important; padding: 3px 6px !important;
+    }
+    .td-permit.empty { color: #888 !important; background: transparent !important; border-color: #DDD !important; }
+  }
   .td-count { font-weight: 900; font-size: 15px; color: #111; text-align: center; width: 60px; }
   .td-count span { font-size: 11px; font-weight: 400; color: #999; }
 
@@ -371,7 +386,7 @@ function buildVtypeSection(vtype, bookings, clientMap, wh, date) {
         <td class="td-num">${rowCounter++}</td>
         <td class="td-name">${c.name||'-'}</td>
         <td class="td-code">${c.company_code||'-'}</td>
-        <td style="font-size:12px;color:#C9A84C;font-weight:700">${b.permit_number||'-'}</td>
+        <td><span class="td-permit ${b.permit_number?'':'empty'}">${b.permit_number ? '🎫 '+b.permit_number : '—'}</span></td>
         <td style="font-size:12px;color:#555">${slot}</td>
         <td class="td-count">${b.count}<br><span>عربية</span></td>
         <td><span class="status-badge ${sc}">${sl}</span></td>
@@ -381,7 +396,7 @@ function buildVtypeSection(vtype, bookings, clientMap, wh, date) {
     });
     slotsHtml += `<div class="slot-group">
       <div class="slot-label">⏰ ${slot} — ${slotBks.length} حجز | ${slotBks.reduce((s,b)=>s+(b.count||0),0)} عربية</div>
-      <table><thead><tr><th>#</th><th>اسم العميل</th><th>الكود</th><th>رقم الإذن</th><th>الموعد</th><th>العدد</th><th>الحالة</th><th class="no-print">إجراء</th></tr></thead>
+      <table><thead><tr><th>#</th><th>اسم العميل</th><th>الكود</th><th>🎫 رقم الإذن</th><th>الموعد</th><th>العدد</th><th>الحالة</th><th class="no-print">إجراء</th></tr></thead>
       <tbody>${rows}</tbody></table></div>`;
   });
 
