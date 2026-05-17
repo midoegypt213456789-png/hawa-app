@@ -198,6 +198,20 @@
     </select>
   </div>
   <div class="filter-group">
+    <label>⏰ الساعة</label>
+    <select id="filterSlot" onchange="loadReport()">
+      <option value="">كل المواعيد</option>
+      <option value="8:00 - 9:00">8:00 - 9:00</option>
+      <option value="9:00 - 10:00">9:00 - 10:00</option>
+      <option value="10:00 - 11:00">10:00 - 11:00</option>
+      <option value="11:00 - 12:00">11:00 - 12:00</option>
+      <option value="12:00 - 1:00">12:00 - 1:00</option>
+      <option value="1:00 - 2:00">1:00 - 2:00</option>
+      <option value="2:00 - 3:00">2:00 - 3:00</option>
+      <option value="3:00 - 4:00">3:00 - 4:00</option>
+    </select>
+  </div>
+  <div class="filter-group">
     <label>📋 الحالة</label>
     <select id="filterStatus" onchange="loadReport()">
       <option value="">كل الحالات</option>
@@ -264,6 +278,7 @@ async function loadReport() {
   const dateTo    = document.getElementById('dateTo').value;
   const warehouse = document.getElementById('filterWarehouse').value;
   const vtype     = document.getElementById('filterVtype').value;
+  const slot      = document.getElementById('filterSlot').value;
   const status    = document.getElementById('filterStatus').value;
 
   if (!dateFrom || !dateTo) { alert('اختر تاريخ البداية والنهاية'); return; }
@@ -275,6 +290,7 @@ async function loadReport() {
     let query = `${SB}/rest/v1/bookings?select=*&loading_date=gte.${dateFrom}&loading_date=lte.${dateTo}&order=loading_date.asc,time_slot.asc`;
     if (warehouse) query += `&warehouse=eq.${encodeURIComponent(warehouse)}`;
     if (vtype)     query += `&vehicle_type=eq.${encodeURIComponent(vtype)}`;
+    if (slot)      query += `&time_slot=eq.${encodeURIComponent(slot)}`;
     if (status)    query += `&status=eq.${encodeURIComponent(status)}`;
     else           query += `&status=neq.${encodeURIComponent('ملغي')}`;
 
