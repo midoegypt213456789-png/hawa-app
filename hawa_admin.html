@@ -1841,7 +1841,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <input class="filter-inp" id="bk-date-from" type="date" onchange="loadBookings()" style="width:140px" title="من تاريخ">
           <span style="color:var(--text-dim);font-size:14px;align-self:center;padding:0 4px">←</span>
           <input class="filter-inp" id="bk-date-to" type="date" onchange="loadBookings()" style="width:140px" title="إلى تاريخ">
-          <select class="filter-inp" id="bk-wh" onchange="loadBookings()" style="width:130px">
+          <select class="filter-inp" id="bk-wh" onchange="onBkWarehouseChange()" style="width:130px">
             <option value="">كل المخازن</option>
             <option value="قليوب">🏭 قليوب</option>
             <option value="السادات">🏗️ السادات</option>
@@ -1851,6 +1851,18 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="موتسيكل">🏍️ موتسيكل</option>
             <option value="تروسكل">🛺 تروسكل</option>
             <option value="كهرباء">⚡ كهرباء</option>
+            <option value="ZONTOS">🚗 ZONTOS</option>
+          </select>
+          <select class="filter-inp" id="bk-slot" onchange="loadBookings()" style="width:150px">
+            <option value="">⏰ كل المواعيد</option>
+            <option value="8:00 - 9:00">⏰ 8:00 - 9:00</option>
+            <option value="9:00 - 10:00">⏰ 9:00 - 10:00</option>
+            <option value="10:00 - 11:00">⏰ 10:00 - 11:00</option>
+            <option value="11:00 - 12:00">⏰ 11:00 - 12:00</option>
+            <option value="12:00 - 1:00">⏰ 12:00 - 1:00</option>
+            <option value="1:00 - 2:00">⏰ 1:00 - 2:00</option>
+            <option value="2:00 - 3:00">⏰ 2:00 - 3:00</option>
+            <option value="3:00 - 4:00">⏰ 3:00 - 4:00</option>
           </select>
           <select class="filter-inp" id="bk-status" onchange="loadBookings()" style="width:150px">
             <option value="">كل الحالات</option>
@@ -2259,7 +2271,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="modal-overlay" id="ruleModal">
       <div class="modal">
         <div class="modal-title">
-          <span>إضافة قاعدة إجازة</span>
+          <span id="rule-modal-title-text">إضافة قاعدة إجازة</span>
           <button class="modal-close" onclick="closeModal('ruleModal')">✕</button>
         </div>
 
@@ -2359,7 +2371,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         </div>
 
         <div class="modal-btns">
-          <button class="modal-save" onclick="saveRule()">💾 حفظ القاعدة</button>
+          <button class="modal-save" id="rule-modal-save-btn" onclick="saveRule()">💾 حفظ القاعدة</button>
           <button class="modal-cancel" onclick="closeModal('ruleModal')">إلغاء</button>
         </div>
       </div>
@@ -3539,11 +3551,98 @@ async function patchPermitAlert(id, newStatus, notes, successLabel) {
 let allBookingsData = [];
 let allClientsMap = {};
 
+// 🚛 الـ vehicle types المتاحة لكل مخزن (cache + lazy load)
+let vehicleTypesByWarehouse = null;
+const VEHICLE_ICONS = {
+  'موتسيكل': '🏍️',
+  'تروسكل':  '🛺',
+  'كهرباء':  '⚡',
+  'ZONTOS':  '🚗'
+};
+
+async function loadWarehouseVehicleTypes(){
+  if(vehicleTypesByWarehouse) return; // cached
+  try {
+    const [whResp, vtResp, mapResp] = await Promise.all([
+      fetch(`${SB}/rest/v1/warehouses?select=id,name`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/vehicle_types?select=id,name`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouse_vehicle_types?is_active=eq.true&select=warehouse_id,vehicle_type_id,display_order&order=display_order.asc`, { headers: HDR })
+    ]);
+    const [warehouses, vehicleTypes, mappings] = await Promise.all([whResp.json(), vtResp.json(), mapResp.json()]);
+
+    const whMap = {}; (warehouses || []).forEach(w => whMap[w.id] = w.name);
+    const vtMap = {}; (vehicleTypes || []).forEach(v => vtMap[v.id] = v.name);
+
+    vehicleTypesByWarehouse = {};
+    for(const m of (mappings || [])){
+      const whName = whMap[m.warehouse_id];
+      const vtName = vtMap[m.vehicle_type_id];
+      if(!whName || !vtName) continue;
+      if(!vehicleTypesByWarehouse[whName]) vehicleTypesByWarehouse[whName] = [];
+      if(!vehicleTypesByWarehouse[whName].includes(vtName)){
+        vehicleTypesByWarehouse[whName].push(vtName);
+      }
+    }
+    console.log('[vehicle-filter] loaded:', vehicleTypesByWarehouse);
+  } catch(e){
+    console.error('[vehicle-filter] load failed:', e);
+    vehicleTypesByWarehouse = {};
+  }
+}
+
+function rebuildBkVehicleFilter(){
+  const sel = document.getElementById('bk-vehicle');
+  if(!sel) return;
+  const currentValue = sel.value;
+  const currentWh = document.getElementById('bk-wh').value;
+
+  let types = [];
+  if(!currentWh){
+    // "كل المخازن" → union
+    const set = new Set();
+    if(vehicleTypesByWarehouse){
+      Object.values(vehicleTypesByWarehouse).forEach(arr => arr.forEach(t => set.add(t)));
+    }
+    types = [...set];
+  } else if(vehicleTypesByWarehouse && vehicleTypesByWarehouse[currentWh]){
+    types = [...vehicleTypesByWarehouse[currentWh]];
+  } else {
+    types = ['موتسيكل','تروسكل','كهرباء','ZONTOS'];
+  }
+
+  let html = '<option value="">كل الأنواع</option>';
+  for(const t of types){
+    const icon = VEHICLE_ICONS[t] || '🚛';
+    html += `<option value="${t}">${icon} ${t}</option>`;
+  }
+  sel.innerHTML = html;
+
+  if(currentValue && types.includes(currentValue)){
+    sel.value = currentValue;
+  } else {
+    sel.value = '';
+  }
+}
+
+// لما يتغير الـ warehouse → rebuild الـ vehicle filter ثم load
+async function onBkWarehouseChange(){
+  await loadWarehouseVehicleTypes(); // cached after first call
+  rebuildBkVehicleFilter();
+  loadBookings();
+}
+
 async function loadBookings(){
+  // 🚛 lazy load + rebuild الـ vehicle filter (first call only)
+  if(!vehicleTypesByWarehouse){
+    await loadWarehouseVehicleTypes();
+    rebuildBkVehicleFilter();
+  }
+
   const dateFrom=document.getElementById('bk-date-from').value;
   const dateTo=document.getElementById('bk-date-to').value;
   const wh=document.getElementById('bk-wh').value;
   const vehicle=document.getElementById('bk-vehicle').value;
+  const slot=document.getElementById('bk-slot').value;
   const status=document.getElementById('bk-status').value;
   document.getElementById('bk-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
 
@@ -3558,6 +3657,7 @@ async function loadBookings(){
   if(dateTo)url+=`&loading_date=lte.${dateTo}`;
   if(wh)url+=`&warehouse=eq.${encodeURIComponent(wh)}`;
   if(vehicle)url+=`&vehicle_type=eq.${encodeURIComponent(vehicle)}`;
+  if(slot)url+=`&time_slot=eq.${encodeURIComponent(slot)}`;
   if(status)url+=`&status=eq.${encodeURIComponent(status)}`;
 
   try{
@@ -7102,7 +7202,10 @@ async function loadRules(){
         <td>${whText}</td>
         <td>${vtText}</td>
         <td>${rule.reason||'-'}</td>
-        <td><button class="act-btn del" onclick="deleteRule(${rule.id})">🗑️ حذف</button></td>
+        <td style="white-space:nowrap">
+          <button class="act-btn" style="background:rgba(74,144,217,0.12);color:#7fb8e8;border:1px solid rgba(74,144,217,0.35);margin-left:4px" onclick="openEditRuleModal(${rule.id})">✏️ تعديل</button>
+          <button class="act-btn del" onclick="deleteRule(${rule.id})">🗑️ حذف</button>
+        </td>
       </tr>`;
     });
     html+='</tbody></table>';
@@ -7185,7 +7288,14 @@ function prevMonth(){ calViewDate.setMonth(calViewDate.getMonth()-1); renderCale
 function nextMonth(){ calViewDate.setMonth(calViewDate.getMonth()+1); renderCalendar(); }
 
 // ---- Rule Modal ----
+// ✏️ State للـ edit mode (null = إضافة جديدة، رقم = تعديل قاعدة موجودة)
+let editingRuleId = null;
+
 async function openRuleModal(){
+  editingRuleId = null; // ⬅️ reset — دا add mode
+  document.getElementById('rule-modal-title-text').textContent = 'إضافة قاعدة إجازة';
+  document.getElementById('rule-modal-save-btn').innerHTML = '💾 حفظ القاعدة';
+
   document.getElementById('rule-type').value='weekly';
   document.getElementById('rule-dow').value='5';
   document.getElementById('rule-start').value='';
@@ -7206,6 +7316,45 @@ async function openRuleModal(){
       el.dataset.recomputeBound = '1';
     }
   });
+  document.getElementById('ruleModal').classList.add('show');
+}
+
+// ✏️ فتح الـ modal لتعديل قاعدة موجودة
+async function openEditRuleModal(ruleId){
+  const rule = schedRules.find(r => r.id === ruleId);
+  if(!rule){ alert('❌ القاعدة مش موجودة'); return; }
+
+  editingRuleId = ruleId; // ⬅️ edit mode
+  document.getElementById('rule-modal-title-text').textContent = '✏️ تعديل قاعدة إجازة #' + ruleId;
+  document.getElementById('rule-modal-save-btn').innerHTML = '💾 حفظ التعديل';
+
+  // 📋 Pre-fill الفيلدز
+  document.getElementById('rule-type').value = rule.type;
+  document.getElementById('rule-dow').value = rule.day_of_week != null ? String(rule.day_of_week) : '5';
+  document.getElementById('rule-start').value = rule.start_date || '';
+  document.getElementById('rule-end').value   = rule.end_date || '';
+  document.getElementById('rule-reason').value = rule.reason || '';
+  document.getElementById('rule-start-hour').value = rule.start_hour != null ? String(rule.start_hour) : '';
+  document.getElementById('rule-end-hour').value   = rule.end_hour != null ? String(rule.end_hour) : '';
+  document.getElementById('rule-effective-from').value = rule.effective_from || '';
+
+  onRuleTypeChange(); // يـ show/hide الـ wraps حسب الـ type
+
+  // 📦/🚛 Scope: حمّل مع pre-selected
+  await loadRuleScopeOptions(rule.warehouses || [], rule.vehicle_types || []);
+
+  // ربط change events (مرة واحدة)
+  ['rule-warehouses-list','rule-vtypes-list'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el && !el.dataset.recomputeBound){
+      el.addEventListener('change', () => recomputeRuleEffectiveFrom());
+      el.dataset.recomputeBound = '1';
+    }
+  });
+
+  // إعادة حساب الـ effective_from hint (مش بـ يـ overwrite الـ existing value)
+  recomputeRuleEffectiveFrom();
+
   document.getElementById('ruleModal').classList.add('show');
 }
 
@@ -7509,11 +7658,27 @@ async function saveRule(){
   }
 
   try{
-    const r = await fetch(`${SB}/rest/v1/schedule_rules`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    let r;
+    if(editingRuleId != null){
+      // ✏️ Edit mode — PATCH
+      r = await fetch(`${SB}/rest/v1/schedule_rules?id=eq.${editingRuleId}`, {
+        method:'PATCH',
+        headers:{...HDR,'Prefer':'return=minimal'},
+        body:JSON.stringify(body)
+      });
+    } else {
+      // ➕ Add mode — POST
+      r = await fetch(`${SB}/rest/v1/schedule_rules`, {
+        method:'POST',
+        headers:{...HDR,'Prefer':'return=minimal'},
+        body:JSON.stringify(body)
+      });
+    }
     if(!r.ok){
       const errTxt = await r.text();
       throw new Error(errTxt || 'فشل الحفظ');
     }
+    editingRuleId = null; // ⬅️ reset بعد success
     closeModal('ruleModal');
     await loadSchedule();
   }catch(e){alert('❌ خطأ في الحفظ: ' + e.message);}
@@ -7654,7 +7819,11 @@ async function loadReports(){
 }
 
 // =================== MODAL / CONFIRM ===================
-function closeModal(id){document.getElementById(id).classList.remove('show');}
+function closeModal(id){
+  document.getElementById(id).classList.remove('show');
+  // ✏️ reset edit state لو الـ rule modal اتقفل (سواء cancel أو ✕)
+  if(id === 'ruleModal') editingRuleId = null;
+}
 
 function showConfirm(icon,title,msg,danger,onYes){
   document.getElementById('cd-icon').textContent=icon;
