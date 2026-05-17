@@ -3446,6 +3446,36 @@ function updateMessagePreview(){
 // 🏭 Per-Warehouse working hours
 let _warehouseHoursCache = [];
 
+// Helper: نفس logic toll slots اللى فى hawa_booking.html — لازم يبقى identical
+function generateSlots(workStart, workEnd){
+  const slots = [];
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  for(let h = workStart; h < workEnd; h++){
+    slots.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+  }
+  return slots;
+}
+
+// Helper: ارجع الحجوزات اللى slot بتاعها مش هيبقى موجود فى الـ slot list الجديد
+async function findOrphanBookings(warehouseName, fromDate, newSlots){
+  const r = await fetch(
+    `${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(warehouseName)}&loading_date=gte.${fromDate}&status=neq.ملغي&select=id,loading_date,time_slot,permit_number,client_id`,
+    {headers:HDR}
+  );
+  if(!r.ok) throw new Error(`فشل قراءة حجوزات ${warehouseName}`);
+  const all = await r.json();
+  return all.filter(b => b.time_slot && !newSlots.includes(b.time_slot));
+}
+
+function formatOrphansMessage(warehouseName, orphans, fromDate, action){
+  const sample = orphans.slice(0,3).map(c => `${c.loading_date} (${c.time_slot})`).join('، ');
+  const more = orphans.length > 3 ? ` وكمان ${orphans.length - 3} حجز` : '';
+  return `❌ مش ممكن ${action} ساعات ${warehouseName}.\n\n` +
+         `فيه ${orphans.length} حجز من ${fromDate} وبعدها مواعيدها هتختفى مع الساعات الجديدة:\n` +
+         `${sample}${more}\n\n` +
+         `لازم تلغى أو تعدّل الحجوزات دى الأول، أو اختار تاريخ تطبيق بعد آخر حجز فيهم.`;
+}
+
 async function loadWarehouseHours(){
   const container = document.getElementById('warehouse-hours-container');
   try{
@@ -3552,7 +3582,26 @@ function renderWarehouseHoursCard(w){
 
 async function cancelPendingHours(id){
   const w = _warehouseHoursCache.find(x => x.id === id);
-  const name = w ? w.name : '';
+  if(!w) return;
+  const name = w.name;
+
+  // 🛡️ Orphan check: بعد ما نلغى pending، الساعات هترجع للـ current.
+  // أى حجز من pending_effective_from فصاعداً عنده slot مش موجود فى الـ current slots → orphan.
+  const currentSlots = generateSlots(w.working_hour_start ?? 8, w.working_hour_end ?? 16);
+  let orphans = [];
+  if(w.pending_effective_from){
+    try{
+      orphans = await findOrphanBookings(name, w.pending_effective_from, currentSlots);
+    }catch(e){
+      alert('❌ ' + e.message);
+      return;
+    }
+  }
+  if(orphans.length){
+    alert(formatOrphansMessage(name, orphans, w.pending_effective_from, 'تلغى التغيير المجدول لـ'));
+    return;
+  }
+
   if(!confirm(`إلغاء التغيير المجدول لـ ${name}؟`)) return;
   try{
     const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`,{
@@ -3618,6 +3667,17 @@ async function saveWarehouseHours(){
       co === w.pending_daily_cutoff_hour &&
       fromVal === w.pending_effective_from
     );
+
+    // 🛡️ Orphan check: لو ساعات العمل (ws/we) بتتغيّر، افحص الحجوزات الموجودة
+    // مهم: cutoff hour (co) لوحده ميسببش orphans — بس بيؤثر على حجز جديد لنفس اليوم
+    const hoursWindowChanging = (ws !== w.working_hour_start || we !== w.working_hour_end);
+    if(hoursWindowChanging){
+      const newSlots = generateSlots(ws, we);
+      const orphans = await findOrphanBookings(w.name, fromVal, newSlots);
+      if(orphans.length){
+        throw new Error(formatOrphansMessage(w.name, orphans, fromVal, 'تغيّر'));
+      }
+    }
 
     if(isFuture){
       // → save فى pending
