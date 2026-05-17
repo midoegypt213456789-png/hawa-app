@@ -308,9 +308,8 @@
     <div class="sec active" id="s1">
       <div class="card">
         <p class="card-title">اختر <span>المخزن</span></p>
-        <div class="opts2">
-          <div class="opt" id="opt-w-قليوب"   onclick="pick('warehouse','قليوب',this,'s1')"><div class="ic">🏭</div><div class="lb">قليوب</div></div>
-          <div class="opt" id="opt-w-السادات" onclick="pick('warehouse','السادات',this,'s1')"><div class="ic">🏗️</div><div class="lb">السادات</div></div>
+        <div class="opts2" id="warehouseOpts">
+          <div class="slots-loading" style="grid-column:1/-1">⏳ جاري تحميل المخازن...</div>
         </div>
       </div>
       <div class="card" id="permitCard" style="display:none">
@@ -634,8 +633,31 @@ function renderVehicleOptions(){
   container.innerHTML = html;
 }
 
+// 🏭 يرسم اختيار المخازن فى step 1 من الـ cache (dynamic بدل hardcoded)
+function renderWarehouseOptions(){
+  const container = document.getElementById('warehouseOpts');
+  if(!container) return;
+  if(!cachedWarehouses || !cachedWarehouses.length){
+    container.innerHTML = '<div class="slots-loading" style="grid-column:1/-1">⚠️ مفيش مخازن متاحة دلوقتى</div>';
+    return;
+  }
+  // Icon mapping للأسماء المعروفة، otherwise 📦 default
+  const iconFor = n => {
+    if(n === 'قليوب') return '🏭';
+    if(n === 'السادات') return '🏗️';
+    return '📦';
+  };
+  container.innerHTML = cachedWarehouses.map(w => {
+    const nameEsc = (w.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return `<div class="opt" id="opt-w-${w.id}" data-name="${nameEsc}" onclick="pick('warehouse','${nameEsc}',this,'s1')">
+      <div class="ic">${iconFor(w.name)}</div>
+      <div class="lb">${w.name}</div>
+    </div>`;
+  }).join('');
+}
+
 // 🚀 Warm-up: pre-fetch settings + warehouses + vehicle types in the background
-ensureSettingsLoaded();
+ensureSettingsLoaded().then(() => renderWarehouseOptions());
 loadVehicleTypesData();
 
 // Booking state
@@ -1309,9 +1331,10 @@ function startEdit(b) {
   bk.remaining = 10;
   bk.permit    = b.permit_number || null;
 
-  // Pre-select المخزن
+  // Pre-select المخزن (يستخدم data-name علشان أى مخزن جديد يشتغل تلقائياً)
   document.querySelectorAll('#s1 .opt').forEach(o => o.classList.remove('sel'));
-  const wOpt = document.getElementById('opt-w-' + b.warehouse);
+  const wOpt = document.querySelector(`#s1 .opt[data-name="${(b.warehouse||'').replace(/"/g,'\\"')}"]`)
+            || document.getElementById('opt-w-' + b.warehouse);  // fallback لأى hardcoded قديم
   if (wOpt) { wOpt.classList.add('sel'); document.getElementById('b1').disabled = false; }
 
   // Pre-select النوع
@@ -1375,7 +1398,10 @@ async function loadMyBookings() {
       return `
         <div class="bk-card">
           <div class="bk-header">
-            <span class="bk-id" title="ID: ${b.id}">حجز #${b.seq_number || b.id}</span>
+            <div>
+              <span class="bk-id" title="ID: ${b.id}">حجز #${b.seq_number || b.id}</span>
+              ${b.permit_number ? `<div style="font-size:11px;color:var(--gold-light);margin-top:3px;letter-spacing:0.3px">🎫 إذن #${b.permit_number}</div>` : ''}
+            </div>
             <span class="bk-status pending">قيد الانتظار</span>
           </div>
           <div class="bk-row"><span class="bk-lbl">المخزن</span><span class="bk-val">${b.warehouse}</span></div>
