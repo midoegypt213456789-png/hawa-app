@@ -822,6 +822,8 @@ async function buildCal() {
   function isDayClosed(dt, ds) {
     const dow = dt.getDay();
     for (const rule of rules) {
+      // ✨ قواعد ساعات معيّنة مش بتقفل اليوم — بس بتحجب slots
+      if (rule.start_hour != null) continue;
       // ✨ احترم فلتر المخازن (لو مش متعرّف، يتطبّق على الكل)
       if (rule.warehouses && rule.warehouses.length > 0) {
         if (!rule.warehouses.includes(bk.warehouse)) continue;
@@ -838,17 +840,49 @@ async function buildCal() {
     return false;
   }
 
+  // 🕐 الحصول على الـ slots المقفولة بقواعد hour-range لتاريخ معيّن
+  function getBlockedSlots(dt, ds) {
+    const dow = dt.getDay();
+    const blockedHours = new Set();
+    for (const rule of rules) {
+      if (rule.start_hour == null) continue;  // skip whole-day rules
+      if (rule.warehouses && rule.warehouses.length > 0) {
+        if (!rule.warehouses.includes(bk.warehouse)) continue;
+      }
+      if (rule.vehicle_types && rule.vehicle_types.length > 0) {
+        if (!rule.vehicle_types.includes(bk.vehicle)) continue;
+      }
+      let applies = false;
+      if (rule.type === 'weekly' && rule.day_of_week === dow) applies = true;
+      else if (rule.type === 'date' && rule.start_date === ds) applies = true;
+      else if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) applies = true;
+      if (applies) {
+        for (let h = rule.start_hour; h < rule.end_hour; h++) blockedHours.add(h);
+      }
+    }
+    // Convert hours → slot strings (نفس fmt اللى فى generateSlots)
+    const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+    const blockedSlots = new Set();
+    blockedHours.forEach(h => blockedSlots.add(`${fmt(h)}:00 - ${fmt(h+1)}:00`));
+    return blockedSlots;
+  }
+
   // 🏭 Per-day fullness (per-warehouse hours قد تختلف عبر الأيام لو فيه pending change)
   function isDayFull(ds) {
+    const dt = new Date(ds + 'T12:00:00');
     const hours = applyWarehouseHours(ds, bk.warehouse);
     const slots = hours.slots;
     if (!slots.length) return false;
+    // 🕐 استبعد الـ slots المقفولة بقواعد ساعات
+    const blocked = getBlockedSlots(dt, ds);
+    const availableSlots = slots.filter(s => !blocked.has(s));
+    if (!availableSlots.length) return true;  // كل الـ slots مقفولة = اليوم mut
     const dayData = bookingsByDate[ds] || {};
     let fullSlots = 0;
-    for (const slot of slots) {
+    for (const slot of availableSlots) {
       if ((dayData[slot] || 0) >= bk.cap) fullSlots++;
     }
-    return fullSlots >= slots.length;
+    return fullSlots >= availableSlots.length;
   }
 
   const days = ['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'];
@@ -930,14 +964,42 @@ async function loadSlots() {
 
   // 🏭 Per-warehouse + per-date slots (Phase 4)
   const hours = applyWarehouseHours(bk.dateStr, bk.warehouse);
-  const slots = hours.slots;
+  const allSlots = hours.slots;
 
   try {
-    const r = await fetch(
-      `${SB}/rest/v1/bookings?select=time_slot,count,id&loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`,
-      { headers: HDR }
-    );
-    const data = await r.json();
+    // ⚡ Parallel: bookings + schedule_rules
+    const [rBookings, rRules] = await Promise.all([
+      fetch(
+        `${SB}/rest/v1/bookings?select=time_slot,count,id&loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`,
+        { headers: HDR }
+      ),
+      fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR })
+    ]);
+    const data = await rBookings.json();
+    const rules = await rRules.json();
+
+    // 🕐 احسب الـ slots المقفولة بقواعد ساعات معيّنة لليوم ده
+    const dt = new Date(bk.dateStr + 'T12:00:00');
+    const dow = dt.getDay();
+    const blockedHours = new Set();
+    for(const rule of rules){
+      if(rule.start_hour == null) continue;  // skip whole-day rules
+      if(rule.warehouses && rule.warehouses.length && !rule.warehouses.includes(bk.warehouse)) continue;
+      if(rule.vehicle_types && rule.vehicle_types.length && !rule.vehicle_types.includes(bk.vehicle)) continue;
+      let applies = false;
+      if(rule.type === 'weekly' && rule.day_of_week === dow) applies = true;
+      else if(rule.type === 'date' && rule.start_date === bk.dateStr) applies = true;
+      else if(rule.type === 'range' && bk.dateStr >= rule.start_date && bk.dateStr <= rule.end_date) applies = true;
+      if(applies){
+        for(let h = rule.start_hour; h < rule.end_hour; h++) blockedHours.add(h);
+      }
+    }
+    const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+    const blockedSlots = new Set();
+    blockedHours.forEach(h => blockedSlots.add(`${fmt(h)}:00 - ${fmt(h+1)}:00`));
+
+    // Final visible slots = warehouse slots − blocked slots
+    const slots = allSlots.filter(s => !blockedSlots.has(s));
 
     // Sum used per slot, excluding the booking being edited
     const totals = {};

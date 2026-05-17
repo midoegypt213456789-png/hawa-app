@@ -1789,6 +1789,29 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <input type="date" id="rule-end">
         </div>
 
+        <!-- 🕐 ساعات معيّنة (اختيارى) -->
+        <div class="fg">
+          <label style="display:flex;align-items:center;justify-content:space-between">
+            <span>🕐 قفل ساعات معيّنة جوا اليوم (اختيارى)</span>
+            <span style="font-size:11px;color:var(--text-dim);font-weight:400">سيب فاضى لقفل اليوم كله</span>
+          </label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;padding:12px">
+            <div>
+              <label style="display:block;font-size:11px;color:var(--text-dim);margin-bottom:4px">من ساعة</label>
+              <input type="number" id="rule-start-hour" min="0" max="23" placeholder="مثلاً 14" style="width:100%">
+              <div style="font-size:10px;color:var(--text-dim);margin-top:3px">24 ساعة (14 = 2 ظهراً)</div>
+            </div>
+            <div>
+              <label style="display:block;font-size:11px;color:var(--text-dim);margin-bottom:4px">إلى ساعة</label>
+              <input type="number" id="rule-end-hour" min="1" max="24" placeholder="مثلاً 15" style="width:100%">
+              <div style="font-size:10px;color:var(--text-dim);margin-top:3px">24 ساعة (15 = 3 عصراً)</div>
+            </div>
+          </div>
+          <div style="font-size:11px;color:#7fb8e8;margin-top:6px;line-height:1.6">
+            💡 مثال: <b>الجمعة</b> + من <b>14</b> إلى <b>15</b> = صلاة الجمعة، كل أسبوع يقفل slot 2:00-3:00 بس
+          </div>
+        </div>
+
         <div class="fg">
           <label>سبب الإجازة (اختياري)</label>
           <input type="text" id="rule-reason" placeholder="مثال: إجازة رمضان، عيد الأضحى...">
@@ -5881,7 +5904,7 @@ async function loadRules(){
       return;
     }
 
-    let html='<table><thead><tr><th>النوع</th><th>التفاصيل</th><th>📦 المخازن</th><th>🚛 الأقسام</th><th>السبب</th><th>إجراءات</th></tr></thead><tbody>';
+    let html='<table><thead><tr><th>النوع</th><th>التفاصيل</th><th>🕐 الساعات</th><th>📦 المخازن</th><th>🚛 الأقسام</th><th>السبب</th><th>إجراءات</th></tr></thead><tbody>';
     schedRules.forEach(rule=>{
       let details='';
       if(rule.type==='weekly') details='كل '+dayNames[rule.day_of_week];
@@ -5896,9 +5919,15 @@ async function loadRules(){
         ? '<span style="color:var(--text-dim);font-size:11px">الكل</span>'
         : rule.vehicle_types.map(v => `<span class="badge sadat" style="margin:1px">${v}</span>`).join(' ');
 
+      // 🕐 الساعات (NULL = يوم كامل، otherwise hour-range)
+      const hoursText = (rule.start_hour == null)
+        ? '<span style="color:#E05555;font-size:11px;font-weight:700">يوم كامل</span>'
+        : `<span class="badge" style="background:rgba(74,144,217,0.15);color:#7fb8e8">${String(rule.start_hour).padStart(2,'0')}:00 → ${String(rule.end_hour).padStart(2,'0')}:00</span>`;
+
       html+=`<tr>
         <td><span class="badge ${rule.type==='weekly'?'noshow':rule.type==='date'?'pending':'qalyub'}">${typeLabel[rule.type]}</span></td>
         <td><b>${details}</b></td>
+        <td>${hoursText}</td>
         <td>${whText}</td>
         <td>${vtText}</td>
         <td>${rule.reason||'-'}</td>
@@ -5931,7 +5960,7 @@ function renderCalendar(){
     const isToday=dt.getTime()===today.getTime();
 
     // فحص القواعد
-    const {closed,type}=isDayClosed(dt,ds);
+    const {closed,type,partial}=isDayClosed(dt,ds);
 
     let bg='rgba(76,175,125,0.1)';
     let border='rgba(76,175,125,0.4)';
@@ -5943,9 +5972,14 @@ function renderCalendar(){
       else if(type==='date'){bg='rgba(224,135,58,0.1)';border='rgba(224,135,58,0.4)';color='#E0873A';}
       else{bg='rgba(74,144,217,0.1)';border='rgba(74,144,217,0.4)';color='var(--blue)';}
     }
+    else if(partial){
+      // 🕐 ساعات معيّنة مقفولة بس — مش يوم كامل
+      bg='rgba(232,201,122,0.10)';border='rgba(232,201,122,0.5)';color='var(--gold-light)';
+    }
 
     const todayBorder=isToday?';outline:2px solid var(--gold);outline-offset:2px':'';
-    html+=`<div style="padding:8px 2px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;border:2px solid ${border};background:${bg};color:${color}${todayBorder}">${d}</div>`;
+    const partialMarker = (partial && !closed) ? '<span style="position:absolute;top:2px;left:4px;font-size:10px">🕐</span>' : '';
+    html+=`<div style="position:relative;padding:8px 2px;border-radius:8px;font-size:12px;font-weight:600;text-align:center;border:2px solid ${border};background:${bg};color:${color}${todayBorder}">${partialMarker}${d}</div>`;
   }
 
   document.getElementById('cal-grid-wrap').innerHTML=html;
@@ -5953,13 +5987,24 @@ function renderCalendar(){
 
 function isDayClosed(dt,ds){
   const dow=dt.getDay();
+  let partial = false;
   for(const rule of schedRules){
     if(!rule.is_active) continue;
-    if(rule.type==='weekly' && rule.day_of_week===dow) return {closed:true,type:'weekly'};
-    if(rule.type==='date' && rule.start_date===ds) return {closed:true,type:'date'};
-    if(rule.type==='range' && ds>=rule.start_date && ds<=rule.end_date) return {closed:true,type:'range'};
+    const dateMatches =
+      (rule.type==='weekly' && rule.day_of_week===dow) ||
+      (rule.type==='date' && rule.start_date===ds) ||
+      (rule.type==='range' && ds>=rule.start_date && ds<=rule.end_date);
+    if(!dateMatches) continue;
+
+    if(rule.start_hour == null){
+      // قاعدة يوم كامل
+      return {closed:true, type:rule.type, partial:false};
+    } else {
+      // قاعدة ساعات بس — flag and continue (might still find a full-day rule)
+      partial = true;
+    }
   }
-  return {closed:false,type:null};
+  return {closed:false, type:null, partial};
 }
 
 function prevMonth(){ calViewDate.setMonth(calViewDate.getMonth()-1); renderCalendar(); }
@@ -5972,6 +6017,8 @@ async function openRuleModal(){
   document.getElementById('rule-start').value='';
   document.getElementById('rule-end').value='';
   document.getElementById('rule-reason').value='';
+  document.getElementById('rule-start-hour').value='';
+  document.getElementById('rule-end-hour').value='';
   onRuleTypeChange();
   // حمّل المخازن والأنواع كـ checkboxes
   await loadRuleScopeOptions();
@@ -6128,11 +6175,106 @@ async function saveRule(){
     body.vehicle_types = selected;
   }
 
+  // 🕐 ساعات معيّنة (اختيارى) — XOR: الاتنين أو ولا واحد
+  const shRaw = document.getElementById('rule-start-hour').value.trim();
+  const ehRaw = document.getElementById('rule-end-hour').value.trim();
+  if(shRaw === '' && ehRaw === ''){
+    body.start_hour = null;
+    body.end_hour   = null;
+  } else if(shRaw === '' || ehRaw === ''){
+    alert('❌ لازم تحدد الساعتين الاتنين، أو سيبهم فاضيين الاتنين');
+    return;
+  } else {
+    const sh = parseInt(shRaw);
+    const eh = parseInt(ehRaw);
+    if(isNaN(sh) || sh<0 || sh>23){ alert('❌ ساعة البداية لازم تكون بين 0 و 23'); return; }
+    if(isNaN(eh) || eh<1 || eh>24){ alert('❌ ساعة النهاية لازم تكون بين 1 و 24'); return; }
+    if(eh <= sh){ alert('❌ ساعة النهاية لازم تكون بعد ساعة البداية'); return; }
+    body.start_hour = sh;
+    body.end_hour   = eh;
+  }
+
+  // 🛡️ Orphan check: لو فيه ساعات → افحص حجوزات موجودة فى الـ slots دى
+  if(body.start_hour != null){
+    try{
+      const conflicts = await findRuleOrphanBookings(body);
+      if(conflicts.length){
+        const sample = conflicts.slice(0,3).map(c => `${c.loading_date} ${c.time_slot} (${c.warehouse})`).join('، ');
+        const more = conflicts.length > 3 ? ` وكمان ${conflicts.length - 3} حجز` : '';
+        alert(
+          `❌ مش ممكن تضيف القاعدة دى.\n\n` +
+          `فيه ${conflicts.length} حجز قائم فى الساعات اللى هتتقفل:\n` +
+          `${sample}${more}\n\n` +
+          `لازم تلغى أو تعدّل الحجوزات دى الأول.`
+        );
+        return;
+      }
+    }catch(e){
+      alert('❌ خطأ فى فحص الحجوزات: ' + e.message);
+      return;
+    }
+  }
+
   try{
-    await fetch(`${SB}/rest/v1/schedule_rules`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    const r = await fetch(`${SB}/rest/v1/schedule_rules`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    if(!r.ok){
+      const errTxt = await r.text();
+      throw new Error(errTxt || 'فشل الحفظ');
+    }
     closeModal('ruleModal');
     await loadSchedule();
-  }catch(e){alert('خطأ في الحفظ');}
+  }catch(e){alert('❌ خطأ في الحفظ: ' + e.message);}
+}
+
+// 🛡️ Helper: لقّى حجوزات هتتقفل بقاعدة hour-range جديدة
+async function findRuleOrphanBookings(rule){
+  // 1) Generate slot strings for hours in [start_hour, end_hour)
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  const blockedSlots = [];
+  for(let h = rule.start_hour; h < rule.end_hour; h++){
+    blockedSlots.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+  }
+  if(!blockedSlots.length) return [];
+
+  // 2) Build query filters
+  const todayStr = new Date().toISOString().slice(0,10);
+  const filters = [
+    `status=neq.${encodeURIComponent('ملغي')}`,
+    `loading_date=gte.${todayStr}`,
+    `time_slot=in.(${blockedSlots.map(s => `"${encodeURIComponent(s)}"`).join(',')})`,
+    'select=id,loading_date,time_slot,warehouse,vehicle_type'
+  ];
+
+  // 3) Filter by date range based on rule type
+  if(rule.type === 'date'){
+    filters.push(`loading_date=eq.${rule.start_date}`);
+  } else if(rule.type === 'range'){
+    filters.push(`loading_date=gte.${rule.start_date}`);
+    filters.push(`loading_date=lte.${rule.end_date}`);
+  }
+  // weekly → no extra date filter (we'll JS-filter by day_of_week)
+
+  // 4) Warehouse filter
+  if(rule.warehouses && rule.warehouses.length){
+    filters.push(`warehouse=in.(${rule.warehouses.map(w => `"${encodeURIComponent(w)}"`).join(',')})`);
+  }
+  // 5) Vehicle type filter
+  if(rule.vehicle_types && rule.vehicle_types.length){
+    filters.push(`vehicle_type=in.(${rule.vehicle_types.map(v => `"${encodeURIComponent(v)}"`).join(',')})`);
+  }
+
+  const r = await fetch(`${SB}/rest/v1/bookings?${filters.join('&')}`,{headers:HDR});
+  if(!r.ok) throw new Error('فشل قراءة الحجوزات');
+  let bookings = await r.json();
+
+  // 6) Weekly: JS-filter by day_of_week
+  if(rule.type === 'weekly'){
+    bookings = bookings.filter(b => {
+      const d = new Date(b.loading_date + 'T12:00:00');
+      return d.getDay() === rule.day_of_week;
+    });
+  }
+  return bookings;
 }
 
 async function deleteRule(id){
