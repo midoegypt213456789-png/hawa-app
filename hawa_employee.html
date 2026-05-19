@@ -611,14 +611,54 @@ async function markStatus(id,status){
 
 async function incrementNoshow(clientId){
   try{
-    const r=await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}&select=no_show_count`,{headers:HDR});
-    const d=await r.json();
-    const newCount=(d[0]?.no_show_count||0)+1;
-    await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}`,{
-      method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},
-      body:JSON.stringify({no_show_count:newCount,is_blocked:newCount>=2})
+    // ─── 1) جلب الحدود الفعّالة و بيانات العميل بالتوازى ───
+    const todayStr = (()=>{ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; })();
+    const [lr, cr] = await Promise.all([
+      fetch(`${SB}/rest/v1/booking_limits?effective_from=lte.${todayStr}&order=effective_from.desc&limit=1&select=noshow_consecutive_max,noshow_period_max,noshow_period`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/clients?id=eq.${clientId}&select=no_show_count,last_unblocked_at`, {headers:HDR})
+    ]);
+    const limits = (await lr.json())[0];
+    const cdata  = (await cr.json())[0] || {};
+    const newCount = (cdata.no_show_count || 0) + 1;
+
+    // ─── 2) لو الحدود مش موجودة، fallback لسلوك بسيط (no auto-block) ───
+    if (!limits) {
+      await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}`, {
+        method:'PATCH', headers:{...HDR,'Prefer':'return=minimal'},
+        body: JSON.stringify({ no_show_count: newCount })
+      });
+      return;
+    }
+
+    // ─── 3) احسب rolling start (من آخر unblock أو من بداية الـ period — أيهما أحدث) ───
+    const periodDays = { week: 7, month: 30, year: 365 }[limits.noshow_period] || 30;
+    const periodStart = new Date(); periodStart.setDate(periodStart.getDate() - periodDays);
+    const periodStartIso = periodStart.toISOString();
+    const lastUnblock = cdata.last_unblocked_at;
+    const effectiveStart = (lastUnblock && lastUnblock > periodStartIso) ? lastUnblock : periodStartIso;
+
+    // ─── 4) اعمل الـ 2 queries بالتوازى ───
+    //    A: عد كل الـ no-show فى الـ rolling period (بما فيهم الحالى)
+    //    B: آخر N حجوزات finalized (تم التنفيذ أو no-show) للـ consecutive check
+    const consecLimit = limits.noshow_consecutive_max;
+    const [nsRes, recRes] = await Promise.all([
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${clientId}&status=eq.no-show&created_at=gte.${encodeURIComponent(effectiveStart)}&select=id`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${clientId}&status=in.(${encodeURIComponent('تم التنفيذ')},no-show)&created_at=gte.${encodeURIComponent(lastUnblock || '2020-01-01')}&select=status,created_at&order=created_at.desc&limit=${consecLimit}`, {headers:HDR})
+    ]);
+    const noshowsInPeriod = (await nsRes.json()).length;  // الـ no-show الحالى متسجل بالفعل قبل ما الـ function تتنادى
+    const recent = await recRes.json();
+    const allRecentNoshow = recent.length >= consecLimit && recent.every(b => b.status === 'no-show');
+
+    // ─── 5) اتخاذ القرار ───
+    const shouldBlock = noshowsInPeriod >= limits.noshow_period_max || allRecentNoshow;
+
+    await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}`, {
+      method:'PATCH', headers:{...HDR,'Prefer':'return=minimal'},
+      body: JSON.stringify({ no_show_count: newCount, is_blocked: shouldBlock || false })
     });
-  }catch(e){}
+  } catch(e) {
+    console.error('incrementNoshow error:', e);
+  }
 }
 
 function showNoshowAllDlg(){
