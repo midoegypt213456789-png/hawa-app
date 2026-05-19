@@ -2886,7 +2886,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 <div class="modal-overlay" id="blModal">
   <div class="modal" style="max-width:680px">
     <div class="modal-title">
-      <span>➕ نسخة جديدة من حدود الحجز</span>
+      <span id="bl-modal-title">➕ نسخة جديدة من حدود الحجز</span>
       <button class="modal-close" onclick="closeLimitsForm()">×</button>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
@@ -9265,6 +9265,7 @@ async function exportActivityLog(){
 // ═══════════════════════════════════════════════════════════
 
 let blAllLimits = [];  // كل النسخ (مرتبة effective_from DESC)
+let blEditingId = null; // null = نسخة جديدة، رقم = تعديل صف
 
 async function loadBookingLimits(){
   try {
@@ -9353,12 +9354,19 @@ function blRenderHistory(activeRow){
     return;
   }
   const todayStr = fmtDate(new Date());
+  const minId = Math.min(...blAllLimits.map(r => r.id));  // النسخة الافتراضية = أقل id
   const rows = blAllLimits.map(r => {
     const isActive = activeRow && r.id === activeRow.id;
     const isFuture = r.effective_from > todayStr;
-    const badge = isActive ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
+    const isDefault = r.id === minId;
+    const badge = isDefault ? '<span style="background:rgba(201,168,76,0.15);color:#E0B040;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">🛡️ افتراضية</span>'
+                : isActive ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
                 : isFuture ? '<span style="background:rgba(74,144,217,0.15);color:#7ab5e8;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">⏭️ جاية</span>'
                 : '<span style="background:rgba(255,255,255,0.05);color:var(--text-dim);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">قديمة</span>';
+    // أزرار: تعديل دايماً، مسح للكل ماعدا الافتراضية
+    const editBtn = `<button onclick="openLimitsForm(${r.id})" style="background:rgba(74,144,217,0.1);color:#7ab5e8;border:1px solid rgba(74,144,217,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" title="تعديل">✏️ تعديل</button>`;
+    const delBtn = isDefault ? '' :
+      `<button onclick="deleteLimit(${r.id})" style="background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer" title="مسح">🗑️ مسح</button>`;
     return `<tr class="${isActive ? 'current-row' : ''}">
       <td>${r.effective_from}</td>
       <td>${badge}</td>
@@ -9367,7 +9375,8 @@ function blRenderHistory(activeRow){
       <td>${r.per_booking_vehicles}</td>
       <td>${r.permit_max_uses} / ${r.permit_max_vehicles}</td>
       <td>${r.open_bookings_max} / ${r.open_bookings_period}</td>
-      <td title="${r.note || ''}">${r.note ? (r.note.length > 30 ? r.note.slice(0, 30) + '…' : r.note) : '—'}</td>
+      <td title="${(r.note || '').replace(/"/g,'&quot;')}">${r.note ? (r.note.length > 30 ? r.note.slice(0, 30) + '…' : r.note) : '—'}</td>
+      <td style="white-space:nowrap">${editBtn}${delBtn}</td>
     </tr>`;
   }).join('');
   container.innerHTML = `
@@ -9382,6 +9391,7 @@ function blRenderHistory(activeRow){
           <th>الإذن (مرات/عربيات)</th>
           <th>مفتوحة</th>
           <th>الملاحظة</th>
+          <th>إجراءات</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -9389,31 +9399,51 @@ function blRenderHistory(activeRow){
   `;
 }
 
-function openLimitsForm(){
-  // Pre-fill بآخر نسخة (لو موجودة) لتسهيل الإدخال
-  const last = blAllLimits[0];
-  document.getElementById('bl-form-error').style.display = 'none';
-  // تاريخ مقترح: بكرة
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-  document.getElementById('bl-effective-from').value = fmtDate(tomorrow);
+function openLimitsForm(editId){
+  blEditingId = editId || null;
+  const errEl = document.getElementById('bl-form-error');
+  errEl.style.display = 'none';
 
-  document.getElementById('bl-weekly').value           = last ? last.weekly_vehicles : '';
-  document.getElementById('bl-daily').value            = last ? last.daily_vehicles : '';
-  document.getElementById('bl-per-booking').value      = last ? last.per_booking_vehicles : '';
-  document.getElementById('bl-permit-uses').value      = last ? last.permit_max_uses : '';
-  document.getElementById('bl-permit-vehicles').value  = last ? last.permit_max_vehicles : '';
-  document.getElementById('bl-open-max').value         = last ? last.open_bookings_max : '';
-  document.getElementById('bl-open-period').value      = last ? last.open_bookings_period : 'month';
-  document.getElementById('bl-noshow-consec').value    = last ? last.noshow_consecutive_max : '';
-  document.getElementById('bl-noshow-period-max').value= last ? last.noshow_period_max : '';
-  document.getElementById('bl-noshow-period').value    = last ? last.noshow_period : 'month';
-  document.getElementById('bl-note').value             = '';
+  // مصدر القيم: لو editing → الصف نفسه، لو جديد → آخر نسخة pre-fill
+  let src = null;
+  if (blEditingId) {
+    src = blAllLimits.find(r => r.id === blEditingId);
+  } else {
+    src = blAllLimits[0];  // آخر نسخة (الأحدث) كـ pre-fill للجديد
+  }
 
-  document.getElementById('blModal').classList.add('active');
+  // عنوان الـ modal
+  const titleEl = document.getElementById('bl-modal-title');
+  if (titleEl) titleEl.textContent = blEditingId ? '✏️ تعديل النسخة' : '➕ نسخة جديدة من حدود الحجز';
+  const saveBtn = document.getElementById('bl-save-btn');
+  if (saveBtn) saveBtn.textContent = blEditingId ? '💾 حفظ التعديل' : '💾 حفظ النسخة';
+
+  // التاريخ
+  if (blEditingId && src) {
+    document.getElementById('bl-effective-from').value = src.effective_from;
+  } else {
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    document.getElementById('bl-effective-from').value = fmtDate(tomorrow);
+  }
+
+  document.getElementById('bl-weekly').value           = src ? src.weekly_vehicles : '';
+  document.getElementById('bl-daily').value            = src ? src.daily_vehicles : '';
+  document.getElementById('bl-per-booking').value      = src ? src.per_booking_vehicles : '';
+  document.getElementById('bl-permit-uses').value      = src ? src.permit_max_uses : '';
+  document.getElementById('bl-permit-vehicles').value  = src ? src.permit_max_vehicles : '';
+  document.getElementById('bl-open-max').value         = src ? src.open_bookings_max : '';
+  document.getElementById('bl-open-period').value      = src ? src.open_bookings_period : 'month';
+  document.getElementById('bl-noshow-consec').value    = src ? src.noshow_consecutive_max : '';
+  document.getElementById('bl-noshow-period-max').value= src ? src.noshow_period_max : '';
+  document.getElementById('bl-noshow-period').value    = src ? src.noshow_period : 'month';
+  document.getElementById('bl-note').value             = blEditingId && src ? (src.note || '') : '';
+
+  document.getElementById('blModal').classList.add('show');
 }
 
 function closeLimitsForm(){
-  document.getElementById('blModal').classList.remove('active');
+  document.getElementById('blModal').classList.remove('show');
+  blEditingId = null;
 }
 
 async function saveLimits(){
@@ -9432,8 +9462,7 @@ async function saveLimits(){
     noshow_consecutive_max: parseInt(document.getElementById('bl-noshow-consec').value),
     noshow_period_max:      parseInt(document.getElementById('bl-noshow-period-max').value),
     noshow_period:          document.getElementById('bl-noshow-period').value,
-    note:                   document.getElementById('bl-note').value.trim() || null,
-    created_by:             admin?.name || admin?.username || 'admin'
+    note:                   document.getElementById('bl-note').value.trim() || null
   };
 
   // Validation
@@ -9458,34 +9487,79 @@ async function saveLimits(){
     return;
   }
 
-  // تحذير لو فى نسخة بنفس التاريخ
-  const existing = blAllLimits.find(r => r.effective_from === payload.effective_from);
-  if (existing) {
-    if (!confirm(`فيه نسخة موجودة بنفس التاريخ (${payload.effective_from}).\nهتضيف نسخة جديدة برضه؟`)) return;
+  // تحذير لو فيه نسخة موجودة بنفس التاريخ (فى حالة الإضافة الجديدة فقط)
+  if (!blEditingId) {
+    const existing = blAllLimits.find(r => r.effective_from === payload.effective_from);
+    if (existing) {
+      if (!confirm(`فيه نسخة موجودة بنفس التاريخ (${payload.effective_from}).\nهتضيف نسخة جديدة برضه؟`)) return;
+    }
   }
 
   const btn = document.getElementById('bl-save-btn');
-  btn.disabled = true; btn.textContent = '⏳ جاري الحفظ...';
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = '⏳ جاري الحفظ...';
 
   try {
-    const r = await fetch(`${SB}/rest/v1/booking_limits`, {
-      method: 'POST',
-      headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    let r;
+    if (blEditingId) {
+      // PATCH
+      r = await fetch(`${SB}/rest/v1/booking_limits?id=eq.${blEditingId}`, {
+        method: 'PATCH',
+        headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      // INSERT — نضيف created_by فى الإنشاء فقط
+      payload.created_by = admin?.name || admin?.username || 'admin';
+      r = await fetch(`${SB}/rest/v1/booking_limits`, {
+        method: 'POST',
+        headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    }
     if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
     if (typeof logActivity === 'function') {
-      logActivity('admin_limits_create', `📊 أضاف نسخة حدود جديدة تبدأ ${payload.effective_from}`, payload);
+      const action = blEditingId ? 'admin_limits_update' : 'admin_limits_create';
+      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId})` : `📊 أضاف نسخة حدود جديدة تبدأ ${payload.effective_from}`;
+      logActivity(action, label, payload);
     }
     closeLimitsForm();
     await loadBookingLimits();
-    if (typeof showToast === 'function') showToast('✅ تم حفظ النسخة الجديدة');
+    if (typeof showToast === 'function') showToast('✅ تم الحفظ');
   } catch(e) {
     console.error('saveLimits error:', e);
     errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
     errEl.style.display = 'block';
   } finally {
-    btn.disabled = false; btn.textContent = '💾 حفظ النسخة';
+    btn.disabled = false; btn.textContent = originalLabel;
+  }
+}
+
+async function deleteLimit(id){
+  const row = blAllLimits.find(r => r.id === id);
+  if (!row) return;
+  // النسخة الافتراضية (أقل id) محمية من المسح
+  const minId = Math.min(...blAllLimits.map(r => r.id));
+  if (id === minId) {
+    alert('❌ النسخة الافتراضية مش بتتمسح — تعديل بس');
+    return;
+  }
+  if (!confirm(`هتمسح النسخة اللى تبدأ من ${row.effective_from}؟\nمش هتقدر ترجعها.`)) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/booking_limits?id=eq.${id}`, {
+      method: 'DELETE',
+      headers: { ...HDR, 'Prefer': 'return=minimal' }
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    if (typeof logActivity === 'function') {
+      logActivity('admin_limits_delete', `📊 مسح نسخة حدود تبدأ ${row.effective_from}`, row);
+    }
+    await loadBookingLimits();
+    if (typeof showToast === 'function') showToast('🗑️ تم المسح');
+  } catch(e) {
+    console.error('deleteLimit error:', e);
+    alert('❌ خطأ فى المسح: ' + e.message);
   }
 }
 
