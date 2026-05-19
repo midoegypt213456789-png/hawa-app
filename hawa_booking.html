@@ -1001,7 +1001,7 @@ async function buildCal() {
     const [rulesRes, bookingsRes, limitsRes] = await Promise.all([
       fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR }),
       fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&loading_date=gte.${todayStr}&loading_date=lte.${maxStr}&status=neq.ملغي&select=loading_date,time_slot,count,id`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/booking_limits?effective_from=lte.${maxStr}&order=effective_from.desc&limit=1&select=per_booking_vehicles`, { headers: HDR })
+      fetch(`${SB}/rest/v1/booking_limits?effective_from=lte.${maxStr}&order=effective_from.desc&select=effective_from,per_booking_vehicles`, { headers: HDR })
     ]);
     rules = await rulesRes.json();
     const bookings = await bookingsRes.json();
@@ -1011,9 +1011,10 @@ async function buildCal() {
       bookingsByDate[b.loading_date][b.time_slot] =
         (bookingsByDate[b.loading_date][b.time_slot] || 0) + (b.count || 0);
     });
-    // 📊 خزّن per_booking_vehicles فى bk state عشان pickSlot/chCnt يستخدموه
-    const limitsData = await limitsRes.json();
-    if (limitsData[0]) bk.perBookingMax = limitsData[0].per_booking_vehicles;
+    // 📊 خزّن كل النسخ الـ relevant عشان pickSlot يختار الصح حسب التاريخ
+    bk.limitsForRange = await limitsRes.json();
+    // fallback للـ initial state قبل ما يختار date
+    if (bk.limitsForRange[0]) bk.perBookingMax = bk.limitsForRange[0].per_booking_vehicles;
   } catch(e) {}
 
   function isDayClosed(dt, ds) {
@@ -1242,6 +1243,11 @@ function pickSlot(sl, el, rem) {
   document.querySelectorAll('.slot').forEach(s => s.classList.remove('sel'));
   el.classList.add('sel');
   document.getElementById('b4').disabled = false;
+  // 📊 احسب per_booking_vehicles الصح بناءً على loading_date
+  if (bk.limitsForRange && bk.dateStr) {
+    const row = bk.limitsForRange.find(r => r.effective_from <= bk.dateStr);
+    if (row) bk.perBookingMax = row.per_booking_vehicles;
+  }
   const cap = Math.min(bk.perBookingMax || 10, rem);
   bk.count = Math.min(bk.count, cap);
   document.getElementById('cntNum').textContent = bk.count;
