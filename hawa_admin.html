@@ -1921,14 +1921,22 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 }
 
 /* Hover على الـ container → border 0 → visible thumb = 14px (الأكبر) */
-.section.active:hover::-webkit-scrollbar-thumb,
-.tbl-scroll-body:hover::-webkit-scrollbar-thumb,
-.ms-options:hover::-webkit-scrollbar-thumb,
-.main-area:hover::-webkit-scrollbar-thumb,
-.sidebar:hover::-webkit-scrollbar-thumb,
-.modal:hover::-webkit-scrollbar-thumb,
-.modal-body:hover::-webkit-scrollbar-thumb,
-.bl-history:hover::-webkit-scrollbar-thumb{
+.sb-active.section.active::-webkit-scrollbar-thumb,
+.sb-active.tbl-scroll-body::-webkit-scrollbar-thumb,
+.sb-active.ms-options::-webkit-scrollbar-thumb,
+.sb-active.main-area::-webkit-scrollbar-thumb,
+.sb-active.sidebar::-webkit-scrollbar-thumb,
+.sb-active.modal::-webkit-scrollbar-thumb,
+.sb-active.modal-body::-webkit-scrollbar-thumb,
+.sb-active.bl-history::-webkit-scrollbar-thumb,
+.section.active::-webkit-scrollbar-thumb:hover,
+.tbl-scroll-body::-webkit-scrollbar-thumb:hover,
+.ms-options::-webkit-scrollbar-thumb:hover,
+.main-area::-webkit-scrollbar-thumb:hover,
+.sidebar::-webkit-scrollbar-thumb:hover,
+.modal::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover,
+.bl-history::-webkit-scrollbar-thumb:hover{
   border-width:0;
   background-color:var(--gold);
 }
@@ -9963,6 +9971,16 @@ async function sendMessageNow(){
 }
 
 // =================== AUTO LOGIN ===================
+// 🎨 Lightweight scrollbar activation — listener واحد على document
+let __sbActiveEl = null;
+document.addEventListener('mousemove', (e) => {
+  const target = e.target.closest('.section.active, .tbl-scroll-body, .ms-options, .main-area, .sidebar, .modal, .modal-body, .bl-history');
+  if (target === __sbActiveEl) return;
+  if (__sbActiveEl) __sbActiveEl.classList.remove('sb-active');
+  __sbActiveEl = target;
+  if (target) target.classList.add('sb-active');
+}, { passive: true });
+
 const saved=sessionStorage.getItem('hawa_admin');
 if(saved){admin=JSON.parse(saved);enterApp();}
 </script>
