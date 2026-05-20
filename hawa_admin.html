@@ -1724,7 +1724,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   background:linear-gradient(180deg,rgba(201,168,76,0.04),rgba(201,168,76,0.01));
   border:1px solid rgba(201,168,76,0.18);
   border-radius:16px;padding:22px 24px;margin-bottom:18px;
-  position:relative;overflow:hidden;
+  position:relative;
+  flex-shrink:0;
 }
 .bl-card.bl-upcoming{
   background:linear-gradient(180deg,rgba(74,144,217,0.05),rgba(74,144,217,0.01));
@@ -1799,6 +1800,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   background:rgba(255,255,255,0.015);
   border:1px solid var(--border);border-radius:14px;
   padding:20px;
+  flex-shrink:0;
 }
 .bl-history-hd{
   display:flex;align-items:center;justify-content:space-between;
@@ -1867,10 +1869,10 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 }
 
 /* ═══════════════════════════════════════════════════════════
-   🎨 Interactive Scrollbars — مخفية → تظهر مع الـ hover
+   🎨 Interactive Scrollbars — ذهبية رفيعة، تتلون مع hover
    ═══════════════════════════════════════════════════════════ */
 
-/* Default: scrollbar موجود لكن thumb شفاف (visually مخفى) */
+/* Default: scrollbar مرئى بلون ذهبى خفيف */
 .section.active::-webkit-scrollbar,
 .tbl-scroll-body::-webkit-scrollbar,
 .ms-options::-webkit-scrollbar,
@@ -1891,10 +1893,11 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .modal::-webkit-scrollbar-track,
 .modal-body::-webkit-scrollbar-track,
 .bl-history::-webkit-scrollbar-track{
-  background:transparent;
+  background:rgba(0,0,0,0.2);
+  border-radius:8px;
 }
 
-/* Thumb مخفى بـ default (opacity = 0) */
+/* Thumb default — ذهبى خفيف */
 .section.active::-webkit-scrollbar-thumb,
 .tbl-scroll-body::-webkit-scrollbar-thumb,
 .ms-options::-webkit-scrollbar-thumb,
@@ -1903,12 +1906,12 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .modal::-webkit-scrollbar-thumb,
 .modal-body::-webkit-scrollbar-thumb,
 .bl-history::-webkit-scrollbar-thumb{
-  background:transparent;
+  background:rgba(201,168,76,0.3);
   border-radius:8px;
-  transition:background 0.3s ease;
+  transition:background 0.25s ease;
 }
 
-/* Hover على الـ container → thumb يظهر بلون ذهبى خفيف */
+/* Hover container → thumb يبقى ذهبى متوسط */
 .section.active:hover::-webkit-scrollbar-thumb,
 .tbl-scroll-body:hover::-webkit-scrollbar-thumb,
 .ms-options:hover::-webkit-scrollbar-thumb,
@@ -1917,7 +1920,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .modal:hover::-webkit-scrollbar-thumb,
 .modal-body:hover::-webkit-scrollbar-thumb,
 .bl-history:hover::-webkit-scrollbar-thumb{
-  background:rgba(201,168,76,0.35);
+  background:rgba(201,168,76,0.6);
 }
 
 /* Hover على الـ thumb نفسها → ذهبى كامل */
@@ -1944,7 +1947,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   background:var(--gold-light) !important;
 }
 
-/* Firefox support — تقريباً نفس الـ effect */
+/* Firefox */
 .section.active,
 .tbl-scroll-body,
 .ms-options,
@@ -1954,18 +1957,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .modal-body,
 .bl-history{
   scrollbar-width:thin;
-  scrollbar-color:transparent transparent;
-  transition:scrollbar-color 0.3s ease;
-}
-.section.active:hover,
-.tbl-scroll-body:hover,
-.ms-options:hover,
-.main-area:hover,
-.sidebar:hover,
-.modal:hover,
-.modal-body:hover,
-.bl-history:hover{
-  scrollbar-color:rgba(201,168,76,0.5) transparent;
+  scrollbar-color:rgba(201,168,76,0.4) rgba(0,0,0,0.2);
 }
 
 </style>
