@@ -3627,6 +3627,67 @@ function enterApp(){
   refreshAlertBadge();
   // كل دقيقتين، حدّث الـ badge تلقائياً (لو فيه alerts جديدة)
   setInterval(refreshAlertBadge, 120000);
+  // 🔄 Auto-refresh الصفحة الحالية كل دقيقة
+  startAutoRefresh();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🔄 AUTO-REFRESH — يحدث الصفحة الحالية كل دقيقة بشكل ذكى
+// ═══════════════════════════════════════════════════════════
+let autoRefreshTimer = null;
+
+function startAutoRefresh(){
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(autoRefreshTick, 60000);  // كل دقيقة
+}
+
+function stopAutoRefresh(){
+  if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+}
+
+function autoRefreshTick(){
+  // 1️⃣ skip لو الـ tab مش active (browser tab مفتوحة بس مش ظاهرة)
+  if (document.hidden) return;
+  // 2️⃣ skip لو فيه modal أو confirm dialog مفتوح
+  if (document.querySelector('.modal-overlay.show, .cdialog-overlay.show')) return;
+  // 3️⃣ skip لو الـ user بيكتب فى أى input/textarea/select
+  const active = document.activeElement;
+  if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT' || active.tagName === 'SELECT' || active.isContentEditable)) return;
+  // 4️⃣ skip لو الـ section مش متعرف (مفيش currentSection)
+  if (!currentSection) return;
+
+  // احفظ الـ scroll position
+  const sectionEl = document.getElementById('sec-' + currentSection);
+  const scrollTop = sectionEl ? sectionEl.scrollTop : 0;
+
+  // استدعى الـ loader المناسب
+  try {
+    const sec = currentSection;
+    if(sec==='bookings' && typeof loadBookings === 'function') loadBookings();
+    else if(sec==='permit-alerts' && typeof loadPermitAlerts === 'function') loadPermitAlerts();
+    else if(sec==='employees' && typeof loadEmployees === 'function') loadEmployees();
+    else if(sec==='clients' && typeof loadClients === 'function') loadClients();
+    else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
+    else if(sec==='extra-contacts' && typeof loadExtraContacts === 'function') loadExtraContacts();
+    else if(sec==='templates' && typeof loadTemplates === 'function') loadTemplates();
+    else if(sec==='unlinked' && typeof loadUnlinked === 'function') loadUnlinked();
+    else if(sec==='vehicle-types' && typeof loadVehicleTypes === 'function') loadVehicleTypes();
+    else if(sec==='schedule' && typeof loadSchedule === 'function') loadSchedule();
+    else if(sec==='blocked' && typeof loadBlocked === 'function') loadBlocked();
+    else if(sec==='reports' && typeof loadReports === 'function') loadReports();
+    else if(sec==='warehouses' && typeof loadWarehouses === 'function') loadWarehouses();
+    else if(sec==='pending-clients' && typeof loadPendingClients === 'function') loadPendingClients();
+    else if(sec==='activity-log' && typeof loadActivityLog === 'function') loadActivityLog();
+    else if(sec==='booking-limits' && typeof loadBookingLimits === 'function') loadBookingLimits();
+    // skip: broadcast/settings — الأدمن غالباً بيكتب
+  } catch(e) {
+    console.warn('Auto-refresh error:', e);
+  }
+
+  // restore الـ scroll بعد ما الـ data تتحمل
+  if (sectionEl && scrollTop > 0) {
+    setTimeout(() => { sectionEl.scrollTop = scrollTop; }, 600);
+  }
 }
 
 // 🆕 Read default page from settings and navigate there
@@ -3680,6 +3741,7 @@ function initResizeHandle(){
 
 function doLogout(){
   showConfirm('🚪','تسجيل الخروج','هتخرج من لوحة التحكم؟',false,()=>{
+    stopAutoRefresh();
     sessionStorage.removeItem('hawa_admin');
     admin=null;
     document.getElementById('loginScreen').style.display='flex';
