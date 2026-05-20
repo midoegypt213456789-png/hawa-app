@@ -3164,9 +3164,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <textarea id="sm-message-text" rows="8"
           style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:12px 14px;font-size:14px;font-weight:500;line-height:1.8;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;min-height:160px;box-sizing:border-box"
           placeholder="اكتب الرسالة هنا..."></textarea>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">
-          💡 الـ <code style="color:#7ab5e8">{name}</code> و <code style="color:#7ab5e8">{permit_number}</code> هتتعبئوا تلقائى
-        </div>
       </div>
 
       <div id="sm-form-error" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin:12px 0"></div>
@@ -10076,7 +10073,7 @@ async function sendMessageNow(){
   }
 
   const btn = document.getElementById('sm-send-btn');
-  btn.disabled = true; btn.textContent = '⏳ جارى الحفظ...';
+  btn.disabled = true; btn.textContent = '⏳ جارى الإرسال...';
 
   try {
     const roleLabel = role === 'attempting' ? 'التاجر اللى حاول' : 'التاجر الأصلى';
