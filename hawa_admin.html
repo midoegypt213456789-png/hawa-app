@@ -1018,6 +1018,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .act-btn.unblock:hover{background:rgba(76,175,125,0.2);}
 .act-btn.silence{background:rgba(138,133,128,0.1);color:var(--text-dim);border:1px solid rgba(138,133,128,0.25);}
 .act-btn.silence:hover{background:rgba(138,133,128,0.2);color:var(--text);}
+.act-btn.delete{background:rgba(224,85,85,0.1);color:#e07474;border:1px solid rgba(224,85,85,0.3);}
+.act-btn.delete:hover{background:rgba(224,85,85,0.25);color:#ff8a8a;}
 
 /* ADD BTN */
 .add-btn{padding:9px 18px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;}
@@ -1949,6 +1951,38 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   scrollbar-color:var(--gold) transparent !important;
 }
 
+/* ⏱️ Refresh timer badge */
+.refresh-timer-badge{
+  position:fixed;
+  top:14px;
+  left:14px;
+  z-index:50;
+  background:rgba(201,168,76,0.12);
+  border:1px solid rgba(201,168,76,0.35);
+  border-radius:20px;
+  padding:6px 14px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--gold);
+  font-family:'Cairo',sans-serif;
+  display:none;
+  align-items:center;
+  gap:6px;
+  backdrop-filter:blur(8px);
+  pointer-events:none;
+  letter-spacing:0.3px;
+}
+.refresh-timer-badge.show{display:inline-flex;}
+.refresh-timer-badge b{
+  display:inline-block;
+  min-width:18px;text-align:center;
+  color:var(--gold-light);
+  font-weight:800;
+}
+.refresh-timer-badge.warning b{color:#e0a557;}
+.refresh-timer-badge.imminent b{color:#e05555;animation:pulse-rt 0.6s infinite;}
+@keyframes pulse-rt{0%,100%{opacity:1;}50%{opacity:0.5;}}
+
 /* ═══════════════════════════════════════════════════════════
    📩 Send Message Modal — recipient cards
    ═══════════════════════════════════════════════════════════ */
@@ -2075,6 +2109,11 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="sb-footer">
       <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
     </div>
+  </div>
+
+  <!-- ⏱️ Auto-refresh countdown timer (fixed top-corner) -->
+  <div class="refresh-timer-badge" id="refreshTimerBadge" title="تحديث تلقائى">
+    🔄 <span>تحديث خلال</span> <b id="refreshCountdown">60</b> <span>ث</span>
   </div>
 
   <!-- MAIN -->
@@ -3635,17 +3674,43 @@ function enterApp(){
 }
 
 // ═══════════════════════════════════════════════════════════
-// 🔄 AUTO-REFRESH — يحدث الصفحة الحالية كل دقيقة بشكل ذكى
+// 🔄 AUTO-REFRESH — countdown timer + يحدث الصفحة كل دقيقة
 // ═══════════════════════════════════════════════════════════
 let autoRefreshTimer = null;
+let refreshCountdown = 60;
 
 function startAutoRefresh(){
   if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-  autoRefreshTimer = setInterval(autoRefreshTick, 60000);  // كل دقيقة
+  refreshCountdown = 60;
+  updateCountdownDisplay();
+  const badge = document.getElementById('refreshTimerBadge');
+  if (badge) badge.classList.add('show');
+  autoRefreshTimer = setInterval(tickCountdown, 1000);
 }
 
 function stopAutoRefresh(){
   if (autoRefreshTimer) { clearInterval(autoRefreshTimer); autoRefreshTimer = null; }
+  const badge = document.getElementById('refreshTimerBadge');
+  if (badge) badge.classList.remove('show');
+}
+
+function tickCountdown(){
+  refreshCountdown--;
+  if (refreshCountdown <= 0){
+    autoRefreshTick();
+    refreshCountdown = 60;
+  }
+  updateCountdownDisplay();
+}
+
+function updateCountdownDisplay(){
+  const el = document.getElementById('refreshCountdown');
+  if (el) el.textContent = refreshCountdown;
+  const badge = document.getElementById('refreshTimerBadge');
+  if (badge){
+    badge.classList.toggle('warning',  refreshCountdown <= 15 && refreshCountdown > 5);
+    badge.classList.toggle('imminent', refreshCountdown <= 5);
+  }
 }
 
 function autoRefreshTick(){
@@ -7091,18 +7156,19 @@ function filterUnlinked(){
     const cityLine = [c.governorate, c.city].filter(x=>x).join(' / ') || '-';
     const hasPhone = !!c.phone;
 
-    html += `<tr>
+    html += `<tr style="cursor:pointer" ondblclick="openClientProfile(${c.id})" title="دبل كليك لفتح ملف العميل">
       <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
       <td><b style="font-size:13px">${c.name||'-'}</b></td>
       <td><span style="color:#d4a957;font-weight:700">${c.company_code||'-'}</span></td>
       <td style="font-size:12px;direction:ltr;text-align:right">${c.phone||'-'}</td>
       <td style="font-size:12px;color:var(--text-dim)">${cityLine}</td>
       <td style="font-size:11px;color:var(--text-dim)">${dt}</td>
-      <td><div class="act-btns">
+      <td><div class="act-btns" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">
         <button class="act-btn edit" onclick="copyClientLink('${codeEsc}','${nameEsc}')" title="نسخ لينك الربط">📋 لينك</button>
         ${hasPhone
           ? `<button class="act-btn toggle" onclick="openWhatsAppWithLink('${codeEsc}','${phoneEsc}')" title="فتح واتساب مع الرسالة جاهزة">💬 واتساب</button>`
           : `<button class="act-btn silence" disabled title="مفيش تليفون">💬 واتساب</button>`}
+        <button class="act-btn delete" onclick="deleteUnlinkedClient(${c.id},'${nameEsc}')" title="حذف العميل">🗑️ حذف</button>
       </div></td>
     </tr>`;
   });
@@ -7141,6 +7207,19 @@ function openWhatsAppWithLink(code, phone){
   const msg = `أهلاً،\n\nعشان تستقبل إشعارات HAWA CO على تليجرام، اضغط على اللينك ده واضغط Start:\n\n${link}\n\nشكراً 🙏`;
   const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(msg)}`;
   window.open(whatsappUrl, '_blank');
+}
+
+function deleteUnlinkedClient(id, name){
+  showConfirm('🗑️','حذف عميل',`هتحذف "${name}" وكل بياناته؟ مش هتقدر ترجع!`,true,async()=>{
+    try {
+      const r = await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'DELETE',headers:HDR});
+      if (!r.ok) throw new Error('HTTP '+r.status);
+      if (typeof showToast === 'function') showToast(`🗑️ اتمسح "${name}"`);
+      loadUnlinked();
+    } catch(e) {
+      alert('❌ فشل الحذف: ' + e.message);
+    }
+  });
 }
 
 async function copyAllUnlinkedLinks(){
