@@ -1869,11 +1869,11 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 }
 
 /* ═══════════════════════════════════════════════════════════
-   🎨 Interactive Scrollbars — رفيعة → تكبر مع الـ hover
-   التقنية: width ثابت + border padding يتحكم فى الحجم المرئى
+   🎨 Interactive Scrollbars — JS-controlled (class-based)
+   Default: رفيعة 4px | Active: عريضة 10px | Hover thumb: 14px
    ═══════════════════════════════════════════════════════════ */
 
-/* الحجم الفعلى ثابت 12px (لكن المرئى يتغير بـ border) */
+/* الحجم الكلى ثابت 14px — الـ visible يتحكم فيه border */
 .section.active::-webkit-scrollbar,
 .tbl-scroll-body::-webkit-scrollbar,
 .ms-options::-webkit-scrollbar,
@@ -1882,8 +1882,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .modal::-webkit-scrollbar,
 .modal-body::-webkit-scrollbar,
 .bl-history::-webkit-scrollbar{
-  width:12px;
-  height:12px;
+  width:14px;
+  height:14px;
 }
 
 .section.active::-webkit-scrollbar-track,
@@ -1897,7 +1897,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   background:transparent;
 }
 
-/* Default: thumb بـ border 4px شفاف → المرئى = 4px (رفيع) */
+/* Default — border 5px → visible thumb = 4px (رفيع) */
 .section.active::-webkit-scrollbar-thumb,
 .tbl-scroll-body::-webkit-scrollbar-thumb,
 .ms-options::-webkit-scrollbar-thumb,
@@ -1906,27 +1906,20 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .modal::-webkit-scrollbar-thumb,
 .modal-body::-webkit-scrollbar-thumb,
 .bl-history::-webkit-scrollbar-thumb{
-  background-color:rgba(201,168,76,0.4);
+  background-color:rgba(201,168,76,0.35);
   background-clip:padding-box;
-  border:4px solid transparent;
-  border-radius:12px;
-  transition:border-width 0.2s ease, background-color 0.2s ease;
+  border:5px solid transparent;
+  border-radius:14px;
+  transition:border-width 0.25s ease, background-color 0.25s ease;
 }
 
-/* Hover على الـ container → border يقل لـ 1px → المرئى = 10px (عريض) */
-.section.active:hover::-webkit-scrollbar-thumb,
-.tbl-scroll-body:hover::-webkit-scrollbar-thumb,
-.ms-options:hover::-webkit-scrollbar-thumb,
-.main-area:hover::-webkit-scrollbar-thumb,
-.sidebar:hover::-webkit-scrollbar-thumb,
-.modal:hover::-webkit-scrollbar-thumb,
-.modal-body:hover::-webkit-scrollbar-thumb,
-.bl-history:hover::-webkit-scrollbar-thumb{
-  border-width:1px;
-  background-color:rgba(201,168,76,0.65);
+/* Active (الـ user جواه) — border 2px → visible thumb = 10px (عريض) */
+.sb-active::-webkit-scrollbar-thumb{
+  border-width:2px !important;
+  background-color:rgba(201,168,76,0.7) !important;
 }
 
-/* Hover على الـ thumb نفسها → بدون border → المرئى = 12px (الأكبر) + ذهبى */
+/* Hover على الـ thumb نفسها — border 0 → visible thumb = 14px (الأكبر) */
 .section.active::-webkit-scrollbar-thumb:hover,
 .tbl-scroll-body::-webkit-scrollbar-thumb:hover,
 .ms-options::-webkit-scrollbar-thumb:hover,
@@ -1939,7 +1932,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   background-color:var(--gold) !important;
 }
 
-/* سحب active → ذهبى فاتح */
+/* سحب active */
 .section.active::-webkit-scrollbar-thumb:active,
 .tbl-scroll-body::-webkit-scrollbar-thumb:active,
 .ms-options::-webkit-scrollbar-thumb:active,
@@ -1952,7 +1945,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   background-color:var(--gold-light) !important;
 }
 
-/* Firefox — رفيع دائماً (الـ engine مش بيدعم hover scrollbar size) */
+/* Firefox */
 .section.active,
 .tbl-scroll-body,
 .ms-options,
@@ -1962,7 +1955,11 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .modal-body,
 .bl-history{
   scrollbar-width:thin;
-  scrollbar-color:rgba(201,168,76,0.5) transparent;
+  scrollbar-color:rgba(201,168,76,0.4) transparent;
+}
+.sb-active{
+  scrollbar-width:auto !important;
+  scrollbar-color:rgba(201,168,76,0.7) transparent !important;
 }
 
 </style>
@@ -3643,6 +3640,8 @@ function goTo(sec){
   } else {
     target.classList.add('active');
   }
+  // Re-bind interactive scrollbars (in case new section just became active)
+  if (typeof setupInteractiveScrollbars === 'function') setupInteractiveScrollbars();
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
 
   // Highlight the matching nav item — works whether triggered by click or programmatically
@@ -9648,6 +9647,27 @@ async function deleteLimit(id){
     console.error('deleteLimit error:', e);
     alert('❌ خطأ فى المسح: ' + e.message);
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 Interactive Scrollbars — توسيع المسطرة عند الـ hover
+// ═══════════════════════════════════════════════════════════
+function setupInteractiveScrollbars(){
+  const selectors = '.section, .tbl-scroll-body, .ms-options, .main-area, .sidebar, .modal, .modal-body, .bl-history';
+  document.querySelectorAll(selectors).forEach(el => {
+    if (el.dataset.sbBound) return;  // ما نعملش bind مرتين
+    el.dataset.sbBound = '1';
+    el.addEventListener('mouseenter', () => el.classList.add('sb-active'));
+    el.addEventListener('mouseleave', () => el.classList.remove('sb-active'));
+  });
+}
+// تشغيل أول مرة + كل ما يدخل صفحة جديدة
+setupInteractiveScrollbars();
+// تأكد بعد ما الـ DOM يخلص رندر
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', setupInteractiveScrollbars);
+} else {
+  setTimeout(setupInteractiveScrollbars, 100);
 }
 
 // =================== AUTO LOGIN ===================
