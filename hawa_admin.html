@@ -1949,13 +1949,17 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 /* ═══════════════════════════════════════════════════════════
    📩 Send Message Modal — recipient cards
    ═══════════════════════════════════════════════════════════ */
-.sm-recipient-row{display:flex;gap:10px;flex-wrap:wrap;}
+.sm-recipient-row{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+}
 .sm-recipient{
-  flex:1;min-width:200px;
-  display:flex;align-items:flex-start;gap:10px;
+  display:flex;align-items:flex-start;gap:12px;
   background:#1A1A1A;border:2px solid var(--border);border-radius:10px;
   padding:12px 14px;cursor:pointer;
   transition:all 0.15s ease;
+  min-width:0;
 }
 .sm-recipient:hover:not(.disabled){border-color:rgba(201,168,76,0.5);}
 .sm-recipient input[type="radio"]{
@@ -1966,14 +1970,10 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .sm-recipient:has(input:checked){
   border-color:var(--gold);background:rgba(201,168,76,0.06);
 }
-.sm-recipient-body{flex:1;min-width:0;}
+.sm-recipient-body{flex:1;min-width:0;overflow:hidden;}
 .sm-recipient-title{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.3px;}
-.sm-recipient-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.sm-recipient-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sm-recipient-meta{font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-
-@media (max-width:600px){
-  .sm-recipient-row{flex-direction:column;}
-}
 
 </style>
 </head>
@@ -3094,7 +3094,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <span>📩 إرسال رسالة للتاجر</span>
       <button class="modal-close" onclick="closeModal('sendMsgModal')">×</button>
     </div>
-    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;overflow-x:hidden;padding:0 4px;">
 
       <!-- اختيار التاجر -->
       <div style="margin-bottom:18px">
@@ -9845,37 +9845,53 @@ async function sendMessageNow(){
   btn.disabled = true; btn.textContent = '⏳ جارى الحفظ...';
 
   try {
-    const payload = {
+    const roleLabel = role === 'attempting' ? 'التاجر اللى حاول' : 'التاجر الأصلى';
+    const adminLabel = admin?.name || admin?.username || 'admin';
+    const nowIso = new Date().toISOString();
+
+    // 1️⃣ INSERT الرسالة فى pending_messages (n8n هياخدها ويبعتها)
+    const insertPayload = {
       alert_id:       currentSendAlert.id,
       client_id:      target.id || null,
       telegram_id:    String(target.telegram_id),
       recipient_name: target.name || null,
-      recipient_role: role,  // 'attempting' | 'original'
+      recipient_role: role,
       message_text:   messageText,
-      created_by:     admin?.name || admin?.username || 'admin'
+      created_by:     adminLabel
     };
-    const r = await fetch(`${SB}/rest/v1/pending_messages`, {
+    const r1 = await fetch(`${SB}/rest/v1/pending_messages`, {
       method: 'POST',
       headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(insertPayload)
     });
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    if (!r1.ok) throw new Error(`HTTP ${r1.status}: ${await r1.text()}`);
 
-    // سجّل فى activity_log
+    // 2️⃣ أرشف الـ alert فوراً (مش هنستنى n8n)
+    const archivePayload = {
+      status: 'reviewed',
+      reviewed_at: nowIso,
+      reviewed_by: adminLabel,
+      admin_notes: `📩 تم جدولة إرسال رسالة لـ ${target.name || '—'} (${roleLabel})`
+    };
+    await fetch(`${SB}/rest/v1/duplicate_permit_alerts?id=eq.${currentSendAlert.id}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+      body: JSON.stringify(archivePayload)
+    });
+
+    // 3️⃣ سجّل فى activity_log
     if (typeof logActivity === 'function') {
       logActivity('admin_alert_message_queued',
-        `📩 جدول إرسال رسالة للتاجر ${target.name || '—'} (${role}) على إذن ${currentSendAlert.permit_number}`,
+        `📩 جدول إرسال رسالة للتاجر ${target.name || '—'} (${roleLabel}) على إذن ${currentSendAlert.permit_number}`,
         { alert_id: currentSendAlert.id, recipient_role: role, recipient_name: target.name });
     }
 
     closeModal('sendMsgModal');
     if (typeof showToast === 'function') {
-      showToast('📤 الرسالة فى الطريق — هتتأرشف لما تتبعت بنجاح');
-    } else {
-      alert('📤 الرسالة فى الطريق — هتتأرشف لما تتبعت بنجاح');
+      showToast('📤 الرسالة فى الطريق — تم أرشفة التنبيه');
     }
-    // refresh لرؤية الـ status لو n8n سريع
-    setTimeout(() => loadPermitAlerts(), 2000);
+    // refresh فورى
+    loadPermitAlerts();
   } catch(e) {
     console.error('sendMessageNow error:', e);
     errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
