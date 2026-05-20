@@ -350,6 +350,14 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
   background:rgba(138,133,128,0.12);color:var(--text-dim);border:1px solid var(--border);
 }
 .permit-alert-actions .dismiss:hover{background:rgba(138,133,128,0.2);color:var(--text);}
+.permit-alert-actions .send-msg{
+  background:rgba(74,144,217,0.12);color:#7ab5e8;border:1px solid rgba(74,144,217,0.35);
+}
+.permit-alert-actions .send-msg:hover:not(:disabled){background:#4A90D9;color:#FFF;}
+.permit-alert-actions .send-msg:disabled{
+  opacity:0.4;cursor:not-allowed;background:rgba(138,133,128,0.06);color:var(--text-dim);
+  border-color:var(--border);
+}
 .permit-alert-archived-meta{
   margin-top:12px;padding:10px 12px;background:rgba(74,144,217,0.05);
   border:1px solid rgba(74,144,217,0.2);border-radius:10px;font-size:12px;color:#7fb8e8;line-height:1.7;
@@ -1938,6 +1946,35 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   scrollbar-color:rgba(201,168,76,0.5) transparent;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   📩 Send Message Modal — recipient cards
+   ═══════════════════════════════════════════════════════════ */
+.sm-recipient-row{display:flex;gap:10px;flex-wrap:wrap;}
+.sm-recipient{
+  flex:1;min-width:200px;
+  display:flex;align-items:flex-start;gap:10px;
+  background:#1A1A1A;border:2px solid var(--border);border-radius:10px;
+  padding:12px 14px;cursor:pointer;
+  transition:all 0.15s ease;
+}
+.sm-recipient:hover:not(.disabled){border-color:rgba(201,168,76,0.5);}
+.sm-recipient input[type="radio"]{
+  margin-top:3px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;
+}
+.sm-recipient.disabled{opacity:0.55;cursor:not-allowed;}
+.sm-recipient.disabled input{cursor:not-allowed;}
+.sm-recipient:has(input:checked){
+  border-color:var(--gold);background:rgba(201,168,76,0.06);
+}
+.sm-recipient-body{flex:1;min-width:0;}
+.sm-recipient-title{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.3px;}
+.sm-recipient-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.sm-recipient-meta{font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+
+@media (max-width:600px){
+  .sm-recipient-row{flex-direction:column;}
+}
+
 </style>
 </head>
 <body>
@@ -3048,6 +3085,55 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   </div>
 </div>
 
+<!-- ═════════════════════════════════════════════════════════
+     📩 SEND MESSAGE MODAL — رسالة من الإذن المكرر
+     ═════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="sendMsgModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">
+      <span>📩 إرسال رسالة للتاجر</span>
+      <button class="modal-close" onclick="closeModal('sendMsgModal')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+
+      <!-- اختيار التاجر -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+          👤 لمين الرسالة؟
+        </div>
+        <div class="sm-recipient-row" id="sm-recipient-options"></div>
+      </div>
+
+      <!-- رقم الإذن -->
+      <div style="margin-bottom:18px">
+        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">🎫 رقم الإذن</div>
+        <div id="sm-permit-display" style="background:#1A1A1A;border:1px solid var(--border);border-radius:10px;padding:12px 16px;font-size:18px;font-weight:800;color:var(--gold-light);text-align:center;letter-spacing:1px">—</div>
+      </div>
+
+      <!-- نص الرسالة -->
+      <div style="margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--gold)">✍️ نص الرسالة</div>
+          <button onclick="resetMessageDefault()" style="background:transparent;color:var(--text-dim);border:none;cursor:pointer;font-size:11px;font-family:'Cairo',sans-serif;text-decoration:underline">🔄 رجوع للنص الافتراضى</button>
+        </div>
+        <textarea id="sm-message-text" rows="8"
+          style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:12px 14px;font-size:14px;font-weight:500;line-height:1.8;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;min-height:160px;box-sizing:border-box"
+          placeholder="اكتب الرسالة هنا..."></textarea>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">
+          💡 الـ <code style="color:#7ab5e8">{name}</code> و <code style="color:#7ab5e8">{permit_number}</code> هتتعبئوا تلقائى
+        </div>
+      </div>
+
+      <div id="sm-form-error" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin:12px 0"></div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal('sendMsgModal')">إلغاء</button>
+      <button class="btn-save" onclick="sendMessageNow()" id="sm-send-btn">📤 إرسال</button>
+    </div>
+  </div>
+</div>
+
 <!-- EMPLOYEE MODAL -->
 <div class="modal-overlay" id="empModal">
   <div class="modal">
@@ -3832,10 +3918,15 @@ function renderPermitAlertCard(a) {
   // الـ footer: لو جديد → notes + buttons. لو archived → metadata
   let footerHtml = '';
   if (a.status === 'new') {
+    // تحديد لو فيه تليجرام للتاجرين
+    const attemptingHasTg = !!(attempting && attempting.telegram_id);
+    const originalHasTg   = !!(original && original.telegram_id);
+    const canSend = attemptingHasTg || originalHasTg;
     footerHtml = `
       <textarea class="permit-alert-notes" id="alert-notes-${a.id}"
                 placeholder="ملاحظات الأدمن (اختيارى)... مثلاً: تم التواصل مع العميل، اتفقنا على كذا"></textarea>
       <div class="permit-alert-actions">
+        <button class="send-msg" onclick="openSendMessageModal(${a.id})" ${canSend ? '' : 'disabled title="مفيش تاجر متصل بالبوت"'}>📩 إرسال رسالة</button>
         <button class="approve" onclick="approvePermitAlert(${a.id})">✅ تمت المراجعة</button>
         <button class="dismiss" onclick="dismissPermitAlert(${a.id})">🗑️ تجاهل</button>
       </div>`;
@@ -9620,6 +9711,176 @@ async function deleteLimit(id){
   } catch(e) {
     console.error('deleteLimit error:', e);
     alert('❌ خطأ فى المسح: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 📩 SEND MESSAGE — رسالة الإذن المكرر
+// ═══════════════════════════════════════════════════════════
+let currentSendAlert = null; // { id, attempting, original, permit_number }
+
+const DEFAULT_MSG_TEMPLATE = `السلام عليكم {name} 👋
+
+رقم الإذن {permit_number} ده مش إذنك.
+
+برجاء التأكد من رقم الإذن الصحيح قبل ما تحاول تحجز تانى.
+
+شكراً 🙏`;
+
+async function openSendMessageModal(alertId){
+  // ابحث الـ alert فى الـ cache
+  const allAlerts = [...permitAlertsData.new, ...permitAlertsData.reviewed, ...permitAlertsData.dismissed];
+  const a = allAlerts.find(x => x.id === alertId);
+  if (!a) { alert('❌ تعذّر إيجاد بيانات التنبيه'); return; }
+
+  // تحقق لو فيه رسالة pending/sent للـ alert ده
+  try {
+    const checkRes = await fetch(
+      `${SB}/rest/v1/pending_messages?alert_id=eq.${alertId}&status=in.(pending,sent)&select=id,status,recipient_name,recipient_role,sent_at&order=created_at.desc`,
+      { headers: HDR }
+    );
+    const existing = await checkRes.json();
+    if (existing.length > 0) {
+      const e = existing[0];
+      const statusLabel = e.status === 'sent' ? 'متبعتة بالفعل' : 'فى الانتظار';
+      const targetLabel = e.recipient_role === 'attempting' ? 'التاجر اللى حاول' : 'التاجر الأصلى';
+      if (!confirm(`⚠️ فيه رسالة ${statusLabel} لـ ${targetLabel} (${e.recipient_name || '—'}).\n\nهتبعت رسالة تانية؟`)) return;
+    }
+  } catch(e) { /* silent — مش حاجة فادحة */ }
+
+  currentSendAlert = {
+    id: a.id,
+    permit_number: a.permit_number,
+    attempting: a.attempting_client_data || {},
+    original:   a.original_client_data || {}
+  };
+
+  // بنى recipient options
+  const optsEl = document.getElementById('sm-recipient-options');
+  const att = currentSendAlert.attempting;
+  const org = currentSendAlert.original;
+  const attHasTg = !!att.telegram_id;
+  const orgHasTg = !!org.telegram_id;
+
+  optsEl.innerHTML = `
+    <label class="sm-recipient ${attHasTg ? '' : 'disabled'}">
+      <input type="radio" name="sm-recipient" value="attempting" ${attHasTg ? '' : 'disabled'} onchange="selectRecipient(this.value)">
+      <div class="sm-recipient-body">
+        <div class="sm-recipient-title">🚫 التاجر اللى حاول</div>
+        <div class="sm-recipient-name">${escAttr(att.name || '—')}</div>
+        <div class="sm-recipient-meta">📞 ${escAttr(att.phone || '—')} ${attHasTg ? '' : '<span style="color:var(--error);font-size:11px;font-weight:700">⚠️ مش رابط البوت</span>'}</div>
+      </div>
+    </label>
+    <label class="sm-recipient ${orgHasTg ? '' : 'disabled'}">
+      <input type="radio" name="sm-recipient" value="original" ${orgHasTg ? '' : 'disabled'} onchange="selectRecipient(this.value)">
+      <div class="sm-recipient-body">
+        <div class="sm-recipient-title">✅ التاجر الأصلى</div>
+        <div class="sm-recipient-name">${escAttr(org.name || '—')}</div>
+        <div class="sm-recipient-meta">📞 ${escAttr(org.phone || '—')} ${orgHasTg ? '' : '<span style="color:var(--error);font-size:11px;font-weight:700">⚠️ مش رابط البوت</span>'}</div>
+      </div>
+    </label>
+  `;
+
+  document.getElementById('sm-permit-display').textContent = currentSendAlert.permit_number;
+  document.getElementById('sm-message-text').value = '';  // فاضى لحد ما يختار recipient
+  document.getElementById('sm-form-error').style.display = 'none';
+  document.getElementById('sm-send-btn').disabled = true;
+
+  // auto-select لو واحد بس متاح
+  if (attHasTg && !orgHasTg) {
+    document.querySelector('input[name="sm-recipient"][value="attempting"]').checked = true;
+    selectRecipient('attempting');
+  } else if (!attHasTg && orgHasTg) {
+    document.querySelector('input[name="sm-recipient"][value="original"]').checked = true;
+    selectRecipient('original');
+  }
+
+  document.getElementById('sendMsgModal').classList.add('show');
+}
+
+function selectRecipient(role){
+  if (!currentSendAlert) return;
+  const target = role === 'attempting' ? currentSendAlert.attempting : currentSendAlert.original;
+  const text = DEFAULT_MSG_TEMPLATE
+    .replace('{name}', target.name || 'حضرتك')
+    .replace('{permit_number}', currentSendAlert.permit_number);
+  document.getElementById('sm-message-text').value = text;
+  document.getElementById('sm-send-btn').disabled = false;
+}
+
+function resetMessageDefault(){
+  const checked = document.querySelector('input[name="sm-recipient"]:checked');
+  if (!checked) {
+    alert('⚠️ اختار التاجر الأول');
+    return;
+  }
+  selectRecipient(checked.value);
+}
+
+async function sendMessageNow(){
+  const errEl = document.getElementById('sm-form-error');
+  errEl.style.display = 'none';
+
+  const checked = document.querySelector('input[name="sm-recipient"]:checked');
+  if (!checked) {
+    errEl.textContent = '⚠️ اختار التاجر الأول';
+    errEl.style.display = 'block';
+    return;
+  }
+  const role = checked.value;
+  const target = role === 'attempting' ? currentSendAlert.attempting : currentSendAlert.original;
+  if (!target.telegram_id) {
+    errEl.textContent = '⚠️ التاجر ده مش رابط البوت';
+    errEl.style.display = 'block';
+    return;
+  }
+  const messageText = document.getElementById('sm-message-text').value.trim();
+  if (!messageText) {
+    errEl.textContent = '⚠️ نص الرسالة فاضى';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('sm-send-btn');
+  btn.disabled = true; btn.textContent = '⏳ جارى الحفظ...';
+
+  try {
+    const payload = {
+      alert_id:       currentSendAlert.id,
+      client_id:      target.id || null,
+      telegram_id:    String(target.telegram_id),
+      recipient_name: target.name || null,
+      recipient_role: role,  // 'attempting' | 'original'
+      message_text:   messageText,
+      created_by:     admin?.name || admin?.username || 'admin'
+    };
+    const r = await fetch(`${SB}/rest/v1/pending_messages`, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+
+    // سجّل فى activity_log
+    if (typeof logActivity === 'function') {
+      logActivity('admin_alert_message_queued',
+        `📩 جدول إرسال رسالة للتاجر ${target.name || '—'} (${role}) على إذن ${currentSendAlert.permit_number}`,
+        { alert_id: currentSendAlert.id, recipient_role: role, recipient_name: target.name });
+    }
+
+    closeModal('sendMsgModal');
+    if (typeof showToast === 'function') {
+      showToast('📤 الرسالة فى الطريق — هتتأرشف لما تتبعت بنجاح');
+    } else {
+      alert('📤 الرسالة فى الطريق — هتتأرشف لما تتبعت بنجاح');
+    }
+    // refresh لرؤية الـ status لو n8n سريع
+    setTimeout(() => loadPermitAlerts(), 2000);
+  } catch(e) {
+    console.error('sendMessageNow error:', e);
+    errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = '📤 إرسال';
   }
 }
 
