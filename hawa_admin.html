@@ -48,7 +48,7 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .section{display:none;flex:1;flex-direction:column;min-height:0;}
 .section.active{display:flex;}
 /* form-style sections: constrain width on wide screens for better composition */
-#sec-broadcast.active, #sec-settings.active, #sec-types.active, #sec-vehicles.active, #sec-templates.active, #sec-booking-limits.active{max-width:1100px;width:100%;margin-right:auto;margin-left:auto;}
+#sec-broadcast.active, #sec-settings.active, #sec-types.active, #sec-vehicles.active, #sec-templates.active, #sec-booking-limits.active, #sec-client-tiers.active{max-width:1100px;width:100%;margin-right:auto;margin-left:auto;}
 /* Broadcast: prevent any text from breaking layout */
 #sec-broadcast .tbl-wrap{overflow-wrap:anywhere;word-break:break-word;}
 #sec-broadcast textarea{overflow-wrap:anywhere;word-break:break-word;}
@@ -2015,6 +2015,95 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .sm-recipient-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sm-recipient-meta{font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 
+/* ═══════════════════════════════════════════════════════════
+   🏆 CLIENT TIERS — فئات العملاء styling
+   ═══════════════════════════════════════════════════════════ */
+.tier-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;
+  font-size:12px;font-weight:700;line-height:1.4;border:1px solid transparent;
+  white-space:nowrap;
+}
+.tier-badge .tb-ico{font-size:13px;}
+.tier-default-flag{
+  display:inline-block;background:rgba(76,175,125,0.15);color:#6dc49a;
+  padding:2px 7px;border-radius:6px;font-size:10.5px;font-weight:700;margin-right:6px;
+  border:1px solid rgba(76,175,125,0.3);
+}
+.tier-row-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.tier-row-actions button{
+  background:transparent;border:1px solid var(--border);border-radius:7px;
+  padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11.5px;font-weight:700;
+  cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:var(--text)
+}
+.tier-row-actions .btn-edit{background:rgba(74,144,217,0.1);color:#7ab5e8;border-color:rgba(74,144,217,0.25);}
+.tier-row-actions .btn-edit:hover{background:rgba(74,144,217,0.18);}
+.tier-row-actions .btn-default{background:rgba(76,175,125,0.1);color:#6dc49a;border-color:rgba(76,175,125,0.3);}
+.tier-row-actions .btn-default:hover{background:rgba(76,175,125,0.18);}
+.tier-row-actions .btn-del{background:rgba(224,85,85,0.1);color:#e88080;border-color:rgba(224,85,85,0.25);}
+.tier-row-actions .btn-del:hover{background:rgba(224,85,85,0.18);}
+.tier-row-actions button:disabled{opacity:0.4;cursor:not-allowed}
+
+/* Color palette swatches (modal) */
+.tier-palette{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.tier-palette-swatch{
+  width:36px;height:36px;border-radius:9px;cursor:pointer;border:2px solid transparent;
+  transition:transform 0.15s ease, border-color 0.15s ease;
+}
+.tier-palette-swatch:hover{transform:scale(1.1);}
+.tier-palette-swatch.selected{border-color:#FFFFFF;box-shadow:0 0 0 2px var(--gold);}
+
+/* Icon palette */
+.tier-icon-palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+.tier-icon-swatch{
+  width:42px;height:42px;border-radius:9px;cursor:pointer;border:2px solid var(--border);
+  background:#1A1A1A;display:flex;align-items:center;justify-content:center;
+  font-size:20px;transition:all 0.15s ease;
+}
+.tier-icon-swatch:hover{border-color:var(--gold);background:rgba(201,168,76,0.06);}
+.tier-icon-swatch.selected{border-color:var(--gold);background:rgba(201,168,76,0.12);transform:scale(1.06);}
+
+/* Tier preview chip in modal */
+.tier-preview-card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+  border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:6px;
+  display:flex;align-items:center;gap:12px;
+}
+.tier-preview-icon{
+  width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:24px;flex-shrink:0;
+}
+.tier-preview-info{flex:1;min-width:0}
+.tier-preview-name{font-size:16px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.tier-preview-desc{font-size:12px;color:var(--text-dim);}
+
+/* ═══════════════════════════════════════════════════════════
+   📊 Booking Limits Tabs (per tier)
+   ═══════════════════════════════════════════════════════════ */
+.bl-tier-tabs{
+  display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);
+  padding-bottom:1px;overflow-x:auto;flex-wrap:nowrap;
+}
+.bl-tier-tab{
+  background:transparent;border:1px solid transparent;border-bottom:none;
+  color:var(--text-dim);padding:10px 16px;font-family:'Cairo',sans-serif;
+  font-size:13.5px;font-weight:700;cursor:pointer;border-radius:10px 10px 0 0;
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+  transition:all 0.15s ease;position:relative;top:1px;
+}
+.bl-tier-tab:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.bl-tier-tab.active{
+  color:var(--gold);background:var(--dark);
+  border-color:var(--border);border-bottom-color:var(--dark);
+}
+.bl-tier-tab .bl-tab-count{
+  background:rgba(255,255,255,0.07);color:var(--text-dim);
+  font-size:10.5px;font-weight:700;padding:1.5px 6.5px;border-radius:10px;
+}
+.bl-tier-tab.active .bl-tab-count{background:rgba(201,168,76,0.18);color:var(--gold-light);}
+
+/* Clients table tier column */
+.tier-cell{padding:4px 0;}
+
 </style>
 </head>
 <body>
@@ -2106,6 +2195,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
       <div class="nav-item" onclick="goTo('warehouses')"><span class="ni">📦</span> إيميلات المخازن</div>
       <div class="nav-item" onclick="goTo('activity-log')"><span class="ni">📜</span> سجل الأنشطة</div>
+      <div class="nav-item" onclick="goTo('client-tiers')"><span class="ni">🏆</span> فئات العملاء</div>
       <div class="nav-item" onclick="goTo('booking-limits')"><span class="ni">📊</span> حدود الحجز</div>
       <div class="nav-item" onclick="goTo('settings')"><span class="ni">⚙️</span> إعدادات عامة</div>
     </div>
@@ -2258,6 +2348,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           </select>
           <select class="filter-inp" id="cl-type" onchange="filterClients()" style="width:150px">
             <option value="">🏷️ كل الأنواع</option>
+          </select>
+          <select class="filter-inp" id="cl-tier" onchange="filterClients()" style="width:150px">
+            <option value="">🏆 كل الفئات</option>
           </select>
           <select class="filter-inp" id="cl-religion" onchange="filterClients()" style="width:150px">
             <option value="">🕌 كل الديانات</option>
@@ -2780,6 +2873,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="blocked">🔒 المبلوكين</option>
             <option value="reports">📊 التقارير</option>
             <option value="warehouses">📦 إيميلات المخازن</option>
+            <option value="client-tiers">🏆 فئات العملاء</option>
             <option value="settings">⚙️ إعدادات عامة</option>
           </select>
         </div>
@@ -2973,12 +3067,42 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
 
     <!-- ═════════════════════════════════════════════════════════
+         🏆 CLIENT TIERS — فئات العملاء (Banking-style)
+         ═════════════════════════════════════════════════════════ -->
+    <div class="section" id="sec-client-tiers">
+      <div class="page-hd">
+        <div class="page-title">🏆 <span>فئات العملاء</span></div>
+        <button class="add-btn" onclick="openTierModal()">➕ إضافة فئة جديدة</button>
+      </div>
+
+      <!-- شرح الصفحة -->
+      <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:14px 18px;margin-bottom:18px;color:#7fb8e8;font-size:13px;line-height:1.8">
+        💡 الفئات هتساعدك تفرّق بين العملاء فى <b>حدود الحجز</b> والتعامل. كل فئة لها قواعدها الخاصة فى صفحة <b>📊 حدود الحجز</b>. لازم يفضل عندك فئة واحدة على الأقل بتبقى الـ <b>افتراضية</b> (العميل الجديد بياخدها).
+      </div>
+
+      <!-- جدول الفئات -->
+      <div class="tbl-wrap">
+        <div id="tiers-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════
          📊 BOOKING LIMITS — حدود الحجز (Versioned)
          ═════════════════════════════════════════════════════════ -->
     <div class="section" id="sec-booking-limits">
       <div class="page-hd">
         <div class="page-title">📊 <span>حدود الحجز</span></div>
         <button class="add-btn" onclick="openLimitsForm()">➕ نسخة جديدة</button>
+      </div>
+
+      <!-- 🏆 Tabs لكل فئة -->
+      <div class="bl-tier-tabs" id="bl-tier-tabs">
+        <div style="color:var(--text-dim);font-size:12px;padding:10px 4px">⏳ جاري تحميل الفئات...</div>
+      </div>
+
+      <!-- شرح -->
+      <div id="bl-tier-hint" style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;color:#7fb8e8;font-size:12.5px;line-height:1.7">
+        💡 كل فئة عندها قواعدها الخاصة. شغّال دلوقتى على فئة: <b id="bl-current-tier-label">—</b>
       </div>
 
       <!-- النسخة الفعّالة -->
@@ -3023,6 +3147,98 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 </div>
 
 <!-- ═════════════════════════════════════════════════════════
+     🏆 CLIENT TIER MODAL — إضافة / تعديل فئة عميل
+     ═════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="tierModal">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-title">
+      <span id="tier-modal-title">➕ إضافة فئة جديدة</span>
+      <button class="modal-close" onclick="closeTierModal()">×</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
+
+      <!-- Live Preview -->
+      <div class="bl-section-title">👁️ معاينة</div>
+      <div class="tier-preview-card">
+        <div class="tier-preview-icon" id="tier-preview-icon" style="background:rgba(201,168,76,0.15);color:#C9A84C">⭐</div>
+        <div class="tier-preview-info">
+          <div class="tier-preview-name" id="tier-preview-name">اسم الفئة</div>
+          <div class="tier-preview-desc" id="tier-preview-desc">شرح الفئة (اختيارى)</div>
+        </div>
+      </div>
+
+      <!-- اسم الفئة -->
+      <div class="bl-section-title" style="margin-top:18px">📝 الأساسيات</div>
+      <div class="bl-modal-grid">
+        <div class="bl-field">
+          <label>اسم الفئة <span style="color:var(--error)">*</span></label>
+          <input type="text" id="tier-name" placeholder="مثلاً: VIP, Gold, مميز..." maxlength="50" oninput="tierUpdatePreview()">
+        </div>
+        <div class="bl-field">
+          <label>الترتيب <span class="bl-hint">(الأقل بيظهر أولاً)</span></label>
+          <input type="number" id="tier-sort" min="0" max="999" placeholder="مثلاً: 1, 2, 3...">
+        </div>
+      </div>
+      <div class="bl-modal-grid full">
+        <div class="bl-field">
+          <label>الوصف <span class="bl-hint">(اختيارى — للتوضيح)</span></label>
+          <input type="text" id="tier-desc" placeholder="مثلاً: العملاء VIP اللى ليهم أولوية" maxlength="200" oninput="tierUpdatePreview()">
+        </div>
+      </div>
+
+      <!-- اللون -->
+      <div class="bl-section-title" style="margin-top:18px">🎨 اللون</div>
+      <div class="bl-modal-grid full">
+        <div class="bl-field" style="padding:0">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <input type="color" id="tier-color" value="#C9A84C" oninput="tierUpdatePreview()"
+              style="width:60px;height:46px;border-radius:10px;border:2px solid var(--border);background:transparent;cursor:pointer;padding:2px">
+            <input type="text" id="tier-color-hex" value="#C9A84C" maxlength="7" oninput="tierSyncColorFromHex(this.value)"
+              style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:13px;font-weight:600;border-radius:10px;font-family:monospace;outline:none;width:110px;letter-spacing:1px">
+            <div style="font-size:11.5px;color:var(--text-dim)">↑ اختار من اللوحة تحت أو ادخل HEX</div>
+          </div>
+          <div class="tier-palette" id="tier-palette"></div>
+        </div>
+      </div>
+
+      <!-- الأيقونة -->
+      <div class="bl-section-title" style="margin-top:18px">✨ الأيقونة</div>
+      <div class="bl-modal-grid full">
+        <div class="bl-field" style="padding:0">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+            <input type="text" id="tier-icon" value="⭐" maxlength="4" oninput="tierUpdatePreview()"
+              style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:22px;font-weight:600;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;width:64px;text-align:center">
+            <div style="font-size:11.5px;color:var(--text-dim)">↑ اكتب emoji أو اختار من تحت</div>
+          </div>
+          <div class="tier-icon-palette" id="tier-icon-palette"></div>
+        </div>
+      </div>
+
+      <!-- Default toggle -->
+      <div class="bl-section-title" style="margin-top:18px">⚙️ خيارات</div>
+      <div class="bl-modal-grid full">
+        <div class="bl-field" style="padding:0">
+          <label style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:rgba(76,175,125,0.06);border:1px solid rgba(76,175,125,0.2);border-radius:10px;cursor:pointer">
+            <input type="checkbox" id="tier-is-default" style="margin-top:2px;width:18px;height:18px;cursor:pointer;accent-color:#6dc49a">
+            <div>
+              <div style="font-size:13.5px;font-weight:700;color:#6dc49a;margin-bottom:3px">⭐ خلى دى الفئة الافتراضية</div>
+              <div style="font-size:11.5px;color:var(--text-dim);line-height:1.6">العميل الجديد بياخد الفئة الافتراضية تلقائياً. لازم يبقى فيه فئة افتراضية واحدة بس.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div id="tier-form-error" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px"></div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeTierModal()">إلغاء</button>
+      <button class="btn-save" onclick="saveTier()" id="tier-save-btn">💾 حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════
      📊 BOOKING LIMITS — Modal للنسخة الجديدة
      ═════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="blModal">
@@ -3032,6 +3248,20 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <button class="modal-close" onclick="closeLimitsForm()">×</button>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
+
+      <!-- 🏆 الفئة الحالية -->
+      <div class="bl-section-title">🏆 الفئة</div>
+      <div class="bl-modal-grid full">
+        <div class="bl-field" style="padding:0">
+          <div id="bl-tier-display" style="background:#1A1A1A;border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+            <span id="bl-tier-display-icon" style="font-size:20px">⭐</span>
+            <div style="flex:1">
+              <div id="bl-tier-display-name" style="font-size:14px;font-weight:800;color:var(--text)">—</div>
+              <div style="font-size:11px;color:var(--text-dim);margin-top:2px">القواعد دى هتطبق على عملاء الفئة دى بس</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- تاريخ التفعيل -->
       <div class="bl-section-title">📅 وقت التفعيل</div>
@@ -3751,6 +3981,7 @@ function autoRefreshTick(){
     else if(sec==='pending-clients' && typeof loadPendingClients === 'function') loadPendingClients();
     else if(sec==='activity-log' && typeof loadActivityLog === 'function') loadActivityLog();
     else if(sec==='booking-limits' && typeof loadBookingLimits === 'function') loadBookingLimits();
+    else if(sec==='client-tiers' && typeof loadClientTiers === 'function') loadClientTiers();
     // skip: broadcast/settings — الأدمن غالباً بيكتب
   } catch(e) {
     console.warn('Auto-refresh error:', e);
@@ -3882,6 +4113,7 @@ function goTo(sec){
     loadActivityLog();
   }
   else if(sec==='booking-limits')loadBookingLimits();
+  else if(sec==='client-tiers')loadClientTiers();
 }
 
 // =================== 🚨 PERMIT ALERTS ===================
@@ -4728,24 +4960,42 @@ function onAdminGovChange() {
 // =================== CLIENTS ===================
 let allClients = [];
 let allReligions = [];
+let allClientTiers = [];
 
 async function loadClients(){
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    const [r1, r2, r3] = await Promise.all([
+    const [r1, r2, r3, r4] = await Promise.all([
       fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}}),
       fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
-      fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR})
+      fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
+      fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`,{headers:HDR})
     ]);
     allClients = await r1.json();
     allClientTypes = await r2.json();
     allReligions = await r3.json();
+    allClientTiers = await r4.json();
 
     initAdminGovDropdown();
     initClientTypeFilter();
     initReligionFilter();
+    initClientTierFilter();
     filterClients();
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+function initClientTierFilter(){
+  const sel = document.getElementById('cl-tier');
+  if(!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">🏆 كل الفئات</option>';
+  (allClientTiers||[]).forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = String(t.id);
+    opt.textContent = `${t.icon || '🏆'} ${t.name}${t.is_default ? ' (افتراضى)' : ''}`;
+    if(String(t.id) === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
 }
 
 function initClientTypeFilter(){
@@ -4815,6 +5065,7 @@ function filterClients(){
   const gov=document.getElementById('cl-gov').value;
   const district=document.getElementById('cl-district').value;
   const type=document.getElementById('cl-type').value;
+  const tier=document.getElementById('cl-tier').value;
   const religion=document.getElementById('cl-religion').value;
   const status=document.getElementById('cl-status').value;
 
@@ -4834,6 +5085,7 @@ function filterClients(){
   if(gov) data=data.filter(c=>c.governorate===gov);
   if(district) data=data.filter(c=>c.city===district||c.district===district);
   if(type) data=data.filter(c=>(c.client_type||'عميل عام')===type);
+  if(tier) data=data.filter(c=>String(c.tier_id||'')===tier);
   if(religion) data=data.filter(c=>(c.religion||'مسلم')===religion);
   if(status==='active') data=data.filter(c=>!c.is_blocked && c.is_active!==false);
   if(status==='blocked') data=data.filter(c=>c.is_blocked);
@@ -4860,6 +5112,7 @@ function filterClients(){
   let html=`<table><thead><tr>
     <th style="width:36px">#</th>
     <th>الاسم</th>
+    <th>🏆 الفئة</th>
     <th>🏷️ النوع</th>
     <th>🕌 الديانة</th>
     <th>الكود</th><th>الهاتف</th>
@@ -4875,6 +5128,16 @@ function filterClients(){
     // Type badge
     const typeName = c.client_type || 'عميل عام';
     const typeColor = typeColorMap[typeName] || '#8A8580';
+
+    // Tier badge (فئة العميل)
+    const tier = (allClientTiers || []).find(t => t.id === c.tier_id)
+              || (allClientTiers || []).find(t => t.is_default);
+    const tierColor = (tier && tier.color) || '#8A8580';
+    const tierIcon  = (tier && tier.icon)  || '👤';
+    const tierName  = (tier && tier.name)  || '—';
+    const tierBadge = tier
+      ? `<span class="tier-badge" style="background:${tierColor}22;color:${tierColor};border-color:${tierColor}55"><span class="tb-ico">${tierIcon}</span>${tierName}</span>`
+      : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
 
     // Religion badge
     const religionBadge = getReligionBadge(c.religion || 'مسلم');
@@ -4892,6 +5155,7 @@ function filterClients(){
     html+=`<tr style="cursor:pointer" ondblclick="openClientProfile(${c.id})" title="دبل كليك لفتح ملف العميل">
       <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
       <td><b style="font-size:13px">${hl(c.name,search)}</b></td>
+      <td class="tier-cell">${tierBadge}</td>
       <td><span class="type-badge" style="background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40">${typeName}</span></td>
       <td>${religionBadge}</td>
       <td><span style="color:#d4a957;font-weight:700">${hl(c.company_code,search)}</span></td>
@@ -4905,6 +5169,7 @@ function filterClients(){
       <td>${statusCell}</td>
       <td><div class="act-btns">
         <button class="act-btn edit" onclick="event.stopPropagation();openClientEdit(${c.id})" title="تعديل بيانات العميل">✏️</button>
+        <button class="act-btn" style="background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" onclick="event.stopPropagation();openChangeClientTier(${c.id})" title="تغيير فئة العميل">🏆</button>
         ${isBlocked?
           `<button class="act-btn unblock" onclick="event.stopPropagation();unblockClient(${c.id},'${nameEsc}')" title="فك الحظر من الحجز">🔓</button>`:
           `<button class="act-btn del" onclick="event.stopPropagation();blockClient(${c.id},'${nameEsc}')" title="حظر من الحجز">🔒</button>`}
@@ -9646,13 +9911,26 @@ async function exportActivityLog(){
 // 📊 BOOKING LIMITS — JS logic لصفحة حدود الحجز
 // ═══════════════════════════════════════════════════════════
 
-let blAllLimits = [];  // كل النسخ (مرتبة effective_from DESC)
+let blAllLimits = [];   // كل النسخ (لكل الفئات)
 let blEditingId = null; // null = نسخة جديدة، رقم = تعديل صف
+let blTiers = [];       // الفئات الموجودة
+let blCurrentTierId = null; // الفئة المعروضة دلوقتى
 
 async function loadBookingLimits(){
   try {
-    const r = await fetch(`${SB}/rest/v1/booking_limits?order=effective_from.desc&select=*`, { headers: HDR });
-    blAllLimits = await r.json();
+    const [r1, r2] = await Promise.all([
+      fetch(`${SB}/rest/v1/booking_limits?order=effective_from.desc&select=*`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR })
+    ]);
+    blAllLimits = await r1.json();
+    blTiers     = await r2.json();
+
+    // اختار الفئة الافتراضية لو مفيش tier محدد، أو ابقى على المختار
+    if (!blCurrentTierId || !blTiers.find(t => t.id === blCurrentTierId)) {
+      const def = blTiers.find(t => t.is_default) || blTiers[0];
+      blCurrentTierId = def ? def.id : null;
+    }
+    blRenderTabs();
     blRender();
   } catch(e) {
     console.error('loadBookingLimits error:', e);
@@ -9661,26 +9939,58 @@ async function loadBookingLimits(){
   }
 }
 
+function blRenderTabs(){
+  const wrap = document.getElementById('bl-tier-tabs');
+  if (!wrap) return;
+  if (!blTiers.length) {
+    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:10px 4px">⚠️ مفيش فئات — اعمل فئة من صفحة <b>🏆 فئات العملاء</b> الأول</div>';
+    return;
+  }
+  wrap.innerHTML = blTiers.map(t => {
+    const count = blAllLimits.filter(r => r.tier_id === t.id).length;
+    const isActive = t.id === blCurrentTierId;
+    const styleActive = isActive ? `style="color:${t.color || '#C9A84C'};border-color:${(t.color || '#C9A84C')}44;border-bottom-color:var(--dark)"` : '';
+    return `<button class="bl-tier-tab ${isActive ? 'active' : ''}" ${styleActive} onclick="blSwitchTier(${t.id})">
+      <span style="font-size:15px">${t.icon || '🏆'}</span>
+      <span>${t.name}${t.is_default ? ' <span style="color:#6dc49a;font-size:10px">★</span>' : ''}</span>
+      <span class="bl-tab-count">${count}</span>
+    </button>`;
+  }).join('');
+
+  const cur = blTiers.find(t => t.id === blCurrentTierId);
+  const lbl = document.getElementById('bl-current-tier-label');
+  if (lbl && cur) lbl.innerHTML = `<span style="color:${cur.color || '#C9A84C'}">${cur.icon || '🏆'} ${cur.name}</span>`;
+}
+
+function blSwitchTier(tierId){
+  blCurrentTierId = tierId;
+  blRenderTabs();
+  blRender();
+}
+
 function blRender(){
   const todayStr = fmtDate(new Date());
   const emptyState = document.getElementById('bl-empty-state');
   const activeCard = document.getElementById('bl-active-card');
   const upcomingCard = document.getElementById('bl-upcoming-card');
 
-  if (!blAllLimits.length) {
+  // فلتر الـ rules على الفئة المختارة بس
+  const limits = blAllLimits.filter(r => r.tier_id === blCurrentTierId);
+
+  if (!limits.length) {
     emptyState.style.display = 'block';
     activeCard.style.display = 'none';
     upcomingCard.style.display = 'none';
     document.getElementById('bl-history-content').innerHTML =
-      '<div class="bl-history-empty">مفيش نسخ — أضف أول نسخة</div>';
+      '<div class="bl-history-empty">مفيش نسخ للفئة دى — أضف أول نسخة</div>';
     return;
   }
   emptyState.style.display = 'none';
 
   // الفعّالة دلوقتى = آخر صف effective_from <= today
-  const active = blAllLimits.find(r => r.effective_from <= todayStr);
+  const active = limits.find(r => r.effective_from <= todayStr);
   // الجاية = أحدث صف effective_from > today
-  const upcoming = [...blAllLimits].reverse().find(r => r.effective_from > todayStr);
+  const upcoming = [...limits].reverse().find(r => r.effective_from > todayStr);
 
   if (active) {
     activeCard.style.display = 'block';
@@ -9704,8 +10014,8 @@ function blRender(){
     upcomingCard.style.display = 'none';
   }
 
-  // جدول التاريخ
-  blRenderHistory(active);
+  // جدول التاريخ — فقط لـ الفئة المختارة
+  blRenderHistory(active, limits);
 }
 
 function blGridHtml(row){
@@ -9729,15 +10039,17 @@ function blGridHtml(row){
   `).join('');
 }
 
-function blRenderHistory(activeRow){
+function blRenderHistory(activeRow, limits){
   const container = document.getElementById('bl-history-content');
-  if (!blAllLimits.length) {
+  const rowsData = limits || blAllLimits.filter(r => r.tier_id === blCurrentTierId);
+  if (!rowsData.length) {
     container.innerHTML = '<div class="bl-history-empty">مفيش نسخ بعد</div>';
     return;
   }
   const todayStr = fmtDate(new Date());
-  const minId = Math.min(...blAllLimits.map(r => r.id));  // النسخة الافتراضية = أقل id
-  const rows = blAllLimits.map(r => {
+  // النسخة الافتراضية للـ tier ده = أقل id
+  const minId = Math.min(...rowsData.map(r => r.id));
+  const rows = rowsData.map(r => {
     const isActive = activeRow && r.id === activeRow.id;
     const isFuture = r.effective_from > todayStr;
     const isDefault = r.id === minId;
@@ -9786,12 +10098,27 @@ function openLimitsForm(editId){
   const errEl = document.getElementById('bl-form-error');
   errEl.style.display = 'none';
 
-  // مصدر القيم: لو editing → الصف نفسه، لو جديد → آخر نسخة pre-fill
+  // مصدر القيم: لو editing → الصف نفسه، لو جديد → آخر نسخة للـ tier الحالى
   let src = null;
+  let targetTierId = blCurrentTierId;
   if (blEditingId) {
     src = blAllLimits.find(r => r.id === blEditingId);
+    if (src) targetTierId = src.tier_id; // عند التعديل، الفئة بتاعة الصف نفسه
   } else {
-    src = blAllLimits[0];  // آخر نسخة (الأحدث) كـ pre-fill للجديد
+    // آخر نسخة للـ tier الحالى كـ pre-fill
+    src = blAllLimits.find(r => r.tier_id === blCurrentTierId);
+    // لو الـ tier الحالى مفيش نسخة، خد من أى tier
+    if (!src) src = blAllLimits[0];
+  }
+
+  // عرض الفئة فى الـ modal
+  const tier = blTiers.find(t => t.id === targetTierId);
+  if (tier) {
+    document.getElementById('bl-tier-display-icon').textContent = tier.icon || '🏆';
+    document.getElementById('bl-tier-display-name').innerHTML = `${tier.name}${tier.is_default ? ' <span style="color:#6dc49a;font-size:11px">★ افتراضى</span>' : ''}`;
+    const disp = document.getElementById('bl-tier-display');
+    disp.style.borderColor = (tier.color || '#C9A84C') + '55';
+    disp.style.background = (tier.color || '#C9A84C') + '0a';
   }
 
   // عنوان الـ modal
@@ -9820,6 +10147,9 @@ function openLimitsForm(editId){
   document.getElementById('bl-noshow-period').value    = src ? src.noshow_period : 'month';
   document.getElementById('bl-note').value             = blEditingId && src ? (src.note || '') : '';
 
+  // نخزّن الـ targetTierId فى الـ modal element كـ dataset
+  document.getElementById('blModal').dataset.tierId = String(targetTierId || '');
+
   document.getElementById('blModal').classList.add('show');
 }
 
@@ -9832,7 +10162,17 @@ async function saveLimits(){
   const errEl = document.getElementById('bl-form-error');
   errEl.style.display = 'none';
 
+  // الفئة من الـ modal dataset (مش من الـ DOM فى الـ form)
+  const tierIdRaw = document.getElementById('blModal').dataset.tierId;
+  const tierId = tierIdRaw ? parseInt(tierIdRaw) : blCurrentTierId;
+  if (!tierId) {
+    errEl.textContent = '⚠️ مفيش فئة محددة. اختار فئة من الـ tabs الأول.';
+    errEl.style.display = 'block';
+    return;
+  }
+
   const payload = {
+    tier_id:                tierId,
     effective_from:         document.getElementById('bl-effective-from').value,
     weekly_vehicles:        parseInt(document.getElementById('bl-weekly').value),
     daily_vehicles:         parseInt(document.getElementById('bl-daily').value),
@@ -9869,11 +10209,11 @@ async function saveLimits(){
     return;
   }
 
-  // تحذير لو فيه نسخة موجودة بنفس التاريخ (فى حالة الإضافة الجديدة فقط)
+  // تحذير لو فيه نسخة موجودة بنفس التاريخ + الفئة (فى حالة الإضافة الجديدة فقط)
   if (!blEditingId) {
-    const existing = blAllLimits.find(r => r.effective_from === payload.effective_from);
+    const existing = blAllLimits.find(r => r.effective_from === payload.effective_from && r.tier_id === tierId);
     if (existing) {
-      if (!confirm(`فيه نسخة موجودة بنفس التاريخ (${payload.effective_from}).\nهتضيف نسخة جديدة برضه؟`)) return;
+      if (!confirm(`فيه نسخة موجودة بنفس التاريخ (${payload.effective_from}) فى نفس الفئة.\nهتضيف نسخة جديدة برضه؟`)) return;
     }
   }
 
@@ -9903,9 +10243,12 @@ async function saveLimits(){
     if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
     if (typeof logActivity === 'function') {
       const action = blEditingId ? 'admin_limits_update' : 'admin_limits_create';
-      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId})` : `📊 أضاف نسخة حدود جديدة تبدأ ${payload.effective_from}`;
+      const tierName = (blTiers.find(t => t.id === tierId) || {}).name || '—';
+      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId}) — فئة ${tierName}` : `📊 أضاف نسخة حدود جديدة لفئة ${tierName} تبدأ ${payload.effective_from}`;
       logActivity(action, label, payload);
     }
+    // اضمن إن الـ tab يفضل على الفئة اللى اتضافت ليها
+    blCurrentTierId = tierId;
     closeLimitsForm();
     await loadBookingLimits();
     if (typeof showToast === 'function') showToast('✅ تم الحفظ');
@@ -9921,10 +10264,11 @@ async function saveLimits(){
 async function deleteLimit(id){
   const row = blAllLimits.find(r => r.id === id);
   if (!row) return;
-  // النسخة الافتراضية (أقل id) محمية من المسح
-  const minId = Math.min(...blAllLimits.map(r => r.id));
+  // النسخة الافتراضية للـ tier (أقل id فى نفس الـ tier) محمية من المسح
+  const tierLimits = blAllLimits.filter(r => r.tier_id === row.tier_id);
+  const minId = Math.min(...tierLimits.map(r => r.id));
   if (id === minId) {
-    alert('❌ النسخة الافتراضية مش بتتمسح — تعديل بس');
+    alert('❌ النسخة الافتراضية للفئة دى مش بتتمسح — تعديل بس');
     return;
   }
   if (!confirm(`هتمسح النسخة اللى تبدأ من ${row.effective_from}؟\nمش هتقدر ترجعها.`)) return;
@@ -9942,6 +10286,513 @@ async function deleteLimit(id){
   } catch(e) {
     console.error('deleteLimit error:', e);
     alert('❌ خطأ فى المسح: ' + e.message);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🏆 CLIENT TIERS — JS logic لصفحة فئات العملاء
+// ═══════════════════════════════════════════════════════════
+let tiersData     = [];   // كل الفئات
+let tiersClientCounts = {}; // {tier_id: count}
+let tiersRulesCounts  = {}; // {tier_id: count}
+let editingTierId = null; // null = إضافة، رقم = تعديل
+
+// Color palette (luxury/refined)
+const TIER_COLORS = [
+  '#8A8580', // gray (default)
+  '#C9A84C', // gold
+  '#E0B040', // amber gold
+  '#6dc49a', // emerald
+  '#4A90D9', // blue
+  '#9B7EDB', // purple
+  '#E07C7C', // red
+  '#E89B5C', // orange
+  '#5DBDB5', // teal
+  '#D478B0', // pink
+  '#7CA868', // sage
+  '#C97C50', // bronze
+];
+
+// Icon palette
+const TIER_ICONS = [
+  '👤','⭐','🏆','👑','💎','🥇','🥈','🥉',
+  '🌟','✨','🔥','💼','🎯','📈','🛡️','💰',
+  '🚀','⚡','🎖️','🎁','🌹','🦅','🦁','🐉'
+];
+
+async function loadClientTiers(){
+  const tbl = document.getElementById('tiers-table');
+  tbl.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try {
+    // جلب الفئات + counts العملاء + counts الـ rules
+    const [r1, r2, r3] = await Promise.all([
+      fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/clients?select=tier_id`, { headers: { ...HDR, 'Range': '0-9999' } }),
+      fetch(`${SB}/rest/v1/booking_limits?select=tier_id`, { headers: HDR })
+    ]);
+    tiersData = await r1.json();
+    const clients = await r2.json();
+    const rules = await r3.json();
+
+    // count clients per tier
+    tiersClientCounts = {};
+    clients.forEach(c => {
+      const tid = c.tier_id;
+      if (tid) tiersClientCounts[tid] = (tiersClientCounts[tid] || 0) + 1;
+    });
+    // count rules per tier
+    tiersRulesCounts = {};
+    rules.forEach(r => {
+      const tid = r.tier_id;
+      if (tid) tiersRulesCounts[tid] = (tiersRulesCounts[tid] || 0) + 1;
+    });
+
+    renderTiersTable();
+  } catch(e) {
+    console.error('loadClientTiers error:', e);
+    tbl.innerHTML = '<div class="empty-txt">❌ خطأ فى التحميل</div>';
+  }
+}
+
+function renderTiersTable(){
+  const tbl = document.getElementById('tiers-table');
+  if (!tiersData.length) {
+    tbl.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
+        <div style="font-size:36px;margin-bottom:10px">🏆</div>
+        <div style="font-weight:700;color:var(--text);margin-bottom:6px">مفيش فئات لسه</div>
+        <div style="font-size:13px;margin-bottom:14px">اعمل فئة جديدة عشان تبدأ تستخدم النظام</div>
+        <button class="add-btn" onclick="openTierModal()">➕ إضافة فئة جديدة</button>
+      </div>`;
+    return;
+  }
+
+  const rows = tiersData.map(t => {
+    const clientCount = tiersClientCounts[t.id] || 0;
+    const rulesCount = tiersRulesCounts[t.id] || 0;
+    const isDefault = !!t.is_default;
+    const canDelete = !isDefault && clientCount === 0 && rulesCount === 0;
+    const delTitle = isDefault ? 'مش بتتمسح فئة الافتراضية' 
+                  : clientCount > 0 ? `فيه ${clientCount} عميل فى الفئة دى — انقلهم أولاً` 
+                  : rulesCount > 0 ? `فيه ${rulesCount} قاعدة حدود مرتبطة بالفئة — امسحهم أولاً`
+                  : 'مسح الفئة';
+    const setDefBtn = isDefault ? '' :
+      `<button class="btn-default" onclick="setTierAsDefault(${t.id}, ${JSON.stringify(t.name).replace(/"/g,'&quot;')})" title="خلى دى الفئة الافتراضية">⭐ افتراضية</button>`;
+    return `<tr>
+      <td style="width:60px;text-align:center">
+        <div style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:11px;font-size:22px;background:${t.color}1f;border:1.5px solid ${t.color}55">${t.icon || '🏆'}</div>
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <b style="font-size:15px;color:${t.color}">${t.name}</b>
+          ${isDefault ? '<span class="tier-default-flag">⭐ افتراضية</span>' : ''}
+        </div>
+        ${t.description ? `<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;line-height:1.5">${t.description}</div>` : ''}
+      </td>
+      <td style="text-align:center">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">${clientCount}</div>
+        <div style="font-size:10.5px;color:var(--text-dim)">عميل</div>
+      </td>
+      <td style="text-align:center">
+        <div style="font-size:18px;font-weight:800;color:var(--text)">${rulesCount}</div>
+        <div style="font-size:10.5px;color:var(--text-dim)">قاعدة</div>
+      </td>
+      <td style="text-align:center;color:var(--text-dim);font-size:13px">${t.sort_order ?? '—'}</td>
+      <td style="font-family:monospace;font-size:11.5px;letter-spacing:0.5px;color:${t.color}">${t.color}</td>
+      <td>
+        <div class="tier-row-actions">
+          ${setDefBtn}
+          <button class="btn-edit" onclick="openTierModal(${t.id})" title="تعديل">✏️ تعديل</button>
+          <button class="btn-del" ${canDelete ? '' : 'disabled'} onclick="deleteTier(${t.id})" title="${delTitle}">🗑️ مسح</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  tbl.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th style="width:60px"></th>
+          <th>الاسم</th>
+          <th style="text-align:center;width:70px">العملاء</th>
+          <th style="text-align:center;width:70px">القواعد</th>
+          <th style="text-align:center;width:80px">الترتيب</th>
+          <th style="width:100px">اللون</th>
+          <th style="width:280px">إجراءات</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function tierRenderColorPalette(){
+  const wrap = document.getElementById('tier-palette');
+  if (!wrap) return;
+  const currentColor = (document.getElementById('tier-color').value || '#C9A84C').toLowerCase();
+  wrap.innerHTML = TIER_COLORS.map(c => {
+    const selected = c.toLowerCase() === currentColor ? 'selected' : '';
+    return `<div class="tier-palette-swatch ${selected}" style="background:${c}" onclick="tierPickColor('${c}')" title="${c}"></div>`;
+  }).join('');
+}
+
+function tierRenderIconPalette(){
+  const wrap = document.getElementById('tier-icon-palette');
+  if (!wrap) return;
+  const current = document.getElementById('tier-icon').value || '⭐';
+  wrap.innerHTML = TIER_ICONS.map(ic => {
+    const selected = ic === current ? 'selected' : '';
+    return `<div class="tier-icon-swatch ${selected}" onclick="tierPickIcon('${ic}')">${ic}</div>`;
+  }).join('');
+}
+
+function tierPickColor(c){
+  document.getElementById('tier-color').value = c;
+  document.getElementById('tier-color-hex').value = c.toUpperCase();
+  tierRenderColorPalette();
+  tierUpdatePreview();
+}
+
+function tierPickIcon(ic){
+  document.getElementById('tier-icon').value = ic;
+  tierRenderIconPalette();
+  tierUpdatePreview();
+}
+
+function tierSyncColorFromHex(val){
+  // قبول الـ hex بحرف # اختيارى
+  let hex = (val || '').trim();
+  if (hex && !hex.startsWith('#')) hex = '#' + hex;
+  // validation: لازم #RRGGBB
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+    document.getElementById('tier-color').value = hex;
+    tierRenderColorPalette();
+    tierUpdatePreview();
+  }
+}
+
+// كل ما الـ color picker يتغير، نحدّث الـ hex text + الـ preview
+document.addEventListener('DOMContentLoaded', () => {
+  const cpicker = document.getElementById('tier-color');
+  if (cpicker) {
+    cpicker.addEventListener('input', () => {
+      document.getElementById('tier-color-hex').value = cpicker.value.toUpperCase();
+      tierRenderColorPalette();
+      tierUpdatePreview();
+    });
+  }
+});
+
+function tierUpdatePreview(){
+  const name  = (document.getElementById('tier-name').value || '').trim() || 'اسم الفئة';
+  const desc  = (document.getElementById('tier-desc').value || '').trim() || 'شرح الفئة (اختيارى)';
+  const color = document.getElementById('tier-color').value || '#C9A84C';
+  const icon  = (document.getElementById('tier-icon').value || '').trim() || '⭐';
+
+  const iconEl = document.getElementById('tier-preview-icon');
+  iconEl.textContent = icon;
+  iconEl.style.background = color + '22';
+  iconEl.style.color = color;
+  iconEl.style.border = `1.5px solid ${color}55`;
+
+  const nameEl = document.getElementById('tier-preview-name');
+  nameEl.textContent = name;
+  nameEl.style.color = color;
+
+  document.getElementById('tier-preview-desc').textContent = desc;
+}
+
+function openTierModal(tierId){
+  editingTierId = tierId || null;
+  document.getElementById('tier-modal-title').textContent = editingTierId ? '✏️ تعديل فئة' : '➕ إضافة فئة جديدة';
+  document.getElementById('tier-form-error').style.display = 'none';
+
+  // pre-fill
+  const t = editingTierId ? tiersData.find(x => x.id === editingTierId) : null;
+
+  if (t) {
+    document.getElementById('tier-name').value     = t.name || '';
+    document.getElementById('tier-desc').value     = t.description || '';
+    document.getElementById('tier-color').value    = t.color || '#C9A84C';
+    document.getElementById('tier-color-hex').value= (t.color || '#C9A84C').toUpperCase();
+    document.getElementById('tier-icon').value     = t.icon || '⭐';
+    document.getElementById('tier-sort').value     = (t.sort_order ?? 0);
+    document.getElementById('tier-is-default').checked = !!t.is_default;
+    // لو الفئة default، نعطل الـ toggle (مش هيقدر يلغى الـ default منها — لازم يخلى تانية default الأول)
+    document.getElementById('tier-is-default').disabled = !!t.is_default;
+  } else {
+    // قيم افتراضية للإضافة
+    document.getElementById('tier-name').value     = '';
+    document.getElementById('tier-desc').value     = '';
+    document.getElementById('tier-color').value    = '#C9A84C';
+    document.getElementById('tier-color-hex').value= '#C9A84C';
+    document.getElementById('tier-icon').value     = '⭐';
+    const maxSort = tiersData.length ? Math.max(...tiersData.map(x => x.sort_order || 0)) : 0;
+    document.getElementById('tier-sort').value     = maxSort + 1;
+    document.getElementById('tier-is-default').checked = false;
+    document.getElementById('tier-is-default').disabled = false;
+  }
+
+  tierRenderColorPalette();
+  tierRenderIconPalette();
+  tierUpdatePreview();
+
+  document.getElementById('tierModal').classList.add('show');
+}
+
+function closeTierModal(){
+  document.getElementById('tierModal').classList.remove('show');
+  editingTierId = null;
+}
+
+async function saveTier(){
+  const errEl = document.getElementById('tier-form-error');
+  errEl.style.display = 'none';
+
+  const name = (document.getElementById('tier-name').value || '').trim();
+  const desc = (document.getElementById('tier-desc').value || '').trim() || null;
+  const color = (document.getElementById('tier-color').value || '#C9A84C').toUpperCase();
+  const icon = (document.getElementById('tier-icon').value || '⭐').trim();
+  const sort = parseInt(document.getElementById('tier-sort').value) || 0;
+  const isDefault = !!document.getElementById('tier-is-default').checked;
+
+  // Validation
+  if (!name) {
+    errEl.textContent = '⚠️ اكتب اسم الفئة';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (name.length > 50) {
+    errEl.textContent = '⚠️ اسم الفئة طويل (أكتر من 50 حرف)';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!icon || icon.length > 4) {
+    errEl.textContent = '⚠️ الأيقونة لازم تكون emoji واحد';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (!/^#[0-9A-F]{6}$/i.test(color)) {
+    errEl.textContent = '⚠️ اللون مش صحيح. لازم بصيغة #RRGGBB';
+    errEl.style.display = 'block';
+    return;
+  }
+  // اسم مكرر؟ (مش الـ row اللى بنعدّله)
+  const dup = tiersData.find(x => x.name === name && x.id !== editingTierId);
+  if (dup) {
+    errEl.textContent = '⚠️ فيه فئة بنفس الاسم — اختار اسم تانى';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const payload = {
+    name, description: desc, color, icon,
+    sort_order: sort, is_default: isDefault
+  };
+
+  const btn = document.getElementById('tier-save-btn');
+  btn.disabled = true;
+  const originalLbl = btn.textContent;
+  btn.textContent = '⏳ جاري الحفظ...';
+
+  try {
+    let r;
+    if (editingTierId) {
+      r = await fetch(`${SB}/rest/v1/client_tiers?id=eq.${editingTierId}`, {
+        method: 'PATCH',
+        headers: { ...HDR, 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      });
+    } else {
+      r = await fetch(`${SB}/rest/v1/client_tiers`, {
+        method: 'POST',
+        headers: { ...HDR, 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      });
+    }
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+
+    if (typeof logActivity === 'function') {
+      const action = editingTierId ? 'admin_tier_update' : 'admin_tier_create';
+      const label = editingTierId ? `🏆 عدّل فئة العميل: ${name}` : `🏆 أضاف فئة عميل جديدة: ${name}`;
+      logActivity(action, label, payload);
+    }
+
+    closeTierModal();
+    await loadClientTiers();
+    if (typeof showToast === 'function') showToast('✅ تم الحفظ');
+  } catch(e) {
+    console.error('saveTier error:', e);
+    errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = originalLbl;
+  }
+}
+
+async function setTierAsDefault(tierId, tierName){
+  if (!confirm(`هتخلى "${tierName}" هى الفئة الافتراضية؟\nالعميل الجديد بياخدها تلقائياً، والفئة الافتراضية الحالية مش هتبقى افتراضية.`)) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/client_tiers?id=eq.${tierId}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ is_default: true })
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    if (typeof logActivity === 'function') {
+      logActivity('admin_tier_set_default', `⭐ خلى "${tierName}" هى الفئة الافتراضية`, { tier_id: tierId });
+    }
+    await loadClientTiers();
+    if (typeof showToast === 'function') showToast('⭐ تم تغيير الفئة الافتراضية');
+  } catch(e) {
+    console.error('setTierAsDefault error:', e);
+    alert('❌ خطأ: ' + e.message);
+  }
+}
+
+async function deleteTier(tierId){
+  const t = tiersData.find(x => x.id === tierId);
+  if (!t) return;
+  const clientCount = tiersClientCounts[tierId] || 0;
+  const rulesCount  = tiersRulesCounts[tierId] || 0;
+  if (t.is_default) { alert('❌ الفئة الافتراضية مش بتتمسح'); return; }
+  if (clientCount > 0) { alert(`❌ فيه ${clientCount} عميل فى الفئة دى — انقلهم لفئة تانية الأول`); return; }
+  if (rulesCount > 0) { alert(`❌ فيه ${rulesCount} قاعدة حدود مرتبطة بالفئة — امسحهم أو حوّلهم لفئة تانية`); return; }
+  if (!confirm(`هتمسح فئة "${t.name}"؟\nمفيش رجوع.`)) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/client_tiers?id=eq.${tierId}`, {
+      method: 'DELETE',
+      headers: { ...HDR, 'Prefer': 'return=minimal' }
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    if (typeof logActivity === 'function') {
+      logActivity('admin_tier_delete', `🗑️ مسح فئة العميل: ${t.name}`, t);
+    }
+    await loadClientTiers();
+    if (typeof showToast === 'function') showToast('🗑️ تم المسح');
+  } catch(e) {
+    console.error('deleteTier error:', e);
+    alert('❌ خطأ فى المسح: ' + e.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 🏆 تغيير فئة عميل من صفحة العملاء
+// ─────────────────────────────────────────────────────────────
+async function openChangeClientTier(clientId){
+  const client = (allClients || []).find(c => c.id === clientId);
+  if (!client) { alert('❌ مفيش عميل بالـ id ده'); return; }
+
+  // تأكد إن الفئات محمّلة
+  if (!allClientTiers || !allClientTiers.length) {
+    try {
+      const r = await fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR });
+      allClientTiers = await r.json();
+    } catch(e) {
+      alert('❌ مش قادر أحمل الفئات');
+      return;
+    }
+  }
+
+  const currentTier = allClientTiers.find(t => t.id === client.tier_id);
+  const currentLbl = currentTier ? `${currentTier.icon} ${currentTier.name}` : '—';
+
+  // بناء options
+  const options = allClientTiers.map(t => {
+    const checked = t.id === client.tier_id ? 'checked' : '';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1A1A1A;border:1.5px solid ${t.id === client.tier_id ? t.color + '55' : 'var(--border)'};border-radius:10px;cursor:pointer;margin-bottom:8px;transition:all 0.15s ease" 
+      onmouseover="this.style.borderColor='${t.color}77';this.style.background='${t.color}0a'" 
+      onmouseout="this.style.borderColor='${t.id === client.tier_id ? t.color + '55' : 'var(--border)'}';this.style.background='${t.id === client.tier_id ? t.color + '0a' : '#1A1A1A'}'">
+      <input type="radio" name="cct-tier" value="${t.id}" ${checked} style="width:18px;height:18px;accent-color:${t.color}">
+      <span style="font-size:22px">${t.icon || '🏆'}</span>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800;color:${t.color}">${t.name}${t.is_default ? ' <span style="font-size:10px;color:#6dc49a">★ افتراضى</span>' : ''}</div>
+        ${t.description ? `<div style="font-size:11px;color:var(--text-dim);margin-top:2px">${t.description}</div>` : ''}
+      </div>
+    </label>`;
+  }).join('');
+
+  // إنشاء/تحديث الـ modal
+  let modal = document.getElementById('cctModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'cctModal';
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+  modal.innerHTML = `
+    <div class="modal" style="max-width:520px">
+      <div class="modal-title">
+        <span>🏆 تغيير فئة العميل</span>
+        <button class="modal-close" onclick="closeChangeClientTier()">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#7fb8e8;line-height:1.7">
+          العميل: <b style="color:var(--text)">${client.name || '—'}</b> · الفئة الحالية: <b>${currentLbl}</b>
+        </div>
+        <div>${options}</div>
+        <div id="cct-err" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px"></div>
+      </div>
+      <div class="modal-foot">
+        <button class="btn-cancel" onclick="closeChangeClientTier()">إلغاء</button>
+        <button class="btn-save" id="cct-save-btn" onclick="saveChangeClientTier(${clientId})">💾 حفظ</button>
+      </div>
+    </div>`;
+  modal.classList.add('show');
+}
+
+function closeChangeClientTier(){
+  const m = document.getElementById('cctModal');
+  if (m) m.classList.remove('show');
+}
+
+async function saveChangeClientTier(clientId){
+  const errEl = document.getElementById('cct-err');
+  errEl.style.display = 'none';
+
+  const picked = document.querySelector('input[name="cct-tier"]:checked');
+  if (!picked) {
+    errEl.textContent = '⚠️ اختار فئة';
+    errEl.style.display = 'block';
+    return;
+  }
+  const newTierId = parseInt(picked.value);
+  const client = (allClients || []).find(c => c.id === clientId);
+  if (!client) return;
+  if (client.tier_id === newTierId) {
+    closeChangeClientTier();
+    return;
+  }
+
+  const btn = document.getElementById('cct-save-btn');
+  btn.disabled = true;
+  const lbl = btn.textContent;
+  btn.textContent = '⏳ جاري الحفظ...';
+
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ tier_id: newTierId })
+    });
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+
+    // update local cache
+    client.tier_id = newTierId;
+    const newTier = (allClientTiers || []).find(t => t.id === newTierId);
+    if (typeof logActivity === 'function') {
+      logActivity('admin_client_tier_change', `🏆 غيّر فئة العميل "${client.name}" لـ ${newTier ? newTier.name : '—'}`, { client_id: clientId, new_tier_id: newTierId });
+    }
+
+    closeChangeClientTier();
+    filterClients(); // re-render الجدول بالـ tier الجديد
+    if (typeof showToast === 'function') showToast(`✅ الفئة اتغيرت لـ ${newTier ? newTier.icon + ' ' + newTier.name : ''}`);
+  } catch(e) {
+    console.error('saveChangeClientTier error:', e);
+    errEl.textContent = '❌ خطأ: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = lbl;
   }
 }
 
