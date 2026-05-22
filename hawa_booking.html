@@ -530,15 +530,23 @@ checkTelegramLink();
 // ═══════════════════════════════════════════════════════════
 
 function bioSupported(){
-  // 1. لو فى Telegram Mini App، نستخدم Telegram's BiometricManager
-  if (tg && tg.BiometricManager) return true;
+  // 1. لو فى Telegram Mini App **حقيقى** (مش stub فى Chrome)، نستخدم Telegram's BiometricManager
+  if (bioIsInTelegram()) return true;
   // 2. وإلا، نستخدم WebAuthn (browser عادى)
   return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
 }
 
-// 📱 لو فى Telegram، استخدم BiometricManager API بتاعهم
+// 📱 يتأكد إن الـ user داخل **فعلاً** من Telegram WebApp (مش Chrome عادى)
+// الـ telegram-web-app.js script بـ يـ inject الـ tg object حتى فى Chrome (stub فاضى)،
+// فلازم نـ check حاجة موجودة فقط فى Telegram الحقيقى زى initData
 function bioIsInTelegram(){
-  return !!(tg && tg.BiometricManager);
+  if (!tg) return false;
+  if (!tg.BiometricManager) return false;
+  // الـ initData موجودة فقط داخل Telegram الحقيقى — فاضية فى Chrome
+  if (!tg.initData || tg.initData === '') return false;
+  // الـ platform "unknown" يعنى Chrome عادى
+  if (!tg.platform || tg.platform === 'unknown') return false;
+  return true;
 }
 
 // Buffer ↔ Base64URL helpers
@@ -872,10 +880,37 @@ async function enrollViaWebAuthn(){
     if (document.getElementById('bioModal').style.display === 'flex') loadBiometrics();
   } catch(e){
     console.error('enrollViaWebAuthn error:', e);
-    if (e.name === 'NotAllowedError')       bioToast('⏱️ تم الإلغاء', 'error');
-    else if (e.name === 'InvalidStateError') bioToast('⚠️ الجهاز ده مسجل بالفعل', 'error');
-    else if (e.name === 'NotSupportedError') bioToast('❌ الجهاز مش بيدعم البصمة', 'error');
-    else                                     bioToast('❌ ' + (e.message || 'خطأ غير متوقع'), 'error');
+    // 🐛 Debug info كامل بدلاً من toast صغير
+    const reasons = [];
+    if (e.name === 'NotAllowedError') reasons.push('• تم الإلغاء أو انتهى الوقت\n• الـ device رفض الطلب\n• مفيش بصمة مسجّلة فى إعدادات الجهاز');
+    if (e.name === 'NotSupportedError') reasons.push('• المتصفح أو الجهاز ما بيدعمش platform authenticator');
+    if (e.name === 'InvalidStateError') reasons.push('• البصمة دى مسجلة بالفعل على الجهاز');
+    if (e.name === 'SecurityError') reasons.push('• مشكلة فى الـ domain أو HTTPS');
+    if (e.name === 'AbortError') reasons.push('• الطلب اتـ abort');
+
+    const debugInfo = `❌ فشل تفعيل البصمة
+
+نوع الخطأ: ${e.name || 'unknown'}
+الرسالة: ${e.message || '—'}
+
+معلومات الجهاز:
+• Domain: ${location.hostname}
+• HTTPS: ${location.protocol === 'https:' ? 'نعم ✅' : 'لأ ❌'}
+• Secure Context: ${window.isSecureContext ? 'نعم ✅' : 'لأ ❌'}
+• WebAuthn متاح: ${!!window.PublicKeyCredential ? 'نعم ✅' : 'لأ ❌'}
+
+🔍 الأسباب المحتملة:
+${reasons.join('\n') || '• خطأ غير متوقع — جرّب تانى'}
+
+💡 الحلول:
+• تأكد إن Chrome متحدث (إعدادات Play Store)
+• Chrome Settings → الخصوصية → اسمح للمواقع تستخدم security keys
+• تأكد إن عندك Google Play Services على الجهاز
+• على Huawei الحديثة: محتمل ما يشتغلش لأن مفيش GMS
+• جرّب على Chrome على كمبيوتر ويندوز/ماك`;
+
+    if (tg && tg.showAlert) tg.showAlert(debugInfo);
+    else alert(debugInfo);
   } finally {
     if (btn){ btn.disabled = false; btn.textContent = '➕ تسجيل البصمة على الجهاز ده'; }
   }
@@ -1103,6 +1138,12 @@ function updateBioHeaderBtn(){
 // الـ banner و enrollment بـ يـ check approval_status لما الـ data تجى من DB
 updateBioHeaderBtn();
 if (typeof updateBioDebug === 'function') updateBioDebug();
+
+// 🚀 لو user.id موجود من localStorage السابق + معتمد سابقاً، اعرض الـ banner فوراً
+// (مش لازم ننتظر checkTelegramLink لو الـ approval_status محفوظ من قبل)
+if (user && user.id && user.approval_status === 'approved') {
+  maybeShowEnrollBanner();
+}
 
 // 🔬 Detection للـ device capability — log فقط (مش نخفى الزرار)
 //    الـ user يقدر يضغط الزرار يشوف الـ status بنفسه فى الـ modal
