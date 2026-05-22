@@ -604,41 +604,88 @@ async function enrollViaTelegram(){
     if (btn){ btn.disabled = true; btn.textContent = '⏳ ابصم على الجهاز...'; }
     const cleanup = () => { if (btn){ btn.disabled = false; btn.textContent = '➕ تسجيل البصمة على الجهاز ده'; } };
 
+    // 🔬 Diagnostic — نـ show على الموبيل لو فى مشكلة
+    const tgVer = tg.version || 'unknown';
+    const platform = tg.platform || 'unknown';
+    const showDiag = (title) => {
+      const msg = `${title}\n\n• Telegram v${tgVer}\n• Platform: ${platform}\n• BioManager exists: ${!!bio}\n• isInited: ${bio?.isInited}\n• isAvailable: ${bio?.isBiometricAvailable}\n• type: ${bio?.biometricType || '—'}\n• access: ${bio?.isAccessGranted ? 'granted' : (bio?.isAccessRequested ? 'requested' : 'no')}`;
+      if (tg.showAlert) tg.showAlert(msg); else alert(msg);
+    };
+
+    if (!bio) {
+      showDiag('❌ BiometricManager غير متاح');
+      cleanup(); return resolve(false);
+    }
+
+    // Telegram BiometricManager متاح من v7.2 (يونيو 2024)
+    const verNum = parseFloat(tgVer);
+    if (!isNaN(verNum) && verNum < 7.2) {
+      showDiag('⚠️ Telegram client بتاعك قديم — حدّث Telegram من Play Store/App Store');
+      cleanup(); return resolve(false);
+    }
+
+    // Timeout على init — لو الـ Telegram ما رجعش الـ callback، اخرج
+    let initDone = false;
+    const initTimer = setTimeout(() => {
+      if (!initDone) {
+        showDiag('⏱️ Telegram ما رجعش callback (init timeout) — الـ feature مش مدعوم على الـ client ده');
+        cleanup(); resolve(false);
+      }
+    }, 8000);
+
     bio.init(() => {
-      console.log('[bio] Telegram BiometricManager:', {
-        isInited: bio.isInited,
-        isAvailable: bio.isBiometricAvailable,
-        biometricType: bio.biometricType,
-        isAccessGranted: bio.isAccessGranted,
-        isAccessRequested: bio.isAccessRequested
-      });
+      initDone = true;
+      clearTimeout(initTimer);
+      console.log('[bio] Telegram init:', { isInited: bio.isInited, isAvailable: bio.isBiometricAvailable, type: bio.biometricType });
 
       if (!bio.isBiometricAvailable) {
-        bioToast('❌ الجهاز ما عندوش بصمة مفعّلة', 'error');
+        showDiag('❌ البصمة مش مفعّلة على الجهاز\nروح للإعدادات → Security → Fingerprint وفعّلها الأول');
         cleanup(); return resolve(false);
       }
 
+      // Timeout على requestAccess
+      let accessDone = false;
+      const accessTimer = setTimeout(() => {
+        if (!accessDone) {
+          showDiag('⏱️ requestAccess timeout — Telegram ما طلبش الإذن');
+          cleanup(); resolve(false);
+        }
+      }, 30000);
+
       bio.requestAccess({ reason: 'لتفعيل الدخول السريع بالبصمة' }, granted => {
+        accessDone = true;
+        clearTimeout(accessTimer);
+        console.log('[bio] requestAccess result:', granted);
+
         if (!granted) {
-          bioToast('⏱️ تم الإلغاء أو رفض الإذن', 'error');
+          showDiag('⏱️ الـ user رفض / Telegram رفض الإذن');
           cleanup(); return resolve(false);
         }
 
-        // اعمل credential ID فريد
         const credentialId = 'tg_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now());
         const deviceLabel = bioDetectDevice() + ' (Telegram)';
-
-        // اطلب من الـ user يحط بصمته عشان نخزن الـ token
         const tokenData = JSON.stringify({ credentialId, clientId: user.id });
 
+        // Timeout على updateBiometricToken
+        let updateDone = false;
+        const updateTimer = setTimeout(() => {
+          if (!updateDone) {
+            showDiag('⏱️ updateBiometricToken timeout');
+            cleanup(); resolve(false);
+          }
+        }, 30000);
+
         bio.updateBiometricToken(tokenData, async success => {
+          updateDone = true;
+          clearTimeout(updateTimer);
+          console.log('[bio] updateBiometricToken result:', success);
+
           if (!success) {
-            bioToast('❌ فشل حفظ البصمة', 'error');
+            showDiag('❌ فشل حفظ البصمة فى Telegram');
             cleanup(); return resolve(false);
           }
 
           try {
-            // احفظ فى الـ DB
             const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
               method: 'POST',
               headers: { ...HDR, 'Prefer': 'return=representation' },
@@ -652,14 +699,10 @@ async function enrollViaTelegram(){
             });
             if (!r.ok) throw new Error('فشل الحفظ فى السيرفر');
 
-            // احفظ فى localStorage
             localStorage.setItem('hawa_biometric', JSON.stringify({
-              credentialId,
-              clientId: user.id,
-              clientCode: user.company_code,
-              clientName: user.name,
-              deviceLabel,
-              enrolledAt: new Date().toISOString(),
+              credentialId, clientId: user.id,
+              clientCode: user.company_code, clientName: user.name,
+              deviceLabel, enrolledAt: new Date().toISOString(),
               provider: 'telegram'
             }));
 
@@ -673,7 +716,7 @@ async function enrollViaTelegram(){
             cleanup(); resolve(true);
           } catch(e){
             console.error('[bio] DB save error:', e);
-            bioToast('❌ ' + (e.message || 'خطأ'), 'error');
+            showDiag('❌ فشل الحفظ فى السيرفر: ' + (e.message || 'error'));
             cleanup(); resolve(false);
           }
         });
