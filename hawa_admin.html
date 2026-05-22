@@ -10213,20 +10213,35 @@ function blRenderHistory(activeRow, limits){
   `;
 }
 
-function blRenderTierCheckboxes(selectedIds){
+function blRenderTierCheckboxes(selectedIds, readonly){
   const wrap = document.getElementById('bl-tier-checkboxes');
   if (!wrap) return;
   const sel = new Set(selectedIds || []);
+  const isReadonly = !!readonly;
   wrap.innerHTML = (blTiers || []).map(t => {
     const checked = sel.has(t.id);
     const color = t.color || '#C9A84C';
-    return `<label class="bl-tier-chip ${checked ? 'checked' : ''}" style="--chip-color:${color}22;${checked ? `background:${color}1f;border-color:${color}` : ''}" onclick="event.stopPropagation()">
-      <input type="checkbox" value="${t.id}" ${checked ? 'checked' : ''} onchange="blTierChipToggle(this, '${color}')" style="accent-color:${color}">
+    const disabledAttr = isReadonly ? 'disabled' : '';
+    const cursorStyle = isReadonly ? 'cursor:not-allowed;opacity:0.7' : '';
+    return `<label class="bl-tier-chip ${checked ? 'checked' : ''}" style="--chip-color:${color}22;${cursorStyle};${checked ? `background:${color}1f;border-color:${color}` : ''}" onclick="event.stopPropagation()">
+      <input type="checkbox" value="${t.id}" ${checked ? 'checked' : ''} ${disabledAttr} onchange="blTierChipToggle(this, '${color}')" style="accent-color:${color}">
       <span style="font-size:16px">${t.icon || '🏆'}</span>
       <span style="color:${color}">${t.name}</span>
       ${t.is_default ? '<span style="font-size:10px;color:#6dc49a">★</span>' : ''}
     </label>`;
   }).join('');
+
+  // 🛡️ disable الـ whole wrap visually لو readonly
+  const checkboxWrap = document.getElementById('bl-tier-checkboxes-wrap');
+  if (checkboxWrap) {
+    if (isReadonly) {
+      checkboxWrap.style.opacity = '0.5';
+      checkboxWrap.style.pointerEvents = 'none';
+    } else {
+      // لو مش readonly، الـ blToggleApplyAll هتـ control الـ opacity حسب الـ flag
+      checkboxWrap.style.pointerEvents = '';
+    }
+  }
 }
 
 function blTierChipToggle(cb, color){
@@ -10247,8 +10262,27 @@ function blGetSelectedTierIds(){
     .map(cb => parseInt(cb.value));
 }
 
+// 🛡️ helper: هل الـ rule دى default لأى tier؟
+// الـ default = الـ rule بأقدم effective_from + أقل id من ضمن الـ rules اللى تطبق على tier
+function blIsDefaultRule(ruleId){
+  if (!ruleId) return { isDefault: false, tiers: [] };
+  // ابحث فى كل tier هل الـ ruleId default ليه
+  const defaultForTiers = [];
+  for (const t of blTiers) {
+    const tierLimits = blAllLimits.filter(r => 
+      r.applies_to_all_tiers || (r.tier_ids || []).includes(t.id)
+    );
+    if (!tierLimits.length) continue;
+    const minId = Math.min(...tierLimits.map(r => r.id));
+    if (minId === ruleId) defaultForTiers.push(t);
+  }
+  return { isDefault: defaultForTiers.length > 0, tiers: defaultForTiers };
+}
+
 // 🌐 toggle: لما الـ "كل الفئات" يتعلّم، نـ disable الـ tier checkboxes
 function blToggleApplyAll(){
+  // لو الـ toggle نفسه disabled (default rule)، ما تغيرش حاجة
+  if (document.getElementById('bl-applies-all').disabled) return;
   const isAll = document.getElementById('bl-applies-all').checked;
   const wrap = document.getElementById('bl-tier-checkboxes-wrap');
   const toggleLabel = document.getElementById('bl-all-tiers-toggle');
@@ -10289,26 +10323,75 @@ function openLimitsForm(editId){
     initialAppliesAll = false;
   }
 
+  // 🛡️ هل ده default rule؟ → فعّل الحماية
+  const defaultCheck = blIsDefaultRule(blEditingId);
+  const isProtected = defaultCheck.isDefault;
+
+  // 🛡️ أظهر/أخفى الـ default warning banner
+  let warningBanner = document.getElementById('bl-default-warning');
+  if (!warningBanner) {
+    // أنشئ الـ banner لو مش موجود
+    warningBanner = document.createElement('div');
+    warningBanner.id = 'bl-default-warning';
+    warningBanner.style.cssText = 'background:linear-gradient(135deg, rgba(201,168,76,0.12), rgba(232,201,122,0.06));border:1.5px solid rgba(201,168,76,0.4);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:none';
+    // أضف فى أعلى الـ modal-body
+    const modalBody = document.querySelector('#blModal .modal-body');
+    if (modalBody) modalBody.insertBefore(warningBanner, modalBody.firstChild);
+  }
+  if (isProtected) {
+    const tierLabels = defaultCheck.tiers.map(t => `${t.icon || '🏆'} <b style="color:${t.color}">${t.name}</b>`).join(' و ');
+    warningBanner.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:22px;flex-shrink:0">🛡️</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:800;color:var(--gold-light);margin-bottom:4px">دى النسخة الافتراضية لفئة ${tierLabels}</div>
+          <div style="font-size:11.5px;color:var(--text-dim);line-height:1.7">تقدر تعدّل القيم والـ note بس. <b style="color:var(--text)">الفئة + التاريخ + flag "كل الفئات"</b> مقفولين عشان مش تكسر النظام عن طريق الخطأ. لو عاوز تغير دول، اعمل <b>نسخة جديدة</b> بدل ما تعدّل الافتراضية.</div>
+        </div>
+      </div>`;
+    warningBanner.style.display = 'block';
+  } else {
+    warningBanner.style.display = 'none';
+  }
+
   // 🌐 set الـ "كل الفئات" toggle + الـ disable logic
-  document.getElementById('bl-applies-all').checked = initialAppliesAll;
+  const appliesAllCb = document.getElementById('bl-applies-all');
+  appliesAllCb.checked = initialAppliesAll;
+  appliesAllCb.disabled = isProtected;
   blToggleApplyAll();
 
   // عمار الـ checkboxes للـ tiers
-  blRenderTierCheckboxes(initialTierIds);
+  blRenderTierCheckboxes(initialTierIds, isProtected);
+
+  // 🛡️ disable الـ "كل الفئات" toggle visual لو protected
+  const allTiersToggle = document.getElementById('bl-all-tiers-toggle');
+  if (isProtected) {
+    allTiersToggle.style.opacity = '0.5';
+    allTiersToggle.style.cursor = 'not-allowed';
+  } else {
+    allTiersToggle.style.opacity = '';
+    allTiersToggle.style.cursor = 'pointer';
+  }
 
   // عنوان الـ modal
   const titleEl = document.getElementById('bl-modal-title');
-  if (titleEl) titleEl.textContent = blEditingId ? '✏️ تعديل النسخة' : '➕ نسخة جديدة من حدود الحجز';
+  if (titleEl) titleEl.textContent = blEditingId 
+    ? (isProtected ? '🛡️ تعديل النسخة الافتراضية' : '✏️ تعديل النسخة')
+    : '➕ نسخة جديدة من حدود الحجز';
   const saveBtn = document.getElementById('bl-save-btn');
   if (saveBtn) saveBtn.textContent = blEditingId ? '💾 حفظ التعديل' : '💾 حفظ النسخة';
 
   // التاريخ
+  const dateInput = document.getElementById('bl-effective-from');
   if (blEditingId && src) {
-    document.getElementById('bl-effective-from').value = src.effective_from;
+    dateInput.value = src.effective_from;
   } else {
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-    document.getElementById('bl-effective-from').value = fmtDate(tomorrow);
+    dateInput.value = fmtDate(tomorrow);
   }
+  // 🛡️ قفل الـ date input لو protected
+  dateInput.disabled = isProtected;
+  dateInput.style.opacity = isProtected ? '0.5' : '';
+  dateInput.style.cursor = isProtected ? 'not-allowed' : '';
 
   document.getElementById('bl-weekly').value           = src ? src.weekly_vehicles : '';
   document.getElementById('bl-daily').value            = src ? src.daily_vehicles : '';
@@ -10334,20 +10417,37 @@ async function saveLimits(){
   const errEl = document.getElementById('bl-form-error');
   errEl.style.display = 'none';
 
-  // 🌐 الـ "كل الفئات" flag
-  const appliesToAll = document.getElementById('bl-applies-all').checked;
-  // الفئات المختارة من الـ checkboxes (لو appliesToAll = false)
-  const selectedTierIds = appliesToAll ? [] : blGetSelectedTierIds();
+  // 🛡️ Server-side guard: لو الـ rule المعدّلة default، استخدم الـ tier_ids/flag/date القديمة (تجاهل الـ DOM)
+  const defaultCheck = blIsDefaultRule(blEditingId);
+  const isProtected = defaultCheck.isDefault;
+  const originalRule = blEditingId ? blAllLimits.find(r => r.id === blEditingId) : null;
 
-  if (!appliesToAll && !selectedTierIds.length) {
-    errEl.textContent = '⚠️ اختار فئة واحدة على الأقل، أو علّم "🌐 طبّق على كل الفئات"';
-    errEl.style.display = 'block';
-    return;
+  // 🌐 الـ "كل الفئات" flag
+  let appliesToAll;
+  let selectedTierIds;
+  let effectiveFromValue;
+
+  if (isProtected && originalRule) {
+    // 🛡️ حماية: استخدم القيم الأصلية للـ default rule
+    appliesToAll = !!originalRule.applies_to_all_tiers;
+    selectedTierIds = originalRule.tier_ids || [];
+    effectiveFromValue = originalRule.effective_from;
+  } else {
+    // عادى: استخدم القيم من الـ DOM
+    appliesToAll = document.getElementById('bl-applies-all').checked;
+    selectedTierIds = appliesToAll ? [] : blGetSelectedTierIds();
+    effectiveFromValue = document.getElementById('bl-effective-from').value;
+
+    if (!appliesToAll && !selectedTierIds.length) {
+      errEl.textContent = '⚠️ اختار فئة واحدة على الأقل، أو علّم "🌐 طبّق على كل الفئات"';
+      errEl.style.display = 'block';
+      return;
+    }
   }
 
   const payload = {
     applies_to_all_tiers:   appliesToAll,
-    effective_from:         document.getElementById('bl-effective-from').value,
+    effective_from:         effectiveFromValue,
     weekly_vehicles:        parseInt(document.getElementById('bl-weekly').value),
     daily_vehicles:         parseInt(document.getElementById('bl-daily').value),
     per_booking_vehicles:   parseInt(document.getElementById('bl-per-booking').value),
@@ -10414,24 +10514,27 @@ async function saveLimits(){
     }
 
     // sync الـ junction table:
-    // لو applies_to_all_tiers=true → امسح كل الـ links (الـ rule يطبق على الكل)
+    // 🛡️ لو default rule، ما نلمسش الـ junction (محمى)
+    // غير كده: لو applies_to_all_tiers=true → امسح كل الـ links
     // لو false → امسح القديمة وضيف الجديدة
-    if (blEditingId) {
-      const rd = await fetch(`${SB}/rest/v1/booking_limit_tiers?booking_limit_id=eq.${ruleId}`, {
-        method: 'DELETE',
-        headers: { ...HDR, 'Prefer': 'return=minimal' }
-      });
-      if (!rd.ok) throw new Error(`Delete links failed: HTTP ${rd.status}`);
-    }
-    // لو مش "كل الفئات"، نـ insert الـ links
-    if (!appliesToAll && selectedTierIds.length) {
-      const links = selectedTierIds.map(tid => ({ booking_limit_id: ruleId, tier_id: tid }));
-      const ri = await fetch(`${SB}/rest/v1/booking_limit_tiers`, {
-        method: 'POST',
-        headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
-        body: JSON.stringify(links)
-      });
-      if (!ri.ok) throw new Error(`Insert links failed: HTTP ${ri.status}: ${await ri.text()}`);
+    if (!isProtected) {
+      if (blEditingId) {
+        const rd = await fetch(`${SB}/rest/v1/booking_limit_tiers?booking_limit_id=eq.${ruleId}`, {
+          method: 'DELETE',
+          headers: { ...HDR, 'Prefer': 'return=minimal' }
+        });
+        if (!rd.ok) throw new Error(`Delete links failed: HTTP ${rd.status}`);
+      }
+      // لو مش "كل الفئات"، نـ insert الـ links
+      if (!appliesToAll && selectedTierIds.length) {
+        const links = selectedTierIds.map(tid => ({ booking_limit_id: ruleId, tier_id: tid }));
+        const ri = await fetch(`${SB}/rest/v1/booking_limit_tiers`, {
+          method: 'POST',
+          headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+          body: JSON.stringify(links)
+        });
+        if (!ri.ok) throw new Error(`Insert links failed: HTTP ${ri.status}: ${await ri.text()}`);
+      }
     }
 
     if (typeof logActivity === 'function') {
@@ -10439,11 +10542,12 @@ async function saveLimits(){
       const targetLabel = appliesToAll 
         ? 'كل الفئات (الحالية + المستقبلية)' 
         : selectedTierIds.map(tid => (blTiers.find(t => t.id === tid) || {}).name).filter(Boolean).join('، ');
-      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId}) — ${targetLabel}` : `📊 أضاف نسخة حدود جديدة لـ ${targetLabel} تبدأ ${payload.effective_from}`;
-      logActivity(action, label, { ...payload, tier_ids: selectedTierIds, applies_to_all_tiers: appliesToAll });
+      const protectedNote = isProtected ? ' [🛡️ default protected]' : '';
+      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId}) — ${targetLabel}${protectedNote}` : `📊 أضاف نسخة حدود جديدة لـ ${targetLabel} تبدأ ${payload.effective_from}`;
+      logActivity(action, label, { ...payload, tier_ids: selectedTierIds, applies_to_all_tiers: appliesToAll, protected: isProtected });
     }
-    // اضمن إن الـ tab يفضل على واحد من الفئات اللى اتضافت ليها (مش هيتغير لو applies_to_all_tiers)
-    if (!appliesToAll && !selectedTierIds.includes(blCurrentTierId)) {
+    // اضمن إن الـ tab يفضل على واحد من الفئات اللى اتضافت ليها (مش هيتغير لو applies_to_all_tiers أو protected)
+    if (!isProtected && !appliesToAll && !selectedTierIds.includes(blCurrentTierId)) {
       blCurrentTierId = selectedTierIds[0];
     }
     closeLimitsForm();
