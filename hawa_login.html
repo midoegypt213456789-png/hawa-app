@@ -445,6 +445,23 @@
 <script>
   const tg = window.Telegram?.WebApp;
   if (tg) { tg.ready(); tg.expand(); }
+
+  // 📱 Auto-redirect من Telegram لـ Chrome (البصمة شغّالة فقط فى المتصفح الخارجى)
+  (function autoRedirectFromTelegram(){
+    if (!tg) return;
+    const isRealTelegram = tg.initData && tg.initData !== '' && tg.platform && tg.platform !== 'unknown';
+    if (!isRealTelegram) return;
+    try {
+      if (tg.openLink) {
+        console.log('[login] Telegram detected → opening in external browser');
+        // افتح صفحة الـ booking مباشرة فى Chrome (الـ Lock Screen هيظهر فيها)
+        const bookingUrl = window.location.href.replace('hawa_login.html', 'hawa_booking.html');
+        tg.openLink(bookingUrl, { try_instant_view: false });
+        setTimeout(() => { try { tg.close && tg.close(); } catch(e){} }, 250);
+      }
+    } catch(e) { console.warn('Telegram redirect failed:', e); }
+  })();
+
   const telegramId = tg?.initDataUnsafe?.user?.id || 'test_user';
 
   const SUPABASE_URL = 'https://oqsowwtjutpjdypjpcum.supabase.co';
