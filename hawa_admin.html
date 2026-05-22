@@ -4129,6 +4129,8 @@ function enterApp(){
   renderSidebar();
   // 📑 ارسم الـ tabs المحفوظة (لو فيه)
   renderTabs();
+  // 🏆 preload الفئات (عشان footer counts فى صفحة العملاء)
+  preloadClientTiers();
   const todayStr = fmtDate(new Date());
   document.getElementById('bk-date-from').value=todayStr;
   document.getElementById('bk-date-to').value=todayStr;
@@ -5750,8 +5752,12 @@ function filterClients(){
     if (!tid) return;
     tierCounts[tid] = (tierCounts[tid] || 0) + 1;
   });
-  const tierCountsHtml = (typeof blTiers !== 'undefined' && Array.isArray(blTiers))
-    ? blTiers.filter(t => tierCounts[t.id]).map(t => 
+  // استخدم allClientTiers الموجودة فى scope الصفحة، fallback لـ blTiers
+  const tiersForCounts = (typeof allClientTiers !== 'undefined' && Array.isArray(allClientTiers) && allClientTiers.length)
+    ? allClientTiers
+    : (typeof blTiers !== 'undefined' && Array.isArray(blTiers) ? blTiers : []);
+  const tierCountsHtml = tiersForCounts.length
+    ? tiersForCounts.filter(t => tierCounts[t.id]).map(t => 
         `<span style="color:${t.color || 'var(--gold)'}">${t.icon || '🏆'} ${t.name}: <b>${tierCounts[t.id]}</b></span>`
       ).join('')
     : '';
@@ -10525,6 +10531,18 @@ let blAllLimits = [];       // كل النسخ (لكل الفئات) — كل ro
 let blEditingId = null;     // null = نسخة جديدة، رقم = تعديل صف
 let blTiers = [];           // الفئات الموجودة
 let blCurrentTierId = null; // الفئة المعروضة دلوقتى فى الـ tab
+
+// 🏆 preload الـ tiers أول ما الأدمن يدخل (عشان footer counts فى صفحة العملاء)
+async function preloadClientTiers(){
+  try {
+    const r = await fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR });
+    if (r.ok) {
+      blTiers = await r.json();
+    }
+  } catch(e) {
+    console.warn('preloadClientTiers failed:', e);
+  }
+}
 
 async function loadBookingLimits(){
   try {
