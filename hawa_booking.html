@@ -343,13 +343,6 @@
   <div id="bioLockScreen" style="display:none;position:fixed;inset:0;background:#0a0a0a;z-index:100000;align-items:flex-start;justify-content:center;padding:24px;flex-direction:column;overflow-y:auto">
     <div style="max-width:340px;width:100%;font-family:Cairo,sans-serif;margin:auto;padding:32px 0">
 
-      <!-- 🌐 Telegram warning banner (يظهر لو فاتح من Telegram) -->
-      <div id="bioTelegramBanner" style="display:none;background:linear-gradient(135deg,rgba(74,144,217,0.15),rgba(74,144,217,0.05));border:1px solid rgba(74,144,217,0.4);border-radius:12px;padding:12px 14px;margin-bottom:24px;text-align:center">
-        <div style="font-size:12.5px;color:#7ab5e8;font-weight:700;margin-bottom:6px">📱 إنت داخل من Telegram</div>
-        <div style="font-size:11px;color:#9eb5cc;line-height:1.5;margin-bottom:10px">البصمة شغالة أحسن فى المتصفح. اضغط هنا تفتحها فى Chrome.</div>
-        <button onclick="bioOpenInBrowser()" style="background:#4a90d9;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:Cairo,sans-serif;font-size:11.5px;font-weight:800;cursor:pointer">🌐 افتح فى المتصفح</button>
-      </div>
-
       <!-- HAWA Logo -->
       <div style="text-align:center;margin-bottom:38px">
         <div style="font-size:30px;font-weight:900;color:#E8C97A;letter-spacing:3px">HAWA CO 🚗</div>
@@ -375,7 +368,19 @@
 
       <!-- Login button + Bio icon side by side (CIB style) -->
       <div style="display:flex;gap:10px;align-items:stretch">
-        <button id="bioLockBioBtn" onclick="bioLoginNow()" style="display:none;background:#161616;border:1.5px solid #C9A84C;color:#E8C97A;border-radius:11px;padding:0 16px;cursor:pointer;font-size:24px;flex-shrink:0;align-items:center;justify-content:center;min-width:56px" title="دخول بالبصمة">👆</button>
+        <button id="bioLockBioBtn" onclick="bioLoginNow()" style="display:none;background:#161616;border:1.5px solid #C9A84C;color:#E8C97A;border-radius:11px;padding:0 14px;cursor:pointer;flex-shrink:0;align-items:center;justify-content:center;min-width:56px" title="دخول بالبصمة">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"></path>
+            <path d="M14 13.12c0 2.38 0 6.38-1 8.88"></path>
+            <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"></path>
+            <path d="M2 12a10 10 0 0 1 18-6"></path>
+            <path d="M2 16h.01"></path>
+            <path d="M21.8 16c.2-2 .131-5.354 0-6"></path>
+            <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"></path>
+            <path d="M8.65 22c.21-.66.45-1.32.57-2"></path>
+            <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"></path>
+          </svg>
+        </button>
         <button id="lockLoginBtn" onclick="passwordLogin()" style="flex:1;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:11px;padding:14px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer">تسجيل الدخول</button>
       </div>
 
@@ -525,6 +530,23 @@
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
+// 📱 Auto-redirect من Telegram لـ Chrome (البصمة شغّالة فقط فى المتصفح الخارجى)
+// لو الـ user فاتح فعلاً من Telegram WebApp، يـ open Chrome مباشرة ويقفل الـ Mini App
+(function autoRedirectFromTelegram(){
+  if (!tg) return;
+  // initData موجودة فقط داخل Telegram الحقيقى، platform != 'unknown' كمان
+  const isRealTelegram = tg.initData && tg.initData !== '' && tg.platform && tg.platform !== 'unknown';
+  if (!isRealTelegram) return;
+  try {
+    if (tg.openLink) {
+      console.log('[bio] Telegram detected → opening in external browser');
+      tg.openLink(window.location.href, { try_instant_view: false });
+      // اقفل الـ Mini App بعد ربع ثانية
+      setTimeout(() => { try { tg.close && tg.close(); } catch(e){} }, 250);
+    }
+  } catch(e) { console.warn('Telegram redirect failed:', e); }
+})();
+
 const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
@@ -558,13 +580,6 @@ if (!user || !user.id) {
     if (savedBio && savedBio.credentialId) {
       const bioBtn = document.getElementById('bioLockBioBtn');
       if (bioBtn) bioBtn.style.display = 'flex';
-    }
-
-    // 📱 لو فاتح من Telegram، اظهر banner التحويل للمتصفح
-    const inTg = !!(typeof tg !== 'undefined' && tg && tg.initData && tg.initData !== '' && tg.platform && tg.platform !== 'unknown');
-    if (inTg) {
-      const tgBanner = document.getElementById('bioTelegramBanner');
-      if (tgBanner) tgBanner.style.display = 'block';
     }
 
     console.log('[bio] ✅ Login gate displayed');
@@ -1162,13 +1177,14 @@ function bioOpenInBrowser(){
 async function bioLoginNow(){
   const btn = document.getElementById('bioLockBioBtn');
   const errEl = document.getElementById('bioLockError');
-  if (btn){ btn.disabled = true; btn.innerHTML = '⏳'; }
+  const originalIcon = btn ? btn.innerHTML : '';  // احفظ الـ SVG الأصلية
+  if (btn){ btn.disabled = true; btn.innerHTML = '<span style="font-size:22px">⏳</span>'; }
   if (errEl) errEl.style.display = 'none';
 
   const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
   if (!stored || !stored.credentialId) {
     showLockError('مفيش بصمة محفوظة على الجهاز ده');
-    if (btn){ btn.disabled = false; btn.innerHTML = '👆'; }
+    if (btn){ btn.disabled = false; btn.innerHTML = originalIcon; }
     return;
   }
 
@@ -1274,7 +1290,7 @@ async function bioLoginNow(){
     else msg = '❌ ' + (e.message || 'خطأ غير متوقع');
     showLockError(msg);
   } finally {
-    if (btn){ btn.disabled = false; btn.innerHTML = '👆'; }
+    if (btn){ btn.disabled = false; btn.innerHTML = originalIcon; }
   }
 }
 
