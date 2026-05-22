@@ -522,23 +522,6 @@
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 
-// 📱 Auto-redirect من Telegram لـ Chrome (البصمة شغّالة فقط فى المتصفح الخارجى)
-// لو الـ user فاتح فعلاً من Telegram WebApp، يـ open Chrome مباشرة ويقفل الـ Mini App
-(function autoRedirectFromTelegram(){
-  if (!tg) return;
-  // initData موجودة فقط داخل Telegram الحقيقى، platform != 'unknown' كمان
-  const isRealTelegram = tg.initData && tg.initData !== '' && tg.platform && tg.platform !== 'unknown';
-  if (!isRealTelegram) return;
-  try {
-    if (tg.openLink) {
-      console.log('[bio] Telegram detected → opening in external browser');
-      tg.openLink(window.location.href, { try_instant_view: false });
-      // اقفل الـ Mini App بعد ربع ثانية
-      setTimeout(() => { try { tg.close && tg.close(); } catch(e){} }, 250);
-    }
-  } catch(e) { console.warn('Telegram redirect failed:', e); }
-})();
-
 const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
@@ -555,7 +538,7 @@ const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 
-// 🔐 Login Gate — الـ Lock Screen يبقى صفحة الدخول الموحّدة (form + bio + Telegram fallback)
+// 🔐 Login Gate — الـ Lock Screen هو صفحة الدخول الموحّدة (form + bio)
 if (!user || !user.id) {
   const savedBio = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; } })();
   console.log('[bio] Login gate:', { hasUser: !!user.id, hasBio: !!savedBio });
