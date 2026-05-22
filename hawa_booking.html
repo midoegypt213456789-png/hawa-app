@@ -752,26 +752,34 @@ async function removeBiometric(id, credentialId){
 // Banner: لو ما سجّلش بصمة، اعرض banner تشجيعى
 // ═══════════════════════════════════════════════════════════
 function maybeShowEnrollBanner(){
-  if (!bioSupported()) return;
-  if (!user || !user.id) return;
+  console.log('[bio] maybeShowEnrollBanner check:', {
+    supported: bioSupported(),
+    user_id: user?.id,
+    approval: user?.approval_status,
+    blocked: user?.is_blocked,
+    is_approved_client: bioIsApprovedClient()
+  });
+  if (!bioSupported()) { console.log('[bio] جهازك مش بيدعم البصمة'); return; }
+  if (!user || !user.id) { console.log('[bio] مفيش user'); return; }
   // 🛡️ فقط للعملاء المعتمدين من الأدمن (مش الـ pending أو المحظورين)
-  if (!bioIsApprovedClient()) return;
+  if (!bioIsApprovedClient()) { console.log('[bio] العميل لسه مش معتمد'); return; }
   // لو فيه bio محفوظ بالفعل، ما تظهرش
   const stored = localStorage.getItem('hawa_biometric');
   if (stored) {
     try {
       const p = JSON.parse(stored);
-      if (p && p.clientId === user.id) return;
+      if (p && p.clientId === user.id) { console.log('[bio] بصمة موجودة بالفعل'); return; }
     } catch(e){}
   }
   // لو الـ user رفض البانر قبل كده، استنى 7 أيام
   const dismissed = parseInt(localStorage.getItem('hawa_biometric_dismissed') || '0');
-  if (dismissed && (Date.now() - dismissed) < 7 * 24 * 60 * 60 * 1000) return;
-  // اعرض بعد 3 ثوانى
-  setTimeout(() => {
-    const banner = document.getElementById('bioEnrollBanner');
-    if (banner && bioIsApprovedClient()) banner.style.display = 'block';
-  }, 3000);
+  if (dismissed && (Date.now() - dismissed) < 7 * 24 * 60 * 60 * 1000) { console.log('[bio] dismissed مؤخراً'); return; }
+  // اعرض فوراً (مش بعد 3 ثوانى)
+  const banner = document.getElementById('bioEnrollBanner');
+  if (banner && bioIsApprovedClient()) {
+    banner.style.display = 'block';
+    console.log('[bio] ✅ Banner ظاهر');
+  }
 }
 
 function dismissEnrollBanner(permanent){
@@ -793,11 +801,7 @@ function updateBioHeaderBtn(){
     btn.style.display = 'none';
     return;
   }
-  // 🛡️ فقط للعملاء المعتمدين
-  if (!bioIsApprovedClient()){
-    btn.style.display = 'none';
-    return;
-  }
+  // 🔐 الزرار يظهر دايماً للعملاء — الـ enrollment داخل الـ modal بـ يـ check approval
   btn.style.display = 'inline-block';
   // لو مسجّل بصمة، اللون أكتر سطوع
   const stored = localStorage.getItem('hawa_biometric');
@@ -810,8 +814,21 @@ function updateBioHeaderBtn(){
   }
 }
 
-// مبدئياً، الـ button و الـ banner مخفيين — يظهروا فقط لو العميل معتمد
-// (الـ trigger يتم من checkTelegramLink بعد ما يجيب approval_status من DB)
+// مبدئياً، خلى الزرار 🔐 يظهر فوراً لو الجهاز يدعم
+// الـ banner و enrollment بـ يـ check approval_status لما الـ data تجى من DB
+updateBioHeaderBtn();
+
+// 🔬 على الموبيل، نتأكد إن الـ platform authenticator متاح (Face ID / Touch ID / بصمة)
+if (bioSupported() && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+  PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(available => {
+    console.log('[bio] Platform authenticator available:', available);
+    if (!available) {
+      // الجهاز ما عندوش بصمة مفعّلة — نخفى الـ button
+      const btn = document.getElementById('bioBtnHeader');
+      if (btn) btn.style.display = 'none';
+    }
+  }).catch(e => console.warn('[bio] platform check failed:', e));
+}
 
 // ═══════════════════════════════════════════════════════════
 // انتهى نظام البصمة
