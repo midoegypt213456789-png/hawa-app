@@ -518,18 +518,35 @@ const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 // 🔐 Bio Login Check — لو مفيش login session، اعرض bio login overlay لو فيه bio محفوظ
 if (!user || !user.id) {
   const savedBio = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; } })();
+  console.log('[bio] Login check:', { hasUser: !!user.id, hasBio: !!savedBio, bioData: savedBio });
+
   if (savedBio && savedBio.credentialId && savedBio.clientId) {
     // فى bio محفوظ → اعرض الـ lock screen
-    document.addEventListener('DOMContentLoaded', () => {
+    const showLock = () => {
       const lockEl = document.getElementById('bioLockScreen');
-      if (lockEl) {
-        lockEl.style.display = 'flex';
-        document.getElementById('bioLockName').textContent = savedBio.clientName || 'عميل';
-        document.getElementById('bioLockDevice').textContent = savedBio.deviceLabel || '—';
+      if (!lockEl) {
+        console.error('[bio] bioLockScreen element not found!');
+        // لو الـ element مش موجود، استنى شوية
+        setTimeout(showLock, 100);
+        return;
       }
-    });
+      lockEl.style.display = 'flex';
+      const nameEl = document.getElementById('bioLockName');
+      const devEl = document.getElementById('bioLockDevice');
+      if (nameEl) nameEl.textContent = savedBio.clientName || 'عميل';
+      if (devEl) devEl.textContent = savedBio.deviceLabel || '—';
+      console.log('[bio] ✅ Lock screen displayed');
+    };
+    // multiple fallbacks للتشغيل مهما كانت حالة الـ DOM
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', showLock);
+    } else {
+      // الـ DOM بالفعل ready
+      setTimeout(showLock, 0);
+    }
   } else {
     // مفيش bio → روح للـ login عادى
+    console.log('[bio] مفيش bio، redirect لـ login');
     window.location.href = 'hawa_login.html';
   }
 }
@@ -558,7 +575,13 @@ logActivity('cl_open_app','🚪 فتح التطبيق');
 function doLogout() {
   logActivity('cl_logout','🚪 خرج من التطبيق');
   localStorage.removeItem('hawa_user');
-  window.location.href = 'hawa_login.html';
+  // 🔐 لو فى بصمة محفوظة، اعمل reload (الـ Lock Screen هيظهر بدلاً من login.html)
+  const hasBio = !!localStorage.getItem('hawa_biometric');
+  if (hasBio) {
+    window.location.reload();
+  } else {
+    window.location.href = 'hawa_login.html';
+  }
 }
 document.getElementById('uname').textContent = user.name || 'العميل';
 document.getElementById('ucode').textContent  = user.company_code || '';
