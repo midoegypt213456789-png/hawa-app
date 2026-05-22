@@ -3114,8 +3114,10 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
 
       <!-- شرح -->
-      <div id="bl-tier-hint" style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;color:#7fb8e8;font-size:12.5px;line-height:1.7">
+      <div id="bl-tier-hint" style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;color:#7fb8e8;font-size:12.5px;line-height:1.8">
         💡 كل فئة عندها قواعدها الخاصة. شغّال دلوقتى على فئة: <b id="bl-current-tier-label">—</b>
+        <br>
+        🌐 لو عاوز قاعدة تطبّق على كل الفئات (الحالية + المستقبلية)، علّم <b style="color:var(--gold-light)">"طبّق على كل الفئات"</b> عند الإضافة — هتظهر فى كل التابات تلقائياً.
       </div>
 
       <!-- النسخة الفعّالة -->
@@ -10050,6 +10052,7 @@ function blRender(){
   const upcomingCard = document.getElementById('bl-upcoming-card');
 
   // فلتر: rule applies_to_all_tiers=true أو الفئة المختارة فى tier_ids
+  // (للـ Active + Upcoming cards بس)
   const limits = blAllLimits.filter(r => 
     r.applies_to_all_tiers || (r.tier_ids || []).includes(blCurrentTierId)
   );
@@ -10058,41 +10061,40 @@ function blRender(){
     emptyState.style.display = 'block';
     activeCard.style.display = 'none';
     upcomingCard.style.display = 'none';
-    document.getElementById('bl-history-content').innerHTML =
-      '<div class="bl-history-empty">مفيش نسخ للفئة دى — أضف أول نسخة</div>';
-    return;
-  }
-  emptyState.style.display = 'none';
-
-  // الفعّالة دلوقتى = آخر صف effective_from <= today
-  const active = limits.find(r => r.effective_from <= todayStr);
-  // الجاية = أحدث صف effective_from > today
-  const upcoming = [...limits].reverse().find(r => r.effective_from > todayStr);
-
-  if (active) {
-    activeCard.style.display = 'block';
-    document.getElementById('bl-active-date').textContent = `يبدأ من ${active.effective_from}`;
-    document.getElementById('bl-active-grid').innerHTML = blGridHtml(active);
-    const noteEl = document.getElementById('bl-active-note');
-    if (active.note) { noteEl.style.display = 'block'; noteEl.textContent = active.note; }
-    else noteEl.style.display = 'none';
   } else {
-    activeCard.style.display = 'none';
+    emptyState.style.display = 'none';
+
+    // الفعّالة دلوقتى = آخر صف effective_from <= today
+    const active = limits.find(r => r.effective_from <= todayStr);
+    // الجاية = أحدث صف effective_from > today
+    const upcoming = [...limits].reverse().find(r => r.effective_from > todayStr);
+
+    if (active) {
+      activeCard.style.display = 'block';
+      document.getElementById('bl-active-date').textContent = `يبدأ من ${active.effective_from}`;
+      document.getElementById('bl-active-grid').innerHTML = blGridHtml(active);
+      const noteEl = document.getElementById('bl-active-note');
+      if (active.note) { noteEl.style.display = 'block'; noteEl.textContent = active.note; }
+      else noteEl.style.display = 'none';
+    } else {
+      activeCard.style.display = 'none';
+    }
+
+    if (upcoming) {
+      upcomingCard.style.display = 'block';
+      document.getElementById('bl-upcoming-date').textContent = `يبدأ من ${upcoming.effective_from}`;
+      document.getElementById('bl-upcoming-grid').innerHTML = blGridHtml(upcoming);
+      const noteEl = document.getElementById('bl-upcoming-note');
+      if (upcoming.note) { noteEl.style.display = 'block'; noteEl.textContent = upcoming.note; }
+      else noteEl.style.display = 'none';
+    } else {
+      upcomingCard.style.display = 'none';
+    }
   }
 
-  if (upcoming) {
-    upcomingCard.style.display = 'block';
-    document.getElementById('bl-upcoming-date').textContent = `يبدأ من ${upcoming.effective_from}`;
-    document.getElementById('bl-upcoming-grid').innerHTML = blGridHtml(upcoming);
-    const noteEl = document.getElementById('bl-upcoming-note');
-    if (upcoming.note) { noteEl.style.display = 'block'; noteEl.textContent = upcoming.note; }
-    else noteEl.style.display = 'none';
-  } else {
-    upcomingCard.style.display = 'none';
-  }
-
-  // جدول التاريخ — فقط لـ الفئة المختارة
-  blRenderHistory(active, limits);
+  // 📊 جدول "كل النسخ" — يعرض كل الـ rules بدون فلتر (لكل الفئات)
+  const active = limits.length ? limits.find(r => r.effective_from <= todayStr) : null;
+  blRenderHistory(active, blAllLimits);
 }
 
 function blGridHtml(row){
@@ -10136,21 +10138,19 @@ function blGridHtml(row){
 
 function blRenderHistory(activeRow, limits){
   const container = document.getElementById('bl-history-content');
-  const rowsData = limits || blAllLimits.filter(r => 
-    r.applies_to_all_tiers || (r.tier_ids || []).includes(blCurrentTierId)
-  );
+  const rowsData = limits || blAllLimits;
   if (!rowsData.length) {
-    container.innerHTML = '<div class="bl-history-empty">مفيش نسخ بعد</div>';
+    container.innerHTML = '<div class="bl-history-empty">مفيش نسخ بعد — أضف أول نسخة</div>';
     return;
   }
   const todayStr = fmtDate(new Date());
   const pLabel = { week: 'أسبوع', month: 'شهر', year: 'سنة' };
-  // النسخة الافتراضية للـ tier ده = أقل id فى الـ rules المرتبطة
-  const minId = Math.min(...rowsData.map(r => r.id));
   const rows = rowsData.map(r => {
-    const isActive = activeRow && r.id === activeRow.id;
+    const isActiveForCurrentTab = activeRow && r.id === activeRow.id;
     const isFuture = r.effective_from > todayStr;
-    const isDefault = r.id === minId;
+    // 🛡️ هل ده default لأى tier؟
+    const defaultCheck = blIsDefaultRule(r.id);
+    const isDefault = defaultCheck.isDefault;
 
     // عرض الفئات: لو applies_to_all_tiers → badge مميز، وإلا الـ tier chips
     let tiersDisplay;
@@ -10165,7 +10165,7 @@ function blRenderHistory(activeRow, limits){
     }
 
     const badge = isDefault ? '<span style="background:rgba(201,168,76,0.15);color:#E0B040;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">🛡️ افتراضية</span>'
-                : isActive ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
+                : isActiveForCurrentTab ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
                 : isFuture ? '<span style="background:rgba(74,144,217,0.15);color:#7ab5e8;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">⏭️ جاية</span>'
                 : '<span style="background:rgba(255,255,255,0.05);color:var(--text-dim);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">قديمة</span>';
     // أزرار: تعديل دايماً، مسح للكل ماعدا الافتراضية
@@ -10175,7 +10175,7 @@ function blRenderHistory(activeRow, limits){
     // truncate الملاحظة لـ 60 char + إعرض الكل فى الـ tooltip
     const noteFull = r.note || '';
     const noteShort = noteFull ? (noteFull.length > 60 ? noteFull.slice(0, 60) + '…' : noteFull) : '—';
-    return `<tr class="${isActive ? 'current-row' : ''}">
+    return `<tr class="${isActiveForCurrentTab ? 'current-row' : ''}">
       <td>${r.effective_from}</td>
       <td>${badge}</td>
       <td><div style="display:flex;flex-wrap:wrap;gap:3px">${tiersDisplay}</div></td>
@@ -10613,11 +10613,11 @@ async function saveLimits(){
 async function deleteLimit(id){
   const row = blAllLimits.find(r => r.id === id);
   if (!row) return;
-  // النسخة الافتراضية للـ tier (أقل id فى الـ rules المرتبطة بالـ tier الحالى) محمية من المسح
-  const tierLimits = blAllLimits.filter(r => (r.tier_ids || []).includes(blCurrentTierId));
-  const minId = Math.min(...tierLimits.map(r => r.id));
-  if (id === minId) {
-    alert('❌ النسخة الافتراضية للفئة دى مش بتتمسح — تعديل بس');
+  // 🛡️ النسخة الافتراضية محمية من المسح
+  const defaultCheck = blIsDefaultRule(id);
+  if (defaultCheck.isDefault) {
+    const tierNames = defaultCheck.tiers.map(t => t.name).join('، ');
+    alert(`❌ النسخة الافتراضية لفئة ${tierNames} مش بتتمسح — تعديل بس`);
     return;
   }
   if (!confirm(`هتمسح النسخة اللى تبدأ من ${row.effective_from}؟\nمش هتقدر ترجعها.`)) return;
