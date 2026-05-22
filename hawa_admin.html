@@ -3266,9 +3266,20 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="bl-section-title">🏆 ينطبق على الفئات</div>
       <div class="bl-modal-grid full">
         <div class="bl-field" style="padding:0">
-          <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">اختار فئة واحدة على الأقل. القاعدة هتطبق على عملاء كل الفئات المختارة.</div>
-          <div id="bl-tier-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px">
-            <!-- يتعمر بالـ checkboxes من الـ JS -->
+          <!-- ✨ Apply to ALL tiers toggle -->
+          <label id="bl-all-tiers-toggle" style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:linear-gradient(135deg, rgba(201,168,76,0.08), rgba(232,201,122,0.04));border:1.5px solid rgba(201,168,76,0.3);border-radius:10px;cursor:pointer;margin-bottom:12px;transition:all 0.2s ease">
+            <input type="checkbox" id="bl-applies-all" style="margin-top:2px;width:18px;height:18px;cursor:pointer;accent-color:var(--gold)" onchange="blToggleApplyAll()">
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;font-weight:700;color:var(--gold);margin-bottom:3px">🌐 طبّق على كل الفئات</div>
+              <div style="font-size:11.5px;color:var(--text-dim);line-height:1.7">القاعدة دى هتطبق على كل الفئات الموجودة + أى فئة هتضاف فى المستقبل تلقائياً.</div>
+            </div>
+          </label>
+
+          <div id="bl-tier-checkboxes-wrap">
+            <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">أو اختار فئات محددة (اختار واحدة على الأقل):</div>
+            <div id="bl-tier-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px">
+              <!-- يتعمر بالـ checkboxes من الـ JS -->
+            </div>
           </div>
         </div>
       </div>
@@ -10010,8 +10021,8 @@ function blRenderTabs(){
     return;
   }
   wrap.innerHTML = blTiers.map(t => {
-    // count: لو الـ tier_ids للـ rule فيها الـ tier ده
-    const count = blAllLimits.filter(r => (r.tier_ids || []).includes(t.id)).length;
+    // count: rule يحسب على الـ tab لو applies_to_all_tiers=true أو tier_ids فيها الـ tier ده
+    const count = blAllLimits.filter(r => r.applies_to_all_tiers || (r.tier_ids || []).includes(t.id)).length;
     const isActive = t.id === blCurrentTierId;
     const styleActive = isActive ? `style="color:${t.color || '#C9A84C'};border-color:${(t.color || '#C9A84C')}44;border-bottom-color:var(--dark)"` : '';
     return `<button class="bl-tier-tab ${isActive ? 'active' : ''}" ${styleActive} onclick="blSwitchTier(${t.id})">
@@ -10038,8 +10049,10 @@ function blRender(){
   const activeCard = document.getElementById('bl-active-card');
   const upcomingCard = document.getElementById('bl-upcoming-card');
 
-  // فلتر: الـ rules اللى الفئة المختارة موجودة فى tier_ids بتاعتها
-  const limits = blAllLimits.filter(r => (r.tier_ids || []).includes(blCurrentTierId));
+  // فلتر: rule applies_to_all_tiers=true أو الفئة المختارة فى tier_ids
+  const limits = blAllLimits.filter(r => 
+    r.applies_to_all_tiers || (r.tier_ids || []).includes(blCurrentTierId)
+  );
 
   if (!limits.length) {
     emptyState.style.display = 'block';
@@ -10085,12 +10098,23 @@ function blRender(){
 function blGridHtml(row){
   const pLabel = { week: 'أسبوع', month: 'شهر', year: 'سنة' };
   // عرض الفئات المرتبطة كـ badges فوق
-  const tierBadges = (row.tier_ids || []).map(tid => {
-    const t = blTiers.find(x => x.id === tid);
-    if (!t) return '';
-    return `<span class="tier-badge" style="background:${t.color}22;color:${t.color};border-color:${t.color}55"><span class="tb-ico">${t.icon||'🏆'}</span>${t.name}</span>`;
-  }).join(' ');
-  const tierLine = tierBadges ? `<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:9px;margin-bottom:6px;align-items:center"><span style="font-size:11.5px;color:var(--text-dim);margin-left:4px">يطبق على:</span>${tierBadges}</div>` : '';
+  let tierLine = '';
+  if (row.applies_to_all_tiers) {
+    // 🌐 يطبّق على كل الفئات
+    tierLine = `<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:linear-gradient(135deg, rgba(201,168,76,0.08), rgba(232,201,122,0.04));border:1px solid rgba(201,168,76,0.25);border-radius:9px;margin-bottom:6px;align-items:center">
+      <span style="font-size:11.5px;color:var(--text-dim);margin-left:4px">يطبق على:</span>
+      <span class="tier-badge" style="background:rgba(201,168,76,0.18);color:var(--gold-light);border-color:rgba(201,168,76,0.5);font-weight:800"><span class="tb-ico">🌐</span>كل الفئات (الحالية + المستقبلية)</span>
+    </div>`;
+  } else {
+    const tierBadges = (row.tier_ids || []).map(tid => {
+      const t = blTiers.find(x => x.id === tid);
+      if (!t) return '';
+      return `<span class="tier-badge" style="background:${t.color}22;color:${t.color};border-color:${t.color}55"><span class="tb-ico">${t.icon||'🏆'}</span>${t.name}</span>`;
+    }).join(' ');
+    if (tierBadges) {
+      tierLine = `<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:9px;margin-bottom:6px;align-items:center"><span style="font-size:11.5px;color:var(--text-dim);margin-left:4px">يطبق على:</span>${tierBadges}</div>`;
+    }
+  }
   const items = [
     { lbl: '🚛 الحد الأسبوعى',       val: row.weekly_vehicles,        unit: 'عربية', sub: 'كل المخازن، آخر 7 أيام' },
     { lbl: '📅 الحد اليومى',         val: row.daily_vehicles,         unit: 'عربية', sub: 'كل المخازن مجتمعة' },
@@ -10112,7 +10136,9 @@ function blGridHtml(row){
 
 function blRenderHistory(activeRow, limits){
   const container = document.getElementById('bl-history-content');
-  const rowsData = limits || blAllLimits.filter(r => (r.tier_ids || []).includes(blCurrentTierId));
+  const rowsData = limits || blAllLimits.filter(r => 
+    r.applies_to_all_tiers || (r.tier_ids || []).includes(blCurrentTierId)
+  );
   if (!rowsData.length) {
     container.innerHTML = '<div class="bl-history-empty">مفيش نسخ بعد</div>';
     return;
@@ -10125,11 +10151,19 @@ function blRenderHistory(activeRow, limits){
     const isActive = activeRow && r.id === activeRow.id;
     const isFuture = r.effective_from > todayStr;
     const isDefault = r.id === minId;
-    const tiersChips = (r.tier_ids || []).map(tid => {
-      const t = blTiers.find(x => x.id === tid);
-      if (!t) return '';
-      return `<span class="tier-badge" style="background:${t.color}22;color:${t.color};border-color:${t.color}55;font-size:10.5px;padding:2px 7px"><span class="tb-ico">${t.icon||'🏆'}</span>${t.name}</span>`;
-    }).join(' ');
+
+    // عرض الفئات: لو applies_to_all_tiers → badge مميز، وإلا الـ tier chips
+    let tiersDisplay;
+    if (r.applies_to_all_tiers) {
+      tiersDisplay = `<span class="tier-badge" style="background:rgba(201,168,76,0.18);color:var(--gold-light);border-color:rgba(201,168,76,0.5);font-size:10.5px;padding:2px 7px;font-weight:800"><span class="tb-ico">🌐</span>كل الفئات</span>`;
+    } else {
+      tiersDisplay = (r.tier_ids || []).map(tid => {
+        const t = blTiers.find(x => x.id === tid);
+        if (!t) return '';
+        return `<span class="tier-badge" style="background:${t.color}22;color:${t.color};border-color:${t.color}55;font-size:10.5px;padding:2px 7px"><span class="tb-ico">${t.icon||'🏆'}</span>${t.name}</span>`;
+      }).join(' ') || '—';
+    }
+
     const badge = isDefault ? '<span style="background:rgba(201,168,76,0.15);color:#E0B040;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">🛡️ افتراضية</span>'
                 : isActive ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
                 : isFuture ? '<span style="background:rgba(74,144,217,0.15);color:#7ab5e8;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">⏭️ جاية</span>'
@@ -10144,7 +10178,7 @@ function blRenderHistory(activeRow, limits){
     return `<tr class="${isActive ? 'current-row' : ''}">
       <td>${r.effective_from}</td>
       <td>${badge}</td>
-      <td><div style="display:flex;flex-wrap:wrap;gap:3px">${tiersChips || '—'}</div></td>
+      <td><div style="display:flex;flex-wrap:wrap;gap:3px">${tiersDisplay}</div></td>
       <td>${r.weekly_vehicles}</td>
       <td>${r.daily_vehicles}</td>
       <td>${r.per_booking_vehicles}</td>
@@ -10213,6 +10247,24 @@ function blGetSelectedTierIds(){
     .map(cb => parseInt(cb.value));
 }
 
+// 🌐 toggle: لما الـ "كل الفئات" يتعلّم، نـ disable الـ tier checkboxes
+function blToggleApplyAll(){
+  const isAll = document.getElementById('bl-applies-all').checked;
+  const wrap = document.getElementById('bl-tier-checkboxes-wrap');
+  const toggleLabel = document.getElementById('bl-all-tiers-toggle');
+  if (isAll) {
+    wrap.style.opacity = '0.35';
+    wrap.style.pointerEvents = 'none';
+    toggleLabel.style.background = 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(232,201,122,0.1))';
+    toggleLabel.style.borderColor = 'var(--gold)';
+  } else {
+    wrap.style.opacity = '1';
+    wrap.style.pointerEvents = 'auto';
+    toggleLabel.style.background = 'linear-gradient(135deg, rgba(201,168,76,0.08), rgba(232,201,122,0.04))';
+    toggleLabel.style.borderColor = 'rgba(201,168,76,0.3)';
+  }
+}
+
 function openLimitsForm(editId){
   blEditingId = editId || null;
   const errEl = document.getElementById('bl-form-error');
@@ -10221,16 +10273,25 @@ function openLimitsForm(editId){
   // مصدر القيم: لو editing → الصف نفسه، لو جديد → آخر نسخة للـ tier الحالى
   let src = null;
   let initialTierIds = [];
+  let initialAppliesAll = false;
   if (blEditingId) {
     src = blAllLimits.find(r => r.id === blEditingId);
-    if (src) initialTierIds = src.tier_ids || [];
+    if (src) {
+      initialTierIds = src.tier_ids || [];
+      initialAppliesAll = !!src.applies_to_all_tiers;
+    }
   } else {
     // آخر نسخة للـ tier الحالى كـ pre-fill
-    src = blAllLimits.find(r => (r.tier_ids || []).includes(blCurrentTierId));
+    src = blAllLimits.find(r => r.applies_to_all_tiers || (r.tier_ids || []).includes(blCurrentTierId));
     if (!src) src = blAllLimits[0];
-    // ابتدائياً نختار الـ tier الحالى فقط
+    // ابتدائياً نختار الـ tier الحالى فقط (مش "كل الفئات")
     initialTierIds = blCurrentTierId ? [blCurrentTierId] : [];
+    initialAppliesAll = false;
   }
+
+  // 🌐 set الـ "كل الفئات" toggle + الـ disable logic
+  document.getElementById('bl-applies-all').checked = initialAppliesAll;
+  blToggleApplyAll();
 
   // عمار الـ checkboxes للـ tiers
   blRenderTierCheckboxes(initialTierIds);
@@ -10273,15 +10334,19 @@ async function saveLimits(){
   const errEl = document.getElementById('bl-form-error');
   errEl.style.display = 'none';
 
-  // الفئات المختارة من الـ checkboxes
-  const selectedTierIds = blGetSelectedTierIds();
-  if (!selectedTierIds.length) {
-    errEl.textContent = '⚠️ اختار فئة واحدة على الأقل';
+  // 🌐 الـ "كل الفئات" flag
+  const appliesToAll = document.getElementById('bl-applies-all').checked;
+  // الفئات المختارة من الـ checkboxes (لو appliesToAll = false)
+  const selectedTierIds = appliesToAll ? [] : blGetSelectedTierIds();
+
+  if (!appliesToAll && !selectedTierIds.length) {
+    errEl.textContent = '⚠️ اختار فئة واحدة على الأقل، أو علّم "🌐 طبّق على كل الفئات"';
     errEl.style.display = 'block';
     return;
   }
 
   const payload = {
+    applies_to_all_tiers:   appliesToAll,
     effective_from:         document.getElementById('bl-effective-from').value,
     weekly_vehicles:        parseInt(document.getElementById('bl-weekly').value),
     daily_vehicles:         parseInt(document.getElementById('bl-daily').value),
@@ -10349,7 +10414,8 @@ async function saveLimits(){
     }
 
     // sync الـ junction table:
-    // 1) امسح الـ links الموجودة للـ rule (PATCH only — لـ INSERT مفيش links)
+    // لو applies_to_all_tiers=true → امسح كل الـ links (الـ rule يطبق على الكل)
+    // لو false → امسح القديمة وضيف الجديدة
     if (blEditingId) {
       const rd = await fetch(`${SB}/rest/v1/booking_limit_tiers?booking_limit_id=eq.${ruleId}`, {
         method: 'DELETE',
@@ -10357,23 +10423,27 @@ async function saveLimits(){
       });
       if (!rd.ok) throw new Error(`Delete links failed: HTTP ${rd.status}`);
     }
-    // 2) أضف الـ links الجديدة
-    const links = selectedTierIds.map(tid => ({ booking_limit_id: ruleId, tier_id: tid }));
-    const ri = await fetch(`${SB}/rest/v1/booking_limit_tiers`, {
-      method: 'POST',
-      headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
-      body: JSON.stringify(links)
-    });
-    if (!ri.ok) throw new Error(`Insert links failed: HTTP ${ri.status}: ${await ri.text()}`);
+    // لو مش "كل الفئات"، نـ insert الـ links
+    if (!appliesToAll && selectedTierIds.length) {
+      const links = selectedTierIds.map(tid => ({ booking_limit_id: ruleId, tier_id: tid }));
+      const ri = await fetch(`${SB}/rest/v1/booking_limit_tiers`, {
+        method: 'POST',
+        headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
+        body: JSON.stringify(links)
+      });
+      if (!ri.ok) throw new Error(`Insert links failed: HTTP ${ri.status}: ${await ri.text()}`);
+    }
 
     if (typeof logActivity === 'function') {
       const action = blEditingId ? 'admin_limits_update' : 'admin_limits_create';
-      const tierNames = selectedTierIds.map(tid => (blTiers.find(t => t.id === tid) || {}).name).filter(Boolean).join('، ');
-      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId}) — فئات: ${tierNames}` : `📊 أضاف نسخة حدود جديدة لفئات: ${tierNames} تبدأ ${payload.effective_from}`;
-      logActivity(action, label, { ...payload, tier_ids: selectedTierIds });
+      const targetLabel = appliesToAll 
+        ? 'كل الفئات (الحالية + المستقبلية)' 
+        : selectedTierIds.map(tid => (blTiers.find(t => t.id === tid) || {}).name).filter(Boolean).join('، ');
+      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId}) — ${targetLabel}` : `📊 أضاف نسخة حدود جديدة لـ ${targetLabel} تبدأ ${payload.effective_from}`;
+      logActivity(action, label, { ...payload, tier_ids: selectedTierIds, applies_to_all_tiers: appliesToAll });
     }
-    // اضمن إن الـ tab يفضل على واحد من الفئات اللى اتضافت ليها (لو الـ tab الحالى مش فيها)
-    if (!selectedTierIds.includes(blCurrentTierId)) {
+    // اضمن إن الـ tab يفضل على واحد من الفئات اللى اتضافت ليها (مش هيتغير لو applies_to_all_tiers)
+    if (!appliesToAll && !selectedTierIds.includes(blCurrentTierId)) {
       blCurrentTierId = selectedTierIds[0];
     }
     closeLimitsForm();
