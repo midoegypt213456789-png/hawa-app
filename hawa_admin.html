@@ -185,6 +185,85 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
   font-size:12.5px;font-weight:700;margin-top:6px;
 }
 .sb-move-cancel:hover{color:var(--text);}
+
+/* ═══════════════════════════════════════════════════════════
+   📑 TABS BAR — الشاشات المفتوحة (browser-like)
+   ═══════════════════════════════════════════════════════════ */
+.tabs-bar{
+  display:flex;align-items:stretch;gap:8px;
+  padding:8px 14px 0 14px;
+  background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.1));
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;backdrop-filter:blur(8px);
+}
+.tabs-bar-scroll{
+  display:flex;gap:3px;flex:1;
+  overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:thin;
+  padding-bottom:0;align-items:flex-end;
+}
+.tabs-bar-scroll::-webkit-scrollbar{height:4px;}
+.tabs-bar-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+.open-tab{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 12px 9px 8px;
+  background:rgba(255,255,255,0.025);
+  border:1px solid var(--border);border-bottom:none;
+  border-radius:9px 9px 0 0;cursor:pointer;
+  color:var(--text-dim);font-size:12.5px;font-weight:700;
+  font-family:'Cairo',sans-serif;white-space:nowrap;
+  transition:all 0.15s ease;position:relative;
+  max-width:200px;min-width:120px;
+}
+.open-tab:hover{
+  background:rgba(255,255,255,0.05);color:var(--text);
+}
+.open-tab.active{
+  background:var(--dark);color:var(--gold);
+  border-color:var(--border);
+  position:relative;z-index:2;
+}
+.open-tab.active::after{
+  content:'';position:absolute;left:0;right:0;bottom:-1px;
+  height:2px;background:var(--dark);
+}
+.open-tab.active::before{
+  content:'';position:absolute;left:0;right:0;top:0;
+  height:2px;background:var(--gold);border-radius:9px 9px 0 0;
+}
+
+.ot-icon{font-size:14px;flex-shrink:0;}
+.ot-label{
+  flex:1;overflow:hidden;text-overflow:ellipsis;
+  text-align:right;direction:rtl;
+}
+.ot-close{
+  background:transparent;border:none;
+  color:var(--text-dim);cursor:pointer;
+  font-size:17px;line-height:1;
+  width:20px;height:20px;display:inline-flex;
+  align-items:center;justify-content:center;
+  border-radius:5px;flex-shrink:0;
+  font-family:Arial,sans-serif;font-weight:400;
+  transition:all 0.15s;padding:0;
+}
+.ot-close:hover{background:rgba(224,85,85,0.25);color:#e88080;}
+.open-tab.active .ot-close{color:var(--text-dim);}
+.open-tab.active .ot-close:hover{background:rgba(224,85,85,0.25);color:#e88080;}
+
+.tabs-close-all{
+  align-self:center;margin-bottom:2px;
+  background:transparent;border:1px solid var(--border);
+  color:var(--text-dim);font-family:'Cairo',sans-serif;
+  font-size:11.5px;font-weight:700;
+  padding:6px 11px;border-radius:8px;cursor:pointer;
+  transition:all 0.15s;white-space:nowrap;flex-shrink:0;
+}
+.tabs-close-all:hover{
+  color:#e88080;border-color:rgba(224,85,85,0.4);
+  background:rgba(224,85,85,0.08);
+}
 .sb-footer{padding:16px;}
 .logout-btn{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
 .logout-btn:hover{border-color:var(--error);color:var(--error);}
@@ -2354,6 +2433,12 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   <!-- MAIN -->
   <div class="main-area">
 
+    <!-- 📑 شريط الـ Tabs (الشاشات المفتوحة) -->
+    <div class="tabs-bar" id="tabsBar" style="display:none">
+      <div class="tabs-bar-scroll" id="tabsBarScroll"></div>
+      <button class="tabs-close-all" onclick="closeAllTabs()" title="إقفال كل الشاشات (ما عدا الحالية)">🗙 إقفال الكل</button>
+    </div>
+
     <!-- BOOKINGS -->
     <div class="section active" id="sec-bookings">
       <div class="page-hd">
@@ -4042,6 +4127,8 @@ function enterApp(){
   document.getElementById('adminName').textContent='👑 '+admin.name;
   // 📁 ابنى الـ sidebar الـ categorized
   renderSidebar();
+  // 📑 ارسم الـ tabs المحفوظة (لو فيه)
+  renderTabs();
   const todayStr = fmtDate(new Date());
   document.getElementById('bk-date-from').value=todayStr;
   document.getElementById('bk-date-to').value=todayStr;
@@ -4149,6 +4236,11 @@ function autoRefreshTick(){
 
 // 🆕 Read default page from settings and navigate there
 async function goToDefaultPage(){
+  // 📑 لو فيه active tab محفوظ من الـ session السابق، روح ليه
+  if (activeTabId && document.getElementById('sec-' + activeTabId)) {
+    goTo(activeTabId, true);
+    return;
+  }
   let target = 'bookings';
   try {
     const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.default_admin_page&select=value`,{headers:HDR});
@@ -4209,6 +4301,124 @@ function doLogout(){
 }
 
 // =================== NAVIGATION ===================
+// ═══════════════════════════════════════════════════════════
+// 📑 TABS SYSTEM — الشاشات المفتوحة (browser-like)
+// ═══════════════════════════════════════════════════════════
+const TABS_STORAGE_KEY = 'hawa_tabs_v1';
+let openTabs = []; // array of section IDs
+let activeTabId = null;
+
+(function loadTabsState(){
+  try {
+    const saved = localStorage.getItem(TABS_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed.openTabs)) {
+        // فلتر — اضمن إن كل الـ tabs المحفوظة لـ sections موجودة
+        openTabs = parsed.openTabs.filter(id => SB_NAV_ITEMS.find(i => i.id === id));
+        activeTabId = parsed.activeTabId && openTabs.includes(parsed.activeTabId) 
+                    ? parsed.activeTabId 
+                    : openTabs[0] || null;
+      }
+    }
+  } catch(e){}
+})();
+
+function saveTabsState(){
+  try { 
+    localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify({ openTabs, activeTabId }));
+  } catch(e){}
+}
+
+function renderTabs(){
+  const bar = document.getElementById('tabsBar');
+  const scroll = document.getElementById('tabsBarScroll');
+  if (!bar || !scroll) return;
+
+  if (openTabs.length === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+
+  scroll.innerHTML = openTabs.map(id => {
+    const item = SB_NAV_ITEMS.find(i => i.id === id);
+    if (!item) return '';
+    const isActive = id === activeTabId;
+    return `<div class="open-tab ${isActive ? 'active' : ''}" onclick="switchToTab('${id}')" title="${item.label}">
+      <span class="ot-icon">${item.icon}</span>
+      <span class="ot-label">${item.label}</span>
+      <button class="ot-close" onclick="closeTab('${id}', event)" title="إقفال (Ctrl+W)">×</button>
+    </div>`;
+  }).join('');
+
+  // scroll للـ active tab
+  setTimeout(() => {
+    const activeEl = scroll.querySelector('.open-tab.active');
+    if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+  }, 50);
+}
+
+function switchToTab(sectionId){
+  if (!openTabs.includes(sectionId)) return;
+  activeTabId = sectionId;
+  saveTabsState();
+  goTo(sectionId, true); // true = جاى من tab click، مش يـ re-add للـ tabs
+}
+
+function closeTab(sectionId, ev){
+  if (ev) ev.stopPropagation();
+  const idx = openTabs.indexOf(sectionId);
+  if (idx < 0) return;
+
+  openTabs.splice(idx, 1);
+
+  // لو كانت الـ active، نقل للـ tab المجاور
+  if (activeTabId === sectionId) {
+    if (openTabs.length === 0) {
+      activeTabId = null;
+      // مفيش tabs مفتوحة → روح للـ default
+      goToDefaultPage();
+    } else {
+      // الـ tab اللى مكانها، أو اللى قبلها
+      activeTabId = openTabs[idx] || openTabs[idx - 1] || openTabs[0];
+      goTo(activeTabId, true);
+    }
+  }
+  saveTabsState();
+  renderTabs();
+}
+
+function closeAllTabs(){
+  if (openTabs.length <= 1) {
+    if (openTabs.length === 1 && !confirm('هتقفل الشاشة المفتوحة؟')) return;
+    if (openTabs.length === 1) {
+      openTabs = [];
+      activeTabId = null;
+      saveTabsState();
+      renderTabs();
+      goToDefaultPage();
+    }
+    return;
+  }
+  if (!confirm(`هتقفل ${openTabs.length - 1} شاشة (الشاشة الحالية هتفضل مفتوحة)؟`)) return;
+  // سيب الـ active فقط
+  openTabs = activeTabId ? [activeTabId] : [];
+  saveTabsState();
+  renderTabs();
+}
+
+// Keyboard shortcut: Ctrl+W يقفل الـ active tab
+document.addEventListener('keydown', function(e){
+  if ((e.ctrlKey || e.metaKey) && e.key === 'w' && activeTabId) {
+    // فقط لو فيه tab مفتوح + الـ user مش بـ يكتب فى input
+    const tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    e.preventDefault();
+    closeTab(activeTabId);
+  }
+});
+
 // ═══════════════════════════════════════════════════════════
 // 📁 SIDEBAR — Categorized navigation system
 // ═══════════════════════════════════════════════════════════
@@ -4396,7 +4606,7 @@ function renderSidebar() {
   if (typeof refreshSidebarBadges === 'function') refreshSidebarBadges();
 }
 
-function goTo(sec){
+function goTo(sec, fromTabClick){
   currentSection=sec;
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   const target = document.getElementById('sec-'+sec);
@@ -4408,6 +4618,15 @@ function goTo(sec){
   } else {
     target.classList.add('active');
   }
+  // 📑 افتح فى tab (لو مش جاى من tab click)
+  if (!fromTabClick) {
+    if (!openTabs.includes(sec)) {
+      openTabs.push(sec);
+    }
+    activeTabId = sec;
+    saveTabsState();
+  }
+  renderTabs();
   // افتح الـ group اللى فيها الـ section الحالى
   const targetGroup = sbGetEffectiveGroup(sec);
   if (targetGroup && !sbState.openGroups[targetGroup]) {
@@ -5523,7 +5742,22 @@ function filterClients(){
   footer.style.display='flex';
   const muslimCount = data.filter(c=>(c.religion||'مسلم')==='مسلم').length;
   const christianCount = data.filter(c=>c.religion==='مسيحي').length;
+
+  // 🏆 تجميع العملاء حسب الفئة (tier)
+  const tierCounts = {};
+  data.forEach(c => {
+    const tid = c.tier_id;
+    if (!tid) return;
+    tierCounts[tid] = (tierCounts[tid] || 0) + 1;
+  });
+  const tierCountsHtml = (typeof blTiers !== 'undefined' && Array.isArray(blTiers))
+    ? blTiers.filter(t => tierCounts[t.id]).map(t => 
+        `<span style="color:${t.color || 'var(--gold)'}">${t.icon || '🏆'} ${t.name}: <b>${tierCounts[t.id]}</b></span>`
+      ).join('')
+    : '';
+
   footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
+    ${tierCountsHtml}
     <span>🕌 مسلم: <b>${muslimCount}</b></span>
     <span>✝️ مسيحي: <b>${christianCount}</b></span>
     <span>نشط: <b>${data.filter(c=>!c.is_blocked && c.is_active!==false).length}</b></span>
