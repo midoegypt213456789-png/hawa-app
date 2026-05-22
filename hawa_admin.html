@@ -2101,6 +2101,39 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 }
 .bl-tier-tab.active .bl-tab-count{background:rgba(201,168,76,0.18);color:var(--gold-light);}
 
+/* Inner tabs داخل الـ cards */
+.bl-inner-tabs{
+  display:flex;gap:4px;margin-bottom:14px;padding:4px;
+  background:rgba(255,255,255,0.025);border-radius:10px;
+  overflow-x:auto;flex-wrap:nowrap;
+}
+.bl-inner-tab{
+  background:transparent;border:none;color:var(--text-dim);
+  padding:7px 14px;font-family:'Cairo',sans-serif;font-size:12.5px;
+  font-weight:700;cursor:pointer;border-radius:7px;
+  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+  transition:all 0.15s ease;
+}
+.bl-inner-tab:hover{color:var(--text);background:rgba(255,255,255,0.03);}
+.bl-inner-tab.active{background:rgba(201,168,76,0.12);color:var(--gold-light) !important;}
+.bl-inner-empty{
+  padding:30px 20px;text-align:center;color:var(--text-dim);
+  font-size:13px;background:rgba(255,255,255,0.02);
+  border-radius:10px;border:1px dashed var(--border);
+}
+.bl-all-summary{
+  display:flex;flex-direction:column;gap:10px;
+}
+.bl-all-summary-row{
+  display:grid;grid-template-columns:auto 1fr auto;gap:14px;
+  padding:12px 14px;background:rgba(255,255,255,0.02);
+  border:1px solid var(--border);border-radius:10px;align-items:center;
+}
+.bl-all-summary-tier{font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;min-width:90px;}
+.bl-all-summary-vals{font-size:12px;color:var(--text-dim);line-height:1.8;display:flex;flex-wrap:wrap;gap:10px 16px;}
+.bl-all-summary-vals b{color:var(--text);font-weight:800;}
+.bl-all-summary-date{font-size:11px;color:#7ab5e8;background:rgba(74,144,217,0.1);padding:3px 8px;border-radius:6px;white-space:nowrap;}
+
 /* Clients table tier column */
 .tier-cell{padding:4px 0;}
 
@@ -3113,12 +3146,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div style="color:var(--text-dim);font-size:12px;padding:10px 4px">⏳ جاري تحميل الفئات...</div>
       </div>
 
-      <!-- شرح -->
-      <div id="bl-tier-hint" style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:10px 14px;margin-bottom:14px;color:#7fb8e8;font-size:12.5px;line-height:1.8">
-        💡 كل فئة عندها قواعدها الخاصة. شغّال دلوقتى على فئة: <b id="bl-current-tier-label">—</b>
-        <br>
-        🌐 لو عاوز قاعدة تطبّق على كل الفئات (الحالية + المستقبلية)، علّم <b style="color:var(--gold-light)">"طبّق على كل الفئات"</b> عند الإضافة — هتظهر فى كل التابات تلقائياً.
-      </div>
+      <!-- 🏆 Tabs (hidden — مستخدمة فقط للـ pre-fill عند الإضافة) -->
+      <div class="bl-tier-tabs" id="bl-tier-tabs" style="display:none"></div>
 
       <!-- النسخة الفعّالة -->
       <div class="bl-card" id="bl-active-card" style="display:none">
@@ -3126,7 +3155,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <h3>✅ النسخة الفعّالة دلوقتى</h3>
           <span class="bl-date-badge" id="bl-active-date">—</span>
         </div>
-        <div class="bl-grid" id="bl-active-grid"></div>
+        <div class="bl-inner-tabs" id="bl-active-tabs"></div>
+        <div id="bl-active-content"></div>
         <div class="bl-note" id="bl-active-note" style="display:none"></div>
       </div>
 
@@ -3136,7 +3166,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <h3>⏭️ النسخة الجاية</h3>
           <span class="bl-date-badge" id="bl-upcoming-date">—</span>
         </div>
-        <div class="bl-grid" id="bl-upcoming-grid"></div>
+        <div class="bl-inner-tabs" id="bl-upcoming-tabs"></div>
+        <div id="bl-upcoming-content"></div>
         <div class="bl-note" id="bl-upcoming-note" style="display:none"></div>
       </div>
 
@@ -10045,56 +10076,149 @@ function blSwitchTier(tierId){
   blRender();
 }
 
+// 🎯 State للـ inner tabs (يتذكر آخر tab مختار فى كل كارت)
+let blActiveTabSel = null;   // tier_id أو 'all'
+let blUpcomingTabSel = null;
+
 function blRender(){
   const todayStr = fmtDate(new Date());
   const emptyState = document.getElementById('bl-empty-state');
   const activeCard = document.getElementById('bl-active-card');
   const upcomingCard = document.getElementById('bl-upcoming-card');
 
-  // فلتر: rule applies_to_all_tiers=true أو الفئة المختارة فى tier_ids
-  // (للـ Active + Upcoming cards بس)
-  const limits = blAllLimits.filter(r => 
-    r.applies_to_all_tiers || (r.tier_ids || []).includes(blCurrentTierId)
-  );
+  // 🎯 لكل tier، الـ rule الفعّالة + الجاية
+  const activeByTier = {};
+  const upcomingByTier = {};
+  blTiers.forEach(t => {
+    const tierLimits = blAllLimits.filter(r => 
+      r.applies_to_all_tiers || (r.tier_ids || []).includes(t.id)
+    );
+    if (!tierLimits.length) return;
+    // الـ active = آخر effective_from <= today
+    const act = tierLimits.find(r => r.effective_from <= todayStr);
+    if (act) activeByTier[t.id] = act;
+    // الـ upcoming = أقدم effective_from > today
+    const upc = [...tierLimits].reverse().find(r => r.effective_from > todayStr);
+    if (upc) upcomingByTier[t.id] = upc;
+  });
 
-  if (!limits.length) {
+  const hasActive = Object.keys(activeByTier).length > 0;
+  const hasUpcoming = Object.keys(upcomingByTier).length > 0;
+
+  if (!blAllLimits.length) {
     emptyState.style.display = 'block';
     activeCard.style.display = 'none';
     upcomingCard.style.display = 'none';
   } else {
     emptyState.style.display = 'none';
+    activeCard.style.display = hasActive ? 'block' : 'none';
+    upcomingCard.style.display = hasUpcoming ? 'block' : 'none';
 
-    // الفعّالة دلوقتى = آخر صف effective_from <= today
-    const active = limits.find(r => r.effective_from <= todayStr);
-    // الجاية = أحدث صف effective_from > today
-    const upcoming = [...limits].reverse().find(r => r.effective_from > todayStr);
-
-    if (active) {
-      activeCard.style.display = 'block';
-      document.getElementById('bl-active-date').textContent = `يبدأ من ${active.effective_from}`;
-      document.getElementById('bl-active-grid').innerHTML = blGridHtml(active);
-      const noteEl = document.getElementById('bl-active-note');
-      if (active.note) { noteEl.style.display = 'block'; noteEl.textContent = active.note; }
-      else noteEl.style.display = 'none';
-    } else {
-      activeCard.style.display = 'none';
+    if (hasActive) {
+      blRenderInnerCard('active', activeByTier);
     }
-
-    if (upcoming) {
-      upcomingCard.style.display = 'block';
-      document.getElementById('bl-upcoming-date').textContent = `يبدأ من ${upcoming.effective_from}`;
-      document.getElementById('bl-upcoming-grid').innerHTML = blGridHtml(upcoming);
-      const noteEl = document.getElementById('bl-upcoming-note');
-      if (upcoming.note) { noteEl.style.display = 'block'; noteEl.textContent = upcoming.note; }
-      else noteEl.style.display = 'none';
-    } else {
-      upcomingCard.style.display = 'none';
+    if (hasUpcoming) {
+      blRenderInnerCard('upcoming', upcomingByTier);
     }
   }
 
-  // 📊 جدول "كل النسخ" — يعرض كل الـ rules بدون فلتر (لكل الفئات)
-  const active = limits.length ? limits.find(r => r.effective_from <= todayStr) : null;
-  blRenderHistory(active, blAllLimits);
+  // 📊 جدول "كل النسخ" — يعرض كل الـ rules بدون فلتر
+  // الـ active للـ tab الحالى (للـ highlighting فقط)
+  const activeForCurrentTab = activeByTier[blCurrentTierId] || null;
+  blRenderHistory(activeForCurrentTab, blAllLimits);
+}
+
+// 🎯 رسم الكارت مع inner tabs (active أو upcoming)
+function blRenderInnerCard(cardType, rulesByTier){
+  const tabsEl = document.getElementById(`bl-${cardType}-tabs`);
+  const contentEl = document.getElementById(`bl-${cardType}-content`);
+  const dateBadge = document.getElementById(`bl-${cardType}-date`);
+  const noteEl = document.getElementById(`bl-${cardType}-note`);
+  if (!tabsEl || !contentEl) return;
+
+  // اعمل tabs لكل tier فيه rule
+  const tabs = [];
+  blTiers.forEach(t => {
+    if (rulesByTier[t.id]) {
+      tabs.push({ id: t.id, label: `${t.icon || '🏆'} ${t.name}`, color: t.color || '#C9A84C' });
+    }
+  });
+  // tab "الكل" لو فيه أكتر من واحد
+  if (tabs.length > 1) {
+    tabs.push({ id: 'all', label: '🌐 الكل', color: '#E8C97A' });
+  }
+
+  // اختار الـ tab الافتراضى
+  const stateKey = cardType === 'active' ? 'blActiveTabSel' : 'blUpcomingTabSel';
+  let selected = window[stateKey];
+  if (!selected || !tabs.find(t => t.id === selected)) {
+    selected = tabs[0]?.id;
+    window[stateKey] = selected;
+  }
+
+  // ارسم الـ tabs
+  tabsEl.innerHTML = tabs.map(t => {
+    const isActive = String(t.id) === String(selected);
+    const styleActive = isActive ? `color:${t.color} !important` : '';
+    return `<button class="bl-inner-tab ${isActive ? 'active' : ''}" style="${styleActive}" onclick="blSwitchInnerTab('${cardType}', ${t.id === 'all' ? "'all'" : t.id})">${t.label}</button>`;
+  }).join('');
+
+  // ارسم الـ content
+  if (selected === 'all') {
+    // عرض compact لكل الـ tiers
+    contentEl.innerHTML = blRenderAllTiersSummary(rulesByTier);
+    if (dateBadge) dateBadge.textContent = `لكل الفئات`;
+    if (noteEl) noteEl.style.display = 'none';
+  } else {
+    const rule = rulesByTier[selected];
+    if (rule) {
+      contentEl.innerHTML = `<div class="bl-grid">${blGridHtml(rule)}</div>`;
+      if (dateBadge) dateBadge.textContent = `يبدأ من ${rule.effective_from}`;
+      if (noteEl) {
+        if (rule.note) {
+          noteEl.style.display = 'block';
+          noteEl.textContent = rule.note;
+        } else {
+          noteEl.style.display = 'none';
+        }
+      }
+    }
+  }
+}
+
+// 🌐 رسم summary compact لكل الـ tiers فى الكارت
+function blRenderAllTiersSummary(rulesByTier){
+  const pLabel = { week: 'أسبوع', month: 'شهر', year: 'سنة' };
+  const rows = blTiers
+    .filter(t => rulesByTier[t.id])
+    .map(t => {
+      const r = rulesByTier[t.id];
+      const allTiersFlag = r.applies_to_all_tiers ? ' <span style="font-size:10px;color:var(--gold-light);background:rgba(201,168,76,0.15);padding:1px 6px;border-radius:5px">🌐 كل الفئات</span>' : '';
+      return `<div class="bl-all-summary-row" style="border-color:${t.color}33">
+        <div class="bl-all-summary-tier" style="color:${t.color}">
+          ${t.icon || '🏆'} ${t.name}${allTiersFlag}
+        </div>
+        <div class="bl-all-summary-vals">
+          <span>🚛 أسبوعى <b>${r.weekly_vehicles}</b></span>
+          <span>📅 يومى <b>${r.daily_vehicles}</b></span>
+          <span>📦 للحجز <b>${r.per_booking_vehicles}</b></span>
+          <span>🎫 الإذن <b>${r.permit_max_uses}</b>/<b>${r.permit_max_vehicles}</b></span>
+          <span>⏳ مفتوحة <b>${r.open_bookings_max}</b>/${pLabel[r.open_bookings_period]}</span>
+          <span>🚫 متتالى <b>${r.noshow_consecutive_max}</b></span>
+          <span>🚫 متفرق <b>${r.noshow_period_max}</b>/${pLabel[r.noshow_period]}</span>
+        </div>
+        <div class="bl-all-summary-date">${r.effective_from}</div>
+      </div>`;
+    }).join('');
+  return `<div class="bl-all-summary">${rows}</div>`;
+}
+
+// 🎯 تبديل الـ inner tab
+function blSwitchInnerTab(cardType, tabId){
+  const stateKey = cardType === 'active' ? 'blActiveTabSel' : 'blUpcomingTabSel';
+  window[stateKey] = tabId;
+  // re-render
+  blRender();
 }
 
 function blGridHtml(row){
@@ -10175,7 +10299,7 @@ function blRenderHistory(activeRow, limits){
     // truncate الملاحظة لـ 60 char + إعرض الكل فى الـ tooltip
     const noteFull = r.note || '';
     const noteShort = noteFull ? (noteFull.length > 60 ? noteFull.slice(0, 60) + '…' : noteFull) : '—';
-    return `<tr class="${isActiveForCurrentTab ? 'current-row' : ''}">
+    return `<tr class="${isActiveForCurrentTab ? 'current-row' : ''}" ondblclick="openLimitsForm(${r.id})" title="دبل كليك للتعديل" style="cursor:pointer">
       <td>${r.effective_from}</td>
       <td>${badge}</td>
       <td><div style="display:flex;flex-wrap:wrap;gap:3px">${tiersDisplay}</div></td>
@@ -10267,14 +10391,20 @@ function blGetSelectedTierIds(){
 function blIsDefaultRule(ruleId){
   if (!ruleId) return { isDefault: false, tiers: [] };
   // ابحث فى كل tier هل الـ ruleId default ليه
+  // الـ default = الـ rule بأقدم effective_from (وفى حالة tie، أقل id)
   const defaultForTiers = [];
   for (const t of blTiers) {
     const tierLimits = blAllLimits.filter(r => 
       r.applies_to_all_tiers || (r.tier_ids || []).includes(t.id)
     );
     if (!tierLimits.length) continue;
-    const minId = Math.min(...tierLimits.map(r => r.id));
-    if (minId === ruleId) defaultForTiers.push(t);
+    const sorted = [...tierLimits].sort((a, b) => {
+      if (a.effective_from !== b.effective_from) {
+        return a.effective_from < b.effective_from ? -1 : 1;
+      }
+      return a.id - b.id;
+    });
+    if (sorted[0].id === ruleId) defaultForTiers.push(t);
   }
   return { isDefault: defaultForTiers.length > 0, tiers: defaultForTiers };
 }
