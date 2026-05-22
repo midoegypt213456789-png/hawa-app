@@ -296,9 +296,13 @@
         <div style="font-size:11px;color:#aaa;line-height:1.5">خلاص ما تنسى الباسوورد — افتح بالبصمة زى البنوك</div>
       </div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button onclick="enrollBiometric()" style="flex:1;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12.5px;font-weight:800;cursor:pointer">✨ فعّل البصمة</button>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button onclick="enrollBiometric()" style="flex:1;min-width:120px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12.5px;font-weight:800;cursor:pointer">✨ فعّل البصمة</button>
       <button onclick="dismissEnrollBanner()" style="background:transparent;border:1px solid #444;color:#888;border-radius:9px;padding:10px 14px;font-family:Cairo,sans-serif;font-size:11.5px;font-weight:600;cursor:pointer">لأ شكراً</button>
+    </div>
+    <div id="bioBannerHelper" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(201,168,76,0.3);font-size:10.5px;color:#888;line-height:1.6">
+      لو مش شغال داخل Telegram، 
+      <a href="javascript:void(0)" onclick="bioOpenInBrowser()" style="color:#E8C97A;text-decoration:underline;font-weight:700">جرّب من المتصفح ←</a>
     </div>
   </div>
 
@@ -607,20 +611,45 @@ async function enrollViaTelegram(){
     // 🔬 Diagnostic — نـ show على الموبيل لو فى مشكلة
     const tgVer = tg.version || 'unknown';
     const platform = tg.platform || 'unknown';
-    const showDiag = (title) => {
-      const msg = `${title}\n\n• Telegram v${tgVer}\n• Platform: ${platform}\n• BioManager exists: ${!!bio}\n• isInited: ${bio?.isInited}\n• isAvailable: ${bio?.isBiometricAvailable}\n• type: ${bio?.biometricType || '—'}\n• access: ${bio?.isAccessGranted ? 'granted' : (bio?.isAccessRequested ? 'requested' : 'no')}`;
-      if (tg.showAlert) tg.showAlert(msg); else alert(msg);
+
+    // 🌐 Fallback: افتح الصفحة فى المتصفح الخارجى (WebAuthn يشتغل هناك)
+    const openInBrowser = () => {
+      const url = window.location.origin + window.location.pathname;
+      try {
+        if (tg.openLink) tg.openLink(url, { try_instant_view: false });
+        else window.open(url, '_blank');
+      } catch(e) { window.open(url, '_blank'); }
+    };
+
+    const showFallback = (title) => {
+      const msg = `${title}\n\nTelegram ما قدرش يـ enroll البصمة — افتح الصفحة فى المتصفح (Chrome/Safari) عشان البصمة تشتغل.\n\nمعلومات:\n• Telegram v${tgVer} (${platform})\n• Bio: ${bio?.isBiometricAvailable ? 'متاح' : 'مش متاح'}\n• Type: ${bio?.biometricType || 'unknown'}`;
+      if (tg.showPopup) {
+        tg.showPopup({
+          title: '🔐 البصمة',
+          message: msg,
+          buttons: [
+            { id: 'browser', type: 'default', text: '🌐 افتح فى المتصفح' },
+            { id: 'cancel', type: 'cancel' }
+          ]
+        }, btnId => {
+          if (btnId === 'browser') openInBrowser();
+        });
+      } else if (tg.showAlert) {
+        tg.showAlert(msg);
+      } else {
+        if (confirm(msg + '\n\nافتح فى المتصفح؟')) openInBrowser();
+      }
     };
 
     if (!bio) {
-      showDiag('❌ BiometricManager غير متاح');
+      showFallback('❌ BiometricManager غير متاح');
       cleanup(); return resolve(false);
     }
 
-    // Telegram BiometricManager متاح من v7.2 (يونيو 2024)
+    // Telegram BiometricManager متاح من Bot API v7.2 (يونيو 2024)
     const verNum = parseFloat(tgVer);
     if (!isNaN(verNum) && verNum < 7.2) {
-      showDiag('⚠️ Telegram client بتاعك قديم — حدّث Telegram من Play Store/App Store');
+      showFallback('⚠️ Telegram قديم — حدّثه من Play Store/App Store');
       cleanup(); return resolve(false);
     }
 
@@ -628,7 +657,7 @@ async function enrollViaTelegram(){
     let initDone = false;
     const initTimer = setTimeout(() => {
       if (!initDone) {
-        showDiag('⏱️ Telegram ما رجعش callback (init timeout) — الـ feature مش مدعوم على الـ client ده');
+        showFallback('⏱️ Telegram ما رجعش callback — الـ feature مش مدعوم على الـ client ده');
         cleanup(); resolve(false);
       }
     }, 8000);
@@ -639,7 +668,7 @@ async function enrollViaTelegram(){
       console.log('[bio] Telegram init:', { isInited: bio.isInited, isAvailable: bio.isBiometricAvailable, type: bio.biometricType });
 
       if (!bio.isBiometricAvailable) {
-        showDiag('❌ البصمة مش مفعّلة على الجهاز\nروح للإعدادات → Security → Fingerprint وفعّلها الأول');
+        showFallback('❌ البصمة مش مفعّلة على الجهاز\nروح للإعدادات → Security → Fingerprint وفعّلها الأول');
         cleanup(); return resolve(false);
       }
 
@@ -647,7 +676,7 @@ async function enrollViaTelegram(){
       let accessDone = false;
       const accessTimer = setTimeout(() => {
         if (!accessDone) {
-          showDiag('⏱️ requestAccess timeout — Telegram ما طلبش الإذن');
+          showFallback('⏱️ Telegram ما طلبش الإذن — bug فى الـ client');
           cleanup(); resolve(false);
         }
       }, 30000);
@@ -658,7 +687,7 @@ async function enrollViaTelegram(){
         console.log('[bio] requestAccess result:', granted);
 
         if (!granted) {
-          showDiag('⏱️ الـ user رفض / Telegram رفض الإذن');
+          showFallback('⏱️ الـ user رفض / Telegram رفض الإذن');
           cleanup(); return resolve(false);
         }
 
@@ -670,7 +699,7 @@ async function enrollViaTelegram(){
         let updateDone = false;
         const updateTimer = setTimeout(() => {
           if (!updateDone) {
-            showDiag('⏱️ updateBiometricToken timeout');
+            showFallback('⏱️ updateBiometricToken timeout');
             cleanup(); resolve(false);
           }
         }, 30000);
@@ -681,7 +710,7 @@ async function enrollViaTelegram(){
           console.log('[bio] updateBiometricToken result:', success);
 
           if (!success) {
-            showDiag('❌ فشل حفظ البصمة فى Telegram');
+            showFallback('❌ فشل حفظ البصمة فى Telegram');
             cleanup(); return resolve(false);
           }
 
@@ -716,7 +745,7 @@ async function enrollViaTelegram(){
             cleanup(); resolve(true);
           } catch(e){
             console.error('[bio] DB save error:', e);
-            showDiag('❌ فشل الحفظ فى السيرفر: ' + (e.message || 'error'));
+            showFallback('❌ فشل الحفظ فى السيرفر: ' + (e.message || 'error'));
             cleanup(); resolve(false);
           }
         });
@@ -887,6 +916,20 @@ async function removeBiometric(id, credentialId){
 // ═══════════════════════════════════════════════════════════
 // Banner: لو ما سجّلش بصمة، اعرض banner تشجيعى
 // ═══════════════════════════════════════════════════════════
+// 🌐 فتح الصفحة فى المتصفح الخارجى (للموبايل لو Telegram bio فشل)
+function bioOpenInBrowser(){
+  const url = window.location.origin + window.location.pathname;
+  try {
+    if (tg && tg.openLink) {
+      tg.openLink(url, { try_instant_view: false });
+    } else {
+      window.open(url, '_blank');
+    }
+  } catch(e){
+    window.open(url, '_blank');
+  }
+}
+
 function maybeShowEnrollBanner(){
   console.log('[bio] maybeShowEnrollBanner check:', {
     supported: bioSupported(),
@@ -914,6 +957,9 @@ function maybeShowEnrollBanner(){
   const banner = document.getElementById('bioEnrollBanner');
   if (banner && bioIsApprovedClient()) {
     banner.style.display = 'block';
+    // لو فى Telegram، اظهر الـ "افتح فى المتصفح" hint كمان
+    const helper = document.getElementById('bioBannerHelper');
+    if (helper) helper.style.display = bioIsInTelegram() ? 'block' : 'none';
     console.log('[bio] ✅ Banner ظاهر');
   }
 }
