@@ -339,6 +339,29 @@
   <!-- 🍞 Toast notifications -->
   <div id="bioToast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(76,175,125,0.95);color:white;padding:12px 20px;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
 
+  <!-- 🔐 Bio Login Lock Screen (يظهر لو فى bio محفوظ لكن مفيش login session) -->
+  <div id="bioLockScreen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0a0a0a 0%,#1a1408 50%,#0a0a0a 100%);z-index:100000;align-items:center;justify-content:center;padding:24px;flex-direction:column">
+    <div style="max-width:380px;width:100%;text-align:center;font-family:Cairo,sans-serif">
+      <div style="font-size:74px;margin-bottom:14px;filter:drop-shadow(0 4px 12px rgba(201,168,76,0.4))">🔐</div>
+      <div style="font-size:22px;font-weight:800;color:#E8C97A;margin-bottom:6px">دخول HAWA CO</div>
+      <div style="font-size:13px;color:#aaa;margin-bottom:6px">أهلاً <b id="bioLockName" style="color:#eee">—</b></div>
+      <div style="font-size:11px;color:#888;margin-bottom:32px">ادخل بالبصمة بسرعة وبدون يوزر نيم</div>
+
+      <button id="bioLoginBtn" onclick="bioLoginNow()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:14px;padding:18px;font-family:Cairo,sans-serif;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 24px rgba(201,168,76,0.3);display:flex;align-items:center;justify-content:center;gap:10px">
+        <span style="font-size:22px">👆</span>
+        <span>ادخل بالبصمة</span>
+      </button>
+
+      <div id="bioLockError" style="display:none;background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.35);border-radius:10px;padding:10px 14px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px"></div>
+
+      <div style="margin:24px 0 8px;height:1px;background:rgba(255,255,255,0.08)"></div>
+
+      <button onclick="bioGoToPasswordLogin()" style="background:transparent;border:1px solid #333;color:#888;border-radius:10px;padding:12px 20px;font-family:Cairo,sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;margin-top:8px">📝 ادخل بالباسوورد بدلاً</button>
+
+      <div style="font-size:10px;color:#555;margin-top:24px;line-height:1.6">جهاز: <span id="bioLockDevice">—</span></div>
+    </div>
+  </div>
+
   <!-- Alert -->
   <div class="alert" id="alert"></div>
 
@@ -491,7 +514,25 @@ const N8N_BASE = 'https://n8n.gladiatorverse.net';
 const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
-if (!user || !user.id) { window.location.href = 'hawa_login.html'; }
+
+// 🔐 Bio Login Check — لو مفيش login session، اعرض bio login overlay لو فيه bio محفوظ
+if (!user || !user.id) {
+  const savedBio = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; } })();
+  if (savedBio && savedBio.credentialId && savedBio.clientId) {
+    // فى bio محفوظ → اعرض الـ lock screen
+    document.addEventListener('DOMContentLoaded', () => {
+      const lockEl = document.getElementById('bioLockScreen');
+      if (lockEl) {
+        lockEl.style.display = 'flex';
+        document.getElementById('bioLockName').textContent = savedBio.clientName || 'عميل';
+        document.getElementById('bioLockDevice').textContent = savedBio.deviceLabel || '—';
+      }
+    });
+  } else {
+    // مفيش bio → روح للـ login عادى
+    window.location.href = 'hawa_login.html';
+  }
+}
 
 // 📜 Activity Logging — تسجل كل حركة العميل فى DB
 async function logActivity(action, label, details={}){
@@ -1066,6 +1107,138 @@ function bioOpenInBrowser(){
   } catch(e){
     window.open(url, '_blank');
   }
+}
+
+// 🔐 الدخول بالبصمة من الـ Lock Screen
+async function bioLoginNow(){
+  const btn = document.getElementById('bioLoginBtn');
+  const errEl = document.getElementById('bioLockError');
+  if (btn){ btn.disabled = true; btn.innerHTML = '<span style="font-size:18px">⏳</span><span>ابصم على الجهاز...</span>'; }
+  if (errEl) errEl.style.display = 'none';
+
+  const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
+  if (!stored || !stored.credentialId) {
+    showLockError('مفيش بصمة محفوظة على الجهاز ده');
+    if (btn){ btn.disabled = false; btn.innerHTML = '<span style="font-size:22px">👆</span><span>ادخل بالبصمة</span>'; }
+    return;
+  }
+
+  try {
+    let credId = null;
+
+    // 📱 لو Telegram bio → استخدم BiometricManager
+    if (stored.provider === 'telegram' && tg && tg.BiometricManager) {
+      const tgCredId = await new Promise((resolve) => {
+        tg.BiometricManager.init(() => {
+          tg.BiometricManager.authenticate({ reason: 'دخول HAWA' }, (success, token) => {
+            if (!success || !token) return resolve(null);
+            try {
+              const parsed = JSON.parse(token);
+              resolve(parsed.credentialId || null);
+            } catch(e) { resolve(null); }
+          });
+        });
+      });
+      if (!tgCredId) throw new Error('cancelled');
+      credId = tgCredId;
+    } else {
+      // 🌐 WebAuthn — تحقق من البصمة على الـ device
+      const cred = await navigator.credentials.get({
+        publicKey: {
+          challenge: crypto.getRandomValues(new Uint8Array(32)),
+          allowCredentials: [{
+            id: bioBase64ToBuf(stored.credentialId),
+            type: 'public-key',
+            transports: ['internal']
+          }],
+          userVerification: 'required',
+          timeout: 60000
+        }
+      });
+      if (!cred) throw new Error('cancelled');
+      credId = bioBufToBase64(cred.rawId);
+    }
+
+    // Verify with DB
+    const verifyR = await fetch(
+      `${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}&select=client_id,clients(*)`,
+      { headers: HDR }
+    );
+    const verifyData = await verifyR.json();
+    if (!Array.isArray(verifyData) || !verifyData.length) {
+      throw new Error('البصمة غير معروفة فى السيستم');
+    }
+    const client = verifyData[0].clients;
+    if (!client) throw new Error('العميل مش موجود');
+    if (client.approval_status !== 'approved') throw new Error('الحساب لسه غير معتمد من الإدارة');
+    if (client.is_blocked) throw new Error('الحساب محظور — اتصل بالإدارة');
+
+    // ✅ login ناجح — احفظ user object
+    Object.assign(user, {
+      id: client.id,
+      name: client.name,
+      company_code: client.company_code,
+      username: client.username,
+      phone: client.phone,
+      governorate: client.governorate,
+      city: client.city,
+      district: client.district,
+      address: client.address,
+      client_type: client.client_type,
+      telegram_id: client.telegram_id,
+      tier_id: client.tier_id,
+      approval_status: client.approval_status,
+      is_blocked: client.is_blocked,
+      is_active: client.is_active
+    });
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+
+    // Update last_used_at فى DB (silent)
+    fetch(`${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ last_used_at: new Date().toISOString() })
+    }).catch(()=>{});
+
+    // اخفى الـ lock screen
+    const lockEl = document.getElementById('bioLockScreen');
+    if (lockEl) lockEl.style.display = 'none';
+
+    // Update header
+    if (document.getElementById('uname')) document.getElementById('uname').textContent = user.name || 'العميل';
+    if (document.getElementById('ucode')) document.getElementById('ucode').textContent = user.company_code || '';
+
+    // Log activity
+    if (typeof logActivity === 'function') {
+      logActivity('cl_login_bio', '🔐 دخول بالبصمة', { device: stored.deviceLabel });
+    }
+
+    // إعادة تحميل البيانات بدل reload الصفحة (أنظف)
+    if (typeof checkTelegramLink === 'function') checkTelegramLink();
+    bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
+  } catch(e) {
+    console.error('bioLoginNow error:', e);
+    let msg;
+    if (e.name === 'NotAllowedError') msg = '⏱️ تم الإلغاء أو انتهى الوقت';
+    else if (e.name === 'NotSupportedError') msg = 'الجهاز مش بيدعم البصمة';
+    else if (e.message === 'cancelled') msg = '⏱️ تم الإلغاء';
+    else msg = '❌ ' + (e.message || 'خطأ غير متوقع');
+    showLockError(msg);
+  } finally {
+    if (btn){ btn.disabled = false; btn.innerHTML = '<span style="font-size:22px">👆</span><span>ادخل بالبصمة</span>'; }
+  }
+}
+
+function showLockError(msg){
+  const errEl = document.getElementById('bioLockError');
+  if (errEl) {
+    errEl.style.display = 'block';
+    errEl.textContent = msg;
+  }
+}
+
+function bioGoToPasswordLogin(){
+  window.location.href = 'hawa_login.html';
 }
 
 function maybeShowEnrollBanner(){
