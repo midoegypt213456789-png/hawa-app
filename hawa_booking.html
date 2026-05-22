@@ -287,6 +287,14 @@
   <!-- Telegram Link Banner (shown if not linked) -->
   <div id="tgLinkBanner" style="display:none"></div>
 
+  <!-- 🔬 Bio Debug Panel — يظهر فوق الصفحة لمساعدة التشخيص -->
+  <div id="bioDebugPanel" style="display:block;background:#1a1a1a;border:1px solid #C9A84C;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-family:Cairo,monospace;font-size:11px;line-height:1.7">
+    <div style="color:#E8C97A;font-weight:800;margin-bottom:4px">🔬 Bio Debug</div>
+    <div id="bioDebugContent" style="color:#aaa">⏳ جاري الفحص...</div>
+    <button onclick="document.getElementById('bioDebugPanel').style.display='none'" style="margin-top:6px;background:transparent;border:1px solid #444;color:#888;border-radius:5px;padding:2px 8px;font-family:Cairo,sans-serif;font-size:10px;cursor:pointer">إخفاء</button>
+    <button onclick="enrollBiometric()" style="margin-top:6px;margin-right:6px;background:#C9A84C;color:#1a1408;border:none;border-radius:5px;padding:3px 10px;font-family:Cairo,sans-serif;font-size:10.5px;font-weight:800;cursor:pointer">🔐 جرب التفعيل</button>
+  </div>
+
   <!-- 🔐 Biometric Enroll Banner (يظهر للموبايل لو ما سجّلش بصمة) -->
   <div id="bioEnrollBanner" style="display:none;background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.06));border:1.5px solid rgba(201,168,76,0.5);border-radius:14px;padding:13px 14px;margin-bottom:12px">
     <div style="display:flex;align-items:center;gap:12px">
@@ -313,11 +321,16 @@
         <div style="font-size:16px;font-weight:800;color:#E8C97A;display:flex;align-items:center;gap:8px">🔐 الدخول بالبصمة</div>
         <button onclick="closeBiometricModal()" style="background:transparent;border:none;color:#888;font-size:22px;cursor:pointer;padding:0 4px;line-height:1">×</button>
       </div>
-      <div style="font-size:12px;color:#888;margin-bottom:16px;line-height:1.7">سجّل البصمة على كل جهاز بتستخدمه. هتدخل أسرع بدون يوزر نيم أو باسوورد.</div>
+      <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.7">سجّل البصمة على كل جهاز بتستخدمه. هتدخل أسرع بدون يوزر نيم أو باسوورد.</div>
+
+      <!-- 🔍 Status checks (يبين السبب لو الـ enrollment ما اشتغلش) -->
+      <div id="bioStatus" style="background:rgba(255,255,255,0.025);border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;margin-bottom:14px"></div>
 
       <div id="bioList"></div>
 
       <button id="bioAddBtn" onclick="enrollBiometric()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-top:8px">➕ تسجيل البصمة على الجهاز ده</button>
+
+      <button id="bioBrowserBtn" onclick="bioOpenInBrowser()" style="display:none;width:100%;background:rgba(74,144,217,0.12);color:#7ab5e8;border:1px solid rgba(74,144,217,0.35);border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px">🌐 افتح فى المتصفح الخارجى (يشتغل أحسن)</button>
 
       <button onclick="closeBiometricModal()" style="width:100%;background:transparent;border:1px solid #333;color:#888;border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px">إغلاق</button>
     </div>
@@ -565,6 +578,36 @@ function bioToast(msg, type){
   el.textContent = msg;
   el.style.display = 'block';
   setTimeout(() => { el.style.display = 'none'; }, 2800);
+}
+
+// 🔬 تحديث الـ debug panel
+async function updateBioDebug(){
+  const el = document.getElementById('bioDebugContent');
+  if (!el) return;
+  const isInTg = bioIsInTelegram();
+  let platformAvail = 'checking…';
+  try {
+    if (!isInTg && window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+      platformAvail = (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) ? '✅ yes' : '❌ no';
+    } else if (isInTg) {
+      platformAvail = '(Telegram mode)';
+    } else {
+      platformAvail = '❌ no API';
+    }
+  } catch(e) { platformAvail = '⚠️ ' + e.message; }
+  const stored = localStorage.getItem('hawa_biometric');
+  let storedParsed = null;
+  try { storedParsed = stored ? JSON.parse(stored) : null; } catch(e){}
+  el.innerHTML = `
+    <div>🌐 URL: <b>${window.location.host}</b></div>
+    <div>📱 Telegram: <b style="color:${isInTg?'#4CAF7D':'#aaa'}">${isInTg ? 'YES' : 'no'}</b>${isInTg && tg?.version ? ' v'+tg.version : ''}</div>
+    <div>🔐 BioSupported: <b style="color:${bioSupported()?'#4CAF7D':'#e88080'}">${bioSupported() ? 'YES' : 'NO'}</b></div>
+    <div>👆 Platform Auth: <b>${platformAvail}</b></div>
+    <div>👤 User ID: <b>${user?.id || '—'}</b></div>
+    <div>✅ Approval: <b style="color:${user?.approval_status==='approved'?'#4CAF7D':'#e88080'}">${user?.approval_status || 'loading…'}</b></div>
+    <div>🛡️ isApproved: <b style="color:${bioIsApprovedClient()?'#4CAF7D':'#e88080'}">${bioIsApprovedClient() ? 'YES' : 'no'}</b></div>
+    <div>💾 Saved Bio: <b>${storedParsed ? '✅ ' + (storedParsed.deviceLabel || 'yes') : '— مش مسجّل'}</b></div>
+  `;
 }
 
 function bioFormatDate(iso){
@@ -858,10 +901,70 @@ function bioGetExcludedCreds(){
 // ═══════════════════════════════════════════════════════════
 function openBiometricModal(){
   document.getElementById('bioModal').style.display = 'flex';
+  showBioStatus();
   loadBiometrics();
 }
 function closeBiometricModal(){
   document.getElementById('bioModal').style.display = 'none';
+}
+
+// 🔍 يعرض status checks تفصيلى عشان الـ user يفهم لو فى مشكلة
+async function showBioStatus(){
+  const statusEl = document.getElementById('bioStatus');
+  if (!statusEl) return;
+
+  // اعمل الـ checks
+  const isHttps = location.protocol === 'https:';
+  const isApproved = bioIsApprovedClient();
+  const inTelegram = bioIsInTelegram();
+  const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials);
+  let hasPlatformAuth = null; // 'loading'
+  if (hasWebAuthn && !inTelegram && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+    try {
+      hasPlatformAuth = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    } catch(e) { hasPlatformAuth = false; }
+  }
+  let tgBioAvailable = null;
+  if (inTelegram && tg.BiometricManager) {
+    tgBioAvailable = tg.BiometricManager.isBiometricAvailable;
+  }
+
+  // ابنى الـ rows
+  const rows = [];
+  rows.push({ ok: isHttps, label: 'الموقع HTTPS' });
+  rows.push({ ok: isApproved, label: 'الحساب معتمد من الإدارة' });
+  rows.push({ ok: inTelegram || hasWebAuthn, label: 'الجهاز يدعم البصمة' });
+  if (inTelegram) {
+    rows.push({ ok: true, info: true, label: `داخل Telegram v${tg.version || '?'}` });
+    if (tgBioAvailable !== null) rows.push({ ok: tgBioAvailable, label: 'Telegram BiometricManager متاح' });
+  } else {
+    rows.push({ ok: true, info: true, label: 'متصفح خارجى' });
+    if (hasPlatformAuth !== null) rows.push({ ok: hasPlatformAuth, label: 'بصمة الجهاز مفعّلة (Face/Fingerprint)' });
+  }
+
+  // ابنى الـ HTML
+  statusEl.innerHTML = '<div style="font-size:11px;color:#888;font-weight:700;margin-bottom:6px">🔍 حالة الجهاز</div>' + 
+    rows.map(r => {
+      const ico = r.ok ? '✅' : (r.info ? 'ℹ️' : '❌');
+      const color = r.ok ? '#9d9d9d' : (r.info ? '#7ab5e8' : '#e88080');
+      return `<div style="display:flex;gap:8px;padding:3px 0;font-size:12px;color:${color};line-height:1.6"><span style="width:18px;flex-shrink:0">${ico}</span><span>${r.label}</span></div>`;
+    }).join('');
+
+  // 📊 تحديد لو الـ enrollment ممكن أو لأ
+  const canEnroll = isHttps && isApproved && (inTelegram ? tgBioAvailable !== false : (hasPlatformAuth !== false));
+  const enrollBtn = document.getElementById('bioAddBtn');
+  const browserBtn = document.getElementById('bioBrowserBtn');
+  if (enrollBtn) {
+    enrollBtn.disabled = !canEnroll;
+    enrollBtn.style.opacity = canEnroll ? '1' : '0.5';
+    if (!isApproved) enrollBtn.textContent = '⚠️ الحساب لازم يكون معتمد الأول';
+    else if (!isHttps) enrollBtn.textContent = '⚠️ الموقع لازم يكون HTTPS';
+    else if (inTelegram && tgBioAvailable === false) enrollBtn.textContent = '⚠️ Telegram bio مش متاح';
+    else if (!inTelegram && hasPlatformAuth === false) enrollBtn.textContent = '⚠️ بصمة الجهاز مش مفعّلة';
+    else enrollBtn.textContent = '➕ تسجيل البصمة على الجهاز ده';
+  }
+  // اظهر زرار "افتح فى المتصفح" لو فى Telegram (دائماً مفيد)
+  if (browserBtn) browserBtn.style.display = inTelegram ? 'block' : 'none';
 }
 
 async function loadBiometrics(){
@@ -999,36 +1102,25 @@ function updateBioHeaderBtn(){
 // مبدئياً، خلى الزرار 🔐 يظهر فوراً لو الجهاز يدعم
 // الـ banner و enrollment بـ يـ check approval_status لما الـ data تجى من DB
 updateBioHeaderBtn();
+if (typeof updateBioDebug === 'function') updateBioDebug();
 
-// 🔬 Detection للـ device capability:
-//    - فى Telegram: نـ init الـ BiometricManager ونـ check availability
-//    - فى Browser: نـ check WebAuthn platform authenticator
+// 🔬 Detection للـ device capability — log فقط (مش نخفى الزرار)
+//    الـ user يقدر يضغط الزرار يشوف الـ status بنفسه فى الـ modal
 if (bioIsInTelegram()) {
-  // Telegram Mini App
   try {
     tg.BiometricManager.init(() => {
-      const available = tg.BiometricManager.isBiometricAvailable;
       console.log('[bio] Telegram BiometricManager init:', {
         isInited: tg.BiometricManager.isInited,
-        isAvailable: available,
+        isAvailable: tg.BiometricManager.isBiometricAvailable,
         biometricType: tg.BiometricManager.biometricType
       });
-      if (!available) {
-        const btn = document.getElementById('bioBtnHeader');
-        if (btn) btn.style.display = 'none';
-      }
     });
   } catch(e) {
     console.warn('[bio] Telegram BiometricManager error:', e);
   }
 } else if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-  // Browser عادى — check platform authenticator
   PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(available => {
     console.log('[bio] Platform authenticator available:', available);
-    if (!available) {
-      const btn = document.getElementById('bioBtnHeader');
-      if (btn) btn.style.display = 'none';
-    }
   }).catch(e => console.warn('[bio] platform check failed:', e));
 }
 
@@ -1054,6 +1146,7 @@ async function checkTelegramLink(){
     // 🔐 بعد ما البيانات وصلت، حدّث الـ biometric UI (يظهر فقط للمعتمدين)
     if (typeof updateBioHeaderBtn === 'function') updateBioHeaderBtn();
     if (typeof maybeShowEnrollBanner === 'function') maybeShowEnrollBanner();
+    if (typeof updateBioDebug === 'function') updateBioDebug();
 
     const banner = document.getElementById('tgLinkBanner');
     if (!tgId) {
