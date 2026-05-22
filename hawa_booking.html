@@ -513,7 +513,15 @@ checkTelegramLink();
 // ═══════════════════════════════════════════════════════════
 
 function bioSupported(){
+  // 1. لو فى Telegram Mini App، نستخدم Telegram's BiometricManager
+  if (tg && tg.BiometricManager) return true;
+  // 2. وإلا، نستخدم WebAuthn (browser عادى)
   return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+}
+
+// 📱 لو فى Telegram، استخدم BiometricManager API بتاعهم
+function bioIsInTelegram(){
+  return !!(tg && tg.BiometricManager);
 }
 
 // Buffer ↔ Base64URL helpers
@@ -570,7 +578,7 @@ function bioIsApprovedClient(){
 }
 
 // ═══════════════════════════════════════════════════════════
-// تسجيل بصمة جديدة على الجهاز ده
+// تسجيل بصمة جديدة على الجهاز ده (router)
 // ═══════════════════════════════════════════════════════════
 async function enrollBiometric(){
   if (!bioSupported()){
@@ -582,6 +590,100 @@ async function enrollBiometric(){
     bioToast('⚠️ الحساب لازم يكون معتمد من الإدارة الأول', 'error');
     return;
   }
+  // 📱 لو فى Telegram → استخدم BiometricManager بتاعهم
+  if (bioIsInTelegram()) return enrollViaTelegram();
+  // 🌐 وإلا → WebAuthn
+  return enrollViaWebAuthn();
+}
+
+// 📱 Telegram BiometricManager — يشتغل داخل الـ Telegram Mini App
+async function enrollViaTelegram(){
+  return new Promise((resolve) => {
+    const bio = tg.BiometricManager;
+    const btn = document.getElementById('bioAddBtn');
+    if (btn){ btn.disabled = true; btn.textContent = '⏳ ابصم على الجهاز...'; }
+    const cleanup = () => { if (btn){ btn.disabled = false; btn.textContent = '➕ تسجيل البصمة على الجهاز ده'; } };
+
+    bio.init(() => {
+      console.log('[bio] Telegram BiometricManager:', {
+        isInited: bio.isInited,
+        isAvailable: bio.isBiometricAvailable,
+        biometricType: bio.biometricType,
+        isAccessGranted: bio.isAccessGranted,
+        isAccessRequested: bio.isAccessRequested
+      });
+
+      if (!bio.isBiometricAvailable) {
+        bioToast('❌ الجهاز ما عندوش بصمة مفعّلة', 'error');
+        cleanup(); return resolve(false);
+      }
+
+      bio.requestAccess({ reason: 'لتفعيل الدخول السريع بالبصمة' }, granted => {
+        if (!granted) {
+          bioToast('⏱️ تم الإلغاء أو رفض الإذن', 'error');
+          cleanup(); return resolve(false);
+        }
+
+        // اعمل credential ID فريد
+        const credentialId = 'tg_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now());
+        const deviceLabel = bioDetectDevice() + ' (Telegram)';
+
+        // اطلب من الـ user يحط بصمته عشان نخزن الـ token
+        const tokenData = JSON.stringify({ credentialId, clientId: user.id });
+
+        bio.updateBiometricToken(tokenData, async success => {
+          if (!success) {
+            bioToast('❌ فشل حفظ البصمة', 'error');
+            cleanup(); return resolve(false);
+          }
+
+          try {
+            // احفظ فى الـ DB
+            const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
+              method: 'POST',
+              headers: { ...HDR, 'Prefer': 'return=representation' },
+              body: JSON.stringify({
+                client_id: user.id,
+                credential_id: credentialId,
+                public_key: 'telegram_bio',
+                device_label: deviceLabel,
+                user_agent: (navigator.userAgent || '').substring(0, 500)
+              })
+            });
+            if (!r.ok) throw new Error('فشل الحفظ فى السيرفر');
+
+            // احفظ فى localStorage
+            localStorage.setItem('hawa_biometric', JSON.stringify({
+              credentialId,
+              clientId: user.id,
+              clientCode: user.company_code,
+              clientName: user.name,
+              deviceLabel,
+              enrolledAt: new Date().toISOString(),
+              provider: 'telegram'
+            }));
+
+            if (typeof logActivity === 'function'){
+              logActivity('cl_biometric_enrolled', '🔐 سجّل بصمة (تليجرام)', { device: deviceLabel });
+            }
+            bioToast('✅ تم تفعيل الدخول بالبصمة!');
+            dismissEnrollBanner(true);
+            updateBioHeaderBtn();
+            if (document.getElementById('bioModal').style.display === 'flex') loadBiometrics();
+            cleanup(); resolve(true);
+          } catch(e){
+            console.error('[bio] DB save error:', e);
+            bioToast('❌ ' + (e.message || 'خطأ'), 'error');
+            cleanup(); resolve(false);
+          }
+        });
+      });
+    });
+  });
+}
+
+// 🌐 WebAuthn — للـ Browser العادى (Chrome, Safari, إلخ)
+async function enrollViaWebAuthn(){
   const btn = document.getElementById('bioAddBtn');
   if (btn){ btn.disabled = true; btn.textContent = '⏳ ابصم على الجهاز...'; }
   try {
@@ -600,7 +702,7 @@ async function enrollBiometric(){
           { type: 'public-key', alg: -257 }   // RS256
         ],
         authenticatorSelection: {
-          authenticatorAttachment: 'platform',  // بصمة الجهاز فقط (مش security key خارجى)
+          authenticatorAttachment: 'platform',  // بصمة الجهاز فقط
           userVerification: 'required',
           residentKey: 'preferred'
         },
@@ -622,7 +724,6 @@ async function enrollBiometric(){
 
     const deviceLabel = bioDetectDevice();
 
-    // احفظ فى الـ DB
     const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
       method: 'POST',
       headers: { ...HDR, 'Prefer': 'return=representation' },
@@ -636,38 +737,30 @@ async function enrollBiometric(){
     });
     if (!r.ok) throw new Error('فشل الحفظ فى السيرفر');
 
-    // احفظ فى localStorage (للـ login السريع المرة الجاية)
     localStorage.setItem('hawa_biometric', JSON.stringify({
       credentialId,
       clientId: user.id,
       clientCode: user.company_code,
       clientName: user.name,
       deviceLabel,
-      enrolledAt: new Date().toISOString()
+      enrolledAt: new Date().toISOString(),
+      provider: 'webauthn'
     }));
 
-    if (typeof logActivity === 'function') {
+    if (typeof logActivity === 'function'){
       logActivity('cl_biometric_enrolled', '🔐 سجّل دخول بالبصمة', { device: deviceLabel });
     }
 
     bioToast('✅ تم تفعيل الدخول بالبصمة!');
     dismissEnrollBanner(true);
     updateBioHeaderBtn();
-    // re-render الـ modal لو مفتوح
-    if (document.getElementById('bioModal').style.display === 'flex') {
-      loadBiometrics();
-    }
+    if (document.getElementById('bioModal').style.display === 'flex') loadBiometrics();
   } catch(e){
-    console.error('enrollBiometric error:', e);
-    if (e.name === 'NotAllowedError') {
-      bioToast('⏱️ تم الإلغاء', 'error');
-    } else if (e.name === 'InvalidStateError') {
-      bioToast('⚠️ الجهاز ده مسجل بالفعل', 'error');
-    } else if (e.name === 'NotSupportedError') {
-      bioToast('❌ الجهاز مش بيدعم البصمة', 'error');
-    } else {
-      bioToast('❌ ' + (e.message || 'خطأ غير متوقع'), 'error');
-    }
+    console.error('enrollViaWebAuthn error:', e);
+    if (e.name === 'NotAllowedError')       bioToast('⏱️ تم الإلغاء', 'error');
+    else if (e.name === 'InvalidStateError') bioToast('⚠️ الجهاز ده مسجل بالفعل', 'error');
+    else if (e.name === 'NotSupportedError') bioToast('❌ الجهاز مش بيدعم البصمة', 'error');
+    else                                     bioToast('❌ ' + (e.message || 'خطأ غير متوقع'), 'error');
   } finally {
     if (btn){ btn.disabled = false; btn.textContent = '➕ تسجيل البصمة على الجهاز ده'; }
   }
@@ -818,12 +911,32 @@ function updateBioHeaderBtn(){
 // الـ banner و enrollment بـ يـ check approval_status لما الـ data تجى من DB
 updateBioHeaderBtn();
 
-// 🔬 على الموبيل، نتأكد إن الـ platform authenticator متاح (Face ID / Touch ID / بصمة)
-if (bioSupported() && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+// 🔬 Detection للـ device capability:
+//    - فى Telegram: نـ init الـ BiometricManager ونـ check availability
+//    - فى Browser: نـ check WebAuthn platform authenticator
+if (bioIsInTelegram()) {
+  // Telegram Mini App
+  try {
+    tg.BiometricManager.init(() => {
+      const available = tg.BiometricManager.isBiometricAvailable;
+      console.log('[bio] Telegram BiometricManager init:', {
+        isInited: tg.BiometricManager.isInited,
+        isAvailable: available,
+        biometricType: tg.BiometricManager.biometricType
+      });
+      if (!available) {
+        const btn = document.getElementById('bioBtnHeader');
+        if (btn) btn.style.display = 'none';
+      }
+    });
+  } catch(e) {
+    console.warn('[bio] Telegram BiometricManager error:', e);
+  }
+} else if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+  // Browser عادى — check platform authenticator
   PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(available => {
     console.log('[bio] Platform authenticator available:', available);
     if (!available) {
-      // الجهاز ما عندوش بصمة مفعّلة — نخفى الـ button
       const btn = document.getElementById('bioBtnHeader');
       if (btn) btn.style.display = 'none';
     }
