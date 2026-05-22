@@ -81,6 +81,110 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .nav-item:hover{background:rgba(201,168,76,0.05);color:var(--text);}
 .nav-item.active{background:rgba(201,168,76,0.08);color:var(--gold);border-right-color:var(--gold);}
 .nav-item .ni{font-size:16px;width:24px;text-align:center;}
+
+/* ═══════════════════════════════════════════════════════════
+   📁 SIDEBAR — Categorized navigation (Professional)
+   ═══════════════════════════════════════════════════════════ */
+.sb-nav{padding:6px 0;overflow-y:auto;}
+.sb-group{margin-bottom:2px;}
+.sb-group:not(:last-child){border-bottom:1px solid rgba(255,255,255,0.03);}
+
+.sb-group-hd{
+  display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;
+  font-size:11.5px;font-weight:800;color:var(--text-dim);
+  text-transform:uppercase;letter-spacing:0.5px;
+  transition:all 0.2s ease;user-select:none;
+  position:relative;
+}
+.sb-group-hd:hover{color:var(--text);background:rgba(255,255,255,0.02);}
+.sb-group.open .sb-group-hd{color:var(--gold-light);background:rgba(201,168,76,0.04);}
+.sb-group.sb-fav .sb-group-hd{color:var(--gold) !important;}
+.sb-group.sb-fav.open .sb-group-hd{background:linear-gradient(90deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));}
+.sb-group.has-active .sb-group-hd::before{
+  content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);
+  width:3px;height:60%;background:var(--gold);border-radius:0 0 0 3px;
+}
+
+.sbg-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
+.sbg-label{flex:1;font-family:'Cairo',sans-serif;}
+.sbg-count{
+  background:rgba(255,255,255,0.06);color:var(--text-dim);
+  font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;
+  min-width:22px;text-align:center;
+}
+.sb-group.open .sbg-count{background:rgba(201,168,76,0.18);color:var(--gold-light);}
+.sb-group.sb-fav .sbg-count{background:rgba(201,168,76,0.2);color:var(--gold);}
+.sbg-chevron{
+  font-size:10px;color:var(--text-dim);
+  transition:transform 0.25s ease;display:inline-block;
+}
+.sb-group.open .sbg-chevron{transform:rotate(180deg);color:var(--gold-light);}
+
+.sb-group-items{
+  max-height:0;overflow:hidden;
+  transition:max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sb-group.open .sb-group-items{max-height:800px;padding-bottom:6px;}
+
+.sb-group .nav-item{
+  padding:9px 16px 9px 36px;font-size:12.5px;font-weight:600;
+  position:relative;display:flex;align-items:center;gap:9px;
+}
+.sb-group .nav-item .ni{font-size:14px;width:20px;}
+.nav-label{flex:1;}
+
+.nav-actions{
+  display:none;gap:2px;align-items:center;
+}
+.nav-item:hover .nav-actions{display:inline-flex;}
+.nav-item .nav-actions .nav-action-btn{
+  background:transparent;border:none;cursor:pointer;
+  font-size:13px;padding:3px 6px;border-radius:5px;
+  color:var(--text-dim);transition:all 0.15s;
+  font-family:'Cairo',sans-serif;
+}
+.nav-action-btn:hover{background:rgba(201,168,76,0.18);color:var(--gold) !important;}
+.nav-action-btn.is-fav{color:var(--gold-light) !important;}
+
+.sb-empty-hint{
+  padding:14px 20px;color:var(--text-dim);
+  font-size:11.5px;text-align:center;
+  font-style:italic;line-height:1.7;
+  background:rgba(255,255,255,0.015);
+  margin:4px 12px;border-radius:8px;
+}
+
+/* Move modal */
+.sb-move-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);
+  display:none;align-items:center;justify-content:center;
+  z-index:9999;padding:20px;
+}
+.sb-move-modal.show{display:flex;}
+.sb-move-modal-box{
+  background:var(--dark2);border:1px solid var(--border);
+  border-radius:14px;padding:24px;max-width:380px;width:100%;
+  box-shadow:0 24px 60px rgba(0,0,0,0.6);
+}
+.sb-move-title{
+  font-size:15px;font-weight:800;color:var(--gold-light);
+  margin-bottom:6px;display:flex;align-items:center;gap:8px;
+}
+.sb-move-sub{font-size:12px;color:var(--text-dim);margin-bottom:18px;line-height:1.7;}
+.sb-move-opt{
+  display:flex;align-items:center;gap:10px;padding:12px 14px;
+  background:rgba(255,255,255,0.03);border:1px solid var(--border);
+  border-radius:10px;cursor:pointer;margin-bottom:8px;
+  transition:all 0.15s;color:var(--text);font-size:13.5px;font-weight:700;
+}
+.sb-move-opt:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.4);}
+.sb-move-opt.current{opacity:0.5;cursor:not-allowed;}
+.sb-move-cancel{
+  width:100%;padding:10px;background:transparent;border:1px solid var(--border);
+  border-radius:9px;color:var(--text-dim);cursor:pointer;font-family:'Cairo',sans-serif;
+  font-size:12.5px;font-weight:700;margin-top:6px;
+}
+.sb-move-cancel:hover{color:var(--text);}
 .sb-footer{padding:16px;}
 .logout-btn{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
 .logout-btn:hover{border-color:var(--error);color:var(--error);}
@@ -2224,29 +2328,21 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
       <div class="sb-admin" id="adminName">...</div>
     </div>
-    <div class="sb-nav">
-      <div class="nav-item active" onclick="goTo('bookings')"><span class="ni">📋</span> الحجوزات</div>
-      <div class="nav-item" onclick="goTo('employees')"><span class="ni">👷</span> الموظفين</div>
-      <div class="nav-item" onclick="goTo('clients')"><span class="ni">👥</span> العملاء</div>
-      <div class="nav-item" onclick="goTo('pending-clients')"><span class="ni">⏳</span> عملاء تحت الانتظار <span class="pending-badge" id="pendingBadge">0</span></div>
-      <div class="nav-item" onclick="goTo('permit-alerts')"><span class="ni">🚨</span> تنبيهات الأذونات <span class="alert-badge" id="alertBadge">0</span></div>
-      <div class="nav-item" onclick="goTo('client-types')"><span class="ni">🏷️</span> أنواع العملاء</div>
-      <div class="nav-item" onclick="goTo('extra-contacts')"><span class="ni">📞</span> جهات إضافية</div>
-      <div class="nav-item" onclick="goTo('broadcast')"><span class="ni">📢</span> إرسال رسائل</div>
-      <div class="nav-item" onclick="goTo('templates')"><span class="ni">💌</span> الرسائل المحفوظة</div>
-      <div class="nav-item" onclick="goTo('unlinked')"><span class="ni">🔗</span> عملاء لم يربطوا</div>
-      <div class="nav-item" onclick="goTo('vehicle-types')"><span class="ni">🚚</span> أنواع العربيات</div>
-      <div class="nav-item" onclick="goTo('schedule')"><span class="ni">📅</span> إدارة الأيام</div>
-      <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
-      <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
-      <div class="nav-item" onclick="goTo('warehouses')"><span class="ni">📦</span> إيميلات المخازن</div>
-      <div class="nav-item" onclick="goTo('activity-log')"><span class="ni">📜</span> سجل الأنشطة</div>
-      <div class="nav-item" onclick="goTo('client-tiers')"><span class="ni">🏆</span> فئات العملاء</div>
-      <div class="nav-item" onclick="goTo('booking-limits')"><span class="ni">📊</span> حدود الحجز</div>
-      <div class="nav-item" onclick="goTo('settings')"><span class="ni">⚙️</span> إعدادات عامة</div>
+    <div class="sb-nav" id="sb-nav-container">
+      <!-- يتعمر بـ JS من renderSidebar() -->
     </div>
     <div class="sb-footer">
       <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
+    </div>
+  </div>
+
+  <!-- 🔀 Modal لنقل nav item بين الـ categories -->
+  <div class="sb-move-modal" id="sbMoveModal" onclick="if(event.target===this)sbCloseMoveModal()">
+    <div class="sb-move-modal-box">
+      <div class="sb-move-title">🔀 <span>نقل لـ category</span></div>
+      <div class="sb-move-sub" id="sbMoveSub">اختار الـ category اللى تنقلها للعنصر:</div>
+      <div id="sbMoveOptions"></div>
+      <button class="sb-move-cancel" onclick="sbCloseMoveModal()">إلغاء</button>
     </div>
   </div>
 
@@ -3944,6 +4040,8 @@ function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('adminName').textContent='👑 '+admin.name;
+  // 📁 ابنى الـ sidebar الـ categorized
+  renderSidebar();
   const todayStr = fmtDate(new Date());
   document.getElementById('bk-date-from').value=todayStr;
   document.getElementById('bk-date-to').value=todayStr;
@@ -4111,6 +4209,193 @@ function doLogout(){
 }
 
 // =================== NAVIGATION ===================
+// ═══════════════════════════════════════════════════════════
+// 📁 SIDEBAR — Categorized navigation system
+// ═══════════════════════════════════════════════════════════
+
+const SB_NAV_ITEMS = [
+  // 📋 الحجوزات
+  { id: 'bookings',         label: 'الحجوزات',           icon: '📋', group: 'bookings' },
+  { id: 'booking-limits',   label: 'حدود الحجز',         icon: '📊', group: 'bookings' },
+  { id: 'vehicle-types',    label: 'أنواع العربيات',    icon: '🚚', group: 'bookings' },
+  { id: 'permit-alerts',    label: 'تنبيهات الأذونات',   icon: '🚨', group: 'bookings', badge: { id: 'alertBadge',   cls: 'alert-badge'   } },
+  { id: 'schedule',         label: 'إدارة الأيام',        icon: '📅', group: 'bookings' },
+  // 👥 العملاء
+  { id: 'clients',          label: 'العملاء',             icon: '👥', group: 'clients' },
+  { id: 'client-tiers',     label: 'فئات العملاء',       icon: '🏆', group: 'clients' },
+  { id: 'client-types',     label: 'أنواع العملاء',     icon: '🏷️', group: 'clients' },
+  { id: 'pending-clients',  label: 'تحت الانتظار',       icon: '⏳', group: 'clients', badge: { id: 'pendingBadge', cls: 'pending-badge' } },
+  { id: 'unlinked',         label: 'لم يربطوا',           icon: '🔗', group: 'clients' },
+  { id: 'blocked',          label: 'المبلوكين',           icon: '🔒', group: 'clients' },
+  { id: 'extra-contacts',   label: 'جهات إضافية',        icon: '📞', group: 'clients' },
+  // 📨 الرسائل
+  { id: 'broadcast',        label: 'إرسال رسائل',        icon: '📢', group: 'messages' },
+  { id: 'templates',        label: 'الرسائل المحفوظة',   icon: '💌', group: 'messages' },
+  { id: 'warehouses',       label: 'إيميلات المخازن',    icon: '📦', group: 'messages' },
+  // ⚙️ الإدارة
+  { id: 'employees',        label: 'الموظفين',           icon: '👷', group: 'admin' },
+  { id: 'reports',          label: 'التقارير',           icon: '📊', group: 'admin' },
+  { id: 'activity-log',     label: 'سجل الأنشطة',        icon: '📜', group: 'admin' },
+  { id: 'settings',         label: 'إعدادات عامة',       icon: '⚙️', group: 'admin' },
+];
+
+const SB_GROUPS = [
+  { id: 'fav',      label: 'المفضل',     icon: '⭐', isFav: true },
+  { id: 'bookings', label: 'الحجوزات',   icon: '📋' },
+  { id: 'clients',  label: 'العملاء',    icon: '👥' },
+  { id: 'messages', label: 'الرسائل',    icon: '📨' },
+  { id: 'admin',    label: 'الإدارة',    icon: '⚙️' },
+];
+
+const SB_STORAGE_KEY = 'hawa_sidebar_v1';
+let sbState = (function loadSidebarState(){
+  try {
+    const saved = localStorage.getItem(SB_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // ensure structure
+      return {
+        favorites: Array.isArray(parsed.favorites) ? parsed.favorites : [],
+        groupOverrides: typeof parsed.groupOverrides === 'object' ? parsed.groupOverrides : {},
+        openGroups: typeof parsed.openGroups === 'object' ? parsed.openGroups : { fav: true, bookings: true, clients: false, messages: false, admin: false },
+      };
+    }
+  } catch(e) {}
+  return {
+    favorites: [],
+    groupOverrides: {},
+    openGroups: { fav: true, bookings: true, clients: false, messages: false, admin: false },
+  };
+})();
+
+function sbSaveState() {
+  try { localStorage.setItem(SB_STORAGE_KEY, JSON.stringify(sbState)); } catch(e) {}
+}
+
+function sbGetEffectiveGroup(sectionId) {
+  if (sbState.groupOverrides && sbState.groupOverrides[sectionId]) return sbState.groupOverrides[sectionId];
+  const item = SB_NAV_ITEMS.find(i => i.id === sectionId);
+  return item ? item.group : null;
+}
+
+function sbToggleGroup(groupId) {
+  sbState.openGroups[groupId] = !sbState.openGroups[groupId];
+  sbSaveState();
+  const el = document.getElementById(`sb-group-${groupId}`);
+  if (el) el.classList.toggle('open', sbState.openGroups[groupId]);
+}
+
+function sbToggleFavorite(sectionId, ev) {
+  if (ev) ev.stopPropagation();
+  const idx = sbState.favorites.indexOf(sectionId);
+  if (idx >= 0) sbState.favorites.splice(idx, 1);
+  else sbState.favorites.push(sectionId);
+  sbSaveState();
+  renderSidebar();
+}
+
+function sbOpenMoveModal(sectionId, ev) {
+  if (ev) ev.stopPropagation();
+  const item = SB_NAV_ITEMS.find(i => i.id === sectionId);
+  if (!item) return;
+  const currentGroup = sbGetEffectiveGroup(sectionId);
+  document.getElementById('sbMoveSub').innerHTML = 
+    `اختار الـ category اللى تنقل ليها <b style="color:var(--gold-light)">${item.icon} ${item.label}</b>:`;
+  document.getElementById('sbMoveOptions').innerHTML = SB_GROUPS
+    .filter(g => !g.isFav)
+    .map(g => {
+      const isCurrent = g.id === currentGroup;
+      return `<div class="sb-move-opt ${isCurrent ? 'current' : ''}" 
+        ${isCurrent ? '' : `onclick="sbMoveItem('${sectionId}', '${g.id}')"`}>
+        <span style="font-size:18px">${g.icon}</span>
+        <span style="flex:1">${g.label}</span>
+        ${isCurrent ? '<span style="color:var(--text-dim);font-size:11px">حالياً</span>' : ''}
+      </div>`;
+    }).join('');
+  document.getElementById('sbMoveModal').classList.add('show');
+}
+
+function sbCloseMoveModal() {
+  document.getElementById('sbMoveModal').classList.remove('show');
+}
+
+// ESC يقفل الـ move modal
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') {
+    const m = document.getElementById('sbMoveModal');
+    if (m && m.classList.contains('show')) sbCloseMoveModal();
+  }
+});
+
+function sbMoveItem(sectionId, targetGroup) {
+  sbState.groupOverrides[sectionId] = targetGroup;
+  sbSaveState();
+  sbCloseMoveModal();
+  // افتح الـ target group أوتوماتيكياً
+  sbState.openGroups[targetGroup] = true;
+  sbSaveState();
+  renderSidebar();
+}
+
+function renderSidebar() {
+  const navEl = document.getElementById('sb-nav-container');
+  if (!navEl) return;
+
+  // اجمع الـ items فى كل group
+  const itemsByGroup = {};
+  SB_GROUPS.forEach(g => itemsByGroup[g.id] = []);
+
+  // المفضل
+  itemsByGroup.fav = sbState.favorites
+    .map(id => SB_NAV_ITEMS.find(i => i.id === id))
+    .filter(Boolean);
+
+  // الباقى حسب الـ effective group
+  SB_NAV_ITEMS.forEach(item => {
+    const g = sbGetEffectiveGroup(item.id);
+    if (g && itemsByGroup[g]) itemsByGroup[g].push(item);
+  });
+
+  // اعمل render
+  navEl.innerHTML = SB_GROUPS.map(g => {
+    const items = itemsByGroup[g.id] || [];
+    const hasActiveItem = items.some(it => it.id === currentSection);
+    const isOpen = !!sbState.openGroups[g.id];
+    
+    let itemsHtml;
+    if (g.isFav && items.length === 0) {
+      itemsHtml = '<div class="sb-empty-hint">⭐ ضيف شاشاتك المفضلة من زرار النجمة بجانب أى عنصر</div>';
+    } else {
+      itemsHtml = items.map(item => {
+        const isFav = sbState.favorites.includes(item.id);
+        const isActive = item.id === currentSection;
+        const badge = item.badge ? `<span class="${item.badge.cls}" id="${item.badge.id}">0</span>` : '';
+        const favBtn = `<button class="nav-action-btn ${isFav ? 'is-fav' : ''}" onclick="sbToggleFavorite('${item.id}', event)" title="${isFav ? 'شيل من المفضل' : 'ضيف للمفضل'}">${isFav ? '★' : '☆'}</button>`;
+        const moveBtn = g.isFav ? '' : `<button class="nav-action-btn" onclick="sbOpenMoveModal('${item.id}', event)" title="نقل لـ category تانية">🔀</button>`;
+        return `<div class="nav-item${isActive ? ' active' : ''}" data-section="${item.id}" onclick="goTo('${item.id}')">
+          <span class="ni">${item.icon}</span>
+          <span class="nav-label">${item.label}</span>
+          ${badge}
+          <span class="nav-actions">${favBtn}${moveBtn}</span>
+        </div>`;
+      }).join('');
+    }
+
+    return `<div class="sb-group${g.isFav ? ' sb-fav' : ''}${isOpen ? ' open' : ''}${hasActiveItem ? ' has-active' : ''}" id="sb-group-${g.id}">
+      <div class="sb-group-hd" onclick="sbToggleGroup('${g.id}')">
+        <span class="sbg-icon">${g.icon}</span>
+        <span class="sbg-label">${g.label}</span>
+        <span class="sbg-count">${items.length}</span>
+        <span class="sbg-chevron">▾</span>
+      </div>
+      <div class="sb-group-items">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+
+  // إعادة سحب الـ badges (counts) لأن الـ IDs اتعملوا من جديد
+  if (typeof refreshSidebarBadges === 'function') refreshSidebarBadges();
+}
+
 function goTo(sec){
   currentSection=sec;
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -4123,20 +4408,14 @@ function goTo(sec){
   } else {
     target.classList.add('active');
   }
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-
-  // Highlight the matching nav item — works whether triggered by click or programmatically
-  let highlighted = false;
-  if(typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.classList){
-    event.currentTarget.classList.add('active');
-    highlighted = true;
+  // افتح الـ group اللى فيها الـ section الحالى
+  const targetGroup = sbGetEffectiveGroup(sec);
+  if (targetGroup && !sbState.openGroups[targetGroup]) {
+    sbState.openGroups[targetGroup] = true;
+    sbSaveState();
   }
-  if(!highlighted){
-    document.querySelectorAll('.nav-item').forEach(n => {
-      const oc = n.getAttribute('onclick') || '';
-      if(oc.includes(`'${sec}'`)) n.classList.add('active');
-    });
-  }
+  // re-render الـ sidebar عشان الـ active state والـ has-active
+  renderSidebar();
 
   if(sec==='bookings')loadBookings();
   else if(sec==='permit-alerts')loadPermitAlerts();
