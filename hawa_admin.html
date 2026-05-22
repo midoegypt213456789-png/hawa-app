@@ -48,7 +48,7 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .section{display:none;flex:1;flex-direction:column;min-height:0;}
 .section.active{display:flex;}
 /* form-style sections: constrain width on wide screens for better composition */
-#sec-broadcast.active, #sec-settings.active, #sec-types.active, #sec-vehicles.active, #sec-templates.active, #sec-booking-limits.active, #sec-client-tiers.active{max-width:1100px;width:100%;margin-right:auto;margin-left:auto;}
+#sec-broadcast.active, #sec-settings.active, #sec-types.active, #sec-vehicles.active, #sec-templates.active, #sec-booking-limits.active{max-width:1100px;width:100%;margin-right:auto;margin-left:auto;}
 /* Broadcast: prevent any text from breaking layout */
 #sec-broadcast .tbl-wrap{overflow-wrap:anywhere;word-break:break-word;}
 #sec-broadcast textarea{overflow-wrap:anywhere;word-break:break-word;}
@@ -81,189 +81,6 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .nav-item:hover{background:rgba(201,168,76,0.05);color:var(--text);}
 .nav-item.active{background:rgba(201,168,76,0.08);color:var(--gold);border-right-color:var(--gold);}
 .nav-item .ni{font-size:16px;width:24px;text-align:center;}
-
-/* ═══════════════════════════════════════════════════════════
-   📁 SIDEBAR — Categorized navigation (Professional)
-   ═══════════════════════════════════════════════════════════ */
-.sb-nav{padding:6px 0;overflow-y:auto;}
-.sb-group{margin-bottom:2px;}
-.sb-group:not(:last-child){border-bottom:1px solid rgba(255,255,255,0.03);}
-
-.sb-group-hd{
-  display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;
-  font-size:11.5px;font-weight:800;color:var(--text-dim);
-  text-transform:uppercase;letter-spacing:0.5px;
-  transition:all 0.2s ease;user-select:none;
-  position:relative;
-}
-.sb-group-hd:hover{color:var(--text);background:rgba(255,255,255,0.02);}
-.sb-group.open .sb-group-hd{color:var(--gold-light);background:rgba(201,168,76,0.04);}
-.sb-group.sb-fav .sb-group-hd{color:var(--gold) !important;}
-.sb-group.sb-fav.open .sb-group-hd{background:linear-gradient(90deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));}
-.sb-group.has-active .sb-group-hd::before{
-  content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);
-  width:3px;height:60%;background:var(--gold);border-radius:0 0 0 3px;
-}
-
-.sbg-icon{font-size:16px;width:22px;text-align:center;flex-shrink:0;}
-.sbg-label{flex:1;font-family:'Cairo',sans-serif;}
-.sbg-count{
-  background:rgba(255,255,255,0.06);color:var(--text-dim);
-  font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px;
-  min-width:22px;text-align:center;
-}
-.sb-group.open .sbg-count{background:rgba(201,168,76,0.18);color:var(--gold-light);}
-.sb-group.sb-fav .sbg-count{background:rgba(201,168,76,0.2);color:var(--gold);}
-.sbg-chevron{
-  font-size:10px;color:var(--text-dim);
-  transition:transform 0.25s ease;display:inline-block;
-}
-.sb-group.open .sbg-chevron{transform:rotate(180deg);color:var(--gold-light);}
-
-.sb-group-items{
-  max-height:0;overflow:hidden;
-  transition:max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.sb-group.open .sb-group-items{max-height:800px;padding-bottom:6px;}
-
-.sb-group .nav-item{
-  padding:9px 16px 9px 36px;font-size:12.5px;font-weight:600;
-  position:relative;display:flex;align-items:center;gap:9px;
-}
-.sb-group .nav-item .ni{font-size:14px;width:20px;}
-.nav-label{flex:1;}
-
-.nav-actions{
-  display:none;gap:2px;align-items:center;
-}
-.nav-item:hover .nav-actions{display:inline-flex;}
-.nav-item .nav-actions .nav-action-btn{
-  background:transparent;border:none;cursor:pointer;
-  font-size:13px;padding:3px 6px;border-radius:5px;
-  color:var(--text-dim);transition:all 0.15s;
-  font-family:'Cairo',sans-serif;
-}
-.nav-action-btn:hover{background:rgba(201,168,76,0.18);color:var(--gold) !important;}
-.nav-action-btn.is-fav{color:var(--gold-light) !important;}
-
-.sb-empty-hint{
-  padding:14px 20px;color:var(--text-dim);
-  font-size:11.5px;text-align:center;
-  font-style:italic;line-height:1.7;
-  background:rgba(255,255,255,0.015);
-  margin:4px 12px;border-radius:8px;
-}
-
-/* Move modal */
-.sb-move-modal{
-  position:fixed;inset:0;background:rgba(0,0,0,0.7);
-  display:none;align-items:center;justify-content:center;
-  z-index:9999;padding:20px;
-}
-.sb-move-modal.show{display:flex;}
-.sb-move-modal-box{
-  background:var(--dark2);border:1px solid var(--border);
-  border-radius:14px;padding:24px;max-width:380px;width:100%;
-  box-shadow:0 24px 60px rgba(0,0,0,0.6);
-}
-.sb-move-title{
-  font-size:15px;font-weight:800;color:var(--gold-light);
-  margin-bottom:6px;display:flex;align-items:center;gap:8px;
-}
-.sb-move-sub{font-size:12px;color:var(--text-dim);margin-bottom:18px;line-height:1.7;}
-.sb-move-opt{
-  display:flex;align-items:center;gap:10px;padding:12px 14px;
-  background:rgba(255,255,255,0.03);border:1px solid var(--border);
-  border-radius:10px;cursor:pointer;margin-bottom:8px;
-  transition:all 0.15s;color:var(--text);font-size:13.5px;font-weight:700;
-}
-.sb-move-opt:hover{background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.4);}
-.sb-move-opt.current{opacity:0.5;cursor:not-allowed;}
-.sb-move-cancel{
-  width:100%;padding:10px;background:transparent;border:1px solid var(--border);
-  border-radius:9px;color:var(--text-dim);cursor:pointer;font-family:'Cairo',sans-serif;
-  font-size:12.5px;font-weight:700;margin-top:6px;
-}
-.sb-move-cancel:hover{color:var(--text);}
-
-/* ═══════════════════════════════════════════════════════════
-   📑 TABS BAR — الشاشات المفتوحة (browser-like)
-   ═══════════════════════════════════════════════════════════ */
-.tabs-bar{
-  display:flex;align-items:stretch;gap:8px;
-  padding:8px 14px 0 14px;
-  background:linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.1));
-  border-bottom:1px solid var(--border);
-  position:sticky;top:0;z-index:50;backdrop-filter:blur(8px);
-}
-.tabs-bar-scroll{
-  display:flex;gap:3px;flex:1;
-  overflow-x:auto;overflow-y:hidden;
-  scrollbar-width:thin;
-  padding-bottom:0;align-items:flex-end;
-}
-.tabs-bar-scroll::-webkit-scrollbar{height:4px;}
-.tabs-bar-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
-
-.open-tab{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:9px 12px 9px 8px;
-  background:rgba(255,255,255,0.025);
-  border:1px solid var(--border);border-bottom:none;
-  border-radius:9px 9px 0 0;cursor:pointer;
-  color:var(--text-dim);font-size:12.5px;font-weight:700;
-  font-family:'Cairo',sans-serif;white-space:nowrap;
-  transition:all 0.15s ease;position:relative;
-  max-width:200px;min-width:120px;
-}
-.open-tab:hover{
-  background:rgba(255,255,255,0.05);color:var(--text);
-}
-.open-tab.active{
-  background:var(--dark);color:var(--gold);
-  border-color:var(--border);
-  position:relative;z-index:2;
-}
-.open-tab.active::after{
-  content:'';position:absolute;left:0;right:0;bottom:-1px;
-  height:2px;background:var(--dark);
-}
-.open-tab.active::before{
-  content:'';position:absolute;left:0;right:0;top:0;
-  height:2px;background:var(--gold);border-radius:9px 9px 0 0;
-}
-
-.ot-icon{font-size:14px;flex-shrink:0;}
-.ot-label{
-  flex:1;overflow:hidden;text-overflow:ellipsis;
-  text-align:right;direction:rtl;
-}
-.ot-close{
-  background:transparent;border:none;
-  color:var(--text-dim);cursor:pointer;
-  font-size:17px;line-height:1;
-  width:20px;height:20px;display:inline-flex;
-  align-items:center;justify-content:center;
-  border-radius:5px;flex-shrink:0;
-  font-family:Arial,sans-serif;font-weight:400;
-  transition:all 0.15s;padding:0;
-}
-.ot-close:hover{background:rgba(224,85,85,0.25);color:#e88080;}
-.open-tab.active .ot-close{color:var(--text-dim);}
-.open-tab.active .ot-close:hover{background:rgba(224,85,85,0.25);color:#e88080;}
-
-.tabs-close-all{
-  align-self:center;margin-bottom:2px;
-  background:transparent;border:1px solid var(--border);
-  color:var(--text-dim);font-family:'Cairo',sans-serif;
-  font-size:11.5px;font-weight:700;
-  padding:6px 11px;border-radius:8px;cursor:pointer;
-  transition:all 0.15s;white-space:nowrap;flex-shrink:0;
-}
-.tabs-close-all:hover{
-  color:#e88080;border-color:rgba(224,85,85,0.4);
-  background:rgba(224,85,85,0.08);
-}
 .sb-footer{padding:16px;}
 .logout-btn{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
 .logout-btn:hover{border-color:var(--error);color:var(--error);}
@@ -2137,14 +1954,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 /* ⏱️ Refresh timer badge */
 .refresh-timer-badge{
   position:fixed;
-  top:10px;
-  left:50%;
-  transform:translateX(-50%);
-  z-index:50;
-  background:rgba(201,168,76,0.1);
-  border:1px solid rgba(201,168,76,0.3);
+  bottom:14px;
+  left:14px;
+  z-index:9999;
+  background:rgba(201,168,76,0.12);
+  border:1px solid rgba(201,168,76,0.35);
   border-radius:14px;
-  padding:3px 10px;
+  padding:4px 11px;
   font-size:10.5px;
   font-weight:700;
   color:var(--gold);
@@ -2155,7 +1971,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   backdrop-filter:blur(8px);
   pointer-events:none;
   letter-spacing:0.2px;
-  opacity:0.75;
+  opacity:0.85;
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
 }
 .refresh-timer-badge:hover{opacity:1;}
 .refresh-timer-badge.show{display:inline-flex;}
@@ -2197,141 +2014,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .sm-recipient-title{font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:4px;letter-spacing:0.3px;}
 .sm-recipient-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .sm-recipient-meta{font-size:11.5px;color:var(--text-dim);display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-
-/* ═══════════════════════════════════════════════════════════
-   🏆 CLIENT TIERS — فئات العملاء styling
-   ═══════════════════════════════════════════════════════════ */
-.tier-badge{
-  display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:8px;
-  font-size:12px;font-weight:700;line-height:1.4;border:1px solid transparent;
-  white-space:nowrap;
-}
-.tier-badge .tb-ico{font-size:13px;}
-.tier-default-flag{
-  display:inline-block;background:rgba(76,175,125,0.15);color:#6dc49a;
-  padding:2px 7px;border-radius:6px;font-size:10.5px;font-weight:700;margin-right:6px;
-  border:1px solid rgba(76,175,125,0.3);
-}
-.tier-row-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
-.tier-row-actions button{
-  background:transparent;border:1px solid var(--border);border-radius:7px;
-  padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11.5px;font-weight:700;
-  cursor:pointer;display:inline-flex;align-items:center;gap:4px;color:var(--text)
-}
-.tier-row-actions .btn-edit{background:rgba(74,144,217,0.1);color:#7ab5e8;border-color:rgba(74,144,217,0.25);}
-.tier-row-actions .btn-edit:hover{background:rgba(74,144,217,0.18);}
-.tier-row-actions .btn-default{background:rgba(76,175,125,0.1);color:#6dc49a;border-color:rgba(76,175,125,0.3);}
-.tier-row-actions .btn-default:hover{background:rgba(76,175,125,0.18);}
-.tier-row-actions .btn-del{background:rgba(224,85,85,0.1);color:#e88080;border-color:rgba(224,85,85,0.25);}
-.tier-row-actions .btn-del:hover{background:rgba(224,85,85,0.18);}
-.tier-row-actions button:disabled{opacity:0.4;cursor:not-allowed}
-
-/* Color palette swatches (modal) */
-.tier-palette{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
-.tier-palette-swatch{
-  width:36px;height:36px;border-radius:9px;cursor:pointer;border:2px solid transparent;
-  transition:transform 0.15s ease, border-color 0.15s ease;
-}
-.tier-palette-swatch:hover{transform:scale(1.1);}
-.tier-palette-swatch.selected{border-color:#FFFFFF;box-shadow:0 0 0 2px var(--gold);}
-
-/* Icon palette */
-.tier-icon-palette{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
-.tier-icon-swatch{
-  width:42px;height:42px;border-radius:9px;cursor:pointer;border:2px solid var(--border);
-  background:#1A1A1A;display:flex;align-items:center;justify-content:center;
-  font-size:20px;transition:all 0.15s ease;
-}
-.tier-icon-swatch:hover{border-color:var(--gold);background:rgba(201,168,76,0.06);}
-.tier-icon-swatch.selected{border-color:var(--gold);background:rgba(201,168,76,0.12);transform:scale(1.06);}
-
-/* Tier preview chip in modal */
-.tier-preview-card{
-  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
-  border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:6px;
-  display:flex;align-items:center;gap:12px;
-}
-.tier-preview-icon{
-  width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-  font-size:24px;flex-shrink:0;
-}
-.tier-preview-info{flex:1;min-width:0}
-.tier-preview-name{font-size:16px;font-weight:800;color:var(--text);margin-bottom:2px;}
-.tier-preview-desc{font-size:12px;color:var(--text-dim);}
-
-/* ═══════════════════════════════════════════════════════════
-   📊 Booking Limits Tabs (per tier)
-   ═══════════════════════════════════════════════════════════ */
-.bl-tier-tabs{
-  display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);
-  padding-bottom:1px;overflow-x:auto;flex-wrap:nowrap;
-}
-.bl-tier-tab{
-  background:transparent;border:1px solid transparent;border-bottom:none;
-  color:var(--text-dim);padding:10px 16px;font-family:'Cairo',sans-serif;
-  font-size:13.5px;font-weight:700;cursor:pointer;border-radius:10px 10px 0 0;
-  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
-  transition:all 0.15s ease;position:relative;top:1px;
-}
-.bl-tier-tab:hover{color:var(--text);background:rgba(255,255,255,0.03);}
-.bl-tier-tab.active{
-  color:var(--gold);background:var(--dark);
-  border-color:var(--border);border-bottom-color:var(--dark);
-}
-.bl-tier-tab .bl-tab-count{
-  background:rgba(255,255,255,0.07);color:var(--text-dim);
-  font-size:10.5px;font-weight:700;padding:1.5px 6.5px;border-radius:10px;
-}
-.bl-tier-tab.active .bl-tab-count{background:rgba(201,168,76,0.18);color:var(--gold-light);}
-
-/* Inner tabs داخل الـ cards */
-.bl-inner-tabs{
-  display:flex;gap:4px;margin-bottom:14px;padding:4px;
-  background:rgba(255,255,255,0.025);border-radius:10px;
-  overflow-x:auto;flex-wrap:nowrap;
-}
-.bl-inner-tab{
-  background:transparent;border:none;color:var(--text-dim);
-  padding:7px 14px;font-family:'Cairo',sans-serif;font-size:12.5px;
-  font-weight:700;cursor:pointer;border-radius:7px;
-  display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
-  transition:all 0.15s ease;
-}
-.bl-inner-tab:hover{color:var(--text);background:rgba(255,255,255,0.03);}
-.bl-inner-tab.active{background:rgba(201,168,76,0.12);color:var(--gold-light) !important;}
-.bl-inner-empty{
-  padding:30px 20px;text-align:center;color:var(--text-dim);
-  font-size:13px;background:rgba(255,255,255,0.02);
-  border-radius:10px;border:1px dashed var(--border);
-}
-.bl-all-summary{
-  display:flex;flex-direction:column;gap:10px;
-}
-.bl-all-summary-row{
-  display:grid;grid-template-columns:auto 1fr auto;gap:14px;
-  padding:12px 14px;background:rgba(255,255,255,0.02);
-  border:1px solid var(--border);border-radius:10px;align-items:center;
-}
-.bl-all-summary-tier{font-size:13px;font-weight:800;display:flex;align-items:center;gap:6px;min-width:90px;}
-.bl-all-summary-vals{font-size:12px;color:var(--text-dim);line-height:1.8;display:flex;flex-wrap:wrap;gap:10px 16px;}
-.bl-all-summary-vals b{color:var(--text);font-weight:800;}
-.bl-all-summary-date{font-size:11px;color:#7ab5e8;background:rgba(74,144,217,0.1);padding:3px 8px;border-radius:6px;white-space:nowrap;}
-
-/* Clients table tier column */
-.tier-cell{padding:4px 0;}
-
-/* Tier checkbox chips (booking limits modal) */
-.bl-tier-chip{
-  display:inline-flex;align-items:center;gap:8px;padding:8px 14px;
-  background:#1A1A1A;border:1.5px solid var(--border);border-radius:10px;
-  cursor:pointer;font-size:13px;font-weight:700;color:var(--text);
-  transition:all 0.15s ease;user-select:none;
-}
-.bl-tier-chip:hover{background:rgba(255,255,255,0.03);}
-.bl-tier-chip input[type="checkbox"]{
-  width:16px;height:16px;cursor:pointer;margin:0;
-}
-.bl-tier-chip.checked{background:var(--chip-color, rgba(201,168,76,0.1));border-color:var(--chip-color, var(--gold));}
 
 </style>
 </head>
@@ -2407,21 +2089,28 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
       <div class="sb-admin" id="adminName">...</div>
     </div>
-    <div class="sb-nav" id="sb-nav-container">
-      <!-- يتعمر بـ JS من renderSidebar() -->
+    <div class="sb-nav">
+      <div class="nav-item active" onclick="goTo('bookings')"><span class="ni">📋</span> الحجوزات</div>
+      <div class="nav-item" onclick="goTo('employees')"><span class="ni">👷</span> الموظفين</div>
+      <div class="nav-item" onclick="goTo('clients')"><span class="ni">👥</span> العملاء</div>
+      <div class="nav-item" onclick="goTo('pending-clients')"><span class="ni">⏳</span> عملاء تحت الانتظار <span class="pending-badge" id="pendingBadge">0</span></div>
+      <div class="nav-item" onclick="goTo('permit-alerts')"><span class="ni">🚨</span> تنبيهات الأذونات <span class="alert-badge" id="alertBadge">0</span></div>
+      <div class="nav-item" onclick="goTo('client-types')"><span class="ni">🏷️</span> أنواع العملاء</div>
+      <div class="nav-item" onclick="goTo('extra-contacts')"><span class="ni">📞</span> جهات إضافية</div>
+      <div class="nav-item" onclick="goTo('broadcast')"><span class="ni">📢</span> إرسال رسائل</div>
+      <div class="nav-item" onclick="goTo('templates')"><span class="ni">💌</span> الرسائل المحفوظة</div>
+      <div class="nav-item" onclick="goTo('unlinked')"><span class="ni">🔗</span> عملاء لم يربطوا</div>
+      <div class="nav-item" onclick="goTo('vehicle-types')"><span class="ni">🚚</span> أنواع العربيات</div>
+      <div class="nav-item" onclick="goTo('schedule')"><span class="ni">📅</span> إدارة الأيام</div>
+      <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
+      <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
+      <div class="nav-item" onclick="goTo('warehouses')"><span class="ni">📦</span> إيميلات المخازن</div>
+      <div class="nav-item" onclick="goTo('activity-log')"><span class="ni">📜</span> سجل الأنشطة</div>
+      <div class="nav-item" onclick="goTo('booking-limits')"><span class="ni">📊</span> حدود الحجز</div>
+      <div class="nav-item" onclick="goTo('settings')"><span class="ni">⚙️</span> إعدادات عامة</div>
     </div>
     <div class="sb-footer">
       <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
-    </div>
-  </div>
-
-  <!-- 🔀 Modal لنقل nav item بين الـ categories -->
-  <div class="sb-move-modal" id="sbMoveModal" onclick="if(event.target===this)sbCloseMoveModal()">
-    <div class="sb-move-modal-box">
-      <div class="sb-move-title">🔀 <span>نقل لـ category</span></div>
-      <div class="sb-move-sub" id="sbMoveSub">اختار الـ category اللى تنقلها للعنصر:</div>
-      <div id="sbMoveOptions"></div>
-      <button class="sb-move-cancel" onclick="sbCloseMoveModal()">إلغاء</button>
     </div>
   </div>
 
@@ -2432,12 +2121,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
   <!-- MAIN -->
   <div class="main-area">
-
-    <!-- 📑 شريط الـ Tabs (الشاشات المفتوحة) -->
-    <div class="tabs-bar" id="tabsBar" style="display:none">
-      <div class="tabs-bar-scroll" id="tabsBarScroll"></div>
-      <button class="tabs-close-all" onclick="closeAllTabs()" title="إقفال كل الشاشات (ما عدا الحالية)">🗙 إقفال الكل</button>
-    </div>
 
     <!-- BOOKINGS -->
     <div class="section active" id="sec-bookings">
@@ -2575,9 +2258,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           </select>
           <select class="filter-inp" id="cl-type" onchange="filterClients()" style="width:150px">
             <option value="">🏷️ كل الأنواع</option>
-          </select>
-          <select class="filter-inp" id="cl-tier" onchange="filterClients()" style="width:150px">
-            <option value="">🏆 كل الفئات</option>
           </select>
           <select class="filter-inp" id="cl-religion" onchange="filterClients()" style="width:150px">
             <option value="">🕌 كل الديانات</option>
@@ -3100,7 +2780,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="blocked">🔒 المبلوكين</option>
             <option value="reports">📊 التقارير</option>
             <option value="warehouses">📦 إيميلات المخازن</option>
-            <option value="client-tiers">🏆 فئات العملاء</option>
             <option value="settings">⚙️ إعدادات عامة</option>
           </select>
         </div>
@@ -3294,26 +2973,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
 
     <!-- ═════════════════════════════════════════════════════════
-         🏆 CLIENT TIERS — فئات العملاء (Banking-style)
-         ═════════════════════════════════════════════════════════ -->
-    <div class="section" id="sec-client-tiers">
-      <div class="page-hd">
-        <div class="page-title">🏆 <span>فئات العملاء</span></div>
-        <button class="add-btn" onclick="openTierModal()">➕ إضافة فئة جديدة</button>
-      </div>
-
-      <!-- شرح الصفحة -->
-      <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:12px;padding:14px 18px;margin-bottom:18px;color:#7fb8e8;font-size:13px;line-height:1.8">
-        💡 الفئات هتساعدك تفرّق بين العملاء فى <b>حدود الحجز</b> والتعامل. كل فئة لها قواعدها الخاصة فى صفحة <b>📊 حدود الحجز</b>. لازم يفضل عندك فئة واحدة على الأقل بتبقى الـ <b>افتراضية</b> (العميل الجديد بياخدها).
-      </div>
-
-      <!-- جدول الفئات -->
-      <div class="tbl-wrap">
-        <div id="tiers-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
-      </div>
-    </div>
-
-    <!-- ═════════════════════════════════════════════════════════
          📊 BOOKING LIMITS — حدود الحجز (Versioned)
          ═════════════════════════════════════════════════════════ -->
     <div class="section" id="sec-booking-limits">
@@ -3322,22 +2981,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <button class="add-btn" onclick="openLimitsForm()">➕ نسخة جديدة</button>
       </div>
 
-      <!-- 🏆 Tabs لكل فئة -->
-      <div class="bl-tier-tabs" id="bl-tier-tabs">
-        <div style="color:var(--text-dim);font-size:12px;padding:10px 4px">⏳ جاري تحميل الفئات...</div>
-      </div>
-
-      <!-- 🏆 Tabs (hidden — مستخدمة فقط للـ pre-fill عند الإضافة) -->
-      <div class="bl-tier-tabs" id="bl-tier-tabs" style="display:none"></div>
-
       <!-- النسخة الفعّالة -->
       <div class="bl-card" id="bl-active-card" style="display:none">
         <div class="bl-card-hd">
           <h3>✅ النسخة الفعّالة دلوقتى</h3>
           <span class="bl-date-badge" id="bl-active-date">—</span>
         </div>
-        <div class="bl-inner-tabs" id="bl-active-tabs"></div>
-        <div id="bl-active-content"></div>
+        <div class="bl-grid" id="bl-active-grid"></div>
         <div class="bl-note" id="bl-active-note" style="display:none"></div>
       </div>
 
@@ -3347,8 +2997,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <h3>⏭️ النسخة الجاية</h3>
           <span class="bl-date-badge" id="bl-upcoming-date">—</span>
         </div>
-        <div class="bl-inner-tabs" id="bl-upcoming-tabs"></div>
-        <div id="bl-upcoming-content"></div>
+        <div class="bl-grid" id="bl-upcoming-grid"></div>
         <div class="bl-note" id="bl-upcoming-note" style="display:none"></div>
       </div>
 
@@ -3374,98 +3023,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 </div>
 
 <!-- ═════════════════════════════════════════════════════════
-     🏆 CLIENT TIER MODAL — إضافة / تعديل فئة عميل
-     ═════════════════════════════════════════════════════════ -->
-<div class="modal-overlay" id="tierModal">
-  <div class="modal" style="max-width:620px">
-    <div class="modal-title">
-      <span id="tier-modal-title">➕ إضافة فئة جديدة</span>
-      <button class="modal-close" onclick="closeTierModal()">×</button>
-    </div>
-    <div class="modal-body" style="max-height:75vh;overflow-y:auto">
-
-      <!-- Live Preview -->
-      <div class="bl-section-title">👁️ معاينة</div>
-      <div class="tier-preview-card">
-        <div class="tier-preview-icon" id="tier-preview-icon" style="background:rgba(201,168,76,0.15);color:#C9A84C">⭐</div>
-        <div class="tier-preview-info">
-          <div class="tier-preview-name" id="tier-preview-name">اسم الفئة</div>
-          <div class="tier-preview-desc" id="tier-preview-desc">شرح الفئة (اختيارى)</div>
-        </div>
-      </div>
-
-      <!-- اسم الفئة -->
-      <div class="bl-section-title" style="margin-top:18px">📝 الأساسيات</div>
-      <div class="bl-modal-grid">
-        <div class="bl-field">
-          <label>اسم الفئة <span style="color:var(--error)">*</span></label>
-          <input type="text" id="tier-name" placeholder="مثلاً: VIP, Gold, مميز..." maxlength="50" oninput="tierUpdatePreview()">
-        </div>
-        <div class="bl-field">
-          <label>الترتيب <span class="bl-hint">(الأقل بيظهر أولاً)</span></label>
-          <input type="number" id="tier-sort" min="0" max="999" placeholder="مثلاً: 1, 2, 3...">
-        </div>
-      </div>
-      <div class="bl-modal-grid full">
-        <div class="bl-field">
-          <label>الوصف <span class="bl-hint">(اختيارى — للتوضيح)</span></label>
-          <input type="text" id="tier-desc" placeholder="مثلاً: العملاء VIP اللى ليهم أولوية" maxlength="200" oninput="tierUpdatePreview()">
-        </div>
-      </div>
-
-      <!-- اللون -->
-      <div class="bl-section-title" style="margin-top:18px">🎨 اللون</div>
-      <div class="bl-modal-grid full">
-        <div class="bl-field" style="padding:0">
-          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-            <input type="color" id="tier-color" value="#C9A84C" oninput="tierUpdatePreview()"
-              style="width:60px;height:46px;border-radius:10px;border:2px solid var(--border);background:transparent;cursor:pointer;padding:2px">
-            <input type="text" id="tier-color-hex" value="#C9A84C" maxlength="7" oninput="tierSyncColorFromHex(this.value)"
-              style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:13px;font-weight:600;border-radius:10px;font-family:monospace;outline:none;width:110px;letter-spacing:1px">
-            <div style="font-size:11.5px;color:var(--text-dim)">↑ اختار من اللوحة تحت أو ادخل HEX</div>
-          </div>
-          <div class="tier-palette" id="tier-palette"></div>
-        </div>
-      </div>
-
-      <!-- الأيقونة -->
-      <div class="bl-section-title" style="margin-top:18px">✨ الأيقونة</div>
-      <div class="bl-modal-grid full">
-        <div class="bl-field" style="padding:0">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
-            <input type="text" id="tier-icon" value="⭐" maxlength="4" oninput="tierUpdatePreview()"
-              style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:22px;font-weight:600;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;width:64px;text-align:center">
-            <div style="font-size:11.5px;color:var(--text-dim)">↑ اكتب emoji أو اختار من تحت</div>
-          </div>
-          <div class="tier-icon-palette" id="tier-icon-palette"></div>
-        </div>
-      </div>
-
-      <!-- Default toggle -->
-      <div class="bl-section-title" style="margin-top:18px">⚙️ خيارات</div>
-      <div class="bl-modal-grid full">
-        <div class="bl-field" style="padding:0">
-          <label style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:rgba(76,175,125,0.06);border:1px solid rgba(76,175,125,0.2);border-radius:10px;cursor:pointer">
-            <input type="checkbox" id="tier-is-default" style="margin-top:2px;width:18px;height:18px;cursor:pointer;accent-color:#6dc49a">
-            <div>
-              <div style="font-size:13.5px;font-weight:700;color:#6dc49a;margin-bottom:3px">⭐ خلى دى الفئة الافتراضية</div>
-              <div style="font-size:11.5px;color:var(--text-dim);line-height:1.6">العميل الجديد بياخد الفئة الافتراضية تلقائياً. لازم يبقى فيه فئة افتراضية واحدة بس.</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div id="tier-form-error" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:12px"></div>
-
-    </div>
-    <div class="modal-foot">
-      <button class="btn-cancel" onclick="closeTierModal()">إلغاء</button>
-      <button class="btn-save" onclick="saveTier()" id="tier-save-btn">💾 حفظ</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═════════════════════════════════════════════════════════
      📊 BOOKING LIMITS — Modal للنسخة الجديدة
      ═════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="blModal">
@@ -3475,28 +3032,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <button class="modal-close" onclick="closeLimitsForm()">×</button>
     </div>
     <div class="modal-body" style="max-height:70vh;overflow-y:auto">
-
-      <!-- 🏆 الفئات اللى تطبق عليها القاعدة -->
-      <div class="bl-section-title">🏆 ينطبق على الفئات</div>
-      <div class="bl-modal-grid full">
-        <div class="bl-field" style="padding:0">
-          <!-- ✨ Apply to ALL tiers toggle -->
-          <label id="bl-all-tiers-toggle" style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;background:linear-gradient(135deg, rgba(201,168,76,0.08), rgba(232,201,122,0.04));border:1.5px solid rgba(201,168,76,0.3);border-radius:10px;cursor:pointer;margin-bottom:12px;transition:all 0.2s ease">
-            <input type="checkbox" id="bl-applies-all" style="margin-top:2px;width:18px;height:18px;cursor:pointer;accent-color:var(--gold)" onchange="blToggleApplyAll()">
-            <div style="flex:1;min-width:0">
-              <div style="font-size:13.5px;font-weight:700;color:var(--gold);margin-bottom:3px">🌐 طبّق على كل الفئات</div>
-              <div style="font-size:11.5px;color:var(--text-dim);line-height:1.7">القاعدة دى هتطبق على كل الفئات الموجودة + أى فئة هتضاف فى المستقبل تلقائياً.</div>
-            </div>
-          </label>
-
-          <div id="bl-tier-checkboxes-wrap">
-            <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">أو اختار فئات محددة (اختار واحدة على الأقل):</div>
-            <div id="bl-tier-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px">
-              <!-- يتعمر بالـ checkboxes من الـ JS -->
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- تاريخ التفعيل -->
       <div class="bl-section-title">📅 وقت التفعيل</div>
@@ -3629,6 +3164,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <textarea id="sm-message-text" rows="8"
           style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:12px 14px;font-size:14px;font-weight:500;line-height:1.8;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;min-height:160px;box-sizing:border-box"
           placeholder="اكتب الرسالة هنا..."></textarea>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">
+          💡 الـ <code style="color:#7ab5e8">{name}</code> و <code style="color:#7ab5e8">{permit_number}</code> هتتعبئوا تلقائى
+        </div>
       </div>
 
       <div id="sm-form-error" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin:12px 0"></div>
@@ -3702,7 +3240,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
     <div class="fg"><label>كود العميل في الشركة</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ac-code" placeholder="مثال: C001"></div></div>
     <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ac-name" placeholder="الاسم الأول والثاني والثالث"></div></div>
-    <div class="fg"><label>🏆 فئة العميل</label><select id="ac-tier"><option value="">-- جاري التحميل --</option></select></div>
     <div class="fg"><label>🏷️ نوع العميل</label><select id="ac-client-type"><option value="">-- جاري التحميل --</option></select></div>
     <div class="fg"><label>🕌 الديانة</label><select id="ac-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ac-phone" placeholder="01xxxxxxxxx"></div></div>
@@ -3790,7 +3327,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <button class="modal-close" onclick="closeModal('clientEditModal')">✕</button>
     </div>
     <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ce-name" placeholder="الاسم الكامل"></div></div>
-    <div class="fg"><label>🏆 فئة العميل</label><select id="ce-tier"><option value="">-- جاري التحميل --</option></select></div>
     <div class="fg"><label>🏷️ نوع العميل</label><select id="ce-client-type"><option value="">-- جاري التحميل --</option></select></div>
     <div class="fg"><label>🕌 الديانة</label><select id="ce-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>كود العميل</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ce-code" placeholder="كود العميل"></div></div>
@@ -4125,12 +3661,6 @@ function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('adminName').textContent='👑 '+admin.name;
-  // 📁 ابنى الـ sidebar الـ categorized
-  renderSidebar();
-  // 📑 ارسم الـ tabs المحفوظة (لو فيه)
-  renderTabs();
-  // 🏆 preload الفئات (عشان footer counts فى صفحة العملاء)
-  preloadClientTiers();
   const todayStr = fmtDate(new Date());
   document.getElementById('bk-date-from').value=todayStr;
   document.getElementById('bk-date-to').value=todayStr;
@@ -4224,7 +3754,6 @@ function autoRefreshTick(){
     else if(sec==='pending-clients' && typeof loadPendingClients === 'function') loadPendingClients();
     else if(sec==='activity-log' && typeof loadActivityLog === 'function') loadActivityLog();
     else if(sec==='booking-limits' && typeof loadBookingLimits === 'function') loadBookingLimits();
-    else if(sec==='client-tiers' && typeof loadClientTiers === 'function') loadClientTiers();
     // skip: broadcast/settings — الأدمن غالباً بيكتب
   } catch(e) {
     console.warn('Auto-refresh error:', e);
@@ -4238,11 +3767,6 @@ function autoRefreshTick(){
 
 // 🆕 Read default page from settings and navigate there
 async function goToDefaultPage(){
-  // 📑 لو فيه active tab محفوظ من الـ session السابق، روح ليه
-  if (activeTabId && document.getElementById('sec-' + activeTabId)) {
-    goTo(activeTabId, true);
-    return;
-  }
   let target = 'bookings';
   try {
     const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.default_admin_page&select=value`,{headers:HDR});
@@ -4303,312 +3827,7 @@ function doLogout(){
 }
 
 // =================== NAVIGATION ===================
-// ═══════════════════════════════════════════════════════════
-// 📑 TABS SYSTEM — الشاشات المفتوحة (browser-like)
-// ═══════════════════════════════════════════════════════════
-const TABS_STORAGE_KEY = 'hawa_tabs_v1';
-let openTabs = []; // array of section IDs
-let activeTabId = null;
-
-(function loadTabsState(){
-  try {
-    const saved = localStorage.getItem(TABS_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed.openTabs)) {
-        // فلتر — اضمن إن كل الـ tabs المحفوظة لـ sections موجودة
-        openTabs = parsed.openTabs.filter(id => SB_NAV_ITEMS.find(i => i.id === id));
-        activeTabId = parsed.activeTabId && openTabs.includes(parsed.activeTabId) 
-                    ? parsed.activeTabId 
-                    : openTabs[0] || null;
-      }
-    }
-  } catch(e){}
-})();
-
-function saveTabsState(){
-  try { 
-    localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify({ openTabs, activeTabId }));
-  } catch(e){}
-}
-
-function renderTabs(){
-  const bar = document.getElementById('tabsBar');
-  const scroll = document.getElementById('tabsBarScroll');
-  if (!bar || !scroll) return;
-
-  if (openTabs.length === 0) {
-    bar.style.display = 'none';
-    return;
-  }
-  bar.style.display = 'flex';
-
-  scroll.innerHTML = openTabs.map(id => {
-    const item = SB_NAV_ITEMS.find(i => i.id === id);
-    if (!item) return '';
-    const isActive = id === activeTabId;
-    return `<div class="open-tab ${isActive ? 'active' : ''}" onclick="switchToTab('${id}')" title="${item.label}">
-      <span class="ot-icon">${item.icon}</span>
-      <span class="ot-label">${item.label}</span>
-      <button class="ot-close" onclick="closeTab('${id}', event)" title="إقفال (Ctrl+W)">×</button>
-    </div>`;
-  }).join('');
-
-  // scroll للـ active tab
-  setTimeout(() => {
-    const activeEl = scroll.querySelector('.open-tab.active');
-    if (activeEl) activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-  }, 50);
-}
-
-function switchToTab(sectionId){
-  if (!openTabs.includes(sectionId)) return;
-  activeTabId = sectionId;
-  saveTabsState();
-  goTo(sectionId, true); // true = جاى من tab click، مش يـ re-add للـ tabs
-}
-
-function closeTab(sectionId, ev){
-  if (ev) ev.stopPropagation();
-  const idx = openTabs.indexOf(sectionId);
-  if (idx < 0) return;
-
-  openTabs.splice(idx, 1);
-
-  // لو كانت الـ active، نقل للـ tab المجاور
-  if (activeTabId === sectionId) {
-    if (openTabs.length === 0) {
-      activeTabId = null;
-      // مفيش tabs مفتوحة → روح للـ default
-      goToDefaultPage();
-    } else {
-      // الـ tab اللى مكانها، أو اللى قبلها
-      activeTabId = openTabs[idx] || openTabs[idx - 1] || openTabs[0];
-      goTo(activeTabId, true);
-    }
-  }
-  saveTabsState();
-  renderTabs();
-}
-
-function closeAllTabs(){
-  if (openTabs.length <= 1) {
-    if (openTabs.length === 1 && !confirm('هتقفل الشاشة المفتوحة؟')) return;
-    if (openTabs.length === 1) {
-      openTabs = [];
-      activeTabId = null;
-      saveTabsState();
-      renderTabs();
-      goToDefaultPage();
-    }
-    return;
-  }
-  if (!confirm(`هتقفل ${openTabs.length - 1} شاشة (الشاشة الحالية هتفضل مفتوحة)؟`)) return;
-  // سيب الـ active فقط
-  openTabs = activeTabId ? [activeTabId] : [];
-  saveTabsState();
-  renderTabs();
-}
-
-// Keyboard shortcut: Ctrl+W يقفل الـ active tab
-document.addEventListener('keydown', function(e){
-  if ((e.ctrlKey || e.metaKey) && e.key === 'w' && activeTabId) {
-    // فقط لو فيه tab مفتوح + الـ user مش بـ يكتب فى input
-    const tag = (e.target.tagName || '').toLowerCase();
-    if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
-    e.preventDefault();
-    closeTab(activeTabId);
-  }
-});
-
-// ═══════════════════════════════════════════════════════════
-// 📁 SIDEBAR — Categorized navigation system
-// ═══════════════════════════════════════════════════════════
-
-const SB_NAV_ITEMS = [
-  // 📋 الحجوزات
-  { id: 'bookings',         label: 'الحجوزات',           icon: '📋', group: 'bookings' },
-  { id: 'booking-limits',   label: 'حدود الحجز',         icon: '📊', group: 'bookings' },
-  { id: 'vehicle-types',    label: 'أنواع العربيات',    icon: '🚚', group: 'bookings' },
-  { id: 'permit-alerts',    label: 'تنبيهات الأذونات',   icon: '🚨', group: 'bookings', badge: { id: 'alertBadge',   cls: 'alert-badge'   } },
-  { id: 'schedule',         label: 'إدارة الأيام',        icon: '📅', group: 'bookings' },
-  // 👥 العملاء
-  { id: 'clients',          label: 'العملاء',             icon: '👥', group: 'clients' },
-  { id: 'client-tiers',     label: 'فئات العملاء',       icon: '🏆', group: 'clients' },
-  { id: 'client-types',     label: 'أنواع العملاء',     icon: '🏷️', group: 'clients' },
-  { id: 'pending-clients',  label: 'تحت الانتظار',       icon: '⏳', group: 'clients', badge: { id: 'pendingBadge', cls: 'pending-badge' } },
-  { id: 'unlinked',         label: 'لم يربطوا',           icon: '🔗', group: 'clients' },
-  { id: 'blocked',          label: 'المبلوكين',           icon: '🔒', group: 'clients' },
-  { id: 'extra-contacts',   label: 'جهات إضافية',        icon: '📞', group: 'clients' },
-  // 📨 الرسائل
-  { id: 'broadcast',        label: 'إرسال رسائل',        icon: '📢', group: 'messages' },
-  { id: 'templates',        label: 'الرسائل المحفوظة',   icon: '💌', group: 'messages' },
-  { id: 'warehouses',       label: 'إيميلات المخازن',    icon: '📦', group: 'messages' },
-  // ⚙️ الإدارة
-  { id: 'employees',        label: 'الموظفين',           icon: '👷', group: 'admin' },
-  { id: 'reports',          label: 'التقارير',           icon: '📊', group: 'admin' },
-  { id: 'activity-log',     label: 'سجل الأنشطة',        icon: '📜', group: 'admin' },
-  { id: 'settings',         label: 'إعدادات عامة',       icon: '⚙️', group: 'admin' },
-];
-
-const SB_GROUPS = [
-  { id: 'fav',      label: 'المفضل',     icon: '⭐', isFav: true },
-  { id: 'bookings', label: 'الحجوزات',   icon: '📋' },
-  { id: 'clients',  label: 'العملاء',    icon: '👥' },
-  { id: 'messages', label: 'الرسائل',    icon: '📨' },
-  { id: 'admin',    label: 'الإدارة',    icon: '⚙️' },
-];
-
-const SB_STORAGE_KEY = 'hawa_sidebar_v1';
-let sbState = (function loadSidebarState(){
-  try {
-    const saved = localStorage.getItem(SB_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      // ensure structure
-      return {
-        favorites: Array.isArray(parsed.favorites) ? parsed.favorites : [],
-        groupOverrides: typeof parsed.groupOverrides === 'object' ? parsed.groupOverrides : {},
-        openGroups: typeof parsed.openGroups === 'object' ? parsed.openGroups : { fav: true, bookings: true, clients: false, messages: false, admin: false },
-      };
-    }
-  } catch(e) {}
-  return {
-    favorites: [],
-    groupOverrides: {},
-    openGroups: { fav: true, bookings: true, clients: false, messages: false, admin: false },
-  };
-})();
-
-function sbSaveState() {
-  try { localStorage.setItem(SB_STORAGE_KEY, JSON.stringify(sbState)); } catch(e) {}
-}
-
-function sbGetEffectiveGroup(sectionId) {
-  if (sbState.groupOverrides && sbState.groupOverrides[sectionId]) return sbState.groupOverrides[sectionId];
-  const item = SB_NAV_ITEMS.find(i => i.id === sectionId);
-  return item ? item.group : null;
-}
-
-function sbToggleGroup(groupId) {
-  sbState.openGroups[groupId] = !sbState.openGroups[groupId];
-  sbSaveState();
-  const el = document.getElementById(`sb-group-${groupId}`);
-  if (el) el.classList.toggle('open', sbState.openGroups[groupId]);
-}
-
-function sbToggleFavorite(sectionId, ev) {
-  if (ev) ev.stopPropagation();
-  const idx = sbState.favorites.indexOf(sectionId);
-  if (idx >= 0) sbState.favorites.splice(idx, 1);
-  else sbState.favorites.push(sectionId);
-  sbSaveState();
-  renderSidebar();
-}
-
-function sbOpenMoveModal(sectionId, ev) {
-  if (ev) ev.stopPropagation();
-  const item = SB_NAV_ITEMS.find(i => i.id === sectionId);
-  if (!item) return;
-  const currentGroup = sbGetEffectiveGroup(sectionId);
-  document.getElementById('sbMoveSub').innerHTML = 
-    `اختار الـ category اللى تنقل ليها <b style="color:var(--gold-light)">${item.icon} ${item.label}</b>:`;
-  document.getElementById('sbMoveOptions').innerHTML = SB_GROUPS
-    .filter(g => !g.isFav)
-    .map(g => {
-      const isCurrent = g.id === currentGroup;
-      return `<div class="sb-move-opt ${isCurrent ? 'current' : ''}" 
-        ${isCurrent ? '' : `onclick="sbMoveItem('${sectionId}', '${g.id}')"`}>
-        <span style="font-size:18px">${g.icon}</span>
-        <span style="flex:1">${g.label}</span>
-        ${isCurrent ? '<span style="color:var(--text-dim);font-size:11px">حالياً</span>' : ''}
-      </div>`;
-    }).join('');
-  document.getElementById('sbMoveModal').classList.add('show');
-}
-
-function sbCloseMoveModal() {
-  document.getElementById('sbMoveModal').classList.remove('show');
-}
-
-// ESC يقفل الـ move modal
-document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape') {
-    const m = document.getElementById('sbMoveModal');
-    if (m && m.classList.contains('show')) sbCloseMoveModal();
-  }
-});
-
-function sbMoveItem(sectionId, targetGroup) {
-  sbState.groupOverrides[sectionId] = targetGroup;
-  sbSaveState();
-  sbCloseMoveModal();
-  // افتح الـ target group أوتوماتيكياً
-  sbState.openGroups[targetGroup] = true;
-  sbSaveState();
-  renderSidebar();
-}
-
-function renderSidebar() {
-  const navEl = document.getElementById('sb-nav-container');
-  if (!navEl) return;
-
-  // اجمع الـ items فى كل group
-  const itemsByGroup = {};
-  SB_GROUPS.forEach(g => itemsByGroup[g.id] = []);
-
-  // المفضل
-  itemsByGroup.fav = sbState.favorites
-    .map(id => SB_NAV_ITEMS.find(i => i.id === id))
-    .filter(Boolean);
-
-  // الباقى حسب الـ effective group
-  SB_NAV_ITEMS.forEach(item => {
-    const g = sbGetEffectiveGroup(item.id);
-    if (g && itemsByGroup[g]) itemsByGroup[g].push(item);
-  });
-
-  // اعمل render
-  navEl.innerHTML = SB_GROUPS.map(g => {
-    const items = itemsByGroup[g.id] || [];
-    const hasActiveItem = items.some(it => it.id === currentSection);
-    const isOpen = !!sbState.openGroups[g.id];
-    
-    let itemsHtml;
-    if (g.isFav && items.length === 0) {
-      itemsHtml = '<div class="sb-empty-hint">⭐ ضيف شاشاتك المفضلة من زرار النجمة بجانب أى عنصر</div>';
-    } else {
-      itemsHtml = items.map(item => {
-        const isFav = sbState.favorites.includes(item.id);
-        const isActive = item.id === currentSection;
-        const badge = item.badge ? `<span class="${item.badge.cls}" id="${item.badge.id}">0</span>` : '';
-        const favBtn = `<button class="nav-action-btn ${isFav ? 'is-fav' : ''}" onclick="sbToggleFavorite('${item.id}', event)" title="${isFav ? 'شيل من المفضل' : 'ضيف للمفضل'}">${isFav ? '★' : '☆'}</button>`;
-        const moveBtn = g.isFav ? '' : `<button class="nav-action-btn" onclick="sbOpenMoveModal('${item.id}', event)" title="نقل لـ category تانية">🔀</button>`;
-        return `<div class="nav-item${isActive ? ' active' : ''}" data-section="${item.id}" onclick="goTo('${item.id}')">
-          <span class="ni">${item.icon}</span>
-          <span class="nav-label">${item.label}</span>
-          ${badge}
-          <span class="nav-actions">${favBtn}${moveBtn}</span>
-        </div>`;
-      }).join('');
-    }
-
-    return `<div class="sb-group${g.isFav ? ' sb-fav' : ''}${isOpen ? ' open' : ''}${hasActiveItem ? ' has-active' : ''}" id="sb-group-${g.id}">
-      <div class="sb-group-hd" onclick="sbToggleGroup('${g.id}')">
-        <span class="sbg-icon">${g.icon}</span>
-        <span class="sbg-label">${g.label}</span>
-        <span class="sbg-count">${items.length}</span>
-        <span class="sbg-chevron">▾</span>
-      </div>
-      <div class="sb-group-items">${itemsHtml}</div>
-    </div>`;
-  }).join('');
-
-  // إعادة سحب الـ badges (counts) لأن الـ IDs اتعملوا من جديد
-  if (typeof refreshSidebarBadges === 'function') refreshSidebarBadges();
-}
-
-function goTo(sec, fromTabClick){
+function goTo(sec){
   currentSection=sec;
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   const target = document.getElementById('sec-'+sec);
@@ -4620,23 +3839,20 @@ function goTo(sec, fromTabClick){
   } else {
     target.classList.add('active');
   }
-  // 📑 افتح فى tab (لو مش جاى من tab click)
-  if (!fromTabClick) {
-    if (!openTabs.includes(sec)) {
-      openTabs.push(sec);
-    }
-    activeTabId = sec;
-    saveTabsState();
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+
+  // Highlight the matching nav item — works whether triggered by click or programmatically
+  let highlighted = false;
+  if(typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.classList){
+    event.currentTarget.classList.add('active');
+    highlighted = true;
   }
-  renderTabs();
-  // افتح الـ group اللى فيها الـ section الحالى
-  const targetGroup = sbGetEffectiveGroup(sec);
-  if (targetGroup && !sbState.openGroups[targetGroup]) {
-    sbState.openGroups[targetGroup] = true;
-    sbSaveState();
+  if(!highlighted){
+    document.querySelectorAll('.nav-item').forEach(n => {
+      const oc = n.getAttribute('onclick') || '';
+      if(oc.includes(`'${sec}'`)) n.classList.add('active');
+    });
   }
-  // re-render الـ sidebar عشان الـ active state والـ has-active
-  renderSidebar();
 
   if(sec==='bookings')loadBookings();
   else if(sec==='permit-alerts')loadPermitAlerts();
@@ -4669,7 +3885,6 @@ function goTo(sec, fromTabClick){
     loadActivityLog();
   }
   else if(sec==='booking-limits')loadBookingLimits();
-  else if(sec==='client-tiers')loadClientTiers();
 }
 
 // =================== 🚨 PERMIT ALERTS ===================
@@ -5516,42 +4731,24 @@ function onAdminGovChange() {
 // =================== CLIENTS ===================
 let allClients = [];
 let allReligions = [];
-let allClientTiers = [];
 
 async function loadClients(){
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    const [r1, r2, r3, r4] = await Promise.all([
+    const [r1, r2, r3] = await Promise.all([
       fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}}),
       fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
-      fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
-      fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`,{headers:HDR})
+      fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR})
     ]);
     allClients = await r1.json();
     allClientTypes = await r2.json();
     allReligions = await r3.json();
-    allClientTiers = await r4.json();
 
     initAdminGovDropdown();
     initClientTypeFilter();
     initReligionFilter();
-    initClientTierFilter();
     filterClients();
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
-}
-
-function initClientTierFilter(){
-  const sel = document.getElementById('cl-tier');
-  if(!sel) return;
-  const currentVal = sel.value;
-  sel.innerHTML = '<option value="">🏆 كل الفئات</option>';
-  (allClientTiers||[]).forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = String(t.id);
-    opt.textContent = `${t.icon || '🏆'} ${t.name}${t.is_default ? ' (افتراضى)' : ''}`;
-    if(String(t.id) === currentVal) opt.selected = true;
-    sel.appendChild(opt);
-  });
 }
 
 function initClientTypeFilter(){
@@ -5621,7 +4818,6 @@ function filterClients(){
   const gov=document.getElementById('cl-gov').value;
   const district=document.getElementById('cl-district').value;
   const type=document.getElementById('cl-type').value;
-  const tier=document.getElementById('cl-tier').value;
   const religion=document.getElementById('cl-religion').value;
   const status=document.getElementById('cl-status').value;
 
@@ -5641,7 +4837,6 @@ function filterClients(){
   if(gov) data=data.filter(c=>c.governorate===gov);
   if(district) data=data.filter(c=>c.city===district||c.district===district);
   if(type) data=data.filter(c=>(c.client_type||'عميل عام')===type);
-  if(tier) data=data.filter(c=>String(c.tier_id||'')===tier);
   if(religion) data=data.filter(c=>(c.religion||'مسلم')===religion);
   if(status==='active') data=data.filter(c=>!c.is_blocked && c.is_active!==false);
   if(status==='blocked') data=data.filter(c=>c.is_blocked);
@@ -5668,7 +4863,6 @@ function filterClients(){
   let html=`<table><thead><tr>
     <th style="width:36px">#</th>
     <th>الاسم</th>
-    <th>🏆 الفئة</th>
     <th>🏷️ النوع</th>
     <th>🕌 الديانة</th>
     <th>الكود</th><th>الهاتف</th>
@@ -5684,16 +4878,6 @@ function filterClients(){
     // Type badge
     const typeName = c.client_type || 'عميل عام';
     const typeColor = typeColorMap[typeName] || '#8A8580';
-
-    // Tier badge (فئة العميل)
-    const tier = (allClientTiers || []).find(t => t.id === c.tier_id)
-              || (allClientTiers || []).find(t => t.is_default);
-    const tierColor = (tier && tier.color) || '#8A8580';
-    const tierIcon  = (tier && tier.icon)  || '👤';
-    const tierName  = (tier && tier.name)  || '—';
-    const tierBadge = tier
-      ? `<span class="tier-badge" style="background:${tierColor}22;color:${tierColor};border-color:${tierColor}55"><span class="tb-ico">${tierIcon}</span>${tierName}</span>`
-      : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
 
     // Religion badge
     const religionBadge = getReligionBadge(c.religion || 'مسلم');
@@ -5711,7 +4895,6 @@ function filterClients(){
     html+=`<tr style="cursor:pointer" ondblclick="openClientProfile(${c.id})" title="دبل كليك لفتح ملف العميل">
       <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
       <td><b style="font-size:13px">${hl(c.name,search)}</b></td>
-      <td class="tier-cell">${tierBadge}</td>
       <td><span class="type-badge" style="background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40">${typeName}</span></td>
       <td>${religionBadge}</td>
       <td><span style="color:#d4a957;font-weight:700">${hl(c.company_code,search)}</span></td>
@@ -5725,7 +4908,6 @@ function filterClients(){
       <td>${statusCell}</td>
       <td><div class="act-btns">
         <button class="act-btn edit" onclick="event.stopPropagation();openClientEdit(${c.id})" title="تعديل بيانات العميل">✏️</button>
-        <button class="act-btn" style="background:rgba(201,168,76,0.1);color:var(--gold);border-color:rgba(201,168,76,0.3)" onclick="event.stopPropagation();openChangeClientTier(${c.id})" title="تغيير فئة العميل">🏆</button>
         ${isBlocked?
           `<button class="act-btn unblock" onclick="event.stopPropagation();unblockClient(${c.id},'${nameEsc}')" title="فك الحظر من الحجز">🔓</button>`:
           `<button class="act-btn del" onclick="event.stopPropagation();blockClient(${c.id},'${nameEsc}')" title="حظر من الحجز">🔒</button>`}
@@ -5744,26 +4926,7 @@ function filterClients(){
   footer.style.display='flex';
   const muslimCount = data.filter(c=>(c.religion||'مسلم')==='مسلم').length;
   const christianCount = data.filter(c=>c.religion==='مسيحي').length;
-
-  // 🏆 تجميع العملاء حسب الفئة (tier)
-  const tierCounts = {};
-  data.forEach(c => {
-    const tid = c.tier_id;
-    if (!tid) return;
-    tierCounts[tid] = (tierCounts[tid] || 0) + 1;
-  });
-  // استخدم allClientTiers الموجودة فى scope الصفحة، fallback لـ blTiers
-  const tiersForCounts = (typeof allClientTiers !== 'undefined' && Array.isArray(allClientTiers) && allClientTiers.length)
-    ? allClientTiers
-    : (typeof blTiers !== 'undefined' && Array.isArray(blTiers) ? blTiers : []);
-  const tierCountsHtml = tiersForCounts.length
-    ? tiersForCounts.filter(t => tierCounts[t.id]).map(t => 
-        `<span style="color:${t.color || 'var(--gold)'}">${t.icon || '🏆'} ${t.name}: <b>${tierCounts[t.id]}</b></span>`
-      ).join('')
-    : '';
-
   footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
-    ${tierCountsHtml}
     <span>🕌 مسلم: <b>${muslimCount}</b></span>
     <span>✝️ مسيحي: <b>${christianCount}</b></span>
     <span>نشط: <b>${data.filter(c=>!c.is_blocked && c.is_active!==false).length}</b></span>
@@ -5797,27 +4960,10 @@ function openAddClientModal(){
   // Populate religion dropdown with default pre-selected
   const defaultReligion = (allReligions||[]).find(r=>r.is_default) || (allReligions||[])[0];
   populateReligionDropdown('ac-religion', defaultReligion ? defaultReligion.name : '');
-  // 🏆 Populate tier dropdown — default tier pre-selected
-  const defaultTier = (allClientTiers||[]).find(t=>t.is_default) || (allClientTiers||[])[0];
-  populateClientTierDropdown('ac-tier', defaultTier ? defaultTier.id : null);
   document.getElementById('addClientModal').classList.add('show');
 }
 
-function populateClientTierDropdown(selectId, selectedId){
-  const sel = document.getElementById(selectId);
-  if(!sel) return;
-  sel.innerHTML = '';
-  (allClientTiers||[]).forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = String(t.id);
-    opt.textContent = `${t.icon || '🏆'} ${t.name}${t.is_default ? ' (افتراضى)' : ''}`;
-    if(String(t.id) === String(selectedId)) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
 async function saveNewClient(){
-  const tierIdRaw = document.getElementById('ac-tier').value;
   const data={
     company_code: document.getElementById('ac-code').value.trim(),
     name:         document.getElementById('ac-name').value.trim(),
@@ -5830,7 +4976,6 @@ async function saveNewClient(){
     password:     document.getElementById('ac-password').value.trim(),
     client_type:  document.getElementById('ac-client-type').value,
     religion:     document.getElementById('ac-religion').value,
-    tier_id:      tierIdRaw ? parseInt(tierIdRaw) : null,
     // ✅ العميل اللى الأدمن بيضيفه بإيده موافق عليه تلقائياً
     approval_status: 'approved',
     is_active: true,
@@ -5839,7 +4984,6 @@ async function saveNewClient(){
   // التحقق من البيانات (مش فاحص approval_status / is_active لأنها set مسبقاً)
   const required = ['company_code','name','phone','governorate','city','district','address','username','password','client_type','religion'];
   if(required.some(k => !data[k])){alert('من فضلك أكمل جميع الحقول (بما فيهم الديانة)');return;}
-  if(!data.tier_id){alert('من فضلك اختار فئة العميل');return;}
   if(data.name.split(/\s+/).length<3){alert('من فضلك أدخل الاسم الثلاثي كاملاً');return;}
   if(!/^01[0-9]{9}$/.test(data.phone)){alert('رقم الهاتف غير صحيح — لازم يبدأ بـ 01 ويكون 11 رقم');return;}
 
@@ -6561,16 +5705,6 @@ function renderClientProfile(c){
   const pending=bks.filter(b=>b.status==='قيد الانتظار'&&b.loading_date>=today);
   const statusBadge={'قيد الانتظار':'<span class="badge pending">⏳ منتظر</span>','تم التنفيذ':'<span class="badge done">✅ حضر</span>','no-show':'<span class="badge noshow">❌ غائب</span>','ملغي':'<span class="badge cancelled">🚫 ملغي</span>'};
 
-  // 🏆 Tier & Type info
-  const tier = (allClientTiers || []).find(t => t.id === c.tier_id);
-  const tierColor = tier ? tier.color : '#8A8580';
-  const tierIcon = tier ? tier.icon : '👤';
-  const tierName = tier ? tier.name : '—';
-  const typeName = c.client_type || 'عميل عام';
-  const typeColorMap = {};
-  (allClientTypes||[]).forEach(t => { typeColorMap[t.name] = t.color; });
-  const typeColor = typeColorMap[typeName] || '#8A8580';
-
   let pendingHtml='';
   if(pending.length){
     let cards='';
@@ -6593,18 +5727,12 @@ function renderClientProfile(c){
       <div style="flex:1">
         <div style="font-size:17px;font-weight:900">${c.name||'-'}</div>
         <div style="color:var(--gold);font-size:13px;font-weight:700;margin-top:2px">${c.company_code||'-'}</div>
-        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
-          ${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}
-          <span class="tier-badge" style="background:${tierColor}22;color:${tierColor};border-color:${tierColor}55"><span class="tb-ico">${tierIcon}</span>${tierName}</span>
-          <span class="type-badge" style="background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40">🏷️ ${typeName}</span>
-        </div>
+        <div style="margin-top:6px">${c.is_blocked?'<span class="badge blocked">محظور 🔒</span>':'<span class="badge active">نشط ✅</span>'}</div>
       </div>
     </div>
     <div class="profile-info-grid">
       <div class="profile-field"><div class="pf-label">📱 الهاتف</div><div class="pf-value">${c.phone||'-'}</div></div>
       <div class="profile-field"><div class="pf-label">🏷️ الكود</div><div class="pf-value" style="color:var(--gold)">${c.company_code||'-'}</div></div>
-      <div class="profile-field"><div class="pf-label">🏆 فئة العميل</div><div class="pf-value" style="color:${tierColor}">${tierIcon} ${tierName}${tier && tier.is_default ? ' <span style="font-size:10px;color:#6dc49a">★ افتراضى</span>' : ''}</div></div>
-      <div class="profile-field"><div class="pf-label">🏷️ نوع العميل</div><div class="pf-value" style="color:${typeColor}">${typeName}</div></div>
       <div class="profile-field"><div class="pf-label">🗺️ المحافظة</div><div class="pf-value">${c.governorate||'-'}</div></div>
       <div class="profile-field"><div class="pf-label">🏙️ المدينة</div><div class="pf-value">${c.city||'-'}</div></div>
       <div class="profile-field" style="grid-column:span 2"><div class="pf-label">📍 العنوان</div><div class="pf-value">${c.address||'-'}</div></div>
@@ -6705,9 +5833,6 @@ function openClientEdit(id){
   document.getElementById('ce-name').value=c.name||'';
   populateClientTypeDropdown('ce-client-type', c.client_type || 'عميل عام');
   populateReligionDropdown('ce-religion', c.religion || 'مسلم');
-  // 🏆 الفئة — pre-fill بالفئة الحالية أو الافتراضية
-  const fallbackTier = (allClientTiers||[]).find(t=>t.is_default) || (allClientTiers||[])[0];
-  populateClientTierDropdown('ce-tier', c.tier_id || (fallbackTier ? fallbackTier.id : null));
   document.getElementById('ce-code').value=c.company_code||'';
   document.getElementById('ce-phone').value=c.phone||'';
   document.getElementById('ce-gov').value=c.governorate||'';
@@ -6730,13 +5855,10 @@ async function saveClientEdit(){
   const password=document.getElementById('ce-password').value.trim();
   const clientType=document.getElementById('ce-client-type').value;
   const religion=document.getElementById('ce-religion').value;
-  const tierIdRaw=document.getElementById('ce-tier').value;
-  const tierId = tierIdRaw ? parseInt(tierIdRaw) : null;
   if(!name||!phone||!username){alert('أدخل الاسم والتليفون واليوزر');return;}
   if(!religion){alert('من فضلك اختار الديانة');return;}
-  if(!tierId){alert('من فضلك اختار فئة العميل');return;}
   if(!/^01[0-9]{9}$/.test(phone)){alert('رقم الهاتف غير صحيح — 11 رقم يبدأ بـ 01');return;}
-  const body={name,company_code:code,phone,governorate:gov,city,address,username,client_type:clientType,religion,tier_id:tierId};
+  const body={name,company_code:code,phone,governorate:gov,city,address,username,client_type:clientType,religion};
   if(password)body.password=password;
   try{
     const res=await fetch(`${SB}/rest/v1/clients?id=eq.${editClientId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
@@ -10527,48 +9649,13 @@ async function exportActivityLog(){
 // 📊 BOOKING LIMITS — JS logic لصفحة حدود الحجز
 // ═══════════════════════════════════════════════════════════
 
-let blAllLimits = [];       // كل النسخ (لكل الفئات) — كل row فيه tier_ids: []
-let blEditingId = null;     // null = نسخة جديدة، رقم = تعديل صف
-let blTiers = [];           // الفئات الموجودة
-let blCurrentTierId = null; // الفئة المعروضة دلوقتى فى الـ tab
-
-// 🏆 preload الـ tiers أول ما الأدمن يدخل (عشان footer counts فى صفحة العملاء)
-async function preloadClientTiers(){
-  try {
-    const r = await fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR });
-    if (r.ok) {
-      blTiers = await r.json();
-    }
-  } catch(e) {
-    console.warn('preloadClientTiers failed:', e);
-  }
-}
+let blAllLimits = [];  // كل النسخ (مرتبة effective_from DESC)
+let blEditingId = null; // null = نسخة جديدة، رقم = تعديل صف
 
 async function loadBookingLimits(){
   try {
-    const [r1, r2, r3] = await Promise.all([
-      fetch(`${SB}/rest/v1/booking_limits?order=effective_from.desc&select=*`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/booking_limit_tiers?select=*`, { headers: HDR })
-    ]);
-    const limits = await r1.json();
-    blTiers     = await r2.json();
-    const links = await r3.json();
-
-    // join: لكل limit، اجمع tier_ids
-    const linksMap = {};
-    links.forEach(l => {
-      if (!linksMap[l.booking_limit_id]) linksMap[l.booking_limit_id] = [];
-      linksMap[l.booking_limit_id].push(l.tier_id);
-    });
-    blAllLimits = limits.map(r => ({ ...r, tier_ids: linksMap[r.id] || [] }));
-
-    // اختار الفئة الافتراضية لو مفيش tier محدد، أو ابقى على المختار
-    if (!blCurrentTierId || !blTiers.find(t => t.id === blCurrentTierId)) {
-      const def = blTiers.find(t => t.is_default) || blTiers[0];
-      blCurrentTierId = def ? def.id : null;
-    }
-    blRenderTabs();
+    const r = await fetch(`${SB}/rest/v1/booking_limits?order=effective_from.desc&select=*`, { headers: HDR });
+    blAllLimits = await r.json();
     blRender();
   } catch(e) {
     console.error('loadBookingLimits error:', e);
@@ -10577,271 +9664,103 @@ async function loadBookingLimits(){
   }
 }
 
-function blRenderTabs(){
-  const wrap = document.getElementById('bl-tier-tabs');
-  if (!wrap) return;
-  if (!blTiers.length) {
-    wrap.innerHTML = '<div style="color:var(--text-dim);font-size:12px;padding:10px 4px">⚠️ مفيش فئات — اعمل فئة من صفحة <b>🏆 فئات العملاء</b> الأول</div>';
-    return;
-  }
-  wrap.innerHTML = blTiers.map(t => {
-    // count: rule يحسب على الـ tab لو applies_to_all_tiers=true أو tier_ids فيها الـ tier ده
-    const count = blAllLimits.filter(r => r.applies_to_all_tiers || (r.tier_ids || []).includes(t.id)).length;
-    const isActive = t.id === blCurrentTierId;
-    const styleActive = isActive ? `style="color:${t.color || '#C9A84C'};border-color:${(t.color || '#C9A84C')}44;border-bottom-color:var(--dark)"` : '';
-    return `<button class="bl-tier-tab ${isActive ? 'active' : ''}" ${styleActive} onclick="blSwitchTier(${t.id})">
-      <span style="font-size:15px">${t.icon || '🏆'}</span>
-      <span>${t.name}${t.is_default ? ' <span style="color:#6dc49a;font-size:10px">★</span>' : ''}</span>
-      <span class="bl-tab-count">${count}</span>
-    </button>`;
-  }).join('');
-
-  const cur = blTiers.find(t => t.id === blCurrentTierId);
-  const lbl = document.getElementById('bl-current-tier-label');
-  if (lbl && cur) lbl.innerHTML = `<span style="color:${cur.color || '#C9A84C'}">${cur.icon || '🏆'} ${cur.name}</span>`;
-}
-
-function blSwitchTier(tierId){
-  blCurrentTierId = tierId;
-  blRenderTabs();
-  blRender();
-}
-
-// 🎯 State للـ inner tabs (يتذكر آخر tab مختار فى كل كارت)
-let blActiveTabSel = null;   // tier_id أو 'all'
-let blUpcomingTabSel = null;
-
 function blRender(){
   const todayStr = fmtDate(new Date());
   const emptyState = document.getElementById('bl-empty-state');
   const activeCard = document.getElementById('bl-active-card');
   const upcomingCard = document.getElementById('bl-upcoming-card');
 
-  // 🎯 لكل tier، الـ rule الفعّالة + الجاية
-  const activeByTier = {};
-  const upcomingByTier = {};
-  blTiers.forEach(t => {
-    const tierLimits = blAllLimits.filter(r => 
-      r.applies_to_all_tiers || (r.tier_ids || []).includes(t.id)
-    );
-    if (!tierLimits.length) return;
-    // الـ active = آخر effective_from <= today
-    const act = tierLimits.find(r => r.effective_from <= todayStr);
-    if (act) activeByTier[t.id] = act;
-    // الـ upcoming = أقدم effective_from > today
-    const upc = [...tierLimits].reverse().find(r => r.effective_from > todayStr);
-    if (upc) upcomingByTier[t.id] = upc;
-  });
-
-  const hasActive = Object.keys(activeByTier).length > 0;
-  const hasUpcoming = Object.keys(upcomingByTier).length > 0;
-
   if (!blAllLimits.length) {
     emptyState.style.display = 'block';
     activeCard.style.display = 'none';
     upcomingCard.style.display = 'none';
+    document.getElementById('bl-history-content').innerHTML =
+      '<div class="bl-history-empty">مفيش نسخ — أضف أول نسخة</div>';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  // الفعّالة دلوقتى = آخر صف effective_from <= today
+  const active = blAllLimits.find(r => r.effective_from <= todayStr);
+  // الجاية = أحدث صف effective_from > today
+  const upcoming = [...blAllLimits].reverse().find(r => r.effective_from > todayStr);
+
+  if (active) {
+    activeCard.style.display = 'block';
+    document.getElementById('bl-active-date').textContent = `يبدأ من ${active.effective_from}`;
+    document.getElementById('bl-active-grid').innerHTML = blGridHtml(active);
+    const noteEl = document.getElementById('bl-active-note');
+    if (active.note) { noteEl.style.display = 'block'; noteEl.textContent = active.note; }
+    else noteEl.style.display = 'none';
   } else {
-    emptyState.style.display = 'none';
-    activeCard.style.display = hasActive ? 'block' : 'none';
-    upcomingCard.style.display = hasUpcoming ? 'block' : 'none';
-
-    if (hasActive) {
-      blRenderInnerCard('active', activeByTier);
-    }
-    if (hasUpcoming) {
-      blRenderInnerCard('upcoming', upcomingByTier);
-    }
+    activeCard.style.display = 'none';
   }
 
-  // 📊 جدول "كل النسخ" — يعرض كل الـ rules بدون فلتر
-  // الـ active للـ tab الحالى (للـ highlighting فقط)
-  const activeForCurrentTab = activeByTier[blCurrentTierId] || null;
-  blRenderHistory(activeForCurrentTab, blAllLimits);
-}
-
-// 🎯 رسم الكارت مع inner tabs (active أو upcoming)
-function blRenderInnerCard(cardType, rulesByTier){
-  const tabsEl = document.getElementById(`bl-${cardType}-tabs`);
-  const contentEl = document.getElementById(`bl-${cardType}-content`);
-  const dateBadge = document.getElementById(`bl-${cardType}-date`);
-  const noteEl = document.getElementById(`bl-${cardType}-note`);
-  if (!tabsEl || !contentEl) return;
-
-  // اعمل tabs لكل tier فيه rule
-  const tabs = [];
-  blTiers.forEach(t => {
-    if (rulesByTier[t.id]) {
-      tabs.push({ id: t.id, label: `${t.icon || '🏆'} ${t.name}`, color: t.color || '#C9A84C' });
-    }
-  });
-  // tab "الكل" لو فيه أكتر من واحد
-  if (tabs.length > 1) {
-    tabs.push({ id: 'all', label: '🌐 الكل', color: '#E8C97A' });
-  }
-
-  // اختار الـ tab الافتراضى
-  const stateKey = cardType === 'active' ? 'blActiveTabSel' : 'blUpcomingTabSel';
-  let selected = window[stateKey];
-  if (!selected || !tabs.find(t => t.id === selected)) {
-    selected = tabs[0]?.id;
-    window[stateKey] = selected;
-  }
-
-  // ارسم الـ tabs
-  tabsEl.innerHTML = tabs.map(t => {
-    const isActive = String(t.id) === String(selected);
-    const styleActive = isActive ? `color:${t.color} !important` : '';
-    return `<button class="bl-inner-tab ${isActive ? 'active' : ''}" style="${styleActive}" onclick="blSwitchInnerTab('${cardType}', ${t.id === 'all' ? "'all'" : t.id})">${t.label}</button>`;
-  }).join('');
-
-  // ارسم الـ content
-  if (selected === 'all') {
-    // عرض compact لكل الـ tiers
-    contentEl.innerHTML = blRenderAllTiersSummary(rulesByTier);
-    if (dateBadge) dateBadge.textContent = `لكل الفئات`;
-    if (noteEl) noteEl.style.display = 'none';
+  if (upcoming) {
+    upcomingCard.style.display = 'block';
+    document.getElementById('bl-upcoming-date').textContent = `يبدأ من ${upcoming.effective_from}`;
+    document.getElementById('bl-upcoming-grid').innerHTML = blGridHtml(upcoming);
+    const noteEl = document.getElementById('bl-upcoming-note');
+    if (upcoming.note) { noteEl.style.display = 'block'; noteEl.textContent = upcoming.note; }
+    else noteEl.style.display = 'none';
   } else {
-    const rule = rulesByTier[selected];
-    if (rule) {
-      contentEl.innerHTML = `<div class="bl-grid">${blGridHtml(rule)}</div>`;
-      if (dateBadge) dateBadge.textContent = `يبدأ من ${rule.effective_from}`;
-      if (noteEl) {
-        if (rule.note) {
-          noteEl.style.display = 'block';
-          noteEl.textContent = rule.note;
-        } else {
-          noteEl.style.display = 'none';
-        }
-      }
-    }
+    upcomingCard.style.display = 'none';
   }
-}
 
-// 🌐 رسم summary compact لكل الـ tiers فى الكارت
-function blRenderAllTiersSummary(rulesByTier){
-  const pLabel = { week: 'أسبوع', month: 'شهر', year: 'سنة' };
-  const rows = blTiers
-    .filter(t => rulesByTier[t.id])
-    .map(t => {
-      const r = rulesByTier[t.id];
-      const allTiersFlag = r.applies_to_all_tiers ? ' <span style="font-size:10px;color:var(--gold-light);background:rgba(201,168,76,0.15);padding:1px 6px;border-radius:5px">🌐 كل الفئات</span>' : '';
-      return `<div class="bl-all-summary-row" style="border-color:${t.color}33">
-        <div class="bl-all-summary-tier" style="color:${t.color}">
-          ${t.icon || '🏆'} ${t.name}${allTiersFlag}
-        </div>
-        <div class="bl-all-summary-vals">
-          <span>🚛 أسبوعى <b>${r.weekly_vehicles}</b></span>
-          <span>📅 يومى <b>${r.daily_vehicles}</b></span>
-          <span>📦 للحجز <b>${r.per_booking_vehicles}</b></span>
-          <span>🎫 الإذن <b>${r.permit_max_uses}</b>/<b>${r.permit_max_vehicles}</b></span>
-          <span>⏳ مفتوحة <b>${r.open_bookings_max}</b>/${pLabel[r.open_bookings_period]}</span>
-          <span>🚫 متتالى <b>${r.noshow_consecutive_max}</b></span>
-          <span>🚫 متفرق <b>${r.noshow_period_max}</b>/${pLabel[r.noshow_period]}</span>
-        </div>
-        <div class="bl-all-summary-date">${r.effective_from}</div>
-      </div>`;
-    }).join('');
-  return `<div class="bl-all-summary">${rows}</div>`;
-}
-
-// 🎯 تبديل الـ inner tab
-function blSwitchInnerTab(cardType, tabId){
-  const stateKey = cardType === 'active' ? 'blActiveTabSel' : 'blUpcomingTabSel';
-  window[stateKey] = tabId;
-  // re-render
-  blRender();
+  // جدول التاريخ
+  blRenderHistory(active);
 }
 
 function blGridHtml(row){
   const pLabel = { week: 'أسبوع', month: 'شهر', year: 'سنة' };
-  // عرض الفئات المرتبطة كـ badges فوق
-  let tierLine = '';
-  if (row.applies_to_all_tiers) {
-    // 🌐 يطبّق على كل الفئات
-    tierLine = `<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:linear-gradient(135deg, rgba(201,168,76,0.08), rgba(232,201,122,0.04));border:1px solid rgba(201,168,76,0.25);border-radius:9px;margin-bottom:6px;align-items:center">
-      <span style="font-size:11.5px;color:var(--text-dim);margin-left:4px">يطبق على:</span>
-      <span class="tier-badge" style="background:rgba(201,168,76,0.18);color:var(--gold-light);border-color:rgba(201,168,76,0.5);font-weight:800"><span class="tb-ico">🌐</span>كل الفئات (الحالية + المستقبلية)</span>
-    </div>`;
-  } else {
-    const tierBadges = (row.tier_ids || []).map(tid => {
-      const t = blTiers.find(x => x.id === tid);
-      if (!t) return '';
-      return `<span class="tier-badge" style="background:${t.color}22;color:${t.color};border-color:${t.color}55"><span class="tb-ico">${t.icon||'🏆'}</span>${t.name}</span>`;
-    }).join(' ');
-    if (tierBadges) {
-      tierLine = `<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:9px;margin-bottom:6px;align-items:center"><span style="font-size:11.5px;color:var(--text-dim);margin-left:4px">يطبق على:</span>${tierBadges}</div>`;
-    }
-  }
   const items = [
-    { lbl: '🚛 الحد الأسبوعى',       val: row.weekly_vehicles,        unit: 'عربية', sub: 'كل المخازن، آخر 7 أيام' },
-    { lbl: '📅 الحد اليومى',         val: row.daily_vehicles,         unit: 'عربية', sub: 'كل المخازن مجتمعة' },
-    { lbl: '📦 أكبر فى الحجز الواحد', val: row.per_booking_vehicles,   unit: 'عربية', sub: 'لكل حجز منفصل' },
-    { lbl: '🎫 مرات استخدام الإذن',  val: row.permit_max_uses,        unit: 'مرة',   sub: 'حجوزات على نفس الإذن' },
-    { lbl: '🚚 عربيات على الإذن',    val: row.permit_max_vehicles,    unit: 'عربية', sub: 'إجمالى العربيات' },
-    { lbl: '⏳ حجوزات مفتوحة',       val: row.open_bookings_max,      unit: 'حجز',   sub: `فى ${pLabel[row.open_bookings_period]} واحد` },
-    { lbl: '🚫 no-show متتالى',       val: row.noshow_consecutive_max, unit: 'مرة',   sub: 'بلوك تلقائى' },
-    { lbl: '🚫 no-show متفرق',        val: row.noshow_period_max,      unit: 'مرة',   sub: `فى ${pLabel[row.noshow_period]} واحد` },
+    { lbl: '🚛 الحد الأسبوعى',       val: row.weekly_vehicles,        sub: 'كل المخازن، آخر 7 أيام' },
+    { lbl: '📅 الحد اليومى',         val: row.daily_vehicles,         sub: 'كل المخازن مجتمعة' },
+    { lbl: '📦 أكبر فى الحجز الواحد', val: row.per_booking_vehicles,   sub: 'لكل حجز منفصل' },
+    { lbl: '🎫 مرات استخدام الإذن',  val: row.permit_max_uses,        sub: 'حجوزات على نفس الإذن' },
+    { lbl: '🚚 عربيات على الإذن',    val: row.permit_max_vehicles,    sub: 'إجمالى العربيات' },
+    { lbl: '⏳ حجوزات مفتوحة',       val: row.open_bookings_max,      sub: `فى ${pLabel[row.open_bookings_period]} واحد` },
+    { lbl: '🚫 no-show متتالى',       val: row.noshow_consecutive_max, sub: 'بلوك تلقائى' },
+    { lbl: '🚫 no-show متفرق',        val: row.noshow_period_max,      sub: `فى ${pLabel[row.noshow_period]} واحد` },
   ];
-  return tierLine + items.map(it => `
+  return items.map(it => `
     <div class="bl-item">
       <div class="bl-item-lbl">${it.lbl}</div>
-      <div class="bl-item-val">${it.val}<span class="bl-item-unit">${it.unit}</span></div>
+      <div class="bl-item-val">${it.val}<span class="bl-item-unit">عربية</span></div>
       <div class="bl-item-sub">${it.sub}</div>
     </div>
   `).join('');
 }
 
-function blRenderHistory(activeRow, limits){
+function blRenderHistory(activeRow){
   const container = document.getElementById('bl-history-content');
-  const rowsData = limits || blAllLimits;
-  if (!rowsData.length) {
-    container.innerHTML = '<div class="bl-history-empty">مفيش نسخ بعد — أضف أول نسخة</div>';
+  if (!blAllLimits.length) {
+    container.innerHTML = '<div class="bl-history-empty">مفيش نسخ بعد</div>';
     return;
   }
   const todayStr = fmtDate(new Date());
-  const pLabel = { week: 'أسبوع', month: 'شهر', year: 'سنة' };
-  const rows = rowsData.map(r => {
-    const isActiveForCurrentTab = activeRow && r.id === activeRow.id;
+  const minId = Math.min(...blAllLimits.map(r => r.id));  // النسخة الافتراضية = أقل id
+  const rows = blAllLimits.map(r => {
+    const isActive = activeRow && r.id === activeRow.id;
     const isFuture = r.effective_from > todayStr;
-    // 🛡️ هل ده default لأى tier؟
-    const defaultCheck = blIsDefaultRule(r.id);
-    const isDefault = defaultCheck.isDefault;
-
-    // عرض الفئات: لو applies_to_all_tiers → badge مميز، وإلا الـ tier chips
-    let tiersDisplay;
-    if (r.applies_to_all_tiers) {
-      tiersDisplay = `<span class="tier-badge" style="background:rgba(201,168,76,0.18);color:var(--gold-light);border-color:rgba(201,168,76,0.5);font-size:10.5px;padding:2px 7px;font-weight:800"><span class="tb-ico">🌐</span>كل الفئات</span>`;
-    } else {
-      tiersDisplay = (r.tier_ids || []).map(tid => {
-        const t = blTiers.find(x => x.id === tid);
-        if (!t) return '';
-        return `<span class="tier-badge" style="background:${t.color}22;color:${t.color};border-color:${t.color}55;font-size:10.5px;padding:2px 7px"><span class="tb-ico">${t.icon||'🏆'}</span>${t.name}</span>`;
-      }).join(' ') || '—';
-    }
-
+    const isDefault = r.id === minId;
     const badge = isDefault ? '<span style="background:rgba(201,168,76,0.15);color:#E0B040;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">🛡️ افتراضية</span>'
-                : isActiveForCurrentTab ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
+                : isActive ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
                 : isFuture ? '<span style="background:rgba(74,144,217,0.15);color:#7ab5e8;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">⏭️ جاية</span>'
                 : '<span style="background:rgba(255,255,255,0.05);color:var(--text-dim);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">قديمة</span>';
     // أزرار: تعديل دايماً، مسح للكل ماعدا الافتراضية
     const editBtn = `<button onclick="openLimitsForm(${r.id})" style="background:rgba(74,144,217,0.1);color:#7ab5e8;border:1px solid rgba(74,144,217,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" title="تعديل">✏️ تعديل</button>`;
     const delBtn = isDefault ? '' :
       `<button onclick="deleteLimit(${r.id})" style="background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer" title="مسح">🗑️ مسح</button>`;
-    // truncate الملاحظة لـ 60 char + إعرض الكل فى الـ tooltip
-    const noteFull = r.note || '';
-    const noteShort = noteFull ? (noteFull.length > 60 ? noteFull.slice(0, 60) + '…' : noteFull) : '—';
-    return `<tr class="${isActiveForCurrentTab ? 'current-row' : ''}" ondblclick="openLimitsForm(${r.id})" title="دبل كليك للتعديل" style="cursor:pointer">
+    return `<tr class="${isActive ? 'current-row' : ''}">
       <td>${r.effective_from}</td>
       <td>${badge}</td>
-      <td><div style="display:flex;flex-wrap:wrap;gap:3px">${tiersDisplay}</div></td>
       <td>${r.weekly_vehicles}</td>
       <td>${r.daily_vehicles}</td>
       <td>${r.per_booking_vehicles}</td>
-      <td>${r.permit_max_uses} مرة / ${r.permit_max_vehicles} عربية</td>
-      <td>${r.open_bookings_max} حجز / ${pLabel[r.open_bookings_period] || r.open_bookings_period}</td>
-      <td>${r.noshow_consecutive_max} مرة</td>
-      <td>${r.noshow_period_max} / ${pLabel[r.noshow_period] || r.noshow_period}</td>
-      <td title="${noteFull.replace(/"/g,'&quot;')}">${noteShort}</td>
+      <td>${r.permit_max_uses} / ${r.permit_max_vehicles}</td>
+      <td>${r.open_bookings_max} / ${r.open_bookings_period}</td>
+      <td title="${(r.note || '').replace(/"/g,'&quot;')}">${r.note ? (r.note.length > 30 ? r.note.slice(0, 30) + '…' : r.note) : '—'}</td>
       <td style="white-space:nowrap">${editBtn}${delBtn}</td>
     </tr>`;
   }).join('');
@@ -10851,14 +9770,11 @@ function blRenderHistory(activeRow, limits){
         <tr>
           <th>تاريخ البدء</th>
           <th>الحالة</th>
-          <th>الفئات</th>
           <th>أسبوعى</th>
           <th>يومى</th>
           <th>للحجز</th>
-          <th>الإذن</th>
+          <th>الإذن (مرات/عربيات)</th>
           <th>مفتوحة</th>
-          <th>🚫 متتالى</th>
-          <th>🚫 متفرق</th>
           <th>الملاحظة</th>
           <th>إجراءات</th>
         </tr>
@@ -10868,191 +9784,32 @@ function blRenderHistory(activeRow, limits){
   `;
 }
 
-function blRenderTierCheckboxes(selectedIds, readonly){
-  const wrap = document.getElementById('bl-tier-checkboxes');
-  if (!wrap) return;
-  const sel = new Set(selectedIds || []);
-  const isReadonly = !!readonly;
-  wrap.innerHTML = (blTiers || []).map(t => {
-    const checked = sel.has(t.id);
-    const color = t.color || '#C9A84C';
-    const disabledAttr = isReadonly ? 'disabled' : '';
-    const cursorStyle = isReadonly ? 'cursor:not-allowed;opacity:0.7' : '';
-    return `<label class="bl-tier-chip ${checked ? 'checked' : ''}" style="--chip-color:${color}22;${cursorStyle};${checked ? `background:${color}1f;border-color:${color}` : ''}" onclick="event.stopPropagation()">
-      <input type="checkbox" value="${t.id}" ${checked ? 'checked' : ''} ${disabledAttr} onchange="blTierChipToggle(this, '${color}')" style="accent-color:${color}">
-      <span style="font-size:16px">${t.icon || '🏆'}</span>
-      <span style="color:${color}">${t.name}</span>
-      ${t.is_default ? '<span style="font-size:10px;color:#6dc49a">★</span>' : ''}
-    </label>`;
-  }).join('');
-
-  // 🛡️ disable الـ whole wrap visually لو readonly
-  const checkboxWrap = document.getElementById('bl-tier-checkboxes-wrap');
-  if (checkboxWrap) {
-    if (isReadonly) {
-      checkboxWrap.style.opacity = '0.5';
-      checkboxWrap.style.pointerEvents = 'none';
-    } else {
-      // لو مش readonly، الـ blToggleApplyAll هتـ control الـ opacity حسب الـ flag
-      checkboxWrap.style.pointerEvents = '';
-    }
-  }
-}
-
-function blTierChipToggle(cb, color){
-  const lbl = cb.closest('.bl-tier-chip');
-  if (cb.checked) {
-    lbl.classList.add('checked');
-    lbl.style.background = color + '1f';
-    lbl.style.borderColor = color;
-  } else {
-    lbl.classList.remove('checked');
-    lbl.style.background = '';
-    lbl.style.borderColor = '';
-  }
-}
-
-function blGetSelectedTierIds(){
-  return Array.from(document.querySelectorAll('#bl-tier-checkboxes input[type="checkbox"]:checked'))
-    .map(cb => parseInt(cb.value));
-}
-
-// 🛡️ helper: هل الـ rule دى default لأى tier؟
-// الـ default = الـ rule بأقدم effective_from + أقل id من ضمن الـ rules اللى تطبق على tier
-function blIsDefaultRule(ruleId){
-  if (!ruleId) return { isDefault: false, tiers: [] };
-  // ابحث فى كل tier هل الـ ruleId default ليه
-  // الـ default = الـ rule بأقدم effective_from (وفى حالة tie، أقل id)
-  const defaultForTiers = [];
-  for (const t of blTiers) {
-    const tierLimits = blAllLimits.filter(r => 
-      r.applies_to_all_tiers || (r.tier_ids || []).includes(t.id)
-    );
-    if (!tierLimits.length) continue;
-    const sorted = [...tierLimits].sort((a, b) => {
-      if (a.effective_from !== b.effective_from) {
-        return a.effective_from < b.effective_from ? -1 : 1;
-      }
-      return a.id - b.id;
-    });
-    if (sorted[0].id === ruleId) defaultForTiers.push(t);
-  }
-  return { isDefault: defaultForTiers.length > 0, tiers: defaultForTiers };
-}
-
-// 🌐 toggle: لما الـ "كل الفئات" يتعلّم، نـ disable الـ tier checkboxes
-function blToggleApplyAll(){
-  // لو الـ toggle نفسه disabled (default rule)، ما تغيرش حاجة
-  if (document.getElementById('bl-applies-all').disabled) return;
-  const isAll = document.getElementById('bl-applies-all').checked;
-  const wrap = document.getElementById('bl-tier-checkboxes-wrap');
-  const toggleLabel = document.getElementById('bl-all-tiers-toggle');
-  if (isAll) {
-    wrap.style.opacity = '0.35';
-    wrap.style.pointerEvents = 'none';
-    toggleLabel.style.background = 'linear-gradient(135deg, rgba(201,168,76,0.18), rgba(232,201,122,0.1))';
-    toggleLabel.style.borderColor = 'var(--gold)';
-  } else {
-    wrap.style.opacity = '1';
-    wrap.style.pointerEvents = 'auto';
-    toggleLabel.style.background = 'linear-gradient(135deg, rgba(201,168,76,0.08), rgba(232,201,122,0.04))';
-    toggleLabel.style.borderColor = 'rgba(201,168,76,0.3)';
-  }
-}
-
 function openLimitsForm(editId){
   blEditingId = editId || null;
   const errEl = document.getElementById('bl-form-error');
   errEl.style.display = 'none';
 
-  // مصدر القيم: لو editing → الصف نفسه، لو جديد → آخر نسخة للـ tier الحالى
+  // مصدر القيم: لو editing → الصف نفسه، لو جديد → آخر نسخة pre-fill
   let src = null;
-  let initialTierIds = [];
-  let initialAppliesAll = false;
   if (blEditingId) {
     src = blAllLimits.find(r => r.id === blEditingId);
-    if (src) {
-      initialTierIds = src.tier_ids || [];
-      initialAppliesAll = !!src.applies_to_all_tiers;
-    }
   } else {
-    // آخر نسخة للـ tier الحالى كـ pre-fill
-    src = blAllLimits.find(r => r.applies_to_all_tiers || (r.tier_ids || []).includes(blCurrentTierId));
-    if (!src) src = blAllLimits[0];
-    // ابتدائياً نختار الـ tier الحالى فقط (مش "كل الفئات")
-    initialTierIds = blCurrentTierId ? [blCurrentTierId] : [];
-    initialAppliesAll = false;
-  }
-
-  // 🛡️ هل ده default rule؟ → فعّل الحماية
-  const defaultCheck = blIsDefaultRule(blEditingId);
-  const isProtected = defaultCheck.isDefault;
-
-  // 🛡️ أظهر/أخفى الـ default warning banner
-  let warningBanner = document.getElementById('bl-default-warning');
-  if (!warningBanner) {
-    // أنشئ الـ banner لو مش موجود
-    warningBanner = document.createElement('div');
-    warningBanner.id = 'bl-default-warning';
-    warningBanner.style.cssText = 'background:linear-gradient(135deg, rgba(201,168,76,0.12), rgba(232,201,122,0.06));border:1.5px solid rgba(201,168,76,0.4);border-radius:10px;padding:12px 14px;margin-bottom:14px;display:none';
-    // أضف فى أعلى الـ modal-body
-    const modalBody = document.querySelector('#blModal .modal-body');
-    if (modalBody) modalBody.insertBefore(warningBanner, modalBody.firstChild);
-  }
-  if (isProtected) {
-    const tierLabels = defaultCheck.tiers.map(t => `${t.icon || '🏆'} <b style="color:${t.color}">${t.name}</b>`).join(' و ');
-    warningBanner.innerHTML = `
-      <div style="display:flex;align-items:flex-start;gap:10px">
-        <span style="font-size:22px;flex-shrink:0">🛡️</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13.5px;font-weight:800;color:var(--gold-light);margin-bottom:4px">دى النسخة الافتراضية لفئة ${tierLabels}</div>
-          <div style="font-size:11.5px;color:var(--text-dim);line-height:1.7">تقدر تعدّل القيم والـ note بس. <b style="color:var(--text)">الفئة + التاريخ + flag "كل الفئات"</b> مقفولين عشان مش تكسر النظام عن طريق الخطأ. لو عاوز تغير دول، اعمل <b>نسخة جديدة</b> بدل ما تعدّل الافتراضية.</div>
-        </div>
-      </div>`;
-    warningBanner.style.display = 'block';
-  } else {
-    warningBanner.style.display = 'none';
-  }
-
-  // 🌐 set الـ "كل الفئات" toggle + الـ disable logic
-  const appliesAllCb = document.getElementById('bl-applies-all');
-  appliesAllCb.checked = initialAppliesAll;
-  appliesAllCb.disabled = isProtected;
-  blToggleApplyAll();
-
-  // عمار الـ checkboxes للـ tiers
-  blRenderTierCheckboxes(initialTierIds, isProtected);
-
-  // 🛡️ disable الـ "كل الفئات" toggle visual لو protected
-  const allTiersToggle = document.getElementById('bl-all-tiers-toggle');
-  if (isProtected) {
-    allTiersToggle.style.opacity = '0.5';
-    allTiersToggle.style.cursor = 'not-allowed';
-  } else {
-    allTiersToggle.style.opacity = '';
-    allTiersToggle.style.cursor = 'pointer';
+    src = blAllLimits[0];  // آخر نسخة (الأحدث) كـ pre-fill للجديد
   }
 
   // عنوان الـ modal
   const titleEl = document.getElementById('bl-modal-title');
-  if (titleEl) titleEl.textContent = blEditingId 
-    ? (isProtected ? '🛡️ تعديل النسخة الافتراضية' : '✏️ تعديل النسخة')
-    : '➕ نسخة جديدة من حدود الحجز';
+  if (titleEl) titleEl.textContent = blEditingId ? '✏️ تعديل النسخة' : '➕ نسخة جديدة من حدود الحجز';
   const saveBtn = document.getElementById('bl-save-btn');
   if (saveBtn) saveBtn.textContent = blEditingId ? '💾 حفظ التعديل' : '💾 حفظ النسخة';
 
   // التاريخ
-  const dateInput = document.getElementById('bl-effective-from');
   if (blEditingId && src) {
-    dateInput.value = src.effective_from;
+    document.getElementById('bl-effective-from').value = src.effective_from;
   } else {
     const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-    dateInput.value = fmtDate(tomorrow);
+    document.getElementById('bl-effective-from').value = fmtDate(tomorrow);
   }
-  // 🛡️ قفل الـ date input لو protected
-  dateInput.disabled = isProtected;
-  dateInput.style.opacity = isProtected ? '0.5' : '';
-  dateInput.style.cursor = isProtected ? 'not-allowed' : '';
 
   document.getElementById('bl-weekly').value           = src ? src.weekly_vehicles : '';
   document.getElementById('bl-daily').value            = src ? src.daily_vehicles : '';
@@ -11078,37 +9835,8 @@ async function saveLimits(){
   const errEl = document.getElementById('bl-form-error');
   errEl.style.display = 'none';
 
-  // 🛡️ Server-side guard: لو الـ rule المعدّلة default، استخدم الـ tier_ids/flag/date القديمة (تجاهل الـ DOM)
-  const defaultCheck = blIsDefaultRule(blEditingId);
-  const isProtected = defaultCheck.isDefault;
-  const originalRule = blEditingId ? blAllLimits.find(r => r.id === blEditingId) : null;
-
-  // 🌐 الـ "كل الفئات" flag
-  let appliesToAll;
-  let selectedTierIds;
-  let effectiveFromValue;
-
-  if (isProtected && originalRule) {
-    // 🛡️ حماية: استخدم القيم الأصلية للـ default rule
-    appliesToAll = !!originalRule.applies_to_all_tiers;
-    selectedTierIds = originalRule.tier_ids || [];
-    effectiveFromValue = originalRule.effective_from;
-  } else {
-    // عادى: استخدم القيم من الـ DOM
-    appliesToAll = document.getElementById('bl-applies-all').checked;
-    selectedTierIds = appliesToAll ? [] : blGetSelectedTierIds();
-    effectiveFromValue = document.getElementById('bl-effective-from').value;
-
-    if (!appliesToAll && !selectedTierIds.length) {
-      errEl.textContent = '⚠️ اختار فئة واحدة على الأقل، أو علّم "🌐 طبّق على كل الفئات"';
-      errEl.style.display = 'block';
-      return;
-    }
-  }
-
   const payload = {
-    applies_to_all_tiers:   appliesToAll,
-    effective_from:         effectiveFromValue,
+    effective_from:         document.getElementById('bl-effective-from').value,
     weekly_vehicles:        parseInt(document.getElementById('bl-weekly').value),
     daily_vehicles:         parseInt(document.getElementById('bl-daily').value),
     per_booking_vehicles:   parseInt(document.getElementById('bl-per-booking').value),
@@ -11144,25 +9872,11 @@ async function saveLimits(){
     return;
   }
 
-  // 🛡️ Client-side duplicate check: منع إنشاء نسختين بنفس التاريخ والفئة
-  // (للـ NEW rules فقط، أو الـ EDIT اللى مش default)
-  if (!isProtected && !appliesToAll && selectedTierIds.length) {
-    const duplicates = blAllLimits.filter(r => 
-      r.id !== blEditingId &&
-      r.effective_from === payload.effective_from &&
-      !r.applies_to_all_tiers &&
-      (r.tier_ids || []).some(tid => selectedTierIds.includes(tid))
-    );
-    if (duplicates.length) {
-      const conflictTierNames = [...new Set(
-        duplicates.flatMap(d => (d.tier_ids || []))
-          .filter(tid => selectedTierIds.includes(tid))
-          .map(tid => (blTiers.find(t => t.id === tid) || {}).name)
-          .filter(Boolean)
-      )].join('، ');
-      errEl.textContent = `⚠️ فيه نسخة موجودة بالفعل بتاريخ ${payload.effective_from} لفئة (${conflictTierNames}). عدّل النسخة الموجودة بدل ما تعمل واحدة جديدة.`;
-      errEl.style.display = 'block';
-      return;
+  // تحذير لو فيه نسخة موجودة بنفس التاريخ (فى حالة الإضافة الجديدة فقط)
+  if (!blEditingId) {
+    const existing = blAllLimits.find(r => r.effective_from === payload.effective_from);
+    if (existing) {
+      if (!confirm(`فيه نسخة موجودة بنفس التاريخ (${payload.effective_from}).\nهتضيف نسخة جديدة برضه؟`)) return;
     }
   }
 
@@ -11172,99 +9886,35 @@ async function saveLimits(){
   btn.textContent = '⏳ جاري الحفظ...';
 
   try {
-    let ruleId;
+    let r;
     if (blEditingId) {
-      // PATCH للـ rule نفسها
-      const r = await fetch(`${SB}/rest/v1/booking_limits?id=eq.${blEditingId}`, {
+      // PATCH
+      r = await fetch(`${SB}/rest/v1/booking_limits?id=eq.${blEditingId}`, {
         method: 'PATCH',
         headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-      ruleId = blEditingId;
     } else {
       // INSERT — نضيف created_by فى الإنشاء فقط
       payload.created_by = admin?.name || admin?.username || 'admin';
-      const r = await fetch(`${SB}/rest/v1/booking_limits`, {
+      r = await fetch(`${SB}/rest/v1/booking_limits`, {
         method: 'POST',
-        headers: { ...HDR, 'Prefer': 'return=representation', 'Content-Type': 'application/json' },
+        headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-      const data = await r.json();
-      ruleId = (data && data[0] && data[0].id);
-      if (!ruleId) throw new Error('لم يتم الحصول على ID للنسخة الجديدة');
     }
-
-    // sync الـ junction table:
-    // 🛡️ لو default rule، ما نلمسش الـ junction (محمى)
-    // غير كده: لو applies_to_all_tiers=true → امسح كل الـ links
-    // لو false → امسح القديمة وضيف الجديدة
-    if (!isProtected) {
-      if (blEditingId) {
-        const rd = await fetch(`${SB}/rest/v1/booking_limit_tiers?booking_limit_id=eq.${ruleId}`, {
-          method: 'DELETE',
-          headers: { ...HDR, 'Prefer': 'return=minimal' }
-        });
-        if (!rd.ok) throw new Error(`Delete links failed: HTTP ${rd.status}`);
-      }
-      // لو مش "كل الفئات"، نـ insert الـ links
-      if (!appliesToAll && selectedTierIds.length) {
-        const links = selectedTierIds.map(tid => ({ booking_limit_id: ruleId, tier_id: tid }));
-        const ri = await fetch(`${SB}/rest/v1/booking_limit_tiers`, {
-          method: 'POST',
-          headers: { ...HDR, 'Prefer': 'return=minimal', 'Content-Type': 'application/json' },
-          body: JSON.stringify(links)
-        });
-        if (!ri.ok) throw new Error(`Insert links failed: HTTP ${ri.status}: ${await ri.text()}`);
-      }
-    }
-
+    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
     if (typeof logActivity === 'function') {
       const action = blEditingId ? 'admin_limits_update' : 'admin_limits_create';
-      const targetLabel = appliesToAll 
-        ? 'كل الفئات (الحالية + المستقبلية)' 
-        : selectedTierIds.map(tid => (blTiers.find(t => t.id === tid) || {}).name).filter(Boolean).join('، ');
-      const protectedNote = isProtected ? ' [🛡️ default protected]' : '';
-      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId}) — ${targetLabel}${protectedNote}` : `📊 أضاف نسخة حدود جديدة لـ ${targetLabel} تبدأ ${payload.effective_from}`;
-      logActivity(action, label, { ...payload, tier_ids: selectedTierIds, applies_to_all_tiers: appliesToAll, protected: isProtected });
-    }
-    // اضمن إن الـ tab يفضل على واحد من الفئات اللى اتضافت ليها (مش هيتغير لو applies_to_all_tiers أو protected)
-    if (!isProtected && !appliesToAll && !selectedTierIds.includes(blCurrentTierId)) {
-      blCurrentTierId = selectedTierIds[0];
+      const label  = blEditingId ? `📊 عدّل نسخة حدود (#${blEditingId})` : `📊 أضاف نسخة حدود جديدة تبدأ ${payload.effective_from}`;
+      logActivity(action, label, payload);
     }
     closeLimitsForm();
     await loadBookingLimits();
-    
-    // 🎯 highlight الـ row الجديد فى الجدول + scroll
-    setTimeout(() => {
-      const tableRows = document.querySelectorAll('.bl-history-tbl tbody tr');
-      tableRows.forEach(tr => {
-        const firstCell = tr.querySelector('td');
-        if (!firstCell) return;
-        // الـ row اللى تاريخه يساوى effective_from وقيمه أحدث (آخر created)
-        if (firstCell.textContent.trim() === payload.effective_from) {
-          tr.style.transition = 'background 0.3s ease';
-          tr.style.background = 'rgba(76,175,125,0.18)';
-          tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          setTimeout(() => { tr.style.background = ''; }, 2500);
-        }
-      });
-    }, 200);
-    
-    if (typeof showToast === 'function') {
-      const savedLabel = appliesToAll ? 'لكل الفئات' : selectedTierIds.map(tid => (blTiers.find(t => t.id === tid) || {}).name).filter(Boolean).join('، ');
-      showToast(`✅ تم الحفظ — نسخة ${blEditingId ? 'محدثة' : 'جديدة'} ${savedLabel} تبدأ ${payload.effective_from}`);
-    }
+    if (typeof showToast === 'function') showToast('✅ تم الحفظ');
   } catch(e) {
     console.error('saveLimits error:', e);
-    // 🛡️ خطأ من الـ DB trigger (duplicate)
-    let userMsg = '❌ خطأ فى الحفظ: ' + e.message;
-    if (e.message && e.message.includes('فيه نسخة موجودة بالفعل')) {
-      userMsg = '⚠️ ' + e.message.split('فيه نسخة موجودة بالفعل')[1].split('"')[0];
-      userMsg = '⚠️ فيه نسخة موجودة بالفعل لنفس الفئة بنفس تاريخ التفعيل. عدّل الموجودة بدل ما تعمل واحدة جديدة.';
-    }
-    errEl.textContent = userMsg;
+    errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
     errEl.style.display = 'block';
   } finally {
     btn.disabled = false; btn.textContent = originalLabel;
@@ -11274,16 +9924,14 @@ async function saveLimits(){
 async function deleteLimit(id){
   const row = blAllLimits.find(r => r.id === id);
   if (!row) return;
-  // 🛡️ النسخة الافتراضية محمية من المسح
-  const defaultCheck = blIsDefaultRule(id);
-  if (defaultCheck.isDefault) {
-    const tierNames = defaultCheck.tiers.map(t => t.name).join('، ');
-    alert(`❌ النسخة الافتراضية لفئة ${tierNames} مش بتتمسح — تعديل بس`);
+  // النسخة الافتراضية (أقل id) محمية من المسح
+  const minId = Math.min(...blAllLimits.map(r => r.id));
+  if (id === minId) {
+    alert('❌ النسخة الافتراضية مش بتتمسح — تعديل بس');
     return;
   }
   if (!confirm(`هتمسح النسخة اللى تبدأ من ${row.effective_from}؟\nمش هتقدر ترجعها.`)) return;
   try {
-    // الـ junction links هتتمسح cascade تلقائياً
     const r = await fetch(`${SB}/rest/v1/booking_limits?id=eq.${id}`, {
       method: 'DELETE',
       headers: { ...HDR, 'Prefer': 'return=minimal' }
@@ -11297,513 +9945,6 @@ async function deleteLimit(id){
   } catch(e) {
     console.error('deleteLimit error:', e);
     alert('❌ خطأ فى المسح: ' + e.message);
-  }
-}
-
-// ═══════════════════════════════════════════════════════════
-// 🏆 CLIENT TIERS — JS logic لصفحة فئات العملاء
-// ═══════════════════════════════════════════════════════════
-let tiersData     = [];   // كل الفئات
-let tiersClientCounts = {}; // {tier_id: count}
-let tiersRulesCounts  = {}; // {tier_id: count}
-let editingTierId = null; // null = إضافة، رقم = تعديل
-
-// Color palette (luxury/refined)
-const TIER_COLORS = [
-  '#8A8580', // gray (default)
-  '#C9A84C', // gold
-  '#E0B040', // amber gold
-  '#6dc49a', // emerald
-  '#4A90D9', // blue
-  '#9B7EDB', // purple
-  '#E07C7C', // red
-  '#E89B5C', // orange
-  '#5DBDB5', // teal
-  '#D478B0', // pink
-  '#7CA868', // sage
-  '#C97C50', // bronze
-];
-
-// Icon palette
-const TIER_ICONS = [
-  '👤','⭐','🏆','👑','💎','🥇','🥈','🥉',
-  '🌟','✨','🔥','💼','🎯','📈','🛡️','💰',
-  '🚀','⚡','🎖️','🎁','🌹','🦅','🦁','🐉'
-];
-
-async function loadClientTiers(){
-  const tbl = document.getElementById('tiers-table');
-  tbl.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
-  try {
-    // جلب الفئات + counts العملاء + counts الـ rules (من junction)
-    const [r1, r2, r3] = await Promise.all([
-      fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/clients?select=tier_id`, { headers: { ...HDR, 'Range': '0-9999' } }),
-      fetch(`${SB}/rest/v1/booking_limit_tiers?select=tier_id`, { headers: HDR })
-    ]);
-    tiersData = await r1.json();
-    const clients = await r2.json();
-    const links = await r3.json();
-
-    // count clients per tier
-    tiersClientCounts = {};
-    clients.forEach(c => {
-      const tid = c.tier_id;
-      if (tid) tiersClientCounts[tid] = (tiersClientCounts[tid] || 0) + 1;
-    });
-    // count rules per tier (عبر junction table)
-    tiersRulesCounts = {};
-    links.forEach(l => {
-      const tid = l.tier_id;
-      if (tid) tiersRulesCounts[tid] = (tiersRulesCounts[tid] || 0) + 1;
-    });
-
-    renderTiersTable();
-  } catch(e) {
-    console.error('loadClientTiers error:', e);
-    tbl.innerHTML = '<div class="empty-txt">❌ خطأ فى التحميل</div>';
-  }
-}
-
-function renderTiersTable(){
-  const tbl = document.getElementById('tiers-table');
-  if (!tiersData.length) {
-    tbl.innerHTML = `
-      <div style="text-align:center;padding:40px 20px;color:var(--text-dim)">
-        <div style="font-size:36px;margin-bottom:10px">🏆</div>
-        <div style="font-weight:700;color:var(--text);margin-bottom:6px">مفيش فئات لسه</div>
-        <div style="font-size:13px;margin-bottom:14px">اعمل فئة جديدة عشان تبدأ تستخدم النظام</div>
-        <button class="add-btn" onclick="openTierModal()">➕ إضافة فئة جديدة</button>
-      </div>`;
-    return;
-  }
-
-  const rows = tiersData.map(t => {
-    const clientCount = tiersClientCounts[t.id] || 0;
-    const rulesCount = tiersRulesCounts[t.id] || 0;
-    const isDefault = !!t.is_default;
-    const canDelete = !isDefault && clientCount === 0 && rulesCount === 0;
-    const delTitle = isDefault ? 'مش بتتمسح فئة الافتراضية' 
-                  : clientCount > 0 ? `فيه ${clientCount} عميل فى الفئة دى — انقلهم أولاً` 
-                  : rulesCount > 0 ? `فيه ${rulesCount} قاعدة حدود مرتبطة بالفئة — امسحهم أولاً`
-                  : 'مسح الفئة';
-    const setDefBtn = isDefault ? '' :
-      `<button class="btn-default" onclick="setTierAsDefault(${t.id}, ${JSON.stringify(t.name).replace(/"/g,'&quot;')})" title="خلى دى الفئة الافتراضية">⭐ افتراضية</button>`;
-    return `<tr>
-      <td style="width:60px;text-align:center">
-        <div style="display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:11px;font-size:22px;background:${t.color}1f;border:1.5px solid ${t.color}55">${t.icon || '🏆'}</div>
-      </td>
-      <td>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <b style="font-size:15px;color:${t.color}">${t.name}</b>
-          ${isDefault ? '<span class="tier-default-flag">⭐ افتراضية</span>' : ''}
-        </div>
-        ${t.description ? `<div style="font-size:11.5px;color:var(--text-dim);margin-top:3px;line-height:1.5">${t.description}</div>` : ''}
-      </td>
-      <td style="text-align:center">
-        <div style="font-size:18px;font-weight:800;color:var(--text)">${clientCount}</div>
-        <div style="font-size:10.5px;color:var(--text-dim)">عميل</div>
-      </td>
-      <td style="text-align:center">
-        <div style="font-size:18px;font-weight:800;color:var(--text)">${rulesCount}</div>
-        <div style="font-size:10.5px;color:var(--text-dim)">قاعدة</div>
-      </td>
-      <td style="text-align:center;color:var(--text-dim);font-size:13px">${t.sort_order ?? '—'}</td>
-      <td style="font-family:monospace;font-size:11.5px;letter-spacing:0.5px;color:${t.color}">${t.color}</td>
-      <td>
-        <div class="tier-row-actions">
-          ${setDefBtn}
-          <button class="btn-edit" onclick="openTierModal(${t.id})" title="تعديل">✏️ تعديل</button>
-          <button class="btn-del" ${canDelete ? '' : 'disabled'} onclick="deleteTier(${t.id})" title="${delTitle}">🗑️ مسح</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
-
-  tbl.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th style="width:60px"></th>
-          <th>الاسم</th>
-          <th style="text-align:center;width:70px">العملاء</th>
-          <th style="text-align:center;width:70px">القواعد</th>
-          <th style="text-align:center;width:80px">الترتيب</th>
-          <th style="width:100px">اللون</th>
-          <th style="width:280px">إجراءات</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>`;
-}
-
-function tierRenderColorPalette(){
-  const wrap = document.getElementById('tier-palette');
-  if (!wrap) return;
-  const currentColor = (document.getElementById('tier-color').value || '#C9A84C').toLowerCase();
-  wrap.innerHTML = TIER_COLORS.map(c => {
-    const selected = c.toLowerCase() === currentColor ? 'selected' : '';
-    return `<div class="tier-palette-swatch ${selected}" style="background:${c}" onclick="tierPickColor('${c}')" title="${c}"></div>`;
-  }).join('');
-}
-
-function tierRenderIconPalette(){
-  const wrap = document.getElementById('tier-icon-palette');
-  if (!wrap) return;
-  const current = document.getElementById('tier-icon').value || '⭐';
-  wrap.innerHTML = TIER_ICONS.map(ic => {
-    const selected = ic === current ? 'selected' : '';
-    return `<div class="tier-icon-swatch ${selected}" onclick="tierPickIcon('${ic}')">${ic}</div>`;
-  }).join('');
-}
-
-function tierPickColor(c){
-  document.getElementById('tier-color').value = c;
-  document.getElementById('tier-color-hex').value = c.toUpperCase();
-  tierRenderColorPalette();
-  tierUpdatePreview();
-}
-
-function tierPickIcon(ic){
-  document.getElementById('tier-icon').value = ic;
-  tierRenderIconPalette();
-  tierUpdatePreview();
-}
-
-function tierSyncColorFromHex(val){
-  // قبول الـ hex بحرف # اختيارى
-  let hex = (val || '').trim();
-  if (hex && !hex.startsWith('#')) hex = '#' + hex;
-  // validation: لازم #RRGGBB
-  if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
-    document.getElementById('tier-color').value = hex;
-    tierRenderColorPalette();
-    tierUpdatePreview();
-  }
-}
-
-// كل ما الـ color picker يتغير، نحدّث الـ hex text + الـ preview
-document.addEventListener('DOMContentLoaded', () => {
-  const cpicker = document.getElementById('tier-color');
-  if (cpicker) {
-    cpicker.addEventListener('input', () => {
-      document.getElementById('tier-color-hex').value = cpicker.value.toUpperCase();
-      tierRenderColorPalette();
-      tierUpdatePreview();
-    });
-  }
-});
-
-function tierUpdatePreview(){
-  const name  = (document.getElementById('tier-name').value || '').trim() || 'اسم الفئة';
-  const desc  = (document.getElementById('tier-desc').value || '').trim() || 'شرح الفئة (اختيارى)';
-  const color = document.getElementById('tier-color').value || '#C9A84C';
-  const icon  = (document.getElementById('tier-icon').value || '').trim() || '⭐';
-
-  const iconEl = document.getElementById('tier-preview-icon');
-  iconEl.textContent = icon;
-  iconEl.style.background = color + '22';
-  iconEl.style.color = color;
-  iconEl.style.border = `1.5px solid ${color}55`;
-
-  const nameEl = document.getElementById('tier-preview-name');
-  nameEl.textContent = name;
-  nameEl.style.color = color;
-
-  document.getElementById('tier-preview-desc').textContent = desc;
-}
-
-function openTierModal(tierId){
-  editingTierId = tierId || null;
-  document.getElementById('tier-modal-title').textContent = editingTierId ? '✏️ تعديل فئة' : '➕ إضافة فئة جديدة';
-  document.getElementById('tier-form-error').style.display = 'none';
-
-  // pre-fill
-  const t = editingTierId ? tiersData.find(x => x.id === editingTierId) : null;
-
-  if (t) {
-    document.getElementById('tier-name').value     = t.name || '';
-    document.getElementById('tier-desc').value     = t.description || '';
-    document.getElementById('tier-color').value    = t.color || '#C9A84C';
-    document.getElementById('tier-color-hex').value= (t.color || '#C9A84C').toUpperCase();
-    document.getElementById('tier-icon').value     = t.icon || '⭐';
-    document.getElementById('tier-sort').value     = (t.sort_order ?? 0);
-    document.getElementById('tier-is-default').checked = !!t.is_default;
-    // لو الفئة default، نعطل الـ toggle (مش هيقدر يلغى الـ default منها — لازم يخلى تانية default الأول)
-    document.getElementById('tier-is-default').disabled = !!t.is_default;
-  } else {
-    // قيم افتراضية للإضافة
-    document.getElementById('tier-name').value     = '';
-    document.getElementById('tier-desc').value     = '';
-    document.getElementById('tier-color').value    = '#C9A84C';
-    document.getElementById('tier-color-hex').value= '#C9A84C';
-    document.getElementById('tier-icon').value     = '⭐';
-    const maxSort = tiersData.length ? Math.max(...tiersData.map(x => x.sort_order || 0)) : 0;
-    document.getElementById('tier-sort').value     = maxSort + 1;
-    document.getElementById('tier-is-default').checked = false;
-    document.getElementById('tier-is-default').disabled = false;
-  }
-
-  tierRenderColorPalette();
-  tierRenderIconPalette();
-  tierUpdatePreview();
-
-  document.getElementById('tierModal').classList.add('show');
-}
-
-function closeTierModal(){
-  document.getElementById('tierModal').classList.remove('show');
-  editingTierId = null;
-}
-
-async function saveTier(){
-  const errEl = document.getElementById('tier-form-error');
-  errEl.style.display = 'none';
-
-  const name = (document.getElementById('tier-name').value || '').trim();
-  const desc = (document.getElementById('tier-desc').value || '').trim() || null;
-  const color = (document.getElementById('tier-color').value || '#C9A84C').toUpperCase();
-  const icon = (document.getElementById('tier-icon').value || '⭐').trim();
-  const sort = parseInt(document.getElementById('tier-sort').value) || 0;
-  const isDefault = !!document.getElementById('tier-is-default').checked;
-
-  // Validation
-  if (!name) {
-    errEl.textContent = '⚠️ اكتب اسم الفئة';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (name.length > 50) {
-    errEl.textContent = '⚠️ اسم الفئة طويل (أكتر من 50 حرف)';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (!icon || icon.length > 4) {
-    errEl.textContent = '⚠️ الأيقونة لازم تكون emoji واحد';
-    errEl.style.display = 'block';
-    return;
-  }
-  if (!/^#[0-9A-F]{6}$/i.test(color)) {
-    errEl.textContent = '⚠️ اللون مش صحيح. لازم بصيغة #RRGGBB';
-    errEl.style.display = 'block';
-    return;
-  }
-  // اسم مكرر؟ (مش الـ row اللى بنعدّله)
-  const dup = tiersData.find(x => x.name === name && x.id !== editingTierId);
-  if (dup) {
-    errEl.textContent = '⚠️ فيه فئة بنفس الاسم — اختار اسم تانى';
-    errEl.style.display = 'block';
-    return;
-  }
-
-  const payload = {
-    name, description: desc, color, icon,
-    sort_order: sort, is_default: isDefault
-  };
-
-  const btn = document.getElementById('tier-save-btn');
-  btn.disabled = true;
-  const originalLbl = btn.textContent;
-  btn.textContent = '⏳ جاري الحفظ...';
-
-  try {
-    let r;
-    if (editingTierId) {
-      r = await fetch(`${SB}/rest/v1/client_tiers?id=eq.${editingTierId}`, {
-        method: 'PATCH',
-        headers: { ...HDR, 'Prefer': 'return=minimal' },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      r = await fetch(`${SB}/rest/v1/client_tiers`, {
-        method: 'POST',
-        headers: { ...HDR, 'Prefer': 'return=minimal' },
-        body: JSON.stringify(payload)
-      });
-    }
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-
-    if (typeof logActivity === 'function') {
-      const action = editingTierId ? 'admin_tier_update' : 'admin_tier_create';
-      const label = editingTierId ? `🏆 عدّل فئة العميل: ${name}` : `🏆 أضاف فئة عميل جديدة: ${name}`;
-      logActivity(action, label, payload);
-    }
-
-    closeTierModal();
-    await loadClientTiers();
-    if (typeof showToast === 'function') showToast('✅ تم الحفظ');
-  } catch(e) {
-    console.error('saveTier error:', e);
-    errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
-    errEl.style.display = 'block';
-  } finally {
-    btn.disabled = false; btn.textContent = originalLbl;
-  }
-}
-
-async function setTierAsDefault(tierId, tierName){
-  if (!confirm(`هتخلى "${tierName}" هى الفئة الافتراضية؟\nالعميل الجديد بياخدها تلقائياً، والفئة الافتراضية الحالية مش هتبقى افتراضية.`)) return;
-  try {
-    const r = await fetch(`${SB}/rest/v1/client_tiers?id=eq.${tierId}`, {
-      method: 'PATCH',
-      headers: { ...HDR, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ is_default: true })
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-    if (typeof logActivity === 'function') {
-      logActivity('admin_tier_set_default', `⭐ خلى "${tierName}" هى الفئة الافتراضية`, { tier_id: tierId });
-    }
-    await loadClientTiers();
-    if (typeof showToast === 'function') showToast('⭐ تم تغيير الفئة الافتراضية');
-  } catch(e) {
-    console.error('setTierAsDefault error:', e);
-    alert('❌ خطأ: ' + e.message);
-  }
-}
-
-async function deleteTier(tierId){
-  const t = tiersData.find(x => x.id === tierId);
-  if (!t) return;
-  const clientCount = tiersClientCounts[tierId] || 0;
-  const rulesCount  = tiersRulesCounts[tierId] || 0;
-  if (t.is_default) { alert('❌ الفئة الافتراضية مش بتتمسح'); return; }
-  if (clientCount > 0) { alert(`❌ فيه ${clientCount} عميل فى الفئة دى — انقلهم لفئة تانية الأول`); return; }
-  if (rulesCount > 0) { alert(`❌ فيه ${rulesCount} قاعدة حدود مرتبطة بالفئة — امسحهم أو حوّلهم لفئة تانية`); return; }
-  if (!confirm(`هتمسح فئة "${t.name}"؟\nمفيش رجوع.`)) return;
-  try {
-    const r = await fetch(`${SB}/rest/v1/client_tiers?id=eq.${tierId}`, {
-      method: 'DELETE',
-      headers: { ...HDR, 'Prefer': 'return=minimal' }
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-    if (typeof logActivity === 'function') {
-      logActivity('admin_tier_delete', `🗑️ مسح فئة العميل: ${t.name}`, t);
-    }
-    await loadClientTiers();
-    if (typeof showToast === 'function') showToast('🗑️ تم المسح');
-  } catch(e) {
-    console.error('deleteTier error:', e);
-    alert('❌ خطأ فى المسح: ' + e.message);
-  }
-}
-
-// ─────────────────────────────────────────────────────────────
-// 🏆 تغيير فئة عميل من صفحة العملاء
-// ─────────────────────────────────────────────────────────────
-async function openChangeClientTier(clientId){
-  const client = (allClients || []).find(c => c.id === clientId);
-  if (!client) { alert('❌ مفيش عميل بالـ id ده'); return; }
-
-  // تأكد إن الفئات محمّلة
-  if (!allClientTiers || !allClientTiers.length) {
-    try {
-      const r = await fetch(`${SB}/rest/v1/client_tiers?select=*&order=sort_order.asc,name.asc`, { headers: HDR });
-      allClientTiers = await r.json();
-    } catch(e) {
-      alert('❌ مش قادر أحمل الفئات');
-      return;
-    }
-  }
-
-  const currentTier = allClientTiers.find(t => t.id === client.tier_id);
-  const currentLbl = currentTier ? `${currentTier.icon} ${currentTier.name}` : '—';
-
-  // بناء options
-  const options = allClientTiers.map(t => {
-    const checked = t.id === client.tier_id ? 'checked' : '';
-    return `<label style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:#1A1A1A;border:1.5px solid ${t.id === client.tier_id ? t.color + '55' : 'var(--border)'};border-radius:10px;cursor:pointer;margin-bottom:8px;transition:all 0.15s ease" 
-      onmouseover="this.style.borderColor='${t.color}77';this.style.background='${t.color}0a'" 
-      onmouseout="this.style.borderColor='${t.id === client.tier_id ? t.color + '55' : 'var(--border)'}';this.style.background='${t.id === client.tier_id ? t.color + '0a' : '#1A1A1A'}'">
-      <input type="radio" name="cct-tier" value="${t.id}" ${checked} style="width:18px;height:18px;accent-color:${t.color}">
-      <span style="font-size:22px">${t.icon || '🏆'}</span>
-      <div style="flex:1">
-        <div style="font-size:14px;font-weight:800;color:${t.color}">${t.name}${t.is_default ? ' <span style="font-size:10px;color:#6dc49a">★ افتراضى</span>' : ''}</div>
-        ${t.description ? `<div style="font-size:11px;color:var(--text-dim);margin-top:2px">${t.description}</div>` : ''}
-      </div>
-    </label>`;
-  }).join('');
-
-  // إنشاء/تحديث الـ modal
-  let modal = document.getElementById('cctModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'cctModal';
-    modal.className = 'modal-overlay';
-    document.body.appendChild(modal);
-  }
-  modal.innerHTML = `
-    <div class="modal" style="max-width:520px">
-      <div class="modal-title">
-        <span>🏆 تغيير فئة العميل</span>
-        <button class="modal-close" onclick="closeChangeClientTier()">×</button>
-      </div>
-      <div class="modal-body">
-        <div style="background:rgba(74,144,217,0.06);border:1px solid rgba(74,144,217,0.2);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#7fb8e8;line-height:1.7">
-          العميل: <b style="color:var(--text)">${client.name || '—'}</b> · الفئة الحالية: <b>${currentLbl}</b>
-        </div>
-        <div>${options}</div>
-        <div id="cct-err" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin-top:10px"></div>
-      </div>
-      <div class="modal-foot">
-        <button class="btn-cancel" onclick="closeChangeClientTier()">إلغاء</button>
-        <button class="btn-save" id="cct-save-btn" onclick="saveChangeClientTier(${clientId})">💾 حفظ</button>
-      </div>
-    </div>`;
-  modal.classList.add('show');
-}
-
-function closeChangeClientTier(){
-  const m = document.getElementById('cctModal');
-  if (m) m.classList.remove('show');
-}
-
-async function saveChangeClientTier(clientId){
-  const errEl = document.getElementById('cct-err');
-  errEl.style.display = 'none';
-
-  const picked = document.querySelector('input[name="cct-tier"]:checked');
-  if (!picked) {
-    errEl.textContent = '⚠️ اختار فئة';
-    errEl.style.display = 'block';
-    return;
-  }
-  const newTierId = parseInt(picked.value);
-  const client = (allClients || []).find(c => c.id === clientId);
-  if (!client) return;
-  if (client.tier_id === newTierId) {
-    closeChangeClientTier();
-    return;
-  }
-
-  const btn = document.getElementById('cct-save-btn');
-  btn.disabled = true;
-  const lbl = btn.textContent;
-  btn.textContent = '⏳ جاري الحفظ...';
-
-  try {
-    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${clientId}`, {
-      method: 'PATCH',
-      headers: { ...HDR, 'Prefer': 'return=minimal' },
-      body: JSON.stringify({ tier_id: newTierId })
-    });
-    if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-
-    // update local cache
-    client.tier_id = newTierId;
-    const newTier = (allClientTiers || []).find(t => t.id === newTierId);
-    if (typeof logActivity === 'function') {
-      logActivity('admin_client_tier_change', `🏆 غيّر فئة العميل "${client.name}" لـ ${newTier ? newTier.name : '—'}`, { client_id: clientId, new_tier_id: newTierId });
-    }
-
-    closeChangeClientTier();
-    filterClients(); // re-render الجدول بالـ tier الجديد
-    if (typeof showToast === 'function') showToast(`✅ الفئة اتغيرت لـ ${newTier ? newTier.icon + ' ' + newTier.name : ''}`);
-  } catch(e) {
-    console.error('saveChangeClientTier error:', e);
-    errEl.textContent = '❌ خطأ: ' + e.message;
-    errEl.style.display = 'block';
-  } finally {
-    btn.disabled = false; btn.textContent = lbl;
   }
 }
 
@@ -11935,7 +10076,7 @@ async function sendMessageNow(){
   }
 
   const btn = document.getElementById('sm-send-btn');
-  btn.disabled = true; btn.textContent = '⏳ جارى الإرسال...';
+  btn.disabled = true; btn.textContent = '⏳ جارى الحفظ...';
 
   try {
     const roleLabel = role === 'attempting' ? 'التاجر اللى حاول' : 'التاجر الأصلى';
