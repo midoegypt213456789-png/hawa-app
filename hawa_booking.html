@@ -274,6 +274,7 @@
       <div class="name" id="uname">...</div>
       <div class="code" id="ucode">...</div>
     </div>
+    <button id="bioBtnHeader" onclick="openBiometricModal()" style="display:none;background:transparent;border:1px solid rgba(201,168,76,0.4);color:#C9A84C;border-radius:20px;padding:4px 10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px" title="إدارة البصمة">🔐</button>
     <button onclick="doLogout()" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:20px;padding:4px 12px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer">🚪 خروج</button>
   </div>
 
@@ -285,6 +286,41 @@
 
   <!-- Telegram Link Banner (shown if not linked) -->
   <div id="tgLinkBanner" style="display:none"></div>
+
+  <!-- 🔐 Biometric Enroll Banner (يظهر للموبايل لو ما سجّلش بصمة) -->
+  <div id="bioEnrollBanner" style="display:none;background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.06));border:1.5px solid rgba(201,168,76,0.5);border-radius:14px;padding:13px 14px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:32px;flex-shrink:0">🔐</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#E8C97A;margin-bottom:3px">دخول أسرع بالبصمة</div>
+        <div style="font-size:11px;color:#aaa;line-height:1.5">خلاص ما تنسى الباسوورد — افتح بالبصمة زى البنوك</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button onclick="enrollBiometric()" style="flex:1;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12.5px;font-weight:800;cursor:pointer">✨ فعّل البصمة</button>
+      <button onclick="dismissEnrollBanner()" style="background:transparent;border:1px solid #444;color:#888;border-radius:9px;padding:10px 14px;font-family:Cairo,sans-serif;font-size:11.5px;font-weight:600;cursor:pointer">لأ شكراً</button>
+    </div>
+  </div>
+
+  <!-- 🔐 Biometric Settings Modal -->
+  <div id="bioModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:18px" onclick="if(event.target===this)closeBiometricModal()">
+    <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:20px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:16px;font-weight:800;color:#E8C97A;display:flex;align-items:center;gap:8px">🔐 الدخول بالبصمة</div>
+        <button onclick="closeBiometricModal()" style="background:transparent;border:none;color:#888;font-size:22px;cursor:pointer;padding:0 4px;line-height:1">×</button>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:16px;line-height:1.7">سجّل البصمة على كل جهاز بتستخدمه. هتدخل أسرع بدون يوزر نيم أو باسوورد.</div>
+
+      <div id="bioList"></div>
+
+      <button id="bioAddBtn" onclick="enrollBiometric()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-top:8px">➕ تسجيل البصمة على الجهاز ده</button>
+
+      <button onclick="closeBiometricModal()" style="width:100%;background:transparent;border:1px solid #333;color:#888;border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- 🍞 Toast notifications -->
+  <div id="bioToast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(76,175,125,0.95);color:white;padding:12px 20px;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
 
   <!-- Alert -->
   <div class="alert" id="alert"></div>
@@ -472,16 +508,333 @@ document.getElementById('ucode').textContent  = user.company_code || '';
 // فحص ربط Telegram عند التحميل
 checkTelegramLink();
 
+// ═══════════════════════════════════════════════════════════
+// 🔐 BIOMETRIC LOGIN (WebAuthn) — دخول بالبصمة زى البنوك
+// ═══════════════════════════════════════════════════════════
+
+function bioSupported(){
+  return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+}
+
+// Buffer ↔ Base64URL helpers
+function bioBufToBase64(buf){
+  const bytes = new Uint8Array(buf);
+  let str = '';
+  for (let i = 0; i < bytes.byteLength; i++) str += String.fromCharCode(bytes[i]);
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function bioBase64ToBuf(s){
+  const pad = '='.repeat((4 - s.length % 4) % 4);
+  const b64 = (s + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf;
+}
+
+function bioDetectDevice(){
+  const ua = navigator.userAgent;
+  if (/iPhone/.test(ua))  return '📱 iPhone';
+  if (/iPad/.test(ua))    return '📱 iPad';
+  if (/Android/i.test(ua)){
+    const m = ua.match(/Android.*?;\s*([^;)]+)\sBuild/);
+    return '📱 ' + (m ? m[1].trim() : 'Android');
+  }
+  if (/Windows/.test(ua)) return '💻 Windows';
+  if (/Mac/.test(ua))     return '💻 Mac';
+  return '📱 جهاز';
+}
+
+function bioToast(msg, type){
+  const el = document.getElementById('bioToast');
+  if (!el) return;
+  const color = type === 'error' ? 'rgba(224,85,85,0.95)' : 'rgba(76,175,125,0.95)';
+  el.style.background = color;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 2800);
+}
+
+function bioFormatDate(iso){
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+// 🛡️ يحدد لو العميل "حالى" (معتمد + مش محظور) — البصمة بس للحاليين
+function bioIsApprovedClient(){
+  if (!user || !user.id) return false;
+  // لو الحقول لسه ما تحملتش، نـ assume false (يـ recheck بعد الـ fetch)
+  if (user.approval_status === undefined) return false;
+  return user.approval_status === 'approved' && user.is_blocked !== true;
+}
+
+// ═══════════════════════════════════════════════════════════
+// تسجيل بصمة جديدة على الجهاز ده
+// ═══════════════════════════════════════════════════════════
+async function enrollBiometric(){
+  if (!bioSupported()){
+    bioToast('❌ جهازك مش بيدعم البصمة', 'error');
+    return;
+  }
+  // 🛡️ ما تسمحش لغير المعتمدين
+  if (!bioIsApprovedClient()){
+    bioToast('⚠️ الحساب لازم يكون معتمد من الإدارة الأول', 'error');
+    return;
+  }
+  const btn = document.getElementById('bioAddBtn');
+  if (btn){ btn.disabled = true; btn.textContent = '⏳ ابصم على الجهاز...'; }
+  try {
+    const userIdBuf = new TextEncoder().encode(String(user.id));
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { name: 'HAWA CO', id: window.location.hostname },
+        user: {
+          id: userIdBuf,
+          name: user.company_code || ('client_' + user.id),
+          displayName: user.name || 'عميل HAWA'
+        },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },    // ES256
+          { type: 'public-key', alg: -257 }   // RS256
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',  // بصمة الجهاز فقط (مش security key خارجى)
+          userVerification: 'required',
+          residentKey: 'preferred'
+        },
+        timeout: 60000,
+        attestation: 'none',
+        excludeCredentials: bioGetExcludedCreds()
+      }
+    });
+
+    if (!cred) throw new Error('cancelled');
+
+    const credentialId = bioBufToBase64(cred.rawId);
+    let publicKey = '';
+    try {
+      if (cred.response.getPublicKey) {
+        publicKey = bioBufToBase64(cred.response.getPublicKey());
+      }
+    } catch(e){}
+
+    const deviceLabel = bioDetectDevice();
+
+    // احفظ فى الـ DB
+    const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        client_id: user.id,
+        credential_id: credentialId,
+        public_key: publicKey,
+        device_label: deviceLabel,
+        user_agent: navigator.userAgent.substring(0, 500)
+      })
+    });
+    if (!r.ok) throw new Error('فشل الحفظ فى السيرفر');
+
+    // احفظ فى localStorage (للـ login السريع المرة الجاية)
+    localStorage.setItem('hawa_biometric', JSON.stringify({
+      credentialId,
+      clientId: user.id,
+      clientCode: user.company_code,
+      clientName: user.name,
+      deviceLabel,
+      enrolledAt: new Date().toISOString()
+    }));
+
+    if (typeof logActivity === 'function') {
+      logActivity('cl_biometric_enrolled', '🔐 سجّل دخول بالبصمة', { device: deviceLabel });
+    }
+
+    bioToast('✅ تم تفعيل الدخول بالبصمة!');
+    dismissEnrollBanner(true);
+    updateBioHeaderBtn();
+    // re-render الـ modal لو مفتوح
+    if (document.getElementById('bioModal').style.display === 'flex') {
+      loadBiometrics();
+    }
+  } catch(e){
+    console.error('enrollBiometric error:', e);
+    if (e.name === 'NotAllowedError') {
+      bioToast('⏱️ تم الإلغاء', 'error');
+    } else if (e.name === 'InvalidStateError') {
+      bioToast('⚠️ الجهاز ده مسجل بالفعل', 'error');
+    } else if (e.name === 'NotSupportedError') {
+      bioToast('❌ الجهاز مش بيدعم البصمة', 'error');
+    } else {
+      bioToast('❌ ' + (e.message || 'خطأ غير متوقع'), 'error');
+    }
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = '➕ تسجيل البصمة على الجهاز ده'; }
+  }
+}
+
+// لو الجهاز ده مسجل بصمة، نمنع تسجيل تانى (excludeCredentials)
+function bioGetExcludedCreds(){
+  try {
+    const stored = JSON.parse(localStorage.getItem('hawa_biometric') || 'null');
+    if (stored && stored.credentialId && stored.clientId === user.id) {
+      return [{
+        id: bioBase64ToBuf(stored.credentialId),
+        type: 'public-key',
+        transports: ['internal']
+      }];
+    }
+  } catch(e){}
+  return [];
+}
+
+// ═══════════════════════════════════════════════════════════
+// Modal: قائمة البصمات المسجلة
+// ═══════════════════════════════════════════════════════════
+function openBiometricModal(){
+  document.getElementById('bioModal').style.display = 'flex';
+  loadBiometrics();
+}
+function closeBiometricModal(){
+  document.getElementById('bioModal').style.display = 'none';
+}
+
+async function loadBiometrics(){
+  const list = document.getElementById('bioList');
+  list.innerHTML = '<div style="color:#888;text-align:center;padding:20px">⏳ جاري التحميل...</div>';
+  try {
+    const r = await fetch(`${SB}/rest/v1/client_biometrics?client_id=eq.${user.id}&order=created_at.desc&select=*`, { headers: HDR });
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length){
+      list.innerHTML = '<div style="text-align:center;padding:30px 20px;background:rgba(255,255,255,0.02);border:1px dashed #2a2a2a;border-radius:10px;color:#888;margin-bottom:8px"><div style="font-size:36px;margin-bottom:8px">🔐</div><div style="font-size:12px">مفيش بصمات مسجلة لسه</div></div>';
+      return;
+    }
+    const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
+    list.innerHTML = data.map(b => {
+      const isCurrent = stored && stored.credentialId === b.credential_id;
+      return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isCurrent ? 'rgba(76,175,125,0.4)' : '#2a2a2a'};border-radius:10px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#eee">${b.device_label || 'جهاز غير معروف'}${isCurrent ? '<span style="color:#4CAF7D;font-size:10px;font-weight:600;margin-right:6px">●  الجهاز الحالى</span>' : ''}</div>
+            <div style="font-size:11px;color:#888;margin-top:3px">سُجّل ${bioFormatDate(b.created_at)}${b.last_used_at ? ' • آخر استخدام ' + bioFormatDate(b.last_used_at) : ''}</div>
+          </div>
+          <button onclick="removeBiometric(${b.id}, '${b.credential_id}')" style="background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.3);border-radius:7px;padding:6px 10px;font-family:Cairo,sans-serif;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">🗑️ مسح</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    list.innerHTML = '<div style="color:#e88080;text-align:center;padding:20px;font-size:12px">❌ خطأ: ' + e.message + '</div>';
+  }
+}
+
+async function removeBiometric(id, credentialId){
+  if (!confirm('متأكد إنك تشيل البصمة دى؟\nهتحتاج تكتب الباسوورد من تانى لو شيلتها وعاوز تدخل تانى من الجهاز ده.')) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/client_biometrics?id=eq.${id}`, { method: 'DELETE', headers: { ...HDR, 'Prefer': 'return=minimal' } });
+    if (!r.ok) throw new Error('فشل المسح');
+    // لو ده الجهاز الحالى، امسح من localStorage كمان
+    const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
+    if (stored && stored.credentialId === credentialId){
+      localStorage.removeItem('hawa_biometric');
+    }
+    if (typeof logActivity === 'function'){
+      logActivity('cl_biometric_removed', '🗑️ شال بصمة جهاز');
+    }
+    bioToast('✅ تم المسح');
+    loadBiometrics();
+    updateBioHeaderBtn();
+  } catch(e){
+    bioToast('❌ خطأ فى المسح', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Banner: لو ما سجّلش بصمة، اعرض banner تشجيعى
+// ═══════════════════════════════════════════════════════════
+function maybeShowEnrollBanner(){
+  if (!bioSupported()) return;
+  if (!user || !user.id) return;
+  // 🛡️ فقط للعملاء المعتمدين من الأدمن (مش الـ pending أو المحظورين)
+  if (!bioIsApprovedClient()) return;
+  // لو فيه bio محفوظ بالفعل، ما تظهرش
+  const stored = localStorage.getItem('hawa_biometric');
+  if (stored) {
+    try {
+      const p = JSON.parse(stored);
+      if (p && p.clientId === user.id) return;
+    } catch(e){}
+  }
+  // لو الـ user رفض البانر قبل كده، استنى 7 أيام
+  const dismissed = parseInt(localStorage.getItem('hawa_biometric_dismissed') || '0');
+  if (dismissed && (Date.now() - dismissed) < 7 * 24 * 60 * 60 * 1000) return;
+  // اعرض بعد 3 ثوانى
+  setTimeout(() => {
+    const banner = document.getElementById('bioEnrollBanner');
+    if (banner && bioIsApprovedClient()) banner.style.display = 'block';
+  }, 3000);
+}
+
+function dismissEnrollBanner(permanent){
+  const banner = document.getElementById('bioEnrollBanner');
+  if (banner) banner.style.display = 'none';
+  if (!permanent) {
+    // remember user's choice (لا يظهر تانى لمدة 7 أيام)
+    localStorage.setItem('hawa_biometric_dismissed', Date.now());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// زرار 🔐 فى الـ header: يظهر دائماً لو الجهاز يدعم
+// ═══════════════════════════════════════════════════════════
+function updateBioHeaderBtn(){
+  const btn = document.getElementById('bioBtnHeader');
+  if (!btn) return;
+  if (!bioSupported() || !user || !user.id) {
+    btn.style.display = 'none';
+    return;
+  }
+  // 🛡️ فقط للعملاء المعتمدين
+  if (!bioIsApprovedClient()){
+    btn.style.display = 'none';
+    return;
+  }
+  btn.style.display = 'inline-block';
+  // لو مسجّل بصمة، اللون أكتر سطوع
+  const stored = localStorage.getItem('hawa_biometric');
+  if (stored) {
+    btn.style.background = 'rgba(201,168,76,0.18)';
+    btn.title = 'إدارة البصمة (مفعّلة)';
+  } else {
+    btn.style.background = 'transparent';
+    btn.title = 'تفعيل الدخول بالبصمة';
+  }
+}
+
+// مبدئياً، الـ button و الـ banner مخفيين — يظهروا فقط لو العميل معتمد
+// (الـ trigger يتم من checkTelegramLink بعد ما يجيب approval_status من DB)
+
+// ═══════════════════════════════════════════════════════════
+// انتهى نظام البصمة
+// ═══════════════════════════════════════════════════════════
+
+
 async function checkTelegramLink(){
   try {
-    // 🏆 نجيب tier_id كمان عشان نطبق الـ booking_limits الصحيحة على العميل
-    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id,tier_id`, { headers: HDR });
+    // 🏆 نجيب tier_id + approval status عشان نطبق الـ booking_limits الصحيحة والبصمة
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id,tier_id,approval_status,is_blocked,is_active`, { headers: HDR });
     const d = await r.json();
     const tgId = d[0]?.telegram_id || null;
     const tierId = d[0]?.tier_id || null;
     user.telegram_id = tgId;
     user.tier_id = tierId;
+    user.approval_status = d[0]?.approval_status || 'pending';
+    user.is_blocked = d[0]?.is_blocked || false;
+    user.is_active = d[0]?.is_active !== false;
     localStorage.setItem('hawa_user', JSON.stringify(user));
+
+    // 🔐 بعد ما البيانات وصلت، حدّث الـ biometric UI (يظهر فقط للمعتمدين)
+    if (typeof updateBioHeaderBtn === 'function') updateBioHeaderBtn();
+    if (typeof maybeShowEnrollBanner === 'function') maybeShowEnrollBanner();
 
     const banner = document.getElementById('tgLinkBanner');
     if (!tgId) {
