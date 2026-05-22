@@ -10454,19 +10454,19 @@ function blGridHtml(row){
   }).join(' ');
   const tierLine = tierBadges ? `<div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:9px;margin-bottom:6px;align-items:center"><span style="font-size:11.5px;color:var(--text-dim);margin-left:4px">يطبق على:</span>${tierBadges}</div>` : '';
   const items = [
-    { lbl: '🚛 الحد الأسبوعى',       val: row.weekly_vehicles,        sub: 'كل المخازن، آخر 7 أيام' },
-    { lbl: '📅 الحد اليومى',         val: row.daily_vehicles,         sub: 'كل المخازن مجتمعة' },
-    { lbl: '📦 أكبر فى الحجز الواحد', val: row.per_booking_vehicles,   sub: 'لكل حجز منفصل' },
-    { lbl: '🎫 مرات استخدام الإذن',  val: row.permit_max_uses,        sub: 'حجوزات على نفس الإذن' },
-    { lbl: '🚚 عربيات على الإذن',    val: row.permit_max_vehicles,    sub: 'إجمالى العربيات' },
-    { lbl: '⏳ حجوزات مفتوحة',       val: row.open_bookings_max,      sub: `فى ${pLabel[row.open_bookings_period]} واحد` },
-    { lbl: '🚫 no-show متتالى',       val: row.noshow_consecutive_max, sub: 'بلوك تلقائى' },
-    { lbl: '🚫 no-show متفرق',        val: row.noshow_period_max,      sub: `فى ${pLabel[row.noshow_period]} واحد` },
+    { lbl: '🚛 الحد الأسبوعى',       val: row.weekly_vehicles,        unit: 'عربية', sub: 'كل المخازن، آخر 7 أيام' },
+    { lbl: '📅 الحد اليومى',         val: row.daily_vehicles,         unit: 'عربية', sub: 'كل المخازن مجتمعة' },
+    { lbl: '📦 أكبر فى الحجز الواحد', val: row.per_booking_vehicles,   unit: 'عربية', sub: 'لكل حجز منفصل' },
+    { lbl: '🎫 مرات استخدام الإذن',  val: row.permit_max_uses,        unit: 'مرة',   sub: 'حجوزات على نفس الإذن' },
+    { lbl: '🚚 عربيات على الإذن',    val: row.permit_max_vehicles,    unit: 'عربية', sub: 'إجمالى العربيات' },
+    { lbl: '⏳ حجوزات مفتوحة',       val: row.open_bookings_max,      unit: 'حجز',   sub: `فى ${pLabel[row.open_bookings_period]} واحد` },
+    { lbl: '🚫 no-show متتالى',       val: row.noshow_consecutive_max, unit: 'مرة',   sub: 'بلوك تلقائى' },
+    { lbl: '🚫 no-show متفرق',        val: row.noshow_period_max,      unit: 'مرة',   sub: `فى ${pLabel[row.noshow_period]} واحد` },
   ];
   return tierLine + items.map(it => `
     <div class="bl-item">
       <div class="bl-item-lbl">${it.lbl}</div>
-      <div class="bl-item-val">${it.val}<span class="bl-item-unit">عربية</span></div>
+      <div class="bl-item-val">${it.val}<span class="bl-item-unit">${it.unit}</span></div>
       <div class="bl-item-sub">${it.sub}</div>
     </div>
   `).join('');
@@ -10480,6 +10480,7 @@ function blRenderHistory(activeRow, limits){
     return;
   }
   const todayStr = fmtDate(new Date());
+  const pLabel = { week: 'أسبوع', month: 'شهر', year: 'سنة' };
   // النسخة الافتراضية للـ tier ده = أقل id فى الـ rules المرتبطة
   const minId = Math.min(...rowsData.map(r => r.id));
   const rows = rowsData.map(r => {
@@ -10499,6 +10500,9 @@ function blRenderHistory(activeRow, limits){
     const editBtn = `<button onclick="openLimitsForm(${r.id})" style="background:rgba(74,144,217,0.1);color:#7ab5e8;border:1px solid rgba(74,144,217,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" title="تعديل">✏️ تعديل</button>`;
     const delBtn = isDefault ? '' :
       `<button onclick="deleteLimit(${r.id})" style="background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer" title="مسح">🗑️ مسح</button>`;
+    // truncate الملاحظة لـ 60 char + إعرض الكل فى الـ tooltip
+    const noteFull = r.note || '';
+    const noteShort = noteFull ? (noteFull.length > 60 ? noteFull.slice(0, 60) + '…' : noteFull) : '—';
     return `<tr class="${isActive ? 'current-row' : ''}">
       <td>${r.effective_from}</td>
       <td>${badge}</td>
@@ -10506,9 +10510,11 @@ function blRenderHistory(activeRow, limits){
       <td>${r.weekly_vehicles}</td>
       <td>${r.daily_vehicles}</td>
       <td>${r.per_booking_vehicles}</td>
-      <td>${r.permit_max_uses} / ${r.permit_max_vehicles}</td>
-      <td>${r.open_bookings_max} / ${r.open_bookings_period}</td>
-      <td title="${(r.note || '').replace(/"/g,'&quot;')}">${r.note ? (r.note.length > 30 ? r.note.slice(0, 30) + '…' : r.note) : '—'}</td>
+      <td>${r.permit_max_uses} مرة / ${r.permit_max_vehicles} عربية</td>
+      <td>${r.open_bookings_max} حجز / ${pLabel[r.open_bookings_period] || r.open_bookings_period}</td>
+      <td>${r.noshow_consecutive_max} مرة</td>
+      <td>${r.noshow_period_max} / ${pLabel[r.noshow_period] || r.noshow_period}</td>
+      <td title="${noteFull.replace(/"/g,'&quot;')}">${noteShort}</td>
       <td style="white-space:nowrap">${editBtn}${delBtn}</td>
     </tr>`;
   }).join('');
@@ -10522,8 +10528,10 @@ function blRenderHistory(activeRow, limits){
           <th>أسبوعى</th>
           <th>يومى</th>
           <th>للحجز</th>
-          <th>الإذن (مرات/عربيات)</th>
+          <th>الإذن</th>
           <th>مفتوحة</th>
+          <th>🚫 متتالى</th>
+          <th>🚫 متفرق</th>
           <th>الملاحظة</th>
           <th>إجراءات</th>
         </tr>
