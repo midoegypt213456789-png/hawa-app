@@ -339,41 +339,51 @@
   <!-- 🍞 Toast notifications -->
   <div id="bioToast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(76,175,125,0.95);color:white;padding:12px 20px;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
 
-  <!-- 🔐 Bio Login Lock Screen -->
-  <div id="bioLockScreen" style="display:none;position:fixed;inset:0;background:#0a0a0a;z-index:100000;align-items:center;justify-content:center;padding:24px;flex-direction:column">
-    <div style="max-width:340px;width:100%;text-align:center;font-family:Cairo,sans-serif">
+  <!-- 🔐 Bio Login Lock Screen (CIB-style) -->
+  <div id="bioLockScreen" style="display:none;position:fixed;inset:0;background:#0a0a0a;z-index:100000;align-items:flex-start;justify-content:center;padding:24px;flex-direction:column;overflow-y:auto">
+    <div style="max-width:340px;width:100%;font-family:Cairo,sans-serif;margin:auto;padding:32px 0">
 
-      <!-- HAWA Logo -->
-      <div style="font-size:30px;font-weight:900;color:#E8C97A;letter-spacing:2px;margin-bottom:6px">🚗 HAWA CO</div>
-      <div style="font-size:10.5px;color:#555;letter-spacing:2px;margin-bottom:56px">VEHICLE LOADING SYSTEM</div>
-
-      <!-- اسم العميل -->
-      <div style="font-size:12.5px;color:#888;margin-bottom:4px">أهلاً</div>
-      <div style="font-size:24px;font-weight:800;color:#f5f5f5;margin-bottom:42px" id="bioLockName">—</div>
-
-      <!-- الزرار الرئيسى -->
-      <button id="bioLoginBtn" onclick="bioLoginNow()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:14px;padding:18px;font-family:Cairo,sans-serif;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:12px;box-shadow:0 8px 24px rgba(201,168,76,0.25)">
-        <span style="font-size:22px">👆</span>
-        <span>تسجيل الدخول بالبصمة</span>
-      </button>
-
-      <!-- Error message -->
-      <div id="bioLockError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:10px;padding:10px 14px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:right"></div>
-
-      <!-- Divider -->
-      <div style="margin:24px 0;display:flex;align-items:center;gap:14px">
-        <div style="flex:1;height:1px;background:#1f1f1f"></div>
-        <div style="font-size:10.5px;color:#444;font-weight:700">أو</div>
-        <div style="flex:1;height:1px;background:#1f1f1f"></div>
+      <!-- 🌐 Telegram warning banner (يظهر لو فاتح من Telegram) -->
+      <div id="bioTelegramBanner" style="display:none;background:linear-gradient(135deg,rgba(74,144,217,0.15),rgba(74,144,217,0.05));border:1px solid rgba(74,144,217,0.4);border-radius:12px;padding:12px 14px;margin-bottom:24px;text-align:center">
+        <div style="font-size:12.5px;color:#7ab5e8;font-weight:700;margin-bottom:6px">📱 إنت داخل من Telegram</div>
+        <div style="font-size:11px;color:#9eb5cc;line-height:1.5;margin-bottom:10px">البصمة شغالة أحسن فى المتصفح. اضغط هنا تفتحها فى Chrome.</div>
+        <button onclick="bioOpenInBrowser()" style="background:#4a90d9;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-family:Cairo,sans-serif;font-size:11.5px;font-weight:800;cursor:pointer">🌐 افتح فى المتصفح</button>
       </div>
 
-      <!-- Password fallback -->
-      <button onclick="bioGoToPasswordLogin()" style="background:transparent;border:1px solid #222;color:#888;border-radius:11px;padding:13px;font-family:Cairo,sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;width:100%">
-        تسجيل الدخول بالباسوورد
-      </button>
+      <!-- HAWA Logo -->
+      <div style="text-align:center;margin-bottom:38px">
+        <div style="font-size:30px;font-weight:900;color:#E8C97A;letter-spacing:3px">HAWA CO 🚗</div>
+        <div style="font-size:10px;color:#444;letter-spacing:2px;margin-top:4px">VEHICLE LOADING SYSTEM</div>
+      </div>
 
-      <!-- Device label -->
-      <div style="font-size:10px;color:#3a3a3a;margin-top:36px;letter-spacing:0.3px">الجهاز: <span id="bioLockDevice">—</span></div>
+      <!-- Username -->
+      <div style="margin-bottom:16px">
+        <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">اسم المستخدم</label>
+        <input type="text" id="lockUsername" autocomplete="username" placeholder="ادخل اسم المستخدم" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')document.getElementById('lockPassword').focus()">
+      </div>
+
+      <!-- Password -->
+      <div style="margin-bottom:8px">
+        <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">كلمة المرور</label>
+        <input type="password" id="lockPassword" autocomplete="current-password" placeholder="ادخل كلمة المرور" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')passwordLogin()">
+      </div>
+
+      <!-- Forgot password -->
+      <div style="text-align:right;margin-bottom:22px;margin-top:8px">
+        <a href="#" onclick="alert('اتصل بالإدارة لإعادة تعيين كلمة المرور'); return false;" style="font-size:11.5px;color:#888;text-decoration:none">هل نسيت كلمة المرور؟</a>
+      </div>
+
+      <!-- Login button + Bio icon side by side (CIB style) -->
+      <div style="display:flex;gap:10px;align-items:stretch">
+        <button id="bioLockBioBtn" onclick="bioLoginNow()" style="display:none;background:#161616;border:1.5px solid #C9A84C;color:#E8C97A;border-radius:11px;padding:0 16px;cursor:pointer;font-size:24px;flex-shrink:0;align-items:center;justify-content:center;min-width:56px" title="دخول بالبصمة">👆</button>
+        <button id="lockLoginBtn" onclick="passwordLogin()" style="flex:1;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:11px;padding:14px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer">تسجيل الدخول</button>
+      </div>
+
+      <!-- Error message -->
+      <div id="bioLockError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:10px;padding:10px 14px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
+
+      <!-- Footer -->
+      <div style="text-align:center;font-size:10px;color:#333;margin-top:44px;letter-spacing:0.5px">HAWA CO © 2026</div>
 
     </div>
   </div>
@@ -531,39 +541,39 @@ const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 
-// 🔐 Bio Login Check — لو مفيش login session، اعرض bio login overlay لو فيه bio محفوظ
+// 🔐 Login Gate — الـ Lock Screen يبقى صفحة الدخول الموحّدة (form + bio + Telegram fallback)
 if (!user || !user.id) {
   const savedBio = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; } })();
-  console.log('[bio] Login check:', { hasUser: !!user.id, hasBio: !!savedBio, bioData: savedBio });
+  console.log('[bio] Login gate:', { hasUser: !!user.id, hasBio: !!savedBio });
 
-  if (savedBio && savedBio.credentialId && savedBio.clientId) {
-    // فى bio محفوظ → اعرض الـ lock screen
-    const showLock = () => {
-      const lockEl = document.getElementById('bioLockScreen');
-      if (!lockEl) {
-        console.error('[bio] bioLockScreen element not found!');
-        // لو الـ element مش موجود، استنى شوية
-        setTimeout(showLock, 100);
-        return;
-      }
-      lockEl.style.display = 'flex';
-      const nameEl = document.getElementById('bioLockName');
-      const devEl = document.getElementById('bioLockDevice');
-      if (nameEl) nameEl.textContent = savedBio.clientName || 'عميل';
-      if (devEl) devEl.textContent = savedBio.deviceLabel || '—';
-      console.log('[bio] ✅ Lock screen displayed');
-    };
-    // multiple fallbacks للتشغيل مهما كانت حالة الـ DOM
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', showLock);
-    } else {
-      // الـ DOM بالفعل ready
-      setTimeout(showLock, 0);
+  const showLock = () => {
+    const lockEl = document.getElementById('bioLockScreen');
+    if (!lockEl) {
+      setTimeout(showLock, 100);
+      return;
     }
+    lockEl.style.display = 'flex';
+
+    // 👆 لو فيه bio محفوظة على الجهاز ده، اظهر زرار البصمة icon
+    if (savedBio && savedBio.credentialId) {
+      const bioBtn = document.getElementById('bioLockBioBtn');
+      if (bioBtn) bioBtn.style.display = 'flex';
+    }
+
+    // 📱 لو فاتح من Telegram، اظهر banner التحويل للمتصفح
+    const inTg = !!(typeof tg !== 'undefined' && tg && tg.initData && tg.initData !== '' && tg.platform && tg.platform !== 'unknown');
+    if (inTg) {
+      const tgBanner = document.getElementById('bioTelegramBanner');
+      if (tgBanner) tgBanner.style.display = 'block';
+    }
+
+    console.log('[bio] ✅ Login gate displayed');
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showLock);
   } else {
-    // مفيش bio → روح للـ login عادى
-    console.log('[bio] مفيش bio، redirect لـ login');
-    window.location.href = 'hawa_login.html';
+    setTimeout(showLock, 0);
   }
 }
 
@@ -1150,15 +1160,15 @@ function bioOpenInBrowser(){
 
 // 🔐 الدخول بالبصمة من الـ Lock Screen
 async function bioLoginNow(){
-  const btn = document.getElementById('bioLoginBtn');
+  const btn = document.getElementById('bioLockBioBtn');
   const errEl = document.getElementById('bioLockError');
-  if (btn){ btn.disabled = true; btn.innerHTML = '<span style="font-size:18px">⏳</span><span>ابصم على الجهاز...</span>'; }
+  if (btn){ btn.disabled = true; btn.innerHTML = '⏳'; }
   if (errEl) errEl.style.display = 'none';
 
   const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
   if (!stored || !stored.credentialId) {
     showLockError('مفيش بصمة محفوظة على الجهاز ده');
-    if (btn){ btn.disabled = false; btn.innerHTML = '<span style="font-size:22px">👆</span><span>ادخل بالبصمة</span>'; }
+    if (btn){ btn.disabled = false; btn.innerHTML = '👆'; }
     return;
   }
 
@@ -1264,7 +1274,7 @@ async function bioLoginNow(){
     else msg = '❌ ' + (e.message || 'خطأ غير متوقع');
     showLockError(msg);
   } finally {
-    if (btn){ btn.disabled = false; btn.innerHTML = '<span style="font-size:22px">👆</span><span>ادخل بالبصمة</span>'; }
+    if (btn){ btn.disabled = false; btn.innerHTML = '👆'; }
   }
 }
 
@@ -1276,8 +1286,65 @@ function showLockError(msg){
   }
 }
 
+// 🔓 Login بـ username/password (verification مع Supabase)
+async function passwordLogin(){
+  const username = (document.getElementById('lockUsername').value || '').trim();
+  const password = (document.getElementById('lockPassword').value || '').trim();
+  const btn = document.getElementById('lockLoginBtn');
+
+  if (!username || !password) {
+    showLockError('املأ اسم المستخدم وكلمة المرور');
+    return;
+  }
+
+  if (btn){ btn.disabled = true; btn.textContent = '⏳ جارى التسجيل...'; }
+
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=*`,
+      { headers: HDR }
+    );
+    if (!r.ok) throw new Error('فشل الاتصال بالسيرفر');
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length) {
+      throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
+    }
+    const client = data[0];
+    if (client.approval_status !== 'approved') throw new Error('الحساب لسه غير معتمد من الإدارة');
+    if (client.is_blocked) throw new Error('الحساب محظور — اتصل بالإدارة');
+
+    // ✅ Save user
+    Object.assign(user, {
+      id: client.id, name: client.name, company_code: client.company_code,
+      username: client.username, phone: client.phone,
+      governorate: client.governorate, city: client.city,
+      district: client.district, address: client.address,
+      client_type: client.client_type, telegram_id: client.telegram_id,
+      tier_id: client.tier_id, approval_status: client.approval_status,
+      is_blocked: client.is_blocked, is_active: client.is_active
+    });
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+
+    // Hide lock screen + show app
+    document.getElementById('bioLockScreen').style.display = 'none';
+    if (document.getElementById('uname')) document.getElementById('uname').textContent = user.name || 'العميل';
+    if (document.getElementById('ucode')) document.getElementById('ucode').textContent = user.company_code || '';
+
+    if (typeof logActivity === 'function') logActivity('cl_login','🔓 دخول بالباسوورد');
+    if (typeof checkTelegramLink === 'function') checkTelegramLink();
+    bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
+  } catch(e) {
+    console.error('passwordLogin error:', e);
+    showLockError(e.message || 'خطأ غير متوقع');
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = 'تسجيل الدخول'; }
+  }
+}
+
+// (legacy) — لو حد ضغط الـ link القديم
 function bioGoToPasswordLogin(){
-  window.location.href = 'hawa_login.html';
+  const u = document.getElementById('lockUsername');
+  if (u) u.focus();
 }
 
 function maybeShowEnrollBanner(){
