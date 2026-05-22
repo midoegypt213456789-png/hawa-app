@@ -10483,6 +10483,28 @@ async function saveLimits(){
     return;
   }
 
+  // 🛡️ Client-side duplicate check: منع إنشاء نسختين بنفس التاريخ والفئة
+  // (للـ NEW rules فقط، أو الـ EDIT اللى مش default)
+  if (!isProtected && !appliesToAll && selectedTierIds.length) {
+    const duplicates = blAllLimits.filter(r => 
+      r.id !== blEditingId &&
+      r.effective_from === payload.effective_from &&
+      !r.applies_to_all_tiers &&
+      (r.tier_ids || []).some(tid => selectedTierIds.includes(tid))
+    );
+    if (duplicates.length) {
+      const conflictTierNames = [...new Set(
+        duplicates.flatMap(d => (d.tier_ids || []))
+          .filter(tid => selectedTierIds.includes(tid))
+          .map(tid => (blTiers.find(t => t.id === tid) || {}).name)
+          .filter(Boolean)
+      )].join('، ');
+      errEl.textContent = `⚠️ فيه نسخة موجودة بالفعل بتاريخ ${payload.effective_from} لفئة (${conflictTierNames}). عدّل النسخة الموجودة بدل ما تعمل واحدة جديدة.`;
+      errEl.style.display = 'block';
+      return;
+    }
+  }
+
   const btn = document.getElementById('bl-save-btn');
   btn.disabled = true;
   const originalLabel = btn.textContent;
@@ -10552,10 +10574,36 @@ async function saveLimits(){
     }
     closeLimitsForm();
     await loadBookingLimits();
-    if (typeof showToast === 'function') showToast('✅ تم الحفظ');
+    
+    // 🎯 highlight الـ row الجديد فى الجدول + scroll
+    setTimeout(() => {
+      const tableRows = document.querySelectorAll('.bl-history-tbl tbody tr');
+      tableRows.forEach(tr => {
+        const firstCell = tr.querySelector('td');
+        if (!firstCell) return;
+        // الـ row اللى تاريخه يساوى effective_from وقيمه أحدث (آخر created)
+        if (firstCell.textContent.trim() === payload.effective_from) {
+          tr.style.transition = 'background 0.3s ease';
+          tr.style.background = 'rgba(76,175,125,0.18)';
+          tr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => { tr.style.background = ''; }, 2500);
+        }
+      });
+    }, 200);
+    
+    if (typeof showToast === 'function') {
+      const savedLabel = appliesToAll ? 'لكل الفئات' : selectedTierIds.map(tid => (blTiers.find(t => t.id === tid) || {}).name).filter(Boolean).join('، ');
+      showToast(`✅ تم الحفظ — نسخة ${blEditingId ? 'محدثة' : 'جديدة'} ${savedLabel} تبدأ ${payload.effective_from}`);
+    }
   } catch(e) {
     console.error('saveLimits error:', e);
-    errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
+    // 🛡️ خطأ من الـ DB trigger (duplicate)
+    let userMsg = '❌ خطأ فى الحفظ: ' + e.message;
+    if (e.message && e.message.includes('فيه نسخة موجودة بالفعل')) {
+      userMsg = '⚠️ ' + e.message.split('فيه نسخة موجودة بالفعل')[1].split('"')[0];
+      userMsg = '⚠️ فيه نسخة موجودة بالفعل لنفس الفئة بنفس تاريخ التفعيل. عدّل الموجودة بدل ما تعمل واحدة جديدة.';
+    }
+    errEl.textContent = userMsg;
     errEl.style.display = 'block';
   } finally {
     btn.disabled = false; btn.textContent = originalLabel;
