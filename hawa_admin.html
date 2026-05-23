@@ -5336,14 +5336,45 @@ function filterClients(){
     tierStats += `<span style="color:${t.color}"><b>${t.icon||''} ${t.name}:</b> ${cnt}</span>`;
   });
 
-  // 🗺️ region stats
+  // 🗺️ Smart geographic breakdown — يتكيف مع الـ filter level
+  // مفيش فلتر → regions | قطاع → محافظات الـ region | محافظة → مراكز المحافظة | مركز → skip
+  const activeRegion   = document.getElementById('cl-region')?.value || '';
+  const activeGov      = document.getElementById('cl-gov')?.value || '';
+  const activeDistrict = document.getElementById('cl-district')?.value || '';
   let regionStats = '';
-  REGION_ORDER.forEach(reg => {
-    const cnt = data.filter(c => (c.region || 'غير محدد') === reg).length;
-    if (cnt === 0 && reg === 'غير محدد') return; // hide empty undefined
-    const meta = REGION_META[reg];
-    regionStats += `<span style="color:${meta.color}"><b>${meta.icon} ${meta.label}:</b> ${cnt}</span>`;
-  });
+
+  if (activeDistrict) {
+    // مركز محدد — مفيش breakdown أعمق، الـ إجمالى كافى
+  } else if (activeGov) {
+    // محافظة مختارة → breakdown بـ مراكز/مدن (من الـ data نفسها)
+    const counts = {};
+    data.forEach(c => {
+      const d = c.district || c.city;
+      if (d) counts[d] = (counts[d] || 0) + 1;
+    });
+    Object.keys(counts).sort().forEach(d => {
+      regionStats += `<span style="color:var(--text-dim)"><b>🏙️ ${d}:</b> ${counts[d]}</span>`;
+    });
+  } else if (activeRegion) {
+    // قطاع مختار → breakdown بـ محافظات الـ region
+    const meta = REGION_META[activeRegion] || REGION_META['غير محدد'];
+    const counts = {};
+    data.forEach(c => {
+      const g = c.governorate;
+      if (g) counts[g] = (counts[g] || 0) + 1;
+    });
+    Object.keys(counts).sort().forEach(g => {
+      regionStats += `<span style="color:${meta.color}"><b>🏛️ ${g}:</b> ${counts[g]}</span>`;
+    });
+  } else {
+    // مفيش فلتر → breakdown بـ كل الـ regions
+    REGION_ORDER.forEach(reg => {
+      const cnt = data.filter(c => (c.region || 'غير محدد') === reg).length;
+      if (cnt === 0 && reg === 'غير محدد') return;
+      const meta = REGION_META[reg];
+      regionStats += `<span style="color:${meta.color}"><b>${meta.icon} ${meta.label}:</b> ${cnt}</span>`;
+    });
+  }
 
   footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
     ${tierStats}
