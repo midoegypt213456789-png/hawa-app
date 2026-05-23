@@ -1025,7 +1025,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .add-btn{padding:9px 18px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;}
 
 /* TBL FOOTER */
-.tbl-footer{padding:10px 16px;border-top:1px solid var(--border);background:var(--dark3);font-size:12px;color:var(--text-dim);display:flex;gap:14px;flex-shrink:0;flex-wrap:wrap;row-gap:8px;align-items:center;}
+.tbl-footer{padding:10px 16px;border-top:1px solid var(--border);background:var(--dark3);font-size:12px;color:var(--text-dim);display:flex;gap:16px;flex-shrink:0;}
 .tbl-footer b{color:var(--gold);}
 
 /* CALENDAR */
@@ -1954,13 +1954,14 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 /* ⏱️ Refresh timer badge */
 .refresh-timer-badge{
   position:fixed;
-  bottom:14px;
-  left:14px;
-  z-index:9999;
-  background:rgba(201,168,76,0.12);
-  border:1px solid rgba(201,168,76,0.35);
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:50;
+  background:rgba(201,168,76,0.1);
+  border:1px solid rgba(201,168,76,0.3);
   border-radius:14px;
-  padding:4px 11px;
+  padding:3px 10px;
   font-size:10.5px;
   font-weight:700;
   color:var(--gold);
@@ -1971,8 +1972,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   backdrop-filter:blur(8px);
   pointer-events:none;
   letter-spacing:0.2px;
-  opacity:0.85;
-  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  opacity:0.75;
 }
 .refresh-timer-badge:hover{opacity:1;}
 .refresh-timer-badge.show{display:inline-flex;}
@@ -2138,13 +2138,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="قليوب">🏭 قليوب</option>
             <option value="السادات">🏗️ السادات</option>
           </select>
-          <select class="filter-inp" id="bk-region" onchange="filterBookingsLocal()" style="width:140px">
-            <option value="">🗺️ كل القطاعات</option>
-            <option value="القاهرة الكبرى">🏙️ القاهرة الكبرى</option>
-            <option value="الدلتا">🌾 الدلتا</option>
-            <option value="الوجه البحرى">🌊 الوجه البحرى</option>
-            <option value="الوجه القبلى">⛰️ الوجه القبلى</option>
-          </select>
           <select class="filter-inp" id="bk-vehicle" onchange="loadBookings()" style="width:130px">
             <option value="">كل الأنواع</option>
             <option value="موتسيكل">🏍️ موتسيكل</option>
@@ -2257,13 +2250,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="tbl-wrap scrollable">
         <div class="tbl-filters">
           <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم / كود / هاتف / مدينة..." oninput="filterClients()" style="width:240px">
-          <select class="filter-inp" id="cl-region" onchange="onAdminRegionChange()" style="width:140px">
-            <option value="">🗺️ كل القطاعات</option>
-            <option value="القاهرة الكبرى">🏙️ القاهرة الكبرى</option>
-            <option value="الدلتا">🌾 الدلتا</option>
-            <option value="الوجه البحرى">🌊 الوجه البحرى</option>
-            <option value="الوجه القبلى">⛰️ الوجه القبلى</option>
-          </select>
           <select class="filter-inp" id="cl-gov" onchange="onAdminGovChange()" style="width:140px">
             <option value="">كل المحافظات</option>
           </select>
@@ -3178,9 +3164,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <textarea id="sm-message-text" rows="8"
           style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:12px 14px;font-size:14px;font-weight:500;line-height:1.8;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;min-height:160px;box-sizing:border-box"
           placeholder="اكتب الرسالة هنا..."></textarea>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">
-          💡 الـ <code style="color:#7ab5e8">{name}</code> و <code style="color:#7ab5e8">{permit_number}</code> هتتعبئوا تلقائى
-        </div>
       </div>
 
       <div id="sm-form-error" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin:12px 0"></div>
@@ -3257,12 +3240,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="fg"><label>🏷️ نوع العميل</label><select id="ac-client-type"><option value="">-- جاري التحميل --</option></select></div>
     <div class="fg"><label>🕌 الديانة</label><select id="ac-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ac-phone" placeholder="01xxxxxxxxx"></div></div>
-    <div class="fg">
-      <label>🗺️ القطاع</label>
-      <div id="ac-region-display" style="background:rgba(122,181,232,0.08);border:1px solid rgba(122,181,232,0.3);color:#9fb5cc;padding:11px 14px;border-radius:8px;font-size:13px;min-height:44px;display:flex;align-items:center" title="يحدد تلقائياً حسب المحافظة">
-        <span style="opacity:0.55">— يظهر تلقائياً بعد اختيار المحافظة</span>
-      </div>
-    </div>
     <div class="fg"><label>المحافظة</label><select id="ac-gov" onchange="onAddGovChange()"><option value="">-- اختر --</option></select></div>
     <div class="fg"><label>المدينة / المركز</label><select id="ac-city"><option value="">-- اختر المحافظة أولاً --</option></select></div>
     <div class="fg"><label>العنوان التفصيلي</label><div class="iw"><span class="ic">📍</span><input type="text" id="ac-address" placeholder="الشارع، المبنى..."></div></div>
@@ -3351,12 +3328,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="fg"><label>🕌 الديانة</label><select id="ce-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>كود العميل</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ce-code" placeholder="كود العميل"></div></div>
     <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ce-phone" placeholder="01xxxxxxxxx"></div></div>
-    <div class="fg">
-      <label>🗺️ القطاع</label>
-      <div id="ce-region-display" style="background:rgba(122,181,232,0.08);border:1px solid rgba(122,181,232,0.3);color:#9fb5cc;padding:11px 14px;border-radius:8px;font-size:13px;min-height:44px;display:flex;align-items:center" title="يحدد تلقائياً حسب المحافظة">
-        <span style="opacity:0.55">— يظهر تلقائياً بعد اختيار المحافظة</span>
-      </div>
-    </div>
     <div class="fg"><label>المحافظة</label><select id="ce-gov" onchange="onEditGovChange()"><option value="">-- اختر --</option></select></div>
     <div class="fg"><label>المدينة / المركز</label><select id="ce-city"><option value="">-- اختر المحافظة أولاً --</option></select></div>
     <div class="fg"><label>العنوان التفصيلي</label><div class="iw"><span class="ic">📍</span><input type="text" id="ce-address" placeholder="الشارع، المبنى..."></div></div>
@@ -4406,7 +4377,6 @@ async function loadBookings(){
 function filterBookingsLocal(){
   const clientSearch=(document.getElementById('bk-client').value||'').trim().toLowerCase();
   const countFilter=document.getElementById('bk-count').value;
-  const regionFilter=document.getElementById('bk-region')?document.getElementById('bk-region').value:'';
 
   let data=allBookingsData;
 
@@ -4415,13 +4385,6 @@ function filterBookingsLocal(){
       const c=allClientsMap[b.client_id]||{};
       return (c.name||'').toLowerCase().includes(clientSearch)||
              (c.company_code||'').toLowerCase().includes(clientSearch);
-    });
-  }
-
-  if(regionFilter){
-    data=data.filter(b=>{
-      const c=allClientsMap[b.client_id]||{};
-      return c.region===regionFilter;
     });
   }
 
@@ -4597,7 +4560,7 @@ function renderBookingsTable(data){
 
   html+=`<table><thead><tr>
     <th style="width:40px;text-align:center"><input type="checkbox" id="bk-select-all" class="bk-checkbox" onchange="toggleAllBookings(this.checked)" ${cancellableCount === 0 ? 'disabled' : ''}></th>
-    <th>#</th><th>🎫 رقم الإذن</th><th>العميل</th><th>الكود</th><th>🗺️ القطاع</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
+    <th>#</th><th>🎫 رقم الإذن</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
 
   data.forEach(b=>{
@@ -4616,7 +4579,6 @@ function renderBookingsTable(data){
       <td>${b.permit_number ? `<b style="color:var(--gold-light);letter-spacing:0.3px">🎫 ${b.permit_number}</b>` : `<span style="color:var(--text-dim);font-size:11px">—</span>`}</td>
       <td><b>${hl(c.name||'-',clientSearch)}</b></td>
       <td><span style="color:var(--gold)">${hl(c.company_code||'-',clientSearch)}</span></td>
-      <td style="font-size:11px;color:#9fb5cc"><span style="background:rgba(122,181,232,0.08);padding:2px 7px;border-radius:5px;border:1px solid rgba(122,181,232,0.25)">${c.region||'—'}</span></td>
       <td>${b.warehouse||'-'}</td>
       <td>${b.vehicle_type||'-'}</td>
       <td><b style="color:var(--gold)">${b.count||0}</b></td>
@@ -4626,36 +4588,10 @@ function renderBookingsTable(data){
       <td>${actionsCell}</td>
     </tr>`;
   });
-  html+=`</tbody></table>`;
-
-  // 🗺️ إحصائيات القطاعات للحجوزات
-  const regionFilter = document.getElementById('bk-region') ? document.getElementById('bk-region').value : '';
-  const regionIcons = { 'القاهرة الكبرى':'🏙️', 'الدلتا':'🌾', 'الوجه البحرى':'🌊', 'الوجه القبلى':'⛰️' };
-  const regionColors = { 'القاهرة الكبرى':'#e8c97a', 'الدلتا':'#7dd4a3', 'الوجه البحرى':'#7ab5e8', 'الوجه القبلى':'#d4a464' };
-  const bkRegions = ['القاهرة الكبرى','الدلتا','الوجه البحرى','الوجه القبلى'];
-  const totalBookings = (allBookingsData||[]).length;
-
-  let bkRegionStats = '';
-  if (regionFilter) {
-    const cnt = data.length;
-    const pct = totalBookings > 0 ? ((cnt / totalBookings) * 100).toFixed(1) : '0';
-    const color = regionColors[regionFilter] || 'var(--gold)';
-    bkRegionStats = `<span style="color:${color};background:${color}15;padding:3px 10px;border-radius:6px;border:1px solid ${color}30">${regionIcons[regionFilter]||'🗺️'} ${regionFilter}: <b>${cnt}</b> <span style="opacity:0.75;font-size:11px">(${pct}% من ${totalBookings})</span></span>`;
-  } else {
-    bkRegionStats = bkRegions.map(r => {
-      const cnt = data.filter(b => (allClientsMap[b.client_id]||{}).region === r).length;
-      const pct = data.length > 0 ? ((cnt / data.length) * 100).toFixed(1) : '0';
-      const color = regionColors[r] || 'var(--gold)';
-      return `<span style="color:${color}">${regionIcons[r]} ${r}: <b>${cnt}</b> <span style="opacity:0.65;font-size:11px">(${pct}%)</span></span>`;
-    }).join('');
-  }
-
-  html += `<div style="padding:10px 16px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);display:flex;gap:14px;flex-wrap:wrap;row-gap:8px;align-items:center">
-    <span>إجمالي النتائج: <b style="color:var(--gold)">${data.length}</b> حجز</span>
-    <span>|</span>
-    <span>إجمالي العربيات: <b style="color:var(--gold)">${data.reduce((s,b)=>s+(b.count||0),0)}</b></span>
-    <span style="color:#333;font-weight:300">|</span>
-    ${bkRegionStats}
+  html+=`</tbody></table>
+  <div style="padding:10px 16px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border)">
+    إجمالي النتائج: <b style="color:var(--gold)">${data.length}</b> حجز |
+    إجمالي العربيات: <b style="color:var(--gold)">${data.reduce((s,b)=>s+(b.count||0),0)}</b>
   </div>`;
   document.getElementById('bk-table').innerHTML=html;
 }
@@ -4763,31 +4699,6 @@ const EGYPT = {
   "جنوب سيناء": ["الطور","شرم الشيخ","دهب","نويبع","طابا","أبو رديس","رأس سدر","سانت كاترين"]
 };
 
-
-// 🗺️ القطاعات → المحافظات (للـ cascade فى الـ filter)
-const REGION_TO_GOVS = {
-  'القاهرة الكبرى': ['القاهرة', 'الجيزة', 'القليوبية'],
-  'الدلتا': ['الشرقية', 'المنوفية', 'الدقهلية', 'الغربية', 'البحيرة', 'كفر الشيخ', 'دمياط', 'شمال سيناء', 'جنوب سيناء'],
-  'الوجه البحرى': ['الإسكندرية', 'بورسعيد', 'السويس', 'الإسماعيلية', 'مطروح'],
-  'الوجه القبلى': ['المنيا', 'سوهاج', 'بني سويف', 'أسوان', 'الفيوم', 'أسيوط', 'قنا', 'الأقصر', 'البحر الأحمر', 'الوادي الجديد']
-};
-
-// لما تتغير القطاع، الـ dropdown بتاع المحافظات يتفلتر تلقائياً
-function onAdminRegionChange() {
-  const region = document.getElementById('cl-region').value;
-  const govSel = document.getElementById('cl-gov');
-  const distSel = document.getElementById('cl-district');
-  govSel.innerHTML = '<option value="">كل المحافظات</option>';
-  distSel.innerHTML = '<option value="">كل المراكز</option>';
-  const govs = (region && REGION_TO_GOVS[region]) ? REGION_TO_GOVS[region] : Object.keys(EGYPT).sort();
-  govs.forEach(gov => {
-    const opt = document.createElement('option');
-    opt.value = gov;
-    opt.textContent = gov;
-    govSel.appendChild(opt);
-  });
-  filterClients();
-}
 
 // Init admin gov dropdown
 function initAdminGovDropdown() {
@@ -4901,7 +4812,6 @@ function getReligionBadge(religion){
 
 function filterClients(){
   const search=(document.getElementById('cl-search').value||'').trim().toLowerCase();
-  const region=document.getElementById('cl-region')?document.getElementById('cl-region').value:'';
   const gov=document.getElementById('cl-gov').value;
   const district=document.getElementById('cl-district').value;
   const type=document.getElementById('cl-type').value;
@@ -4910,18 +4820,17 @@ function filterClients(){
 
   let data=allClients;
 
-  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة والقطاع)
+  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة)
   if(search){
     data=data.filter(c=>{
       const fields=[
         c.name, c.company_code, c.phone,
-        c.region, c.governorate, c.city, c.district, c.address,
+        c.governorate, c.city, c.district, c.address,
         c.username, String(c.id), c.client_type, c.religion
       ].map(f=>(f||'').toLowerCase());
       return fields.some(f=>f.includes(search));
     });
   }
-  if(region) data=data.filter(c=>c.region===region);
   if(gov) data=data.filter(c=>c.governorate===gov);
   if(district) data=data.filter(c=>c.city===district||c.district===district);
   if(type) data=data.filter(c=>(c.client_type||'عميل عام')===type);
@@ -4954,7 +4863,7 @@ function filterClients(){
     <th>🏷️ النوع</th>
     <th>🕌 الديانة</th>
     <th>الكود</th><th>الهاتف</th>
-    <th>🗺️ القطاع</th><th>المحافظة</th><th>المدينة</th><th>العنوان</th>
+    <th>المحافظة</th><th>المدينة</th><th>العنوان</th>
     <th>اليوزر نيم</th><th>الباسورد</th>
     <th style="width:60px">no-show</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
@@ -4987,7 +4896,6 @@ function filterClients(){
       <td>${religionBadge}</td>
       <td><span style="color:#d4a957;font-weight:700">${hl(c.company_code,search)}</span></td>
       <td style="font-size:12px;direction:ltr;text-align:right">${hl(c.phone,search)}</td>
-      <td style="font-size:11px;color:#9fb5cc"><span style="background:rgba(122,181,232,0.1);padding:2px 7px;border-radius:5px;border:1px solid rgba(122,181,232,0.25)">${c.region||'—'}</span></td>
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.governorate,search)}</td>
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.city,search)}</td>
       <td style="font-size:11px;color:var(--text-dim);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${c.address||''}">${hl(c.address,search)}</td>
@@ -5015,38 +4923,12 @@ function filterClients(){
   footer.style.display='flex';
   const muslimCount = data.filter(c=>(c.religion||'مسلم')==='مسلم').length;
   const christianCount = data.filter(c=>c.religion==='مسيحي').length;
-
-  // 🗺️ إحصائيات القطاعات
-  const totalClients = allClients.length;
-  const regionIcons = { 'القاهرة الكبرى':'🏙️', 'الدلتا':'🌾', 'الوجه البحرى':'🌊', 'الوجه القبلى':'⛰️' };
-  const regionColors = { 'القاهرة الكبرى':'#e8c97a', 'الدلتا':'#7dd4a3', 'الوجه البحرى':'#7ab5e8', 'الوجه القبلى':'#d4a464' };
-  const regionsList = ['القاهرة الكبرى','الدلتا','الوجه البحرى','الوجه القبلى'];
-
-  let regionStatsHtml = '';
-  if (region) {
-    // فلتر قطاع محدد — اعرض القطاع لوحده + النسبة من الإجمالى الكلى
-    const regCount = data.length;
-    const pct = totalClients > 0 ? ((regCount / totalClients) * 100).toFixed(1) : '0';
-    const color = regionColors[region] || 'var(--gold)';
-    regionStatsHtml = `<span style="color:${color};background:${color}15;padding:3px 10px;border-radius:6px;border:1px solid ${color}30">${regionIcons[region]||'🗺️'} ${region}: <b>${regCount}</b> <span style="opacity:0.75;font-size:11px">(${pct}% من ${totalClients})</span></span>`;
-  } else {
-    // كل القطاعات
-    regionStatsHtml = regionsList.map(r => {
-      const cnt = data.filter(c => c.region === r).length;
-      const pct = totalClients > 0 ? ((cnt / totalClients) * 100).toFixed(1) : '0';
-      const color = regionColors[r] || 'var(--gold)';
-      return `<span style="color:${color}">${regionIcons[r]} ${r}: <b>${cnt}</b> <span style="opacity:0.65;font-size:11px">(${pct}%)</span></span>`;
-    }).join('');
-  }
-
   footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
     <span>🕌 مسلم: <b>${muslimCount}</b></span>
     <span>✝️ مسيحي: <b>${christianCount}</b></span>
     <span>نشط: <b>${data.filter(c=>!c.is_blocked && c.is_active!==false).length}</b></span>
     <span>محظور: <b style="color:#e88080">${data.filter(c=>c.is_blocked).length}</b></span>
     <span>لا يستقبل: <b style="color:var(--text-dim)">${data.filter(c=>c.is_active===false).length}</b></span>
-    <span style="color:#333;font-weight:300">|</span>
-    ${regionStatsHtml}
     <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك لفتح ملف العميل</span>`;
 }
 
@@ -5057,34 +4939,11 @@ function initAddGovDropdown(){
   Object.keys(EGYPT).sort().forEach(gov=>{const opt=document.createElement('option');opt.value=gov;opt.textContent=gov;sel.appendChild(opt);});
 }
 
-// 🗺️ Helper: محافظة → قطاع (يستخدم REGION_TO_GOVS)
-function govToRegion(gov){
-  if (!gov) return null;
-  for (const [region, govs] of Object.entries(REGION_TO_GOVS)) {
-    if (govs.includes(gov)) return region;
-  }
-  return null;
-}
-
-// تحديث display القطاع فى الـ modal (Add أو Edit)
-function refreshRegionDisplay(displayId, gov){
-  const el = document.getElementById(displayId);
-  if (!el) return;
-  const region = govToRegion(gov);
-  if (region) {
-    const icons = { 'القاهرة الكبرى':'🏙️', 'الدلتا':'🌾', 'الوجه البحرى':'🌊', 'الوجه القبلى':'⛰️' };
-    el.innerHTML = `<span style="font-weight:800;color:#7ab5e8">${icons[region]||'🗺️'} ${region}</span>`;
-  } else {
-    el.innerHTML = `<span style="opacity:0.55">— يظهر تلقائياً بعد اختيار المحافظة</span>`;
-  }
-}
-
 function onAddGovChange(){
   const gov=document.getElementById('ac-gov').value;
   const cs=document.getElementById('ac-city');
   cs.innerHTML='<option value="">-- اختر --</option>';
   if(gov&&EGYPT[gov])EGYPT[gov].forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;cs.appendChild(o);});
-  refreshRegionDisplay('ac-region-display', gov);
 }
 
 function openAddClientModal(){
@@ -5092,7 +4951,6 @@ function openAddClientModal(){
   ['ac-code','ac-name','ac-phone','ac-address','ac-username','ac-password'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('ac-gov').value='';
   document.getElementById('ac-city').innerHTML='<option value="">-- اختر المحافظة أولاً --</option>';
-  refreshRegionDisplay('ac-region-display', '');
   // Populate client type dropdown with default pre-selected
   const defaultType = allClientTypes.find(t=>t.is_default) || allClientTypes[0];
   populateClientTypeDropdown('ac-client-type', defaultType ? defaultType.name : '');
@@ -5962,7 +5820,6 @@ function onEditGovChange(){
   const cs=document.getElementById('ce-city');
   cs.innerHTML='<option value="">-- اختر --</option>';
   if(gov&&EGYPT[gov])EGYPT[gov].forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;cs.appendChild(o);});
-  refreshRegionDisplay('ce-region-display', gov);
 }
 
 function openClientEdit(id){
@@ -10216,7 +10073,7 @@ async function sendMessageNow(){
   }
 
   const btn = document.getElementById('sm-send-btn');
-  btn.disabled = true; btn.textContent = '⏳ جارى الحفظ...';
+  btn.disabled = true; btn.textContent = '⏳ جارى الإرسال...';
 
   try {
     const roleLabel = role === 'attempting' ? 'التاجر اللى حاول' : 'التاجر الأصلى';
