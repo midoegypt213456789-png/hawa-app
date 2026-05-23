@@ -43,8 +43,8 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 /* LAYOUT */
 .app{display:none;height:100vh;overflow:hidden;}
 .app.show{display:flex;}
-.sidebar{width:var(--sidebar);background:var(--dark2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:50;overflow-y:auto;}
-.main-area{margin-right:var(--sidebar);flex:1;padding:20px 24px 60px 24px;overflow-y:auto;height:100vh;display:flex;flex-direction:column;}
+.sidebar{width:var(--sidebar);background:var(--dark2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:50;overflow-y:scroll;}
+.main-area{margin-right:var(--sidebar);flex:1;padding:20px 24px 60px 24px;overflow-y:scroll;height:100vh;display:flex;flex-direction:column;}
 .section{display:none;flex:1;flex-direction:column;min-height:0;}
 .section.active{display:flex;}
 /* form-style sections: constrain width on wide screens for better composition */
@@ -77,13 +77,57 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .sb-logo{font-size:16px;font-weight:900;letter-spacing:2px;background:linear-gradient(135deg,var(--gold),var(--gold-light));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .sb-admin{font-size:11px;color:var(--text-dim);margin-top:4px;}
 .sb-nav{flex:1;padding:12px 0;}
-.nav-item{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;transition:all 0.2s;font-size:13px;font-weight:600;color:var(--text-dim);border-right:3px solid transparent;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:11px 16px;cursor:pointer;transition:all 0.2s;font-size:13px;font-weight:600;color:var(--text-dim);border-right:3px solid transparent;position:relative;}
 .nav-item:hover{background:rgba(201,168,76,0.05);color:var(--text);}
 .nav-item.active{background:rgba(201,168,76,0.08);color:var(--gold);border-right-color:var(--gold);}
 .nav-item .ni{font-size:16px;width:24px;text-align:center;}
 .sb-footer{padding:16px;}
 .logout-btn{width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;}
 .logout-btn:hover{border-color:var(--error);color:var(--error);}
+
+/* ═══════════════════════════════════════════════════════════
+   🎨 SIDEBAR — Categories / Favorites / Drag-and-Drop
+   ═══════════════════════════════════════════════════════════ */
+.nav-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.nav-star{flex-shrink:0;background:transparent;border:none;color:var(--text-dim);font-size:14px;cursor:pointer;padding:2px 4px;border-radius:6px;opacity:0;transition:all 0.2s;font-family:inherit;}
+.nav-item:hover .nav-star{opacity:0.6;}
+.nav-star:hover{opacity:1 !important;color:var(--gold);background:rgba(201,168,76,0.1);}
+.nav-star.starred{opacity:1;color:var(--gold);}
+.nav-item.dragging{opacity:0.4;}
+.nav-item[draggable=true]{cursor:grab;}
+.nav-item[draggable=true]:active{cursor:grabbing;}
+.nav-drag-handle{flex-shrink:0;color:var(--text-dim);font-size:11px;opacity:0;transition:opacity 0.2s;line-height:1;letter-spacing:-1px;cursor:grab;padding:0 4px;user-select:none;}
+.nav-item:hover .nav-drag-handle{opacity:0.45;}
+
+/* Category section */
+.sb-cat{margin-bottom:4px;}
+.sb-cat-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px 8px 16px;cursor:pointer;font-size:11px;font-weight:800;color:var(--text-dim);text-transform:uppercase;letter-spacing:1.4px;user-select:none;transition:color 0.2s;}
+.sb-cat-header:hover{color:var(--gold);}
+.sb-cat-title{display:flex;align-items:center;gap:8px;}
+.sb-cat-title .ci{font-size:14px;}
+.sb-cat-arrow{font-size:9px;transition:transform 0.25s cubic-bezier(.4,0,.2,1);}
+.sb-cat.collapsed .sb-cat-arrow{transform:rotate(-90deg);}
+.sb-cat-items{display:flex;flex-direction:column;overflow:hidden;transition:max-height 0.3s ease, opacity 0.2s ease;}
+.sb-cat.collapsed .sb-cat-items{max-height:0 !important;opacity:0;pointer-events:none;}
+.sb-cat-items.drag-target{background:rgba(201,168,76,0.04);}
+
+/* Empty category placeholder */
+.sb-cat-empty{padding:8px 18px;font-size:10.5px;color:var(--text-dim);opacity:0.45;font-style:italic;}
+
+/* Favorites section (special — gold accent) */
+.sb-fav{margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.sb-fav .sb-cat-header{color:var(--gold);font-weight:900;letter-spacing:1.5px;}
+.sb-fav-empty{padding:8px 18px 4px 18px;font-size:10.5px;color:var(--text-dim);opacity:0.55;font-style:italic;text-align:center;}
+.sb-fav .nav-item{padding-right:16px;}
+.sb-fav .nav-item .nav-star{opacity:1;color:var(--gold);}
+
+/* Drag drop indicators */
+.sb-drop-zone{height:3px;border-radius:2px;transition:all 0.15s;margin:0 12px;}
+.sb-drop-zone.over{height:8px;background:var(--gold);margin:4px 12px;box-shadow:0 0 12px rgba(201,168,76,0.4);}
+.sb-cat-items.drag-over{background:rgba(201,168,76,0.06);border-radius:8px;outline:1.5px dashed rgba(201,168,76,0.4);outline-offset:-2px;}
+
+/* Drag ghost */
+.sb-drag-ghost{position:fixed;pointer-events:none;background:var(--dark2);border:1.5px solid var(--gold);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;color:var(--gold);box-shadow:0 8px 24px rgba(0,0,0,0.6);z-index:99999;display:flex;align-items:center;gap:8px;font-family:'Cairo',sans-serif;}
 
 /* PAGE HEADER */
 .page-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
@@ -2153,26 +2197,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
       <div class="sb-admin" id="adminName">...</div>
     </div>
-    <div class="sb-nav">
-      <div class="nav-item active" onclick="goTo('bookings')"><span class="ni">📋</span> الحجوزات</div>
-      <div class="nav-item" onclick="goTo('employees')"><span class="ni">👷</span> الموظفين</div>
-      <div class="nav-item" onclick="goTo('clients')"><span class="ni">👥</span> العملاء</div>
-      <div class="nav-item" onclick="goTo('pending-clients')"><span class="ni">⏳</span> عملاء تحت الانتظار <span class="pending-badge" id="pendingBadge">0</span></div>
-      <div class="nav-item" onclick="goTo('permit-alerts')"><span class="ni">🚨</span> تنبيهات الأذونات <span class="alert-badge" id="alertBadge">0</span></div>
-      <div class="nav-item" onclick="goTo('client-types')"><span class="ni">🏷️</span> أنواع العملاء</div>
-      <div class="nav-item" onclick="goTo('client-tiers')"><span class="ni">🏆</span> فئات العملاء</div>
-      <div class="nav-item" onclick="goTo('extra-contacts')"><span class="ni">📞</span> جهات إضافية</div>
-      <div class="nav-item" onclick="goTo('broadcast')"><span class="ni">📢</span> إرسال رسائل</div>
-      <div class="nav-item" onclick="goTo('templates')"><span class="ni">💌</span> الرسائل المحفوظة</div>
-      <div class="nav-item" onclick="goTo('unlinked')"><span class="ni">🔗</span> عملاء لم يربطوا</div>
-      <div class="nav-item" onclick="goTo('vehicle-types')"><span class="ni">🚚</span> أنواع العربيات</div>
-      <div class="nav-item" onclick="goTo('schedule')"><span class="ni">📅</span> إدارة الأيام</div>
-      <div class="nav-item" onclick="goTo('blocked')"><span class="ni">🔒</span> المبلوكين</div>
-      <div class="nav-item" onclick="goTo('reports')"><span class="ni">📊</span> التقارير</div>
-      <div class="nav-item" onclick="goTo('warehouses')"><span class="ni">📦</span> إيميلات المخازن</div>
-      <div class="nav-item" onclick="goTo('activity-log')"><span class="ni">📜</span> سجل الأنشطة</div>
-      <div class="nav-item" onclick="goTo('booking-limits')"><span class="ni">📊</span> حدود الحجز</div>
-      <div class="nav-item" onclick="goTo('settings')"><span class="ni">⚙️</span> إعدادات عامة</div>
+    <div class="sb-nav" id="sb-nav-container">
+      <!-- Sidebar rendered dynamically by renderSidebar() in JS -->
+      <div style="padding:20px;text-align:center;color:var(--text-dim);font-size:11px">⏳ جارى التحميل...</div>
     </div>
     <div class="sb-footer">
       <button class="logout-btn" onclick="doLogout()">🚪 تسجيل الخروج</button>
@@ -3865,6 +3892,8 @@ function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('show');
   document.getElementById('adminName').textContent='👑 '+admin.name;
+  // 🎨 Load and render sidebar layout (categories, favorites, drag state)
+  loadSidebarLayout();
   const todayStr = fmtDate(new Date());
   document.getElementById('bk-date-from').value=todayStr;
   document.getElementById('bk-date-to').value=todayStr;
@@ -11030,6 +11059,370 @@ async function saveChangeClientTier(){
     btn.disabled = false; btn.textContent = origLabel;
   }
 }
+
+// ═══════════════════════════════════════════════════════════
+// 🎨 SIDEBAR ENGINE — Categories / Favorites / Drag-and-Drop
+// ═══════════════════════════════════════════════════════════
+
+// ── Nav metadata (single source of truth)
+const NAV_META = {
+  'bookings':         { icon: '📋',  label: 'الحجوزات' },
+  'pending-clients':  { icon: '⏳',  label: 'عملاء تحت الانتظار', badge: { id: 'pendingBadge', cls: 'pending-badge' } },
+  'permit-alerts':    { icon: '🚨',  label: 'تنبيهات الأذونات',    badge: { id: 'alertBadge',   cls: 'alert-badge' } },
+  'blocked':          { icon: '🔒',  label: 'المبلوكين' },
+  'booking-limits':   { icon: '📊',  label: 'حدود الحجز' },
+
+  'clients':          { icon: '👥',  label: 'العملاء' },
+  'client-types':     { icon: '🏷️', label: 'أنواع العملاء' },
+  'client-tiers':     { icon: '🏆',  label: 'فئات العملاء' },
+  'extra-contacts':   { icon: '📞',  label: 'جهات إضافية' },
+  'unlinked':         { icon: '🔗',  label: 'عملاء لم يربطوا' },
+
+  'broadcast':        { icon: '📢',  label: 'إرسال رسائل' },
+  'templates':        { icon: '💌',  label: 'الرسائل المحفوظة' },
+
+  'employees':        { icon: '👷',  label: 'الموظفين' },
+  'vehicle-types':    { icon: '🚚',  label: 'أنواع العربيات' },
+  'schedule':         { icon: '📅',  label: 'إدارة الأيام' },
+  'reports':          { icon: '📊',  label: 'التقارير' },
+  'warehouses':       { icon: '📦',  label: 'إيميلات المخازن' },
+  'activity-log':     { icon: '📜',  label: 'سجل الأنشطة' },
+  'settings':         { icon: '⚙️', label: 'إعدادات عامة' }
+};
+
+// ── Default sidebar layout
+const DEFAULT_SIDEBAR_LAYOUT = {
+  favorites: [],
+  categories: [
+    { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
+    { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
+    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['broadcast', 'templates'] },
+    { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
+  ],
+  collapsed: {}
+};
+
+let sidebarLayout = JSON.parse(JSON.stringify(DEFAULT_SIDEBAR_LAYOUT));
+let __sidebarSaveTimer = null;
+let __sidebarLoaded = false;
+
+// ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
+function repairSidebarLayout(layout){
+  const known = new Set(Object.keys(NAV_META));
+  // 1. Clean favorites (drop unknown)
+  layout.favorites = (layout.favorites || []).filter(id => known.has(id));
+  // 2. Clean categories items (drop unknown)
+  layout.categories = (layout.categories || []).map(cat => ({
+    ...cat,
+    items: (cat.items || []).filter(id => known.has(id))
+  }));
+  // 3. Find ids placed somewhere (favorites OR any category)
+  const placed = new Set(layout.favorites);
+  layout.categories.forEach(c => c.items.forEach(id => placed.add(id)));
+  // 4. For any missing nav meta id → add to last category as catchall
+  const missing = [...known].filter(id => !placed.has(id));
+  if (missing.length) {
+    let target = layout.categories.find(c => c.id === 'system') || layout.categories[layout.categories.length - 1];
+    if (!target) {
+      // Layout completely broken — fallback to defaults
+      return JSON.parse(JSON.stringify(DEFAULT_SIDEBAR_LAYOUT));
+    }
+    target.items.push(...missing);
+  }
+  // 5. Ensure every category has an id, icon, title
+  layout.categories.forEach((c, i) => {
+    if (!c.id)    c.id = 'cat_' + i;
+    if (!c.icon)  c.icon = '📁';
+    if (!c.title) c.title = 'قسم ' + (i + 1);
+  });
+  // 6. Ensure collapsed is an object
+  if (!layout.collapsed || typeof layout.collapsed !== 'object') layout.collapsed = {};
+  return layout;
+}
+
+// ── Load layout from DB on admin login
+async function loadSidebarLayout(){
+  if (!admin || !admin.id) {
+    sidebarLayout = JSON.parse(JSON.stringify(DEFAULT_SIDEBAR_LAYOUT));
+    __sidebarLoaded = true;
+    renderSidebar();
+    return;
+  }
+  try {
+    const r = await fetch(`${SB}/rest/v1/admin_preferences?admin_id=eq.${admin.id}&pref_key=eq.sidebar_layout&select=pref_value`, { headers: HDR });
+    const data = await r.json();
+    if (Array.isArray(data) && data.length && data[0].pref_value) {
+      sidebarLayout = repairSidebarLayout(data[0].pref_value);
+    } else {
+      sidebarLayout = repairSidebarLayout(JSON.parse(JSON.stringify(DEFAULT_SIDEBAR_LAYOUT)));
+    }
+  } catch(e) {
+    console.warn('loadSidebarLayout error, using defaults:', e);
+    sidebarLayout = JSON.parse(JSON.stringify(DEFAULT_SIDEBAR_LAYOUT));
+  }
+  __sidebarLoaded = true;
+  renderSidebar();
+}
+
+// ── Save layout to DB (debounced)
+function saveSidebarLayout(){
+  if (!admin || !admin.id || !__sidebarLoaded) return;
+  clearTimeout(__sidebarSaveTimer);
+  __sidebarSaveTimer = setTimeout(async () => {
+    try {
+      // upsert via Prefer: resolution=merge-duplicates needs unique constraint
+      const payload = {
+        admin_id: admin.id,
+        pref_key: 'sidebar_layout',
+        pref_value: sidebarLayout
+      };
+      const r = await fetch(`${SB}/rest/v1/admin_preferences?on_conflict=admin_id,pref_key`, {
+        method: 'POST',
+        headers: { ...HDR, 'Prefer': 'resolution=merge-duplicates,return=minimal', 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!r.ok) console.warn('saveSidebarLayout HTTP', r.status, await r.text());
+    } catch(e) {
+      console.warn('saveSidebarLayout error:', e);
+    }
+  }, 600);
+}
+
+// ── Render the entire sidebar from layout state
+function renderSidebar(){
+  const container = document.getElementById('sb-nav-container');
+  if (!container) return;
+
+  let html = '';
+
+  // Favorites (always rendered, even if empty — drop zone)
+  const favCollapsed = !!sidebarLayout.collapsed['__favorites__'];
+  html += `<div class="sb-cat sb-fav ${favCollapsed ? 'collapsed' : ''}" data-cat-id="__favorites__">
+    <div class="sb-cat-header" onclick="toggleSidebarCategory('__favorites__')">
+      <div class="sb-cat-title"><span class="ci">⭐</span><span>المفضلة</span></div>
+      <span class="sb-cat-arrow">▼</span>
+    </div>
+    <div class="sb-cat-items" data-cat-id="__favorites__" data-is-fav="1">
+      ${renderSidebarItems(sidebarLayout.favorites, true)}
+      ${sidebarLayout.favorites.length === 0 ? '<div class="sb-fav-empty">اسحب صفحة هنا أو دوس ⭐</div>' : ''}
+    </div>
+  </div>`;
+
+  // Categories
+  sidebarLayout.categories.forEach(cat => {
+    const isCollapsed = !!sidebarLayout.collapsed[cat.id];
+    html += `<div class="sb-cat ${isCollapsed ? 'collapsed' : ''}" data-cat-id="${cat.id}">
+      <div class="sb-cat-header" onclick="toggleSidebarCategory('${cat.id}')">
+        <div class="sb-cat-title"><span class="ci">${cat.icon||'📁'}</span><span>${cat.title||cat.id}</span></div>
+        <span class="sb-cat-arrow">▼</span>
+      </div>
+      <div class="sb-cat-items" data-cat-id="${cat.id}">
+        ${renderSidebarItems(cat.items, false)}
+        ${cat.items.length === 0 ? '<div class="sb-cat-empty">— فارغ —</div>' : ''}
+      </div>
+    </div>`;
+  });
+
+  container.innerHTML = html;
+
+  // Re-apply active highlight
+  if (currentSection) {
+    container.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('data-nav-id') === currentSection) n.classList.add('active');
+    });
+  }
+
+  // Wire up drag events
+  attachSidebarDragHandlers();
+}
+
+function renderSidebarItems(ids, inFavorites){
+  return (ids||[]).map(id => {
+    const meta = NAV_META[id];
+    if (!meta) return '';
+    const isFav = sidebarLayout.favorites.includes(id);
+    const starCls = isFav ? 'starred' : '';
+    const starSymbol = isFav ? '★' : '☆';
+    const badgeHtml = meta.badge
+      ? `<span class="${meta.badge.cls}" id="${meta.badge.id}">0</span>`
+      : '';
+    return `<div class="nav-item" draggable="true" data-nav-id="${id}" onclick="goTo('${id}')" title="اسحب لإعادة الترتيب أو النقل">
+      <span class="nav-drag-handle">⋮⋮</span>
+      <span class="ni">${meta.icon}</span>
+      <span class="nav-label">${meta.label}</span>
+      ${badgeHtml}
+      <button class="nav-star ${starCls}" onclick="event.stopPropagation();toggleFavorite('${id}')" title="${isFav ? 'إزالة من المفضلة' : 'إضافة للمفضلة'}">${starSymbol}</button>
+    </div>`;
+  }).join('');
+}
+
+// ── Toggle favorite (click on star)
+function toggleFavorite(navId){
+  if (!NAV_META[navId]) return;
+  const idx = sidebarLayout.favorites.indexOf(navId);
+  if (idx >= 0) {
+    sidebarLayout.favorites.splice(idx, 1);
+  } else {
+    sidebarLayout.favorites.push(navId);
+  }
+  renderSidebar();
+  saveSidebarLayout();
+  // refresh badges since they got recreated
+  if (typeof refreshAlertBadge === 'function') refreshAlertBadge();
+  if (typeof refreshPendingBadge === 'function') refreshPendingBadge();
+}
+
+// ── Toggle category collapsed/expanded
+function toggleSidebarCategory(catId){
+  sidebarLayout.collapsed[catId] = !sidebarLayout.collapsed[catId];
+  // toggle class directly (avoid full re-render for animation)
+  const el = document.querySelector(`.sb-cat[data-cat-id="${CSS.escape(catId)}"]`);
+  if (el) el.classList.toggle('collapsed', !!sidebarLayout.collapsed[catId]);
+  saveSidebarLayout();
+}
+
+// ── Drag-and-drop handlers
+let __dragNavId = null;
+let __dragSource = null;     // { type: 'fav'|'cat', catId?: string }
+let __dragGhostEl = null;
+
+function attachSidebarDragHandlers(){
+  const container = document.getElementById('sb-nav-container');
+  if (!container) return;
+
+  // 1. Items: dragstart
+  container.querySelectorAll('.nav-item[draggable=true]').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      __dragNavId = item.getAttribute('data-nav-id');
+      const parent = item.closest('.sb-cat-items');
+      __dragSource = parent && parent.getAttribute('data-is-fav') === '1'
+        ? { type: 'fav' }
+        : { type: 'cat', catId: parent ? parent.getAttribute('data-cat-id') : null };
+      item.classList.add('dragging');
+      try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', __dragNavId); } catch(_){}
+      // Custom ghost
+      const meta = NAV_META[__dragNavId];
+      if (meta) {
+        __dragGhostEl = document.createElement('div');
+        __dragGhostEl.className = 'sb-drag-ghost';
+        __dragGhostEl.innerHTML = `<span>${meta.icon}</span><span>${meta.label}</span>`;
+        document.body.appendChild(__dragGhostEl);
+        // Move out of view initially
+        __dragGhostEl.style.top = '-1000px';
+        __dragGhostEl.style.left = '-1000px';
+        try { e.dataTransfer.setDragImage(new Image(), 0, 0); } catch(_){}
+      }
+    });
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
+      __dragNavId = null;
+      __dragSource = null;
+      if (__dragGhostEl) { __dragGhostEl.remove(); __dragGhostEl = null; }
+      // Clear all drop indicators
+      container.querySelectorAll('.sb-cat-items.drag-over').forEach(el => el.classList.remove('drag-over'));
+    });
+  });
+
+  // 2. Category containers: dragover + drop
+  container.querySelectorAll('.sb-cat-items').forEach(zone => {
+    zone.addEventListener('dragover', (e) => {
+      if (!__dragNavId) return;
+      e.preventDefault();
+      try { e.dataTransfer.dropEffect = 'move'; } catch(_){}
+      zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave', (e) => {
+      // Only clear if leaving the zone itself (not entering a child)
+      if (e.target === zone) zone.classList.remove('drag-over');
+    });
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      if (!__dragNavId) return;
+      const targetCatId = zone.getAttribute('data-cat-id');
+      const isFavTarget = zone.getAttribute('data-is-fav') === '1';
+      // Determine insertion index based on mouse Y vs items
+      const items = Array.from(zone.querySelectorAll('.nav-item'));
+      let insertBeforeId = null;
+      for (const it of items) {
+        if (it.getAttribute('data-nav-id') === __dragNavId) continue;
+        const rect = it.getBoundingClientRect();
+        if (e.clientY < rect.top + rect.height / 2) {
+          insertBeforeId = it.getAttribute('data-nav-id');
+          break;
+        }
+      }
+      moveNavItem(__dragNavId, isFavTarget ? '__favorites__' : targetCatId, insertBeforeId, __dragSource);
+    });
+  });
+}
+
+// ── Move a nav item to target category (or favorites)
+// dragSource: { type: 'fav' } | { type: 'cat', catId: string } | null (= scrub all)
+function moveNavItem(navId, targetCatId, insertBeforeId, dragSource){
+  // 1. Remove from source ONLY (if known) — preserves duplicates between fav & category
+  if (dragSource && dragSource.type === 'fav') {
+    const i = sidebarLayout.favorites.indexOf(navId);
+    if (i >= 0) sidebarLayout.favorites.splice(i, 1);
+  } else if (dragSource && dragSource.type === 'cat' && dragSource.catId) {
+    const cat = sidebarLayout.categories.find(c => c.id === dragSource.catId);
+    if (cat) {
+      const i = cat.items.indexOf(navId);
+      if (i >= 0) cat.items.splice(i, 1);
+    }
+  } else {
+    // No known source — remove from everywhere (safety net)
+    const fi = sidebarLayout.favorites.indexOf(navId);
+    if (fi >= 0) sidebarLayout.favorites.splice(fi, 1);
+    sidebarLayout.categories.forEach(c => {
+      const i = c.items.indexOf(navId);
+      if (i >= 0) c.items.splice(i, 1);
+    });
+  }
+  // 2. Determine target array
+  let targetArr;
+  if (targetCatId === '__favorites__') {
+    targetArr = sidebarLayout.favorites;
+    // Avoid duplicate inside favorites
+    const dup = targetArr.indexOf(navId);
+    if (dup >= 0) targetArr.splice(dup, 1);
+  } else {
+    const cat = sidebarLayout.categories.find(c => c.id === targetCatId);
+    if (!cat) {
+      const fallback = sidebarLayout.categories.find(c => c.id === 'system') || sidebarLayout.categories[0];
+      targetArr = fallback ? fallback.items : sidebarLayout.favorites;
+    } else {
+      targetArr = cat.items;
+    }
+    // Avoid duplicate inside same category
+    const dup = targetArr.indexOf(navId);
+    if (dup >= 0) targetArr.splice(dup, 1);
+  }
+  // 3. Insert
+  if (insertBeforeId) {
+    const idx = targetArr.indexOf(insertBeforeId);
+    if (idx >= 0) {
+      targetArr.splice(idx, 0, navId);
+    } else {
+      targetArr.push(navId);
+    }
+  } else {
+    targetArr.push(navId);
+  }
+  renderSidebar();
+  saveSidebarLayout();
+  // refresh badges since they got recreated
+  if (typeof refreshAlertBadge === 'function') refreshAlertBadge();
+  if (typeof refreshPendingBadge === 'function') refreshPendingBadge();
+}
+
+// Track the dragged ghost position
+document.addEventListener('dragover', (e) => {
+  if (__dragGhostEl) {
+    __dragGhostEl.style.left = (e.clientX + 14) + 'px';
+    __dragGhostEl.style.top  = (e.clientY + 14) + 'px';
+  }
+}, { passive: true });
 
 const saved=sessionStorage.getItem('hawa_admin');
 if(saved){admin=JSON.parse(saved);enterApp();}
