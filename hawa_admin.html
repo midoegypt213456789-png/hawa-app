@@ -2342,7 +2342,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="القاهرة الكبرى">🏙️ القاهرة الكبرى</option>
             <option value="الوجه القبلى">⛰️ الوجه القبلى</option>
             <option value="الوجه البحرى">🌊 الوجه البحرى</option>
-            <option value="غير محدد">❓ غير محدد</option>
           </select>
           <select class="filter-inp" id="cl-gov" onchange="onAdminGovChange()" style="width:140px">
             <option value="">كل المحافظات</option>
@@ -5160,7 +5159,7 @@ const REGION_META = {
   'الوجه البحرى':    { icon: '🌊', color: '#4A90D9', label: 'الوجه البحرى' },
   'غير محدد':        { icon: '❓', color: '#8A8580', label: 'غير محدد' }
 };
-const REGION_ORDER = ['الدلتا', 'القاهرة الكبرى', 'الوجه القبلى', 'الوجه البحرى', 'غير محدد'];
+const REGION_ORDER = ['الدلتا', 'القاهرة الكبرى', 'الوجه القبلى', 'الوجه البحرى'];
 
 // 🗺️ Mapping: region → list of governorates (مرآة DB function derive_region، نسخة EGYPT)
 const REGION_GOVS = {
