@@ -2336,6 +2336,14 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="tbl-wrap scrollable">
         <div class="tbl-filters">
           <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم / كود / هاتف / مدينة..." oninput="filterClients()" style="width:240px">
+          <select class="filter-inp" id="cl-region" onchange="filterClients()" style="width:160px">
+            <option value="">🗺️ كل القطاعات</option>
+            <option value="الدلتا">🌾 الدلتا</option>
+            <option value="القاهرة الكبرى">🏙️ القاهرة الكبرى</option>
+            <option value="الوجه القبلى">⛰️ الوجه القبلى</option>
+            <option value="الوجه البحرى">🌊 الوجه البحرى</option>
+            <option value="غير محدد">❓ غير محدد</option>
+          </select>
           <select class="filter-inp" id="cl-gov" onchange="onAdminGovChange()" style="width:140px">
             <option value="">كل المحافظات</option>
           </select>
@@ -2492,6 +2500,25 @@ tr:hover td{background:rgba(201,168,76,0.03);}
                   <button type="button" onclick="msClearAll('bc-religion')">✕ مسح</button>
                 </div>
                 <div class="ms-options" id="bc-religion-options"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Regions Multi-select (قطاعات) -->
+          <div>
+            <div class="filter-group-label">🗺️ القطاع</div>
+            <div class="ms-wrap" id="bc-region-wrap">
+              <button type="button" class="ms-trigger" onclick="toggleMS('bc-region')">
+                <span class="ms-label">🗺️ كل القطاعات</span>
+                <span class="ms-count" style="display:none">0</span>
+                <span class="ms-arrow">▼</span>
+              </button>
+              <div class="ms-panel">
+                <div class="ms-actions">
+                  <button type="button" onclick="msSelectAll('bc-region')">✓ الكل</button>
+                  <button type="button" onclick="msClearAll('bc-region')">✕ مسح</button>
+                </div>
+                <div class="ms-options" id="bc-region-options"></div>
               </div>
             </div>
           </div>
@@ -2787,6 +2814,15 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
       <div class="stat-grid" id="rep-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="rep-wh"></div>
+
+      <!-- 🗺️ Region breakdown -->
+      <div class="tbl-wrap" style="padding:18px;margin-top:16px">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          🗺️ توزيع العملاء حسب القطاع
+          <span style="font-size:11px;color:var(--text-dim);font-weight:400;margin-right:auto" id="rep-region-total"></span>
+        </div>
+        <div id="rep-region-breakdown" style="display:flex;flex-direction:column;gap:10px"></div>
+      </div>
     </div>
 
     <!-- WAREHOUSES (إيميلات المخازن) -->
@@ -5091,8 +5127,27 @@ function getReligionBadge(religion){
   return '<span style="color:var(--text-dim);font-size:11px">-</span>';
 }
 
+// ═══════════════════════════════════════════════════════════
+// 🗺️ REGION HELPERS — قطاعات جغرافية (الدلتا، القاهرة الكبرى، القبلى، البحرى)
+// ═══════════════════════════════════════════════════════════
+const REGION_META = {
+  'الدلتا':          { icon: '🌾', color: '#4CAF7D', label: 'الدلتا' },
+  'القاهرة الكبرى':  { icon: '🏙️', color: '#C9A84C', label: 'القاهرة الكبرى' },
+  'الوجه القبلى':    { icon: '⛰️', color: '#D4953C', label: 'الوجه القبلى' },
+  'الوجه البحرى':    { icon: '🌊', color: '#4A90D9', label: 'الوجه البحرى' },
+  'غير محدد':        { icon: '❓', color: '#8A8580', label: 'غير محدد' }
+};
+const REGION_ORDER = ['الدلتا', 'القاهرة الكبرى', 'الوجه القبلى', 'الوجه البحرى', 'غير محدد'];
+
+function getRegionBadge(region){
+  const r = region || 'غير محدد';
+  const meta = REGION_META[r] || REGION_META['غير محدد'];
+  return `<span class="type-badge" style="background:${meta.color}22;color:${meta.color};border:1px solid ${meta.color}55;font-weight:700">${meta.icon} ${meta.label}</span>`;
+}
+
 function filterClients(){
   const search=(document.getElementById('cl-search').value||'').trim().toLowerCase();
+  const region=document.getElementById('cl-region')?document.getElementById('cl-region').value:'';
   const gov=document.getElementById('cl-gov').value;
   const district=document.getElementById('cl-district').value;
   const type=document.getElementById('cl-type').value;
@@ -5106,19 +5161,21 @@ function filterClients(){
 
   let data=allClients;
 
-  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة والفئة)
+  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة والفئة والمنطقة)
   if(search){
     data=data.filter(c=>{
       const tierName = tierMap[c.tier_id] || '';
       const fields=[
         c.name, c.company_code, c.phone,
         c.governorate, c.city, c.district, c.address,
-        c.username, String(c.id), c.client_type, c.religion, tierName
+        c.username, String(c.id), c.client_type, c.religion, tierName,
+        c.region
       ].map(f=>(f||'').toLowerCase());
       return fields.some(f=>f.includes(search));
     });
   }
   if(gov) data=data.filter(c=>c.governorate===gov);
+  if(region) data=data.filter(c=>(c.region||'غير محدد')===region);
   if(district) data=data.filter(c=>c.city===district||c.district===district);
   if(type) data=data.filter(c=>(c.client_type||'عميل عام')===type);
   if(tierFilter) data=data.filter(c=>String(c.tier_id)===tierFilter);
@@ -5155,6 +5212,7 @@ function filterClients(){
     <th>⭐ الفئة</th>
     <th>🏷️ النوع</th>
     <th>🕌 الديانة</th>
+    <th>🗺️ المنطقة</th>
     <th>الكود</th><th>الهاتف</th>
     <th>المحافظة</th><th>المدينة</th><th>العنوان</th>
     <th>اليوزر نيم</th><th>الباسورد</th>
@@ -5194,6 +5252,7 @@ function filterClients(){
       <td>${tierBadge}</td>
       <td><span class="type-badge" style="background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40">${typeName}</span></td>
       <td>${religionBadge}</td>
+      <td>${getRegionBadge(c.region)}</td>
       <td><span style="color:#d4a957;font-weight:700">${hl(c.company_code,search)}</span></td>
       <td style="font-size:12px;direction:ltr;text-align:right">${hl(c.phone,search)}</td>
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.governorate,search)}</td>
@@ -5232,8 +5291,18 @@ function filterClients(){
     tierStats += `<span style="color:${t.color}"><b>${t.icon||''} ${t.name}:</b> ${cnt}</span>`;
   });
 
+  // 🗺️ region stats
+  let regionStats = '';
+  REGION_ORDER.forEach(reg => {
+    const cnt = data.filter(c => (c.region || 'غير محدد') === reg).length;
+    if (cnt === 0 && reg === 'غير محدد') return; // hide empty undefined
+    const meta = REGION_META[reg];
+    regionStats += `<span style="color:${meta.color}"><b>${meta.icon} ${meta.label}:</b> ${cnt}</span>`;
+  });
+
   footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
     ${tierStats}
+    ${regionStats}
     <span>🕌 مسلم: <b>${muslimCount}</b></span>
     <span>✝️ مسيحي: <b>${christianCount}</b></span>
     <span>نشط: <b>${data.filter(c=>!c.is_blocked && c.is_active!==false).length}</b></span>
@@ -6059,6 +6128,7 @@ function renderClientProfile(c){
       <div class="profile-field"><div class="pf-label">📱 الهاتف</div><div class="pf-value">${c.phone||'-'}</div></div>
       <div class="profile-field"><div class="pf-label">🏷️ الكود</div><div class="pf-value" style="color:var(--gold)">${c.company_code||'-'}</div></div>
       <div class="profile-field"><div class="pf-label">🗺️ المحافظة</div><div class="pf-value">${c.governorate||'-'}</div></div>
+      <div class="profile-field"><div class="pf-label">📍 القطاع</div><div class="pf-value">${getRegionBadge(c.region)}</div></div>
       <div class="profile-field"><div class="pf-label">🏙️ المدينة</div><div class="pf-value">${c.city||'-'}</div></div>
       <div class="profile-field" style="grid-column:span 2"><div class="pf-label">📍 العنوان</div><div class="pf-value">${c.address||'-'}</div></div>
       <div class="profile-field"><div class="pf-label">👤 اليوزر نيم</div><div class="pf-value">${c.username||'-'}</div></div>
@@ -6857,6 +6927,13 @@ function initBroadcastFilters(){
   }));
   initMS('bc-religion', relOptions, '🕌 كل الديانات');
 
+  // 🗺️ Regions (قطاعات) multi-select
+  const regionOptions = REGION_ORDER.map(r => ({
+    value: r,
+    label: `${REGION_META[r].icon} ${REGION_META[r].label}`
+  }));
+  initMS('bc-region', regionOptions, '🗺️ كل القطاعات');
+
   // Governorates multi-select
   const govOptions = Object.keys(EGYPT).sort().map(g => ({
     value: g,
@@ -7172,6 +7249,7 @@ function applyTemplate(id){
 async function calculateBroadcastTargets(){
   const types     = getMSValues('bc-type');
   const religions = getMSValues('bc-religion');
+  const regions   = getMSValues('bc-region');
   const govs      = getMSValues('bc-gov');
   const cities    = getMSValues('bc-city');
   const includeExtra = document.getElementById('bc-include-extra').checked;
@@ -7185,6 +7263,8 @@ async function calculateBroadcastTargets(){
   else if(types.length > 1)     baseFilter += `&client_type=in.(${types.map(esc).join(',')})`;
   if(religions.length === 1)    baseFilter += `&religion=eq.${esc(religions[0])}`;
   else if(religions.length > 1) baseFilter += `&religion=in.(${religions.map(esc).join(',')})`;
+  if(regions.length === 1)      baseFilter += `&region=eq.${esc(regions[0])}`;
+  else if(regions.length > 1)   baseFilter += `&region=in.(${regions.map(esc).join(',')})`;
   if(govs.length === 1)         baseFilter += `&governorate=eq.${esc(govs[0])}`;
   else if(govs.length > 1)      baseFilter += `&governorate=in.(${govs.map(esc).join(',')})`;
   if(cities.length === 1)       baseFilter += `&city=eq.${esc(cities[0])}`;
@@ -7312,6 +7392,11 @@ function openBroadcastConfirm(){
   if(religions.length > 0){
     const relLabels = religions.map(r => r === 'مسلم' ? '🕌 المسلمين' : r === 'مسيحي' ? '✝️ المسيحيين' : r).join(' / ');
     breakdownHtml += `<div style="color:var(--gold)">🎯 فلتر ديانة مفعّل: <b>${relLabels}</b></div>`;
+  }
+  const regions = getMSValues('bc-region');
+  if(regions.length > 0){
+    const regLabels = regions.map(r => `${(REGION_META[r]||{}).icon||''} ${r}`).join(' / ');
+    breakdownHtml += `<div style="color:var(--gold)">🗺️ فلتر قطاع مفعّل: <b>${regLabels}</b></div>`;
   }
   // Show attached files info
   if(broadcastFiles.length){
@@ -8833,7 +8918,49 @@ async function loadReports(){
       </div>`;
     };
     document.getElementById('rep-wh').innerHTML=whCard('🏭 قليوب — اليوم',qR)+whCard('🏗️ السادات — اليوم',sR);
+
+    // 🗺️ Region breakdown — توزيع العملاء حسب القطاع
+    await loadRegionBreakdown();
   }catch(e){console.error(e);}
+}
+
+async function loadRegionBreakdown(){
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?select=region`, {headers: {...HDR, 'Range': '0-1999'}});
+    const data = await r.json();
+    if (!Array.isArray(data)) return;
+    // Count per region
+    const counts = {};
+    data.forEach(c => {
+      const r = c.region || 'غير محدد';
+      counts[r] = (counts[r] || 0) + 1;
+    });
+    const total = data.length;
+    document.getElementById('rep-region-total').textContent = `(إجمالى: ${total} عميل)`;
+    // Build rows in REGION_ORDER
+    const rows = REGION_ORDER.map(reg => {
+      const cnt = counts[reg] || 0;
+      const pct = total > 0 ? (cnt / total * 100) : 0;
+      const meta = REGION_META[reg];
+      return `<div style="display:flex;align-items:center;gap:14px;padding:10px 14px;background:var(--dark3);border-radius:10px;border:1px solid ${meta.color}33">
+        <div style="min-width:160px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:13px;color:${meta.color}">
+          <span style="font-size:16px">${meta.icon}</span>
+          <span>${meta.label}</span>
+        </div>
+        <div style="flex:1;height:14px;background:var(--dark);border-radius:10px;overflow:hidden;border:1px solid var(--border)">
+          <div style="height:100%;width:${pct.toFixed(1)}%;background:linear-gradient(90deg, ${meta.color}77, ${meta.color});border-radius:10px;transition:width 0.6s ease"></div>
+        </div>
+        <div style="min-width:110px;text-align:left;font-size:13px;font-weight:700">
+          <span style="color:${meta.color}">${cnt}</span>
+          <span style="color:var(--text-dim);font-size:11px;margin-right:6px">عميل (${pct.toFixed(1)}%)</span>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('rep-region-breakdown').innerHTML = rows || '<div class="empty-txt">— مفيش بيانات —</div>';
+  } catch(e) {
+    console.error('loadRegionBreakdown error:', e);
+    document.getElementById('rep-region-breakdown').innerHTML = '<div class="empty-txt">❌ خطأ فى التحميل</div>';
+  }
 }
 
 // =================== MODAL / CONFIRM ===================
