@@ -44,7 +44,7 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 .app{display:none;height:100vh;overflow:hidden;}
 .app.show{display:flex;}
 .sidebar{width:var(--sidebar);background:var(--dark2);border-left:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;right:0;height:100vh;z-index:50;overflow-y:scroll;}
-.main-area{margin-right:var(--sidebar);flex:1;padding:20px 24px 60px 24px;overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+.main-area{margin-right:var(--sidebar);flex:1;padding:20px 24px 60px 24px;overflow-y:scroll;overflow-x:hidden;height:100vh;display:flex;flex-direction:column;}
 .section{display:none;flex:1;flex-direction:column;min-height:0;}
 .section.active{display:flex;}
 /* form-style sections: constrain width on wide screens for better composition */
@@ -147,7 +147,7 @@ input::placeholder,textarea::placeholder{color:var(--text-dim);}
 /* TABLE */
 .tbl-wrap{background:var(--dark2);border:1px solid var(--border);border-radius:16px;overflow:hidden;flex-shrink:0;}
 /* ⚙️ FIX: prevent flex-column children from being compressed; let section scroll instead */
-.section.active{overflow-y:scroll;overflow-x:scroll;}
+.section.active{overflow-y:auto;overflow-x:hidden;}
 /* ⚙️ FIX: allow ms-panel dropdown to escape tbl-wrap overflow:hidden */
 #sec-broadcast .tbl-wrap{overflow:visible;}
 
