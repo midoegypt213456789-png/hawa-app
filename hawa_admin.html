@@ -2275,12 +2275,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <button class="add-btn" onclick="loadPermitAlerts()" style="background:rgba(201,168,76,0.1);color:var(--gold)">🔄 تحديث</button>
       </div>
 
-      <div class="tbl-wrap" style="padding:14px 18px;margin-bottom:14px;background:rgba(224,85,85,0.04);border:1px solid rgba(224,85,85,0.18)">
-        <div style="font-size:12.5px;color:#E5908C;line-height:1.8">
-          ℹ️ هنا بتظهر محاولات استخدام رقم إذن لعميل تانى. راجع كل تنبيه واتخذ القرار: <b>تمت المراجعة</b> (هتروح للأرشيف) أو <b>تجاهل</b> (مش هتظهر تانى).
-        </div>
-      </div>
-
       <div class="alert-tabs">
         <button class="alert-tab-btn active" id="alert-tab-new" onclick="switchAlertTab('new')">
           🆕 الجديد <span class="count" id="alert-count-new">0</span>
@@ -3290,9 +3284,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <textarea id="sm-message-text" rows="8"
           style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:12px 14px;font-size:14px;font-weight:500;line-height:1.8;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;min-height:160px;box-sizing:border-box"
           placeholder="اكتب الرسالة هنا..."></textarea>
-        <div style="font-size:11px;color:var(--text-dim);margin-top:6px">
-          💡 الـ <code style="color:#7ab5e8">{name}</code> و <code style="color:#7ab5e8">{permit_number}</code> هتتعبئوا تلقائى
-        </div>
       </div>
 
       <div id="sm-form-error" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin:12px 0"></div>
