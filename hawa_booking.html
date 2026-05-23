@@ -262,6 +262,39 @@
   }
 
   @keyframes sp { to { transform: rotate(360deg); } }
+
+  /* ═══════════════════════════════════════════════════════════
+     🎨 Universal Scrollbars — نفس theme الـ admin
+     Default: شعرة 6px ذهبى شفاف | hover: عريض 14px ذهبى لامع
+     ═══════════════════════════════════════════════════════════ */
+  *::-webkit-scrollbar{
+    width:6px;
+    height:6px;
+  }
+  *::-webkit-scrollbar-track{
+    background:transparent;
+  }
+  *::-webkit-scrollbar-thumb{
+    background-color:rgba(201,168,76,0.4);
+    border-radius:8px;
+    transition:background-color 0.2s ease;
+  }
+  *::-webkit-scrollbar-thumb:hover{
+    background-color:var(--gold);
+  }
+  *::-webkit-scrollbar-corner{
+    background:transparent;
+  }
+  /* Expand on hover anywhere in the scrollable element */
+  *:hover::-webkit-scrollbar{
+    width:14px;
+    height:14px;
+  }
+  /* Firefox */
+  *{
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,168,76,0.4) transparent;
+  }
 </style>
 </head>
 <body>
