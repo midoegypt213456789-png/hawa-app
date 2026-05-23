@@ -2336,7 +2336,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="tbl-wrap scrollable">
         <div class="tbl-filters">
           <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم / كود / هاتف / مدينة..." oninput="filterClients()" style="width:240px">
-          <select class="filter-inp" id="cl-region" onchange="filterClients()" style="width:160px">
+          <select class="filter-inp" id="cl-region" onchange="onCLRegionChange()" style="width:160px">
             <option value="">🗺️ كل القطاعات</option>
             <option value="الدلتا">🌾 الدلتا</option>
             <option value="القاهرة الكبرى">🏙️ القاهرة الكبرى</option>
@@ -4985,15 +4985,38 @@ const EGYPT = {
 };
 
 
-// Init admin gov dropdown
-function initAdminGovDropdown() {
+// Init admin gov dropdown — يأخد region filter (اختيارى)
+// لو activeRegion مختار → يظهر فقط محافظات الـ region
+function initAdminGovDropdown(activeRegion) {
   const sel = document.getElementById('cl-gov');
-  if (!sel || sel.children.length > 1) return;
-  Object.keys(EGYPT).sort().forEach(gov => {
+  if (!sel) return;
+  const currentVal = sel.value;
+  // قائمة المحافظات المسموحة
+  const govs = getGovsForRegions(activeRegion || null);
+  // أعد بناء الـ options (مع الحفاظ على placeholder)
+  sel.innerHTML = '<option value="">كل المحافظات</option>';
+  govs.forEach(gov => {
     const opt = document.createElement('option');
     opt.value = gov; opt.textContent = gov;
     sel.appendChild(opt);
   });
+  // لو الـ current value لسه valid فى الـ region الجديد، حافظ عليه؛ غير كده reset
+  if (currentVal && govs.includes(currentVal)) {
+    sel.value = currentVal;
+  } else {
+    sel.value = '';
+    // كمان reset الـ districts dropdown لأن الـ gov اتغير
+    const distSel = document.getElementById('cl-district');
+    if (distSel) distSel.innerHTML = '<option value="">كل المراكز</option>';
+  }
+}
+
+// 🗺️ يـ called لما الـ user يغيّر فلتر القطاع
+function onCLRegionChange() {
+  const region = document.getElementById('cl-region').value;
+  initAdminGovDropdown(region);   // re-populate gov options + reset لو invalid
+  // إعادة فلترة العملاء
+  filterClients();
 }
 
 function onAdminGovChange() {
@@ -5138,6 +5161,28 @@ const REGION_META = {
   'غير محدد':        { icon: '❓', color: '#8A8580', label: 'غير محدد' }
 };
 const REGION_ORDER = ['الدلتا', 'القاهرة الكبرى', 'الوجه القبلى', 'الوجه البحرى', 'غير محدد'];
+
+// 🗺️ Mapping: region → list of governorates (مرآة DB function derive_region، نسخة EGYPT)
+const REGION_GOVS = {
+  'القاهرة الكبرى': ['القاهرة', 'الجيزة', 'القليوبية'],
+  'الدلتا':         ['الشرقية', 'المنوفية', 'الدقهلية', 'الغربية', 'البحيرة', 'كفر الشيخ', 'دمياط', 'شمال سيناء', 'جنوب سيناء'],
+  'الوجه البحرى':   ['الإسكندرية', 'بورسعيد', 'السويس', 'الإسماعيلية', 'مطروح'],
+  'الوجه القبلى':   ['المنيا', 'سوهاج', 'بني سويف', 'أسوان', 'الفيوم', 'أسيوط', 'قنا', 'الأقصر', 'البحر الأحمر', 'الوادي الجديد']
+};
+
+// يرجع المحافظات الـ valid حسب region(s) — لو selectedRegions فاضى/null → كل المحافظات
+function getGovsForRegions(selectedRegions){
+  if (!selectedRegions || (Array.isArray(selectedRegions) && selectedRegions.length === 0)) {
+    return Object.keys(EGYPT).sort();
+  }
+  const arr = Array.isArray(selectedRegions) ? selectedRegions : [selectedRegions];
+  const set = new Set();
+  arr.forEach(r => {
+    (REGION_GOVS[r] || []).forEach(g => set.add(g));
+  });
+  // فقط اللى موجودة فعلاً فى EGYPT
+  return [...set].filter(g => EGYPT[g]).sort();
+}
 
 function getRegionBadge(region){
   const r = region || 'غير محدد';
@@ -6847,11 +6892,42 @@ function setMSValues(id, values){
 
 // Hook called whenever any multi-select changes
 function onMSChange(id){
-  if(id === 'bc-gov'){
+  if(id === 'bc-region'){
+    onBroadcastRegionChange();
+  } else if(id === 'bc-gov'){
     onBroadcastGovChange();
   } else if(id === 'bc-type' || id === 'bc-religion' || id === 'bc-city'){
     invalidateBroadcastPreview();
   }
+}
+
+// 🗺️ يـ called لما الـ user يغيّر region(s) فى الـ broadcast
+function onBroadcastRegionChange(){
+  const selectedRegions = getMSValues('bc-region');
+  // المحافظات الـ valid حسب الـ regions الـ مختارة (أو الكل لو region فاضى)
+  const allowedGovs = getGovsForRegions(selectedRegions);
+
+  // Preserve الـ المحافظات المختارة سابقاً اللى لسه valid
+  const prevSelected = getMSValues('bc-gov');
+  const preserve = prevSelected.filter(g => allowedGovs.includes(g));
+
+  // Re-build options
+  const govOptions = allowedGovs.map(g => ({ value: g, label: g }));
+  initMS('bc-gov', govOptions, '🏛️ كل المحافظات');
+
+  // Re-select الـ preserved
+  if(preserve.length){
+    const state = MS_STATE['bc-gov'];
+    if(state){
+      preserve.forEach(g => state.selected.add(g));
+      renderMSOptions('bc-gov');
+      updateMSTrigger('bc-gov');
+    }
+  }
+
+  // Cities: re-trigger gov change to rebuild city options
+  onBroadcastGovChange();
+  invalidateBroadcastPreview();
 }
 
 async function loadBroadcast(){
