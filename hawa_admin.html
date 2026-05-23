@@ -2259,6 +2259,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <select class="filter-inp" id="cl-type" onchange="filterClients()" style="width:150px">
             <option value="">🏷️ كل الأنواع</option>
           </select>
+          <select class="filter-inp" id="cl-tier" onchange="filterClients()" style="width:140px">
+            <option value="">⭐ كل الفئات</option>
+          </select>
           <select class="filter-inp" id="cl-religion" onchange="filterClients()" style="width:150px">
             <option value="">🕌 كل الديانات</option>
           </select>
@@ -3241,6 +3244,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="fg"><label>كود العميل في الشركة</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ac-code" placeholder="مثال: C001"></div></div>
     <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ac-name" placeholder="الاسم الأول والثاني والثالث"></div></div>
     <div class="fg"><label>🏷️ نوع العميل</label><select id="ac-client-type"><option value="">-- جاري التحميل --</option></select></div>
+    <div class="fg"><label>⭐ الفئة (Tier)</label><select id="ac-tier"><option value="">-- جاري التحميل --</option></select></div>
     <div class="fg"><label>🕌 الديانة</label><select id="ac-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ac-phone" placeholder="01xxxxxxxxx"></div></div>
     <div class="fg"><label>المحافظة</label><select id="ac-gov" onchange="onAddGovChange()"><option value="">-- اختر --</option></select></div>
@@ -3328,6 +3332,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
     <div class="fg"><label>الاسم الثلاثي</label><div class="iw"><span class="ic">📛</span><input type="text" id="ce-name" placeholder="الاسم الكامل"></div></div>
     <div class="fg"><label>🏷️ نوع العميل</label><select id="ce-client-type"><option value="">-- جاري التحميل --</option></select></div>
+    <div class="fg"><label>⭐ الفئة (Tier)</label><select id="ce-tier"><option value="">-- جاري التحميل --</option></select></div>
     <div class="fg"><label>🕌 الديانة</label><select id="ce-religion"><option value="">-- اختر الديانة --</option></select></div>
     <div class="fg"><label>كود العميل</label><div class="iw"><span class="ic">🏷️</span><input type="text" id="ce-code" placeholder="كود العميل"></div></div>
     <div class="fg"><label>رقم الهاتف</label><div class="iw"><span class="ic">📱</span><input type="tel" id="ce-phone" placeholder="01xxxxxxxxx"></div></div>
@@ -4731,24 +4736,42 @@ function onAdminGovChange() {
 // =================== CLIENTS ===================
 let allClients = [];
 let allReligions = [];
+let allTiers = [];
 
 async function loadClients(){
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    const [r1, r2, r3] = await Promise.all([
+    const [r1, r2, r3, r4] = await Promise.all([
       fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}}),
       fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
-      fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR})
+      fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
+      fetch(`${SB}/rest/v1/client_tiers?select=*&is_active=eq.true&order=sort_order.asc`,{headers:HDR})
     ]);
     allClients = await r1.json();
     allClientTypes = await r2.json();
     allReligions = await r3.json();
+    allTiers = await r4.json();
 
     initAdminGovDropdown();
     initClientTypeFilter();
     initReligionFilter();
+    initTierFilter();
     filterClients();
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+function initTierFilter(){
+  const sel = document.getElementById('cl-tier');
+  if(!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">⭐ كل الفئات</option>';
+  (allTiers||[]).forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = String(t.id);
+    opt.textContent = `${t.icon||''} ${t.name}`.trim();
+    if(String(t.id) === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
 }
 
 function initClientTypeFilter(){
@@ -4806,6 +4829,20 @@ function populateReligionDropdown(selectId, selectedValue){
   });
 }
 
+// ⭐ Populate الـ tier dropdown (Add/Edit Client modals)
+function populateTierDropdown(selectId, selectedTierId){
+  const sel = document.getElementById(selectId);
+  if(!sel) return;
+  sel.innerHTML = '';
+  (allTiers||[]).forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = String(t.id);
+    opt.textContent = `${t.icon||''} ${t.name}${t.is_default ? ' (افتراضي)' : ''}`.trim();
+    if(String(t.id) === String(selectedTierId)) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
 function getReligionBadge(religion){
   if(religion === 'مسلم') return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(76,175,125,0.12);color:#6dc49a">🕌 مسلم</span>';
   if(religion === 'مسيحي') return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(74,144,217,0.12);color:#6faee8">✝️ مسيحي</span>';
@@ -4818,18 +4855,24 @@ function filterClients(){
   const gov=document.getElementById('cl-gov').value;
   const district=document.getElementById('cl-district').value;
   const type=document.getElementById('cl-type').value;
+  const tierFilter=document.getElementById('cl-tier')?document.getElementById('cl-tier').value:'';
   const religion=document.getElementById('cl-religion').value;
   const status=document.getElementById('cl-status').value;
 
+  // ⭐ map لـ tier names للبحث
+  const tierMap = {};
+  (allTiers||[]).forEach(t => { tierMap[t.id] = t.name; });
+
   let data=allClients;
 
-  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة)
+  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة والفئة)
   if(search){
     data=data.filter(c=>{
+      const tierName = tierMap[c.tier_id] || '';
       const fields=[
         c.name, c.company_code, c.phone,
         c.governorate, c.city, c.district, c.address,
-        c.username, String(c.id), c.client_type, c.religion
+        c.username, String(c.id), c.client_type, c.religion, tierName
       ].map(f=>(f||'').toLowerCase());
       return fields.some(f=>f.includes(search));
     });
@@ -4837,6 +4880,7 @@ function filterClients(){
   if(gov) data=data.filter(c=>c.governorate===gov);
   if(district) data=data.filter(c=>c.city===district||c.district===district);
   if(type) data=data.filter(c=>(c.client_type||'عميل عام')===type);
+  if(tierFilter) data=data.filter(c=>String(c.tier_id)===tierFilter);
   if(religion) data=data.filter(c=>(c.religion||'مسلم')===religion);
   if(status==='active') data=data.filter(c=>!c.is_blocked && c.is_active!==false);
   if(status==='blocked') data=data.filter(c=>c.is_blocked);
@@ -4854,6 +4898,10 @@ function filterClients(){
   const typeColorMap = {};
   allClientTypes.forEach(t => { typeColorMap[t.name] = t.color; });
 
+  // ⭐ Build tier map
+  const tierObjMap = {};
+  (allTiers||[]).forEach(t => { tierObjMap[t.id] = t; });
+
   const hl=(text,q)=>{
     if(!q||!text)return text||'-';
     const re=new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
@@ -4863,6 +4911,7 @@ function filterClients(){
   let html=`<table><thead><tr>
     <th style="width:36px">#</th>
     <th>الاسم</th>
+    <th>⭐ الفئة</th>
     <th>🏷️ النوع</th>
     <th>🕌 الديانة</th>
     <th>الكود</th><th>الهاتف</th>
@@ -4878,6 +4927,12 @@ function filterClients(){
     // Type badge
     const typeName = c.client_type || 'عميل عام';
     const typeColor = typeColorMap[typeName] || '#8A8580';
+
+    // ⭐ Tier badge
+    const tier = tierObjMap[c.tier_id];
+    const tierBadge = tier
+      ? `<span class="type-badge" style="background:${tier.color}22;color:${tier.color};border:1px solid ${tier.color}55;font-weight:800">${tier.icon||''} ${tier.name}</span>`
+      : `<span style="color:var(--text-dim);font-size:11px">—</span>`;
 
     // Religion badge
     const religionBadge = getReligionBadge(c.religion || 'مسلم');
@@ -4895,6 +4950,7 @@ function filterClients(){
     html+=`<tr style="cursor:pointer" ondblclick="openClientProfile(${c.id})" title="دبل كليك لفتح ملف العميل">
       <td style="color:var(--text-dim);text-align:center;font-size:11px">${i+1}</td>
       <td><b style="font-size:13px">${hl(c.name,search)}</b></td>
+      <td>${tierBadge}</td>
       <td><span class="type-badge" style="background:${typeColor}20;color:${typeColor};border:1px solid ${typeColor}40">${typeName}</span></td>
       <td>${religionBadge}</td>
       <td><span style="color:#d4a957;font-weight:700">${hl(c.company_code,search)}</span></td>
@@ -4926,7 +4982,16 @@ function filterClients(){
   footer.style.display='flex';
   const muslimCount = data.filter(c=>(c.religion||'مسلم')==='مسلم').length;
   const christianCount = data.filter(c=>c.religion==='مسيحي').length;
+
+  // ⭐ tier stats
+  let tierStats = '';
+  (allTiers||[]).forEach(t => {
+    const cnt = data.filter(c => c.tier_id === t.id).length;
+    tierStats += `<span style="color:${t.color}"><b>${t.icon||''} ${t.name}:</b> ${cnt}</span>`;
+  });
+
   footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
+    ${tierStats}
     <span>🕌 مسلم: <b>${muslimCount}</b></span>
     <span>✝️ مسيحي: <b>${christianCount}</b></span>
     <span>نشط: <b>${data.filter(c=>!c.is_blocked && c.is_active!==false).length}</b></span>
@@ -4957,6 +5022,9 @@ function openAddClientModal(){
   // Populate client type dropdown with default pre-selected
   const defaultType = allClientTypes.find(t=>t.is_default) || allClientTypes[0];
   populateClientTypeDropdown('ac-client-type', defaultType ? defaultType.name : '');
+  // ⭐ Populate tier dropdown with default
+  const defaultTier = (allTiers||[]).find(t=>t.is_default) || (allTiers||[])[0];
+  populateTierDropdown('ac-tier', defaultTier ? defaultTier.id : '');
   // Populate religion dropdown with default pre-selected
   const defaultReligion = (allReligions||[]).find(r=>r.is_default) || (allReligions||[])[0];
   populateReligionDropdown('ac-religion', defaultReligion ? defaultReligion.name : '');
@@ -4964,6 +5032,7 @@ function openAddClientModal(){
 }
 
 async function saveNewClient(){
+  const tierVal = document.getElementById('ac-tier').value;
   const data={
     company_code: document.getElementById('ac-code').value.trim(),
     name:         document.getElementById('ac-name').value.trim(),
@@ -4975,6 +5044,7 @@ async function saveNewClient(){
     username:     document.getElementById('ac-username').value.trim(),
     password:     document.getElementById('ac-password').value.trim(),
     client_type:  document.getElementById('ac-client-type').value,
+    tier_id:      tierVal ? parseInt(tierVal) : null,
     religion:     document.getElementById('ac-religion').value,
     // ✅ العميل اللى الأدمن بيضيفه بإيده موافق عليه تلقائياً
     approval_status: 'approved',
@@ -5832,6 +5902,7 @@ function openClientEdit(id){
   initEditGovDropdown();
   document.getElementById('ce-name').value=c.name||'';
   populateClientTypeDropdown('ce-client-type', c.client_type || 'عميل عام');
+  populateTierDropdown('ce-tier', c.tier_id);
   populateReligionDropdown('ce-religion', c.religion || 'مسلم');
   document.getElementById('ce-code').value=c.company_code||'';
   document.getElementById('ce-phone').value=c.phone||'';
@@ -5854,11 +5925,12 @@ async function saveClientEdit(){
   const username=document.getElementById('ce-username').value.trim();
   const password=document.getElementById('ce-password').value.trim();
   const clientType=document.getElementById('ce-client-type').value;
+  const tierVal=document.getElementById('ce-tier').value;
   const religion=document.getElementById('ce-religion').value;
   if(!name||!phone||!username){alert('أدخل الاسم والتليفون واليوزر');return;}
   if(!religion){alert('من فضلك اختار الديانة');return;}
   if(!/^01[0-9]{9}$/.test(phone)){alert('رقم الهاتف غير صحيح — 11 رقم يبدأ بـ 01');return;}
-  const body={name,company_code:code,phone,governorate:gov,city,address,username,client_type:clientType,religion};
+  const body={name,company_code:code,phone,governorate:gov,city,address,username,client_type:clientType,tier_id:tierVal?parseInt(tierVal):null,religion};
   if(password)body.password=password;
   try{
     const res=await fetch(`${SB}/rest/v1/clients?id=eq.${editClientId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
