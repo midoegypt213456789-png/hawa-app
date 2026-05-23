@@ -3300,7 +3300,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
     <div class="modal-foot">
       <button class="btn-cancel" onclick="closeModal('sendMsgModal')">إلغاء</button>
-      <button class="btn-save" onclick="sendMessageNow()" id="sm-send-btn">📤 إرسال</button>
+      <button class="btn-save" onclick="sendMessageNow()" id="sm-send-btn">📩 إرسال الرسالة</button>
     </div>
   </div>
 </div>
@@ -10603,7 +10603,7 @@ async function sendMessageNow(){
   }
 
   const btn = document.getElementById('sm-send-btn');
-  btn.disabled = true; btn.textContent = '⏳ جارى الحفظ...';
+  btn.disabled = true; btn.textContent = '⏳ جارى الإرسال...';
 
   try {
     const roleLabel = role === 'attempting' ? 'التاجر اللى حاول' : 'التاجر الأصلى';
@@ -10655,9 +10655,9 @@ async function sendMessageNow(){
     loadPermitAlerts();
   } catch(e) {
     console.error('sendMessageNow error:', e);
-    errEl.textContent = '❌ خطأ فى الحفظ: ' + e.message;
+    errEl.textContent = '❌ خطأ فى الإرسال: ' + e.message;
     errEl.style.display = 'block';
-    btn.disabled = false; btn.textContent = '📤 إرسال';
+    btn.disabled = false; btn.textContent = '📩 إرسال الرسالة';
   }
 }
 
