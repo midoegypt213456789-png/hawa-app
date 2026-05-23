@@ -10156,10 +10156,10 @@ function blRenderHistory(activeRow, visibleRows){
                 : isActive ? '<span style="background:rgba(76,175,125,0.15);color:#6dc49a;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">✅ فعّالة</span>'
                 : isFuture ? '<span style="background:rgba(74,144,217,0.15);color:#7ab5e8;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">⏭️ جاية</span>'
                 : '<span style="background:rgba(255,255,255,0.05);color:var(--text-dim);padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700">قديمة</span>';
-    const editBtn = `<button onclick="openLimitsForm(${r.id})" style="background:rgba(74,144,217,0.1);color:#7ab5e8;border:1px solid rgba(74,144,217,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" title="تعديل">✏️ تعديل</button>`;
+    const editBtn = `<button onclick="event.stopPropagation();openLimitsForm(${r.id})" style="background:rgba(74,144,217,0.1);color:#7ab5e8;border:1px solid rgba(74,144,217,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer;margin-left:4px" title="تعديل">✏️ تعديل</button>`;
     const delBtn = isDefault ? '' :
-      `<button onclick="deleteLimit(${r.id})" style="background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer" title="مسح">🗑️ مسح</button>`;
-    return `<tr class="${isActive ? 'current-row' : ''}">
+      `<button onclick="event.stopPropagation();deleteLimit(${r.id})" style="background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.25);border-radius:7px;padding:5px 10px;font-family:'Cairo',sans-serif;font-size:11px;font-weight:700;cursor:pointer" title="مسح">🗑️ مسح</button>`;
+    return `<tr class="${isActive ? 'current-row' : ''}" style="cursor:pointer" ondblclick="openLimitsForm(${r.id})" title="دبل كليك للتعديل">
       <td>${r.effective_from}</td>
       <td>${badge}</td>
       <td>${blTierPillsHtml(r)}</td>
@@ -10751,7 +10751,7 @@ function renderTiers(){
     const isDefault = !!t.is_default;
     const canDelete = !isDefault && cnt === 0;
     const delTitle = isDefault ? 'مينفعش تمسح الفئة الافتراضية' : (cnt > 0 ? `فيه ${cnt} عميل فى الفئة دى — نقلهم لفئة تانية الأول` : 'مسح الفئة');
-    html += `<div class="tier-card" style="--tier-color:${t.color};--tier-color-bg:${t.color}1f;--tier-color-border:${t.color}55">
+    html += `<div class="tier-card" style="--tier-color:${t.color};--tier-color-bg:${t.color}1f;--tier-color-border:${t.color}55;cursor:pointer" ondblclick="openTierModal(${t.id})" title="دبل كليك للتعديل">
       <div class="tier-card-hd">
         <div class="tier-card-icon">${t.icon||'⭐'}</div>
         <div style="flex:1;min-width:0">
@@ -10773,8 +10773,8 @@ function renderTiers(){
         </div>
       </div>
       <div class="tier-card-actions">
-        <button onclick="openTierModal(${t.id})">✏️ تعديل</button>
-        <button class="tc-act-del" onclick="deleteTier(${t.id})" ${canDelete ? '' : 'disabled'} title="${delTitle}">🗑️ مسح</button>
+        <button onclick="event.stopPropagation();openTierModal(${t.id})">✏️ تعديل</button>
+        <button class="tc-act-del" onclick="event.stopPropagation();deleteTier(${t.id})" ${canDelete ? '' : 'disabled'} title="${delTitle}">🗑️ مسح</button>
       </div>
     </div>`;
   });
