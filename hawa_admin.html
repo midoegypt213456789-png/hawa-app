@@ -2138,6 +2138,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="قليوب">🏭 قليوب</option>
             <option value="السادات">🏗️ السادات</option>
           </select>
+          <select class="filter-inp" id="bk-region" onchange="filterBookingsLocal()" style="width:140px">
+            <option value="">🗺️ كل القطاعات</option>
+            <option value="القاهرة الكبرى">🏙️ القاهرة الكبرى</option>
+            <option value="الدلتا">🌾 الدلتا</option>
+            <option value="الوجه البحرى">🌊 الوجه البحرى</option>
+            <option value="الوجه القبلى">⛰️ الوجه القبلى</option>
+          </select>
           <select class="filter-inp" id="bk-vehicle" onchange="loadBookings()" style="width:130px">
             <option value="">كل الأنواع</option>
             <option value="موتسيكل">🏍️ موتسيكل</option>
@@ -4399,6 +4406,7 @@ async function loadBookings(){
 function filterBookingsLocal(){
   const clientSearch=(document.getElementById('bk-client').value||'').trim().toLowerCase();
   const countFilter=document.getElementById('bk-count').value;
+  const regionFilter=document.getElementById('bk-region')?document.getElementById('bk-region').value:'';
 
   let data=allBookingsData;
 
@@ -4407,6 +4415,13 @@ function filterBookingsLocal(){
       const c=allClientsMap[b.client_id]||{};
       return (c.name||'').toLowerCase().includes(clientSearch)||
              (c.company_code||'').toLowerCase().includes(clientSearch);
+    });
+  }
+
+  if(regionFilter){
+    data=data.filter(b=>{
+      const c=allClientsMap[b.client_id]||{};
+      return c.region===regionFilter;
     });
   }
 
@@ -4582,7 +4597,7 @@ function renderBookingsTable(data){
 
   html+=`<table><thead><tr>
     <th style="width:40px;text-align:center"><input type="checkbox" id="bk-select-all" class="bk-checkbox" onchange="toggleAllBookings(this.checked)" ${cancellableCount === 0 ? 'disabled' : ''}></th>
-    <th>#</th><th>🎫 رقم الإذن</th><th>العميل</th><th>الكود</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
+    <th>#</th><th>🎫 رقم الإذن</th><th>العميل</th><th>الكود</th><th>🗺️ القطاع</th><th>المخزن</th><th>النوع</th><th>العدد</th><th>اليوم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
 
   data.forEach(b=>{
@@ -4601,6 +4616,7 @@ function renderBookingsTable(data){
       <td>${b.permit_number ? `<b style="color:var(--gold-light);letter-spacing:0.3px">🎫 ${b.permit_number}</b>` : `<span style="color:var(--text-dim);font-size:11px">—</span>`}</td>
       <td><b>${hl(c.name||'-',clientSearch)}</b></td>
       <td><span style="color:var(--gold)">${hl(c.company_code||'-',clientSearch)}</span></td>
+      <td style="font-size:11px;color:#9fb5cc"><span style="background:rgba(122,181,232,0.08);padding:2px 7px;border-radius:5px;border:1px solid rgba(122,181,232,0.25)">${c.region||'—'}</span></td>
       <td>${b.warehouse||'-'}</td>
       <td>${b.vehicle_type||'-'}</td>
       <td><b style="color:var(--gold)">${b.count||0}</b></td>
@@ -4610,10 +4626,36 @@ function renderBookingsTable(data){
       <td>${actionsCell}</td>
     </tr>`;
   });
-  html+=`</tbody></table>
-  <div style="padding:10px 16px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border)">
-    إجمالي النتائج: <b style="color:var(--gold)">${data.length}</b> حجز |
-    إجمالي العربيات: <b style="color:var(--gold)">${data.reduce((s,b)=>s+(b.count||0),0)}</b>
+  html+=`</tbody></table>`;
+
+  // 🗺️ إحصائيات القطاعات للحجوزات
+  const regionFilter = document.getElementById('bk-region') ? document.getElementById('bk-region').value : '';
+  const regionIcons = { 'القاهرة الكبرى':'🏙️', 'الدلتا':'🌾', 'الوجه البحرى':'🌊', 'الوجه القبلى':'⛰️' };
+  const regionColors = { 'القاهرة الكبرى':'#e8c97a', 'الدلتا':'#7dd4a3', 'الوجه البحرى':'#7ab5e8', 'الوجه القبلى':'#d4a464' };
+  const bkRegions = ['القاهرة الكبرى','الدلتا','الوجه البحرى','الوجه القبلى'];
+  const totalBookings = (allBookingsData||[]).length;
+
+  let bkRegionStats = '';
+  if (regionFilter) {
+    const cnt = data.length;
+    const pct = totalBookings > 0 ? ((cnt / totalBookings) * 100).toFixed(1) : '0';
+    const color = regionColors[regionFilter] || 'var(--gold)';
+    bkRegionStats = `<span style="color:${color};background:${color}15;padding:3px 10px;border-radius:6px;border:1px solid ${color}30">${regionIcons[regionFilter]||'🗺️'} ${regionFilter}: <b>${cnt}</b> <span style="opacity:0.75;font-size:11px">(${pct}% من ${totalBookings})</span></span>`;
+  } else {
+    bkRegionStats = bkRegions.map(r => {
+      const cnt = data.filter(b => (allClientsMap[b.client_id]||{}).region === r).length;
+      const pct = data.length > 0 ? ((cnt / data.length) * 100).toFixed(1) : '0';
+      const color = regionColors[r] || 'var(--gold)';
+      return `<span style="color:${color}">${regionIcons[r]} ${r}: <b>${cnt}</b> <span style="opacity:0.65;font-size:11px">(${pct}%)</span></span>`;
+    }).join('');
+  }
+
+  html += `<div style="padding:10px 16px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border);display:flex;gap:14px;flex-wrap:wrap;row-gap:8px;align-items:center">
+    <span>إجمالي النتائج: <b style="color:var(--gold)">${data.length}</b> حجز</span>
+    <span>|</span>
+    <span>إجمالي العربيات: <b style="color:var(--gold)">${data.reduce((s,b)=>s+(b.count||0),0)}</b></span>
+    <span style="color:#333;font-weight:300">|</span>
+    ${bkRegionStats}
   </div>`;
   document.getElementById('bk-table').innerHTML=html;
 }
