@@ -1602,6 +1602,14 @@ function getRollingStart(period, fromDateStr){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+// يحسب نهاية الـ forward period (بعد N أيام من fromDateStr) — للـ open bookings
+function getRollingEnd(period, fromDateStr){
+  const days = { week: 7, month: 30, year: 365 }[period] || 30;
+  const d = new Date(fromDateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days - 1);  // -1 لأن "خلال 7 أيام جاية" تتضمن النهاردة
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 // يرجع اسم الفترة بالعربى
 function periodLabelAr(period){
   return { week: 'الأسبوع', month: 'الشهر', year: 'السنة' }[period] || 'الفترة';
@@ -2405,15 +2413,17 @@ async function confirm_booking() {
       }
     }
 
-    // 5️⃣ open_bookings_max — حجوزات قيد الانتظار فى rolling period (من النهاردة للوراء)
+    // 5️⃣ open_bookings_max — حجوزات قيد الانتظار "المفتوحة" (النهارده أو مستقبل، خلال الـ period)
+    //    "مفتوح" = loading_date >= today AND loading_date <= today + period AND status='قيد الانتظار'
+    //    الحجوزات القديمة (loading_date < today) مش بـ تتحسب هنا — دى بتدخل no-show counter
     const todayForOpen = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
-    const openStart = getRollingStart(limits.open_bookings_period, todayForOpen);
-    const or  = await fetch(`${SB}/rest/v1/bookings?select=id,loading_date&client_id=eq.${user.id}&status=eq.${encodeURIComponent('قيد الانتظار')}&loading_date=gte.${openStart}`, { headers: HDR });
+    const openEnd = getRollingEnd(limits.open_bookings_period, todayForOpen);
+    const or  = await fetch(`${SB}/rest/v1/bookings?select=id,loading_date&client_id=eq.${user.id}&status=eq.${encodeURIComponent('قيد الانتظار')}&loading_date=gte.${todayForOpen}&loading_date=lte.${openEnd}`, { headers: HDR });
     const od  = await or.json();
     const openCount = od.filter(b => !(editMode && b.id === editMode.id)).length;
     if (openCount >= limits.open_bookings_max) {
       const pl = periodLabelAr(limits.open_bookings_period);
-      showErr(`عندك ${openCount} حجز لسه ما اتحملش فى ${pl} الحالى\nحمّل واحد منهم قبل ما تحجز جديد (الحد ${limits.open_bookings_max})`);
+      showErr(`عندك ${openCount} حجز مفتوح فى ${pl} الجاى\nحمّل واحد منهم قبل ما تحجز جديد (الحد ${limits.open_bookings_max})`);
       resetBtn(); return;
     }
 
