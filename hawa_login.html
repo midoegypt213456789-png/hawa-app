@@ -3,807 +3,3645 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>HAWA CO - تسجيل الدخول</title>
+<title>HAWA CO - حجز دور</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
 
+  /* 🚫 Bio UI hidden per Mido's request (JS functions kept intact for safety) */
+  #bioBtnHeader, #bioEnrollBanner, #bioModal { display: none !important; }
+
   :root {
-    --gold: #C9A84C;
-    --gold-light: #E8C97A;
-    --dark: #0A0A0A;
-    --dark2: #111111;
-    --dark3: #1A1A1A;
-    --text: #F0EDE8;
-    --text-dim: #8A8580;
-    --border: #2A2A2A;
-    --error: #E05555;
-    --success: #4CAF7D;
+    --gold: #C9A84C; --gold-light: #E8C97A;
+    --dark: #0A0A0A; --dark2: #111111; --dark3: #1A1A1A;
+    --text: #F0EDE8; --text-dim: #8A8580; --border: #2A2A2A;
+    --error: #E05555; --success: #4CAF7D; --blue: #4A90D9;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  html { height: 100%; }
-
   body {
-    font-family: 'Cairo', sans-serif;
-    background: var(--dark);
-    color: var(--text);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px 16px 40px;
-    overflow-y: auto;
+    font-family: 'Cairo', sans-serif; background: var(--dark); color: var(--text);
+    min-height: 100vh; padding: 16px 16px 50px; overflow-y: auto;
   }
 
-  body::before {
-    content: '';
-    position: fixed;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: radial-gradient(ellipse at 30% 20%, rgba(201,168,76,0.06) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 80%, rgba(201,168,76,0.04) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-  }
+  .container { width: 100%; max-width: 420px; margin: 0 auto; }
 
-  .container {
-    width: 100%;
-    max-width: 420px;
-    position: relative;
-    z-index: 1;
+  /* Header */
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; padding: 12px 16px;
+    background: var(--dark2); border-radius: 16px; border: 1px solid var(--border);
   }
-
-  .logo-wrap {
-    text-align: center;
-    margin-bottom: 20px;
-    padding-top: 10px;
-  }
-
-  .logo-icon {
-    width: 65px; height: 65px;
+  .header-logo {
+    font-size: 18px; font-weight: 900; letter-spacing: 2px;
     background: linear-gradient(135deg, var(--gold), var(--gold-light));
-    border-radius: 18px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    margin-bottom: 10px;
-    box-shadow: 0 8px 32px rgba(201,168,76,0.25);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   }
+  .header-user .name { font-size: 13px; font-weight: 700; text-align: left; }
+  .header-user .code { font-size: 11px; color: var(--gold); text-align: left; }
 
-  .logo-title {
-    font-size: 24px;
-    font-weight: 900;
-    letter-spacing: 4px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-light));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .logo-sub {
-    font-size: 11px;
-    color: var(--text-dim);
-    letter-spacing: 2px;
-    margin-top: 4px;
-  }
-
+  /* Tabs */
   .tabs {
-    display: flex;
-    background: var(--dark3);
-    border-radius: 14px;
-    padding: 4px;
-    margin-bottom: 16px;
-    border: 1px solid var(--border);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 14px;
+    background: var(--dark2); border: 1px solid var(--border); border-radius: 14px; padding: 5px;
   }
-
-  .tab {
-    flex: 1;
-    padding: 9px 6px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: 'Cairo', sans-serif;
-    border: none;
-    background: transparent;
-    color: var(--text-dim);
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+  .tab-btn {
+    padding: 10px; border-radius: 10px; border: none; cursor: pointer;
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700;
+    background: transparent; color: var(--text-dim); transition: all 0.25s;
   }
+  .tab-btn.active { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: var(--dark); }
 
-  .tab.active {
-    background: linear-gradient(135deg, var(--gold), var(--gold-light));
-    color: var(--dark);
+  /* Edit Banner */
+  .edit-banner {
+    display: none; align-items: center; gap: 8px; padding: 10px 14px;
+    border-radius: 12px; margin-bottom: 12px;
+    background: rgba(201,168,76,0.1); border: 1px solid rgba(201,168,76,0.3);
+    font-size: 13px; font-weight: 700; color: var(--gold);
   }
+  .edit-banner.show { display: flex; }
 
-  .card {
-    background: var(--dark2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 22px 18px;
-  }
+  /* Steps */
+  .steps { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: all 0.3s; }
+  .dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
+  .dot.done { background: var(--success); }
 
-  .form-group { margin-bottom: 14px; }
-
-  label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-dim);
-    margin-bottom: 6px;
-  }
-
-  .input-wrap { position: relative; }
-
-  .input-icon {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 14px;
-    pointer-events: none;
-  }
-
-  input {
-    width: 100%;
-    background: var(--dark3);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
-    padding: 11px 38px 11px 12px;
-    font-family: 'Cairo', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    outline: none;
-    transition: all 0.3s ease;
-    direction: rtl;
-  }
-
-  input:focus {
-    border-color: var(--gold);
-    background: #1C1C1C;
-    box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
-  }
-
-  input::placeholder { color: var(--text-dim); }
-
-  .row2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .btn-main {
-    width: 100%;
-    padding: 13px;
-    background: linear-gradient(135deg, var(--gold), var(--gold-light));
-    color: var(--dark);
-    font-family: 'Cairo', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;
-    margin-top: 6px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(201,168,76,0.3);
-  }
-
-  .btn-main:active { transform: scale(0.98); }
-  .btn-main:disabled { opacity: 0.6; cursor: not-allowed; }
-
-  .btn-secondary {
-    width: 100%;
-    padding: 11px;
-    background: transparent;
-    color: var(--gold);
-    font-family: 'Cairo', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1.5px solid rgba(201,168,76,0.3);
-    border-radius: 14px;
-    cursor: pointer;
-    margin-top: 10px;
-    transition: all 0.3s ease;
-  }
-
+  /* Alert */
   .alert {
-    padding: 11px 14px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 14px;
-    display: none;
-    align-items: center;
-    gap: 8px;
-    line-height: 1.5;
+    padding: 12px 14px; border-radius: 12px; font-size: 13px; font-weight: 600;
+    margin-bottom: 14px; display: none; gap: 8px; line-height: 1.5;
+    align-items: flex-start; white-space: pre-line;
+  }
+  .alert.show-error   { display: flex; background: rgba(224,85,85,0.1);  border: 1px solid rgba(224,85,85,0.3);  color: var(--error); }
+  .alert.show-success { display: flex; background: rgba(76,175,125,0.1); border: 1px solid rgba(76,175,125,0.3); color: var(--success); }
+
+  /* Card */
+  .card { background: var(--dark2); border: 1px solid var(--border); border-radius: 20px; padding: 20px 16px; margin-bottom: 14px; }
+  .card-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; text-align: center; }
+  .card-title span { color: var(--gold); }
+
+  /* Options */
+  .opts2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opts3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 8px; }
+  .opt {
+    padding: 14px 8px; background: var(--dark3); border: 2px solid var(--border);
+    border-radius: 14px; cursor: pointer; text-align: center; transition: all 0.25s;
+  }
+  .opt:hover { border-color: rgba(201,168,76,0.5); }
+  .opt.sel   { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .opt .ic   { font-size: 26px; margin-bottom: 6px; }
+  .opt .lb   { font-size: 13px; font-weight: 700; color: var(--text); }
+  .opt.sel .lb { color: var(--gold); }
+
+  /* Calendar */
+  .cal-month { text-align: center; font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 12px; }
+  .cal-month + .cal-month { margin-top: 24px; padding-top: 16px; border-top: 1px dashed rgba(201,168,76,0.2); }
+  .cal-grid  { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px; }
+  .cal-hd    { font-size: 10px; color: var(--text-dim); font-weight: 600; text-align: center; padding: 4px 0; }
+  .cal-d {
+    padding: 9px 2px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    text-align: center; border: 2px solid transparent; background: var(--dark3);
+    color: var(--text); cursor: pointer; transition: all 0.25s;
+  }
+  .cal-d:hover:not(.off):not(.past) { border-color: rgba(201,168,76,0.5); }
+  .cal-d.sel   { border-color: var(--gold); background: rgba(201,168,76,0.12); color: var(--gold); }
+  .cal-d.past  { background: transparent; color: #333; cursor: default; }
+  .cal-d.off   { background: transparent; color: #333; cursor: not-allowed; }
+  .cal-d.today { border-color: var(--blue); color: var(--blue); }
+  .cal-d.empty { background: transparent; border: none; cursor: default; }
+  .cal-d.full   { background: rgba(224,85,85,0.08); border-color: rgba(224,85,85,0.5); color: #e88080; cursor: not-allowed; opacity: 0.85; }
+  .cal-d.cutoff { background: rgba(138,133,128,0.08); border-color: rgba(138,133,128,0.4); color: var(--text-dim); cursor: not-allowed; opacity: 0.7; }
+
+  /* Slots */
+  .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .slot {
+    padding: 11px 8px; background: var(--dark3); border: 2px solid var(--border);
+    border-radius: 12px; cursor: pointer; text-align: center; transition: all 0.25s;
+  }
+  .slot:hover:not(.slot-full) { border-color: rgba(201,168,76,0.5); }
+  .slot.sel       { border-color: var(--gold); background: rgba(201,168,76,0.08); }
+  .slot.sel .st   { color: var(--gold); }
+  .slot.slot-full { opacity: 0.45; cursor: not-allowed; }
+  .slot .st { font-size: 12px; font-weight: 700; color: var(--text); }
+  .slot .av { font-size: 11px; color: var(--success); margin-top: 2px; }
+  .slot .fl { font-size: 11px; color: var(--error); margin-top: 2px; }
+  .slots-loading { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px; grid-column: span 2; }
+
+  /* Count */
+  .count-wrap { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 8px 0; }
+  .cnt-btn {
+    width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--gold);
+    background: transparent; color: var(--gold); font-size: 24px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
+  }
+  .cnt-btn:hover { background: rgba(201,168,76,0.1); }
+  .cnt-num  { font-size: 38px; font-weight: 900; min-width: 64px; text-align: center; }
+  .cnt-info { text-align: center; font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+
+  /* Summary */
+  .sum-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .sum-row:last-child { border-bottom: none; }
+  .sum-lbl { font-size: 13px; color: var(--text-dim); }
+  .sum-val  { font-size: 13px; font-weight: 700; }
+  .sum-val.g { color: var(--gold); }
+
+  /* Buttons */
+  .btn-gold {
+    width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: var(--dark); font-family: 'Cairo', sans-serif; font-size: 15px; font-weight: 700;
+    border: none; border-radius: 14px; cursor: pointer; transition: all 0.25s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.25);
+  }
+  .btn-gold:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn-back {
+    width: 100%; padding: 12px; background: transparent; color: var(--text-dim);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--border); border-radius: 14px; cursor: pointer; margin-top: 10px;
   }
 
-  .alert.error { background: rgba(224,85,85,0.1); border: 1px solid rgba(224,85,85,0.3); color: var(--error); display: flex; }
-  .alert.success { background: rgba(76,175,125,0.1); border: 1px solid rgba(76,175,125,0.3); color: var(--success); display: flex; }
-
-  .spinner {
-    width: 16px; height: 16px;
-    border: 2px solid rgba(10,10,10,0.3);
-    border-top-color: var(--dark);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 6px;
+  .spin {
+    width: 16px; height: 16px; border: 2px solid rgba(10,10,10,0.3);
+    border-top-color: #000; border-radius: 50%; animation: sp 0.7s linear infinite;
+    display: inline-block; vertical-align: middle; margin-left: 6px;
   }
 
-  .section { display: none; }
-  .section.active { display: block; }
+  /* Views */
+  .view        { display: none; }
+  .view.active { display: block; }
+  .sec         { display: none; }
+  .sec.active  { display: block; }
 
-  .divider {
-    text-align: center;
-    color: var(--text-dim);
-    font-size: 12px;
-    margin: 12px 0;
-    position: relative;
+  /* My Bookings */
+  .bk-card {
+    background: var(--dark2); border: 1px solid var(--border);
+    border-radius: 18px; padding: 16px; margin-bottom: 12px; transition: border-color 0.2s;
+  }
+  .bk-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .bk-id     { font-size: 12px; color: var(--text-dim); font-weight: 600; }
+  .bk-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+  .bk-status.pending { background: rgba(74,144,217,0.15); color: var(--blue); }
+  .bk-row  { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
+  .bk-lbl  { color: var(--text-dim); }
+  .bk-val  { font-weight: 700; }
+  .bk-val.gold { color: var(--gold); }
+  .bk-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .bk-btn-edit {
+    flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid var(--gold);
+    background: transparent; color: var(--gold);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .bk-btn-edit:hover { background: rgba(201,168,76,0.1); }
+  .bk-btn-cancel {
+    flex: 1; padding: 9px; border-radius: 10px; border: 1.5px solid rgba(224,85,85,0.4);
+    background: transparent; color: var(--error);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  }
+  .bk-btn-cancel:hover { background: rgba(224,85,85,0.08); }
+
+  .empty-state       { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+  .empty-state .ei   { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p     { font-size: 14px; font-weight: 600; }
+  .loading-state     { text-align: center; padding: 40px; color: var(--text-dim); font-size: 14px; }
+
+  /* Cancel dialog */
+  .overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75);
+    z-index: 100; align-items: center; justify-content: center; padding: 20px;
+  }
+  .overlay.show { display: flex; }
+  .dialog {
+    background: var(--dark2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 24px; width: 100%; max-width: 340px; text-align: center;
+  }
+  .dialog .d-icon  { font-size: 40px; margin-bottom: 12px; }
+  .dialog .d-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .dialog .d-msg   { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+  .dialog .d-btns  { display: flex; gap: 10px; }
+  .d-btn-yes {
+    flex: 1; padding: 12px; border-radius: 12px; border: none;
+    background: var(--error); color: white;
+    font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .d-btn-no {
+    flex: 1; padding: 12px; border-radius: 12px; border: 1.5px solid var(--border);
+    background: transparent; color: var(--text-dim);
+    font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer;
   }
 
-  .divider::before, .divider::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    width: 35%;
-    height: 1px;
-    background: var(--border);
+  /* Success Screen */
+  .success-screen { display: none; text-align: center; padding: 10px 0; }
+  .success-screen.show { display: block; }
+  .success-icon  { font-size: 60px; margin-bottom: 16px; }
+  .success-title { font-size: 20px; font-weight: 900; color: var(--success); margin-bottom: 8px; }
+  .success-details {
+    background: var(--dark2); border: 1px solid var(--border); border-radius: 16px;
+    padding: 16px; margin: 16px 0; text-align: right;
+  }
+  .success-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .notice-box {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 14px; padding: 12px 14px; margin-top: 14px; text-align: right;
+  }
+  .notice-box .ni { font-size: 20px; flex-shrink: 0; }
+  .notice-box .nt { font-size: 12px; font-weight: 600; color: var(--gold); line-height: 1.6; }
+  .btn-close-app {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, var(--success), #3a9660);
+    color: white; font-family: 'Cairo', sans-serif; font-size: 15px; font-weight: 700;
+    border: none; border-radius: 14px; cursor: pointer;
+  }
+  .btn-new-bk {
+    width: 100%; padding: 12px; background: transparent; color: var(--gold);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--gold); border-radius: 14px; cursor: pointer;
+  }
+  .btn-go-list {
+    width: 100%; padding: 12px; background: transparent; color: var(--text-dim);
+    font-family: 'Cairo', sans-serif; font-size: 13px; font-weight: 600;
+    border: 1.5px solid var(--border); border-radius: 14px; cursor: pointer;
   }
 
-  .divider::before { right: 0; }
-  .divider::after { left: 0; }
+  @keyframes sp { to { transform: rotate(360deg); } }
 
-  .step-title {
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    text-align: center;
+  /* ═══════════════════════════════════════════════════════════
+     🎨 Universal Scrollbars — نفس theme الـ admin
+     Default: شعرة 6px ذهبى شفاف | hover: عريض 14px ذهبى لامع
+     ═══════════════════════════════════════════════════════════ */
+  *::-webkit-scrollbar{
+    width:6px;
+    height:6px;
   }
-
-  .step-title span { color: var(--gold); }
-
-  .section-label {
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--gold);
-    letter-spacing: 1px;
-    margin: 14px 0 10px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 5px;
+  *::-webkit-scrollbar-track{
+    background:transparent;
   }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
+  *::-webkit-scrollbar-thumb{
+    background-color:rgba(201,168,76,0.4);
+    border-radius:8px;
+    transition:background-color 0.2s ease;
+  }
+  *::-webkit-scrollbar-thumb:hover{
+    background-color:var(--gold);
+  }
+  *::-webkit-scrollbar-corner{
+    background:transparent;
+  }
+  /* Expand on hover anywhere in the scrollable element */
+  *:hover::-webkit-scrollbar{
+    width:14px;
+    height:14px;
+  }
+  /* Firefox */
+  *{
+    scrollbar-width:thin;
+    scrollbar-color:rgba(201,168,76,0.4) transparent;
+  }
 </style>
 </head>
 <body>
 <div class="container">
 
-  <div class="logo-wrap">
-    <div class="logo-icon">🚗</div>
-    <div class="logo-title">HAWA CO</div>
-    <div class="logo-sub">نظام حجز دور العربيات</div>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">🚗 HAWA CO</div>
+    <div class="header-user">
+      <div class="name" id="uname">...</div>
+      <div class="code" id="ucode">...</div>
+    </div>
+    <button id="bioBtnHeader" onclick="openBiometricModal()" style="display:none;background:transparent;border:1px solid rgba(201,168,76,0.4);color:#C9A84C;border-radius:20px;padding:4px 10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px" title="إدارة البصمة">🔐</button>
+    <button onclick="doLogout()" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:20px;padding:4px 12px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer">🚪 خروج</button>
   </div>
 
+  <!-- Tabs -->
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('login')">🔑 تسجيل دخول</button>
-    <button class="tab" onclick="switchTab('register')">📝 عميل جديد</button>
+    <button class="tab-btn active" id="tabNew" onclick="switchTab('new')">➕ حجز جديد</button>
+    <button class="tab-btn"        id="tabMy"  onclick="switchTab('my')">📋 حجوزاتي</button>
   </div>
 
-  <div class="card">
-    <div class="alert" id="alert"></div>
+  <!-- Telegram Link Banner (shown if not linked) -->
+  <div id="tgLinkBanner" style="display:none"></div>
 
-    <!-- LOGIN -->
-    <div class="section active" id="login-section">
-      <p class="step-title">أهلاً بك في <span>HAWA CO</span></p>
+  <!-- 🔐 Biometric Enroll Banner (يظهر للموبايل لو ما سجّلش بصمة) -->
+  <div id="bioEnrollBanner" style="display:none;background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.06));border:1.5px solid rgba(201,168,76,0.5);border-radius:14px;padding:13px 14px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="font-size:32px;flex-shrink:0">🔐</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:#E8C97A;margin-bottom:3px">دخول أسرع بالبصمة</div>
+        <div style="font-size:11px;color:#aaa;line-height:1.5">خلاص ما تنسى الباسوورد — افتح بالبصمة زى البنوك</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+      <button onclick="enrollBiometric()" style="flex:1;min-width:120px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12.5px;font-weight:800;cursor:pointer">✨ فعّل البصمة</button>
+      <button onclick="dismissEnrollBanner()" style="background:transparent;border:1px solid #444;color:#888;border-radius:9px;padding:10px 14px;font-family:Cairo,sans-serif;font-size:11.5px;font-weight:600;cursor:pointer">لأ شكراً</button>
+    </div>
+    <div id="bioBannerHelper" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed rgba(201,168,76,0.3);font-size:10.5px;color:#888;line-height:1.6">
+      لو مش شغال داخل Telegram، 
+      <a href="javascript:void(0)" onclick="bioOpenInBrowser()" style="color:#E8C97A;text-decoration:underline;font-weight:700">جرّب من المتصفح ←</a>
+    </div>
+  </div>
 
-      <div class="form-group">
-        <label>اسم المستخدم</label>
-        <div class="input-wrap">
-          <span class="input-icon">👤</span>
-          <input type="text" id="login-username" placeholder="أدخل اسم المستخدم" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
+  <!-- 🔐 Biometric Settings Modal -->
+  <div id="bioModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;align-items:center;justify-content:center;padding:18px" onclick="if(event.target===this)closeBiometricModal()">
+    <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:20px;max-width:400px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.6)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:16px;font-weight:800;color:#E8C97A;display:flex;align-items:center;gap:8px">🔐 الدخول بالبصمة</div>
+        <button onclick="closeBiometricModal()" style="background:transparent;border:none;color:#888;font-size:22px;cursor:pointer;padding:0 4px;line-height:1">×</button>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.7">سجّل البصمة على كل جهاز بتستخدمه. هتدخل أسرع بدون يوزر نيم أو باسوورد.</div>
+
+      <!-- 🔍 Status checks (يبين السبب لو الـ enrollment ما اشتغلش) -->
+      <div id="bioStatus" style="background:rgba(255,255,255,0.025);border:1px solid #2a2a2a;border-radius:10px;padding:10px 12px;margin-bottom:14px"></div>
+
+      <div id="bioList"></div>
+
+      <button id="bioAddBtn" onclick="enrollBiometric()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer;margin-top:8px">➕ تسجيل البصمة على الجهاز ده</button>
+
+      <button id="bioBrowserBtn" onclick="bioOpenInBrowser()" style="display:none;width:100%;background:rgba(74,144,217,0.12);color:#7ab5e8;border:1px solid rgba(74,144,217,0.35);border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px">🌐 افتح فى المتصفح الخارجى (يشتغل أحسن)</button>
+
+      <button onclick="closeBiometricModal()" style="width:100%;background:transparent;border:1px solid #333;color:#888;border-radius:9px;padding:10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px">إغلاق</button>
+    </div>
+  </div>
+
+  <!-- 🍞 Toast notifications -->
+  <div id="bioToast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(76,175,125,0.95);color:white;padding:12px 20px;border-radius:10px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;z-index:10000;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+
+  <!-- 🔐 Bio Login Lock Screen (CIB-style) -->
+  <div id="bioLockScreen" style="display:none;position:fixed;inset:0;background:#0a0a0a;z-index:100000;align-items:flex-start;justify-content:center;padding:24px;flex-direction:column;overflow-y:auto">
+    <div style="max-width:340px;width:100%;font-family:Cairo,sans-serif;margin:auto;padding:32px 0">
+
+      <!-- HAWA Logo -->
+      <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:30px;font-weight:900;color:#E8C97A;letter-spacing:3px">HAWA CO 🚗</div>
+        <div style="font-size:10px;color:#444;letter-spacing:2px;margin-top:4px">VEHICLE LOADING SYSTEM</div>
       </div>
 
-      <div class="form-group">
-        <label>كلمة المرور</label>
-        <div class="input-wrap">
-          <span class="input-icon">🔒</span>
-          <input type="password" id="login-password" placeholder="أدخل كلمة المرور" onkeydown="if(event.key==='Enter')doLogin()">
-        </div>
+      <!-- ═══ 2-Tab switcher ═══ -->
+      <div style="display:flex;gap:0;margin-bottom:24px;background:#0f0f0f;border:1px solid #1f1f1f;border-radius:11px;padding:4px">
+        <button id="tabLoginBtn" onclick="switchAuthTab('login')" style="flex:1;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:8px;padding:11px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s">تسجيل الدخول</button>
+        <button id="tabRegisterBtn" onclick="switchAuthTab('register')" style="flex:1;background:transparent;color:#888;border:none;border-radius:8px;padding:11px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">🆕 عميل جديد</button>
       </div>
 
-      <button class="btn-main" onclick="doLogin()" id="login-btn">تسجيل الدخول</button>
-      <div class="divider">أو</div>
-      <button class="btn-secondary" onclick="switchTab('forgot')">🔓 نسيت كلمة المرور؟</button>
+      <!-- ═══ Login Pane ═══ -->
+      <div id="loginPane">
+
+        <!-- Username -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">اسم المستخدم</label>
+          <input type="text" id="lockUsername" autocomplete="username" placeholder="ادخل اسم المستخدم" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')document.getElementById('lockPassword').focus()">
+        </div>
+
+        <!-- Password -->
+        <div style="margin-bottom:8px">
+          <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">كلمة المرور</label>
+          <input type="password" id="lockPassword" autocomplete="current-password" placeholder="ادخل كلمة المرور" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')passwordLogin()">
+        </div>
+
+        <!-- Forgot password -->
+        <div style="text-align:right;margin-bottom:22px;margin-top:8px">
+          <a href="#" onclick="openRecoveryModal(); return false;" style="font-size:11.5px;color:#888;text-decoration:none">هل نسيت كلمة المرور؟</a>
+        </div>
+
+        <!-- Login button -->
+        <button id="lockLoginBtn" onclick="passwordLogin()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:11px;padding:14px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer">تسجيل الدخول</button>
+
+        <!-- Error message -->
+        <div id="bioLockError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:10px;padding:10px 14px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
+
+      </div>
+
+      <!-- ═══ Register Pane (inline) ═══ -->
+      <div id="registerPane" style="display:none">
+
+        <div id="registerForm">
+
+          <div style="font-size:11.5px;color:#888;margin-bottom:14px;line-height:1.7;text-align:center">
+            بعد التسجيل، الإدارة هـ تعتمد حسابك خلال ساعات
+          </div>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">الاسم الكامل <span style="color:#e05555">*</span></label>
+          <input type="text" id="regName" placeholder="مثال: محمد على" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">رقم الموبيل <span style="color:#e05555">*</span></label>
+          <input type="tel" inputmode="tel" id="regPhone" placeholder="01xxxxxxxxx" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كود العميل <span style="color:#e05555">*</span></label>
+          <input type="text" id="regCompanyCode" placeholder="اختار كود من 2-10 حروف/أرقام" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
+
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1">
+              <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">اسم المستخدم <span style="color:#e05555">*</span></label>
+              <input type="text" id="regUsername" placeholder="username" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
+            </div>
+            <div style="flex:1">
+              <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كلمة المرور <span style="color:#e05555">*</span></label>
+              <input type="text" id="regPassword" placeholder="4 حروف على الأقل" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
+            </div>
+          </div>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المحافظة <span style="color:#e05555">*</span></label>
+          <select id="regGovernorate" onchange="onGovernorateChange()" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px;cursor:pointer">
+            <option value="">— اختار المحافظة —</option>
+          </select>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المركز / الحى <span style="color:#e05555">*</span></label>
+          <select id="regCitySelect" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:6px;cursor:pointer" disabled>
+            <option value="">— اختار المحافظة الأول —</option>
+          </select>
+          <input type="text" id="regCityText" placeholder="أو اكتب مدينة جديدة" style="display:none;width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+          <div style="margin-bottom:10px"></div>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">العنوان التفصيلى <span style="color:#e05555">*</span></label>
+          <input type="text" id="regAddress" placeholder="مثال: شارع الجمهورية، بجوار المسجد الكبير" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:6px;font-weight:700">الديانة <span style="color:#e05555">*</span></label>
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <label style="flex:1;background:#161616;border:1px solid #262626;border-radius:10px;padding:11px;text-align:center;cursor:pointer;font-size:13.5px;color:#fff" id="regReligionMuslimLbl">
+              <input type="radio" name="regReligion" value="مسلم" onchange="onReligionChange()" style="display:none">
+              ☪️ مسلم
+            </label>
+            <label style="flex:1;background:#161616;border:1px solid #262626;border-radius:10px;padding:11px;text-align:center;cursor:pointer;font-size:13.5px;color:#fff" id="regReligionChristianLbl">
+              <input type="radio" name="regReligion" value="مسيحي" onchange="onReligionChange()" style="display:none">
+              ✝️ مسيحي
+            </label>
+          </div>
+
+          <button id="registerSubmitBtn" onclick="registerSubmit()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ تسجيل الحساب</button>
+
+          <!-- Error message -->
+          <div id="registerError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:9px;padding:10px 12px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
+
+        </div>
+
+        <!-- Register success state -->
+        <div id="registerSuccess" style="display:none;text-align:center;padding:24px 0">
+          <div style="font-size:48px;margin-bottom:12px">✅</div>
+          <div style="font-size:15px;color:#4CAF7D;font-weight:800;margin-bottom:8px">تم استلام طلبك</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.7">الإدارة هـ تنظر فى الطلب خلال ساعات.<br>هـ تقدر تدخل بعد الاعتماد.</div>
+          <button onclick="switchAuthTab('login'); resetRegisterForm();" style="margin-top:16px;background:#1A1A1A;border:1px solid #2A2A2A;color:#fff;border-radius:9px;padding:10px 24px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">رجوع لتسجيل الدخول</button>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div style="text-align:center;font-size:10px;color:#333;margin-top:30px;letter-spacing:0.5px">HAWA CO © 2026</div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 🔑 Credential Recovery Modal — يفتح من "نسيت كلمة المرور" -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="recoveryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100002;align-items:center;justify-content:center;padding:18px;font-family:Cairo,sans-serif" onclick="if(event.target===this)closeRecoveryModal()">
+    <div style="background:#111;border:1px solid #2A2A2A;border-radius:14px;padding:24px;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.6)">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:800;color:#E8C97A">🔑 استرجاع بيانات الدخول</div>
+        <button onclick="closeRecoveryModal()" style="background:transparent;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1;padding:0 6px">×</button>
+      </div>
+
+      <!-- Form -->
+      <div id="recoveryForm">
+        <div style="font-size:12px;color:#aaa;margin-bottom:14px;line-height:1.7">
+          ادخل <b>كود العميل</b> و <b>رقم الموبيل</b> المسجّل عندنا، وهـ نبعتلك اسم المستخدم وكلمة المرور على Telegram.
+        </div>
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:6px;font-weight:700">كود العميل</label>
+        <input type="text" id="recoveryCompanyCode" placeholder="مثال: 7042" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px" onkeypress="if(event.key==='Enter')document.getElementById('recoveryPhone').focus()">
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:6px;font-weight:700">رقم الموبيل</label>
+        <input type="tel" inputmode="tel" id="recoveryPhone" placeholder="مثال: 01018303060" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box;direction:ltr;text-align:right" onkeypress="if(event.key==='Enter')recoverySubmit()">
+
+        <button id="recoverySubmitBtn" onclick="recoverySubmit()" style="width:100%;margin-top:16px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer">📨 أرسلهم على Telegram</button>
+      </div>
+
+      <!-- Success state -->
+      <div id="recoverySuccess" style="display:none;text-align:center;padding:12px 0">
+        <div style="font-size:48px;margin-bottom:12px">✅</div>
+        <div style="font-size:15px;color:#4CAF7D;font-weight:800;margin-bottom:8px">تم الإرسال</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.7">شيك Telegram دلوقتى<br>هـ تلاقى اسم المستخدم وكلمة المرور</div>
+        <button onclick="closeRecoveryModal()" style="margin-top:16px;background:#1A1A1A;border:1px solid #2A2A2A;color:#fff;border-radius:9px;padding:10px 24px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">تم</button>
+      </div>
+
+      <!-- Error message -->
+      <div id="recoveryError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:9px;padding:10px 12px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
+    </div>
+  </div>
+
+
+  <!-- Alert -->
+  <div class="alert" id="alert"></div>
+
+  <!-- ======== VIEW: FORM ======== -->
+  <div class="view active" id="viewForm">
+
+    <div class="edit-banner" id="editBanner">
+      ✏️ وضع التعديل — الحجز رقم <span id="editBannerNum"></span>
     </div>
 
-    <!-- REGISTER -->
-    <div class="section" id="register-section">
-      <p class="step-title">إنشاء <span>حساب جديد</span></p>
-
-      <div class="section-label">📋 بيانات الشركة</div>
-
-      <div class="form-group">
-        <label>كود العميل في الشركة</label>
-        <div class="input-wrap">
-          <span class="input-icon">🏷️</span>
-          <input type="text" id="reg-code" placeholder="مثال: C001 أو 1234AB">
-        </div>
-      </div>
-
-      <div class="section-label">👤 البيانات الشخصية</div>
-
-      <div class="form-group">
-        <label>الاسم الثلاثي</label>
-        <div class="input-wrap">
-          <span class="input-icon">📛</span>
-          <input type="text" id="reg-name" placeholder="الاسم الأول والثاني والثالث">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>رقم الهاتف</label>
-        <div class="input-wrap">
-          <span class="input-icon">📱</span>
-          <input type="tel" id="reg-phone" placeholder="01xxxxxxxxx">
-        </div>
-      </div>
-
-      <div class="section-label">📍 العنوان</div>
-
-      <div class="form-group">
-        <label>المحافظة</label>
-        <select id="reg-gov" onchange="onGovChange()">
-          <option value="">-- اختر المحافظة --</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>المدينة / المركز / الحي</label>
-        <select id="reg-city" disabled>
-          <option value="">-- اختر المحافظة أولاً --</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>المركز</label>
-        <select id="reg-district" disabled>
-          <option value="">-- اختر المحافظة أولاً --</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>العنوان التفصيلي</label>
-        <div class="input-wrap">
-          <span class="input-icon">📍</span>
-          <input type="text" id="reg-address" placeholder="الشارع، المبنى، الشقة...">
-        </div>
-      </div>
-
-      <div class="section-label">🔐 بيانات الدخول</div>
-
-      <div class="form-group">
-        <label>اسم المستخدم</label>
-        <div class="input-wrap">
-          <span class="input-icon">👤</span>
-          <input type="text" id="reg-username" placeholder="اختر اسم مستخدم">
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label>كلمة المرور</label>
-        <div class="input-wrap">
-          <span class="input-icon">🔒</span>
-          <input type="password" id="reg-password" placeholder="كلمة مرور قوية">
-        </div>
-      </div>
-
-      <button class="btn-main" onclick="doRegister()" id="register-btn">إنشاء الحساب</button>
-      <button class="btn-secondary" onclick="switchTab('login')">← العودة لتسجيل الدخول</button>
+    <div class="steps">
+      <div class="dot active" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+      <div class="dot" id="d4"></div>
+      <div class="dot" id="d5"></div>
     </div>
 
-    <!-- FORGOT -->
-    <div class="section" id="forgot-section">
-      <p class="step-title">🔓 استعادة <span>كلمة المرور</span></p>
-
-      <div class="form-group">
-        <label>كود العميل في الشركة</label>
-        <div class="input-wrap">
-          <span class="input-icon">🏷️</span>
-          <input type="text" id="forgot-code" placeholder="أدخل كود العميل">
+    <!-- Step 1: المخزن -->
+    <div class="sec active" id="s1">
+      <div class="card">
+        <p class="card-title">اختر <span>المخزن</span></p>
+        <div class="opts2" id="warehouseOpts">
+          <div class="slots-loading" style="grid-column:1/-1">⏳ جاري تحميل المخازن...</div>
         </div>
       </div>
-
-      <div class="form-group">
-        <label>رقم الهاتف المسجل</label>
-        <div class="input-wrap">
-          <span class="input-icon">📱</span>
-          <input type="tel" id="forgot-phone" placeholder="01xxxxxxxxx">
-        </div>
+      <div class="card" id="permitCard" style="display:none">
+        <p class="card-title">رقم <span>الإذن</span></p>
+        <input id="permitInput" type="number" placeholder="أدخل رقم الإذن"
+          style="width:100%;padding:12px 16px;background:var(--dark3);border:2px solid var(--border);border-radius:12px;
+          color:var(--text);font-family:Cairo,sans-serif;font-size:15px;font-weight:700;outline:none;text-align:center"
+          oninput="onPermitInput()" />
+        <div id="permitMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
       </div>
-
-      <div class="form-group" id="new-pass-group" style="display:none">
-        <label>كلمة المرور الجديدة</label>
-        <div class="input-wrap">
-          <span class="input-icon">🔒</span>
-          <input type="password" id="forgot-newpass" placeholder="أدخل كلمة المرور الجديدة">
-        </div>
-      </div>
-
-      <button class="btn-main" onclick="doForgot()" id="forgot-btn">التحقق من البيانات</button>
-      <button class="btn-secondary" onclick="switchTab('login')">← العودة لتسجيل الدخول</button>
+      <button class="btn-gold" id="b1" onclick="goStep2()" disabled>التالي ←</button>
     </div>
 
+    <!-- Step 2: النوع -->
+    <div class="sec" id="s2">
+      <div class="card">
+        <p class="card-title">نوع <span>العربية</span></p>
+        <div class="opts3" id="vehicleOpts">
+          <div class="slots-loading" style="grid-column:1/-1">⏳ جاري تحميل الأنواع...</div>
+        </div>
+      </div>
+      <button class="btn-gold" id="b2" onclick="go(3)" disabled>التالي ←</button>
+      <button class="btn-back" onclick="go(1)">→ رجوع</button>
+    </div>
+
+    <!-- Step 3: اليوم -->
+    <div class="sec" id="s3">
+      <div class="card">
+        <p class="card-title">اختر <span>يوم التحميل</span></p>
+        <div id="calContainer"></div>
+      </div>
+      <button class="btn-gold" id="b3" onclick="go(4)" disabled>التالي ←</button>
+      <button class="btn-back" onclick="go(2)">→ رجوع</button>
+    </div>
+
+    <!-- Step 4: الموعد -->
+    <div class="sec" id="s4">
+      <div class="card">
+        <p class="card-title">اختر <span>الموعد</span></p>
+        <div class="slots" id="slotsGrid"></div>
+      </div>
+      <button class="btn-gold" id="b4" onclick="go(5)" disabled>التالي ←</button>
+      <button class="btn-back" onclick="go(3)">→ رجوع</button>
+    </div>
+
+    <!-- Step 5: العدد + تأكيد -->
+    <div class="sec" id="s5">
+      <div class="card">
+        <p class="card-title">عدد <span>العربيات</span></p>
+        <div class="count-wrap">
+          <button class="cnt-btn" onclick="chCnt(-1)">−</button>
+          <div class="cnt-num" id="cntNum">1</div>
+          <button class="cnt-btn" onclick="chCnt(1)">+</button>
+        </div>
+        <div class="cnt-info" id="cntInfo"></div>
+      </div>
+      <div class="card">
+        <p class="card-title">تأكيد <span>الحجز</span></p>
+        <div class="sum-row"><span class="sum-lbl">العميل</span><span class="sum-val" id="sName"></span></div>
+        <div class="sum-row"><span class="sum-lbl">الكود</span><span class="sum-val g" id="sCode"></span></div>
+        <div class="sum-row"><span class="sum-lbl">رقم الإذن</span><span class="sum-val g" id="sPermit"></span></div>
+        <div class="sum-row"><span class="sum-lbl">المخزن</span><span class="sum-val" id="sWarehouse"></span></div>
+        <div class="sum-row"><span class="sum-lbl">النوع</span><span class="sum-val" id="sVehicle"></span></div>
+        <div class="sum-row"><span class="sum-lbl">اليوم</span><span class="sum-val" id="sDate"></span></div>
+        <div class="sum-row"><span class="sum-lbl">الموعد</span><span class="sum-val g" id="sSlot"></span></div>
+        <div class="sum-row"><span class="sum-lbl">العدد</span><span class="sum-val g" id="sCount"></span></div>
+      </div>
+      <!-- Form buttons (hidden after success) -->
+      <div id="formBtns">
+        <button class="btn-gold" id="bConfirm" onclick="confirm_booking()">💾 حفظ الحجز</button>
+        <button class="btn-back" onclick="go(4)">→ رجوع للموعد</button>
+      </div>
+
+      <!-- Success screen (shown after save) -->
+      <div class="success-screen" id="successScreen">
+        <div class="success-icon">🎉</div>
+        <div class="success-title" id="successTitle">تم الحفظ بنجاح!</div>
+        <div class="success-details" id="successDetails"></div>
+        <div id="tgBanner" style="display:none"></div>
+        <div class="success-actions" id="successActions"></div>
+        <div class="notice-box">
+          <span class="ni">⏰</span>
+          <span class="nt">الرجاء الحضور قبل موعدك بـ <strong>15 دقيقة</strong>، تأخرك أكثر من نصف ساعة يؤجل تحميلك لآخر اليوم</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /viewForm -->
+
+  <!-- ======== VIEW: MY BOOKINGS ======== -->
+  <div class="view" id="viewMy">
+    <div id="myList"></div>
+  </div>
+
+</div>
+
+<!-- Cancel Dialog -->
+<div class="overlay" id="cancelOverlay">
+  <div class="dialog">
+    <div class="d-icon">🗑️</div>
+    <div class="d-title">تأكيد الإلغاء</div>
+    <div class="d-msg" id="cancelMsg"></div>
+    <div class="d-btns">
+      <button class="d-btn-yes" id="cancelYes">نعم، إلغاء الحجز</button>
+      <button class="d-btn-no"  onclick="hideCancelDlg()">لأ، رجوع</button>
+    </div>
   </div>
 </div>
 
 <script>
-  const tg = window.Telegram?.WebApp;
-  if (tg) { tg.ready(); tg.expand(); }
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
 
-  // 📱 Auto-redirect من Telegram لـ Chrome (البصمة شغّالة فقط فى المتصفح الخارجى)
-  (function autoRedirectFromTelegram(){
-    if (!tg) return;
-    const isRealTelegram = tg.initData && tg.initData !== '' && tg.platform && tg.platform !== 'unknown';
-    if (!isRealTelegram) return;
-    try {
-      if (tg.openLink) {
-        console.log('[login] Telegram detected → opening in external browser');
-        // افتح صفحة الـ booking مباشرة فى Chrome (الـ Lock Screen هيظهر فيها)
-        const bookingUrl = window.location.href.replace('hawa_login.html', 'hawa_booking.html');
-        tg.openLink(bookingUrl, { try_instant_view: false });
-        setTimeout(() => { try { tg.close && tg.close(); } catch(e){} }, 250);
-      }
-    } catch(e) { console.warn('Telegram redirect failed:', e); }
-  })();
+const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
+const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
+const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': 'application/json' };
 
-  const telegramId = tg?.initDataUnsafe?.user?.id || 'test_user';
+// 📅 Global helper: Cairo local date (مش UTC) — موجود global عشان كل الـ functions تستخدمه
+const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 
-  const SUPABASE_URL = 'https://oqsowwtjutpjdypjpcum.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_rCmWQJCKfoJK4XiY2JKUzQ_CI9IGtP5';
+// ⚙️ ربط n8n: السيرفر الخارجى الـ default
+//    لو السيرفر الخارجى وقع لأى سبب، فعّل السطر التانى بدل الأول وارفع التعديل
+const N8N_BASE = 'https://n8n.gladiatorverse.net';
+// const N8N_BASE = 'https://unhatched-lashaunda-inductive.ngrok-free.dev';  // local fallback
 
-  let forgotVerified = false;
-  let forgotUserId = null;
+const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 
-  function switchTab(tab) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    hideAlert();
-    if (tab === 'login') {
-      document.querySelectorAll('.tab')[0].classList.add('active');
-      document.getElementById('login-section').classList.add('active');
-    } else if (tab === 'register') {
-      document.querySelectorAll('.tab')[1].classList.add('active');
-      document.getElementById('register-section').classList.add('active');
-    } else if (tab === 'forgot') {
-      document.getElementById('forgot-section').classList.add('active');
-    }
-  }
+const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 
-  function showAlert(msg, type) {
-    const el = document.getElementById('alert');
-    el.textContent = (type === 'error' ? '⚠️ ' : '✅ ') + msg;
-    el.className = 'alert ' + type;
-  }
+// 🔐 Login Gate — الـ Lock Screen هو صفحة الدخول الموحّدة (form + bio)
+if (!user || !user.id) {
+  const savedBio = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; } })();
+  console.log('[bio] Login gate:', { hasUser: !!user.id, hasBio: !!savedBio });
 
-  function hideAlert() {
-    document.getElementById('alert').className = 'alert';
-  }
-
-  async function doLogin() {
-    const username = document.getElementById('login-username').value.trim();
-    const password = document.getElementById('login-password').value.trim();
-
-    if (!username || !password) {
-      showAlert('من فضلك أدخل اسم المستخدم وكلمة المرور', 'error');
+  const showLock = () => {
+    const lockEl = document.getElementById('bioLockScreen');
+    if (!lockEl) {
+      setTimeout(showLock, 100);
       return;
     }
+    lockEl.style.display = 'flex';
 
-    const btn = document.getElementById('login-btn');
-    btn.disabled = true;
-    btn.innerHTML = 'جاري التحقق... <span class="spinner"></span>';
-
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=*`,
-        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-      );
-      const data = await res.json();
-
-      if (data && data.length > 0) {
-        const user = data[0];
-
-        // ═══ التحقق من حالة الموافقة ═══
-        const approval = user.approval_status || 'approved'; // default للحسابات القديمة
-
-        if (approval === 'pending') {
-          showAlert('⏳ حسابك تحت المراجعة من الإدارة، استنى الموافقة قبل ما تقدر تدخل', 'error');
-          btn.disabled = false;
-          btn.innerHTML = 'تسجيل الدخول';
-          return;
-        }
-
-        if (approval === 'rejected') {
-          showAlert('❌ تم رفض حسابك من الإدارة. للاستفسار تواصل مع الإدارة', 'error');
-          btn.disabled = false;
-          btn.innerHTML = 'تسجيل الدخول';
-          return;
-        }
-
-        // ═══ التحقق من إن الحساب مش متبلوك ═══
-        if (user.is_blocked) {
-          showAlert('🚫 حسابك متوقف، تواصل مع الإدارة', 'error');
-          btn.disabled = false;
-          btn.innerHTML = 'تسجيل الدخول';
-          return;
-        }
-
-        showAlert(`أهلاً ${user.name}! تم تسجيل الدخول بنجاح 🎉`, 'success');
-        localStorage.setItem('hawa_user', JSON.stringify(user));
-        setTimeout(() => { window.location.href = 'hawa_booking.html'; }, 2000);
-      } else {
-        showAlert('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
-      }
-    } catch (e) {
-      showAlert('حدث خطأ في الاتصال، حاول مرة أخرى', 'error');
+    // 👆 لو فيه bio محفوظة على الجهاز ده، اظهر زرار البصمة icon
+    if (savedBio && savedBio.credentialId) {
+      const bioBtn = document.getElementById('bioLockBioBtn');
+      if (bioBtn) bioBtn.style.display = 'flex';
     }
 
-    btn.disabled = false;
-    btn.innerHTML = 'تسجيل الدخول';
+    console.log('[bio] ✅ Login gate displayed');
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showLock);
+  } else {
+    setTimeout(showLock, 0);
+  }
+}
+
+// 📜 Activity Logging — تسجل كل حركة العميل فى DB
+async function logActivity(action, label, details={}){
+  if(!user || !user.id) return;
+  try{
+    fetch(`${SB}/rest/v1/activity_log`,{
+      method:'POST',
+      headers:{...HDR,'Prefer':'return=minimal'},
+      body:JSON.stringify({
+        user_type:'client',
+        user_id:user.id,
+        user_name:user.name,
+        user_extra:user.company_code,
+        action, action_label:label, details
+      })
+    });
+  }catch(e){/* silent */}
+}
+
+// log أول دخول للصفحة (يعد كـ login event)
+logActivity('cl_open_app','🚪 فتح التطبيق');
+
+function doLogout() {
+  logActivity('cl_logout','🚪 خرج من التطبيق');
+  localStorage.removeItem('hawa_user');
+  // 🔐 لو فى بصمة محفوظة، اعمل reload (الـ Lock Screen هيظهر بدلاً من login.html)
+  const hasBio = !!localStorage.getItem('hawa_biometric');
+  if (hasBio) {
+    window.location.reload();
+  } else {
+    window.location.href = 'hawa_login.html';
+  }
+}
+document.getElementById('uname').textContent = user.name || 'العميل';
+document.getElementById('ucode').textContent  = user.company_code || '';
+
+// فحص ربط Telegram عند التحميل
+checkTelegramLink();
+
+// ═══════════════════════════════════════════════════════════
+// 🔐 BIOMETRIC LOGIN (WebAuthn) — دخول بالبصمة زى البنوك
+// ═══════════════════════════════════════════════════════════
+
+function bioSupported(){
+  // 1. لو فى Telegram Mini App **حقيقى** (مش stub فى Chrome)، نستخدم Telegram's BiometricManager
+  if (bioIsInTelegram()) return true;
+  // 2. وإلا، نستخدم WebAuthn (browser عادى)
+  return !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+}
+
+// 📱 يتأكد إن الـ user داخل **فعلاً** من Telegram WebApp (مش Chrome عادى)
+// الـ telegram-web-app.js script بـ يـ inject الـ tg object حتى فى Chrome (stub فاضى)،
+// فلازم نـ check حاجة موجودة فقط فى Telegram الحقيقى زى initData
+function bioIsInTelegram(){
+  if (!tg) return false;
+  if (!tg.BiometricManager) return false;
+  // الـ initData موجودة فقط داخل Telegram الحقيقى — فاضية فى Chrome
+  if (!tg.initData || tg.initData === '') return false;
+  // الـ platform "unknown" يعنى Chrome عادى
+  if (!tg.platform || tg.platform === 'unknown') return false;
+  return true;
+}
+
+// Buffer ↔ Base64URL helpers
+function bioBufToBase64(buf){
+  const bytes = new Uint8Array(buf);
+  let str = '';
+  for (let i = 0; i < bytes.byteLength; i++) str += String.fromCharCode(bytes[i]);
+  return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function bioBase64ToBuf(s){
+  const pad = '='.repeat((4 - s.length % 4) % 4);
+  const b64 = (s + pad).replace(/-/g, '+').replace(/_/g, '/');
+  const bin = atob(b64);
+  const buf = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+  return buf;
+}
+
+function bioDetectDevice(){
+  const ua = navigator.userAgent;
+  if (/iPhone/.test(ua))  return '📱 iPhone';
+  if (/iPad/.test(ua))    return '📱 iPad';
+  if (/Android/i.test(ua)){
+    const m = ua.match(/Android.*?;\s*([^;)]+)\sBuild/);
+    return '📱 ' + (m ? m[1].trim() : 'Android');
+  }
+  if (/Windows/.test(ua)) return '💻 Windows';
+  if (/Mac/.test(ua))     return '💻 Mac';
+  return '📱 جهاز';
+}
+
+function bioToast(msg, type){
+  const el = document.getElementById('bioToast');
+  if (!el) return;
+  const color = type === 'error' ? 'rgba(224,85,85,0.95)' : 'rgba(76,175,125,0.95)';
+  el.style.background = color;
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 2800);
+}
+
+// 🔬 تحديث الـ debug panel
+async function updateBioDebug(){
+  const el = document.getElementById('bioDebugContent');
+  if (!el) return;
+  const isInTg = bioIsInTelegram();
+  let platformAvail = 'checking…';
+  try {
+    if (!isInTg && window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+      platformAvail = (await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()) ? '✅ yes' : '❌ no';
+    } else if (isInTg) {
+      platformAvail = '(Telegram mode)';
+    } else {
+      platformAvail = '❌ no API';
+    }
+  } catch(e) { platformAvail = '⚠️ ' + e.message; }
+  const stored = localStorage.getItem('hawa_biometric');
+  let storedParsed = null;
+  try { storedParsed = stored ? JSON.parse(stored) : null; } catch(e){}
+  el.innerHTML = `
+    <div>🌐 URL: <b>${window.location.host}</b></div>
+    <div>📱 Telegram: <b style="color:${isInTg?'#4CAF7D':'#aaa'}">${isInTg ? 'YES' : 'no'}</b>${isInTg && tg?.version ? ' v'+tg.version : ''}</div>
+    <div>🔐 BioSupported: <b style="color:${bioSupported()?'#4CAF7D':'#e88080'}">${bioSupported() ? 'YES' : 'NO'}</b></div>
+    <div>👆 Platform Auth: <b>${platformAvail}</b></div>
+    <div>👤 User ID: <b>${user?.id || '—'}</b></div>
+    <div>✅ Approval: <b style="color:${user?.approval_status==='approved'?'#4CAF7D':'#e88080'}">${user?.approval_status || 'loading…'}</b></div>
+    <div>🛡️ isApproved: <b style="color:${bioIsApprovedClient()?'#4CAF7D':'#e88080'}">${bioIsApprovedClient() ? 'YES' : 'no'}</b></div>
+    <div>💾 Saved Bio: <b>${storedParsed ? '✅ ' + (storedParsed.deviceLabel || 'yes') : '— مش مسجّل'}</b></div>
+  `;
+}
+
+function bioFormatDate(iso){
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('ar-EG', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+// 🛡️ يحدد لو العميل "حالى" (معتمد + مش محظور) — البصمة بس للحاليين
+function bioIsApprovedClient(){
+  if (!user || !user.id) return false;
+  // لو الحقول لسه ما تحملتش، نـ assume false (يـ recheck بعد الـ fetch)
+  if (user.approval_status === undefined) return false;
+  return user.approval_status === 'approved' && user.is_blocked !== true;
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🧭 detectBioContext — يـ classify الـ environment ويـ recommend strategy
+// مفيش side effects، مفيش async — صافى لـ routing فقط
+// ═══════════════════════════════════════════════════════════
+function detectBioContext(){
+  const ua = navigator.userAgent || '';
+  const isInTg = bioIsInTelegram();
+  const tgVer = isInTg ? parseFloat(tg.version || '0') : 0;
+  const tgPlatform = isInTg ? (tg.platform || 'unknown') : null;
+  const hasTgBioMgr = !!(isInTg && tg.BiometricManager && tgVer >= 7.2);
+
+  // OS detection
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  let osVersion = null;
+  if (isIOS) {
+    const m = ua.match(/OS (\d+)_(\d+)/);
+    if (m) osVersion = parseInt(m[1], 10);
+  } else if (isAndroid) {
+    const m = ua.match(/Android (\d+)/);
+    if (m) osVersion = parseInt(m[1], 10);
   }
 
-  async function doRegister() {
-    const data = {
-      company_code: document.getElementById('reg-code').value.trim(),
-      name: document.getElementById('reg-name').value.trim(),
-      phone: document.getElementById('reg-phone').value.trim(),
-      governorate: document.getElementById('reg-gov').value,
-      city: document.getElementById('reg-city').value,
-      district: document.getElementById('reg-district').value,
-      address: document.getElementById('reg-address').value.trim(),
-      username: document.getElementById('reg-username').value.trim(),
-      password: document.getElementById('reg-password').value.trim(),
-      approval_status: 'pending',
+  const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+  const isSecure = window.isSecureContext && location.protocol === 'https:';
+
+  // Strategy decision
+  // A_telegram : فى Telegram + BiometricManager متاح ⇒ نستخدمه
+  // B_webauthn : متصفح خارجى أو ديسكتوب ⇒ WebAuthn passkey
+  // C_blocked  : Telegram WebView بدون BiometricManager (Telegram قديم أو platform مش بـ يدعم) ⇒ مش هنا إلا OTP أو فتح متصفح
+  let strategy;
+  let guidance = '';
+  if (!isSecure) {
+    strategy = 'blocked_https';
+    guidance = 'الموقع لازم يكون HTTPS';
+  } else if (isInTg && hasTgBioMgr) {
+    strategy = 'A_telegram';
+    guidance = 'هنستخدم بصمة Telegram';
+  } else if (isInTg && !hasTgBioMgr) {
+    // فى Telegram لكن BiometricManager مش متاح (إصدار قديم أو platform غير مدعوم)
+    strategy = 'C_open_browser';
+    if (isIOS) {
+      guidance = 'افتح الصفحة فى Safari خارج Telegram عشان Face ID/Touch ID يشتغل';
+    } else if (isAndroid) {
+      guidance = 'افتح الصفحة فى Chrome خارج Telegram عشان البصمة تشتغل (Telegram WebView ما بـ يقدرش يـ access البصمة على الجهاز ده)';
+    } else {
+      guidance = 'افتح الصفحة فى المتصفح خارج Telegram';
+    }
+  } else if (hasWebAuthn) {
+    strategy = 'B_webauthn';
+    if (isIOS) guidance = 'هنستخدم Face ID/Touch ID';
+    else if (isAndroid) guidance = 'هنستخدم بصمة الجهاز';
+    else guidance = 'هنستخدم بصمة الجهاز';
+  } else {
+    strategy = 'blocked_unsupported';
+    guidance = 'المتصفح ده ما بـ يدعمش البصمة — جرّب Chrome أو Safari';
+  }
+
+  return {
+    isInTelegram: isInTg,
+    tgVersion: tgVer,
+    tgPlatform,
+    hasTgBioMgr,
+    isIOS,
+    isAndroid,
+    osVersion,
+    hasWebAuthn,
+    isSecure,
+    strategy,
+    guidance,
+    // معلومات للـ logging
+    summary: `tg=${isInTg ? `${tgPlatform}/v${tgVer}` : 'no'} os=${isIOS ? 'ios' : isAndroid ? 'android' : 'other'}/${osVersion || '?'} wa=${hasWebAuthn ? 'y' : 'n'} strat=${strategy}`
+  };
+}
+
+// 📝 يـ log فشل enrollment/login فى activity_log عشان نـ diagnose من admin
+// silent fire-and-forget — مش هـ يـ block الـ user flow لو فشل
+function bioLogFailure(action, errName, errMessage, extra){
+  try {
+    if (typeof logActivity !== 'function') return;
+    const ctx = detectBioContext();
+    const details = {
+      error_name: errName || 'unknown',
+      error_message: (errMessage || '').substring(0, 200),
+      context: ctx.summary,
+      strategy: ctx.strategy,
+      ua: (navigator.userAgent || '').substring(0, 200),
+      ...extra
+    };
+    // action: 'cl_bio_enroll_failed' | 'cl_bio_login_failed'
+    logActivity(action, action === 'cl_bio_enroll_failed' ? '⚠️ فشل تسجيل بصمة' : '⚠️ فشل دخول بالبصمة', details);
+  } catch(e){ /* logging يـ never throws */ }
+}
+
+// ═══════════════════════════════════════════════════════════
+// تسجيل بصمة جديدة على الجهاز ده (router)
+// ═══════════════════════════════════════════════════════════
+async function enrollBiometric(){
+  if (!bioSupported()){
+    bioToast('❌ جهازك مش بيدعم البصمة', 'error');
+    return;
+  }
+  // 🛡️ ما تسمحش لغير المعتمدين
+  if (!bioIsApprovedClient()){
+    bioToast('⚠️ الحساب لازم يكون معتمد من الإدارة الأول', 'error');
+    return;
+  }
+  // 📱 لو فى Telegram → استخدم BiometricManager بتاعهم
+  if (bioIsInTelegram()) return enrollViaTelegram();
+  // 🌐 وإلا → WebAuthn
+  return enrollViaWebAuthn();
+}
+
+// 📱 Telegram BiometricManager — يشتغل داخل الـ Telegram Mini App
+async function enrollViaTelegram(){
+  return new Promise((resolve) => {
+    const bio = tg.BiometricManager;
+    const btn = document.getElementById('bioAddBtn');
+    if (btn){ btn.disabled = true; btn.textContent = '⏳ ابصم على الجهاز...'; }
+    const cleanup = () => { if (btn){ btn.disabled = false; btn.textContent = '➕ تسجيل البصمة على الجهاز ده'; } };
+
+    // 🔬 Diagnostic — نـ show على الموبيل لو فى مشكلة
+    const tgVer = tg.version || 'unknown';
+    const platform = tg.platform || 'unknown';
+
+    // 🌐 Fallback: افتح الصفحة فى المتصفح الخارجى (WebAuthn يشتغل هناك)
+    const openInBrowser = () => {
+      const url = window.location.origin + window.location.pathname;
+      try {
+        if (tg.openLink) tg.openLink(url, { try_instant_view: false });
+        else window.open(url, '_blank');
+      } catch(e) { window.open(url, '_blank'); }
     };
 
-    if (Object.entries(data).some(([k, v]) => k !== 'approval_status' && !v)) {
-      showAlert('من فضلك أكمل جميع الحقول', 'error');
-      return;
-    }
-
-    if (data.name.trim().split(/\s+/).length < 3) {
-      showAlert('من فضلك أدخل الاسم الثلاثي كاملاً', 'error');
-      return;
-    }
-
-    if (!/^01[0-9]{9}$/.test(data.phone)) {
-      showAlert('رقم الهاتف غير صحيح — لازم يبدأ بـ 01 ويكون 11 رقم بالظبط', 'error');
-      return;
-    }
-
-    const btn = document.getElementById('register-btn');
-    btn.disabled = true;
-    btn.innerHTML = 'جاري التسجيل... <span class="spinner"></span>';
-
-    try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/clients`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
-        },
-        body: JSON.stringify(data)
-      });
-
-      if (res.ok) {
-        // ✨ بدلاً من تسجيل الدخول التلقائى، نعرض شاشة "فى انتظار الموافقة"
-        showPendingApprovalScreen(data.name);
+    const showFallback = (title) => {
+      const msg = `${title}\n\nTelegram ما قدرش يـ enroll البصمة — افتح الصفحة فى المتصفح (Chrome/Safari) عشان البصمة تشتغل.\n\nمعلومات:\n• Telegram v${tgVer} (${platform})\n• Bio: ${bio?.isBiometricAvailable ? 'متاح' : 'مش متاح'}\n• Type: ${bio?.biometricType || 'unknown'}`;
+      if (tg.showPopup) {
+        tg.showPopup({
+          title: '🔐 البصمة',
+          message: msg,
+          buttons: [
+            { id: 'browser', type: 'default', text: '🌐 افتح فى المتصفح' },
+            { id: 'cancel', type: 'cancel' }
+          ]
+        }, btnId => {
+          if (btnId === 'browser') openInBrowser();
+        });
+      } else if (tg.showAlert) {
+        tg.showAlert(msg);
       } else {
-        const err = await res.json();
-        if (err.code === '23505') {
-          showAlert('اسم المستخدم أو كود العميل أو رقم الهاتف مسجل بالفعل', 'error');
-        } else {
-          showAlert('حدث خطأ في التسجيل، حاول مرة أخرى', 'error');
-        }
+        if (confirm(msg + '\n\nافتح فى المتصفح؟')) openInBrowser();
       }
-    } catch (e) {
-      showAlert('حدث خطأ في الاتصال', 'error');
+    };
+
+    if (!bio) {
+      bioLogFailure('cl_bio_enroll_failed', 'TgBioMgrMissing', 'BiometricManager غير متاح', { tg_version: tgVer, tg_platform: platform });
+      showFallback('❌ BiometricManager غير متاح');
+      cleanup(); return resolve(false);
     }
 
-    btn.disabled = false;
-    btn.innerHTML = 'إنشاء الحساب';
-  }
+    // Telegram BiometricManager متاح من Bot API v7.2 (يونيو 2024)
+    const verNum = parseFloat(tgVer);
+    if (!isNaN(verNum) && verNum < 7.2) {
+      bioLogFailure('cl_bio_enroll_failed', 'TgVersionOld', `Telegram ${tgVer} < 7.2`, { tg_version: tgVer, tg_platform: platform });
+      showFallback('⚠️ Telegram قديم — حدّثه من Play Store/App Store');
+      cleanup(); return resolve(false);
+    }
 
-  // ═══════════════════════════════════════════════════════════
-  // شاشة انتظار الموافقة بعد التسجيل
-  // ═══════════════════════════════════════════════════════════
-  function showPendingApprovalScreen(name) {
-    const root = document.querySelector('.container') || document.body;
-    root.innerHTML = `
-      <div style="max-width:480px;margin:50px auto;padding:40px 28px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid rgba(201,168,76,0.3);border-radius:20px;text-align:center;font-family:Cairo,sans-serif">
-        <div style="font-size:72px;margin-bottom:16px">⏳</div>
-        <h2 style="color:#C9A84C;font-size:24px;font-weight:800;margin:0 0 12px 0">حسابك تحت المراجعة</h2>
-        <p style="color:#D8D3CE;font-size:16px;line-height:1.9;margin:0 0 20px 0">
-          أهلاً <b style="color:#C9A84C">${escapeHtmlSimple(name)}</b>،<br/>
-          تم إستلام طلب تسجيلك بنجاح ✅
-        </p>
-        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:16px;margin:20px 0;color:#7fb8e8;font-size:14px;line-height:1.9">
-          📋 الإدارة هتراجع بياناتك وتوافق على حسابك<br/>
-          🔐 لما تتم الموافقة، تقدر تدخل بنفس اسم المستخدم وكلمة المرور
-        </div>
-        <p style="color:#8A8580;font-size:13px;margin:16px 0 24px 0">
-          ⏰ المراجعة بتاخد عادةً من ساعات لـ يوم واحد كحد أقصى
-        </p>
-        <button onclick="window.location.reload()" style="background:rgba(201,168,76,0.1);border:2px solid rgba(201,168,76,0.4);color:#C9A84C;padding:12px 28px;border-radius:10px;font-family:Cairo;font-weight:700;font-size:14px;cursor:pointer;transition:all 0.2s">
-          ← العودة للرئيسية
-        </button>
-      </div>`;
-  }
+    // ⏱️ Timeout على init (15s — كان 8s، لكن networks بطيئة بـ يـ false-trigger)
+    let initDone = false;
+    const initTimer = setTimeout(() => {
+      if (!initDone) {
+        bioLogFailure('cl_bio_enroll_failed', 'TgInitTimeout', 'init callback لم يـ fire خلال 15s', { tg_version: tgVer, tg_platform: platform });
+        showFallback('⏱️ Telegram ما رجعش callback — الـ feature مش مدعوم على الـ client ده');
+        cleanup(); resolve(false);
+      }
+    }, 15000);
 
-  function escapeHtmlSimple(s) {
-    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
+    bio.init(() => {
+      initDone = true;
+      clearTimeout(initTimer);
+      console.log('[bio] Telegram init:', { isInited: bio.isInited, isAvailable: bio.isBiometricAvailable, type: bio.biometricType });
 
-const EGYPT = {
-  "القاهرة": ["مدينة نصر","الزيتون","شبرا","الوايلي","المطرية","عين شمس","النزهة","المنيل","حلوان","التجمع الأول","التجمع الخامس","التجمع الثالث","الهرم","العجوزة","الدقي","المهندسين","إمبابة","المعادي","المقطم","الخليفة","السيدة زينب","الأزهر","الجمالية","باب الشعرية","بولاق الدكرور","الزمالك","وسط البلد","مصر الجديدة","مصر القديمة","الأميرية","السلام","البساتين","دار السلام","الموسكي","عابدين","روض الفرج","الشرابية","المرج","عزبة النخل","منشأة ناصر","الزهراء","15 مايو","مدينة بدر","مدينة العبور"],
-  "الجيزة": ["الجيزة","6 أكتوبر","الشيخ زايد","العياط","البدرشين","الصف","أطفيح","أوسيم","كرداسة","الحوامدية","العمرانية","بولاق الدكرور","فيصل","الهرم","الدقي","إمبابة","ومان","المنيل","الدوقي","الوراق","أبو النمرس","حوض المراشدة"],
-  "الإسكندرية": ["المنتزه","سيدي جابر","الجمرك","العطارين","الرمل","محرم بك","سموحة","الأزاريطة","كوم الدكة","كرموز","الورديان","العامرية","الدخيلة","أبو قير","برج العرب","ابو سليمان","الانفوشي","المنشية","اللبان","الدخيلة","غيط العنب","سبورتنج","فلمينج","غليون","ستانلي","مصطفى كامل","بولكلي","السيوف","المكس","العصافرة"],
-  "القليوبية": ["بنها","قليوب","شبرا الخيمة","القناطر الخيرية","طوخ","الخانكة","كفر شكر","تلا","الخصوص","العبور","قها","سرس الليان","منيوف","الجبل الأصفر","شبين القناطر"],
-  "الشرقية": ["الزقازيق","بلبيس","ديرب نجم","الإبراهيمية","أبو كبير","فاقوس","منيا القمح","أبو حماد","القنايات","هيهيا","كفر صقر","الحسينية","العاشر من رمضان","صان الحجر","مشتول السوق","ميت أبو علي","أولاد صقر","الصالحية الجديدة"],
-  "المنوفية": ["شبين الكوم","مدينة السادات","منوف","أشمون","الشهداء","بركة السبع","قويسنا","السرو","الباجور","تلا","سرس الليان","المسلمية","مطياس","بقلية"],
-  "الدقهلية": ["المنصورة","طلخا","ميت غمر","السنبلاوين","دكرنس","أجا","المطرية","بلقاس","منية النصر","شربين","تمي الأمديد","نبروه","ميت سلسيل","الجمالية","السنبلاوين","بني عبيد","ميت ابو غالب"],
-  "الغربية": ["طنطا","المحلة الكبرى","كفر الزيات","السنطة","زفتى","بسيون","سمنود","قطور","سيفين"],
-  "كفر الشيخ": ["كفر الشيخ","دسوق","فوة","الحامول","الرياض","مطوبس","قلين","سيدي سالم","بيلا","برج البرلس","الرياض","بلطيم"],
-  "البحيرة": ["دمنهور","كفر الدوار","رشيد","أبو المطامير","إيتاي البارود","حوش عيسى","شبراخيت","الدلنجات","المحمودية","الرحمانية","النوبارية","وادي النطرون","إدكو","أبو حمص","بدر","كوم حمادة"],
-  "الإسماعيلية": ["الإسماعيلية","فايد","القنطرة شرق","القنطرة غرب","أبو صوير","التل الكبير","القصاصين","الإسماعيلية الجديدة"],
-  "بورسعيد": ["بورسعيد","بورفؤاد","الزهور","الشرق","الضواحي","المناخ","العرب","المنتزه"],
-  "السويس": ["السويس","عتاقة","الجناين","فيصل","أربعين","الجناين"],
-  "دمياط": ["دمياط","رأس البر","فارسكور","الزرقا","كفر سعد","السرو","دمياط الجديدة","عزبة البرج","ميت أبو غالب"],
-  "بني سويف": ["بني سويف","ناصر","الواسطي","ببا","إهناسيا","بياض العرب","سمسطا","الفاصل"],
-  "الفيوم": ["الفيوم","سنورس","إطسا","طامية","يوسف الصديق","أبشواي","الحادقة","إبشواي"],
-  "المنيا": ["المنيا","أبو قرقاص","ملوي","سمالوط","مطاي","بني مزار","العدوة","مغاغة","دير مواس","الفشن"],
-  "أسيوط": ["أسيوط","ديروط","القوصية","منفلوط","أبنوب","أبو تيج","البداري","صدفا","الفتح","ساحل سليم","الغنايم","أسيوط الجديدة"],
-  "سوهاج": ["سوهاج","طهطا","طما","المراغة","جرجا","دار السلام","البلينا","أخميم","ساقلتة","المنشأة","الكوثر"],
-  "قنا": ["قنا","نجع حمادي","أبو تشت","نقادة","قفط","فرشوط","دشنا","قوص","الوقف","أرمنت"],
-  "الأقصر": ["الأقصر","إسنا","أرمنت","الطود","القرنة","البياضية","الزينية","إسنا"],
-  "أسوان": ["أسوان","إدفو","كوم أمبو","نصر النوبة","دراو","الكلابشة","أبو سمبل","بشلق"],
-  "البحر الأحمر": ["الغردقة","سفاجا","القصير","مرسى علم","رأس غارب","الشلاتين"],
-  "الوادي الجديد": ["الخارجة","الداخلة","الفرافرة","موط","بريس"],
-  "مطروح": ["مرسى مطروح","سيوة","الضبعة","الحمام","العلمين","النجيلة","الداب","السلوم"],
-  "شمال سيناء": ["العريش","الشيخ زويد","رفح","بئر العبد","نخل","الحسنة"],
-  "جنوب سيناء": ["الطور","شرم الشيخ","دهب","نويبع","طابا","أبو رديس","رأس سدر","سانت كاترين"]
-};
+      if (!bio.isBiometricAvailable) {
+        bioLogFailure('cl_bio_enroll_failed', 'TgBioNotAvailable', `biometricType=${bio.biometricType || 'unknown'}`, { tg_version: tgVer, tg_platform: platform });
+        showFallback('❌ البصمة مش مفعّلة على الجهاز\nروح للإعدادات → Security → Fingerprint وفعّلها الأول');
+        cleanup(); return resolve(false);
+      }
 
+      // Timeout على requestAccess
+      let accessDone = false;
+      const accessTimer = setTimeout(() => {
+        if (!accessDone) {
+          bioLogFailure('cl_bio_enroll_failed', 'TgAccessTimeout', 'requestAccess لم يـ callback خلال 30s', { tg_version: tgVer, tg_platform: platform });
+          showFallback('⏱️ Telegram ما طلبش الإذن — bug فى الـ client');
+          cleanup(); resolve(false);
+        }
+      }, 30000);
 
-// ===== Governorate Cascade =====
-function initGovDropdown() {
-  const govSel = document.getElementById('reg-gov');
-  if (!govSel) return;
-  Object.keys(EGYPT).sort().forEach(gov => {
-    const opt = document.createElement('option');
-    opt.value = gov; opt.textContent = gov;
-    govSel.appendChild(opt);
+      bio.requestAccess({ reason: 'لتفعيل الدخول السريع بالبصمة' }, granted => {
+        accessDone = true;
+        clearTimeout(accessTimer);
+        console.log('[bio] requestAccess result:', granted);
+
+        if (!granted) {
+          bioLogFailure('cl_bio_enroll_failed', 'TgAccessDenied', 'requestAccess رجع granted=false', { tg_version: tgVer, tg_platform: platform });
+          showFallback('⏱️ الـ user رفض / Telegram رفض الإذن');
+          cleanup(); return resolve(false);
+        }
+
+        const credentialId = 'tg_' + (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now());
+        const deviceLabel = bioDetectDevice() + ' (Telegram)';
+        const tokenData = JSON.stringify({ credentialId, clientId: user.id });
+
+        // Timeout على updateBiometricToken
+        let updateDone = false;
+        const updateTimer = setTimeout(() => {
+          if (!updateDone) {
+            bioLogFailure('cl_bio_enroll_failed', 'TgUpdateTokenTimeout', 'updateBiometricToken لم يـ callback خلال 30s', { tg_version: tgVer, tg_platform: platform });
+            showFallback('⏱️ updateBiometricToken timeout');
+            cleanup(); resolve(false);
+          }
+        }, 30000);
+
+        bio.updateBiometricToken(tokenData, async success => {
+          updateDone = true;
+          clearTimeout(updateTimer);
+          console.log('[bio] updateBiometricToken result:', success);
+
+          if (!success) {
+            bioLogFailure('cl_bio_enroll_failed', 'TgUpdateTokenFailed', 'updateBiometricToken رجع success=false', { tg_version: tgVer, tg_platform: platform });
+            showFallback('❌ فشل حفظ البصمة فى Telegram');
+            cleanup(); return resolve(false);
+          }
+
+          try {
+            const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
+              method: 'POST',
+              headers: { ...HDR, 'Prefer': 'return=representation' },
+              body: JSON.stringify({
+                client_id: user.id,
+                credential_id: credentialId,
+                public_key: 'telegram_bio',
+                device_label: deviceLabel,
+                user_agent: (navigator.userAgent || '').substring(0, 500)
+              })
+            });
+            if (!r.ok) throw new Error('فشل الحفظ فى السيرفر');
+
+            localStorage.setItem('hawa_biometric', JSON.stringify({
+              credentialId, clientId: user.id,
+              clientCode: user.company_code, clientName: user.name,
+              deviceLabel, enrolledAt: new Date().toISOString(),
+              provider: 'telegram'
+            }));
+
+            if (typeof logActivity === 'function'){
+              logActivity('cl_biometric_enrolled', '🔐 سجّل بصمة (تليجرام)', { device: deviceLabel });
+            }
+            bioToast('✅ تم تفعيل الدخول بالبصمة!');
+            dismissEnrollBanner(true);
+            updateBioHeaderBtn();
+            if (document.getElementById('bioModal').style.display === 'flex') loadBiometrics();
+            cleanup(); resolve(true);
+          } catch(e){
+            console.error('[bio] DB save error:', e);
+            bioLogFailure('cl_bio_enroll_failed', 'TgDbSaveFailed', e.message || 'DB save error', { tg_version: tgVer, tg_platform: platform });
+            showFallback('❌ فشل الحفظ فى السيرفر: ' + (e.message || 'error'));
+            cleanup(); resolve(false);
+          }
+        });
+      });
+    });
   });
 }
 
-function onGovChange() {
-  const gov = document.getElementById('reg-gov').value;
-  const citySel = document.getElementById('reg-city');
-  const distSel = document.getElementById('reg-district');
+// 🌐 WebAuthn — للـ Browser العادى (Chrome, Safari, إلخ)
+async function enrollViaWebAuthn(){
+  const btn = document.getElementById('bioAddBtn');
+  if (btn){ btn.disabled = true; btn.textContent = '⏳ ابصم على الجهاز...'; }
+  const enrollCtx = detectBioContext(); // snapshot الـ context قبل ما نبدأ
+  try {
+    const userIdBuf = new TextEncoder().encode(String(user.id));
+    const cred = await navigator.credentials.create({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        rp: { name: 'HAWA CO', id: window.location.hostname },
+        user: {
+          id: userIdBuf,
+          name: user.company_code || ('client_' + user.id),
+          displayName: user.name || 'عميل HAWA'
+        },
+        pubKeyCredParams: [
+          { type: 'public-key', alg: -7 },    // ES256
+          { type: 'public-key', alg: -257 }   // RS256
+        ],
+        authenticatorSelection: {
+          authenticatorAttachment: 'platform',  // بصمة الجهاز فقط
+          userVerification: 'required',
+          residentKey: 'preferred'              // 🔑 يخلى الـ discoverable login يشتغل (Strategy C فى bioLoginNow)
+        },
+        timeout: 60000,
+        attestation: 'none',
+        excludeCredentials: bioGetExcludedCreds()
+      }
+    });
 
-  citySel.innerHTML = '<option value="">-- اختر المدينة/المركز --</option>';
-  distSel.innerHTML = '<option value="">-- اختر المدينة أولاً --</option>';
+    if (!cred) throw new Error('cancelled');
 
-  if (!gov) {
-    citySel.disabled = true; distSel.disabled = true; return;
+    const credentialId = bioBufToBase64(cred.rawId);
+    let publicKey = '';
+    try {
+      if (cred.response.getPublicKey) {
+        publicKey = bioBufToBase64(cred.response.getPublicKey());
+      }
+    } catch(e){}
+
+    // 🆕 device label أوضح يفرّق بين Telegram WebView و external browser
+    let deviceLabel = bioDetectDevice();
+    if (enrollCtx.isInTelegram) deviceLabel += ' (Telegram WebView)';
+    else if (enrollCtx.isIOS) deviceLabel += ' (Safari)';
+    else if (enrollCtx.isAndroid) deviceLabel += ' (Chrome)';
+
+    const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=representation' },
+      body: JSON.stringify({
+        client_id: user.id,
+        credential_id: credentialId,
+        public_key: publicKey,
+        device_label: deviceLabel,
+        user_agent: navigator.userAgent.substring(0, 500)
+      })
+    });
+    if (!r.ok) throw new Error('فشل الحفظ فى السيرفر');
+
+    localStorage.setItem('hawa_biometric', JSON.stringify({
+      credentialId,
+      clientId: user.id,
+      clientCode: user.company_code,
+      clientName: user.name,
+      deviceLabel,
+      enrolledAt: new Date().toISOString(),
+      provider: 'webauthn'
+    }));
+
+    if (typeof logActivity === 'function'){
+      logActivity('cl_biometric_enrolled', '🔐 سجّل دخول بالبصمة', { device: deviceLabel, ctx: enrollCtx.summary });
+    }
+
+    bioToast('✅ تم تفعيل الدخول بالبصمة!');
+    dismissEnrollBanner(true);
+    updateBioHeaderBtn();
+    if (document.getElementById('bioModal').style.display === 'flex') loadBiometrics();
+  } catch(e){
+    console.error('enrollViaWebAuthn error:', e);
+    // 📝 سجّل فى DB قبل عرض الـ alert
+    bioLogFailure('cl_bio_enroll_failed', e.name || 'Error', e.message || 'unknown', { ctx_summary: enrollCtx.summary });
+
+    // 🐛 Debug info — context-aware (نصيحة محددة لكل سيناريو)
+    const reasons = [];
+    if (e.name === 'NotAllowedError') reasons.push('• تم الإلغاء أو انتهى الوقت\n• الـ device رفض الطلب\n• مفيش بصمة مسجّلة فى إعدادات الجهاز');
+    if (e.name === 'NotReadableError') reasons.push('• المتصفح ما قدرش يـ access البصمة على الجهاز\n• شائع جداً فى Telegram WebView على Android');
+    if (e.name === 'NotSupportedError') reasons.push('• المتصفح أو الجهاز ما بيدعمش platform authenticator');
+    if (e.name === 'InvalidStateError') reasons.push('• البصمة دى مسجلة بالفعل على الجهاز');
+    if (e.name === 'SecurityError') reasons.push('• مشكلة فى الـ domain أو HTTPS');
+    if (e.name === 'AbortError') reasons.push('• الطلب اتـ abort');
+
+    // 💡 الحلول — حسب الـ context
+    let solutions = [];
+    if (enrollCtx.isInTelegram) {
+      solutions.push('🌟 الحل الأهم: افتح الصفحة فى المتصفح خارج Telegram (Chrome على Android، Safari على iPhone) — البصمة هـ تشتغل هناك');
+    }
+    if (enrollCtx.isIOS) {
+      solutions.push('• تأكد إن Face ID/Touch ID مفعّل فى Settings → Face ID & Passcode');
+      solutions.push('• تأكد إن iCloud Keychain مفعّل: Settings → Apple ID → iCloud → Passwords & Keychain');
+      solutions.push('• خروج من Private Browsing');
+    } else if (enrollCtx.isAndroid) {
+      solutions.push('• تأكد إن Chrome متحدث (إعدادات Play Store)');
+      solutions.push('• Settings → Security → Screen lock — لازم يكون Fingerprint أو PIN');
+      solutions.push('• Chrome Settings → الخصوصية والأمان → اسمح للمواقع تستخدم security keys');
+      solutions.push('• على Huawei الحديثة: محتمل ما يشتغلش لأن مفيش GMS');
+    } else {
+      solutions.push('• جرّب Chrome أو Safari');
+    }
+
+    const debugInfo = `❌ فشل تفعيل البصمة
+
+نوع الخطأ: ${e.name || 'unknown'}
+الرسالة: ${e.message || '—'}
+
+معلومات الجهاز:
+• Domain: ${location.hostname}
+• HTTPS: ${location.protocol === 'https:' ? 'نعم ✅' : 'لأ ❌'}
+• Secure Context: ${window.isSecureContext ? 'نعم ✅' : 'لأ ❌'}
+• WebAuthn متاح: ${!!window.PublicKeyCredential ? 'نعم ✅' : 'لأ ❌'}
+• Context: ${enrollCtx.summary}
+
+🔍 الأسباب المحتملة:
+${reasons.join('\n') || '• خطأ غير متوقع — جرّب تانى'}
+
+💡 الحلول:
+${solutions.join('\n')}`;
+
+    if (tg && tg.showAlert) tg.showAlert(debugInfo);
+    else alert(debugInfo);
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = '➕ تسجيل البصمة على الجهاز ده'; }
+  }
+}
+
+// لو الجهاز ده مسجل بصمة، نمنع تسجيل تانى (excludeCredentials)
+function bioGetExcludedCreds(){
+  try {
+    const stored = JSON.parse(localStorage.getItem('hawa_biometric') || 'null');
+    if (stored && stored.credentialId && stored.clientId === user.id) {
+      return [{
+        id: bioBase64ToBuf(stored.credentialId),
+        type: 'public-key',
+        transports: ['internal']
+      }];
+    }
+  } catch(e){}
+  return [];
+}
+
+// ═══════════════════════════════════════════════════════════
+// Modal: قائمة البصمات المسجلة
+// ═══════════════════════════════════════════════════════════
+function openBiometricModal(){
+  document.getElementById('bioModal').style.display = 'flex';
+  showBioStatus();
+  loadBiometrics();
+}
+function closeBiometricModal(){
+  document.getElementById('bioModal').style.display = 'none';
+}
+
+// 🔍 يعرض status checks تفصيلى عشان الـ user يفهم لو فى مشكلة
+async function showBioStatus(){
+  const statusEl = document.getElementById('bioStatus');
+  if (!statusEl) return;
+
+  // اعمل الـ checks
+  const isHttps = location.protocol === 'https:';
+  const isApproved = bioIsApprovedClient();
+  const inTelegram = bioIsInTelegram();
+  const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials);
+  let hasPlatformAuth = null; // 'loading'
+  if (hasWebAuthn && !inTelegram && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+    try {
+      hasPlatformAuth = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    } catch(e) { hasPlatformAuth = false; }
+  }
+  let tgBioAvailable = null;
+  if (inTelegram && tg.BiometricManager) {
+    tgBioAvailable = tg.BiometricManager.isBiometricAvailable;
   }
 
-  const districts = EGYPT[gov] || [];
-  districts.forEach(d => {
-    const opt = document.createElement('option');
-    opt.value = d; opt.textContent = d;
-    citySel.appendChild(opt);
-  });
-  citySel.disabled = false;
-  distSel.disabled = false;
+  // ابنى الـ rows
+  const rows = [];
+  rows.push({ ok: isHttps, label: 'الموقع HTTPS' });
+  rows.push({ ok: isApproved, label: 'الحساب معتمد من الإدارة' });
+  rows.push({ ok: inTelegram || hasWebAuthn, label: 'الجهاز يدعم البصمة' });
+  if (inTelegram) {
+    rows.push({ ok: true, info: true, label: `داخل Telegram v${tg.version || '?'}` });
+    if (tgBioAvailable !== null) rows.push({ ok: tgBioAvailable, label: 'Telegram BiometricManager متاح' });
+  } else {
+    rows.push({ ok: true, info: true, label: 'متصفح خارجى' });
+    if (hasPlatformAuth !== null) rows.push({ ok: hasPlatformAuth, label: 'بصمة الجهاز مفعّلة (Face/Fingerprint)' });
+  }
 
-  // sync city → district
+  // ابنى الـ HTML
+  statusEl.innerHTML = '<div style="font-size:11px;color:#888;font-weight:700;margin-bottom:6px">🔍 حالة الجهاز</div>' + 
+    rows.map(r => {
+      const ico = r.ok ? '✅' : (r.info ? 'ℹ️' : '❌');
+      const color = r.ok ? '#9d9d9d' : (r.info ? '#7ab5e8' : '#e88080');
+      return `<div style="display:flex;gap:8px;padding:3px 0;font-size:12px;color:${color};line-height:1.6"><span style="width:18px;flex-shrink:0">${ico}</span><span>${r.label}</span></div>`;
+    }).join('');
+
+  // 📊 تحديد الحالة + النص + الـ enable
+  // ⚠️ خلينا permissive — حتى لو الـ probe بـ يقول "false" (مثلاً isUserVerifyingPlatformAuthenticatorAvailable
+  // على iOS Safari لما iCloud Keychain مش مفعّل) نخلى العميل يحاول. الـ probe ساعات بـ يكدب.
+  // الـ block الحقيقى هو لو HTTPS مش متاح أو الحساب مش معتمد — دول hard blocks.
+  const ctx = detectBioContext();
+  const hardBlocked = !isHttps || !isApproved;
+  const probeWarn = (inTelegram && tgBioAvailable === false) || (!inTelegram && hasPlatformAuth === false);
+  const enrollBtn = document.getElementById('bioAddBtn');
+  const browserBtn = document.getElementById('bioBrowserBtn');
+  if (enrollBtn) {
+    enrollBtn.disabled = hardBlocked;
+    enrollBtn.style.opacity = hardBlocked ? '0.5' : '1';
+    if (!isApproved) enrollBtn.textContent = '⚠️ الحساب لازم يكون معتمد الأول';
+    else if (!isHttps) enrollBtn.textContent = '⚠️ الموقع لازم يكون HTTPS';
+    else if (probeWarn && inTelegram) enrollBtn.textContent = '➕ جرّب تسجيل البصمة (Telegram قال مش متاح)';
+    else if (probeWarn && !inTelegram && ctx.isIOS) enrollBtn.textContent = '➕ جرّب — لو فشل فعّل iCloud Keychain';
+    else if (probeWarn && !inTelegram) enrollBtn.textContent = '➕ جرّب — لو فشل فعّل قفل الشاشة';
+    else enrollBtn.textContent = '➕ تسجيل البصمة على الجهاز ده';
+  }
+  // 🌐 زرار "افتح فى المتصفح" — دلوقتى بيظهر فى حالتين:
+  //   1) جوّا Telegram (دايماً مفيد كـ alternative)
+  //   2) جوّا Telegram على iOS بدون BiometricManager (الحالة الأسوأ — نـ surface زرار بشكل بارز)
+  if (browserBtn) browserBtn.style.display = inTelegram ? 'block' : 'none';
+
+  // 💡 لو الـ context هو C_open_browser (Telegram بدون BM)، اعرض الـ guidance فوق
+  if (ctx.strategy === 'C_open_browser') {
+    statusEl.innerHTML += `<div style="margin-top:10px;padding:10px;background:rgba(122,181,232,0.08);border:1px solid rgba(122,181,232,0.25);border-radius:8px;color:#7ab5e8;font-size:11.5px;line-height:1.7"><b>💡 توصية:</b> ${ctx.guidance}</div>`;
+  }
+}
+
+async function loadBiometrics(){
+  const list = document.getElementById('bioList');
+  list.innerHTML = '<div style="color:#888;text-align:center;padding:20px">⏳ جاري التحميل...</div>';
+  try {
+    const r = await fetch(`${SB}/rest/v1/client_biometrics?client_id=eq.${user.id}&order=created_at.desc&select=*`, { headers: HDR });
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length){
+      list.innerHTML = '<div style="text-align:center;padding:30px 20px;background:rgba(255,255,255,0.02);border:1px dashed #2a2a2a;border-radius:10px;color:#888;margin-bottom:8px"><div style="font-size:36px;margin-bottom:8px">🔐</div><div style="font-size:12px">مفيش بصمات مسجلة لسه</div></div>';
+      return;
+    }
+    const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
+    list.innerHTML = data.map(b => {
+      const isCurrent = stored && stored.credentialId === b.credential_id;
+      return `<div style="background:rgba(255,255,255,0.03);border:1px solid ${isCurrent ? 'rgba(76,175,125,0.4)' : '#2a2a2a'};border-radius:10px;padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:#eee">${b.device_label || 'جهاز غير معروف'}${isCurrent ? '<span style="color:#4CAF7D;font-size:10px;font-weight:600;margin-right:6px">●  الجهاز الحالى</span>' : ''}</div>
+            <div style="font-size:11px;color:#888;margin-top:3px">سُجّل ${bioFormatDate(b.created_at)}${b.last_used_at ? ' • آخر استخدام ' + bioFormatDate(b.last_used_at) : ''}</div>
+          </div>
+          <button onclick="removeBiometric(${b.id}, '${b.credential_id}')" style="background:rgba(224,85,85,0.1);color:#e88080;border:1px solid rgba(224,85,85,0.3);border-radius:7px;padding:6px 10px;font-family:Cairo,sans-serif;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0">🗑️ مسح</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    list.innerHTML = '<div style="color:#e88080;text-align:center;padding:20px;font-size:12px">❌ خطأ: ' + e.message + '</div>';
+  }
+}
+
+async function removeBiometric(id, credentialId){
+  if (!confirm('متأكد إنك تشيل البصمة دى؟\nهتحتاج تكتب الباسوورد من تانى لو شيلتها وعاوز تدخل تانى من الجهاز ده.')) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/client_biometrics?id=eq.${id}`, { method: 'DELETE', headers: { ...HDR, 'Prefer': 'return=minimal' } });
+    if (!r.ok) throw new Error('فشل المسح');
+    // لو ده الجهاز الحالى، امسح من localStorage كمان
+    const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
+    if (stored && stored.credentialId === credentialId){
+      localStorage.removeItem('hawa_biometric');
+    }
+    if (typeof logActivity === 'function'){
+      logActivity('cl_biometric_removed', '🗑️ شال بصمة جهاز');
+    }
+    bioToast('✅ تم المسح');
+    loadBiometrics();
+    updateBioHeaderBtn();
+  } catch(e){
+    bioToast('❌ خطأ فى المسح', 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// Banner: لو ما سجّلش بصمة، اعرض banner تشجيعى
+// ═══════════════════════════════════════════════════════════
+// 🌐 فتح الصفحة فى المتصفح الخارجى (للموبايل لو Telegram bio فشل)
+function bioOpenInBrowser(){
+  const url = window.location.origin + window.location.pathname;
+  try {
+    if (tg && tg.openLink) {
+      tg.openLink(url, { try_instant_view: false });
+    } else {
+      window.open(url, '_blank');
+    }
+  } catch(e){
+    window.open(url, '_blank');
+  }
+}
+
+// 🔐 الدخول بالبصمة من الـ Lock Screen
+// 🆕 v15.1: لو localStorage فاضى أو الـ credentialId المحفوظ مش مطابق على الجهاز،
+//         نـ fallback لـ discoverable credentials (passkey style) — الجهاز نفسه يختار البصمة.
+//         ده بـ يحل: Safari ITP بـ يمسح localStorage، Telegram WebView ≠ external browser context، إلخ.
+async function bioLoginNow(){
+  const btn = document.getElementById('bioLockBioBtn');
+  const errEl = document.getElementById('bioLockError');
+  const originalIcon = btn ? btn.innerHTML : '';  // احفظ الـ SVG الأصلية
+  if (btn){ btn.disabled = true; btn.innerHTML = '<span style="font-size:22px">⏳</span>'; }
+  if (errEl) errEl.style.display = 'none';
+
+  const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
+  const hasStored = !!(stored && stored.credentialId);
+
+  // 🎯 يحاول الـ Telegram path الأول لو stored.provider='telegram' و فى Telegram
+  // ⚙️ Helper inline — يـ resolve لـ credentialId أو يـ throw
+  const tryTelegram = async () => {
+    return await new Promise((resolve, reject) => {
+      let done = false;
+      const fail = (reason) => { if (!done) { done = true; reject(new Error(reason)); } };
+      const succeed = (id) => { if (!done) { done = true; resolve(id); } };
+      // safety timeout — Telegram BioMgr ساعات بـ يـ hang
+      const safety = setTimeout(() => fail('telegram_timeout'), 45000);
+      try {
+        tg.BiometricManager.init(() => {
+          tg.BiometricManager.authenticate({ reason: 'دخول HAWA' }, (success, token) => {
+            clearTimeout(safety);
+            if (!success || !token) return fail('cancelled');
+            try {
+              const parsed = JSON.parse(token);
+              if (!parsed.credentialId) return fail('invalid_token');
+              succeed(parsed.credentialId);
+            } catch(e) { fail('invalid_token'); }
+          });
+        });
+      } catch(e){ clearTimeout(safety); fail(e.message || 'tg_error'); }
+    });
+  };
+
+  // ⚙️ Helper inline — WebAuthn (مع allowCredentials أو بدونها)
+  // useDiscoverable=true ⇒ allowCredentials: [] (الجهاز يختار)، مفيد لو stored ضايع
+  const tryWebAuthn = async (useDiscoverable) => {
+    const allow = (!useDiscoverable && hasStored)
+      ? [{ id: bioBase64ToBuf(stored.credentialId), type: 'public-key', transports: ['internal'] }]
+      : [];
+    const cred = await navigator.credentials.get({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        allowCredentials: allow,
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    if (!cred) throw new Error('cancelled');
+    return bioBufToBase64(cred.rawId);
+  };
+
+  let credId = null;
+  let firstError = null;
+
+  try {
+    // ═══════════════════════════════════════════════════════════
+    // Strategy A: Telegram BiometricManager (لو محفوظ بـ provider='telegram' + فى Telegram)
+    // ═══════════════════════════════════════════════════════════
+    if (hasStored && stored.provider === 'telegram' && tg && tg.BiometricManager && bioIsInTelegram()) {
+      try {
+        credId = await tryTelegram();
+      } catch(e) {
+        firstError = e;
+        // لو Telegram فشل بـ سبب غير cancellation → نـ try WebAuthn fallback
+        // لو الـ user cancelled → احترم الخيار، ما نـ retry-ش
+        if (e.message === 'cancelled') throw e;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Strategy B: WebAuthn بـ allowCredentials محدد (الـ flow القديم)
+    // ═══════════════════════════════════════════════════════════
+    if (!credId && hasStored && stored.provider !== 'telegram') {
+      try {
+        credId = await tryWebAuthn(false);
+      } catch(e) {
+        firstError = firstError || e;
+        // NotAllowedError ساعات بـ يعنى "user cancelled" وساعات "credential not found"
+        // الـ Discoverable path هـ يحل الـ "not found" — فلازم نـ try
+        if (e.name !== 'NotAllowedError' && e.name !== 'AbortError' && e.message !== 'cancelled') {
+          // أخطاء أخرى — احتفظ بيها، جرّب discoverable
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Strategy C: Discoverable Credentials (passkey style)
+    // يـ trigger لو: مفيش stored، أو B فشل، أو stored provider غير معروف
+    // ═══════════════════════════════════════════════════════════
+    if (!credId) {
+      const ctx = detectBioContext();
+      // لو فى Telegram WebView بدون BiometricManager → discoverable WebAuthn هـ يفشل
+      // نـ show رسالة محددة بدلاً من Crash
+      if (ctx.strategy === 'C_open_browser') {
+        throw new Error('telegram_webview_no_bio:' + ctx.guidance);
+      }
+      if (!ctx.hasWebAuthn) {
+        throw new Error('no_webauthn');
+      }
+      try {
+        credId = await tryWebAuthn(true);
+      } catch(e) {
+        firstError = firstError || e;
+        throw e;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Verify with DB — credId الناتج من أى Strategy
+    // ═══════════════════════════════════════════════════════════
+    const verifyR = await fetch(
+      `${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}&select=client_id,device_label,clients(*)`,
+      { headers: HDR }
+    );
+    const verifyData = await verifyR.json();
+    if (!Array.isArray(verifyData) || !verifyData.length) {
+      // البصمة شغّالة على الجهاز لكن مش موجودة فى DB
+      // ممكن العميل مسحها من admin أو من جهاز تانى
+      throw new Error('credential_not_in_db');
+    }
+    const client = verifyData[0].clients;
+    const matchedDeviceLabel = verifyData[0].device_label;
+    if (!client) throw new Error('العميل مش موجود');
+    if (client.approval_status !== 'approved') throw new Error('الحساب لسه غير معتمد من الإدارة');
+    if (client.is_blocked) throw new Error('الحساب محظور — اتصل بالإدارة');
+
+    // ✅ login ناجح — احفظ user object
+    Object.assign(user, {
+      id: client.id,
+      name: client.name,
+      company_code: client.company_code,
+      username: client.username,
+      phone: client.phone,
+      governorate: client.governorate,
+      city: client.city,
+      district: client.district,
+      address: client.address,
+      client_type: client.client_type,
+      telegram_id: client.telegram_id,
+      tier_id: client.tier_id,
+      approval_status: client.approval_status,
+      is_blocked: client.is_blocked,
+      is_active: client.is_active
+    });
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+
+    // 🔁 لو الـ login تم عبر discoverable و localStorage كانت فاضية، نـ restore الـ hint
+    // كده المرة الجاية الـ A أو B بـ يشتغلوا بدون passkey UI
+    if (!hasStored) {
+      try {
+        localStorage.setItem('hawa_biometric', JSON.stringify({
+          credentialId: credId,
+          clientId: client.id,
+          clientCode: client.company_code,
+          clientName: client.name,
+          deviceLabel: matchedDeviceLabel || bioDetectDevice(),
+          enrolledAt: new Date().toISOString(),
+          provider: 'webauthn',
+          restored: true
+        }));
+      } catch(e){}
+    }
+
+    // Update last_used_at فى DB (silent)
+    fetch(`${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ last_used_at: new Date().toISOString() })
+    }).catch(()=>{});
+
+    // اخفى الـ lock screen
+    const lockEl = document.getElementById('bioLockScreen');
+    if (lockEl) lockEl.style.display = 'none';
+
+    // Update header
+    if (document.getElementById('uname')) document.getElementById('uname').textContent = user.name || 'العميل';
+    if (document.getElementById('ucode')) document.getElementById('ucode').textContent = user.company_code || '';
+
+    // Log activity
+    if (typeof logActivity === 'function') {
+      logActivity('cl_login_bio', '🔐 دخول بالبصمة', { device: matchedDeviceLabel || stored?.deviceLabel || bioDetectDevice() });
+    }
+
+    // إعادة تحميل البيانات بدل reload الصفحة (أنظف)
+    if (typeof checkTelegramLink === 'function') checkTelegramLink();
+    bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
+  } catch(e) {
+    console.error('bioLoginNow error:', e);
+    // 📝 سجّل الفشل فى activity_log عشان admin يقدر يـ diagnose
+    bioLogFailure('cl_bio_login_failed', e.name || 'Error', e.message || 'unknown', {
+      had_stored: hasStored,
+      provider: stored?.provider || 'none'
+    });
+    let msg;
+    if (e.message && e.message.startsWith('telegram_webview_no_bio:')) {
+      msg = '⚠️ ' + e.message.replace('telegram_webview_no_bio:', '');
+    } else if (e.message === 'no_webauthn') {
+      msg = '❌ المتصفح ده ما بـ يدعمش البصمة — استخدم Chrome أو Safari';
+    } else if (e.message === 'credential_not_in_db') {
+      msg = '⚠️ البصمة دى مش معروفة فى النظام — سجّل بصمة جديدة';
+    } else if (e.message === 'telegram_timeout') {
+      msg = '⏱️ Telegram ما ردش — جرّب تانى أو افتح فى المتصفح';
+    } else if (e.name === 'NotAllowedError') {
+      msg = '⏱️ تم الإلغاء أو انتهى الوقت';
+    } else if (e.name === 'NotSupportedError') {
+      msg = 'الجهاز مش بيدعم البصمة';
+    } else if (e.name === 'SecurityError') {
+      msg = '🔒 خطأ أمان — تأكد إنك على HTTPS';
+    } else if (e.message === 'cancelled') {
+      msg = '⏱️ تم الإلغاء';
+    } else {
+      msg = '❌ ' + (e.message || 'خطأ غير متوقع');
+    }
+    showLockError(msg);
+  } finally {
+    if (btn){ btn.disabled = false; btn.innerHTML = originalIcon; }
+  }
+}
+
+function showLockError(msg){
+  const errEl = document.getElementById('bioLockError');
+  if (errEl) {
+    errEl.style.display = 'block';
+    errEl.textContent = msg;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🔑 Credential Recovery — استرجاع بيانات الدخول عبر Telegram
+// ═══════════════════════════════════════════════════════════
+// User flow:
+//   1. الضغط على "هل نسيت كلمة المرور؟" → openRecoveryModal()
+//   2. ادخال كود العميل + رقم الموبيل → recoverySubmit()
+//   3. fetch إلى n8n /webhook/hawa-recover-credentials
+//   4. n8n بـ يستدعى RPC request_credentials_recovery (مع service_role)
+//   5. لو match → RPC يرجع username + password + telegram_id لـ n8n
+//   6. n8n يبعت Telegram message للعميل بـ البيانات
+//   7. UI يعرض "تم الإرسال — شيك Telegram"
+// ═══════════════════════════════════════════════════════════
+
+function openRecoveryModal(){
+  const modal = document.getElementById('recoveryModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('recoveryForm').style.display = 'block';
+  document.getElementById('recoverySuccess').style.display = 'none';
+  document.getElementById('recoveryError').style.display = 'none';
+
+  // Pre-fill كود العميل من lockUsername لو موجود
+  const existing = (document.getElementById('lockUsername')?.value || '').trim();
+  const codeEl = document.getElementById('recoveryCompanyCode');
+  if (codeEl){
+    codeEl.value = existing;
+    setTimeout(() => {
+      if (existing) document.getElementById('recoveryPhone').focus();
+      else codeEl.focus();
+    }, 80);
+  }
+}
+
+function closeRecoveryModal(){
+  const modal = document.getElementById('recoveryModal');
+  if (modal) modal.style.display = 'none';
+  // Cleanup
+  document.getElementById('recoveryCompanyCode').value = '';
+  document.getElementById('recoveryPhone').value = '';
+  document.getElementById('recoveryError').style.display = 'none';
+}
+
+function showRecoveryError(msg){
+  const el = document.getElementById('recoveryError');
+  if (el){ el.style.display = 'block'; el.textContent = msg; }
+}
+function hideRecoveryError(){
+  const el = document.getElementById('recoveryError');
+  if (el) el.style.display = 'none';
+}
+
+// 🌐 Map error code → رسالة عربية
+function recoveryErrorMessage(error, data){
+  data = data || {};
+  switch(error){
+    case 'no_match':         return 'البيانات مش مطابقة — راجع الكود ورقم الموبيل';
+    case 'no_telegram_id':   return 'حسابك ما اتربطش بـ @hawa_car_bot — اضغط /start فى البوت الأول';
+    case 'rate_limit':       return `حاولت كتير — استنى ${data.retry_after_minutes || 60} دقيقة`;
+    case 'invalid_request':  return 'املأ الكود ورقم الموبيل';
+    case 'telegram_send_failed': return 'مش قادر يبعت على Telegram — تأكد إنك ضاغط /start فى البوت';
+    case 'timeout':          return '⏱️ انتهى الوقت — حاول تانى';
+    case 'network':          return '❌ خطأ فى الشبكة — حاول تانى';
+    default:                 return '❌ خطأ: ' + (error || 'غير معروف');
+  }
+}
+
+async function recoverySubmit(){
+  hideRecoveryError();
+  const code = (document.getElementById('recoveryCompanyCode').value || '').trim();
+  const phone = (document.getElementById('recoveryPhone').value || '').trim();
+
+  if (!code){ showRecoveryError('ادخل كود العميل'); return; }
+  if (!phone){ showRecoveryError('ادخل رقم الموبيل'); return; }
+  if (phone.replace(/[^0-9]/g, '').length < 10){
+    showRecoveryError('رقم الموبيل قصير — راجعه');
+    return;
+  }
+
+  const btn = document.getElementById('recoverySubmitBtn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ جارى الإرسال...';
+
+  // fetch بـ timeout 15s
+  const ac = new AbortController();
+  const to = setTimeout(() => ac.abort(), 15000);
+
+  try {
+    const r = await fetch(`${N8N_BASE}/webhook/hawa-recover-credentials`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_code: code,
+        phone: phone,
+        ua: (navigator.userAgent || '').substring(0, 200),
+        device_label: (typeof bioDetectDevice === 'function') ? bioDetectDevice() : 'unknown'
+      }),
+      signal: ac.signal
+    });
+    clearTimeout(to);
+
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok && !data.error) data.error = 'http_' + r.status;
+
+    if (data.ok || data.success){
+      // ✅ نجح → اعرض success state
+      document.getElementById('recoveryForm').style.display = 'none';
+      document.getElementById('recoverySuccess').style.display = 'block';
+      hideRecoveryError();
+    } else {
+      showRecoveryError(recoveryErrorMessage(data.error, data));
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  } catch(e){
+    clearTimeout(to);
+    showRecoveryError(recoveryErrorMessage(e.name === 'AbortError' ? 'timeout' : 'network'));
+    btn.disabled = false;
+    btn.textContent = origText;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🆕 New Client Registration
+// ═══════════════════════════════════════════════════════════
+// Flow:
+//   1. User يضغط "🆕 عميل جديد" tab → switchAuthTab('register')
+//   2. User يـ fill form → registerSubmit()
+//   3. fetch إلى Supabase RPC register_new_client (direct, no n8n)
+//   4. RPC يـ validate + check uniqueness + INSERT (approval_status='pending')
+//   5. Success → عرض "تم الإرسال، استنى الاعتماد"
+// ═══════════════════════════════════════════════════════════
+
+// ═══════════════════════════════════════════════════════════
+// 🔀 Auth Tabs: Login / Register
+// ═══════════════════════════════════════════════════════════
+
+let _govCitiesCache = null;  // cache للـ governorate→cities map من DB
+
+function switchAuthTab(tab){
+  const loginPane = document.getElementById('loginPane');
+  const regPane   = document.getElementById('registerPane');
+  const loginBtn  = document.getElementById('tabLoginBtn');
+  const regBtn    = document.getElementById('tabRegisterBtn');
+  if (!loginPane || !regPane) return;
+
+  if (tab === 'register'){
+    loginPane.style.display = 'none';
+    regPane.style.display = 'block';
+    // Active styling للـ register tab
+    regBtn.style.background = 'linear-gradient(135deg,#C9A84C,#E8C97A)';
+    regBtn.style.color = '#1a1408';
+    regBtn.style.fontWeight = '800';
+    loginBtn.style.background = 'transparent';
+    loginBtn.style.color = '#888';
+    loginBtn.style.fontWeight = '700';
+
+    // أول مرة: load الـ governorates من DB
+    if (!_govCitiesCache){
+      loadGovernorateCities();
+    }
+    setTimeout(() => document.getElementById('regName')?.focus(), 80);
+  } else {
+    regPane.style.display = 'none';
+    loginPane.style.display = 'block';
+    // Active styling للـ login tab
+    loginBtn.style.background = 'linear-gradient(135deg,#C9A84C,#E8C97A)';
+    loginBtn.style.color = '#1a1408';
+    loginBtn.style.fontWeight = '800';
+    regBtn.style.background = 'transparent';
+    regBtn.style.color = '#888';
+    regBtn.style.fontWeight = '700';
+  }
+}
+
+function resetRegisterForm(){
+  ['regName','regPhone','regCompanyCode','regUsername','regPassword','regAddress','regCityText']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const govSel = document.getElementById('regGovernorate');
+  if (govSel) govSel.value = '';
+  const citySel = document.getElementById('regCitySelect');
+  if (citySel){
+    citySel.innerHTML = '<option value="">— اختار المحافظة الأول —</option>';
+    citySel.disabled = true;
+  }
+  const cityText = document.getElementById('regCityText');
+  if (cityText) cityText.style.display = 'none';
+  // Reset religion radios
+  document.querySelectorAll('input[name="regReligion"]').forEach(r => r.checked = false);
+  onReligionChange();
+  document.getElementById('registerForm').style.display = 'block';
+  document.getElementById('registerSuccess').style.display = 'none';
+  document.getElementById('registerError').style.display = 'none';
+}
+
+// 🗺️ يـ fetch governorate→cities map من DB
+async function loadGovernorateCities(){
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/get_governorate_cities`, {
+      method: 'POST',
+      headers: { ...HDR, 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    const data = await r.json();
+    if (data && typeof data === 'object'){
+      _govCitiesCache = data;
+      populateGovernoratesDropdown();
+    } else {
+      console.warn('[register] غير قادر على تحميل المحافظات', data);
+    }
+  } catch(e){
+    console.warn('[register] خطأ فى تحميل المحافظات', e);
+  }
+}
+
+// يـ populate الـ governorate <select> من الـ cache
+function populateGovernoratesDropdown(){
+  const sel = document.getElementById('regGovernorate');
+  if (!sel || !_govCitiesCache) return;
+
+  // ترتيب جغرافى زى UI الباقى
+  const REGION_GROUPS = {
+    'القاهرة الكبرى': ['القاهرة','الجيزة','القليوبية'],
+    'الدلتا':         ['الشرقية','المنوفية','الدقهلية','الغربية','البحيرة','كفر الشيخ','دمياط','شمال سيناء','جنوب سيناء'],
+    'الوجه البحرى':   ['الإسكندرية','بورسعيد','السويس','الإسماعيلية','مطروح'],
+    'الوجه القبلى':   ['المنيا','سوهاج','بني سويف','أسوان','الفيوم','أسيوط','قنا','الأقصر','البحر الأحمر','الوادي الجديد']
+  };
+
+  let html = '<option value="">— اختار المحافظة —</option>';
+  for (const [region, govs] of Object.entries(REGION_GROUPS)){
+    html += `<optgroup label="${region}">`;
+    govs.forEach(g => { html += `<option value="${g}">${g}</option>`; });
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
+}
+
+// لما المحافظة تتغير، نـ populate الـ city dropdown من الـ cache
+function onGovernorateChange(){
+  const gov = document.getElementById('regGovernorate').value;
+  const citySel = document.getElementById('regCitySelect');
+  const cityText = document.getElementById('regCityText');
+  if (!citySel) return;
+
+  if (!gov){
+    citySel.innerHTML = '<option value="">— اختار المحافظة الأول —</option>';
+    citySel.disabled = true;
+    cityText.style.display = 'none';
+    return;
+  }
+
+  const cities = (_govCitiesCache && _govCitiesCache[gov]) || [];
+  if (cities.length === 0){
+    // المحافظة معندهاش cities فى DB — اعرض input text
+    citySel.innerHTML = '<option value="">— اكتب المدينة فى المربع تحت —</option>';
+    citySel.disabled = true;
+    cityText.style.display = 'block';
+    cityText.value = '';
+    cityText.placeholder = 'اكتب اسم المدينة/المركز';
+    return;
+  }
+
+  // فى cities — populate الـ select
+  let html = '<option value="">— اختار المركز/الحى —</option>';
+  cities.forEach(c => { html += `<option value="${c}">${c}</option>`; });
+  html += '<option value="__OTHER__">+ مدينة جديدة (اكتب)</option>';
+  citySel.innerHTML = html;
+  citySel.disabled = false;
+  cityText.style.display = 'none';
+
+  // لو user اختار "مدينة جديدة"، نظهر الـ text input
   citySel.onchange = () => {
-    const city = citySel.value;
-    distSel.innerHTML = '<option value="">-- اختر --</option>';
-    if (city) {
-      const opt = document.createElement('option');
-      opt.value = city; opt.textContent = city;
-      distSel.appendChild(opt);
-      distSel.value = city;
+    if (citySel.value === '__OTHER__'){
+      cityText.style.display = 'block';
+      cityText.value = '';
+      cityText.placeholder = 'اكتب اسم المدينة/المركز الجديدة';
+      cityText.focus();
+    } else {
+      cityText.style.display = 'none';
     }
   };
 }
 
-// Init on load
-initGovDropdown();
-
-  async function doForgot() {
-    if (!forgotVerified) {
-      const code = document.getElementById('forgot-code').value.trim();
-      const phone = document.getElementById('forgot-phone').value.trim();
-
-      if (!code || !phone) {
-        showAlert('من فضلك أدخل كود العميل ورقم الهاتف', 'error');
-        return;
-      }
-
-      const btn = document.getElementById('forgot-btn');
-      btn.disabled = true;
-      btn.innerHTML = 'جاري التحقق... <span class="spinner"></span>';
-
-      try {
-        const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/clients?company_code=eq.${encodeURIComponent(code)}&phone=eq.${encodeURIComponent(phone)}&select=id,name`,
-          { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
-        );
-        const data = await res.json();
-
-        if (data && data.length > 0) {
-          forgotVerified = true;
-          forgotUserId = data[0].id;
-          showAlert(`تم التحقق! أهلاً ${data[0].name} - أدخل كلمة المرور الجديدة`, 'success');
-          document.getElementById('new-pass-group').style.display = 'block';
-          btn.innerHTML = 'حفظ كلمة المرور الجديدة';
-        } else {
-          showAlert('الكود أو رقم الهاتف غير صحيح', 'error');
-          btn.innerHTML = 'التحقق من البيانات';
-        }
-      } catch (e) {
-        showAlert('حدث خطأ في الاتصال', 'error');
-        btn.innerHTML = 'التحقق من البيانات';
-      }
-      btn.disabled = false;
-
+// Religion radio styling
+function onReligionChange(){
+  ['regReligionMuslimLbl','regReligionChristianLbl'].forEach(id => {
+    const lbl = document.getElementById(id);
+    if (!lbl) return;
+    const radio = lbl.querySelector('input[type="radio"]');
+    if (radio && radio.checked){
+      lbl.style.background = 'linear-gradient(135deg,rgba(201,168,76,0.2),rgba(232,201,122,0.15))';
+      lbl.style.borderColor = '#C9A84C';
+      lbl.style.color = '#E8C97A';
     } else {
-      const newpass = document.getElementById('forgot-newpass').value.trim();
-      if (!newpass || newpass.length < 4) {
-        showAlert('كلمة المرور لازم تكون 4 أحرف على الأقل', 'error');
+      lbl.style.background = '#161616';
+      lbl.style.borderColor = '#262626';
+      lbl.style.color = '#fff';
+    }
+  });
+}
+
+function showRegisterError(msg){
+  const el = document.getElementById('registerError');
+  if (el){ el.style.display = 'block'; el.textContent = msg; }
+}
+function hideRegisterError(){
+  const el = document.getElementById('registerError');
+  if (el) el.style.display = 'none';
+}
+
+function registerErrorMessage(error){
+  switch(error){
+    case 'invalid_name':          return 'الاسم قصير — اكتب الاسم كامل';
+    case 'invalid_phone':         return 'رقم الموبيل غير صحيح — لازم يبدأ بـ 010/011/012/015 ويكون 11 رقم';
+    case 'invalid_company_code':  return 'كود العميل غير صحيح — من 2 لـ 10 حروف/أرقام';
+    case 'invalid_username':      return 'اسم المستخدم قصير — 3 حروف على الأقل';
+    case 'invalid_password':      return 'كلمة المرور قصيرة — 4 حروف على الأقل';
+    case 'invalid_governorate':   return 'اختار المحافظة';
+    case 'invalid_city':          return 'املأ المركز/المدينة';
+    case 'invalid_address':       return 'العنوان لازم يكون 3 حروف على الأقل';
+    case 'invalid_religion':      return 'اختار الديانة';
+    case 'company_code_exists':   return 'الكود ده مستخدم بالفعل — اختار كود تانى';
+    case 'username_exists':       return 'اسم المستخدم ده مستخدم — اختار اسم تانى';
+    case 'rate_limit':            return 'حاولت كتير — استنى ساعة وحاول تانى';
+    case 'timeout':               return '⏱️ انتهى الوقت — حاول تانى';
+    case 'network':               return '❌ خطأ فى الشبكة — حاول تانى';
+    default:                      return '❌ خطأ: ' + (error || 'غير معروف');
+  }
+}
+
+async function registerSubmit(){
+  hideRegisterError();
+
+  // الـ city ممكن يكون من select أو من text input (لو "مدينة جديدة")
+  const citySel  = document.getElementById('regCitySelect');
+  const cityText = document.getElementById('regCityText');
+  let cityValue = '';
+  if (cityText.style.display !== 'none' && cityText.value.trim()){
+    cityValue = cityText.value.trim();
+  } else if (citySel.value && citySel.value !== '__OTHER__'){
+    cityValue = citySel.value;
+  }
+
+  // الـ religion من الراديو
+  const religionRadio = document.querySelector('input[name="regReligion"]:checked');
+  const religionValue = religionRadio ? religionRadio.value : '';
+
+  const payload = {
+    name:          (document.getElementById('regName').value || '').trim(),
+    phone:         (document.getElementById('regPhone').value || '').trim(),
+    company_code:  (document.getElementById('regCompanyCode').value || '').trim(),
+    username:      (document.getElementById('regUsername').value || '').trim(),
+    password:      (document.getElementById('regPassword').value || '').trim(),
+    governorate:   (document.getElementById('regGovernorate').value || '').trim(),
+    city:          cityValue,
+    address:       (document.getElementById('regAddress').value || '').trim(),
+    religion:      religionValue,
+    ua:            (navigator.userAgent || '').substring(0, 200)
+  };
+
+  // Client-side validation (RPC هـ يـ recheck برضو)
+  if (payload.name.length < 2)        return showRegisterError(registerErrorMessage('invalid_name'));
+  if (!/^01[0125][0-9]{8}$/.test(payload.phone.replace(/[\s\-\+]/g, '')))
+                                       return showRegisterError(registerErrorMessage('invalid_phone'));
+  if (!/^[a-zA-Z0-9_-]{2,10}$/.test(payload.company_code))
+                                       return showRegisterError(registerErrorMessage('invalid_company_code'));
+  if (payload.username.length < 3)    return showRegisterError(registerErrorMessage('invalid_username'));
+  if (payload.password.length < 4)    return showRegisterError(registerErrorMessage('invalid_password'));
+  if (!payload.governorate)           return showRegisterError(registerErrorMessage('invalid_governorate'));
+  if (payload.city.length < 2)        return showRegisterError(registerErrorMessage('invalid_city'));
+  if (payload.address.length < 3)     return showRegisterError(registerErrorMessage('invalid_address'));
+  if (!payload.religion)              return showRegisterError(registerErrorMessage('invalid_religion'));
+
+  const btn = document.getElementById('registerSubmitBtn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ جارى التسجيل...';
+
+  const ac = new AbortController();
+  const to = setTimeout(() => ac.abort(), 15000);
+
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/register_new_client`, {
+      method: 'POST',
+      headers: { ...HDR, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_data: payload }),
+      signal: ac.signal
+    });
+    clearTimeout(to);
+
+    const data = await r.json().catch(() => ({}));
+
+    if (data.success){
+      // ✅ نجح
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('registerSuccess').style.display = 'block';
+      hideRegisterError();
+    } else {
+      showRegisterError(registerErrorMessage(data.error));
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  } catch(e){
+    clearTimeout(to);
+    showRegisterError(registerErrorMessage(e.name === 'AbortError' ? 'timeout' : 'network'));
+    btn.disabled = false;
+    btn.textContent = orig;
+  }
+}
+
+// 🔓 Login بـ username/password (verification مع Supabase)
+async function passwordLogin(){
+  const username = (document.getElementById('lockUsername').value || '').trim();
+  const password = (document.getElementById('lockPassword').value || '').trim();
+  const btn = document.getElementById('lockLoginBtn');
+
+  if (!username || !password) {
+    showLockError('املأ اسم المستخدم وكلمة المرور');
+    return;
+  }
+
+  if (btn){ btn.disabled = true; btn.textContent = '⏳ جارى التسجيل...'; }
+
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=*`,
+      { headers: HDR }
+    );
+    if (!r.ok) throw new Error('فشل الاتصال بالسيرفر');
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length) {
+      throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
+    }
+    const client = data[0];
+    if (client.approval_status !== 'approved') throw new Error('الحساب لسه غير معتمد من الإدارة');
+    if (client.is_blocked) throw new Error('الحساب محظور — اتصل بالإدارة');
+
+    // ✅ Save user
+    Object.assign(user, {
+      id: client.id, name: client.name, company_code: client.company_code,
+      username: client.username, phone: client.phone,
+      governorate: client.governorate, city: client.city,
+      district: client.district, address: client.address,
+      client_type: client.client_type, telegram_id: client.telegram_id,
+      tier_id: client.tier_id, approval_status: client.approval_status,
+      is_blocked: client.is_blocked, is_active: client.is_active
+    });
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+
+    // Hide lock screen + show app
+    document.getElementById('bioLockScreen').style.display = 'none';
+    if (document.getElementById('uname')) document.getElementById('uname').textContent = user.name || 'العميل';
+    if (document.getElementById('ucode')) document.getElementById('ucode').textContent = user.company_code || '';
+
+    if (typeof logActivity === 'function') logActivity('cl_login','🔓 دخول بالباسوورد');
+    if (typeof checkTelegramLink === 'function') checkTelegramLink();
+    bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
+  } catch(e) {
+    console.error('passwordLogin error:', e);
+    showLockError(e.message || 'خطأ غير متوقع');
+  } finally {
+    if (btn){ btn.disabled = false; btn.textContent = 'تسجيل الدخول'; }
+  }
+}
+
+// (legacy) — لو حد ضغط الـ link القديم
+function bioGoToPasswordLogin(){
+  const u = document.getElementById('lockUsername');
+  if (u) u.focus();
+}
+
+function maybeShowEnrollBanner(){
+  console.log('[bio] maybeShowEnrollBanner check:', {
+    supported: bioSupported(),
+    user_id: user?.id,
+    approval: user?.approval_status,
+    blocked: user?.is_blocked,
+    is_approved_client: bioIsApprovedClient()
+  });
+  if (!bioSupported()) { console.log('[bio] جهازك مش بيدعم البصمة'); return; }
+  if (!user || !user.id) { console.log('[bio] مفيش user'); return; }
+  // 🛡️ فقط للعملاء المعتمدين من الأدمن (مش الـ pending أو المحظورين)
+  if (!bioIsApprovedClient()) { console.log('[bio] العميل لسه مش معتمد'); return; }
+  // لو فيه bio محفوظ بالفعل، ما تظهرش
+  const stored = localStorage.getItem('hawa_biometric');
+  if (stored) {
+    try {
+      const p = JSON.parse(stored);
+      if (p && p.clientId === user.id) { console.log('[bio] بصمة موجودة بالفعل'); return; }
+    } catch(e){}
+  }
+  // لو الـ user رفض البانر قبل كده، استنى 7 أيام
+  const dismissed = parseInt(localStorage.getItem('hawa_biometric_dismissed') || '0');
+  if (dismissed && (Date.now() - dismissed) < 7 * 24 * 60 * 60 * 1000) { console.log('[bio] dismissed مؤخراً'); return; }
+  // اعرض فوراً (مش بعد 3 ثوانى)
+  const banner = document.getElementById('bioEnrollBanner');
+  if (banner && bioIsApprovedClient()) {
+    banner.style.display = 'block';
+    // لو فى Telegram، اظهر الـ "افتح فى المتصفح" hint كمان
+    const helper = document.getElementById('bioBannerHelper');
+    if (helper) helper.style.display = bioIsInTelegram() ? 'block' : 'none';
+    console.log('[bio] ✅ Banner ظاهر');
+  }
+}
+
+function dismissEnrollBanner(permanent){
+  const banner = document.getElementById('bioEnrollBanner');
+  if (banner) banner.style.display = 'none';
+  if (!permanent) {
+    // remember user's choice (لا يظهر تانى لمدة 7 أيام)
+    localStorage.setItem('hawa_biometric_dismissed', Date.now());
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// زرار 🔐 فى الـ header: يظهر دائماً لو الجهاز يدعم
+// ═══════════════════════════════════════════════════════════
+function updateBioHeaderBtn(){
+  const btn = document.getElementById('bioBtnHeader');
+  if (!btn) return;
+  if (!bioSupported() || !user || !user.id) {
+    btn.style.display = 'none';
+    return;
+  }
+  // 🔐 الزرار يظهر دايماً للعملاء — الـ enrollment داخل الـ modal بـ يـ check approval
+  btn.style.display = 'inline-block';
+  // لو مسجّل بصمة، اللون أكتر سطوع
+  const stored = localStorage.getItem('hawa_biometric');
+  if (stored) {
+    btn.style.background = 'rgba(201,168,76,0.18)';
+    btn.title = 'إدارة البصمة (مفعّلة)';
+  } else {
+    btn.style.background = 'transparent';
+    btn.title = 'تفعيل الدخول بالبصمة';
+  }
+}
+
+// مبدئياً، خلى الزرار 🔐 يظهر فوراً لو الجهاز يدعم
+// الـ banner و enrollment بـ يـ check approval_status لما الـ data تجى من DB
+updateBioHeaderBtn();
+if (typeof updateBioDebug === 'function') updateBioDebug();
+
+// 🚀 لو user.id موجود من localStorage السابق + معتمد سابقاً، اعرض الـ banner فوراً
+// (مش لازم ننتظر checkTelegramLink لو الـ approval_status محفوظ من قبل)
+if (user && user.id && user.approval_status === 'approved') {
+  maybeShowEnrollBanner();
+}
+
+// 🔬 Detection للـ device capability — log فقط (مش نخفى الزرار)
+//    الـ user يقدر يضغط الزرار يشوف الـ status بنفسه فى الـ modal
+if (bioIsInTelegram()) {
+  try {
+    tg.BiometricManager.init(() => {
+      console.log('[bio] Telegram BiometricManager init:', {
+        isInited: tg.BiometricManager.isInited,
+        isAvailable: tg.BiometricManager.isBiometricAvailable,
+        biometricType: tg.BiometricManager.biometricType
+      });
+    });
+  } catch(e) {
+    console.warn('[bio] Telegram BiometricManager error:', e);
+  }
+} else if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+  PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(available => {
+    console.log('[bio] Platform authenticator available:', available);
+  }).catch(e => console.warn('[bio] platform check failed:', e));
+}
+
+// ═══════════════════════════════════════════════════════════
+// انتهى نظام البصمة
+// ═══════════════════════════════════════════════════════════
+
+
+async function checkTelegramLink(){
+  try {
+    // 🏆 نجيب tier_id + approval status عشان نطبق الـ booking_limits الصحيحة والبصمة
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id,tier_id,approval_status,is_blocked,is_active`, { headers: HDR });
+    const d = await r.json();
+    const tgId = d[0]?.telegram_id || null;
+    const tierId = d[0]?.tier_id || null;
+    user.telegram_id = tgId;
+    user.tier_id = tierId;
+    user.approval_status = d[0]?.approval_status || 'pending';
+    user.is_blocked = d[0]?.is_blocked || false;
+    user.is_active = d[0]?.is_active !== false;
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+
+    // 🔐 بعد ما البيانات وصلت، حدّث الـ biometric UI (يظهر فقط للمعتمدين)
+    if (typeof updateBioHeaderBtn === 'function') updateBioHeaderBtn();
+    if (typeof maybeShowEnrollBanner === 'function') maybeShowEnrollBanner();
+    if (typeof updateBioDebug === 'function') updateBioDebug();
+
+    const banner = document.getElementById('tgLinkBanner');
+    if (!tgId) {
+      const code = user.company_code || '';
+      banner.style.display = 'block';
+      banner.innerHTML = `
+        <div style="background:linear-gradient(135deg,rgba(0,136,204,0.12),rgba(0,136,204,0.04));border:1.5px solid rgba(0,136,204,0.35);border-radius:14px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:26px;flex-shrink:0">📲</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:700;color:#4ab3e8;margin-bottom:2px">فعّل إشعارات Telegram</div>
+            <div style="font-size:11px;color:var(--text-dim);line-height:1.5">علشان تاكيد الحجز يوصلك على التليجرام</div>
+          </div>
+          <a href="https://t.me/hawa_car_bot?start=${encodeURIComponent(code)}" target="_blank"
+             style="background:linear-gradient(135deg,#0088cc,#4ab3e8);color:white;text-decoration:none;
+             padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;white-space:nowrap;flex-shrink:0">
+            🔔 تفعيل
+          </a>
+        </div>`;
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e){}
+}
+
+// ===================== DYNAMIC SETTINGS / HELPERS =====================
+let allVehicleTypes = [];            // Filled from vehicle_types table
+let cachedAppSettings = null;        // {permit_min, permit_max, ...}
+let cachedWarehouses = null;         // [{id, name, working_hour_*, pending_*, ...}]
+let cachedLimits = {};               // {[dateStr]: limitsRow} — cached per loading_date
+
+// ===================== BOOKING LIMITS HELPERS =====================
+// 🏆 يضمن إن tier_id الـ client متاح (يجيبه من DB لو مش محفوظ)
+async function ensureClientTier(){
+  if (user.tier_id !== undefined && user.tier_id !== null) return user.tier_id;
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=tier_id`, { headers: HDR });
+    const d = await r.json();
+    user.tier_id = d[0]?.tier_id || null;
+    try { localStorage.setItem('hawa_user', JSON.stringify(user)); } catch(e){}
+    return user.tier_id;
+  } catch(e) {
+    return null;
+  }
+}
+
+// 🎯 يحدد لو rule واحدة تطبق على الـ tier الحالى
+function ruleAppliesToTier(rule, tierId){
+  // applies_to_all_tiers = true → دائماً تطبق
+  if (rule.applies_to_all_tiers === true) return true;
+  // مفيش tier_id للـ client → ما تطبقش أى rule مخصصة
+  if (!tierId) return false;
+  // شوف لو الـ rule مرتبطة بالـ tier عبر الـ junction
+  const links = rule.booking_limit_tiers;
+  if (!Array.isArray(links)) return false;
+  return links.some(j => j && j.tier_id === tierId);
+}
+
+// 🎯 يجيب الـ row الفعّال للـ tier بتاع الـ client (آخر صف effective_from <= loadingDate يطبق على الـ tier)
+async function getActiveLimits(loadingDate){
+  const tierId = await ensureClientTier();
+  const cacheKey = `${loadingDate}::${tierId || 'none'}`;
+  if (cachedLimits[cacheKey]) return cachedLimits[cacheKey];
+  try {
+    // اجيب كل الـ rules + الـ junction، مرتبة من الأحدث للأقدم
+    const r = await fetch(
+      `${SB}/rest/v1/booking_limits?` +
+      `effective_from=lte.${loadingDate}` +
+      `&order=effective_from.desc,id.desc` +
+      `&select=*,booking_limit_tiers(tier_id)`,
+      { headers: HDR }
+    );
+    const data = await r.json();
+    if (!Array.isArray(data) || !data.length) return null;
+    // أول rule تطبق على الـ client (لأن الـ data مرتبة من الأحدث)
+    const row = data.find(rule => ruleAppliesToTier(rule, tierId)) || null;
+    if (row) cachedLimits[cacheKey] = row;
+    return row;
+  } catch(e) {
+    console.error('getActiveLimits error:', e);
+    return null;
+  }
+}
+
+// 🎯 يجيب كل الـ rules اللى effective_from <= maxDate وتطبق على الـ tier (مرتبة desc)
+async function getLimitsForRange(maxDate){
+  const tierId = await ensureClientTier();
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/booking_limits?` +
+      `effective_from=lte.${maxDate}` +
+      `&order=effective_from.desc,id.desc` +
+      `&select=effective_from,per_booking_vehicles,applies_to_all_tiers,booking_limit_tiers(tier_id)`,
+      { headers: HDR }
+    );
+    const data = await r.json();
+    if (!Array.isArray(data)) return [];
+    return data.filter(rule => ruleAppliesToTier(rule, tierId));
+  } catch(e) {
+    console.error('getLimitsForRange error:', e);
+    return [];
+  }
+}
+
+// يحسب بداية الـ rolling period (آخر N أيام قبل fromDateStr)
+function getRollingStart(period, fromDateStr){
+  const days = { week: 7, month: 30, year: 365 }[period] || 30;
+  const d = new Date(fromDateStr + 'T12:00:00');
+  d.setDate(d.getDate() - days + 1);  // +1 لأن "آخر 7 أيام" تتضمن النهاردة
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// يحسب نهاية الـ forward period (بعد N أيام من fromDateStr) — للـ open bookings
+function getRollingEnd(period, fromDateStr){
+  const days = { week: 7, month: 30, year: 365 }[period] || 30;
+  const d = new Date(fromDateStr + 'T12:00:00');
+  d.setDate(d.getDate() + days - 1);  // -1 لأن "خلال 7 أيام جاية" تتضمن النهاردة
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+// يرجع اسم الفترة بالعربى
+function periodLabelAr(period){
+  return { week: 'الأسبوع', month: 'الشهر', year: 'السنة' }[period] || 'الفترة';
+}
+
+// Convert Arabic-Indic / Persian-Indic digits to ASCII digits
+function arabicToEnglish(str){
+  if(str === null || str === undefined) return '';
+  return String(str)
+    .replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[۰-۹]/g, d => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)));
+}
+
+function generateSlots(workStart, workEnd){
+  const slots = [];
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  for(let h = workStart; h < workEnd; h++){
+    slots.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+  }
+  return slots;
+}
+
+// 🏭 Returns effective hours for a specific date + warehouse,
+// honoring pending changes (pending applied if dateStr >= pending_effective_from).
+function applyWarehouseHours(dateStr, warehouseName){
+  const fallback = { ws:8, we:16, co:15, slots:generateSlots(8,16), source:'fallback' };
+  if(!cachedWarehouses || !warehouseName) return fallback;
+  const w = cachedWarehouses.find(x => x.name === warehouseName);
+  if(!w) return fallback;
+
+  const usePending = w.pending_effective_from &&
+                     w.pending_working_hour_start != null &&
+                     dateStr >= w.pending_effective_from;
+
+  const ws = (usePending ? w.pending_working_hour_start : w.working_hour_start) ?? 8;
+  const we = (usePending ? w.pending_working_hour_end   : w.working_hour_end)   ?? 16;
+  const co = (usePending ? w.pending_daily_cutoff_hour  : w.daily_cutoff_hour)  ?? 15;
+
+  return { ws, we, co, slots: generateSlots(ws, we), source: usePending ? 'pending' : 'current' };
+}
+
+async function ensureSettingsLoaded(force=false){
+  if(cachedAppSettings && cachedWarehouses && !force) return cachedAppSettings;
+  try{
+    // Parallel: app_settings + warehouses
+    const [r1, r2] = await Promise.all([
+      fetch(`${SB}/rest/v1/app_settings?select=key,value`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from`, { headers: HDR })
+    ]);
+    const settingsData = await r1.json();
+    cachedAppSettings = {};
+    settingsData.forEach(s => cachedAppSettings[s.key] = s.value);
+    cachedWarehouses = await r2.json();
+
+    // 🚀 Phase 5: Auto-promote أى pending وصل تاريخ تطبيقه
+    const today = new Date().toISOString().slice(0,10);
+    const toPromote = cachedWarehouses.filter(w =>
+      w.pending_effective_from && w.pending_effective_from <= today &&
+      w.pending_working_hour_start != null
+    );
+    if(toPromote.length){
+      await Promise.all(toPromote.map(async w => {
+        try{
+          const r = await fetch(`${SB}/rest/v1/warehouses?id=eq.${w.id}`, {
+            method: 'PATCH',
+            headers: { ...HDR, 'Prefer': 'return=minimal' },
+            body: JSON.stringify({
+              working_hour_start: w.pending_working_hour_start,
+              working_hour_end:   w.pending_working_hour_end,
+              daily_cutoff_hour:  w.pending_daily_cutoff_hour,
+              pending_working_hour_start: null,
+              pending_working_hour_end:   null,
+              pending_daily_cutoff_hour:  null,
+              pending_effective_from:     null
+            })
+          });
+          if(r.ok){
+            // حدّث local cache فوراً علشان الـ session الحالى يستخدم القيم الجديدة
+            w.working_hour_start = w.pending_working_hour_start;
+            w.working_hour_end   = w.pending_working_hour_end;
+            w.daily_cutoff_hour  = w.pending_daily_cutoff_hour;
+            w.pending_working_hour_start = null;
+            w.pending_working_hour_end   = null;
+            w.pending_daily_cutoff_hour  = null;
+            w.pending_effective_from     = null;
+          }
+        }catch(e){}
+      }));
+    }
+  }catch(e){
+    cachedAppSettings = cachedAppSettings || {};
+    cachedWarehouses  = cachedWarehouses  || [];
+  }
+  return cachedAppSettings;
+}
+
+async function loadVehicleTypesData(force=false){
+  if(allVehicleTypes.length && !force) return allVehicleTypes;
+  try{
+    // الجلب من الـ join table مع join للـ vehicle_types catalog
+    const r = await fetch(
+      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
+      {headers: HDR}
+    );
+    const data = await r.json();
+    // Flatten + filter: نسيب اللى الـ wvt active + الـ type active
+    allVehicleTypes = data
+      .filter(x => x.vehicle_types && x.vehicle_types.is_active !== false && x.warehouses)
+      .map(x => ({
+        id: x.vehicle_type_id,
+        name: x.vehicle_types.name,
+        icon: x.vehicle_types.icon,
+        capacity_per_hour: x.capacity_per_hour,
+        display_order: x.display_order,
+        warehouse_name: x.warehouses.name,
+        warehouse_id: x.warehouse_id
+      }));
+  }catch(e){}
+  return allVehicleTypes;
+}
+
+function renderVehicleOptions(){
+  const container = document.getElementById('vehicleOpts');
+  if(!container) return;
+  if(!allVehicleTypes.length){
+    container.innerHTML = '<div class="slots-loading" style="grid-column:1/-1">⚠️ مفيش أنواع متاحة دلوقتي</div>';
+    return;
+  }
+  // 📦 فلتر للـ warehouse المختار
+  const visibleTypes = allVehicleTypes.filter(v => v.warehouse_name === bk.warehouse);
+  if(!visibleTypes.length){
+    container.innerHTML = `<div class="slots-loading" style="grid-column:1/-1">😞 مفيش أنواع عربيات متاحة فى مخزن ${bk.warehouse} دلوقتى</div>`;
+    return;
+  }
+  // Sort by display_order
+  visibleTypes.sort((a,b) => (a.display_order||0) - (b.display_order||0) || a.id - b.id);
+  let html = '';
+  visibleTypes.forEach(v => {
+    const nameEsc = (v.name||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const cap = v.capacity_per_hour || 5;
+    html += `<div class="opt" data-name="${nameEsc}" onclick="pickVehicle('${nameEsc}',${cap},this)"><div class="ic">${v.icon||'🚛'}</div><div class="lb">${v.name}</div></div>`;
+  });
+  container.innerHTML = html;
+}
+
+// 🏭 يرسم اختيار المخازن فى step 1 من الـ cache (dynamic بدل hardcoded)
+function renderWarehouseOptions(){
+  const container = document.getElementById('warehouseOpts');
+  if(!container) return;
+  if(!cachedWarehouses || !cachedWarehouses.length){
+    container.innerHTML = '<div class="slots-loading" style="grid-column:1/-1">⚠️ مفيش مخازن متاحة دلوقتى</div>';
+    return;
+  }
+  // Icon mapping للأسماء المعروفة، otherwise 📦 default
+  const iconFor = n => {
+    if(n === 'قليوب') return '🏭';
+    if(n === 'السادات') return '🏗️';
+    return '📦';
+  };
+  container.innerHTML = cachedWarehouses.map(w => {
+    const nameEsc = (w.name || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return `<div class="opt" id="opt-w-${w.id}" data-name="${nameEsc}" onclick="pick('warehouse','${nameEsc}',this,'s1')">
+      <div class="ic">${iconFor(w.name)}</div>
+      <div class="lb">${w.name}</div>
+    </div>`;
+  }).join('');
+}
+
+// 🚀 Warm-up: pre-fetch settings + warehouses + vehicle types in the background
+ensureSettingsLoaded().then(() => renderWarehouseOptions());
+loadVehicleTypesData();
+
+// Booking state
+const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, remaining: 10, count: 1, permit: null, perBookingMax: 10 };
+
+// Edit state: null = new | object = editing
+let editMode = null; // { id, oldCount }
+
+// ===================== TABS =====================
+function switchTab(tab) {
+  ['new','my'].forEach(t => {
+    document.getElementById('tab' + (t==='new'?'New':'My')).classList.toggle('active', t === tab);
+    document.getElementById('view' + (t==='new'?'Form':'My')).classList.toggle('active', t === tab);
+  });
+  hideAlert();
+  if (tab === 'my') {
+    logActivity('cl_view_bookings','📋 فتح صفحة حجوزاتى');
+    loadMyBookings();
+  }
+}
+
+// ===================== FORM NAV =====================
+function go(n) {
+  // إخفاء شاشة النجاح لو ظاهرة
+  document.getElementById('formBtns').style.display = '';
+  document.getElementById('successScreen').classList.remove('show');
+  document.querySelector('.steps').style.display = '';
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('d' + i).className =
+      'dot' + (i < n ? ' done' : i === n ? ' active' : '');
+  }
+  hideAlert();
+  if (n === 3) buildCal();
+  if (n === 4) loadSlots();
+  if (n === 5) buildSummary();
+  window.scrollTo(0, 0);
+}
+
+function pick(field, val, el, step) {
+  bk[field] = val;
+  document.querySelectorAll('#' + step + ' .opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  const num = step.replace('s','');
+  if (field === 'warehouse') {
+    document.getElementById('permitCard').style.display = '';
+    document.getElementById('permitInput').value = '';
+    document.getElementById('permitMsg').textContent = '';
+    bk.permit = null;
+    document.getElementById('b1').disabled = true;
+  } else {
+    document.getElementById('b' + num).disabled = false;
+  }
+}
+
+function onPermitInput() {
+  const inp = document.getElementById('permitInput');
+  const original = inp.value;
+  // Convert Arabic-Indic digits to ASCII, then strip non-digits
+  const cleaned = arabicToEnglish(original).replace(/[^\d]/g, '');
+  if(original !== cleaned){
+    const cursor = inp.selectionStart;
+    inp.value = cleaned;
+    try { inp.setSelectionRange(cursor, cursor); } catch(e){}
+  }
+  bk.permit = cleaned || null;
+  document.getElementById('b1').disabled = !cleaned;
+  document.getElementById('permitMsg').textContent = '';
+  document.getElementById('permitMsg').style.color = '';
+}
+
+// 🚨 تسجيل محاولة تكرار رقم إذن لعميل تانى — fire-and-forget
+async function reportDuplicatePermitAttempt(permit, conflictBooking) {
+  try {
+    // 1. هات بيانات العميل الأصلى (صاحب رقم الإذن الأصلى)
+    let originalClient = null;
+    try {
+      const r = await fetch(
+        `${SB}/rest/v1/clients?id=eq.${conflictBooking.client_id}&select=id,name,phone,company_code,governorate,city,district,address,client_type,telegram_id,created_at`,
+        { headers: HDR }
+      );
+      if (r.ok) {
+        const d = await r.json();
+        originalClient = d[0] || null;
+      }
+    } catch(e){ /* silent */ }
+
+    // 2. بيانات العميل المحاول — من الـ local user object
+    const attemptingClientData = {
+      id: user.id,
+      name: user.name || null,
+      phone: user.phone || null,
+      company_code: user.company_code || null,
+      governorate: user.governorate || null,
+      city: user.city || null,
+      district: user.district || null,
+      address: user.address || null,
+      client_type: user.client_type || null,
+      telegram_id: user.telegram_id || null
+    };
+
+    // 3. بيانات المحاولة (الحجز اللى كان بيتعمل) — partial لأن المستخدم اتمنع فى step 1
+    const attemptingBookingData = {
+      permit_number: permit,
+      warehouse: bk.warehouse || null,
+      attempted_at: new Date().toISOString(),
+      edit_mode_booking_id: editMode?.id || null,
+      stage: 'permit_validation_step_2',
+      blocked_by: 'cross_client_permit_duplicate'
+    };
+
+    // 4. بيانات العميل الأصلى — لو الـ fetch فشل، نحط placeholder
+    const originalClientData = originalClient || {
+      id: conflictBooking.client_id,
+      _fetch_failed: true,
+      _note: 'تعذّر جلب بيانات العميل الأصلى من DB'
+    };
+
+    // 5. بيانات الحجز الأصلى — من الـ conflict row
+    const originalBookingData = {
+      id: conflictBooking.id,
+      seq_number: conflictBooking.seq_number || null,
+      permit_number: conflictBooking.permit_number,
+      warehouse: conflictBooking.warehouse || null,
+      vehicle_type: conflictBooking.vehicle_type || null,
+      count: conflictBooking.count || null,
+      loading_date: conflictBooking.loading_date || null,
+      time_slot: conflictBooking.time_slot || null,
+      status: conflictBooking.status || null,
+      created_at: conflictBooking.created_at || null
+    };
+
+    // 6. POST لـ duplicate_permit_alerts — fire-and-forget
+    fetch(`${SB}/rest/v1/duplicate_permit_alerts`, {
+      method: 'POST',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        permit_number: String(permit),
+        attempting_client_id: user.id,
+        attempting_client_data: attemptingClientData,
+        attempting_booking_data: attemptingBookingData,
+        original_client_id: conflictBooking.client_id,
+        original_client_data: originalClientData,
+        original_booking_id: conflictBooking.id,
+        original_booking_data: originalBookingData
+        // status بياخد default 'new' من الـ schema
+      })
+    }).catch(()=>{});
+
+    // 7. سجّل event موازى فى activity_log للـ audit trail
+    logActivity(
+      'cl_permit_duplicate_attempt',
+      `🚨 حاول يستخدم رقم إذن لعميل تانى: ${permit}`,
+      {
+        permit_number: permit,
+        original_booking_id: conflictBooking.id,
+        original_client_id: conflictBooking.client_id,
+        warehouse: bk.warehouse
+      }
+    );
+  } catch(e) {
+    // silent — مش هنوقف flow الرفض
+  }
+}
+
+async function goStep2() {
+  let permit = bk.permit;
+  if (!permit) return;
+  // Belt-and-suspenders: convert Arabic digits in case any slipped through
+  permit = arabicToEnglish(permit);
+  bk.permit = permit;
+
+  const msgEl = document.getElementById('permitMsg');
+  msgEl.textContent = '⏳ جاري التحقق...';
+  msgEl.style.color = 'var(--text-dim)';
+  document.getElementById('b1').disabled = true;
+
+  let success = false;
+  try {
+    // ⚡ Parallel: permit-check + cached settings + vehicle types (3 in flight at once)
+    const [r1, settings, _vt] = await Promise.all([
+      fetch(
+        `${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(permit)}&status=neq.${encodeURIComponent('ملغي')}&select=id,client_id,warehouse,vehicle_type,count,loading_date,time_slot,permit_number,status,seq_number,created_at`,
+        { headers: HDR }
+      ),
+      ensureSettingsLoaded(),
+      loadVehicleTypesData()
+    ]);
+    const d1 = await r1.json();
+    const editExclude = editMode ? d1.filter(b => b.id === editMode.id).length : 0;
+    const usedCount = d1.length - editExclude;
+
+    // 📊 جيب حدود اليوم (للـ permit checks)
+    const todayStr = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+    const limits = await getActiveLimits(todayStr);
+
+    // ① Max uses on permit
+    const maxUses = limits ? limits.permit_max_uses : 4;
+    if (usedCount >= maxUses) {
+      msgEl.textContent = `❌ رقم الإذن ده وصل الحد الأقصى (${maxUses} مرات)`;
+      msgEl.style.color = 'var(--error)';
+      document.getElementById('b1').disabled = false;
+      return;
+    }
+
+    // ① مكرر: Max vehicles total on permit (الإذن بالكامل)
+    if (limits) {
+      const usedVehTotal = d1
+        .filter(b => !(editMode && b.id === editMode.id))
+        .reduce((s, b) => s + (b.count || 0), 0);
+      if (usedVehTotal >= limits.permit_max_vehicles) {
+        msgEl.textContent = `❌ الإذن ده استهلك كل العربيات (${limits.permit_max_vehicles} عربية)`;
+        msgEl.style.color = 'var(--error)';
+        document.getElementById('b1').disabled = false;
         return;
       }
+    }
 
-      const btn = document.getElementById('forgot-btn');
-      btn.disabled = true;
-      btn.innerHTML = 'جاري الحفظ... <span class="spinner"></span>';
+    // ② No cross-client sharing
+    const otherClients = d1.filter(b => b.client_id !== user.id && b.id !== (editMode?.id));
+    if (otherClients.length > 0) {
+      // 🚨 سجّل الـ alert فى DB (fire-and-forget — مش هيوقف الرفض)
+      reportDuplicatePermitAttempt(permit, otherClients[0]);
 
-      try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${forgotUserId}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ password: newpass })
+      msgEl.innerHTML = '❌ رقم الإذن ده مستخدم من عميل تانى<br><span style="font-size:11px;color:var(--text-dim);font-weight:400">تم إرسال بياناتك للأدمن للمراجعة</span>';
+      msgEl.style.color = 'var(--error)';
+      document.getElementById('b1').disabled = false;
+      return;
+    }
+
+    // ③ Permit range validation (using cached settings)
+    const minP = parseInt(settings.permit_min);
+    const maxP = parseInt(settings.permit_max);
+    const permitNum = parseInt(permit);
+    if (!isNaN(minP) && !isNaN(maxP) && !isNaN(permitNum)) {
+      if (permitNum < minP || permitNum > maxP) {
+        msgEl.textContent = `❌ رقم الإذن غير صحيح، تأكد من الرقم اللي في الإذن بتاعك`;
+        msgEl.style.color = 'var(--error)';
+        document.getElementById('b1').disabled = false;
+        return;
+      }
+    }
+
+    // ✅ Success
+    const rem = maxUses - usedCount;
+    msgEl.textContent = usedCount > 0 ? `⚠️ استُخدم ${usedCount} من ${maxUses} مرات — متبقي ${rem}` : '✅ رقم الإذن صحيح';
+    msgEl.style.color = usedCount > 0 ? 'var(--gold)' : 'var(--success)';
+    document.getElementById('b1').disabled = false;
+
+    // Render vehicle options now that we have the data
+    renderVehicleOptions();
+
+    success = true;
+  } catch(e) {
+    msgEl.textContent = '❌ خطأ في التحقق، حاول تاني';
+    msgEl.style.color = 'var(--error)';
+    document.getElementById('b1').disabled = false;
+  }
+  // 🔧 Bug fix: only advance to step 2 if validation actually succeeded
+  if (success) go(2);
+}
+
+function pickVehicle(v, cap, el) {
+  bk.vehicle = v; bk.cap = cap;
+  document.querySelectorAll('#s2 .opt').forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('b2').disabled = false;
+}
+
+// ===================== CALENDAR =====================
+async function buildCal() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const maxD  = new Date(today); maxD.setDate(today.getDate() + 7);
+
+  // Ensure settings + warehouses are loaded (auto-promote pending too)
+  await ensureSettingsLoaded();
+
+  // Format helpers
+  const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  const todayStr = fmtDate(today);
+  const maxStr   = fmtDate(maxD);
+
+  // 🏭 Cutoff hour لـ "اليوم" للمخزن المختار (per-warehouse)
+  const todayHours = applyWarehouseHours(todayStr, bk.warehouse);
+  const cutoffHour = todayHours.co;
+  const now = new Date();
+  const isCutoffPassedToday = now.getHours() >= cutoffHour;
+
+  // ⚡ Parallel fetch: schedule_rules + bookings for the next 7 days + booking_limits (tier-aware)
+  let rules = [];
+  const bookingsByDate = {};
+  try {
+    const [rulesRes, bookingsRes, limitsFiltered] = await Promise.all([
+      fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/bookings?warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&loading_date=gte.${todayStr}&loading_date=lte.${maxStr}&status=neq.ملغي&select=loading_date,time_slot,count,id`, { headers: HDR }),
+      getLimitsForRange(maxStr)  // 🏆 مفلتر بـ tier الـ client
+    ]);
+    rules = await rulesRes.json();
+    const bookings = await bookingsRes.json();
+    bookings.forEach(b => {
+      if (editMode && b.id === editMode.id) return; // exclude the booking being edited
+      if (!bookingsByDate[b.loading_date]) bookingsByDate[b.loading_date] = {};
+      bookingsByDate[b.loading_date][b.time_slot] =
+        (bookingsByDate[b.loading_date][b.time_slot] || 0) + (b.count || 0);
+    });
+    // 📊 خزّن كل النسخ الـ relevant للـ tier (مرتبة من الأحدث)
+    bk.limitsForRange = limitsFiltered;
+    // fallback للـ initial state قبل ما يختار date
+    if (bk.limitsForRange[0]) bk.perBookingMax = bk.limitsForRange[0].per_booking_vehicles;
+  } catch(e) {}
+
+  function isDayClosed(dt, ds) {
+    const dow = dt.getDay();
+    for (const rule of rules) {
+      // ✨ قواعد ساعات معيّنة مش بتقفل اليوم — بس بتحجب slots
+      if (rule.start_hour != null) continue;
+      // ✨ احترم فلتر المخازن (لو مش متعرّف، يتطبّق على الكل)
+      if (rule.warehouses && rule.warehouses.length > 0) {
+        if (!rule.warehouses.includes(bk.warehouse)) continue;
+      }
+      // ✨ احترم فلتر الأقسام (أنواع العربيات)
+      if (rule.vehicle_types && rule.vehicle_types.length > 0) {
+        if (!rule.vehicle_types.includes(bk.vehicle)) continue;
+      }
+      // فحص التاريخ
+      if (rule.type === 'weekly' && rule.day_of_week === dow) return true;
+      if (rule.type === 'date' && rule.start_date === ds) return true;
+      if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) return true;
+    }
+    return false;
+  }
+
+  // 🕐 الحصول على الـ slots المقفولة بقواعد hour-range لتاريخ معيّن
+  function getBlockedSlots(dt, ds) {
+    const dow = dt.getDay();
+    const blockedHours = new Set();
+    for (const rule of rules) {
+      if (rule.start_hour == null) continue;  // skip whole-day rules
+      // 📅 احترم effective_from لو موجود
+      if (rule.effective_from && ds < rule.effective_from) continue;
+      if (rule.warehouses && rule.warehouses.length > 0) {
+        if (!rule.warehouses.includes(bk.warehouse)) continue;
+      }
+      if (rule.vehicle_types && rule.vehicle_types.length > 0) {
+        if (!rule.vehicle_types.includes(bk.vehicle)) continue;
+      }
+      let applies = false;
+      if (rule.type === 'weekly' && rule.day_of_week === dow) applies = true;
+      else if (rule.type === 'date' && rule.start_date === ds) applies = true;
+      else if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) applies = true;
+      if (applies) {
+        for (let h = rule.start_hour; h < rule.end_hour; h++) blockedHours.add(h);
+      }
+    }
+    // Convert hours → slot strings (نفس fmt اللى فى generateSlots)
+    const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+    const blockedSlots = new Set();
+    blockedHours.forEach(h => blockedSlots.add(`${fmt(h)}:00 - ${fmt(h+1)}:00`));
+    return blockedSlots;
+  }
+
+  // 🏭 Per-day fullness (per-warehouse hours قد تختلف عبر الأيام لو فيه pending change)
+  function isDayFull(ds) {
+    const dt = new Date(ds + 'T12:00:00');
+    const hours = applyWarehouseHours(ds, bk.warehouse);
+    const slots = hours.slots;
+    if (!slots.length) return false;
+    // 🕐 استبعد الـ slots المقفولة بقواعد ساعات
+    const blocked = getBlockedSlots(dt, ds);
+    const availableSlots = slots.filter(s => !blocked.has(s));
+    if (!availableSlots.length) return true;  // كل الـ slots مقفولة = اليوم mut
+    const dayData = bookingsByDate[ds] || {};
+    let fullSlots = 0;
+    for (const slot of availableSlots) {
+      if ((dayData[slot] || 0) >= bk.cap) fullSlots++;
+    }
+    return fullSlots >= availableSlots.length;
+  }
+
+  const days = ['أحد','اثن','ثلث','أرب','خمس','جمع','سبت'];
+
+  // 🆕 Builds HTML for ONE month (header + grid). Used 1 or 2 times based on whether maxD crosses into next month.
+  function buildMonthSection(year, month) {
+    const monthDate = new Date(year, month, 1);
+    const monthName = monthDate.toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' });
+
+    let h = `<div class="cal-month">${monthName}</div>`;
+    h += `<div class="cal-grid">`;
+    h += days.map(d => `<div class="cal-hd">${d}</div>`).join('');
+
+    const first = new Date(year, month, 1);
+    for (let i = 0; i < first.getDay(); i++) h += `<div class="cal-d empty"></div>`;
+
+    const dim = new Date(year, month + 1, 0).getDate();
+    for (let d = 1; d <= dim; d++) {
+      const dt = new Date(year, month, d);
+      const ds = fmtDate(dt);
+      const isPast    = dt < today;
+      const isFuture  = dt > maxD;
+      const isClosed  = isDayClosed(dt, ds);
+      const isToday   = dt.getTime() === today.getTime();
+      const isCutoff  = isToday && isCutoffPassedToday;
+      const isFull    = !isPast && !isFuture && !isClosed && !isCutoff && isDayFull(ds);
+      const isSel     = ds === bk.dateStr;
+      const isDisabled = isPast || isFuture || isClosed || isCutoff || isFull;
+
+      let cls = 'cal-d';
+      if (isPast) cls += ' past';
+      else if (isFuture || isClosed) cls += ' off';
+      else if (isCutoff) cls += ' cutoff';
+      else if (isFull)   cls += ' full';
+      else {
+        if (isToday) cls += ' today';
+        if (isSel)   cls += ' sel';
+      }
+
+      let label = String(d);
+      if (isCutoff)    label += '<div style="font-size:9px;margin-top:1px">انتهى الدور</div>';
+      else if (isFull) label += '<div style="font-size:9px;margin-top:1px">مكتمل</div>';
+
+      const click = !isDisabled ? `onclick="pickDay('${ds}',this)"` : '';
+      h += `<div class="${cls}" ${click}>${label}</div>`;
+    }
+    h += `</div>`;
+    return h;
+  }
+
+  // Render current month
+  let allHtml = buildMonthSection(today.getFullYear(), today.getMonth());
+
+  // 🆕 If maxD crosses into the next month, render that month too
+  if (maxD.getMonth() !== today.getMonth() || maxD.getFullYear() !== today.getFullYear()) {
+    allHtml += buildMonthSection(maxD.getFullYear(), maxD.getMonth());
+  }
+
+  document.getElementById('calContainer').innerHTML = allHtml;
+  if (bk.dateStr) document.getElementById('b3').disabled = false;
+}
+
+function pickDay(ds, el) {
+  bk.dateStr = ds;
+  document.querySelectorAll('.cal-d').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('b3').disabled = false;
+  bk.slot = null;
+}
+
+// ===================== SLOTS =====================
+async function loadSlots() {
+  const g = document.getElementById('slotsGrid');
+  g.innerHTML = `<div class="slots-loading">⏳ جاري تحميل المواعيد...</div>`;
+  document.getElementById('b4').disabled = true;
+
+  // Make sure settings + warehouses are loaded
+  await ensureSettingsLoaded();
+
+  // 🏭 Per-warehouse + per-date slots (Phase 4)
+  const hours = applyWarehouseHours(bk.dateStr, bk.warehouse);
+  const allSlots = hours.slots;
+
+  try {
+    // ⚡ Parallel: bookings + schedule_rules
+    const [rBookings, rRules] = await Promise.all([
+      fetch(
+        `${SB}/rest/v1/bookings?select=time_slot,count,id&loading_date=eq.${bk.dateStr}&warehouse=eq.${encodeURIComponent(bk.warehouse)}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=neq.ملغي`,
+        { headers: HDR }
+      ),
+      fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR })
+    ]);
+    const data = await rBookings.json();
+    const rules = await rRules.json();
+
+    // 🕐 احسب الـ slots المقفولة بقواعد ساعات معيّنة لليوم ده
+    const dt = new Date(bk.dateStr + 'T12:00:00');
+    const dow = dt.getDay();
+    const blockedHours = new Set();
+    for(const rule of rules){
+      if(rule.start_hour == null) continue;  // skip whole-day rules
+      // 📅 احترم effective_from
+      if(rule.effective_from && bk.dateStr < rule.effective_from) continue;
+      if(rule.warehouses && rule.warehouses.length && !rule.warehouses.includes(bk.warehouse)) continue;
+      if(rule.vehicle_types && rule.vehicle_types.length && !rule.vehicle_types.includes(bk.vehicle)) continue;
+      let applies = false;
+      if(rule.type === 'weekly' && rule.day_of_week === dow) applies = true;
+      else if(rule.type === 'date' && rule.start_date === bk.dateStr) applies = true;
+      else if(rule.type === 'range' && bk.dateStr >= rule.start_date && bk.dateStr <= rule.end_date) applies = true;
+      if(applies){
+        for(let h = rule.start_hour; h < rule.end_hour; h++) blockedHours.add(h);
+      }
+    }
+    const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+    const blockedSlots = new Set();
+    blockedHours.forEach(h => blockedSlots.add(`${fmt(h)}:00 - ${fmt(h+1)}:00`));
+
+    // Final visible slots = warehouse slots − blocked slots
+    const slots = allSlots.filter(s => !blockedSlots.has(s));
+
+    // Sum used per slot, excluding the booking being edited
+    const totals = {};
+    data.forEach(b => {
+      if (editMode && b.id === editMode.id) return;
+      totals[b.time_slot] = (totals[b.time_slot] || 0) + (b.count || 0);
+    });
+
+    let html = '';
+    let availableCount = 0;
+    slots.forEach(sl => {
+      const used = totals[sl] || 0;
+      const rem  = bk.cap - used;
+      // 🚫 Hide full slots completely (used to show "ممتلئ ❌")
+      if (rem <= 0) return;
+      availableCount++;
+      const sel = sl === bk.slot;
+      html += `<div class="slot ${sel?'sel':''}"
+        onclick="pickSlot('${sl}',this,${rem})">
+        <div class="st">${sl}</div>
+        <div class="av">متاح: ${rem} ✅</div>
+      </div>`;
+    });
+
+    if (availableCount === 0) {
+      g.innerHTML = `<div class="slots-loading">😞 مفيش مواعيد متاحة في اليوم ده — ارجع واختار يوم تاني</div>`;
+    } else {
+      g.innerHTML = html;
+    }
+    if (bk.slot) document.getElementById('b4').disabled = false;
+
+  } catch(e) {
+    g.innerHTML = `<div class="slots-loading">❌ خطأ في التحميل، ارجع وحاول تاني</div>`;
+  }
+}
+
+function pickSlot(sl, el, rem) {
+  bk.slot = sl; bk.remaining = rem;
+  document.querySelectorAll('.slot').forEach(s => s.classList.remove('sel'));
+  el.classList.add('sel');
+  document.getElementById('b4').disabled = false;
+  // 📊 احسب per_booking_vehicles الصح بناءً على loading_date
+  if (bk.limitsForRange && bk.dateStr) {
+    const row = bk.limitsForRange.find(r => r.effective_from <= bk.dateStr);
+    if (row) bk.perBookingMax = row.per_booking_vehicles;
+  }
+  const cap = Math.min(bk.perBookingMax || 10, rem);
+  bk.count = Math.min(bk.count, cap);
+  document.getElementById('cntNum').textContent = bk.count;
+}
+
+// ===================== COUNT =====================
+function chCnt(d) {
+  const mx = Math.min(bk.perBookingMax || 10, bk.remaining);
+  bk.count = Math.max(1, Math.min(mx, bk.count + d));
+  document.getElementById('cntNum').textContent = bk.count;
+}
+
+// ===================== SUMMARY =====================
+function buildSummary() {
+  document.getElementById('sName').textContent = user.name || '-';
+  document.getElementById('sCode').textContent = user.company_code || '-';
+  document.getElementById('sPermit').textContent = bk.permit || '-';
+  document.getElementById('sWarehouse').textContent = bk.warehouse;
+  document.getElementById('sVehicle').textContent   = bk.vehicle;
+  document.getElementById('sDate').textContent =
+    new Date(bk.dateStr + 'T12:00:00').toLocaleDateString('ar-EG', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('sSlot').textContent  = bk.slot;
+  document.getElementById('sCount').textContent = bk.count + ' عربية';
+  document.getElementById('cntInfo').textContent = `الحد الأقصى ${Math.min(bk.perBookingMax || 10, bk.remaining)} عربية في هذا الموعد`;
+  document.getElementById('bConfirm').textContent = editMode ? '💾 حفظ التعديل' : '💾 حفظ الحجز';
+}
+
+// ===================== CONFIRM =====================
+async function confirm_booking() {
+  const btn = document.getElementById('bConfirm');
+  btn.disabled = true;
+  btn.innerHTML = (editMode ? 'جاري الحفظ...' : 'جاري الحجز...') + ' <span class="spin"></span>';
+  hideAlert();
+
+  try {
+    // فحص البلوك
+    try {
+      const br = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=is_blocked`, { headers: HDR });
+      if (br.ok) {
+        const bd = await br.json();
+        if (bd[0]?.is_blocked) { showErr('حسابك موقوف، تواصل مع الإدارة'); resetBtn(); return; }
+      }
+    } catch(e) {}
+
+    // 📊 جلب الحدود الفعّالة لتاريخ الحجز
+    const limits = await getActiveLimits(bk.dateStr);
+    if (!limits) {
+      showErr('النظام لسه ما اتظبطش — كلم الأدمن');
+      resetBtn(); return;
+    }
+
+    // 1️⃣ per_booking_vehicles
+    if (bk.count > limits.per_booking_vehicles) {
+      showErr(`الحد الأقصى ${limits.per_booking_vehicles} عربية فى الحجز الواحد`);
+      resetBtn(); return;
+    }
+
+    // 2️⃣ daily_vehicles — كل المخازن، كل الأنواع، نستثنى ملغى فقط
+    const dr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=eq.${bk.dateStr}&client_id=eq.${user.id}&status=neq.${encodeURIComponent('ملغي')}`, { headers: HDR });
+    const dd  = await dr.json();
+    const dayTotal = dd.reduce((s, b) => (editMode && b.id === editMode.id) ? s : s + (b.count||0), 0);
+    if (dayTotal + bk.count > limits.daily_vehicles) {
+      showErr(`تجاوزت الحد اليومى!\nمحجوز ${dayTotal} عربية فى نفس اليوم (الحد ${limits.daily_vehicles})`);
+      resetBtn(); return;
+    }
+
+    // 3️⃣ weekly_vehicles — rolling (آخر 7 أيام قبل وحتى loading_date)، كل المخازن، كل الأنواع
+    const weekStart = getRollingStart('week', bk.dateStr);
+    const wr  = await fetch(`${SB}/rest/v1/bookings?select=count,id&loading_date=gte.${weekStart}&loading_date=lte.${bk.dateStr}&client_id=eq.${user.id}&status=neq.${encodeURIComponent('ملغي')}`, { headers: HDR });
+    const wd  = await wr.json();
+    const weekTotal = wd.reduce((s, b) => (editMode && b.id === editMode.id) ? s : s + (b.count||0), 0);
+    if (weekTotal + bk.count > limits.weekly_vehicles) {
+      showErr(`تجاوزت الحد الأسبوعى!\nمحجوز ${weekTotal} عربية فى آخر 7 أيام (الحد ${limits.weekly_vehicles})`);
+      resetBtn(); return;
+    }
+
+    // 4️⃣ permit_max_vehicles — re-check مع الـ count النهائى
+    if (bk.permit) {
+      const pr = await fetch(`${SB}/rest/v1/bookings?permit_number=eq.${encodeURIComponent(bk.permit)}&status=neq.${encodeURIComponent('ملغي')}&select=id,count`, { headers: HDR });
+      const pd = await pr.json();
+      const permitVehTotal = pd
+        .filter(b => !(editMode && b.id === editMode.id))
+        .reduce((s, b) => s + (b.count || 0), 0);
+      if (permitVehTotal + bk.count > limits.permit_max_vehicles) {
+        const remaining = Math.max(0, limits.permit_max_vehicles - permitVehTotal);
+        showErr(`تجاوزت حد الإذن!\nمتبقى ${remaining} عربية على الإذن ده (الحد ${limits.permit_max_vehicles})`);
+        resetBtn(); return;
+      }
+    }
+
+    // 5️⃣ open_bookings_max — حجوزات قيد الانتظار "المفتوحة" (النهارده أو مستقبل، خلال الـ period)
+    //    "مفتوح" = loading_date >= today AND loading_date <= today + period AND status='قيد الانتظار'
+    //    الحجوزات القديمة (loading_date < today) مش بـ تتحسب هنا — دى بتدخل no-show counter
+    const todayForOpen = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
+    const openEnd = getRollingEnd(limits.open_bookings_period, todayForOpen);
+    const or  = await fetch(`${SB}/rest/v1/bookings?select=id,loading_date&client_id=eq.${user.id}&status=eq.${encodeURIComponent('قيد الانتظار')}&loading_date=gte.${todayForOpen}&loading_date=lte.${openEnd}`, { headers: HDR });
+    const od  = await or.json();
+    const openCount = od.filter(b => !(editMode && b.id === editMode.id)).length;
+    if (openCount >= limits.open_bookings_max) {
+      const pl = periodLabelAr(limits.open_bookings_period);
+      showErr(`عندك ${openCount} حجز مفتوح فى ${pl} الجاى\nحمّل واحد منهم قبل ما تحجز جديد (الحد ${limits.open_bookings_max})`);
+      resetBtn(); return;
+    }
+
+    if (editMode) {
+      // PATCH
+      const res = await fetch(`${SB}/rest/v1/bookings?id=eq.${editMode.id}`, {
+        method: 'PATCH',
+        headers: { ...HDR, 'Prefer': 'return=minimal' },
+        body: JSON.stringify({
+          warehouse: bk.warehouse, vehicle_type: bk.vehicle, count: bk.count,
+          loading_date: bk.dateStr, time_slot: bk.slot,
+          permit_number: bk.permit || null,
+          status: 'قيد الانتظار'
+        })
+      });
+      if (res.ok) {
+        // 📸 Snapshot: التقط القيم قبل أى reset عشان مهما اتغير الترتيب الكود يفضل شغّال
+        const snap = {
+          id:            editMode.id,
+          seq_number:    editMode.seq_number,
+          warehouse:     bk.warehouse,
+          vehicle_type:  bk.vehicle,
+          count:         bk.count,
+          loading_date:  bk.dateStr,
+          time_slot:     bk.slot,
+          permit_number: bk.permit
+        };
+        const displayId = snap.seq_number || snap.id;
+
+        // دلوقتى ممكن نـ reset بأمان — كل الـ values محفوظة فى snap
+        exitEditMode();
+
+        // 📜 سجل التعديل
+        logActivity('cl_edit_booking','✏️ عدل حجز #'+displayId,{
+          booking_id:snap.id, seq_number:snap.seq_number,
+          warehouse:snap.warehouse, vehicle_type:snap.vehicle_type,
+          count:snap.count, loading_date:snap.loading_date, time_slot:snap.time_slot
         });
 
-        if (res.ok) {
-          showAlert('تم تغيير كلمة المرور بنجاح! 🎉', 'success');
-          forgotVerified = false;
-          forgotUserId = null;
-          setTimeout(() => switchTab('login'), 2000);
-        } else {
-          showAlert('حدث خطأ، حاول مرة أخرى', 'error');
-        }
-      } catch (e) {
-        showAlert('حدث خطأ في الاتصال', 'error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = 'حفظ كلمة المرور الجديدة';
+        sendTelegramConfirm({
+          id:            snap.id,
+          seq_number:    snap.seq_number,
+          warehouse:     snap.warehouse,
+          vehicle_type:  snap.vehicle_type,
+          count:         snap.count,
+          loading_date:  snap.loading_date,
+          time_slot:     snap.time_slot,
+          permit_number: snap.permit_number,
+          is_edit:       true
+        });
+        showSuccessScreen(
+          `تم تعديل الحجز #${displayId}`,
+          `${snap.warehouse} | ${snap.vehicle_type} | ${snap.count} عربية<br>${snap.time_slot}`,
+          'edit'
+        );
+      } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
+
+    } else {
+      // POST
+      const res = await fetch(`${SB}/rest/v1/bookings`, {
+        method: 'POST',
+        headers: { ...HDR, 'Prefer': 'return=representation' },
+        body: JSON.stringify({
+          client_id: user.id, warehouse: bk.warehouse, vehicle_type: bk.vehicle,
+          count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot,
+          phone: user.phone || null, governorate: user.governorate || null,
+          permit_number: bk.permit || null,
+          status: 'قيد الانتظار'
+        })
+      });
+      if (res.ok) {
+        const result = await res.json();
+        const booking = result[0];
+        const displayId = booking.seq_number || booking.id;
+        // 💤 لو العميل كان غير نشط — رجّعه نشط (fire-and-forget)
+        fetch(`${SB}/rest/v1/clients?id=eq.${user.id}`, {
+          method: 'PATCH',
+          headers: { ...HDR, 'Prefer':'return=minimal' },
+          body: JSON.stringify({ is_active: true })
+        }).catch(()=>{});
+        // 📜 سجل الحجز الجديد
+        logActivity('cl_create_booking','➕ حجز جديد #'+displayId,{
+          booking_id:booking.id, seq_number:booking.seq_number,
+          warehouse:booking.warehouse, vehicle_type:booking.vehicle_type,
+          count:booking.count, loading_date:booking.loading_date, time_slot:booking.time_slot
+        });
+        // بعت رسالة تأكيد تليجرام عبر n8n
+        sendTelegramConfirm(booking);
+        showSuccessScreen(
+          `تم الحجز بنجاح! #${displayId}`,
+          `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
+          'new'
+        );
+      } else { showErr('حدث خطأ في الحجز، حاول مرة أخرى'); }
     }
+
+  } catch(e) { showErr('خطأ في الاتصال بالسيرفر'); }
+  resetBtn();
+}
+
+function resetBtn() {
+  const btn = document.getElementById('bConfirm');
+  btn.disabled = false;
+  btn.textContent = editMode ? '💾 حفظ التعديل' : '💾 حفظ الحجز';
+}
+
+function showSuccessScreen(title, details, mode) {
+  // إخفاء فورم الخطوة 5 وإظهار شاشة النجاح
+  document.getElementById('formBtns').style.display    = 'none';
+  document.getElementById('successScreen').classList.add('show');
+
+  // إخفاء الـ dots
+  document.querySelector('.steps').style.display = 'none';
+
+  document.getElementById('successTitle').textContent  = title;
+  document.getElementById('successDetails').innerHTML  = details;
+
+  // Telegram activation banner - يظهر لو مش مربوط
+  checkAndShowTelegramBanner();
+
+  const actions = document.getElementById('successActions');
+  if (mode === 'new') {
+    actions.innerHTML = `
+      <button class="btn-close-app" onclick="closeOrReset()">✅ حفظ وإغلاق</button>
+      <button class="btn-new-bk"   onclick="startNewBooking()">➕ حجز جديد</button>
+      <button class="btn-go-list"  onclick="switchTab('my')">📋 شوف حجوزاتي</button>`;
+  } else {
+    actions.innerHTML = `
+      <button class="btn-close-app" onclick="switchTab('my')">📋 رجوع لحجوزاتي</button>
+      <button class="btn-new-bk"   onclick="startNewBooking()">➕ حجز جديد</button>`;
   }
+}
+
+async function checkAndShowTelegramBanner(){
+  // شيك لو العميل مربوط بالبوت
+  let telegramId = user.telegram_id || null;
+  try {
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id`, { headers: HDR });
+    const d = await r.json();
+    telegramId = d[0]?.telegram_id || null;
+    user.telegram_id = telegramId;
+    localStorage.setItem('hawa_user', JSON.stringify(user));
+  } catch(e){}
+
+  const banner = document.getElementById('tgBanner');
+  if (!telegramId) {
+    // مش مربوط - أظهر الزرار
+    banner.style.display = 'block';
+    const code = user.company_code || '';
+    banner.innerHTML = `
+      <div style="background:linear-gradient(135deg,rgba(0,136,204,0.15),rgba(0,136,204,0.05));border:1.5px solid rgba(0,136,204,0.4);border-radius:14px;padding:14px;margin-top:14px;text-align:center">
+        <div style="font-size:32px;margin-bottom:6px">📲</div>
+        <div style="font-size:14px;font-weight:700;color:#4ab3e8;margin-bottom:4px">فعّل إشعارات Telegram</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px;line-height:1.6">
+          لتوصلك رسالة QR code وتفاصيل الحجز تلقائياً على Telegram
+        </div>
+        <a href="https://t.me/hawa_car_bot?start=${encodeURIComponent(code)}" target="_blank"
+           style="display:inline-block;background:linear-gradient(135deg,#0088cc,#4ab3e8);color:white;text-decoration:none;
+           padding:10px 24px;border-radius:10px;font-weight:700;font-size:13px">
+          🔔 تفعيل الإشعارات
+        </a>
+      </div>`;
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+function closeOrReset() {
+  // ✅ خطوة 1: نقل لـ "حجوزاتى" دايماً (عشان لو tg.close فشلت، الـ user يشوف حركة)
+  const successEl = document.getElementById('successScreen');
+  if (successEl) successEl.classList.remove('show');
+  const formBtns = document.getElementById('formBtns');
+  if (formBtns) formBtns.style.display = '';
+  const steps = document.querySelector('.steps');
+  if (steps) steps.style.display = '';
+  exitEditMode();
+  switchTab('my');
+
+  // ✅ خطوة 2: حاول تـ close الـ WebApp (هـ تشتغل بس داخل Telegram client الحقيقى)
+  // فى المتصفح: postEvent بـ يـ post بس مفيش close فعلى → الـ user يفضل على "حجوزاتى"
+  if (tg && typeof tg.close === 'function') {
+    try { tg.close(); } catch (e) { console.warn('[closeOrReset] tg.close noop:', e); }
+  }
+}
+
+function startNewBooking() {
+  // reset كل حاجة وابدأ من الأول
+  exitEditMode();
+  document.getElementById('formBtns').style.display    = '';
+  document.getElementById('successScreen').classList.remove('show');
+  document.querySelector('.steps').style.display = '';
+  go(1);
+}
+
+// ===================== EDIT MODE =====================
+function startEdit(b) {
+  editMode = { id: b.id, seq_number: b.seq_number || null, oldCount: b.count };
+
+  bk.warehouse = b.warehouse;
+  bk.vehicle   = b.vehicle_type;
+  bk.dateStr   = b.loading_date;
+  bk.slot      = b.time_slot;
+  bk.count     = b.count;
+  // جيب الـ capacity من allVehicleTypes (اللى محمّلة من DB)
+  // جيب الـ capacity من الـ join data — لازم warehouse + type match
+  const veh = (allVehicleTypes || []).find(v => v.name === b.vehicle_type && v.warehouse_name === b.warehouse)
+           || (allVehicleTypes || []).find(v => v.name === b.vehicle_type); // fallback لو warehouse مش متاح
+  bk.cap       = veh ? (veh.capacity_per_hour || 5) : 6;
+  bk.remaining = 10;
+  bk.permit    = b.permit_number || null;
+
+  // Pre-select المخزن (يستخدم data-name علشان أى مخزن جديد يشتغل تلقائياً)
+  document.querySelectorAll('#s1 .opt').forEach(o => o.classList.remove('sel'));
+  const wOpt = document.querySelector(`#s1 .opt[data-name="${(b.warehouse||'').replace(/"/g,'\\"')}"]`)
+            || document.getElementById('opt-w-' + b.warehouse);  // fallback لأى hardcoded قديم
+  if (wOpt) { wOpt.classList.add('sel'); document.getElementById('b1').disabled = false; }
+
+  // Pre-select النوع (يستخدم data-name علشان أى نوع جديد يشتغل تلقائياً)
+  document.querySelectorAll('#s2 .opt').forEach(o => o.classList.remove('sel'));
+  const vOpt = document.querySelector(`#s2 .opt[data-name="${(b.vehicle_type||'').replace(/"/g,'\\"')}"]`)
+            || document.getElementById('opt-v-' + b.vehicle_type);  // fallback
+  if (vOpt) { vOpt.classList.add('sel'); document.getElementById('b2').disabled = false; }
+
+  // بانر التعديل (يعرض الـ seq_number لو موجود، وإلا الـ id)
+  document.getElementById('editBanner').classList.add('show');
+  document.getElementById('editBannerNum').textContent = b.seq_number || b.id;
+
+  switchTab('new');
+  go(1);
+}
+
+function exitEditMode() {
+  editMode = null;
+  document.getElementById('editBanner').classList.remove('show');
+  bk.warehouse = null; bk.vehicle = null; bk.cap = 0;
+  bk.dateStr   = null; bk.slot    = null; bk.remaining = 10; bk.count = 1; bk.permit = null;
+  document.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
+  ['b1','b2','b3','b4'].forEach(id => document.getElementById(id).disabled = true);
+  document.getElementById('permitCard').style.display = 'none';
+  document.getElementById('permitInput').value = '';
+}
+
+// ===================== MY BOOKINGS =====================
+// Cache للحجوزات الـ pending (مفتاحها id)
+const myBookingsCache = {};
+
+async function loadMyBookings() {
+  const container = document.getElementById('myList');
+  container.innerHTML = `<div class="loading-state">⏳ جاري التحميل...</div>`;
+
+  try {
+    const today    = new Date(); today.setHours(0,0,0,0);
+    const todayStr = fmtDate(today);
+
+    const r = await fetch(
+      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gte.${todayStr}&status=eq.${encodeURIComponent('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`,
+      { headers: HDR }
+    );
+    const data = await r.json();
+
+    if (!data.length) {
+      container.innerHTML = `<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات قادمة</p></div>`;
+      return;
+    }
+
+    // امسح الـ cache القديم وحدّثه
+    Object.keys(myBookingsCache).forEach(k => delete myBookingsCache[k]);
+
+    container.innerHTML = data.map(b => {
+      // خزّن الحجز فى الـ cache بدل ما نـ embed الـ JSON فى الـ HTML
+      myBookingsCache[b.id] = b;
+
+      const dateLabel = new Date(b.loading_date + 'T12:00:00')
+        .toLocaleDateString('ar-EG', { weekday:'short', day:'numeric', month:'long' });
+      const safeDate = (dateLabel || '').replace(/"/g, '&quot;');
+      const safeVehicle = (b.vehicle_type || '').replace(/"/g, '&quot;');
+      return `
+        <div class="bk-card">
+          <div class="bk-header">
+            <div>
+              <span class="bk-id" title="ID: ${b.id}">حجز #${b.seq_number || b.id}</span>
+              ${b.permit_number ? `<div style="font-size:11px;color:var(--gold-light);margin-top:3px;letter-spacing:0.3px">🎫 إذن #${b.permit_number}</div>` : ''}
+            </div>
+            <span class="bk-status pending">قيد الانتظار</span>
+          </div>
+          <div class="bk-row"><span class="bk-lbl">المخزن</span><span class="bk-val">${b.warehouse}</span></div>
+          <div class="bk-row"><span class="bk-lbl">النوع</span><span class="bk-val">${b.vehicle_type}</span></div>
+          <div class="bk-row"><span class="bk-lbl">اليوم</span><span class="bk-val gold">${dateLabel}</span></div>
+          <div class="bk-row"><span class="bk-lbl">الموعد</span><span class="bk-val gold">${b.time_slot}</span></div>
+          <div class="bk-row"><span class="bk-lbl">العدد</span><span class="bk-val">${b.count} عربية</span></div>
+          <div class="bk-actions">
+            <button class="bk-btn-edit"   data-action="edit"   data-id="${b.id}">✏️ تعديل</button>
+            <button class="bk-btn-cancel" data-action="cancel" data-id="${b.id}" data-date="${safeDate}" data-vehicle="${safeVehicle}">❌ إلغاء</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    // ربط الـ buttons بالـ event listeners (أكثر reliability من onclick attributes)
+    console.log('[loadMyBookings] cached', Object.keys(myBookingsCache).length, 'bookings');
+    container.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.id, 10);
+        console.log('[edit clicked] id=', id, 'cached?', !!myBookingsCache[id]);
+        startEditById(id);
+      });
+    });
+    container.querySelectorAll('button[data-action="cancel"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = parseInt(btn.dataset.id, 10);
+        showCancelDlg(id, btn.dataset.date || '', btn.dataset.vehicle || '');
+      });
+    });
+
+  } catch(e) {
+    console.error('loadMyBookings error:', e);
+    container.innerHTML = `<div class="loading-state">❌ خطأ في التحميل</div>`;
+  }
+}
+
+// helper: يجيب الحجز من الـ cache ويـ startEdit
+function startEditById(id) {
+  const b = myBookingsCache[id];
+  if (!b) {
+    showErr('الحجز مش لاقيه — افتح الصفحة من جديد');
+    return;
+  }
+  startEdit(b);
+}
+
+// لسه محتفظ بيها للـ backward compatibility (لو فى أى مكان تانى بيناديها)
+function decodeBooking(str) {
+  return JSON.parse(decodeURIComponent(str));
+}
+
+// ===================== CANCEL =====================
+// إشعار العميل بإلغاء الحجز عبر التليجرام (webhook → n8n)
+async function notifyClientCancellation(bookingIds) {
+  if (!Array.isArray(bookingIds)) bookingIds = [bookingIds];
+  if (!bookingIds.length) return;
+  try {
+    await fetch('https://n8n.gladiatorverse.net/webhook/cancel-notification', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ booking_ids: bookingIds })
+    });
+  } catch(e) {
+    console.warn('Cancel notification webhook failed:', e);
+  }
+}
+
+function showCancelDlg(id, dateLabel, vehicleType) {
+  document.getElementById('cancelMsg').textContent =
+    `هتلغي حجز ${vehicleType} يوم ${dateLabel}.\nمش هتقدر ترجع للحجز ده!`;
+  document.getElementById('cancelOverlay').classList.add('show');
+  document.getElementById('cancelYes').onclick = async () => {
+    hideCancelDlg();
+    await doCancelBooking(id);
+  };
+}
+
+function hideCancelDlg() {
+  document.getElementById('cancelOverlay').classList.remove('show');
+}
+
+async function doCancelBooking(id) {
+  try {
+    // اجلب الـ booking details قبل الإلغاء عشان نـ log
+    const cached = myBookingsCache && myBookingsCache[id];
+    const res = await fetch(`${SB}/rest/v1/bookings?id=eq.${id}`, {
+      method: 'PATCH',
+      headers: { ...HDR, 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ status: 'ملغي' })
+    });
+    if (res.ok) {
+      // 📜 سجل الإلغاء
+      logActivity('cl_cancel_booking','🚫 ألغى حجز #'+(cached?.seq_number || id),{
+        booking_id:id, seq_number:cached?.seq_number,
+        warehouse:cached?.warehouse, vehicle_type:cached?.vehicle_type,
+        loading_date:cached?.loading_date, time_slot:cached?.time_slot
+      });
+      // إشعار العميل على التليجرام (الحجز اتلغى من الموبايل)
+      notifyClientCancellation([id]);
+      showSuccess(`✅ تم إلغاء الحجز #${id} بنجاح`);
+      await loadMyBookings();
+    } else {
+      showErr('حدث خطأ في الإلغاء، حاول تاني');
+    }
+  } catch(e) {
+    showErr('خطأ في الاتصال بالسيرفر');
+  }
+}
+
+// ===================== TELEGRAM NOTIFY =====================
+async function sendTelegramConfirm(booking) {
+  const dateLabel = new Date((booking.loading_date || bk.dateStr) + 'T12:00:00')
+    .toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  const isEdit = booking.is_edit || false;
+
+  // جيب telegram_id من Supabase مباشرة — مش من localStorage
+  let telegramId = user.telegram_id || null;
+  try {
+    const tr = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id`, { headers: HDR });
+    const td = await tr.json();
+    if (td[0]?.telegram_id) {
+      telegramId = td[0].telegram_id;
+      user.telegram_id = telegramId; // حدّث localStorage كمان
+      localStorage.setItem('hawa_user', JSON.stringify(user));
+    }
+  } catch(e) {}
+
+  const payload = {
+    action:        isEdit ? 'edit' : 'new',
+    telegram_id:   telegramId,
+    client_name:   user.name,
+    company_code:  user.company_code,
+    booking_id:    booking.id,
+    seq_number:    booking.seq_number || null,
+    warehouse:     booking.warehouse    || bk.warehouse,
+    vehicle_type:  booking.vehicle_type || bk.vehicle,
+    count:         booking.count        ?? bk.count,
+    loading_date:  booking.loading_date || bk.dateStr,
+    date_label:    dateLabel,
+    time_slot:     booking.time_slot    || bk.slot,
+    permit_number: booking.permit_number || bk.permit || null,
+    is_edit:       isEdit
+  };
+
+  fetch(N8N, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+}
+
+// ===================== HELPERS =====================
+function showErr(msg) {
+  const el = document.getElementById('alert');
+  el.textContent = '⚠️ ' + msg;
+  el.className = 'alert show-error';
+  window.scrollTo(0, 0);
+}
+function showSuccess(msg) {
+  const el = document.getElementById('alert');
+  el.textContent = msg;
+  el.className = 'alert show-success';
+  window.scrollTo(0, 0);
+}
+function hideAlert() {
+  document.getElementById('alert').className = 'alert';
+}
 </script>
 </body>
 </html>
