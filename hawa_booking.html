@@ -3359,17 +3359,7 @@ async function checkAndShowTelegramBanner(){
 }
 
 function closeOrReset() {
-  // داخل Telegram WebApp → حاول تـ close
-  if (tg && typeof tg.close === 'function') {
-    try {
-      tg.close();
-      return;
-    } catch (e) {
-      console.warn('[closeOrReset] tg.close failed:', e);
-    }
-  }
-  // خارج Telegram أو لو الـ close فشلت → انقل لـ "حجوزاتى" 
-  // (logical "saved" state — الحجز اتـ saved بالفعل)
+  // ✅ خطوة 1: نقل لـ "حجوزاتى" دايماً (عشان لو tg.close فشلت، الـ user يشوف حركة)
   const successEl = document.getElementById('successScreen');
   if (successEl) successEl.classList.remove('show');
   const formBtns = document.getElementById('formBtns');
@@ -3378,6 +3368,12 @@ function closeOrReset() {
   if (steps) steps.style.display = '';
   exitEditMode();
   switchTab('my');
+
+  // ✅ خطوة 2: حاول تـ close الـ WebApp (هـ تشتغل بس داخل Telegram client الحقيقى)
+  // فى المتصفح: postEvent بـ يـ post بس مفيش close فعلى → الـ user يفضل على "حجوزاتى"
+  if (tg && typeof tg.close === 'function') {
+    try { tg.close(); } catch (e) { console.warn('[closeOrReset] tg.close noop:', e); }
+  }
 }
 
 function startNewBooking() {
