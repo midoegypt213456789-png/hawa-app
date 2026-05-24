@@ -8,6 +8,9 @@
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
 
+  /* 🚫 Bio UI hidden per Mido's request (JS functions kept intact for safety) */
+  #bioBtnHeader, #bioEnrollBanner, #bioModal { display: none !important; }
+
   :root {
     --gold: #C9A84C; --gold-light: #E8C97A;
     --dark: #0A0A0A; --dark2: #111111; --dark3: #1A1A1A;
@@ -391,29 +394,27 @@
         <a href="#" onclick="openRecoveryModal(); return false;" style="font-size:11.5px;color:#888;text-decoration:none">هل نسيت كلمة المرور؟</a>
       </div>
 
-      <!-- Login button + Bio icon side by side (CIB style) -->
-      <div style="display:flex;gap:10px;align-items:stretch">
-        <button id="bioLockBioBtn" onclick="bioLoginNow()" style="display:none;background:#161616;border:1.5px solid #C9A84C;color:#E8C97A;border-radius:11px;padding:0 14px;cursor:pointer;flex-shrink:0;align-items:center;justify-content:center;min-width:56px" title="دخول بالبصمة">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"></path>
-            <path d="M14 13.12c0 2.38 0 6.38-1 8.88"></path>
-            <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"></path>
-            <path d="M2 12a10 10 0 0 1 18-6"></path>
-            <path d="M2 16h.01"></path>
-            <path d="M21.8 16c.2-2 .131-5.354 0-6"></path>
-            <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"></path>
-            <path d="M8.65 22c.21-.66.45-1.32.57-2"></path>
-            <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"></path>
-          </svg>
-        </button>
-        <button id="lockLoginBtn" onclick="passwordLogin()" style="flex:1;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:11px;padding:14px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer">تسجيل الدخول</button>
-      </div>
+      <!-- Login button (full width — bio removed per Mido's request) -->
+      <button id="lockLoginBtn" onclick="passwordLogin()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:11px;padding:14px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer">تسجيل الدخول</button>
 
       <!-- Error message -->
       <div id="bioLockError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:10px;padding:10px 14px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
 
+      <!-- ─── أو ─── Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin-top:24px;color:#333;font-size:10px;letter-spacing:1px">
+        <div style="flex:1;height:1px;background:#1a1a1a"></div>
+        <span>أو</span>
+        <div style="flex:1;height:1px;background:#1a1a1a"></div>
+      </div>
+
+      <!-- 🆕 New client registration button -->
+      <button id="lockRegisterBtn" onclick="openRegisterModal()" style="width:100%;margin-top:14px;background:transparent;border:1.5px solid rgba(232,201,122,0.35);color:#E8C97A;border-radius:11px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+        <span style="font-size:17px">🆕</span>
+        <span>تسجيل عميل جديد</span>
+      </button>
+
       <!-- Footer -->
-      <div style="text-align:center;font-size:10px;color:#333;margin-top:44px;letter-spacing:0.5px">HAWA CO © 2026</div>
+      <div style="text-align:center;font-size:10px;color:#333;margin-top:36px;letter-spacing:0.5px">HAWA CO © 2026</div>
 
     </div>
   </div>
@@ -443,10 +444,6 @@
         <input type="tel" inputmode="tel" id="recoveryPhone" placeholder="مثال: 01018303060" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box;direction:ltr;text-align:right" onkeypress="if(event.key==='Enter')recoverySubmit()">
 
         <button id="recoverySubmitBtn" onclick="recoverySubmit()" style="width:100%;margin-top:16px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer">📨 أرسلهم على Telegram</button>
-
-        <div style="text-align:center;margin-top:14px;font-size:11px;color:#666;line-height:1.6">
-          ⚠️ لازم تكون ضاغط <b>/start</b> فى @hawa_car_bot قبل كده
-        </div>
       </div>
 
       <!-- Success state -->
@@ -459,6 +456,106 @@
 
       <!-- Error message -->
       <div id="recoveryError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:9px;padding:10px 12px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 🆕 New Client Registration Modal -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="registerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100002;align-items:center;justify-content:center;padding:18px;font-family:Cairo,sans-serif;overflow-y:auto" onclick="if(event.target===this)closeRegisterModal()">
+    <div style="background:#111;border:1px solid #2A2A2A;border-radius:14px;padding:24px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.6);margin:20px auto">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:800;color:#E8C97A">🆕 تسجيل عميل جديد</div>
+        <button onclick="closeRegisterModal()" style="background:transparent;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1;padding:0 6px">×</button>
+      </div>
+
+      <!-- Form -->
+      <div id="registerForm">
+        <div style="font-size:12px;color:#aaa;margin-bottom:16px;line-height:1.7">
+          املأ بياناتك وهـ يـ review طلبك الإدارة وتعتمد حسابك.
+        </div>
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">الاسم الكامل <span style="color:#e05555">*</span></label>
+        <input type="text" id="regName" placeholder="مثال: محمد على" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">رقم الموبيل <span style="color:#e05555">*</span></label>
+        <input type="tel" inputmode="tel" id="regPhone" placeholder="01xxxxxxxxx" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كود العميل <span style="color:#e05555">*</span></label>
+        <input type="text" id="regCompanyCode" placeholder="اختار كود من 2-10 حروف/أرقام" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
+
+        <div style="display:flex;gap:10px;margin-bottom:10px">
+          <div style="flex:1">
+            <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">اسم المستخدم <span style="color:#e05555">*</span></label>
+            <input type="text" id="regUsername" placeholder="username" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
+          </div>
+          <div style="flex:1">
+            <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كلمة المرور <span style="color:#e05555">*</span></label>
+            <input type="text" id="regPassword" placeholder="4 حروف على الأقل" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
+          </div>
+        </div>
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المحافظة <span style="color:#e05555">*</span></label>
+        <select id="regGovernorate" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px;cursor:pointer">
+          <option value="">— اختار المحافظة —</option>
+          <optgroup label="القاهرة الكبرى">
+            <option>القاهرة</option>
+            <option>الجيزة</option>
+            <option>القليوبية</option>
+          </optgroup>
+          <optgroup label="الدلتا">
+            <option>الشرقية</option>
+            <option>المنوفية</option>
+            <option>الدقهلية</option>
+            <option>الغربية</option>
+            <option>البحيرة</option>
+            <option>كفر الشيخ</option>
+            <option>دمياط</option>
+            <option>شمال سيناء</option>
+            <option>جنوب سيناء</option>
+          </optgroup>
+          <optgroup label="الوجه البحرى">
+            <option>الإسكندرية</option>
+            <option>بورسعيد</option>
+            <option>السويس</option>
+            <option>الإسماعيلية</option>
+            <option>مطروح</option>
+          </optgroup>
+          <optgroup label="الوجه القبلى">
+            <option>المنيا</option>
+            <option>سوهاج</option>
+            <option>بني سويف</option>
+            <option>أسوان</option>
+            <option>الفيوم</option>
+            <option>أسيوط</option>
+            <option>قنا</option>
+            <option>الأقصر</option>
+            <option>البحر الأحمر</option>
+            <option>الوادي الجديد</option>
+          </optgroup>
+        </select>
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المركز / المدينة <span style="color:#e05555">*</span></label>
+        <input type="text" id="regCity" placeholder="مثال: شبرا الخيمة" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">العنوان التفصيلى</label>
+        <input type="text" id="regAddress" placeholder="(اختيارى)" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+
+        <button id="registerSubmitBtn" onclick="registerSubmit()" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ تسجيل الحساب</button>
+      </div>
+
+      <!-- Success state -->
+      <div id="registerSuccess" style="display:none;text-align:center;padding:12px 0">
+        <div style="font-size:48px;margin-bottom:12px">✅</div>
+        <div style="font-size:15px;color:#4CAF7D;font-weight:800;margin-bottom:8px">تم استلام طلبك</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.7">الإدارة هـ تنظر فى الطلب خلال ساعات.<br>هـ تقدر تدخل بعد الاعتماد.</div>
+        <button onclick="closeRegisterModal()" style="margin-top:16px;background:#1A1A1A;border:1px solid #2A2A2A;color:#fff;border-radius:9px;padding:10px 24px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">تم</button>
+      </div>
+
+      <!-- Error message -->
+      <div id="registerError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:9px;padding:10px 12px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
     </div>
   </div>
 
@@ -1717,6 +1814,128 @@ async function recoverySubmit(){
     showRecoveryError(recoveryErrorMessage(e.name === 'AbortError' ? 'timeout' : 'network'));
     btn.disabled = false;
     btn.textContent = origText;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🆕 New Client Registration
+// ═══════════════════════════════════════════════════════════
+// Flow:
+//   1. User يضغط "تسجيل عميل جديد" → openRegisterModal()
+//   2. User يـ fill form → registerSubmit()
+//   3. fetch إلى Supabase RPC register_new_client (direct, no n8n)
+//   4. RPC يـ validate + check uniqueness + INSERT (approval_status='pending')
+//   5. Success → عرض "تم الإرسال، استنى الاعتماد"
+// ═══════════════════════════════════════════════════════════
+
+function openRegisterModal(){
+  const modal = document.getElementById('registerModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('registerForm').style.display = 'block';
+  document.getElementById('registerSuccess').style.display = 'none';
+  document.getElementById('registerError').style.display = 'none';
+
+  setTimeout(() => document.getElementById('regName')?.focus(), 80);
+}
+
+function closeRegisterModal(){
+  const modal = document.getElementById('registerModal');
+  if (modal) modal.style.display = 'none';
+  // Cleanup all form fields
+  ['regName','regPhone','regCompanyCode','regUsername','regPassword','regGovernorate','regCity','regAddress']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('registerError').style.display = 'none';
+}
+
+function showRegisterError(msg){
+  const el = document.getElementById('registerError');
+  if (el){ el.style.display = 'block'; el.textContent = msg; }
+}
+function hideRegisterError(){
+  const el = document.getElementById('registerError');
+  if (el) el.style.display = 'none';
+}
+
+function registerErrorMessage(error){
+  switch(error){
+    case 'invalid_name':          return 'الاسم قصير — اكتب الاسم كامل';
+    case 'invalid_phone':         return 'رقم الموبيل غير صحيح — لازم يبدأ بـ 010/011/012/015 ويكون 11 رقم';
+    case 'invalid_company_code':  return 'كود العميل غير صحيح — من 2 لـ 10 حروف/أرقام';
+    case 'invalid_username':      return 'اسم المستخدم قصير — 3 حروف على الأقل';
+    case 'invalid_password':      return 'كلمة المرور قصيرة — 4 حروف على الأقل';
+    case 'invalid_governorate':   return 'اختار المحافظة';
+    case 'invalid_city':          return 'املأ المركز/المدينة';
+    case 'company_code_exists':   return 'الكود ده مستخدم بالفعل — اختار كود تانى';
+    case 'username_exists':       return 'اسم المستخدم ده مستخدم — اختار اسم تانى';
+    case 'rate_limit':            return 'حاولت كتير — استنى ساعة وحاول تانى';
+    case 'timeout':               return '⏱️ انتهى الوقت — حاول تانى';
+    case 'network':               return '❌ خطأ فى الشبكة — حاول تانى';
+    default:                      return '❌ خطأ: ' + (error || 'غير معروف');
+  }
+}
+
+async function registerSubmit(){
+  hideRegisterError();
+
+  // اقرأ القيم
+  const payload = {
+    name:          (document.getElementById('regName').value || '').trim(),
+    phone:         (document.getElementById('regPhone').value || '').trim(),
+    company_code:  (document.getElementById('regCompanyCode').value || '').trim(),
+    username:      (document.getElementById('regUsername').value || '').trim(),
+    password:      (document.getElementById('regPassword').value || '').trim(),
+    governorate:   (document.getElementById('regGovernorate').value || '').trim(),
+    city:          (document.getElementById('regCity').value || '').trim(),
+    address:       (document.getElementById('regAddress').value || '').trim(),
+    ua:            (navigator.userAgent || '').substring(0, 200)
+  };
+
+  // Client-side basic validation (RPC هـ يـ recheck برضو)
+  if (payload.name.length < 2)        return showRegisterError(registerErrorMessage('invalid_name'));
+  if (!/^01[0125][0-9]{8}$/.test(payload.phone.replace(/[\s\-\+]/g, '')))
+                                       return showRegisterError(registerErrorMessage('invalid_phone'));
+  if (!/^[a-zA-Z0-9_-]{2,10}$/.test(payload.company_code))
+                                       return showRegisterError(registerErrorMessage('invalid_company_code'));
+  if (payload.username.length < 3)    return showRegisterError(registerErrorMessage('invalid_username'));
+  if (payload.password.length < 4)    return showRegisterError(registerErrorMessage('invalid_password'));
+  if (!payload.governorate)           return showRegisterError(registerErrorMessage('invalid_governorate'));
+  if (payload.city.length < 2)        return showRegisterError(registerErrorMessage('invalid_city'));
+
+  const btn = document.getElementById('registerSubmitBtn');
+  const orig = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ جارى التسجيل...';
+
+  const ac = new AbortController();
+  const to = setTimeout(() => ac.abort(), 15000);
+
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/register_new_client`, {
+      method: 'POST',
+      headers: { ...HDR, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_data: payload }),
+      signal: ac.signal
+    });
+    clearTimeout(to);
+
+    const data = await r.json().catch(() => ({}));
+
+    if (data.success){
+      // ✅ نجح
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('registerSuccess').style.display = 'block';
+      hideRegisterError();
+    } else {
+      showRegisterError(registerErrorMessage(data.error));
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  } catch(e){
+    clearTimeout(to);
+    showRegisterError(registerErrorMessage(e.name === 'AbortError' ? 'timeout' : 'network'));
+    btn.disabled = false;
+    btn.textContent = orig;
   }
 }
 
