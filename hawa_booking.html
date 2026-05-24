@@ -3359,7 +3359,25 @@ async function checkAndShowTelegramBanner(){
 }
 
 function closeOrReset() {
-  if (tg && tg.close) { tg.close(); } else { startNewBooking(); }
+  // داخل Telegram WebApp → حاول تـ close
+  if (tg && typeof tg.close === 'function') {
+    try {
+      tg.close();
+      return;
+    } catch (e) {
+      console.warn('[closeOrReset] tg.close failed:', e);
+    }
+  }
+  // خارج Telegram أو لو الـ close فشلت → انقل لـ "حجوزاتى" 
+  // (logical "saved" state — الحجز اتـ saved بالفعل)
+  const successEl = document.getElementById('successScreen');
+  if (successEl) successEl.classList.remove('show');
+  const formBtns = document.getElementById('formBtns');
+  if (formBtns) formBtns.style.display = '';
+  const steps = document.querySelector('.steps');
+  if (steps) steps.style.display = '';
+  exitEditMode();
+  switchTab('my');
 }
 
 function startNewBooking() {
