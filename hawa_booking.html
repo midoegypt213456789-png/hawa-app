@@ -388,7 +388,7 @@
 
       <!-- Forgot password -->
       <div style="text-align:right;margin-bottom:22px;margin-top:8px">
-        <a href="#" onclick="alert('اتصل بالإدارة لإعادة تعيين كلمة المرور'); return false;" style="font-size:11.5px;color:#888;text-decoration:none">هل نسيت كلمة المرور؟</a>
+        <a href="#" onclick="openRecoveryModal(); return false;" style="font-size:11.5px;color:#888;text-decoration:none">هل نسيت كلمة المرور؟</a>
       </div>
 
       <!-- Login button + Bio icon side by side (CIB style) -->
@@ -415,6 +415,50 @@
       <!-- Footer -->
       <div style="text-align:center;font-size:10px;color:#333;margin-top:44px;letter-spacing:0.5px">HAWA CO © 2026</div>
 
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- 🔑 Credential Recovery Modal — يفتح من "نسيت كلمة المرور" -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div id="recoveryModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100002;align-items:center;justify-content:center;padding:18px;font-family:Cairo,sans-serif" onclick="if(event.target===this)closeRecoveryModal()">
+    <div style="background:#111;border:1px solid #2A2A2A;border-radius:14px;padding:24px;max-width:380px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.6)">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:800;color:#E8C97A">🔑 استرجاع بيانات الدخول</div>
+        <button onclick="closeRecoveryModal()" style="background:transparent;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1;padding:0 6px">×</button>
+      </div>
+
+      <!-- Form -->
+      <div id="recoveryForm">
+        <div style="font-size:12px;color:#aaa;margin-bottom:14px;line-height:1.7">
+          ادخل <b>كود العميل</b> و <b>رقم الموبيل</b> المسجّل عندنا، وهـ نبعتلك اسم المستخدم وكلمة المرور على Telegram.
+        </div>
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:6px;font-weight:700">كود العميل</label>
+        <input type="text" id="recoveryCompanyCode" placeholder="مثال: 7042" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:12px" onkeypress="if(event.key==='Enter')document.getElementById('recoveryPhone').focus()">
+
+        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:6px;font-weight:700">رقم الموبيل</label>
+        <input type="tel" inputmode="tel" id="recoveryPhone" placeholder="مثال: 01018303060" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:12px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box;direction:ltr;text-align:right" onkeypress="if(event.key==='Enter')recoverySubmit()">
+
+        <button id="recoverySubmitBtn" onclick="recoverySubmit()" style="width:100%;margin-top:16px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer">📨 أرسلهم على Telegram</button>
+
+        <div style="text-align:center;margin-top:14px;font-size:11px;color:#666;line-height:1.6">
+          ⚠️ لازم تكون ضاغط <b>/start</b> فى @hawa_car_bot قبل كده
+        </div>
+      </div>
+
+      <!-- Success state -->
+      <div id="recoverySuccess" style="display:none;text-align:center;padding:12px 0">
+        <div style="font-size:48px;margin-bottom:12px">✅</div>
+        <div style="font-size:15px;color:#4CAF7D;font-weight:800;margin-bottom:8px">تم الإرسال</div>
+        <div style="font-size:12px;color:#aaa;line-height:1.7">شيك Telegram دلوقتى<br>هـ تلاقى اسم المستخدم وكلمة المرور</div>
+        <button onclick="closeRecoveryModal()" style="margin-top:16px;background:#1A1A1A;border:1px solid #2A2A2A;color:#fff;border-radius:9px;padding:10px 24px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">تم</button>
+      </div>
+
+      <!-- Error message -->
+      <div id="recoveryError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:9px;padding:10px 12px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
     </div>
   </div>
 
@@ -746,6 +790,100 @@ function bioIsApprovedClient(){
 }
 
 // ═══════════════════════════════════════════════════════════
+// 🧭 detectBioContext — يـ classify الـ environment ويـ recommend strategy
+// مفيش side effects، مفيش async — صافى لـ routing فقط
+// ═══════════════════════════════════════════════════════════
+function detectBioContext(){
+  const ua = navigator.userAgent || '';
+  const isInTg = bioIsInTelegram();
+  const tgVer = isInTg ? parseFloat(tg.version || '0') : 0;
+  const tgPlatform = isInTg ? (tg.platform || 'unknown') : null;
+  const hasTgBioMgr = !!(isInTg && tg.BiometricManager && tgVer >= 7.2);
+
+  // OS detection
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (/Mac/.test(ua) && navigator.maxTouchPoints > 1);
+  const isAndroid = /Android/i.test(ua);
+  let osVersion = null;
+  if (isIOS) {
+    const m = ua.match(/OS (\d+)_(\d+)/);
+    if (m) osVersion = parseInt(m[1], 10);
+  } else if (isAndroid) {
+    const m = ua.match(/Android (\d+)/);
+    if (m) osVersion = parseInt(m[1], 10);
+  }
+
+  const hasWebAuthn = !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create);
+  const isSecure = window.isSecureContext && location.protocol === 'https:';
+
+  // Strategy decision
+  // A_telegram : فى Telegram + BiometricManager متاح ⇒ نستخدمه
+  // B_webauthn : متصفح خارجى أو ديسكتوب ⇒ WebAuthn passkey
+  // C_blocked  : Telegram WebView بدون BiometricManager (Telegram قديم أو platform مش بـ يدعم) ⇒ مش هنا إلا OTP أو فتح متصفح
+  let strategy;
+  let guidance = '';
+  if (!isSecure) {
+    strategy = 'blocked_https';
+    guidance = 'الموقع لازم يكون HTTPS';
+  } else if (isInTg && hasTgBioMgr) {
+    strategy = 'A_telegram';
+    guidance = 'هنستخدم بصمة Telegram';
+  } else if (isInTg && !hasTgBioMgr) {
+    // فى Telegram لكن BiometricManager مش متاح (إصدار قديم أو platform غير مدعوم)
+    strategy = 'C_open_browser';
+    if (isIOS) {
+      guidance = 'افتح الصفحة فى Safari خارج Telegram عشان Face ID/Touch ID يشتغل';
+    } else if (isAndroid) {
+      guidance = 'افتح الصفحة فى Chrome خارج Telegram عشان البصمة تشتغل (Telegram WebView ما بـ يقدرش يـ access البصمة على الجهاز ده)';
+    } else {
+      guidance = 'افتح الصفحة فى المتصفح خارج Telegram';
+    }
+  } else if (hasWebAuthn) {
+    strategy = 'B_webauthn';
+    if (isIOS) guidance = 'هنستخدم Face ID/Touch ID';
+    else if (isAndroid) guidance = 'هنستخدم بصمة الجهاز';
+    else guidance = 'هنستخدم بصمة الجهاز';
+  } else {
+    strategy = 'blocked_unsupported';
+    guidance = 'المتصفح ده ما بـ يدعمش البصمة — جرّب Chrome أو Safari';
+  }
+
+  return {
+    isInTelegram: isInTg,
+    tgVersion: tgVer,
+    tgPlatform,
+    hasTgBioMgr,
+    isIOS,
+    isAndroid,
+    osVersion,
+    hasWebAuthn,
+    isSecure,
+    strategy,
+    guidance,
+    // معلومات للـ logging
+    summary: `tg=${isInTg ? `${tgPlatform}/v${tgVer}` : 'no'} os=${isIOS ? 'ios' : isAndroid ? 'android' : 'other'}/${osVersion || '?'} wa=${hasWebAuthn ? 'y' : 'n'} strat=${strategy}`
+  };
+}
+
+// 📝 يـ log فشل enrollment/login فى activity_log عشان نـ diagnose من admin
+// silent fire-and-forget — مش هـ يـ block الـ user flow لو فشل
+function bioLogFailure(action, errName, errMessage, extra){
+  try {
+    if (typeof logActivity !== 'function') return;
+    const ctx = detectBioContext();
+    const details = {
+      error_name: errName || 'unknown',
+      error_message: (errMessage || '').substring(0, 200),
+      context: ctx.summary,
+      strategy: ctx.strategy,
+      ua: (navigator.userAgent || '').substring(0, 200),
+      ...extra
+    };
+    // action: 'cl_bio_enroll_failed' | 'cl_bio_login_failed'
+    logActivity(action, action === 'cl_bio_enroll_failed' ? '⚠️ فشل تسجيل بصمة' : '⚠️ فشل دخول بالبصمة', details);
+  } catch(e){ /* logging يـ never throws */ }
+}
+
+// ═══════════════════════════════════════════════════════════
 // تسجيل بصمة جديدة على الجهاز ده (router)
 // ═══════════════════════════════════════════════════════════
 async function enrollBiometric(){
@@ -806,6 +944,7 @@ async function enrollViaTelegram(){
     };
 
     if (!bio) {
+      bioLogFailure('cl_bio_enroll_failed', 'TgBioMgrMissing', 'BiometricManager غير متاح', { tg_version: tgVer, tg_platform: platform });
       showFallback('❌ BiometricManager غير متاح');
       cleanup(); return resolve(false);
     }
@@ -813,18 +952,20 @@ async function enrollViaTelegram(){
     // Telegram BiometricManager متاح من Bot API v7.2 (يونيو 2024)
     const verNum = parseFloat(tgVer);
     if (!isNaN(verNum) && verNum < 7.2) {
+      bioLogFailure('cl_bio_enroll_failed', 'TgVersionOld', `Telegram ${tgVer} < 7.2`, { tg_version: tgVer, tg_platform: platform });
       showFallback('⚠️ Telegram قديم — حدّثه من Play Store/App Store');
       cleanup(); return resolve(false);
     }
 
-    // Timeout على init — لو الـ Telegram ما رجعش الـ callback، اخرج
+    // ⏱️ Timeout على init (15s — كان 8s، لكن networks بطيئة بـ يـ false-trigger)
     let initDone = false;
     const initTimer = setTimeout(() => {
       if (!initDone) {
+        bioLogFailure('cl_bio_enroll_failed', 'TgInitTimeout', 'init callback لم يـ fire خلال 15s', { tg_version: tgVer, tg_platform: platform });
         showFallback('⏱️ Telegram ما رجعش callback — الـ feature مش مدعوم على الـ client ده');
         cleanup(); resolve(false);
       }
-    }, 8000);
+    }, 15000);
 
     bio.init(() => {
       initDone = true;
@@ -832,6 +973,7 @@ async function enrollViaTelegram(){
       console.log('[bio] Telegram init:', { isInited: bio.isInited, isAvailable: bio.isBiometricAvailable, type: bio.biometricType });
 
       if (!bio.isBiometricAvailable) {
+        bioLogFailure('cl_bio_enroll_failed', 'TgBioNotAvailable', `biometricType=${bio.biometricType || 'unknown'}`, { tg_version: tgVer, tg_platform: platform });
         showFallback('❌ البصمة مش مفعّلة على الجهاز\nروح للإعدادات → Security → Fingerprint وفعّلها الأول');
         cleanup(); return resolve(false);
       }
@@ -840,6 +982,7 @@ async function enrollViaTelegram(){
       let accessDone = false;
       const accessTimer = setTimeout(() => {
         if (!accessDone) {
+          bioLogFailure('cl_bio_enroll_failed', 'TgAccessTimeout', 'requestAccess لم يـ callback خلال 30s', { tg_version: tgVer, tg_platform: platform });
           showFallback('⏱️ Telegram ما طلبش الإذن — bug فى الـ client');
           cleanup(); resolve(false);
         }
@@ -851,6 +994,7 @@ async function enrollViaTelegram(){
         console.log('[bio] requestAccess result:', granted);
 
         if (!granted) {
+          bioLogFailure('cl_bio_enroll_failed', 'TgAccessDenied', 'requestAccess رجع granted=false', { tg_version: tgVer, tg_platform: platform });
           showFallback('⏱️ الـ user رفض / Telegram رفض الإذن');
           cleanup(); return resolve(false);
         }
@@ -863,6 +1007,7 @@ async function enrollViaTelegram(){
         let updateDone = false;
         const updateTimer = setTimeout(() => {
           if (!updateDone) {
+            bioLogFailure('cl_bio_enroll_failed', 'TgUpdateTokenTimeout', 'updateBiometricToken لم يـ callback خلال 30s', { tg_version: tgVer, tg_platform: platform });
             showFallback('⏱️ updateBiometricToken timeout');
             cleanup(); resolve(false);
           }
@@ -874,6 +1019,7 @@ async function enrollViaTelegram(){
           console.log('[bio] updateBiometricToken result:', success);
 
           if (!success) {
+            bioLogFailure('cl_bio_enroll_failed', 'TgUpdateTokenFailed', 'updateBiometricToken رجع success=false', { tg_version: tgVer, tg_platform: platform });
             showFallback('❌ فشل حفظ البصمة فى Telegram');
             cleanup(); return resolve(false);
           }
@@ -909,6 +1055,7 @@ async function enrollViaTelegram(){
             cleanup(); resolve(true);
           } catch(e){
             console.error('[bio] DB save error:', e);
+            bioLogFailure('cl_bio_enroll_failed', 'TgDbSaveFailed', e.message || 'DB save error', { tg_version: tgVer, tg_platform: platform });
             showFallback('❌ فشل الحفظ فى السيرفر: ' + (e.message || 'error'));
             cleanup(); resolve(false);
           }
@@ -922,6 +1069,7 @@ async function enrollViaTelegram(){
 async function enrollViaWebAuthn(){
   const btn = document.getElementById('bioAddBtn');
   if (btn){ btn.disabled = true; btn.textContent = '⏳ ابصم على الجهاز...'; }
+  const enrollCtx = detectBioContext(); // snapshot الـ context قبل ما نبدأ
   try {
     const userIdBuf = new TextEncoder().encode(String(user.id));
     const cred = await navigator.credentials.create({
@@ -940,7 +1088,7 @@ async function enrollViaWebAuthn(){
         authenticatorSelection: {
           authenticatorAttachment: 'platform',  // بصمة الجهاز فقط
           userVerification: 'required',
-          residentKey: 'preferred'
+          residentKey: 'preferred'              // 🔑 يخلى الـ discoverable login يشتغل (Strategy C فى bioLoginNow)
         },
         timeout: 60000,
         attestation: 'none',
@@ -958,7 +1106,11 @@ async function enrollViaWebAuthn(){
       }
     } catch(e){}
 
-    const deviceLabel = bioDetectDevice();
+    // 🆕 device label أوضح يفرّق بين Telegram WebView و external browser
+    let deviceLabel = bioDetectDevice();
+    if (enrollCtx.isInTelegram) deviceLabel += ' (Telegram WebView)';
+    else if (enrollCtx.isIOS) deviceLabel += ' (Safari)';
+    else if (enrollCtx.isAndroid) deviceLabel += ' (Chrome)';
 
     const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
       method: 'POST',
@@ -984,7 +1136,7 @@ async function enrollViaWebAuthn(){
     }));
 
     if (typeof logActivity === 'function'){
-      logActivity('cl_biometric_enrolled', '🔐 سجّل دخول بالبصمة', { device: deviceLabel });
+      logActivity('cl_biometric_enrolled', '🔐 سجّل دخول بالبصمة', { device: deviceLabel, ctx: enrollCtx.summary });
     }
 
     bioToast('✅ تم تفعيل الدخول بالبصمة!');
@@ -993,13 +1145,35 @@ async function enrollViaWebAuthn(){
     if (document.getElementById('bioModal').style.display === 'flex') loadBiometrics();
   } catch(e){
     console.error('enrollViaWebAuthn error:', e);
-    // 🐛 Debug info كامل بدلاً من toast صغير
+    // 📝 سجّل فى DB قبل عرض الـ alert
+    bioLogFailure('cl_bio_enroll_failed', e.name || 'Error', e.message || 'unknown', { ctx_summary: enrollCtx.summary });
+
+    // 🐛 Debug info — context-aware (نصيحة محددة لكل سيناريو)
     const reasons = [];
     if (e.name === 'NotAllowedError') reasons.push('• تم الإلغاء أو انتهى الوقت\n• الـ device رفض الطلب\n• مفيش بصمة مسجّلة فى إعدادات الجهاز');
+    if (e.name === 'NotReadableError') reasons.push('• المتصفح ما قدرش يـ access البصمة على الجهاز\n• شائع جداً فى Telegram WebView على Android');
     if (e.name === 'NotSupportedError') reasons.push('• المتصفح أو الجهاز ما بيدعمش platform authenticator');
     if (e.name === 'InvalidStateError') reasons.push('• البصمة دى مسجلة بالفعل على الجهاز');
     if (e.name === 'SecurityError') reasons.push('• مشكلة فى الـ domain أو HTTPS');
     if (e.name === 'AbortError') reasons.push('• الطلب اتـ abort');
+
+    // 💡 الحلول — حسب الـ context
+    let solutions = [];
+    if (enrollCtx.isInTelegram) {
+      solutions.push('🌟 الحل الأهم: افتح الصفحة فى المتصفح خارج Telegram (Chrome على Android، Safari على iPhone) — البصمة هـ تشتغل هناك');
+    }
+    if (enrollCtx.isIOS) {
+      solutions.push('• تأكد إن Face ID/Touch ID مفعّل فى Settings → Face ID & Passcode');
+      solutions.push('• تأكد إن iCloud Keychain مفعّل: Settings → Apple ID → iCloud → Passwords & Keychain');
+      solutions.push('• خروج من Private Browsing');
+    } else if (enrollCtx.isAndroid) {
+      solutions.push('• تأكد إن Chrome متحدث (إعدادات Play Store)');
+      solutions.push('• Settings → Security → Screen lock — لازم يكون Fingerprint أو PIN');
+      solutions.push('• Chrome Settings → الخصوصية والأمان → اسمح للمواقع تستخدم security keys');
+      solutions.push('• على Huawei الحديثة: محتمل ما يشتغلش لأن مفيش GMS');
+    } else {
+      solutions.push('• جرّب Chrome أو Safari');
+    }
 
     const debugInfo = `❌ فشل تفعيل البصمة
 
@@ -1011,16 +1185,13 @@ async function enrollViaWebAuthn(){
 • HTTPS: ${location.protocol === 'https:' ? 'نعم ✅' : 'لأ ❌'}
 • Secure Context: ${window.isSecureContext ? 'نعم ✅' : 'لأ ❌'}
 • WebAuthn متاح: ${!!window.PublicKeyCredential ? 'نعم ✅' : 'لأ ❌'}
+• Context: ${enrollCtx.summary}
 
 🔍 الأسباب المحتملة:
 ${reasons.join('\n') || '• خطأ غير متوقع — جرّب تانى'}
 
 💡 الحلول:
-• تأكد إن Chrome متحدث (إعدادات Play Store)
-• Chrome Settings → الخصوصية → اسمح للمواقع تستخدم security keys
-• تأكد إن عندك Google Play Services على الجهاز
-• على Huawei الحديثة: محتمل ما يشتغلش لأن مفيش GMS
-• جرّب على Chrome على كمبيوتر ويندوز/ماك`;
+${solutions.join('\n')}`;
 
     if (tg && tg.showAlert) tg.showAlert(debugInfo);
     else alert(debugInfo);
@@ -1098,21 +1269,34 @@ async function showBioStatus(){
       return `<div style="display:flex;gap:8px;padding:3px 0;font-size:12px;color:${color};line-height:1.6"><span style="width:18px;flex-shrink:0">${ico}</span><span>${r.label}</span></div>`;
     }).join('');
 
-  // 📊 تحديد لو الـ enrollment ممكن أو لأ
-  const canEnroll = isHttps && isApproved && (inTelegram ? tgBioAvailable !== false : (hasPlatformAuth !== false));
+  // 📊 تحديد الحالة + النص + الـ enable
+  // ⚠️ خلينا permissive — حتى لو الـ probe بـ يقول "false" (مثلاً isUserVerifyingPlatformAuthenticatorAvailable
+  // على iOS Safari لما iCloud Keychain مش مفعّل) نخلى العميل يحاول. الـ probe ساعات بـ يكدب.
+  // الـ block الحقيقى هو لو HTTPS مش متاح أو الحساب مش معتمد — دول hard blocks.
+  const ctx = detectBioContext();
+  const hardBlocked = !isHttps || !isApproved;
+  const probeWarn = (inTelegram && tgBioAvailable === false) || (!inTelegram && hasPlatformAuth === false);
   const enrollBtn = document.getElementById('bioAddBtn');
   const browserBtn = document.getElementById('bioBrowserBtn');
   if (enrollBtn) {
-    enrollBtn.disabled = !canEnroll;
-    enrollBtn.style.opacity = canEnroll ? '1' : '0.5';
+    enrollBtn.disabled = hardBlocked;
+    enrollBtn.style.opacity = hardBlocked ? '0.5' : '1';
     if (!isApproved) enrollBtn.textContent = '⚠️ الحساب لازم يكون معتمد الأول';
     else if (!isHttps) enrollBtn.textContent = '⚠️ الموقع لازم يكون HTTPS';
-    else if (inTelegram && tgBioAvailable === false) enrollBtn.textContent = '⚠️ Telegram bio مش متاح';
-    else if (!inTelegram && hasPlatformAuth === false) enrollBtn.textContent = '⚠️ بصمة الجهاز مش مفعّلة';
+    else if (probeWarn && inTelegram) enrollBtn.textContent = '➕ جرّب تسجيل البصمة (Telegram قال مش متاح)';
+    else if (probeWarn && !inTelegram && ctx.isIOS) enrollBtn.textContent = '➕ جرّب — لو فشل فعّل iCloud Keychain';
+    else if (probeWarn && !inTelegram) enrollBtn.textContent = '➕ جرّب — لو فشل فعّل قفل الشاشة';
     else enrollBtn.textContent = '➕ تسجيل البصمة على الجهاز ده';
   }
-  // اظهر زرار "افتح فى المتصفح" لو فى Telegram (دائماً مفيد)
+  // 🌐 زرار "افتح فى المتصفح" — دلوقتى بيظهر فى حالتين:
+  //   1) جوّا Telegram (دايماً مفيد كـ alternative)
+  //   2) جوّا Telegram على iOS بدون BiometricManager (الحالة الأسوأ — نـ surface زرار بشكل بارز)
   if (browserBtn) browserBtn.style.display = inTelegram ? 'block' : 'none';
+
+  // 💡 لو الـ context هو C_open_browser (Telegram بدون BM)، اعرض الـ guidance فوق
+  if (ctx.strategy === 'C_open_browser') {
+    statusEl.innerHTML += `<div style="margin-top:10px;padding:10px;background:rgba(122,181,232,0.08);border:1px solid rgba(122,181,232,0.25);border-radius:8px;color:#7ab5e8;font-size:11.5px;line-height:1.7"><b>💡 توصية:</b> ${ctx.guidance}</div>`;
+  }
 }
 
 async function loadBiometrics(){
@@ -1182,6 +1366,9 @@ function bioOpenInBrowser(){
 }
 
 // 🔐 الدخول بالبصمة من الـ Lock Screen
+// 🆕 v15.1: لو localStorage فاضى أو الـ credentialId المحفوظ مش مطابق على الجهاز،
+//         نـ fallback لـ discoverable credentials (passkey style) — الجهاز نفسه يختار البصمة.
+//         ده بـ يحل: Safari ITP بـ يمسح localStorage، Telegram WebView ≠ external browser context، إلخ.
 async function bioLoginNow(){
   const btn = document.getElementById('bioLockBioBtn');
   const errEl = document.getElementById('bioLockError');
@@ -1190,58 +1377,122 @@ async function bioLoginNow(){
   if (errEl) errEl.style.display = 'none';
 
   const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
-  if (!stored || !stored.credentialId) {
-    showLockError('مفيش بصمة محفوظة على الجهاز ده');
-    if (btn){ btn.disabled = false; btn.innerHTML = originalIcon; }
-    return;
-  }
+  const hasStored = !!(stored && stored.credentialId);
 
-  try {
-    let credId = null;
-
-    // 📱 لو Telegram bio → استخدم BiometricManager
-    if (stored.provider === 'telegram' && tg && tg.BiometricManager) {
-      const tgCredId = await new Promise((resolve) => {
+  // 🎯 يحاول الـ Telegram path الأول لو stored.provider='telegram' و فى Telegram
+  // ⚙️ Helper inline — يـ resolve لـ credentialId أو يـ throw
+  const tryTelegram = async () => {
+    return await new Promise((resolve, reject) => {
+      let done = false;
+      const fail = (reason) => { if (!done) { done = true; reject(new Error(reason)); } };
+      const succeed = (id) => { if (!done) { done = true; resolve(id); } };
+      // safety timeout — Telegram BioMgr ساعات بـ يـ hang
+      const safety = setTimeout(() => fail('telegram_timeout'), 45000);
+      try {
         tg.BiometricManager.init(() => {
           tg.BiometricManager.authenticate({ reason: 'دخول HAWA' }, (success, token) => {
-            if (!success || !token) return resolve(null);
+            clearTimeout(safety);
+            if (!success || !token) return fail('cancelled');
             try {
               const parsed = JSON.parse(token);
-              resolve(parsed.credentialId || null);
-            } catch(e) { resolve(null); }
+              if (!parsed.credentialId) return fail('invalid_token');
+              succeed(parsed.credentialId);
+            } catch(e) { fail('invalid_token'); }
           });
         });
-      });
-      if (!tgCredId) throw new Error('cancelled');
-      credId = tgCredId;
-    } else {
-      // 🌐 WebAuthn — تحقق من البصمة على الـ device
-      const cred = await navigator.credentials.get({
-        publicKey: {
-          challenge: crypto.getRandomValues(new Uint8Array(32)),
-          allowCredentials: [{
-            id: bioBase64ToBuf(stored.credentialId),
-            type: 'public-key',
-            transports: ['internal']
-          }],
-          userVerification: 'required',
-          timeout: 60000
-        }
-      });
-      if (!cred) throw new Error('cancelled');
-      credId = bioBufToBase64(cred.rawId);
+      } catch(e){ clearTimeout(safety); fail(e.message || 'tg_error'); }
+    });
+  };
+
+  // ⚙️ Helper inline — WebAuthn (مع allowCredentials أو بدونها)
+  // useDiscoverable=true ⇒ allowCredentials: [] (الجهاز يختار)، مفيد لو stored ضايع
+  const tryWebAuthn = async (useDiscoverable) => {
+    const allow = (!useDiscoverable && hasStored)
+      ? [{ id: bioBase64ToBuf(stored.credentialId), type: 'public-key', transports: ['internal'] }]
+      : [];
+    const cred = await navigator.credentials.get({
+      publicKey: {
+        challenge: crypto.getRandomValues(new Uint8Array(32)),
+        allowCredentials: allow,
+        userVerification: 'required',
+        timeout: 60000
+      }
+    });
+    if (!cred) throw new Error('cancelled');
+    return bioBufToBase64(cred.rawId);
+  };
+
+  let credId = null;
+  let firstError = null;
+
+  try {
+    // ═══════════════════════════════════════════════════════════
+    // Strategy A: Telegram BiometricManager (لو محفوظ بـ provider='telegram' + فى Telegram)
+    // ═══════════════════════════════════════════════════════════
+    if (hasStored && stored.provider === 'telegram' && tg && tg.BiometricManager && bioIsInTelegram()) {
+      try {
+        credId = await tryTelegram();
+      } catch(e) {
+        firstError = e;
+        // لو Telegram فشل بـ سبب غير cancellation → نـ try WebAuthn fallback
+        // لو الـ user cancelled → احترم الخيار، ما نـ retry-ش
+        if (e.message === 'cancelled') throw e;
+      }
     }
 
-    // Verify with DB
+    // ═══════════════════════════════════════════════════════════
+    // Strategy B: WebAuthn بـ allowCredentials محدد (الـ flow القديم)
+    // ═══════════════════════════════════════════════════════════
+    if (!credId && hasStored && stored.provider !== 'telegram') {
+      try {
+        credId = await tryWebAuthn(false);
+      } catch(e) {
+        firstError = firstError || e;
+        // NotAllowedError ساعات بـ يعنى "user cancelled" وساعات "credential not found"
+        // الـ Discoverable path هـ يحل الـ "not found" — فلازم نـ try
+        if (e.name !== 'NotAllowedError' && e.name !== 'AbortError' && e.message !== 'cancelled') {
+          // أخطاء أخرى — احتفظ بيها، جرّب discoverable
+        }
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Strategy C: Discoverable Credentials (passkey style)
+    // يـ trigger لو: مفيش stored، أو B فشل، أو stored provider غير معروف
+    // ═══════════════════════════════════════════════════════════
+    if (!credId) {
+      const ctx = detectBioContext();
+      // لو فى Telegram WebView بدون BiometricManager → discoverable WebAuthn هـ يفشل
+      // نـ show رسالة محددة بدلاً من Crash
+      if (ctx.strategy === 'C_open_browser') {
+        throw new Error('telegram_webview_no_bio:' + ctx.guidance);
+      }
+      if (!ctx.hasWebAuthn) {
+        throw new Error('no_webauthn');
+      }
+      try {
+        credId = await tryWebAuthn(true);
+      } catch(e) {
+        firstError = firstError || e;
+        throw e;
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // Verify with DB — credId الناتج من أى Strategy
+    // ═══════════════════════════════════════════════════════════
     const verifyR = await fetch(
-      `${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}&select=client_id,clients(*)`,
+      `${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}&select=client_id,device_label,clients(*)`,
       { headers: HDR }
     );
     const verifyData = await verifyR.json();
     if (!Array.isArray(verifyData) || !verifyData.length) {
-      throw new Error('البصمة غير معروفة فى السيستم');
+      // البصمة شغّالة على الجهاز لكن مش موجودة فى DB
+      // ممكن العميل مسحها من admin أو من جهاز تانى
+      throw new Error('credential_not_in_db');
     }
     const client = verifyData[0].clients;
+    const matchedDeviceLabel = verifyData[0].device_label;
     if (!client) throw new Error('العميل مش موجود');
     if (client.approval_status !== 'approved') throw new Error('الحساب لسه غير معتمد من الإدارة');
     if (client.is_blocked) throw new Error('الحساب محظور — اتصل بالإدارة');
@@ -1266,6 +1517,23 @@ async function bioLoginNow(){
     });
     localStorage.setItem('hawa_user', JSON.stringify(user));
 
+    // 🔁 لو الـ login تم عبر discoverable و localStorage كانت فاضية، نـ restore الـ hint
+    // كده المرة الجاية الـ A أو B بـ يشتغلوا بدون passkey UI
+    if (!hasStored) {
+      try {
+        localStorage.setItem('hawa_biometric', JSON.stringify({
+          credentialId: credId,
+          clientId: client.id,
+          clientCode: client.company_code,
+          clientName: client.name,
+          deviceLabel: matchedDeviceLabel || bioDetectDevice(),
+          enrolledAt: new Date().toISOString(),
+          provider: 'webauthn',
+          restored: true
+        }));
+      } catch(e){}
+    }
+
     // Update last_used_at فى DB (silent)
     fetch(`${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}`, {
       method: 'PATCH',
@@ -1283,7 +1551,7 @@ async function bioLoginNow(){
 
     // Log activity
     if (typeof logActivity === 'function') {
-      logActivity('cl_login_bio', '🔐 دخول بالبصمة', { device: stored.deviceLabel });
+      logActivity('cl_login_bio', '🔐 دخول بالبصمة', { device: matchedDeviceLabel || stored?.deviceLabel || bioDetectDevice() });
     }
 
     // إعادة تحميل البيانات بدل reload الصفحة (أنظف)
@@ -1291,11 +1559,31 @@ async function bioLoginNow(){
     bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
   } catch(e) {
     console.error('bioLoginNow error:', e);
+    // 📝 سجّل الفشل فى activity_log عشان admin يقدر يـ diagnose
+    bioLogFailure('cl_bio_login_failed', e.name || 'Error', e.message || 'unknown', {
+      had_stored: hasStored,
+      provider: stored?.provider || 'none'
+    });
     let msg;
-    if (e.name === 'NotAllowedError') msg = '⏱️ تم الإلغاء أو انتهى الوقت';
-    else if (e.name === 'NotSupportedError') msg = 'الجهاز مش بيدعم البصمة';
-    else if (e.message === 'cancelled') msg = '⏱️ تم الإلغاء';
-    else msg = '❌ ' + (e.message || 'خطأ غير متوقع');
+    if (e.message && e.message.startsWith('telegram_webview_no_bio:')) {
+      msg = '⚠️ ' + e.message.replace('telegram_webview_no_bio:', '');
+    } else if (e.message === 'no_webauthn') {
+      msg = '❌ المتصفح ده ما بـ يدعمش البصمة — استخدم Chrome أو Safari';
+    } else if (e.message === 'credential_not_in_db') {
+      msg = '⚠️ البصمة دى مش معروفة فى النظام — سجّل بصمة جديدة';
+    } else if (e.message === 'telegram_timeout') {
+      msg = '⏱️ Telegram ما ردش — جرّب تانى أو افتح فى المتصفح';
+    } else if (e.name === 'NotAllowedError') {
+      msg = '⏱️ تم الإلغاء أو انتهى الوقت';
+    } else if (e.name === 'NotSupportedError') {
+      msg = 'الجهاز مش بيدعم البصمة';
+    } else if (e.name === 'SecurityError') {
+      msg = '🔒 خطأ أمان — تأكد إنك على HTTPS';
+    } else if (e.message === 'cancelled') {
+      msg = '⏱️ تم الإلغاء';
+    } else {
+      msg = '❌ ' + (e.message || 'خطأ غير متوقع');
+    }
     showLockError(msg);
   } finally {
     if (btn){ btn.disabled = false; btn.innerHTML = originalIcon; }
@@ -1307,6 +1595,128 @@ function showLockError(msg){
   if (errEl) {
     errEl.style.display = 'block';
     errEl.textContent = msg;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🔑 Credential Recovery — استرجاع بيانات الدخول عبر Telegram
+// ═══════════════════════════════════════════════════════════
+// User flow:
+//   1. الضغط على "هل نسيت كلمة المرور؟" → openRecoveryModal()
+//   2. ادخال كود العميل + رقم الموبيل → recoverySubmit()
+//   3. fetch إلى n8n /webhook/hawa-recover-credentials
+//   4. n8n بـ يستدعى RPC request_credentials_recovery (مع service_role)
+//   5. لو match → RPC يرجع username + password + telegram_id لـ n8n
+//   6. n8n يبعت Telegram message للعميل بـ البيانات
+//   7. UI يعرض "تم الإرسال — شيك Telegram"
+// ═══════════════════════════════════════════════════════════
+
+function openRecoveryModal(){
+  const modal = document.getElementById('recoveryModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('recoveryForm').style.display = 'block';
+  document.getElementById('recoverySuccess').style.display = 'none';
+  document.getElementById('recoveryError').style.display = 'none';
+
+  // Pre-fill كود العميل من lockUsername لو موجود
+  const existing = (document.getElementById('lockUsername')?.value || '').trim();
+  const codeEl = document.getElementById('recoveryCompanyCode');
+  if (codeEl){
+    codeEl.value = existing;
+    setTimeout(() => {
+      if (existing) document.getElementById('recoveryPhone').focus();
+      else codeEl.focus();
+    }, 80);
+  }
+}
+
+function closeRecoveryModal(){
+  const modal = document.getElementById('recoveryModal');
+  if (modal) modal.style.display = 'none';
+  // Cleanup
+  document.getElementById('recoveryCompanyCode').value = '';
+  document.getElementById('recoveryPhone').value = '';
+  document.getElementById('recoveryError').style.display = 'none';
+}
+
+function showRecoveryError(msg){
+  const el = document.getElementById('recoveryError');
+  if (el){ el.style.display = 'block'; el.textContent = msg; }
+}
+function hideRecoveryError(){
+  const el = document.getElementById('recoveryError');
+  if (el) el.style.display = 'none';
+}
+
+// 🌐 Map error code → رسالة عربية
+function recoveryErrorMessage(error, data){
+  data = data || {};
+  switch(error){
+    case 'no_match':         return 'البيانات مش مطابقة — راجع الكود ورقم الموبيل';
+    case 'no_telegram_id':   return 'حسابك ما اتربطش بـ @hawa_car_bot — اضغط /start فى البوت الأول';
+    case 'rate_limit':       return `حاولت كتير — استنى ${data.retry_after_minutes || 60} دقيقة`;
+    case 'invalid_request':  return 'املأ الكود ورقم الموبيل';
+    case 'telegram_send_failed': return 'مش قادر يبعت على Telegram — تأكد إنك ضاغط /start فى البوت';
+    case 'timeout':          return '⏱️ انتهى الوقت — حاول تانى';
+    case 'network':          return '❌ خطأ فى الشبكة — حاول تانى';
+    default:                 return '❌ خطأ: ' + (error || 'غير معروف');
+  }
+}
+
+async function recoverySubmit(){
+  hideRecoveryError();
+  const code = (document.getElementById('recoveryCompanyCode').value || '').trim();
+  const phone = (document.getElementById('recoveryPhone').value || '').trim();
+
+  if (!code){ showRecoveryError('ادخل كود العميل'); return; }
+  if (!phone){ showRecoveryError('ادخل رقم الموبيل'); return; }
+  if (phone.replace(/[^0-9]/g, '').length < 10){
+    showRecoveryError('رقم الموبيل قصير — راجعه');
+    return;
+  }
+
+  const btn = document.getElementById('recoverySubmitBtn');
+  const origText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ جارى الإرسال...';
+
+  // fetch بـ timeout 15s
+  const ac = new AbortController();
+  const to = setTimeout(() => ac.abort(), 15000);
+
+  try {
+    const r = await fetch(`${N8N_BASE}/webhook/hawa-recover-credentials`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        company_code: code,
+        phone: phone,
+        ua: (navigator.userAgent || '').substring(0, 200),
+        device_label: (typeof bioDetectDevice === 'function') ? bioDetectDevice() : 'unknown'
+      }),
+      signal: ac.signal
+    });
+    clearTimeout(to);
+
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok && !data.error) data.error = 'http_' + r.status;
+
+    if (data.ok || data.success){
+      // ✅ نجح → اعرض success state
+      document.getElementById('recoveryForm').style.display = 'none';
+      document.getElementById('recoverySuccess').style.display = 'block';
+      hideRecoveryError();
+    } else {
+      showRecoveryError(recoveryErrorMessage(data.error, data));
+      btn.disabled = false;
+      btn.textContent = origText;
+    }
+  } catch(e){
+    clearTimeout(to);
+    showRecoveryError(recoveryErrorMessage(e.name === 'AbortError' ? 'timeout' : 'network'));
+    btn.disabled = false;
+    btn.textContent = origText;
   }
 }
 
