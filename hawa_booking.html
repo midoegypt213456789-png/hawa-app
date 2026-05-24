@@ -372,49 +372,120 @@
     <div style="max-width:340px;width:100%;font-family:Cairo,sans-serif;margin:auto;padding:32px 0">
 
       <!-- HAWA Logo -->
-      <div style="text-align:center;margin-bottom:38px">
+      <div style="text-align:center;margin-bottom:24px">
         <div style="font-size:30px;font-weight:900;color:#E8C97A;letter-spacing:3px">HAWA CO 🚗</div>
         <div style="font-size:10px;color:#444;letter-spacing:2px;margin-top:4px">VEHICLE LOADING SYSTEM</div>
       </div>
 
-      <!-- Username -->
-      <div style="margin-bottom:16px">
-        <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">اسم المستخدم</label>
-        <input type="text" id="lockUsername" autocomplete="username" placeholder="ادخل اسم المستخدم" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')document.getElementById('lockPassword').focus()">
+      <!-- ═══ 2-Tab switcher ═══ -->
+      <div style="display:flex;gap:0;margin-bottom:24px;background:#0f0f0f;border:1px solid #1f1f1f;border-radius:11px;padding:4px">
+        <button id="tabLoginBtn" onclick="switchAuthTab('login')" style="flex:1;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:8px;padding:11px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer;transition:all .2s">تسجيل الدخول</button>
+        <button id="tabRegisterBtn" onclick="switchAuthTab('register')" style="flex:1;background:transparent;color:#888;border:none;border-radius:8px;padding:11px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s">🆕 عميل جديد</button>
       </div>
 
-      <!-- Password -->
-      <div style="margin-bottom:8px">
-        <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">كلمة المرور</label>
-        <input type="password" id="lockPassword" autocomplete="current-password" placeholder="ادخل كلمة المرور" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')passwordLogin()">
+      <!-- ═══ Login Pane ═══ -->
+      <div id="loginPane">
+
+        <!-- Username -->
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">اسم المستخدم</label>
+          <input type="text" id="lockUsername" autocomplete="username" placeholder="ادخل اسم المستخدم" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')document.getElementById('lockPassword').focus()">
+        </div>
+
+        <!-- Password -->
+        <div style="margin-bottom:8px">
+          <label style="display:block;font-size:12.5px;color:#aaa;margin-bottom:6px;font-weight:700">كلمة المرور</label>
+          <input type="password" id="lockPassword" autocomplete="current-password" placeholder="ادخل كلمة المرور" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:11px;padding:13px 15px;font-family:Cairo,sans-serif;font-size:14px;outline:none;box-sizing:border-box" onkeypress="if(event.key==='Enter')passwordLogin()">
+        </div>
+
+        <!-- Forgot password -->
+        <div style="text-align:right;margin-bottom:22px;margin-top:8px">
+          <a href="#" onclick="openRecoveryModal(); return false;" style="font-size:11.5px;color:#888;text-decoration:none">هل نسيت كلمة المرور؟</a>
+        </div>
+
+        <!-- Login button -->
+        <button id="lockLoginBtn" onclick="passwordLogin()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:11px;padding:14px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer">تسجيل الدخول</button>
+
+        <!-- Error message -->
+        <div id="bioLockError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:10px;padding:10px 14px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
+
       </div>
 
-      <!-- Forgot password -->
-      <div style="text-align:right;margin-bottom:22px;margin-top:8px">
-        <a href="#" onclick="openRecoveryModal(); return false;" style="font-size:11.5px;color:#888;text-decoration:none">هل نسيت كلمة المرور؟</a>
+      <!-- ═══ Register Pane (inline) ═══ -->
+      <div id="registerPane" style="display:none">
+
+        <div id="registerForm">
+
+          <div style="font-size:11.5px;color:#888;margin-bottom:14px;line-height:1.7;text-align:center">
+            بعد التسجيل، الإدارة هـ تعتمد حسابك خلال ساعات
+          </div>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">الاسم الكامل <span style="color:#e05555">*</span></label>
+          <input type="text" id="regName" placeholder="مثال: محمد على" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">رقم الموبيل <span style="color:#e05555">*</span></label>
+          <input type="tel" inputmode="tel" id="regPhone" placeholder="01xxxxxxxxx" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كود العميل <span style="color:#e05555">*</span></label>
+          <input type="text" id="regCompanyCode" placeholder="اختار كود من 2-10 حروف/أرقام" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
+
+          <div style="display:flex;gap:8px;margin-bottom:10px">
+            <div style="flex:1">
+              <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">اسم المستخدم <span style="color:#e05555">*</span></label>
+              <input type="text" id="regUsername" placeholder="username" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
+            </div>
+            <div style="flex:1">
+              <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كلمة المرور <span style="color:#e05555">*</span></label>
+              <input type="text" id="regPassword" placeholder="4 حروف على الأقل" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
+            </div>
+          </div>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المحافظة <span style="color:#e05555">*</span></label>
+          <select id="regGovernorate" onchange="onGovernorateChange()" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px;cursor:pointer">
+            <option value="">— اختار المحافظة —</option>
+          </select>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المركز / الحى <span style="color:#e05555">*</span></label>
+          <select id="regCitySelect" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:6px;cursor:pointer" disabled>
+            <option value="">— اختار المحافظة الأول —</option>
+          </select>
+          <input type="text" id="regCityText" placeholder="أو اكتب مدينة جديدة" style="display:none;width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+          <div style="margin-bottom:10px"></div>
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">العنوان التفصيلى <span style="color:#e05555">*</span></label>
+          <input type="text" id="regAddress" placeholder="مثال: شارع الجمهورية، بجوار المسجد الكبير" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:10px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
+
+          <label style="display:block;font-size:12px;color:#aaa;margin-bottom:6px;font-weight:700">الديانة <span style="color:#e05555">*</span></label>
+          <div style="display:flex;gap:8px;margin-bottom:14px">
+            <label style="flex:1;background:#161616;border:1px solid #262626;border-radius:10px;padding:11px;text-align:center;cursor:pointer;font-size:13.5px;color:#fff" id="regReligionMuslimLbl">
+              <input type="radio" name="regReligion" value="مسلم" onchange="onReligionChange()" style="display:none">
+              ☪️ مسلم
+            </label>
+            <label style="flex:1;background:#161616;border:1px solid #262626;border-radius:10px;padding:11px;text-align:center;cursor:pointer;font-size:13.5px;color:#fff" id="regReligionChristianLbl">
+              <input type="radio" name="regReligion" value="مسيحي" onchange="onReligionChange()" style="display:none">
+              ✝️ مسيحي
+            </label>
+          </div>
+
+          <button id="registerSubmitBtn" onclick="registerSubmit()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ تسجيل الحساب</button>
+
+          <!-- Error message -->
+          <div id="registerError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:9px;padding:10px 12px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
+
+        </div>
+
+        <!-- Register success state -->
+        <div id="registerSuccess" style="display:none;text-align:center;padding:24px 0">
+          <div style="font-size:48px;margin-bottom:12px">✅</div>
+          <div style="font-size:15px;color:#4CAF7D;font-weight:800;margin-bottom:8px">تم استلام طلبك</div>
+          <div style="font-size:12px;color:#aaa;line-height:1.7">الإدارة هـ تنظر فى الطلب خلال ساعات.<br>هـ تقدر تدخل بعد الاعتماد.</div>
+          <button onclick="switchAuthTab('login'); resetRegisterForm();" style="margin-top:16px;background:#1A1A1A;border:1px solid #2A2A2A;color:#fff;border-radius:9px;padding:10px 24px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">رجوع لتسجيل الدخول</button>
+        </div>
+
       </div>
-
-      <!-- Login button (full width — bio removed per Mido's request) -->
-      <button id="lockLoginBtn" onclick="passwordLogin()" style="width:100%;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:11px;padding:14px;font-family:Cairo,sans-serif;font-size:14px;font-weight:800;cursor:pointer">تسجيل الدخول</button>
-
-      <!-- Error message -->
-      <div id="bioLockError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:10px;padding:10px 14px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
-
-      <!-- ─── أو ─── Divider -->
-      <div style="display:flex;align-items:center;gap:10px;margin-top:24px;color:#333;font-size:10px;letter-spacing:1px">
-        <div style="flex:1;height:1px;background:#1a1a1a"></div>
-        <span>أو</span>
-        <div style="flex:1;height:1px;background:#1a1a1a"></div>
-      </div>
-
-      <!-- 🆕 New client registration button -->
-      <button id="lockRegisterBtn" onclick="openRegisterModal()" style="width:100%;margin-top:14px;background:transparent;border:1.5px solid rgba(232,201,122,0.35);color:#E8C97A;border-radius:11px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-        <span style="font-size:17px">🆕</span>
-        <span>تسجيل عميل جديد</span>
-      </button>
 
       <!-- Footer -->
-      <div style="text-align:center;font-size:10px;color:#333;margin-top:36px;letter-spacing:0.5px">HAWA CO © 2026</div>
+      <div style="text-align:center;font-size:10px;color:#333;margin-top:30px;letter-spacing:0.5px">HAWA CO © 2026</div>
 
     </div>
   </div>
@@ -459,105 +530,6 @@
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════════ -->
-  <!-- 🆕 New Client Registration Modal -->
-  <!-- ═══════════════════════════════════════════════════════════ -->
-  <div id="registerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:100002;align-items:center;justify-content:center;padding:18px;font-family:Cairo,sans-serif;overflow-y:auto" onclick="if(event.target===this)closeRegisterModal()">
-    <div style="background:#111;border:1px solid #2A2A2A;border-radius:14px;padding:24px;max-width:420px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.6);margin:20px auto">
-
-      <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div style="font-size:16px;font-weight:800;color:#E8C97A">🆕 تسجيل عميل جديد</div>
-        <button onclick="closeRegisterModal()" style="background:transparent;border:none;color:#666;font-size:22px;cursor:pointer;line-height:1;padding:0 6px">×</button>
-      </div>
-
-      <!-- Form -->
-      <div id="registerForm">
-        <div style="font-size:12px;color:#aaa;margin-bottom:16px;line-height:1.7">
-          املأ بياناتك وهـ يـ review طلبك الإدارة وتعتمد حسابك.
-        </div>
-
-        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">الاسم الكامل <span style="color:#e05555">*</span></label>
-        <input type="text" id="regName" placeholder="مثال: محمد على" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
-
-        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">رقم الموبيل <span style="color:#e05555">*</span></label>
-        <input type="tel" inputmode="tel" id="regPhone" placeholder="01xxxxxxxxx" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
-
-        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كود العميل <span style="color:#e05555">*</span></label>
-        <input type="text" id="regCompanyCode" placeholder="اختار كود من 2-10 حروف/أرقام" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;direction:ltr;text-align:right;margin-bottom:10px">
-
-        <div style="display:flex;gap:10px;margin-bottom:10px">
-          <div style="flex:1">
-            <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">اسم المستخدم <span style="color:#e05555">*</span></label>
-            <input type="text" id="regUsername" placeholder="username" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
-          </div>
-          <div style="flex:1">
-            <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">كلمة المرور <span style="color:#e05555">*</span></label>
-            <input type="text" id="regPassword" placeholder="4 حروف على الأقل" autocomplete="off" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box">
-          </div>
-        </div>
-
-        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المحافظة <span style="color:#e05555">*</span></label>
-        <select id="regGovernorate" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px;cursor:pointer">
-          <option value="">— اختار المحافظة —</option>
-          <optgroup label="القاهرة الكبرى">
-            <option>القاهرة</option>
-            <option>الجيزة</option>
-            <option>القليوبية</option>
-          </optgroup>
-          <optgroup label="الدلتا">
-            <option>الشرقية</option>
-            <option>المنوفية</option>
-            <option>الدقهلية</option>
-            <option>الغربية</option>
-            <option>البحيرة</option>
-            <option>كفر الشيخ</option>
-            <option>دمياط</option>
-            <option>شمال سيناء</option>
-            <option>جنوب سيناء</option>
-          </optgroup>
-          <optgroup label="الوجه البحرى">
-            <option>الإسكندرية</option>
-            <option>بورسعيد</option>
-            <option>السويس</option>
-            <option>الإسماعيلية</option>
-            <option>مطروح</option>
-          </optgroup>
-          <optgroup label="الوجه القبلى">
-            <option>المنيا</option>
-            <option>سوهاج</option>
-            <option>بني سويف</option>
-            <option>أسوان</option>
-            <option>الفيوم</option>
-            <option>أسيوط</option>
-            <option>قنا</option>
-            <option>الأقصر</option>
-            <option>البحر الأحمر</option>
-            <option>الوادي الجديد</option>
-          </optgroup>
-        </select>
-
-        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">المركز / المدينة <span style="color:#e05555">*</span></label>
-        <input type="text" id="regCity" placeholder="مثال: شبرا الخيمة" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
-
-        <label style="display:block;font-size:12px;color:#aaa;margin-bottom:5px;font-weight:700">العنوان التفصيلى</label>
-        <input type="text" id="regAddress" placeholder="(اختيارى)" style="width:100%;background:#161616;border:1px solid #262626;color:#fff;border-radius:9px;padding:11px;font-family:Cairo,sans-serif;font-size:13.5px;outline:none;box-sizing:border-box;margin-bottom:10px">
-
-        <button id="registerSubmitBtn" onclick="registerSubmit()" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#1a1408;border:none;border-radius:10px;padding:13px;font-family:Cairo,sans-serif;font-size:13px;font-weight:800;cursor:pointer">✅ تسجيل الحساب</button>
-      </div>
-
-      <!-- Success state -->
-      <div id="registerSuccess" style="display:none;text-align:center;padding:12px 0">
-        <div style="font-size:48px;margin-bottom:12px">✅</div>
-        <div style="font-size:15px;color:#4CAF7D;font-weight:800;margin-bottom:8px">تم استلام طلبك</div>
-        <div style="font-size:12px;color:#aaa;line-height:1.7">الإدارة هـ تنظر فى الطلب خلال ساعات.<br>هـ تقدر تدخل بعد الاعتماد.</div>
-        <button onclick="closeRegisterModal()" style="margin-top:16px;background:#1A1A1A;border:1px solid #2A2A2A;color:#fff;border-radius:9px;padding:10px 24px;font-family:Cairo,sans-serif;font-size:12px;cursor:pointer">تم</button>
-      </div>
-
-      <!-- Error message -->
-      <div id="registerError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);border-radius:9px;padding:10px 12px;color:#e88080;font-size:12px;line-height:1.6;margin-top:14px;text-align:center"></div>
-    </div>
-  </div>
 
   <!-- Alert -->
   <div class="alert" id="alert"></div>
@@ -1821,31 +1793,179 @@ async function recoverySubmit(){
 // 🆕 New Client Registration
 // ═══════════════════════════════════════════════════════════
 // Flow:
-//   1. User يضغط "تسجيل عميل جديد" → openRegisterModal()
+//   1. User يضغط "🆕 عميل جديد" tab → switchAuthTab('register')
 //   2. User يـ fill form → registerSubmit()
 //   3. fetch إلى Supabase RPC register_new_client (direct, no n8n)
 //   4. RPC يـ validate + check uniqueness + INSERT (approval_status='pending')
 //   5. Success → عرض "تم الإرسال، استنى الاعتماد"
 // ═══════════════════════════════════════════════════════════
 
-function openRegisterModal(){
-  const modal = document.getElementById('registerModal');
-  if (!modal) return;
-  modal.style.display = 'flex';
+// ═══════════════════════════════════════════════════════════
+// 🔀 Auth Tabs: Login / Register
+// ═══════════════════════════════════════════════════════════
+
+let _govCitiesCache = null;  // cache للـ governorate→cities map من DB
+
+function switchAuthTab(tab){
+  const loginPane = document.getElementById('loginPane');
+  const regPane   = document.getElementById('registerPane');
+  const loginBtn  = document.getElementById('tabLoginBtn');
+  const regBtn    = document.getElementById('tabRegisterBtn');
+  if (!loginPane || !regPane) return;
+
+  if (tab === 'register'){
+    loginPane.style.display = 'none';
+    regPane.style.display = 'block';
+    // Active styling للـ register tab
+    regBtn.style.background = 'linear-gradient(135deg,#C9A84C,#E8C97A)';
+    regBtn.style.color = '#1a1408';
+    regBtn.style.fontWeight = '800';
+    loginBtn.style.background = 'transparent';
+    loginBtn.style.color = '#888';
+    loginBtn.style.fontWeight = '700';
+
+    // أول مرة: load الـ governorates من DB
+    if (!_govCitiesCache){
+      loadGovernorateCities();
+    }
+    setTimeout(() => document.getElementById('regName')?.focus(), 80);
+  } else {
+    regPane.style.display = 'none';
+    loginPane.style.display = 'block';
+    // Active styling للـ login tab
+    loginBtn.style.background = 'linear-gradient(135deg,#C9A84C,#E8C97A)';
+    loginBtn.style.color = '#1a1408';
+    loginBtn.style.fontWeight = '800';
+    regBtn.style.background = 'transparent';
+    regBtn.style.color = '#888';
+    regBtn.style.fontWeight = '700';
+  }
+}
+
+function resetRegisterForm(){
+  ['regName','regPhone','regCompanyCode','regUsername','regPassword','regAddress','regCityText']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const govSel = document.getElementById('regGovernorate');
+  if (govSel) govSel.value = '';
+  const citySel = document.getElementById('regCitySelect');
+  if (citySel){
+    citySel.innerHTML = '<option value="">— اختار المحافظة الأول —</option>';
+    citySel.disabled = true;
+  }
+  const cityText = document.getElementById('regCityText');
+  if (cityText) cityText.style.display = 'none';
+  // Reset religion radios
+  document.querySelectorAll('input[name="regReligion"]').forEach(r => r.checked = false);
+  onReligionChange();
   document.getElementById('registerForm').style.display = 'block';
   document.getElementById('registerSuccess').style.display = 'none';
   document.getElementById('registerError').style.display = 'none';
-
-  setTimeout(() => document.getElementById('regName')?.focus(), 80);
 }
 
-function closeRegisterModal(){
-  const modal = document.getElementById('registerModal');
-  if (modal) modal.style.display = 'none';
-  // Cleanup all form fields
-  ['regName','regPhone','regCompanyCode','regUsername','regPassword','regGovernorate','regCity','regAddress']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-  document.getElementById('registerError').style.display = 'none';
+// 🗺️ يـ fetch governorate→cities map من DB
+async function loadGovernorateCities(){
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/get_governorate_cities`, {
+      method: 'POST',
+      headers: { ...HDR, 'Content-Type': 'application/json' },
+      body: '{}'
+    });
+    const data = await r.json();
+    if (data && typeof data === 'object'){
+      _govCitiesCache = data;
+      populateGovernoratesDropdown();
+    } else {
+      console.warn('[register] غير قادر على تحميل المحافظات', data);
+    }
+  } catch(e){
+    console.warn('[register] خطأ فى تحميل المحافظات', e);
+  }
+}
+
+// يـ populate الـ governorate <select> من الـ cache
+function populateGovernoratesDropdown(){
+  const sel = document.getElementById('regGovernorate');
+  if (!sel || !_govCitiesCache) return;
+
+  // ترتيب جغرافى زى UI الباقى
+  const REGION_GROUPS = {
+    'القاهرة الكبرى': ['القاهرة','الجيزة','القليوبية'],
+    'الدلتا':         ['الشرقية','المنوفية','الدقهلية','الغربية','البحيرة','كفر الشيخ','دمياط','شمال سيناء','جنوب سيناء'],
+    'الوجه البحرى':   ['الإسكندرية','بورسعيد','السويس','الإسماعيلية','مطروح'],
+    'الوجه القبلى':   ['المنيا','سوهاج','بني سويف','أسوان','الفيوم','أسيوط','قنا','الأقصر','البحر الأحمر','الوادي الجديد']
+  };
+
+  let html = '<option value="">— اختار المحافظة —</option>';
+  for (const [region, govs] of Object.entries(REGION_GROUPS)){
+    html += `<optgroup label="${region}">`;
+    govs.forEach(g => { html += `<option value="${g}">${g}</option>`; });
+    html += '</optgroup>';
+  }
+  sel.innerHTML = html;
+}
+
+// لما المحافظة تتغير، نـ populate الـ city dropdown من الـ cache
+function onGovernorateChange(){
+  const gov = document.getElementById('regGovernorate').value;
+  const citySel = document.getElementById('regCitySelect');
+  const cityText = document.getElementById('regCityText');
+  if (!citySel) return;
+
+  if (!gov){
+    citySel.innerHTML = '<option value="">— اختار المحافظة الأول —</option>';
+    citySel.disabled = true;
+    cityText.style.display = 'none';
+    return;
+  }
+
+  const cities = (_govCitiesCache && _govCitiesCache[gov]) || [];
+  if (cities.length === 0){
+    // المحافظة معندهاش cities فى DB — اعرض input text
+    citySel.innerHTML = '<option value="">— اكتب المدينة فى المربع تحت —</option>';
+    citySel.disabled = true;
+    cityText.style.display = 'block';
+    cityText.value = '';
+    cityText.placeholder = 'اكتب اسم المدينة/المركز';
+    return;
+  }
+
+  // فى cities — populate الـ select
+  let html = '<option value="">— اختار المركز/الحى —</option>';
+  cities.forEach(c => { html += `<option value="${c}">${c}</option>`; });
+  html += '<option value="__OTHER__">+ مدينة جديدة (اكتب)</option>';
+  citySel.innerHTML = html;
+  citySel.disabled = false;
+  cityText.style.display = 'none';
+
+  // لو user اختار "مدينة جديدة"، نظهر الـ text input
+  citySel.onchange = () => {
+    if (citySel.value === '__OTHER__'){
+      cityText.style.display = 'block';
+      cityText.value = '';
+      cityText.placeholder = 'اكتب اسم المدينة/المركز الجديدة';
+      cityText.focus();
+    } else {
+      cityText.style.display = 'none';
+    }
+  };
+}
+
+// Religion radio styling
+function onReligionChange(){
+  ['regReligionMuslimLbl','regReligionChristianLbl'].forEach(id => {
+    const lbl = document.getElementById(id);
+    if (!lbl) return;
+    const radio = lbl.querySelector('input[type="radio"]');
+    if (radio && radio.checked){
+      lbl.style.background = 'linear-gradient(135deg,rgba(201,168,76,0.2),rgba(232,201,122,0.15))';
+      lbl.style.borderColor = '#C9A84C';
+      lbl.style.color = '#E8C97A';
+    } else {
+      lbl.style.background = '#161616';
+      lbl.style.borderColor = '#262626';
+      lbl.style.color = '#fff';
+    }
+  });
 }
 
 function showRegisterError(msg){
@@ -1866,6 +1986,8 @@ function registerErrorMessage(error){
     case 'invalid_password':      return 'كلمة المرور قصيرة — 4 حروف على الأقل';
     case 'invalid_governorate':   return 'اختار المحافظة';
     case 'invalid_city':          return 'املأ المركز/المدينة';
+    case 'invalid_address':       return 'العنوان لازم يكون 3 حروف على الأقل';
+    case 'invalid_religion':      return 'اختار الديانة';
     case 'company_code_exists':   return 'الكود ده مستخدم بالفعل — اختار كود تانى';
     case 'username_exists':       return 'اسم المستخدم ده مستخدم — اختار اسم تانى';
     case 'rate_limit':            return 'حاولت كتير — استنى ساعة وحاول تانى';
@@ -1878,7 +2000,20 @@ function registerErrorMessage(error){
 async function registerSubmit(){
   hideRegisterError();
 
-  // اقرأ القيم
+  // الـ city ممكن يكون من select أو من text input (لو "مدينة جديدة")
+  const citySel  = document.getElementById('regCitySelect');
+  const cityText = document.getElementById('regCityText');
+  let cityValue = '';
+  if (cityText.style.display !== 'none' && cityText.value.trim()){
+    cityValue = cityText.value.trim();
+  } else if (citySel.value && citySel.value !== '__OTHER__'){
+    cityValue = citySel.value;
+  }
+
+  // الـ religion من الراديو
+  const religionRadio = document.querySelector('input[name="regReligion"]:checked');
+  const religionValue = religionRadio ? religionRadio.value : '';
+
   const payload = {
     name:          (document.getElementById('regName').value || '').trim(),
     phone:         (document.getElementById('regPhone').value || '').trim(),
@@ -1886,12 +2021,13 @@ async function registerSubmit(){
     username:      (document.getElementById('regUsername').value || '').trim(),
     password:      (document.getElementById('regPassword').value || '').trim(),
     governorate:   (document.getElementById('regGovernorate').value || '').trim(),
-    city:          (document.getElementById('regCity').value || '').trim(),
+    city:          cityValue,
     address:       (document.getElementById('regAddress').value || '').trim(),
+    religion:      religionValue,
     ua:            (navigator.userAgent || '').substring(0, 200)
   };
 
-  // Client-side basic validation (RPC هـ يـ recheck برضو)
+  // Client-side validation (RPC هـ يـ recheck برضو)
   if (payload.name.length < 2)        return showRegisterError(registerErrorMessage('invalid_name'));
   if (!/^01[0125][0-9]{8}$/.test(payload.phone.replace(/[\s\-\+]/g, '')))
                                        return showRegisterError(registerErrorMessage('invalid_phone'));
@@ -1901,6 +2037,8 @@ async function registerSubmit(){
   if (payload.password.length < 4)    return showRegisterError(registerErrorMessage('invalid_password'));
   if (!payload.governorate)           return showRegisterError(registerErrorMessage('invalid_governorate'));
   if (payload.city.length < 2)        return showRegisterError(registerErrorMessage('invalid_city'));
+  if (payload.address.length < 3)     return showRegisterError(registerErrorMessage('invalid_address'));
+  if (!payload.religion)              return showRegisterError(registerErrorMessage('invalid_religion'));
 
   const btn = document.getElementById('registerSubmitBtn');
   const orig = btn.textContent;
