@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HAWA CO — جارى التحويل...</title>
+  <meta http-equiv="refresh" content="0; url=hawa_booking.html">
+  <link rel="canonical" href="https://hawa.gladiatorverse.net/hawa_booking.html">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0A0A0A;
+      color: #C9A84C;
+      font-family: 'Cairo', sans-serif;
+      font-size: 18px;
+    }
+    .box { text-align: center; }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #2A2A2A;
+      border-top-color: #C9A84C;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    a { color: #E8C97A; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="spinner"></div>
+    <div>🚛 HAWA CO</div>
+    <div style="margin-top: 10px; font-size: 14px; color: #8A8580;">جارى تحميل صفحة الحجز...</div>
+    <div style="margin-top: 20px; font-size: 13px;">
+      <a href="hawa_booking.html">اضغط هنا لو الصفحة ما اتفتحتش تلقائياً</a>
+    </div>
+  </div>
+  <script>
+    // Immediate JS redirect (faster than meta refresh)
+    window.location.replace('hawa_booking.html');
+  </script>
+</body>
+</html>
