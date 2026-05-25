@@ -2123,6 +2123,192 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .bl-tier-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:700;margin-inline-end:4px;}
 .bl-tier-pill-all{background:rgba(74,144,217,0.12);color:#7ab5e8;border:1px solid rgba(74,144,217,0.3);}
 
+/* ═══════════════════════════════════════════════════════════
+   🆕 TAB SYSTEM + SIDEBAR TOGGLE + DIRTY MODAL
+   ═══════════════════════════════════════════════════════════ */
+
+/* — sidebar smooth transitions — */
+.sidebar{transition:width 0.28s ease;}
+.main-area{transition:margin-right 0.28s ease;}
+
+/* — top row in sb-header — */
+.sb-top-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+
+/* — sidebar toggle button — */
+.sidebar-toggle{
+  background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);
+  color:var(--gold);width:30px;height:30px;border-radius:8px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:900;transition:all 0.18s ease;flex-shrink:0;
+}
+.sidebar-toggle:hover{background:rgba(201,168,76,0.18);transform:scale(1.05);}
+.sidebar-toggle:active{transform:scale(0.95);}
+.sidebar-toggle-icon{display:inline-block;transition:transform 0.28s ease;line-height:1;}
+
+/* — collapsed sidebar — */
+.sidebar.collapsed{width:64px;}
+.sidebar.collapsed .sb-logo{font-size:18px;letter-spacing:0;}
+.sidebar.collapsed .sb-logo::after{content:'';}
+.sidebar.collapsed .sb-logo{overflow:hidden;text-overflow:clip;white-space:nowrap;}
+.sidebar.collapsed .sb-admin{display:none;}
+.sidebar.collapsed .notif-bell{display:none;}
+.sidebar.collapsed .nav-section-title{
+  font-size:0;padding:6px 0;border-top:1px dashed var(--border);margin:8px 6px;
+}
+.sidebar.collapsed .nav-section-title > *{display:none;}
+.sidebar.collapsed .nav-item{
+  padding:11px 0;justify-content:center;border-right:3px solid transparent;
+  position:relative;
+}
+.sidebar.collapsed .nav-item > span:not(.ni):not(.nav-star):not(.nav-drag-handle){
+  display:none;
+}
+.sidebar.collapsed .nav-item .ni{width:24px;font-size:18px;}
+.sidebar.collapsed .nav-item .nav-star,
+.sidebar.collapsed .nav-item .nav-drag-handle{display:none;}
+.sidebar.collapsed .sb-fav-header,
+.sidebar.collapsed .sb-cat-header{font-size:0;padding:8px 0;text-align:center;}
+.sidebar.collapsed .sb-fav-header > *,
+.sidebar.collapsed .sb-cat-header > *{display:none;}
+.sidebar.collapsed .sb-cat-header::before{content:'━';font-size:14px;color:var(--gold);}
+.sidebar.collapsed .sb-fav-header::before{content:'⭐';font-size:14px;}
+.sidebar.collapsed .logout-btn{padding:10px 0;font-size:0;width:100%;}
+.sidebar.collapsed .logout-btn::before{content:'🚪';font-size:16px;}
+.sidebar.collapsed .refresh-timer-badge{display:none;}
+.sidebar.collapsed .sidebar-toggle-icon{transform:rotate(180deg);}
+
+/* — tooltip on hover when collapsed — */
+.sidebar.collapsed .nav-item{position:relative;}
+.sidebar.collapsed .nav-item:hover::after{
+  content:attr(data-label);
+  position:absolute;right:calc(100% + 4px);top:50%;transform:translateY(-50%);
+  background:var(--dark3);color:var(--text);padding:6px 10px;border-radius:6px;
+  border:1px solid var(--border);font-size:12px;font-weight:700;
+  white-space:nowrap;z-index:1000;pointer-events:none;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* — TAB BAR — */
+.tab-bar{
+  display:flex;align-items:stretch;gap:6px;background:var(--dark2);
+  border:1px solid var(--border);border-radius:10px;padding:6px;
+  margin:0 0 14px 0;min-height:44px;
+  position:sticky;top:0;z-index:30;
+}
+.tab-bar-tabs{
+  display:flex;align-items:stretch;gap:4px;flex:1;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;
+}
+.tab-bar-tabs::-webkit-scrollbar{height:4px;}
+.tab-bar-tabs::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+.tab{
+  display:inline-flex;align-items:center;gap:6px;padding:6px 10px 6px 8px;
+  background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;
+  cursor:pointer;transition:all 0.16s ease;flex-shrink:0;max-width:240px;
+  user-select:none;font-size:12.5px;font-weight:600;color:var(--text-dim);
+  position:relative;
+}
+.tab:hover{background:rgba(201,168,76,0.06);color:var(--text);border-color:rgba(201,168,76,0.2);}
+.tab.active{
+  background:rgba(201,168,76,0.12);color:var(--gold);
+  border-color:rgba(201,168,76,0.4);
+  box-shadow:0 0 0 1px rgba(201,168,76,0.18) inset;
+}
+.tab-label{
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px;
+}
+.tab.dirty .tab-label::before{
+  content:'';display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:var(--gold);margin-inline-end:6px;vertical-align:middle;
+  box-shadow:0 0 6px var(--gold);
+  animation:tab-dirty-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tab-dirty-pulse{
+  0%,100%{opacity:1;transform:scale(1);}
+  50%{opacity:0.6;transform:scale(0.85);}
+}
+.tab-close{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:5px;font-size:11px;
+  opacity:0.5;transition:all 0.14s ease;cursor:pointer;flex-shrink:0;
+  margin-inline-start:2px;
+}
+.tab-close:hover{opacity:1;background:rgba(224,85,85,0.18);color:var(--error);}
+.tab-bar-close-all{
+  display:flex;align-items:center;gap:6px;padding:0 12px;
+  background:rgba(224,85,85,0.08);color:var(--error);
+  border:1px solid rgba(224,85,85,0.25);border-radius:8px;
+  font-size:11.5px;font-weight:700;cursor:pointer;transition:all 0.16s ease;
+  flex-shrink:0;white-space:nowrap;
+}
+.tab-bar-close-all:hover{background:rgba(224,85,85,0.16);}
+
+/* mobile: hide tab bar tweaks */
+@media(max-width:768px){
+  .tab-bar{margin-bottom:10px;}
+  .tab{max-width:160px;font-size:11.5px;}
+  .tab-label{max-width:110px;}
+  .sidebar-toggle{display:none;}
+}
+
+/* — DIRTY MODAL — */
+.dirty-modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;z-index:9999;
+  animation:fade-in 0.18s ease;
+}
+.dirty-modal-overlay.show{display:flex;}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+.dirty-modal{
+  background:var(--dark2);border:1px solid var(--border);border-radius:14px;
+  max-width:460px;width:92%;padding:28px 24px 22px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.55);
+  animation:dirty-modal-in 0.22s ease;
+}
+@keyframes dirty-modal-in{
+  from{opacity:0;transform:translateY(10px) scale(0.96);}
+  to{opacity:1;transform:translateY(0) scale(1);}
+}
+.dirty-modal-icon{font-size:42px;text-align:center;margin-bottom:10px;}
+.dirty-modal-title{
+  font-size:18px;font-weight:900;color:var(--gold);
+  text-align:center;margin-bottom:8px;
+}
+.dirty-modal-text{
+  font-size:13.5px;color:var(--text);text-align:center;
+  line-height:1.65;margin-bottom:22px;
+}
+.dirty-modal-text b{color:var(--gold-light);}
+.dirty-modal-buttons{
+  display:flex;flex-direction:column;gap:8px;
+}
+.dirty-modal-buttons button{
+  padding:11px 16px;border-radius:9px;font-size:13px;font-weight:800;
+  cursor:pointer;transition:all 0.16s ease;border:1px solid transparent;
+  font-family:inherit;
+}
+.dirty-modal-buttons .btn-save{
+  background:linear-gradient(135deg,var(--gold),var(--gold-light));
+  color:var(--dark);border-color:var(--gold);
+}
+.dirty-modal-buttons .btn-save:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(201,168,76,0.32);}
+.dirty-modal-buttons .btn-save:disabled{opacity:0.5;cursor:not-allowed;transform:none;box-shadow:none;}
+.dirty-modal-buttons .btn-discard{
+  background:rgba(224,85,85,0.1);color:var(--error);
+  border-color:rgba(224,85,85,0.3);
+}
+.dirty-modal-buttons .btn-discard:hover{background:rgba(224,85,85,0.18);}
+.dirty-modal-buttons .btn-cancel{
+  background:transparent;color:var(--text-dim);
+  border-color:var(--border);
+}
+.dirty-modal-buttons .btn-cancel:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+
+/* empty state when no tabs */
+.tabs-empty-state{
+  padding:60px 20px;text-align:center;color:var(--text-dim);
+}
+
 </style>
 </head>
 <body>
@@ -2188,7 +2374,10 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sb-header">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div class="sb-top-row">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="إخفاء/إظهار القائمة">
+          <span class="sidebar-toggle-icon">◀</span>
+        </button>
         <div class="sb-logo">👑 HAWA CO</div>
         <button class="notif-bell" id="notifBell" onclick="event.stopPropagation();toggleNotifPanel()" title="التنبيهات">
           🔔
@@ -2213,6 +2402,14 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
   <!-- MAIN -->
   <div class="main-area">
+
+    <!-- 🆕 TAB BAR -->
+    <div class="tab-bar" id="tabBar">
+      <div class="tab-bar-tabs" id="tabBarTabs"></div>
+      <button class="tab-bar-close-all" id="tabBarCloseAll" onclick="closeAllTabsConfirm()" style="display:none" title="إغلاق كل التابات">
+        ✕ إغلاق الكل
+      </button>
+    </div>
 
     <!-- BOOKINGS -->
     <div class="section active" id="sec-bookings">
@@ -11657,8 +11854,456 @@ document.addEventListener('dragover', (e) => {
   }
 }, { passive: true });
 
+// ═══════════════════════════════════════════════════════════
+// 🆕 TAB SYSTEM + SIDEBAR TOGGLE + DIRTY TRACKING
+// ═══════════════════════════════════════════════════════════
+
+// ---- Storage keys ----
+const TABS_STORAGE_KEY = 'hawa_admin_open_tabs_v1';
+const SIDEBAR_STORAGE_KEY = 'hawa_admin_sidebar_collapsed_v1';
+
+// ---- State ----
+window.openTabs = [];        // [{id, label}]
+window.activeTabId = null;
+window.sectionSnapshots = {}; // {secId: {key:val}} for dirty detection
+window.pendingClose = null;   // {type:'single'|'all', id?, ids?}
+
+// ---- Sections registered for dirty tracking (forms with explicit save) ----
+// saveFn: name of global function to call for "احفظ وأقفل" (null = no save button)
+const DIRTY_SECTIONS = {
+  'settings':       { saveFn: 'saveSettings' },
+  'booking-limits': { saveFn: 'saveLimits' },
+  'broadcast':      { saveFn: null },           // textarea content may be unsaved
+  'extra-contacts': { saveFn: null },
+  'templates':      { saveFn: null },
+  'schedule':       { saveFn: null },
+  'warehouses':     { saveFn: null }
+};
+
+// ---- Default labels (fallback if nav item not found) ----
+const SECTION_LABELS_DEFAULT = {
+  'bookings':        '📋 الحجوزات',
+  'permit-alerts':   '🚨 تنبيهات الأذونات',
+  'employees':       '👷 الموظفين',
+  'pending-clients': '⏳ عملاء تحت الانتظار',
+  'clients':         '👥 العملاء',
+  'client-types':    '🏷️ أنواع العملاء',
+  'client-tiers':    '⭐ فئات العملاء',
+  'extra-contacts':  '📞 جهات الاتصال',
+  'broadcast':       '📢 الإرسال',
+  'templates':       '📝 القوالب',
+  'unlinked':        '🔗 غير المرتبطين',
+  'vehicle-types':   '🚛 أنواع العربيات',
+  'schedule':        '📅 الجدول',
+  'blocked':         '🚫 المبلوكين',
+  'reports':         '📊 التقارير',
+  'warehouses':      '🏭 المخازن',
+  'settings':        '⚙️ الإعدادات',
+  'activity-log':    '📜 سجل النشاط',
+  'booking-limits':  '🚦 حدود الحجز'
+};
+
+function getSecLabel(navId){
+  // Try the actual nav item first (catches user's custom favorites label)
+  const nav = document.querySelector(`.nav-item[data-nav-id="${navId}"]`);
+  if (nav) {
+    const txt = (nav.textContent || '').trim().replace(/^[★⭐]\s*/,'').replace(/\s+/g,' ');
+    if (txt) return txt;
+  }
+  return SECTION_LABELS_DEFAULT[navId] || navId;
+}
+
+function tabsEscapeHtml(s){
+  return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ═══ TAB MANAGEMENT ═══
+function openTab(navId){
+  if (!navId) return;
+  // already open? just focus
+  const existing = openTabs.find(t => t.id === navId);
+  if (existing){
+    setActiveTab(navId);
+    return;
+  }
+  // verify the section exists in DOM before adding tab
+  if (!document.getElementById('sec-' + navId)) {
+    // fallback to bookings
+    if (navId !== 'bookings') return openTab('bookings');
+    return;
+  }
+  openTabs.push({ id: navId, label: getSecLabel(navId) });
+  setActiveTab(navId);
+}
+
+function setActiveTab(navId){
+  activeTabId = navId;
+  // Call the ORIGINAL goTo logic (renamed below) — handles section show/hide + load function
+  if (typeof _hawa_originalGoTo === 'function'){
+    _hawa_originalGoTo(navId);
+  }
+  renderTabBar();
+  saveTabsState();
+  // Schedule a snapshot after load completes (for dirty tracking)
+  if (DIRTY_SECTIONS[navId]){
+    setTimeout(() => {
+      snapshotSection('sec-' + navId);
+      renderTabBar(); // refresh dirty dots
+    }, 1500);
+  }
+}
+
+function closeTab(navId){
+  if (isTabDirty(navId)){
+    pendingClose = { type: 'single', id: navId };
+    showDirtyModal([navId]);
+    return;
+  }
+  finalizeCloseTab(navId);
+}
+
+function finalizeCloseTab(navId){
+  openTabs = openTabs.filter(t => t.id !== navId);
+  delete sectionSnapshots['sec-' + navId];
+  if (activeTabId === navId){
+    if (openTabs.length > 0){
+      // activate the last one (or the one to the right)
+      setActiveTab(openTabs[openTabs.length - 1].id);
+    } else {
+      // always keep at least one tab open → fall back to bookings
+      openTab('bookings');
+    }
+  } else {
+    renderTabBar();
+    saveTabsState();
+  }
+}
+
+function closeAllTabsConfirm(){
+  const dirtyIds = openTabs.filter(t => isTabDirty(t.id)).map(t => t.id);
+  if (dirtyIds.length === 0){
+    finalizeCloseAll();
+    return;
+  }
+  pendingClose = { type: 'all', ids: dirtyIds };
+  showDirtyModal(dirtyIds);
+}
+
+function finalizeCloseAll(){
+  openTabs = [];
+  sectionSnapshots = {};
+  activeTabId = null;
+  // always restore the default tab
+  openTab('bookings');
+}
+
+function renderTabBar(){
+  const container = document.getElementById('tabBarTabs');
+  if (!container) return;
+  container.innerHTML = openTabs.map(t => {
+    const isActive = (t.id === activeTabId);
+    const isDirty  = isTabDirty(t.id);
+    return `<div class="tab ${isActive ? 'active' : ''} ${isDirty ? 'dirty' : ''}"
+                 onclick="setActiveTab('${tabsEscapeHtml(t.id)}')"
+                 title="${tabsEscapeHtml(t.label)}${isDirty ? ' • تعديلات غير محفوظة' : ''}">
+              <span class="tab-label">${tabsEscapeHtml(t.label)}</span>
+              <span class="tab-close" onclick="event.stopPropagation();closeTab('${tabsEscapeHtml(t.id)}')" title="إغلاق التاب">✕</span>
+            </div>`;
+  }).join('');
+  // close-all button visibility
+  const closeAll = document.getElementById('tabBarCloseAll');
+  if (closeAll) closeAll.style.display = openTabs.length > 1 ? 'flex' : 'none';
+}
+
+function saveTabsState(){
+  try {
+    localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify({
+      tabs: openTabs.map(t => ({ id: t.id, label: t.label })),
+      active: activeTabId
+    }));
+  } catch(e){ /* localStorage full or disabled — ignore */ }
+}
+
+function restoreTabsState(){
+  try {
+    const raw = localStorage.getItem(TABS_STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data || !Array.isArray(data.tabs) || data.tabs.length === 0) return false;
+    // Validate each tab still exists in DOM
+    const validTabs = data.tabs.filter(t => t && t.id && document.getElementById('sec-' + t.id));
+    if (validTabs.length === 0) return false;
+    openTabs = validTabs.map(t => ({ id: t.id, label: t.label || getSecLabel(t.id) }));
+    const activeId = (data.active && validTabs.find(t => t.id === data.active))
+                     ? data.active
+                     : validTabs[validTabs.length - 1].id;
+    setActiveTab(activeId);
+    return true;
+  } catch(e){ return false; }
+}
+
+// ═══ DIRTY TRACKING (snapshot-based) ═══
+function snapshotSection(secId){
+  const sec = document.getElementById(secId);
+  if (!sec) return;
+  const snap = {};
+  sec.querySelectorAll('input, select, textarea').forEach(el => {
+    const key = el.id || el.name;
+    if (!key) return;
+    snap[key] = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+  });
+  sectionSnapshots[secId] = snap;
+}
+
+function isTabDirty(navId){
+  if (!DIRTY_SECTIONS[navId]) return false;
+  const secId = 'sec-' + navId;
+  const snap = sectionSnapshots[secId];
+  if (!snap) return false;
+  const sec = document.getElementById(secId);
+  if (!sec) return false;
+  const els = sec.querySelectorAll('input, select, textarea');
+  for (const el of els){
+    const key = el.id || el.name;
+    if (!key) continue;
+    if (!(key in snap)) continue; // new element appeared after snapshot — skip
+    const cur = (el.type === 'checkbox' || el.type === 'radio') ? el.checked : el.value;
+    if (snap[key] !== cur) return true;
+  }
+  return false;
+}
+
+function setupDirtyListeners(){
+  // Listen on each dirty-tracked section. Use capture so we catch all inputs.
+  Object.keys(DIRTY_SECTIONS).forEach(navId => {
+    const sec = document.getElementById('sec-' + navId);
+    if (!sec) return;
+    const handler = () => {
+      // Debounce: re-render tab bar at most every 250ms
+      if (sec._dirtyRenderTimer) return;
+      sec._dirtyRenderTimer = setTimeout(() => {
+        sec._dirtyRenderTimer = null;
+        renderTabBar();
+      }, 250);
+    };
+    sec.addEventListener('input',  handler, true);
+    sec.addEventListener('change', handler, true);
+  });
+}
+
+// ═══ DIRTY MODAL ═══
+function showDirtyModal(dirtyIds){
+  const overlay = document.getElementById('dirtyModalOverlay');
+  if (!overlay) return;
+  // Determine if a save button should appear:
+  //   - single tab with a known saveFn → show save
+  //   - all-tabs close: show save only if ALL dirty tabs have saveFn
+  const btnSave = document.getElementById('dirtyBtnSave');
+  let canSave = false;
+  if (dirtyIds.length === 1){
+    const meta = DIRTY_SECTIONS[dirtyIds[0]];
+    canSave = !!(meta && meta.saveFn && typeof window[meta.saveFn] === 'function');
+  } else {
+    canSave = dirtyIds.every(id => {
+      const m = DIRTY_SECTIONS[id];
+      return m && m.saveFn && typeof window[m.saveFn] === 'function';
+    });
+  }
+  if (btnSave) btnSave.style.display = canSave ? 'block' : 'none';
+
+  // Modal text
+  const txt = document.getElementById('dirtyModalText');
+  if (txt){
+    if (dirtyIds.length === 1){
+      const label = getSecLabel(dirtyIds[0]);
+      txt.innerHTML = `فى تعديلات لسه ما اتحفظتش فى شاشة <b>${tabsEscapeHtml(label)}</b>. تحب تعمل إيه؟`;
+    } else {
+      txt.innerHTML = `فى <b>${dirtyIds.length}</b> شاشات بتعديلات لسه ما اتحفظتش. تحب تعمل إيه؟`;
+    }
+  }
+  overlay.classList.add('show');
+}
+
+function hideDirtyModal(){
+  const overlay = document.getElementById('dirtyModalOverlay');
+  if (overlay) overlay.classList.remove('show');
+  pendingClose = null;
+}
+
+async function runSaveFor(navId){
+  const meta = DIRTY_SECTIONS[navId];
+  if (!meta || !meta.saveFn) return false;
+  const fn = window[meta.saveFn];
+  if (typeof fn !== 'function') return false;
+  try {
+    // The save needs the section to be visible (forms only read current DOM values)
+    setActiveTab(navId);
+    // small delay so DOM reflow finishes before save reads inputs
+    await new Promise(r => setTimeout(r, 100));
+    const result = fn();
+    if (result && typeof result.then === 'function') await result;
+    // refresh snapshot to clear dirty flag
+    snapshotSection('sec-' + navId);
+    return true;
+  } catch(e){
+    console.warn('[tabs] Save failed for', navId, e);
+    return false;
+  }
+}
+
+async function confirmSaveAndClose(){
+  if (!pendingClose) return hideDirtyModal();
+  const btnSave = document.getElementById('dirtyBtnSave');
+  if (btnSave) btnSave.disabled = true;
+  try {
+    if (pendingClose.type === 'single'){
+      const ok = await runSaveFor(pendingClose.id);
+      if (ok) finalizeCloseTab(pendingClose.id);
+      else { hideDirtyModal(); return; }
+    } else {
+      // all
+      for (const id of [...pendingClose.ids]){
+        await runSaveFor(id);
+      }
+      finalizeCloseAll();
+    }
+  } finally {
+    if (btnSave) btnSave.disabled = false;
+    hideDirtyModal();
+  }
+}
+
+function confirmDiscardAndClose(){
+  if (!pendingClose) return hideDirtyModal();
+  if (pendingClose.type === 'single'){
+    finalizeCloseTab(pendingClose.id);
+  } else {
+    finalizeCloseAll();
+  }
+  hideDirtyModal();
+}
+
+function cancelDirtyClose(){
+  hideDirtyModal();
+}
+
+// ═══ SIDEBAR TOGGLE ═══
+function toggleSidebar(){
+  const sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
+  const isCollapsing = !sidebar.classList.contains('collapsed');
+  sidebar.classList.toggle('collapsed');
+  // Update main-area margin via CSS variable trick
+  document.documentElement.style.setProperty('--sidebar', isCollapsing ? '64px' : '220px');
+  try {
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, isCollapsing ? '1' : '0');
+  } catch(e){}
+  // Add data-label to nav items for tooltip when collapsed
+  if (isCollapsing) populateNavTooltips();
+}
+
+function populateNavTooltips(){
+  document.querySelectorAll('.nav-item').forEach(n => {
+    const navId = n.getAttribute('data-nav-id');
+    if (!navId) return;
+    const label = getSecLabel(navId);
+    n.setAttribute('data-label', label);
+  });
+}
+
+function restoreSidebarState(){
+  try {
+    const v = localStorage.getItem(SIDEBAR_STORAGE_KEY);
+    if (v === '1'){
+      const sidebar = document.querySelector('.sidebar');
+      if (sidebar){
+        sidebar.classList.add('collapsed');
+        document.documentElement.style.setProperty('--sidebar', '64px');
+      }
+    }
+  } catch(e){}
+}
+
+// ═══ INTEGRATION: Override goTo() to use tab system ═══
+// Rename the original goTo (defined earlier in the script) to _hawa_originalGoTo,
+// then replace window.goTo with our wrapper that opens/focuses a tab.
+if (typeof goTo === 'function' && typeof _hawa_originalGoTo !== 'function'){
+  window._hawa_originalGoTo = goTo;
+  window.goTo = function(sec){
+    openTab(sec);
+  };
+}
+
+// ═══ INIT (called after enterApp + renderSidebar) ═══
+function initTabSystem(){
+  // Set up dirty listeners on sections (idempotent — re-running is harmless)
+  setupDirtyListeners();
+  // Populate tooltips for collapsed mode
+  populateNavTooltips();
+  // Render the current (possibly empty) tab bar
+  renderTabBar();
+}
+
+// Hook into enterApp / goToDefaultPage so we restore tabs from localStorage
+// before falling back to the default page.
+(function hookTabRestoration(){
+  if (typeof goToDefaultPage !== 'function') return;
+  const _origGoToDefaultPage = goToDefaultPage;
+  window.goToDefaultPage = async function(){
+    // Initialize tab system (dirty listeners, tooltips) FIRST
+    initTabSystem();
+    // Restore sidebar collapsed state
+    restoreSidebarState();
+    // Try to restore tabs from localStorage; if none, fall back to default
+    if (restoreTabsState()){
+      return; // tabs were restored — done
+    }
+    // No saved tabs → use the original default-page logic (opens via openTab now)
+    return await _origGoToDefaultPage.apply(this, arguments);
+  };
+})();
+
+// Re-populate tooltips whenever sidebar is re-rendered (renderSidebar may run later)
+(function hookRenderSidebar(){
+  if (typeof renderSidebar !== 'function') return;
+  const _origRenderSidebar = renderSidebar;
+  window.renderSidebar = function(){
+    const r = _origRenderSidebar.apply(this, arguments);
+    // After re-render, refresh tooltips + restore active-tab highlight on nav
+    setTimeout(() => {
+      populateNavTooltips();
+      // Re-highlight active nav item if a tab is active
+      if (activeTabId){
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        const navEl = document.querySelector(`.nav-item[data-nav-id="${activeTabId}"]`);
+        if (navEl) navEl.classList.add('active');
+      }
+    }, 50);
+    return r;
+  };
+})();
+
+// ═══════════════════════════════════════════════════════════
+// END TAB SYSTEM
+// ═══════════════════════════════════════════════════════════
+
 const saved=sessionStorage.getItem('hawa_admin');
 if(saved){admin=JSON.parse(saved);enterApp();}
 </script>
+
+<!-- 🆕 DIRTY MODAL (تعديلات غير محفوظة) -->
+<div class="dirty-modal-overlay" id="dirtyModalOverlay" onclick="if(event.target===this)cancelDirtyClose()">
+  <div class="dirty-modal">
+    <div class="dirty-modal-icon">⚠️</div>
+    <div class="dirty-modal-title">تعديلات غير محفوظة</div>
+    <div class="dirty-modal-text" id="dirtyModalText">فى تعديلات لسه ما اتحفظتش. تحب تعمل إيه؟</div>
+    <div class="dirty-modal-buttons">
+      <button class="btn-save" id="dirtyBtnSave" onclick="confirmSaveAndClose()">💾 احفظ وأقفل</button>
+      <button class="btn-discard" onclick="confirmDiscardAndClose()">🗑️ أقفل بدون حفظ</button>
+      <button class="btn-cancel" onclick="cancelDirtyClose()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
