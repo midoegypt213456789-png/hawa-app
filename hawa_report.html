@@ -201,14 +201,6 @@
     <label>⏰ الساعة</label>
     <select id="filterSlot" onchange="loadReport()">
       <option value="">كل المواعيد</option>
-      <option value="8:00 - 9:00">8:00 - 9:00</option>
-      <option value="9:00 - 10:00">9:00 - 10:00</option>
-      <option value="10:00 - 11:00">10:00 - 11:00</option>
-      <option value="11:00 - 12:00">11:00 - 12:00</option>
-      <option value="12:00 - 1:00">12:00 - 1:00</option>
-      <option value="1:00 - 2:00">1:00 - 2:00</option>
-      <option value="2:00 - 3:00">2:00 - 3:00</option>
-      <option value="3:00 - 4:00">3:00 - 4:00</option>
     </select>
   </div>
   <div class="filter-group">
@@ -235,10 +227,58 @@ const N8N_BASE = 'https://n8n.gladiatorverse.net';
 // const N8N_BASE = 'https://unhatched-lashaunda-inductive.ngrok-free.dev';  // local fallback
 
 const N8N = `${N8N_BASE}/webhook/booking-confirm`;
-const VTYPES = ['موتسيكل', 'تروسكل', 'كهرباء'];
-const VICONS = { 'موتسيكل': '🏍️', 'تروسكل': '🛺', 'كهرباء': '⚡' };
-const SLOTS  = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00',
-                '12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
+const VTYPES = ['موتسيكل', 'تروسكل', 'كهرباء', 'ZONTOS'];  // ترتيب العرض المفضل
+const VICONS = { 'موتسيكل': '🏍️', 'تروسكل': '🛺', 'كهرباء': '⚡', 'ZONTOS': '🚗' };
+
+// ⏰ ============ المواعيد الديناميكية ============
+// SLOTS بتتولد من ساعات عمل المخازن (من الداتابيز) + أي موعد موجود فعلاً في الحجوزات
+let SLOTS  = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00',
+              '12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00']; // fallback مؤقت
+let warehouseHoursByName = null;
+
+// يحوّل "8:00 - 9:00" لساعة 24 للترتيب الصحيح (8-11 صباحاً، 12 ظهراً، 1-7 بعد الظهر)
+function slotStartHour24(slot){
+  const m = String(slot||'').match(/^(\d{1,2}):/);
+  if(!m) return 99;
+  const h = parseInt(m[1],10);
+  if(h === 12) return 12;
+  if(h >= 1 && h <= 7) return h + 12;
+  return h;
+}
+function generateSlotsRange(ws, we){
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  const out = [];
+  for(let h = ws; h < we; h++) out.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+  return out;
+}
+// إعادة بناء SLOTS + dropdown المواعيد حسب المخزن المختار والحجوزات المحمّلة
+function rebuildSlotsReport(bookings){
+  const currentWh = document.getElementById('filterWarehouse').value;
+  const set = new Set();
+  if(warehouseHoursByName && Object.keys(warehouseHoursByName).length){
+    if(currentWh && warehouseHoursByName[currentWh]){
+      const {ws, we} = warehouseHoursByName[currentWh];
+      generateSlotsRange(ws, we).forEach(s=>set.add(s));
+    } else {
+      Object.values(warehouseHoursByName).forEach(({ws, we})=>{
+        generateSlotsRange(ws, we).forEach(s=>set.add(s));
+      });
+    }
+  }
+  if(!set.size) generateSlotsRange(8,16).forEach(s=>set.add(s));
+  // 🛡️ ضمان: أي موعد موجود في الحجوزات الفعلية يظهر حتى لو خارج الساعات الحالية
+  (bookings||[]).forEach(b=>{ if(b.time_slot) set.add(b.time_slot); });
+  SLOTS = [...set].sort((a,b)=>slotStartHour24(a)-slotStartHour24(b));
+
+  const sel = document.getElementById('filterSlot');
+  if(sel){
+    const cur = sel.value;
+    let html = '<option value="">كل المواعيد</option>';
+    SLOTS.forEach(s=>html+=`<option value="${s}">${s}</option>`);
+    sel.innerHTML = html;
+    sel.value = SLOTS.includes(cur) ? cur : '';
+  }
+}
 
 // ===== AUTH CHECK =====
 // بنستخدم sessionStorage عشان تنتهي لما الـ browser يتقفل
@@ -287,7 +327,7 @@ async function loadWarehouseVehicleTypes(){
   try {
     // 3 fetches منفصلة (أكثر reliability من الـ embed)
     const [whResp, vtResp, mapResp] = await Promise.all([
-      fetch(`${SB}/rest/v1/warehouses?select=id,name`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end`, { headers: HDR }),
       fetch(`${SB}/rest/v1/vehicle_types?select=id,name`, { headers: HDR }),
       fetch(`${SB}/rest/v1/warehouse_vehicle_types?is_active=eq.true&select=warehouse_id,vehicle_type_id,display_order&order=display_order.asc`, { headers: HDR })
     ]);
@@ -295,6 +335,14 @@ async function loadWarehouseVehicleTypes(){
 
     const whMap = {}; (warehouses || []).forEach(w => whMap[w.id] = w.name);
     const vtMap = {}; (vehicleTypes || []).forEach(v => vtMap[v.id] = v.name);
+
+    // ⏰ cache ساعات العمل لكل مخزن (شامل الـ pending)
+    warehouseHoursByName = {};
+    (warehouses || []).forEach(w => {
+      const ws = Math.min(w.working_hour_start ?? 8,  w.pending_working_hour_start ?? (w.working_hour_start ?? 8));
+      const we = Math.max(w.working_hour_end   ?? 16, w.pending_working_hour_end   ?? (w.working_hour_end   ?? 16));
+      warehouseHoursByName[w.name] = {ws, we};
+    });
 
     vehicleTypesByWarehouse = {};
     for(const m of (mappings || [])){
@@ -382,6 +430,9 @@ async function loadReport() {
     const bookings = await r.json();
     if (!Array.isArray(bookings)) throw new Error('خطأ');
 
+    // ⏰ حدّث فلتر المواعيد ديناميكياً حسب المخزن والحجوزات
+    rebuildSlotsReport(bookings);
+
     const ids = [...new Set(bookings.map(b => b.client_id).filter(Boolean))];
     let clientMap = {};
     if (ids.length) {
@@ -437,7 +488,10 @@ function buildSection(wh, date, dateLabel, bookings, clientMap, vtypeFilter) {
   const pending = bookings.filter(b => b.status === 'قيد الانتظار').length;
   const noshow  = bookings.filter(b => b.status === 'no-show').length;
 
-  const vtypesToShow = vtypeFilter ? [vtypeFilter] : VTYPES;
+  // 🛡️ أي نوع عربية موجود في الحجوزات يظهر — حتى الأنواع الجديدة اللي مش في VTYPES
+  const present = [...new Set(bookings.map(b => b.vehicle_type).filter(Boolean))];
+  const ordered = [...VTYPES.filter(t => present.includes(t)), ...present.filter(t => !VTYPES.includes(t))];
+  const vtypesToShow = vtypeFilter ? [vtypeFilter] : ordered;
   let vtypesHtml = '';
   vtypesToShow.forEach(vt => {
     const bks = bookings.filter(b => b.vehicle_type === vt);
