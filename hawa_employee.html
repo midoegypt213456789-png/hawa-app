@@ -157,21 +157,9 @@
     <div class="filter-bar" style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;padding:0 10px 10px">
       <select id="filterVehicle" onchange="applyFilters()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark;min-width:140px">
         <option value="">🚛 كل الأنواع</option>
-        <option value="موتسيكل">🏍️ موتسيكل</option>
-        <option value="تروسكل">🛺 تروسكل</option>
-        <option value="كهرباء">⚡ كهرباء</option>
-        <option value="ZONTOS">🚗 ZONTOS</option>
       </select>
       <select id="filterSlot" onchange="applyFilters()" style="background:#1A1A1A;color:#F0EDE8;border:1px solid rgba(201,168,76,0.4);border-radius:8px;padding:7px 12px;font-family:inherit;font-size:13px;cursor:pointer;color-scheme:dark;min-width:140px">
         <option value="">⏰ كل المواعيد</option>
-        <option value="8:00 - 9:00">⏰ 8:00 - 9:00</option>
-        <option value="9:00 - 10:00">⏰ 9:00 - 10:00</option>
-        <option value="10:00 - 11:00">⏰ 10:00 - 11:00</option>
-        <option value="11:00 - 12:00">⏰ 11:00 - 12:00</option>
-        <option value="12:00 - 1:00">⏰ 12:00 - 1:00</option>
-        <option value="1:00 - 2:00">⏰ 1:00 - 2:00</option>
-        <option value="2:00 - 3:00">⏰ 2:00 - 3:00</option>
-        <option value="3:00 - 4:00">⏰ 3:00 - 4:00</option>
       </select>
       <button onclick="resetFilters()" id="filterResetBtn" style="background:rgba(138,133,128,0.15);color:#A8A39E;border:1px solid rgba(138,133,128,0.4);border-radius:6px;padding:6px 12px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:none">✖️ مسح</button>
     </div>
@@ -201,7 +189,79 @@
 const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
-const SLOTS=['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00','12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00'];
+// ⏰ ============ المواعيد الديناميكية ============
+// SLOTS بتتولد من ساعات عمل المخازن (من الداتابيز) + أي موعد موجود فعلاً في الحجوزات
+// → أي تغيير في ساعات العمل ينعكس هنا تلقائياً، ومفيش حجز يختفي أبداً
+let SLOTS = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00','12:00 - 1:00','1:00 - 2:00','2:00 - 3:00','3:00 - 4:00']; // fallback مؤقت لحد ما الداتا توصل
+let warehouseHoursByName = null;
+
+// يحوّل "8:00 - 9:00" لساعة 24 للترتيب الصحيح (8-11 صباحاً، 12 ظهراً، 1-7 بعد الظهر)
+function slotStartHour24(slot){
+  const m = String(slot||'').match(/^(\d{1,2}):/);
+  if(!m) return 99;
+  const h = parseInt(m[1],10);
+  if(h === 12) return 12;
+  if(h >= 1 && h <= 7) return h + 12;
+  return h;
+}
+function generateSlotsRange(ws, we){
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  const out = [];
+  for(let h = ws; h < we; h++) out.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+  return out;
+}
+
+// تحميل ساعات عمل المخازن (مرة واحدة، cached)
+async function loadFilterMeta(){
+  if(warehouseHoursByName) return;
+  try{
+    const whR = await fetch(`${SB}/rest/v1/warehouses?select=name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end`,{headers:HDR});
+    const whs = await whR.json();
+    warehouseHoursByName = {};
+    (Array.isArray(whs)?whs:[]).forEach(w=>{
+      const ws = Math.min(w.working_hour_start ?? 8,  w.pending_working_hour_start ?? (w.working_hour_start ?? 8));
+      const we = Math.max(w.working_hour_end   ?? 16, w.pending_working_hour_end   ?? (w.working_hour_end   ?? 16));
+      warehouseHoursByName[w.name] = {ws, we};
+    });
+  }catch(e){
+    console.error('[filter-meta] load failed:', e);
+    warehouseHoursByName = warehouseHoursByName || {};
+  }
+}
+
+// إعادة بناء SLOTS حسب المخزن المختار + الحجوزات المحمّلة، وتحديث الفلاتر
+function rebuildSlots(){
+  const set = new Set();
+  if(warehouseHoursByName && Object.keys(warehouseHoursByName).length){
+    if(warehouse && warehouse !== 'ALL' && warehouseHoursByName[warehouse]){
+      const {ws, we} = warehouseHoursByName[warehouse];
+      generateSlotsRange(ws, we).forEach(s=>set.add(s));
+    } else {
+      Object.values(warehouseHoursByName).forEach(({ws, we})=>{
+        generateSlotsRange(ws, we).forEach(s=>set.add(s));
+      });
+    }
+  }
+  if(!set.size) generateSlotsRange(8,16).forEach(s=>set.add(s));
+  // 🛡️ ضمان: أي موعد موجود في الحجوزات الفعلية يظهر حتى لو خارج الساعات الحالية
+  (allBookings||[]).forEach(b=>{ if(b.time_slot) set.add(b.time_slot); });
+  SLOTS = [...set].sort((a,b)=>slotStartHour24(a)-slotStartHour24(b));
+  rebuildFilterDropdowns();
+}
+
+function rebuildFilterDropdowns(){
+  // ⏰ فلتر المواعيد فقط — فلتر الأنواع له نظامه الخاص (rebuildVehicleFilter)
+  const selS = document.getElementById('filterSlot');
+  if(selS){
+    const cur = selS.value;
+    let html = '<option value="">⏰ كل المواعيد</option>';
+    SLOTS.forEach(s=>html+=`<option value="${s}">⏰ ${s}</option>`);
+    selS.innerHTML = html;
+    selS.value = SLOTS.includes(cur) ? cur : '';
+  }
+  // sync القيمة المحلية لو الاختيار اتشال
+  filterSlot = document.getElementById('filterSlot')?.value || '';
+}
 // 📅 الـ date range الـ selected (default = اليوم إلى اليوم) + helpers
 let selectedDateFrom = new Date(); selectedDateFrom.setHours(0,0,0,0);
 let selectedDateTo   = new Date(); selectedDateTo.setHours(0,0,0,0);
@@ -503,7 +563,11 @@ async function loadBookings(){
     }
     const r=await fetch(url,{headers:HDR});
     allBookings=await r.json();
+    if(!Array.isArray(allBookings)) allBookings=[];
     lastRefreshTime=Date.now();  // 📌 سجّل وقت آخر تحديث
+    // ⏰ حدّث المواعيد والفلاتر ديناميكياً حسب المخزن والحجوزات
+    await loadFilterMeta();
+    rebuildSlots();
     if(!allBookings.length){
       const whLabel = warehouse === 'ALL' ? 'المخزنين' : warehouse;
       const isOnlyToday = (fromStr === getTodayStr() && toStr === getTodayStr());

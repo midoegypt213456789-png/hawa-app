@@ -2582,14 +2582,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           </select>
           <select class="filter-inp" id="bk-slot" onchange="loadBookings()" style="width:150px">
             <option value="">⏰ كل المواعيد</option>
-            <option value="8:00 - 9:00">⏰ 8:00 - 9:00</option>
-            <option value="9:00 - 10:00">⏰ 9:00 - 10:00</option>
-            <option value="10:00 - 11:00">⏰ 10:00 - 11:00</option>
-            <option value="11:00 - 12:00">⏰ 11:00 - 12:00</option>
-            <option value="12:00 - 1:00">⏰ 12:00 - 1:00</option>
-            <option value="1:00 - 2:00">⏰ 1:00 - 2:00</option>
-            <option value="2:00 - 3:00">⏰ 2:00 - 3:00</option>
-            <option value="3:00 - 4:00">⏰ 3:00 - 4:00</option>
           </select>
           <select class="filter-inp" id="bk-status" onchange="loadBookings()" style="width:150px">
             <option value="">كل الحالات</option>
@@ -4854,6 +4846,8 @@ let allClientsMap = {};
 
 // 🚛 الـ vehicle types المتاحة لكل مخزن (cache + lazy load)
 let vehicleTypesByWarehouse = null;
+// ⏰ ساعات العمل لكل مخزن { name: {ws, we} } — لتوليد فلتر المواعيد ديناميكياً
+let warehouseHoursByName = null;
 const VEHICLE_ICONS = {
   'موتسيكل': '🏍️',
   'تروسكل':  '🛺',
@@ -4865,7 +4859,7 @@ async function loadWarehouseVehicleTypes(){
   if(vehicleTypesByWarehouse) return; // cached
   try {
     const [whResp, vtResp, mapResp] = await Promise.all([
-      fetch(`${SB}/rest/v1/warehouses?select=id,name`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end,pending_effective_from`, { headers: HDR }),
       fetch(`${SB}/rest/v1/vehicle_types?select=id,name`, { headers: HDR }),
       fetch(`${SB}/rest/v1/warehouse_vehicle_types?is_active=eq.true&select=warehouse_id,vehicle_type_id,display_order&order=display_order.asc`, { headers: HDR })
     ]);
@@ -4873,6 +4867,14 @@ async function loadWarehouseVehicleTypes(){
 
     const whMap = {}; (warehouses || []).forEach(w => whMap[w.id] = w.name);
     const vtMap = {}; (vehicleTypes || []).forEach(v => vtMap[v.id] = v.name);
+
+    // ⏰ cache ساعات العمل لكل مخزن (شامل الـ pending عشان نغطي المواعيد المستقبلية)
+    warehouseHoursByName = {};
+    (warehouses || []).forEach(w => {
+      const ws = Math.min(w.working_hour_start ?? 8,  w.pending_working_hour_start ?? (w.working_hour_start ?? 8));
+      const we = Math.max(w.working_hour_end   ?? 16, w.pending_working_hour_end   ?? (w.working_hour_end   ?? 16));
+      warehouseHoursByName[w.name] = { ws, we };
+    });
 
     vehicleTypesByWarehouse = {};
     for(const m of (mappings || [])){
@@ -4929,7 +4931,53 @@ function rebuildBkVehicleFilter(){
 async function onBkWarehouseChange(){
   await loadWarehouseVehicleTypes(); // cached after first call
   rebuildBkVehicleFilter();
+  rebuildBkSlotFilter();
   loadBookings();
+}
+
+// ⏰ ============ فلتر المواعيد الديناميكي ============
+// يحوّل "8:00 - 9:00" لساعة 24 للترتيب الصحيح
+function slotStartHour24(slot){
+  const m = String(slot||'').match(/^(\d{1,2}):/);
+  if(!m) return 99;
+  const h = parseInt(m[1],10);
+  if(h === 12) return 12;          // 12 ظهراً
+  if(h >= 1 && h <= 7) return h + 12; // 1-7 = بعد الظهر
+  return h;                         // 8-11 صباحاً
+}
+function generateSlotsRange(ws, we){
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  const out = [];
+  for(let h = ws; h < we; h++) out.push(`${fmt(h)}:00 - ${fmt(h+1)}:00`);
+  return out;
+}
+function rebuildBkSlotFilter(extraSlots){
+  const sel = document.getElementById('bk-slot');
+  if(!sel) return;
+  const currentValue = sel.value;
+  const currentWh = document.getElementById('bk-wh').value;
+
+  const set = new Set();
+  if(warehouseHoursByName){
+    if(currentWh && warehouseHoursByName[currentWh]){
+      const {ws, we} = warehouseHoursByName[currentWh];
+      generateSlotsRange(ws, we).forEach(s => set.add(s));
+    } else {
+      // "كل المخازن" → union كل ساعات كل المخازن
+      Object.values(warehouseHoursByName).forEach(({ws, we}) => {
+        generateSlotsRange(ws, we).forEach(s => set.add(s));
+      });
+    }
+  }
+  if(!set.size) generateSlotsRange(8,16).forEach(s => set.add(s)); // fallback
+  // 🛡️ ضمان: أي موعد موجود فعلاً في الحجوزات يظهر حتى لو خارج الساعات الحالية
+  (extraSlots || []).forEach(s => { if(s) set.add(s); });
+
+  const sorted = [...set].sort((a,b) => slotStartHour24(a) - slotStartHour24(b));
+  let html = '<option value="">⏰ كل المواعيد</option>';
+  for(const s of sorted) html += `<option value="${s}">⏰ ${s}</option>`;
+  sel.innerHTML = html;
+  sel.value = (currentValue && set.has(currentValue)) ? currentValue : '';
 }
 
 async function loadBookings(){
@@ -4937,6 +4985,7 @@ async function loadBookings(){
   if(!vehicleTypesByWarehouse){
     await loadWarehouseVehicleTypes();
     rebuildBkVehicleFilter();
+    rebuildBkSlotFilter();
   }
 
   const dateFrom=document.getElementById('bk-date-from').value;
@@ -4964,6 +5013,14 @@ async function loadBookings(){
   try{
     const r=await fetch(url,{headers:{...HDR,'Range':'0-499'}});
     allBookingsData=await r.json();
+
+    // 🛡️ لو فيه مواعيد في الحجوزات مش موجودة في الفلتر → ضيفها تلقائياً
+    if(!slot && Array.isArray(allBookingsData)){
+      const sel=document.getElementById('bk-slot');
+      const existing=new Set([...sel.options].map(o=>o.value));
+      const missing=[...new Set(allBookingsData.map(b=>b.time_slot).filter(Boolean))].filter(s=>!existing.has(s));
+      if(missing.length) rebuildBkSlotFilter(missing);
+    }
 
     // Stats للفترة المختارة (أو اليوم لو مفيش فترة)
     let statsUrl=`${SB}/rest/v1/bookings?select=status,count`;
