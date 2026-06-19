@@ -2921,6 +2921,20 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
 
+    <!-- BROADCAST LOGS -->
+    <div class="section" id="sec-broadcast-logs">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">📬 سجل الإرسال</div>
+          <div class="page-sub">كل رسالة broadcast اتبعتت: مين وصله، مين فشل، وليه</div>
+        </div>
+        <button class="btn-add" onclick="loadBroadcastLogs()" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold)">🔄 تحديث</button>
+      </div>
+
+      <div id="blog-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px"></div>
+      <div id="blog-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
+
     <!-- TEMPLATES -->
     <div class="section" id="sec-templates">
       <div class="page-hd">
@@ -4464,6 +4478,7 @@ function goTo(sec){
   else if(sec==='client-types')loadClientTypes();
   else if(sec==='extra-contacts')loadExtraContacts();
   else if(sec==='broadcast'){ refreshClientActivity(true).then(()=>loadBroadcast()); }
+  else if(sec==='broadcast-logs')loadBroadcastLogs();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='vehicle-types')loadVehicleTypes();
@@ -7764,7 +7779,8 @@ async function calculateBroadcastTargets(){
   const esc = v => encodeURIComponent(String(v));
 
   // Build base filter (without telegram_id check, to count not-linked separately)
-  let baseFilter = `is_active=eq.true`;
+  // 🚫 is_blocked: نستبعد المحظورين دايماً — مهما كانوا active وعندهم telegram_id
+  let baseFilter = `is_active=eq.true&or=(is_blocked.is.null,is_blocked.eq.false)`;
   if(types.length === 1)        baseFilter += `&client_type=eq.${esc(types[0])}`;
   else if(types.length > 1)     baseFilter += `&client_type=in.(${types.map(esc).join(',')})`;
   if(religions.length === 1)    baseFilter += `&religion=eq.${esc(religions[0])}`;
@@ -7987,6 +8003,93 @@ async function sendBroadcast(){
     alert(`❌ مش قادر أوصل للـ webhook\n\nده غالباً معناه إن السيرفر مش شغّال أو فيه مشكلة فى الشبكة.\n\nالتفاصيل: ${e.message}`);
     sendBtn.disabled = false;
     sendBtn.textContent = '📢 إرسال الرسالة';
+  }
+}
+
+// =================== BROADCAST LOGS ===================
+async function loadBroadcastLogs(){
+  const listEl = document.getElementById('blog-list');
+  const sumEl  = document.getElementById('blog-summary');
+  listEl.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  sumEl.innerHTML = '';
+
+  try{
+    const r = await fetch(`${SB}/rest/v1/broadcast_logs?select=*&order=created_at.desc&limit=100`, {headers:HDR});
+    const logs = await r.json();
+
+    if(!Array.isArray(logs) || !logs.length){
+      listEl.innerHTML = '<div class="empty-txt" style="padding:40px">📭 مفيش عمليات إرسال متسجّلة لسه — أول broadcast هيظهر هنا</div>';
+      return;
+    }
+
+    // ── ملخص إجمالي (آخر 100 عملية) ──
+    const totSent    = logs.reduce((s,l)=>s+(l.sent||0),0);
+    const totFailed  = logs.reduce((s,l)=>s+(l.failed||0),0);
+    const totBlocked = logs.reduce((s,l)=>s+(l.blocked||0),0);
+    const card = (icon,label,val,color)=>`<div style="flex:1;min-width:130px;background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:${color}">${val}</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${icon} ${label}</div></div>`;
+    sumEl.innerHTML =
+      card('📤','عمليات إرسال',logs.length,'var(--gold)') +
+      card('✅','وصلت',totSent,'var(--success)') +
+      card('❌','فشلت',totFailed, totFailed>0?'var(--error)':'var(--text-dim)') +
+      card('🚫','حظروا البوت',totBlocked, totBlocked>0?'#d4a030':'var(--text-dim)');
+
+    // ── قائمة العمليات ──
+    let html = '';
+    logs.forEach(log => {
+      const dt = log.created_at ? new Date(log.created_at).toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}) : '-';
+      const preview = (log.message_preview || '(ملفات فقط)').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const failed = log.failed || 0;
+      const details = Array.isArray(log.failed_details) ? log.failed_details : [];
+
+      // شارة النتيجة
+      let statusBadge;
+      if(failed === 0){
+        statusBadge = `<span style="background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.4);color:var(--success);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">✅ كله وصل</span>`;
+      } else {
+        statusBadge = `<span style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.35);color:#e88080;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">⚠️ ${failed} فشل</span>`;
+      }
+
+      // تفاصيل الفشل (قابلة للطي)
+      let failDetailsHtml = '';
+      if(details.length){
+        const rows = details.map(d => {
+          let reasonLabel = d.reason || '';
+          if(/\[403\]/.test(reasonLabel)) reasonLabel = '🚫 العميل حظر البوت';
+          else if(/\[400\]/.test(reasonLabel)) reasonLabel = '⚠️ telegram_id غلط أو قديم';
+          else if(/429/.test(reasonLabel)) reasonLabel = '⏱️ rate limit (اتحاول تاني وفشل)';
+          return `<div style="display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px">
+            <span style="color:var(--text)">${(d.name||'—').replace(/</g,'&lt;')} <span style="color:var(--text-dim)">(${d.source==='extra'?'جهة إضافية':'عميل'})</span></span>
+            <span style="color:#e88080;white-space:nowrap">${reasonLabel}</span>
+          </div>`;
+        }).join('');
+        failDetailsHtml = `<details style="margin-top:10px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--gold);font-weight:700">👁️ شوف مين فشل (${details.length})</summary>
+          <div style="margin-top:8px;background:var(--dark3);border-radius:8px;overflow:hidden">${rows}</div>
+        </details>`;
+      }
+
+      html += `<div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:12px;color:var(--text-dim)">📅 ${dt}</span>
+          ${statusBadge}
+        </div>
+        <div style="font-size:13px;color:var(--text);background:var(--dark3);border-radius:8px;padding:10px 12px;white-space:pre-wrap;max-height:100px;overflow-y:auto;margin-bottom:10px">${preview}</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-dim)">
+          <span>📬 إجمالي: <b style="color:var(--text)">${log.total||0}</b></span>
+          <span>✅ وصل: <b style="color:var(--success)">${log.sent||0}</b></span>
+          ${failed>0?`<span>❌ فشل: <b style="color:#e88080">${failed}</b></span>`:''}
+          ${log.blocked>0?`<span>🚫 حظروا: <b style="color:#d4a030">${log.blocked}</b></span>`:''}
+          ${log.invalid>0?`<span>⚠️ ID غلط: <b style="color:#d4a030">${log.invalid}</b></span>`:''}
+        </div>
+        ${failDetailsHtml}
+      </div>`;
+    });
+    listEl.innerHTML = html;
+
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-txt" style="padding:40px;color:var(--error)">❌ خطأ في التحميل: ${e.message||''}</div>`;
   }
 }
 
@@ -11712,6 +11815,7 @@ const NAV_META = {
   'unlinked':         { icon: '🔗',  label: 'عملاء لم يربطوا' },
 
   'broadcast':        { icon: '📢',  label: 'إرسال رسائل' },
+  'broadcast-logs':   { icon: '📬',  label: 'سجل الإرسال' },
   'templates':        { icon: '💌',  label: 'الرسائل المحفوظة' },
 
   'employees':        { icon: '👷',  label: 'الموظفين' },
@@ -11729,7 +11833,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
   categories: [
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
-    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['broadcast', 'templates'] },
+    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['broadcast', 'broadcast-logs', 'templates'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -12094,6 +12198,7 @@ const SECTION_LABELS_DEFAULT = {
   'client-tiers':    '⭐ فئات العملاء',
   'extra-contacts':  '📞 جهات الاتصال',
   'broadcast':       '📢 الإرسال',
+  'broadcast-logs':  '📬 سجل الإرسال',
   'templates':       '📝 القوالب',
   'unlinked':        '🔗 غير المرتبطين',
   'vehicle-types':   '🚛 أنواع العربيات',
