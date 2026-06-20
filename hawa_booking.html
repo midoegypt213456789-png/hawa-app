@@ -675,6 +675,36 @@ const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': '
 // 📅 Global helper: Cairo local date (مش UTC) — موجود global عشان كل الـ functions تستخدمه
 const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 
+// 🕐 يرجّع ساعة بداية السلوت بنظام 24 ساعة (يعتمد على ساعات عمل المخزن لتفادي لبس ص/م)
+function slotStartHour24(slot, ws, we){
+  if(!slot) return null;
+  const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
+  const s = parseInt(ws, 10), e = parseInt(we, 10);
+  if(Number.isFinite(s) && Number.isFinite(e)){
+    for(let h = s; h < e; h++){
+      if(`${fmt(h)}:00 - ${fmt(h+1)}:00` === slot) return h;
+    }
+  }
+  const m = String(slot).match(/^(\d{1,2}):/);
+  if(!m) return null;
+  let h = parseInt(m[1], 10);
+  if(h >= 1 && h <= 7) h += 12;
+  return h;
+}
+
+// ⏰ هل بدأ موعد الحجز فعلاً؟ (تاريخه النهاردة وساعة سلوته جت أو عدّت)
+function isBookingTimePassed(loadingDate, slot, warehouseName){
+  const t = new Date(); t.setHours(0,0,0,0);
+  const todayStr = fmtDate(t);
+  if(loadingDate < todayStr) return true;
+  if(loadingDate > todayStr) return false;
+  const h = (typeof applyWarehouseHours === 'function')
+    ? applyWarehouseHours(loadingDate, warehouseName) : null;
+  const startH = slotStartHour24(slot, h ? h.ws : null, h ? h.we : null);
+  if(startH == null) return false;
+  return startH <= new Date().getHours();
+}
+
 // ⚙️ ربط n8n: السيرفر الخارجى الـ default
 //    لو السيرفر الخارجى وقع لأى سبب، فعّل السطر التانى بدل الأول وارفع التعديل
 const N8N_BASE = 'https://n8n.gladiatorverse.net';
@@ -3043,7 +3073,17 @@ async function loadSlots() {
     blockedHours.forEach(h => blockedSlots.add(`${fmt(h)}:00 - ${fmt(h+1)}:00`));
 
     // Final visible slots = warehouse slots − blocked slots
-    const slots = allSlots.filter(s => !blockedSlots.has(s));
+    let slots = allSlots.filter(s => !blockedSlots.has(s));
+
+    // ⏰ لو اليوم المختار = النهاردة، استبعد السلوتس اللي ساعتها جت أو عدّت
+    const _todayStr = fmtDate(new Date());
+    if (bk.dateStr === _todayStr) {
+      const nowH = new Date().getHours();
+      slots = slots.filter(sl => {
+        const sh = slotStartHour24(sl, hours.ws, hours.we);
+        return sh == null ? true : sh > nowH;   // يفضل بس السلوتس اللي لسه ماجتش
+      });
+    }
 
     // Sum used per slot, excluding the booking being edited
     const totals = {};
@@ -3133,6 +3173,13 @@ async function confirm_booking() {
         if (bd[0]?.is_blocked) { showErr('حسابك موقوف، تواصل مع الإدارة'); resetBtn(); return; }
       }
     } catch(e) {}
+
+    // ⏰ حماية: لو الموعد المختار بدأ فعلاً (تاريخه النهاردة وساعته جت/عدّت) — ارفض
+    if (isBookingTimePassed(bk.dateStr, bk.slot, bk.warehouse)) {
+      showErr('الموعد ده عدّى وقته — اختار موعد تاني لسه ماجاش');
+      resetBtn();
+      return;
+    }
 
     // 📊 جلب الحدود الفعّالة لتاريخ الحجز
     const limits = await getActiveLimits(bk.dateStr);
@@ -3481,10 +3528,12 @@ async function loadMyBookings() {
           <div class="bk-row"><span class="bk-lbl">اليوم</span><span class="bk-val gold">${dateLabel}</span></div>
           <div class="bk-row"><span class="bk-lbl">الموعد</span><span class="bk-val gold">${b.time_slot}</span></div>
           <div class="bk-row"><span class="bk-lbl">العدد</span><span class="bk-val">${b.count} عربية</span></div>
-          <div class="bk-actions">
-            <button class="bk-btn-edit"   data-action="edit"   data-id="${b.id}">✏️ تعديل</button>
-            <button class="bk-btn-cancel" data-action="cancel" data-id="${b.id}" data-date="${safeDate}" data-vehicle="${safeVehicle}">❌ إلغاء</button>
-          </div>
+          <div class="bk-actions">${
+            isBookingTimePassed(b.loading_date, b.time_slot, b.warehouse)
+            ? `<div style="flex:1;text-align:center;background:rgba(138,133,128,0.08);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:12px;color:var(--text-dim);line-height:1.5">⏳ الموعد بدأ — مينفعش تعدّل أو تلغي<br><span style="font-size:11px">لأي استفسار كلّم الإدارة</span></div>`
+            : `<button class="bk-btn-edit"   data-action="edit"   data-id="${b.id}">✏️ تعديل</button>
+            <button class="bk-btn-cancel" data-action="cancel" data-id="${b.id}" data-date="${safeDate}" data-vehicle="${safeVehicle}">❌ إلغاء</button>`
+          }</div>
         </div>`;
     }).join('');
 
