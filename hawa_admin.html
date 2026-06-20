@@ -8265,7 +8265,7 @@ function openFeedbackReply(id){
   document.getElementById('fbReplyOriginal').innerHTML = `<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">نص ${kindLabel}:</div><div style="white-space:pre-wrap">${esc(f.message)}</div>`;
   document.getElementById('fbReplyText').value = '';
   document.getElementById('fbReplyError').style.display = 'none';
-  openModal('feedbackReplyModal');
+  document.getElementById('feedbackReplyModal').classList.add('show');
 }
 
 async function sendFeedbackReply(){
