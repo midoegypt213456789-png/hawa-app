@@ -1067,6 +1067,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
 /* ADD BTN */
 .add-btn{padding:9px 18px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;border:none;border-radius:12px;cursor:pointer;}
+.fb-filter-btn{padding:7px 16px;background:var(--dark2);color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:all .15s;}
+.fb-filter-btn:hover{border-color:var(--gold);color:var(--text);}
+.fb-filter-btn.active{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--gold);}
 
 /* TBL FOOTER */
 .tbl-footer{padding:10px 16px;border-top:1px solid var(--border);background:var(--dark3);font-size:12px;color:var(--text-dim);display:flex;gap:16px;flex-shrink:0;}
@@ -2935,6 +2938,29 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div id="blog-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
 
+    <!-- FEEDBACK (الشكاوى والاقتراحات) -->
+    <div class="section" id="sec-feedback">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">💬 الشكاوى والاقتراحات</div>
+          <div class="page-sub">كل شكوى أو اقتراح وصل من العملاء عن طريق البوت — اقرأها ورد عليها</div>
+        </div>
+        <button class="btn-add" onclick="loadFeedback()" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold)">🔄 تحديث</button>
+      </div>
+
+      <div id="fb-summary" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px"></div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px" id="fb-filters">
+        <button class="fb-filter-btn active" data-filter="all"        onclick="setFeedbackFilter(this,'all')">الكل</button>
+        <button class="fb-filter-btn"        data-filter="new"        onclick="setFeedbackFilter(this,'new')">🆕 جديدة</button>
+        <button class="fb-filter-btn"        data-filter="complaint"  onclick="setFeedbackFilter(this,'complaint')">⚠️ شكاوى</button>
+        <button class="fb-filter-btn"        data-filter="suggestion" onclick="setFeedbackFilter(this,'suggestion')">💡 اقتراحات</button>
+        <button class="fb-filter-btn"        data-filter="replied"    onclick="setFeedbackFilter(this,'replied')">✅ تم الرد</button>
+      </div>
+
+      <div id="fb-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
+
     <!-- TEMPLATES -->
     <div class="section" id="sec-templates">
       <div class="page-hd">
@@ -3678,6 +3704,31 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="modal-foot">
       <button class="btn-cancel" onclick="closeModal('sendMsgModal')">إلغاء</button>
       <button class="btn-save" onclick="sendMessageNow()" id="sm-send-btn">📩 إرسال الرسالة</button>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK REPLY MODAL -->
+<div class="modal-overlay" id="feedbackReplyModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">
+      <span>↩️ رد على <span id="fbReplyClientName">العميل</span></span>
+      <button class="modal-close" onclick="closeModal('feedbackReplyModal')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:75vh;overflow-y:auto;overflow-x:hidden;padding:0 4px;">
+      <div id="fbReplyOriginal" style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--text);margin-bottom:16px;line-height:1.7"></div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:13px;font-weight:700;color:var(--gold);margin-bottom:8px">✍️ ردّك للعميل</div>
+        <textarea id="fbReplyText" rows="6"
+          style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:12px 14px;font-size:14px;font-weight:500;line-height:1.8;border-radius:10px;font-family:'Cairo',sans-serif;outline:none;resize:vertical;min-height:130px;box-sizing:border-box"
+          placeholder="اكتب ردك على العميل هنا..."></textarea>
+      </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:6px">💡 الرد هيوصل للعميل في البوت على طول</div>
+      <div id="fbReplyError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin:12px 0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-cancel" onclick="closeModal('feedbackReplyModal')">إلغاء</button>
+      <button class="btn-save" onclick="sendFeedbackReply()" id="fbReplyBtn">📩 ابعت الرد</button>
     </div>
   </div>
 </div>
@@ -4479,6 +4530,7 @@ function goTo(sec){
   else if(sec==='extra-contacts')loadExtraContacts();
   else if(sec==='broadcast'){ refreshClientActivity(true).then(()=>loadBroadcast()); }
   else if(sec==='broadcast-logs')loadBroadcastLogs();
+  else if(sec==='feedback')loadFeedback();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='vehicle-types')loadVehicleTypes();
@@ -8090,6 +8142,189 @@ async function loadBroadcastLogs(){
 
   }catch(e){
     listEl.innerHTML = `<div class="empty-txt" style="padding:40px;color:var(--error)">❌ خطأ في التحميل: ${e.message||''}</div>`;
+  }
+}
+
+// =================== FEEDBACK (الشكاوى والاقتراحات) ===================
+let allFeedback = [];
+let feedbackFilter = 'all';
+
+async function loadFeedback(){
+  const listEl = document.getElementById('fb-list');
+  const sumEl  = document.getElementById('fb-summary');
+  listEl.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  sumEl.innerHTML = '';
+  try{
+    const r = await fetch(`${SB}/rest/v1/feedback?select=*&order=created_at.desc&limit=200`, {headers:HDR});
+    allFeedback = await r.json();
+    if(!Array.isArray(allFeedback)) allFeedback = [];
+
+    // ملخص
+    const newCount   = allFeedback.filter(f=>f.status==='جديد').length;
+    const compCount  = allFeedback.filter(f=>f.kind==='complaint').length;
+    const sugCount   = allFeedback.filter(f=>f.kind==='suggestion').length;
+    const repCount   = allFeedback.filter(f=>f.status==='تم الرد').length;
+    const card = (icon,label,val,color)=>`<div style="flex:1;min-width:120px;background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center">
+      <div style="font-size:24px;font-weight:800;color:${color}">${val}</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${icon} ${label}</div></div>`;
+    sumEl.innerHTML =
+      card('🆕','جديدة',newCount, newCount>0?'var(--gold)':'var(--text-dim)') +
+      card('⚠️','شكاوى',compCount,'#e88080') +
+      card('💡','اقتراحات',sugCount,'var(--success)') +
+      card('✅','تم الرد',repCount,'var(--text-dim)');
+
+    renderFeedback();
+  }catch(e){
+    listEl.innerHTML = `<div class="empty-txt" style="padding:40px;color:var(--error)">❌ خطأ في التحميل: ${e.message||''}</div>`;
+  }
+}
+
+function setFeedbackFilter(btn, filter){
+  feedbackFilter = filter;
+  document.querySelectorAll('.fb-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFeedback();
+}
+
+function renderFeedback(){
+  const listEl = document.getElementById('fb-list');
+  let items = allFeedback.slice();
+  if(feedbackFilter==='new')        items = items.filter(f=>f.status==='جديد');
+  else if(feedbackFilter==='complaint')  items = items.filter(f=>f.kind==='complaint');
+  else if(feedbackFilter==='suggestion') items = items.filter(f=>f.kind==='suggestion');
+  else if(feedbackFilter==='replied')    items = items.filter(f=>f.status==='تم الرد');
+
+  if(!items.length){
+    listEl.innerHTML = '<div class="empty-txt" style="padding:40px">📭 مفيش حاجة هنا</div>';
+    return;
+  }
+
+  const esc = t => (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let html = '';
+  items.forEach(f => {
+    const dt = f.created_at ? new Date(f.created_at).toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}) : '-';
+    const isComplaint = f.kind==='complaint';
+    const isSuggestion = f.kind==='suggestion';
+    const kindIcon  = isComplaint?'⚠️':isSuggestion?'💡':'💬';
+    const kindLabel = isComplaint?'شكوى':isSuggestion?'اقتراح':'رسالة';
+    const kindColor = isComplaint?'#e88080':isSuggestion?'var(--success)':'var(--text-dim)';
+
+    // شارة الحالة
+    let statusBadge;
+    if(f.status==='تم الرد') statusBadge = `<span style="background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.4);color:var(--success);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">✅ تم الرد</span>`;
+    else if(f.status==='تحت المعالجة') statusBadge = `<span style="background:rgba(74,144,217,0.15);border:1px solid rgba(74,144,217,0.4);color:var(--blue);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">⏳ تحت المعالجة</span>`;
+    else statusBadge = `<span style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">🆕 جديدة</span>`;
+
+    const linked = !!f.telegram_id;
+
+    // رد الأدمن (لو موجود)
+    let replyBlock = '';
+    if(f.admin_reply){
+      const rdt = f.replied_at ? new Date(f.replied_at).toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}) : '';
+      replyBlock = `<div style="margin-top:10px;background:rgba(76,175,125,0.08);border:1px solid rgba(76,175,125,0.25);border-radius:8px;padding:10px 12px">
+        <div style="font-size:11px;color:var(--success);font-weight:700;margin-bottom:4px">✅ ردّك${f.replied_by?' — '+esc(f.replied_by):''}${rdt?' • '+rdt:''}</div>
+        <div style="font-size:13px;color:var(--text);white-space:pre-wrap">${esc(f.admin_reply)}</div>
+      </div>`;
+    }
+
+    // زر الرد (لو مربوط بالبوت وملوش رد لسه)
+    let actionBtn = '';
+    if(linked && f.status!=='تم الرد'){
+      actionBtn = `<button class="add-btn" style="font-size:12px;padding:7px 14px" onclick="openFeedbackReply(${f.id})">↩️ رد على العميل</button>`;
+    } else if(!linked){
+      actionBtn = `<span style="font-size:11px;color:var(--text-dim)">🔕 مش مربوط بالبوت — مينفعش يتبعتله رد</span>`;
+    }
+
+    html += `<div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;border-right:3px solid ${kindColor}">
+      <div style="display:flex;justify-content:space-between;align-items:start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div>
+          <span style="font-size:14px;font-weight:800;color:${kindColor}">${kindIcon} ${kindLabel}</span>
+          <span style="font-size:13px;color:var(--text);margin-right:8px">— ${esc(f.client_name||'عميل')}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text-dim)">📅 ${dt}</span>
+          ${statusBadge}
+        </div>
+      </div>
+      <div style="font-size:14px;color:var(--text);background:var(--dark3);border-radius:8px;padding:12px 14px;white-space:pre-wrap;line-height:1.7">${esc(f.message)}</div>
+      ${replyBlock}
+      <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px">${actionBtn}</div>
+    </div>`;
+  });
+  listEl.innerHTML = html;
+}
+
+let currentReplyFeedback = null;
+function openFeedbackReply(id){
+  const f = allFeedback.find(x=>x.id===id);
+  if(!f) return;
+  currentReplyFeedback = f;
+  const esc = t => (t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const kindLabel = f.kind==='complaint'?'الشكوى':f.kind==='suggestion'?'الاقتراح':'الرسالة';
+  document.getElementById('fbReplyClientName').textContent = f.client_name || 'عميل';
+  document.getElementById('fbReplyOriginal').innerHTML = `<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">نص ${kindLabel}:</div><div style="white-space:pre-wrap">${esc(f.message)}</div>`;
+  document.getElementById('fbReplyText').value = '';
+  document.getElementById('fbReplyError').style.display = 'none';
+  openModal('feedbackReplyModal');
+}
+
+async function sendFeedbackReply(){
+  if(!currentReplyFeedback) return;
+  const errEl = document.getElementById('fbReplyError');
+  errEl.style.display = 'none';
+  const replyText = document.getElementById('fbReplyText').value.trim();
+  if(!replyText){ errEl.textContent='⚠️ اكتب الرد الأول'; errEl.style.display='block'; return; }
+  if(!currentReplyFeedback.telegram_id){ errEl.textContent='⚠️ العميل ده مش مربوط بالبوت'; errEl.style.display='block'; return; }
+
+  const btn = document.getElementById('fbReplyBtn');
+  btn.disabled = true; btn.textContent = '⏳ جاري الإرسال...';
+
+  try{
+    const adminLabel = admin?.name || admin?.username || 'admin';
+    const nowIso = new Date().toISOString();
+    const kindLabel = currentReplyFeedback.kind==='complaint'?'شكوتك':currentReplyFeedback.kind==='suggestion'?'اقتراحك':'رسالتك';
+    const fullMsg = `📬 <b>رد على ${kindLabel}</b>\n\n${replyText}\n\n— إدارة HAWA CO`;
+
+    // 1️⃣ ابعت الرد عن طريق pending_messages (نفس workflow البرودكاست/الرسائل)
+    const r1 = await fetch(`${SB}/rest/v1/pending_messages`, {
+      method:'POST',
+      headers:{ ...HDR, 'Prefer':'return=minimal', 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        client_id:      currentReplyFeedback.client_id || null,
+        telegram_id:    String(currentReplyFeedback.telegram_id),
+        recipient_name: currentReplyFeedback.client_name || null,
+        message_text:   fullMsg,
+        created_by:     adminLabel
+      })
+    });
+    if(!r1.ok) throw new Error(`HTTP ${r1.status}: ${await r1.text()}`);
+
+    // 2️⃣ حدّث الـ feedback row → تم الرد
+    const r2 = await fetch(`${SB}/rest/v1/feedback?id=eq.${currentReplyFeedback.id}`, {
+      method:'PATCH',
+      headers:{ ...HDR, 'Prefer':'return=minimal', 'Content-Type':'application/json' },
+      body: JSON.stringify({
+        status:'تم الرد',
+        admin_reply: replyText,
+        replied_at: nowIso,
+        replied_by: adminLabel
+      })
+    });
+    if(!r2.ok) throw new Error(`HTTP ${r2.status}: ${await r2.text()}`);
+
+    // 3️⃣ سجّل النشاط
+    if(typeof logActivity === 'function'){
+      logActivity('feedback_replied', `↩️ رد على ${currentReplyFeedback.kind==='complaint'?'شكوى':'اقتراح'} من ${currentReplyFeedback.client_name||'عميل'}`, { feedback_id: currentReplyFeedback.id });
+    }
+
+    closeModal('feedbackReplyModal');
+    if(typeof showToast === 'function') showToast('📤 الرد في الطريق للعميل');
+    loadFeedback();
+  }catch(e){
+    console.error('sendFeedbackReply error:', e);
+    errEl.textContent = '❌ خطأ في الإرسال: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = '📩 ابعت الرد';
   }
 }
 
@@ -11816,6 +12051,7 @@ const NAV_META = {
 
   'broadcast':        { icon: '📢',  label: 'إرسال رسائل' },
   'broadcast-logs':   { icon: '📬',  label: 'سجل الإرسال' },
+  'feedback':         { icon: '💬',  label: 'الشكاوى والاقتراحات' },
   'templates':        { icon: '💌',  label: 'الرسائل المحفوظة' },
 
   'employees':        { icon: '👷',  label: 'الموظفين' },
@@ -11833,7 +12069,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
   categories: [
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
-    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['broadcast', 'broadcast-logs', 'templates'] },
+    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -12199,6 +12435,7 @@ const SECTION_LABELS_DEFAULT = {
   'extra-contacts':  '📞 جهات الاتصال',
   'broadcast':       '📢 الإرسال',
   'broadcast-logs':  '📬 سجل الإرسال',
+  'feedback':        '💬 الشكاوى والاقتراحات',
   'templates':       '📝 القوالب',
   'unlinked':        '🔗 غير المرتبطين',
   'vehicle-types':   '🚛 أنواع العربيات',
