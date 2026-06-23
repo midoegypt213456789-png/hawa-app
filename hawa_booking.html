@@ -183,6 +183,15 @@
   .bk-id     { font-size: 12px; color: var(--text-dim); font-weight: 600; }
   .bk-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
   .bk-status.pending { background: rgba(74,144,217,0.15); color: var(--blue); }
+  .bk-status.noshow  { background: rgba(224,85,85,0.15); color: var(--error); }
+  .bk-status.cancelled { background: rgba(138,133,128,0.15); color: var(--text-dim); }
+  /* تبويبات حجوزاتي الفرعية */
+  .my-subtabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .my-subtab { flex: 1; background: var(--dark2); color: var(--text-dim); border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; font-family: 'Cairo',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .my-subtab .cnt { font-size: 16px; font-weight: 800; }
+  .my-subtab.active { background: rgba(201,168,76,0.12); border-color: var(--gold); color: var(--gold); }
+  .my-subtab.active.noshow-tab { background: rgba(224,85,85,0.10); border-color: var(--error); color: var(--error); }
+  .my-subtab.active.cancelled-tab { background: rgba(138,133,128,0.12); border-color: var(--text-dim); color: var(--text); }
   .bk-row  { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
   .bk-lbl  { color: var(--text-dim); }
   .bk-val  { font-weight: 700; }
@@ -646,6 +655,17 @@
 
   <!-- ======== VIEW: MY BOOKINGS ======== -->
   <div class="view" id="viewMy">
+    <div class="my-subtabs">
+      <div class="my-subtab active" id="subtabPending" onclick="switchMyTab('pending')">
+        <span>⏳ منتظر</span><span class="cnt" id="cntPending">0</span>
+      </div>
+      <div class="my-subtab noshow-tab" id="subtabNoshow" onclick="switchMyTab('noshow')">
+        <span>🚫 غير محمل</span><span class="cnt" id="cntNoshow">0</span>
+      </div>
+      <div class="my-subtab cancelled-tab" id="subtabCancelled" onclick="switchMyTab('cancelled')">
+        <span>❌ ملغي</span><span class="cnt" id="cntCancelled">0</span>
+      </div>
+    </div>
     <div id="myList"></div>
   </div>
 
@@ -3483,6 +3503,8 @@ function exitEditMode() {
 // ===================== MY BOOKINGS =====================
 // Cache للحجوزات الـ pending (مفتاحها id)
 const myBookingsCache = {};
+let myData = { pending: [], noshow: [], cancelled: [] };
+let myCurrentTab = 'pending';
 
 async function loadMyBookings() {
   const container = document.getElementById('myList');
@@ -3491,71 +3513,110 @@ async function loadMyBookings() {
   try {
     const today    = new Date(); today.setHours(0,0,0,0);
     const todayStr = fmtDate(today);
+    const enc = encodeURIComponent;
 
-    const r = await fetch(
-      `${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gte.${todayStr}&status=eq.${encodeURIComponent('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`,
-      { headers: HDR }
-    );
-    const data = await r.json();
+    // 3 فئات منفصلة (أبسط وأضمن من فلتر in المعقّد)
+    const [rp, rn, rc] = await Promise.all([
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gte.${todayStr}&status=eq.${enc('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('no-show')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('ملغي')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR })
+    ]);
+    myData.pending   = await rp.json();
+    myData.noshow    = await rn.json();
+    myData.cancelled = await rc.json();
+    if (!Array.isArray(myData.pending))   myData.pending = [];
+    if (!Array.isArray(myData.noshow))    myData.noshow = [];
+    if (!Array.isArray(myData.cancelled)) myData.cancelled = [];
 
-    if (!data.length) {
-      container.innerHTML = `<div class="empty-state"><div class="ei">📭</div><p>مفيش حجوزات قادمة</p></div>`;
-      return;
-    }
+    // حدّث عدّادات التبويبات
+    document.getElementById('cntPending').textContent   = myData.pending.length;
+    document.getElementById('cntNoshow').textContent    = myData.noshow.length;
+    document.getElementById('cntCancelled').textContent = myData.cancelled.length;
 
-    // امسح الـ cache القديم وحدّثه
-    Object.keys(myBookingsCache).forEach(k => delete myBookingsCache[k]);
-
-    container.innerHTML = data.map(b => {
-      // خزّن الحجز فى الـ cache بدل ما نـ embed الـ JSON فى الـ HTML
-      myBookingsCache[b.id] = b;
-
-      const dateLabel = new Date(b.loading_date + 'T12:00:00')
-        .toLocaleDateString('ar-EG', { weekday:'short', day:'numeric', month:'long' });
-      const safeDate = (dateLabel || '').replace(/"/g, '&quot;');
-      const safeVehicle = (b.vehicle_type || '').replace(/"/g, '&quot;');
-      return `
-        <div class="bk-card">
-          <div class="bk-header">
-            <div>
-              <span class="bk-id" title="ID: ${b.id}">حجز #${b.seq_number || b.id}</span>
-              ${b.permit_number ? `<div style="font-size:11px;color:var(--gold-light);margin-top:3px;letter-spacing:0.3px">🎫 إذن #${b.permit_number}</div>` : ''}
-            </div>
-            <span class="bk-status pending">قيد الانتظار</span>
-          </div>
-          <div class="bk-row"><span class="bk-lbl">المخزن</span><span class="bk-val">${b.warehouse}</span></div>
-          <div class="bk-row"><span class="bk-lbl">النوع</span><span class="bk-val">${b.vehicle_type}</span></div>
-          <div class="bk-row"><span class="bk-lbl">اليوم</span><span class="bk-val gold">${dateLabel}</span></div>
-          <div class="bk-row"><span class="bk-lbl">الموعد</span><span class="bk-val gold">${b.time_slot}</span></div>
-          <div class="bk-row"><span class="bk-lbl">العدد</span><span class="bk-val">${b.count} عربية</span></div>
-          <div class="bk-actions">${
-            isBookingTimePassed(b.loading_date, b.time_slot, b.warehouse)
-            ? `<div style="flex:1;text-align:center;background:rgba(138,133,128,0.08);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:12px;color:var(--text-dim);line-height:1.5">⏳ الموعد بدأ — مينفعش تعدّل أو تلغي<br><span style="font-size:11px">لأي استفسار كلّم الإدارة</span></div>`
-            : `<button class="bk-btn-edit"   data-action="edit"   data-id="${b.id}">✏️ تعديل</button>
-            <button class="bk-btn-cancel" data-action="cancel" data-id="${b.id}" data-date="${safeDate}" data-vehicle="${safeVehicle}">❌ إلغاء</button>`
-          }</div>
-        </div>`;
-    }).join('');
-
-    // ربط الـ buttons بالـ event listeners (أكثر reliability من onclick attributes)
-    console.log('[loadMyBookings] cached', Object.keys(myBookingsCache).length, 'bookings');
-    container.querySelectorAll('button[data-action="edit"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.dataset.id, 10);
-        console.log('[edit clicked] id=', id, 'cached?', !!myBookingsCache[id]);
-        startEditById(id);
-      });
-    });
-    container.querySelectorAll('button[data-action="cancel"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const id = parseInt(btn.dataset.id, 10);
-        showCancelDlg(id, btn.dataset.date || '', btn.dataset.vehicle || '');
-      });
-    });
-
+    renderMyTab(myCurrentTab);
   } catch(e) {
     console.error('loadMyBookings error:', e);
     container.innerHTML = `<div class="loading-state">❌ خطأ في التحميل</div>`;
+  }
+}
+
+function switchMyTab(tab) {
+  myCurrentTab = tab;
+  document.getElementById('subtabPending').classList.toggle('active', tab === 'pending');
+  document.getElementById('subtabNoshow').classList.toggle('active', tab === 'noshow');
+  document.getElementById('subtabCancelled').classList.toggle('active', tab === 'cancelled');
+  renderMyTab(tab);
+}
+
+function renderMyTab(tab) {
+  const container = document.getElementById('myList');
+  const list = myData[tab] || [];
+
+  if (!list.length) {
+    const msg = tab === 'pending'   ? '📭 مفيش حجوزات قادمة'
+              : tab === 'noshow'    ? '✅ مفيش حجوزات غير محملة'
+              : '✅ مفيش حجوزات ملغية';
+    container.innerHTML = `<div class="empty-state"><div class="ei">📭</div><p>${msg}</p></div>`;
+    return;
+  }
+
+  // امسح الـ cache وحدّثه (للتعديل/الإلغاء فى تبويب المنتظر)
+  Object.keys(myBookingsCache).forEach(k => delete myBookingsCache[k]);
+
+  container.innerHTML = list.map(b => {
+    if (tab === 'pending') myBookingsCache[b.id] = b;
+
+    const dateLabel = new Date(b.loading_date + 'T12:00:00')
+      .toLocaleDateString('ar-EG', { weekday:'short', day:'numeric', month:'long' });
+    const safeDate = (dateLabel || '').replace(/"/g, '&quot;');
+    const safeVehicle = (b.vehicle_type || '').replace(/"/g, '&quot;');
+
+    // شارة الحالة حسب التبويب
+    const badge = tab === 'noshow'
+        ? '<span class="bk-status noshow">🚫 غير محمل</span>'
+      : tab === 'cancelled'
+        ? '<span class="bk-status cancelled">❌ ملغي</span>'
+        : '<span class="bk-status pending">قيد الانتظار</span>';
+
+    // الأكشنز: المنتظر بس فيه تعديل/إلغاء (مع قفل الموعد اللى بدأ). الباقى للعرض فقط
+    let actions = '';
+    if (tab === 'pending') {
+      actions = `<div class="bk-actions">${
+        isBookingTimePassed(b.loading_date, b.time_slot, b.warehouse)
+        ? `<div style="flex:1;text-align:center;background:rgba(138,133,128,0.08);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:12px;color:var(--text-dim);line-height:1.5">⏳ الموعد بدأ — مينفعش تعدّل أو تلغي<br><span style="font-size:11px">لأي استفسار كلّم الإدارة</span></div>`
+        : `<button class="bk-btn-edit"   data-action="edit"   data-id="${b.id}">✏️ تعديل</button>
+        <button class="bk-btn-cancel" data-action="cancel" data-id="${b.id}" data-date="${safeDate}" data-vehicle="${safeVehicle}">❌ إلغاء</button>`
+      }</div>`;
+    }
+
+    return `
+      <div class="bk-card">
+        <div class="bk-header">
+          <div>
+            <span class="bk-id" title="ID: ${b.id}">حجز #${b.seq_number || b.id}</span>
+            ${b.permit_number ? `<div style="font-size:11px;color:var(--gold-light);margin-top:3px;letter-spacing:0.3px">🎫 إذن #${b.permit_number}</div>` : ''}
+          </div>
+          ${badge}
+        </div>
+        <div class="bk-row"><span class="bk-lbl">المخزن</span><span class="bk-val">${b.warehouse}</span></div>
+        <div class="bk-row"><span class="bk-lbl">النوع</span><span class="bk-val">${b.vehicle_type}</span></div>
+        <div class="bk-row"><span class="bk-lbl">اليوم</span><span class="bk-val gold">${dateLabel}</span></div>
+        <div class="bk-row"><span class="bk-lbl">الموعد</span><span class="bk-val gold">${b.time_slot}</span></div>
+        <div class="bk-row"><span class="bk-lbl">العدد</span><span class="bk-val">${b.count} عربية</span></div>
+        ${actions}
+      </div>`;
+  }).join('');
+
+  // اربط أزرار التعديل/الإلغاء (تبويب المنتظر بس)
+  if (tab === 'pending') {
+    container.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+      btn.addEventListener('click', () => startEditById(parseInt(btn.dataset.id, 10)));
+    });
+    container.querySelectorAll('button[data-action="cancel"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        showCancelDlg(parseInt(btn.dataset.id, 10), btn.dataset.date || '', btn.dataset.vehicle || '');
+      });
+    });
   }
 }
 
