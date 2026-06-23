@@ -4307,8 +4307,9 @@ async function doAdminLogin(){
   const btn=document.getElementById('loginBtn');
   btn.disabled=true;btn.innerHTML='جاري التحقق... <span class="spin"></span>';
   try{
-    const r=await fetch(`${SB}/rest/v1/admins?username=eq.${encodeURIComponent(u)}&password=eq.${encodeURIComponent(p)}&is_active=eq.true&select=id,name`,{headers:HDR});
-    const data=await r.json();
+    const r=await fetch(`${SB}/rest/v1/rpc/login_admin`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
+    const _aj=await r.json();
+    const data=_aj?[_aj]:[];
     if(data&&data.length>0){
       admin=data[0];
       sessionStorage.setItem('hawa_admin',JSON.stringify(admin));
@@ -5351,7 +5352,7 @@ function renderBookingsTable(data){
 async function loadEmployees(){
   document.getElementById('emp-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    const r=await fetch(`${SB}/rest/v1/employees?select=*&order=created_at.asc`,{headers:HDR});
+    const r=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at&order=created_at.asc`,{headers:HDR});
     const data=await r.json();
     if(!data.length){document.getElementById('emp-table').innerHTML='<div class="empty-txt">لا يوجد موظفين</div>';return;}
     const roleBadge={'قليوب':'<span class="badge qalyub">قليوب 🏭</span>','السادات':'<span class="badge sadat">السادات 🏗️</span>','عام':'<span class="badge general">عام 🌐</span>'};
@@ -5508,7 +5509,7 @@ async function loadClients(){
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
     const [r1, r2, r3, r4] = await Promise.all([
-      fetch(`${SB}/rest/v1/clients?select=*&order=name.asc`,{headers:{...HDR,'Range':'0-499'}}),
+      fetch(`${SB}/rest/v1/clients?select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region&order=name.asc`,{headers:{...HDR,'Range':'0-499'}}),
       fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
       fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
       fetch(`${SB}/rest/v1/client_tiers?select=*&is_active=eq.true&order=sort_order.asc`,{headers:HDR})
@@ -9696,7 +9697,7 @@ async function deleteRule(id){
 async function loadBlocked(){
   document.getElementById('bl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    const r=await fetch(`${SB}/rest/v1/clients?is_blocked=eq.true&select=*&order=name.asc`,{headers:HDR});
+    const r=await fetch(`${SB}/rest/v1/clients?is_blocked=eq.true&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region&order=name.asc`,{headers:HDR});
     const data=await r.json();
     if(!data.length){document.getElementById('bl-table').innerHTML='<div class="empty-txt">✅ لا يوجد عملاء محظورين</div>';return;}
     let html=`<table><thead><tr><th>الاسم</th><th>الكود</th><th>الهاتف</th><th>no-show</th><th>إجراءات</th></tr></thead><tbody>`;
@@ -10116,7 +10117,7 @@ async function loadPendingClients(){
   c.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
   try {
     const r = await fetch(
-      `${SB}/rest/v1/clients?approval_status=eq.pending&select=*&order=created_at.desc`,
+      `${SB}/rest/v1/clients?approval_status=eq.pending&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region&order=created_at.desc`,
       {headers: HDR}
     );
     if (!r.ok) throw new Error('فشل الاتصال بقاعدة البيانات');

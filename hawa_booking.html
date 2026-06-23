@@ -2142,11 +2142,12 @@ async function passwordLogin(){
 
   try {
     const r = await fetch(
-      `${SB}/rest/v1/clients?username=eq.${encodeURIComponent(username)}&password=eq.${encodeURIComponent(password)}&select=*`,
-      { headers: HDR }
+      `${SB}/rest/v1/rpc/login_client`,
+      { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' }, body: JSON.stringify({ p_username: username, p_password: password }) }
     );
     if (!r.ok) throw new Error('فشل الاتصال بالسيرفر');
-    const data = await r.json();
+    const _lj = await r.json();
+    const data = _lj ? [_lj] : [];
     if (!Array.isArray(data) || !data.length) {
       throw new Error('اسم المستخدم أو كلمة المرور غير صحيحة');
     }

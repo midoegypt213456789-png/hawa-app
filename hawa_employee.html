@@ -460,8 +460,9 @@ async function doLogin(){
   const btn=document.getElementById('loginBtn');
   btn.disabled=true;btn.innerHTML='جاري التحقق... <span class="spin"></span>';
   try{
-    const r=await fetch(`${SB}/rest/v1/employees?username=eq.${encodeURIComponent(u)}&password=eq.${encodeURIComponent(p)}&is_active=eq.true&select=id,name,role`,{headers:HDR});
-    const data=await r.json();
+    const r=await fetch(`${SB}/rest/v1/rpc/login_employee`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
+    const _ej=await r.json();
+    const data=_ej?[_ej]:[];
     if(data&&data.length>0){
       emp=data[0];
       sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
