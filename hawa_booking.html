@@ -194,6 +194,14 @@
   .my-subtab.active.noshow-tab { background: rgba(224,85,85,0.10); border-color: var(--error); color: var(--error); }
   .my-subtab.active.cancelled-tab { background: rgba(138,133,128,0.12); border-color: var(--text-dim); color: var(--text); }
   .my-subtab.active.loaded-tab { background: rgba(76,175,125,0.12); border-color: var(--success); color: var(--success); }
+  .my-filters { background: var(--dark2); border: 1px solid var(--border); border-radius: 14px; padding: 12px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .myf-row { display: flex; gap: 10px; }
+  .myf-field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+  .myf-field label { font-size: 11px; color: var(--text-dim); font-weight: 700; padding-right: 2px; }
+  .my-filters input, .my-filters select { padding: 9px 10px; font-size: 13px; }
+  .my-filters input[type="date"] { color-scheme: dark; }
+  .myf-clear { align-self: flex-start; background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 10px; padding: 7px 14px; font-family: 'Cairo',sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; transition: all .15s; }
+  .myf-clear:hover { border-color: var(--gold); color: var(--gold); }
   .bk-row  { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
   .bk-lbl  { color: var(--text-dim); }
   .bk-val  { font-weight: 700; }
@@ -670,6 +678,17 @@
       <div class="my-subtab cancelled-tab" id="subtabCancelled" onclick="switchMyTab('cancelled')">
         <span>❌ ملغي</span><span class="cnt" id="cntCancelled">0</span>
       </div>
+    </div>
+    <div class="my-filters" id="myFilters">
+      <div class="myf-row">
+        <div class="myf-field"><label>من تاريخ</label><input type="date" id="myfFrom" onchange="onMyFilterChange()"></div>
+        <div class="myf-field"><label>إلى تاريخ</label><input type="date" id="myfTo" onchange="onMyFilterChange()"></div>
+      </div>
+      <div class="myf-row">
+        <div class="myf-field"><label>المخزن</label><select id="myfWarehouse" onchange="onMyFilterChange()"><option value="">كل المخازن</option></select></div>
+        <div class="myf-field"><label>النوع</label><select id="myfVtype" onchange="onMyFilterChange()"><option value="">كل الأنواع</option></select></div>
+      </div>
+      <button class="myf-clear" id="myfClear" onclick="clearMyFilters()" style="display:none">🧹 مسح الفلاتر</button>
     </div>
     <div id="myList"></div>
   </div>
@@ -3512,6 +3531,57 @@ const myBookingsCache = {};
 let myData = { pending: [], loaded: [], noshow: [], cancelled: [] };
 let myCurrentTab = 'pending';
 
+// 🔎 فلاتر حجوزاتي (تشتغل على كل التبويبات، client-side)
+let myFilters = { from:'', to:'', warehouse:'', vtype:'' };
+
+function applyMyFilters(list){
+  return (list || []).filter(b => {
+    if (myFilters.from && (b.loading_date || '') < myFilters.from) return false;
+    if (myFilters.to   && (b.loading_date || '') > myFilters.to)   return false;
+    if (myFilters.warehouse && b.warehouse    !== myFilters.warehouse) return false;
+    if (myFilters.vtype     && b.vehicle_type !== myFilters.vtype)     return false;
+    return true;
+  });
+}
+
+function populateMyFilterOptions(){
+  const all = [...myData.pending, ...myData.loaded, ...myData.noshow, ...myData.cancelled];
+  const whs = [...new Set(all.map(b => b.warehouse).filter(Boolean))].sort();
+  const vts = [...new Set(all.map(b => b.vehicle_type).filter(Boolean))].sort();
+  const wSel = document.getElementById('myfWarehouse');
+  const vSel = document.getElementById('myfVtype');
+  if (wSel){ const cur = wSel.value; wSel.innerHTML = '<option value="">كل المخازن</option>' + whs.map(w => `<option value="${w}">${w}</option>`).join(''); wSel.value = whs.includes(cur) ? cur : ''; }
+  if (vSel){ const cur = vSel.value; vSel.innerHTML = '<option value="">كل الأنواع</option>' + vts.map(v => `<option value="${v}">${v}</option>`).join(''); vSel.value = vts.includes(cur) ? cur : ''; }
+}
+
+function updateMyCounts(){
+  const set = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n; };
+  set('cntPending',   applyMyFilters(myData.pending).length);
+  set('cntLoaded',    applyMyFilters(myData.loaded).length);
+  set('cntNoshow',    applyMyFilters(myData.noshow).length);
+  set('cntCancelled', applyMyFilters(myData.cancelled).length);
+}
+
+function onMyFilterChange(){
+  myFilters.from      = (document.getElementById('myfFrom')||{}).value      || '';
+  myFilters.to        = (document.getElementById('myfTo')||{}).value        || '';
+  myFilters.warehouse = (document.getElementById('myfWarehouse')||{}).value || '';
+  myFilters.vtype     = (document.getElementById('myfVtype')||{}).value     || '';
+  const anyFilter = !!(myFilters.from || myFilters.to || myFilters.warehouse || myFilters.vtype);
+  const clr = document.getElementById('myfClear');
+  if (clr) clr.style.display = anyFilter ? 'block' : 'none';
+  updateMyCounts();
+  renderMyTab(myCurrentTab);
+}
+
+function clearMyFilters(){
+  myFilters = { from:'', to:'', warehouse:'', vtype:'' };
+  ['myfFrom','myfTo','myfWarehouse','myfVtype'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const clr = document.getElementById('myfClear'); if (clr) clr.style.display = 'none';
+  updateMyCounts();
+  renderMyTab(myCurrentTab);
+}
+
 async function loadMyBookings() {
   const container = document.getElementById('myList');
   container.innerHTML = `<div class="loading-state">⏳ جاري التحميل...</div>`;
@@ -3524,9 +3594,9 @@ async function loadMyBookings() {
     // 4 فئات منفصلة (أبسط وأضمن من فلتر in المعقّد)
     const [rp, rl, rn, rc] = await Promise.all([
       fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gte.${todayStr}&status=eq.${enc('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('تم التنفيذ')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('no-show')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('ملغي')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR })
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('تم التنفيذ')}&order=loading_date.desc&select=*&limit=300`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('no-show')}&order=loading_date.desc&select=*&limit=300`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('ملغي')}&order=loading_date.desc&select=*&limit=300`, { headers: HDR })
     ]);
     myData.pending   = await rp.json();
     myData.loaded    = await rl.json();
@@ -3537,11 +3607,9 @@ async function loadMyBookings() {
     if (!Array.isArray(myData.noshow))    myData.noshow = [];
     if (!Array.isArray(myData.cancelled)) myData.cancelled = [];
 
-    // حدّث عدّادات التبويبات
-    document.getElementById('cntPending').textContent   = myData.pending.length;
-    document.getElementById('cntLoaded').textContent    = myData.loaded.length;
-    document.getElementById('cntNoshow').textContent    = myData.noshow.length;
-    document.getElementById('cntCancelled').textContent = myData.cancelled.length;
+    // عمّر فلاتر المخزن/النوع من بيانات العميل + حدّث العدّادات (متأثرة بالفلاتر)
+    populateMyFilterOptions();
+    updateMyCounts();
 
     renderMyTab(myCurrentTab);
   } catch(e) {
@@ -3561,14 +3629,16 @@ function switchMyTab(tab) {
 
 function renderMyTab(tab) {
   const container = document.getElementById('myList');
-  const list = myData[tab] || [];
+  const list = applyMyFilters(myData[tab] || []);
 
   if (!list.length) {
-    const msg = tab === 'pending'   ? '📭 مفيش حجوزات قادمة'
-              : tab === 'loaded'    ? '🚛 لسه مفيش حجوزات اتحمّلت'
-              : tab === 'noshow'    ? '✅ مفيش حجوزات غير محملة'
+    const anyFilter = !!(myFilters.from || myFilters.to || myFilters.warehouse || myFilters.vtype);
+    const msg = anyFilter        ? '🔍 مفيش حجوزات بالفلاتر دي'
+              : tab === 'pending' ? '📭 مفيش حجوزات قادمة'
+              : tab === 'loaded'  ? '🚛 لسه مفيش حجوزات اتحمّلت'
+              : tab === 'noshow'  ? '✅ مفيش حجوزات غير محملة'
               : '✅ مفيش حجوزات ملغية';
-    container.innerHTML = `<div class="empty-state"><div class="ei">📭</div><p>${msg}</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="ei">${anyFilter ? '🔍' : '📭'}</div><p>${msg}</p></div>`;
     return;
   }
 
