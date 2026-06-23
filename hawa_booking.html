@@ -185,6 +185,7 @@
   .bk-status.pending { background: rgba(74,144,217,0.15); color: var(--blue); }
   .bk-status.noshow  { background: rgba(224,85,85,0.15); color: var(--error); }
   .bk-status.cancelled { background: rgba(138,133,128,0.15); color: var(--text-dim); }
+  .bk-status.loaded { background: rgba(76,175,125,0.15); color: var(--success); }
   /* تبويبات حجوزاتي الفرعية */
   .my-subtabs { display: flex; gap: 8px; margin-bottom: 14px; }
   .my-subtab { flex: 1; background: var(--dark2); color: var(--text-dim); border: 1px solid var(--border); border-radius: 12px; padding: 10px 6px; font-family: 'Cairo',sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 3px; }
@@ -192,6 +193,7 @@
   .my-subtab.active { background: rgba(201,168,76,0.12); border-color: var(--gold); color: var(--gold); }
   .my-subtab.active.noshow-tab { background: rgba(224,85,85,0.10); border-color: var(--error); color: var(--error); }
   .my-subtab.active.cancelled-tab { background: rgba(138,133,128,0.12); border-color: var(--text-dim); color: var(--text); }
+  .my-subtab.active.loaded-tab { background: rgba(76,175,125,0.12); border-color: var(--success); color: var(--success); }
   .bk-row  { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; }
   .bk-lbl  { color: var(--text-dim); }
   .bk-val  { font-weight: 700; }
@@ -658,6 +660,9 @@
     <div class="my-subtabs">
       <div class="my-subtab active" id="subtabPending" onclick="switchMyTab('pending')">
         <span>⏳ منتظر</span><span class="cnt" id="cntPending">0</span>
+      </div>
+      <div class="my-subtab loaded-tab" id="subtabLoaded" onclick="switchMyTab('loaded')">
+        <span>✅ محمل</span><span class="cnt" id="cntLoaded">0</span>
       </div>
       <div class="my-subtab noshow-tab" id="subtabNoshow" onclick="switchMyTab('noshow')">
         <span>🚫 غير محمل</span><span class="cnt" id="cntNoshow">0</span>
@@ -3504,7 +3509,7 @@ function exitEditMode() {
 // ===================== MY BOOKINGS =====================
 // Cache للحجوزات الـ pending (مفتاحها id)
 const myBookingsCache = {};
-let myData = { pending: [], noshow: [], cancelled: [] };
+let myData = { pending: [], loaded: [], noshow: [], cancelled: [] };
 let myCurrentTab = 'pending';
 
 async function loadMyBookings() {
@@ -3516,21 +3521,25 @@ async function loadMyBookings() {
     const todayStr = fmtDate(today);
     const enc = encodeURIComponent;
 
-    // 3 فئات منفصلة (أبسط وأضمن من فلتر in المعقّد)
-    const [rp, rn, rc] = await Promise.all([
+    // 4 فئات منفصلة (أبسط وأضمن من فلتر in المعقّد)
+    const [rp, rl, rn, rc] = await Promise.all([
       fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&loading_date=gte.${todayStr}&status=eq.${enc('قيد الانتظار')}&order=loading_date.asc,time_slot.asc&select=*`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('تم التنفيذ')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR }),
       fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('no-show')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR }),
       fetch(`${SB}/rest/v1/bookings?client_id=eq.${user.id}&status=eq.${enc('ملغي')}&order=loading_date.desc&select=*&limit=100`, { headers: HDR })
     ]);
     myData.pending   = await rp.json();
+    myData.loaded    = await rl.json();
     myData.noshow    = await rn.json();
     myData.cancelled = await rc.json();
     if (!Array.isArray(myData.pending))   myData.pending = [];
+    if (!Array.isArray(myData.loaded))    myData.loaded = [];
     if (!Array.isArray(myData.noshow))    myData.noshow = [];
     if (!Array.isArray(myData.cancelled)) myData.cancelled = [];
 
     // حدّث عدّادات التبويبات
     document.getElementById('cntPending').textContent   = myData.pending.length;
+    document.getElementById('cntLoaded').textContent    = myData.loaded.length;
     document.getElementById('cntNoshow').textContent    = myData.noshow.length;
     document.getElementById('cntCancelled').textContent = myData.cancelled.length;
 
@@ -3544,6 +3553,7 @@ async function loadMyBookings() {
 function switchMyTab(tab) {
   myCurrentTab = tab;
   document.getElementById('subtabPending').classList.toggle('active', tab === 'pending');
+  document.getElementById('subtabLoaded').classList.toggle('active', tab === 'loaded');
   document.getElementById('subtabNoshow').classList.toggle('active', tab === 'noshow');
   document.getElementById('subtabCancelled').classList.toggle('active', tab === 'cancelled');
   renderMyTab(tab);
@@ -3555,6 +3565,7 @@ function renderMyTab(tab) {
 
   if (!list.length) {
     const msg = tab === 'pending'   ? '📭 مفيش حجوزات قادمة'
+              : tab === 'loaded'    ? '🚛 لسه مفيش حجوزات اتحمّلت'
               : tab === 'noshow'    ? '✅ مفيش حجوزات غير محملة'
               : '✅ مفيش حجوزات ملغية';
     container.innerHTML = `<div class="empty-state"><div class="ei">📭</div><p>${msg}</p></div>`;
@@ -3577,6 +3588,8 @@ function renderMyTab(tab) {
         ? '<span class="bk-status noshow">🚫 غير محمل</span>'
       : tab === 'cancelled'
         ? '<span class="bk-status cancelled">❌ ملغي</span>'
+      : tab === 'loaded'
+        ? '<span class="bk-status loaded">✅ محمل</span>'
         : '<span class="bk-status pending">قيد الانتظار</span>';
 
     // الأكشنز: المنتظر بس فيه تعديل/إلغاء (مع قفل الموعد اللى بدأ). الباقى للعرض فقط
