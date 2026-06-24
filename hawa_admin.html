@@ -2593,7 +2593,20 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="no-show">❌ no-show</option>
             <option value="ملغي">🚫 ملغي</option>
           </select>
-          <input class="filter-inp" id="bk-client" type="text" placeholder="🔍 اسم العميل أو الكود..." oninput="filterBookingsLocal()" style="width:200px">
+          <input class="filter-inp" id="bk-client" type="text" placeholder="🔍 اكتب للبحث..." oninput="filterBookingsLocal()" style="width:180px">
+          <select class="filter-inp" id="bk-search-field" onchange="filterBookingsLocal()" style="width:130px">
+            <option value="all">🔎 كل البيانات</option>
+            <option value="name">اسم العميل</option>
+            <option value="code">الكود</option>
+            <option value="phone">الهاتف</option>
+            <option value="permit">رقم الإذن</option>
+            <option value="booking">رقم الحجز</option>
+          </select>
+          <select class="filter-inp" id="bk-search-mode" onchange="filterBookingsLocal()" style="width:120px">
+            <option value="contains">يحتوي على</option>
+            <option value="not">لا يحتوي على</option>
+            <option value="exact">تطابق تام</option>
+          </select>
           <select class="filter-inp" id="bk-count" onchange="filterBookingsLocal()" style="width:130px">
             <option value="">كل الأعداد</option>
             <option value="1">1 عربية</option>
@@ -2673,7 +2686,22 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
       <div class="tbl-wrap scrollable">
         <div class="tbl-filters">
-          <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 بحث بالاسم / كود / هاتف / مدينة..." oninput="filterClients()" style="width:240px">
+          <input class="filter-inp" id="cl-search" type="text" placeholder="🔍 اكتب للبحث..." oninput="filterClients()" style="width:200px">
+          <select class="filter-inp" id="cl-search-field" onchange="filterClients()" style="width:140px">
+            <option value="all">🔎 كل البيانات</option>
+            <option value="name">الاسم</option>
+            <option value="code">الكود</option>
+            <option value="phone">الهاتف</option>
+            <option value="gov">المحافظة</option>
+            <option value="city">المدينة/المركز</option>
+            <option value="username">اليوزر نيم</option>
+            <option value="address">العنوان</option>
+          </select>
+          <select class="filter-inp" id="cl-search-mode" onchange="filterClients()" style="width:120px">
+            <option value="contains">يحتوي على</option>
+            <option value="not">لا يحتوي على</option>
+            <option value="exact">تطابق تام</option>
+          </select>
           <select class="filter-inp" id="cl-region" onchange="onCLRegionChange()" style="width:160px">
             <option value="">🗺️ كل القطاعات</option>
             <option value="الدلتا">🌾 الدلتا</option>
@@ -5117,7 +5145,7 @@ async function loadBookings(){
     const ids=[...new Set(allBookingsData.map(b=>b.client_id).filter(Boolean))];
     allClientsMap={};
     if(ids.length){
-      const cr=await fetch(`${SB}/rest/v1/clients?id=in.(${ids.join(',')})&select=id,name,company_code`,{headers:HDR});
+      const cr=await fetch(`${SB}/rest/v1/clients?id=in.(${ids.join(',')})&select=id,name,company_code,phone`,{headers:HDR});
       const clients=await cr.json();
       clients.forEach(c=>allClientsMap[c.id]=c);
     }
@@ -5126,17 +5154,32 @@ async function loadBookings(){
   }catch(e){document.getElementById('bk-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
 }
 
+// 🔎 مطابقة موحّدة: contains (يحتوي) / not (لا يحتوي) / exact (تطابق تام) على مجموعة قيم
+function matchSearch(values, term, mode){
+  const vals=(values||[]).map(v=>(v==null?'':String(v)).toLowerCase());
+  if(mode==='exact') return vals.some(v=>v===term);
+  if(mode==='not')   return !vals.some(v=>v.includes(term));
+  return vals.some(v=>v.includes(term));
+}
+
 function filterBookingsLocal(){
   const clientSearch=(document.getElementById('bk-client').value||'').trim().toLowerCase();
   const countFilter=document.getElementById('bk-count').value;
+  const bkField=(document.getElementById('bk-search-field')||{}).value||'all';
+  const bkMode=(document.getElementById('bk-search-mode')||{}).value||'contains';
 
   let data=allBookingsData;
 
   if(clientSearch){
     data=data.filter(b=>{
       const c=allClientsMap[b.client_id]||{};
-      return (c.name||'').toLowerCase().includes(clientSearch)||
-             (c.company_code||'').toLowerCase().includes(clientSearch);
+      const bookingNo=String(b.seq_number||b.id||'');
+      const map={
+        name:[c.name], code:[c.company_code], phone:[c.phone],
+        permit:[b.permit_number], booking:[bookingNo],
+        all:[c.name,c.company_code,c.phone,b.permit_number,bookingNo]
+      };
+      return matchSearch(map[bkField]||map.all, clientSearch, bkMode);
     });
   }
 
@@ -5673,17 +5716,20 @@ function filterClients(){
 
   let data=allClients;
 
-  // فلتر البحث الذكي - بيفلتر بكل الحقول (بما فيهم نوع العميل والديانة والفئة والمنطقة)
+  const clField=(document.getElementById('cl-search-field')||{}).value||'all';
+  const clMode=(document.getElementById('cl-search-mode')||{}).value||'contains';
+  // فلتر البحث - حسب الحقل المختار وطريقة المطابقة
   if(search){
     data=data.filter(c=>{
       const tierName = tierMap[c.tier_id] || '';
-      const fields=[
-        c.name, c.company_code, c.phone,
-        c.governorate, c.city, c.district, c.address,
-        c.username, String(c.id), c.client_type, c.religion, tierName,
-        c.region
-      ].map(f=>(f||'').toLowerCase());
-      return fields.some(f=>f.includes(search));
+      const map={
+        name:[c.name], code:[c.company_code], phone:[c.phone],
+        gov:[c.governorate], city:[c.city,c.district], username:[c.username],
+        address:[c.address],
+        all:[c.name,c.company_code,c.phone,c.governorate,c.city,c.district,c.address,
+             c.username,String(c.id),c.client_type,c.religion,tierName,c.region]
+      };
+      return matchSearch(map[clField]||map.all, search, clMode);
     });
   }
   if(gov) data=data.filter(c=>c.governorate===gov);
