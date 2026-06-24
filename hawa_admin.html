@@ -9700,14 +9700,16 @@ async function loadBlocked(){
     const r=await fetch(`${SB}/rest/v1/clients?is_blocked=eq.true&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region&order=name.asc`,{headers:HDR});
     const data=await r.json();
     if(!data.length){document.getElementById('bl-table').innerHTML='<div class="empty-txt">✅ لا يوجد عملاء محظورين</div>';return;}
+    // خلّي بيانات المبلوكين متاحة لـ openClientProfile (بيدوّر في allClients)
+    data.forEach(c=>{ if(!allClients.some(x=>x.id===c.id)) allClients.push(c); });
     let html=`<table><thead><tr><th>الاسم</th><th>الكود</th><th>الهاتف</th><th>no-show</th><th>إجراءات</th></tr></thead><tbody>`;
     data.forEach(c=>{
-      html+=`<tr>
+      html+=`<tr ondblclick="openClientProfile(${c.id})" style="cursor:pointer" title="دبل كليك لفتح ملف العميل">
         <td><b>${c.name||'-'}</b></td>
         <td style="color:var(--gold)">${c.company_code||'-'}</td>
         <td>${c.phone||'-'}</td>
         <td style="color:var(--error)">${c.no_show_count||0}</td>
-        <td><button class="act-btn unblock" onclick="unblockClient(${c.id},'${c.name}')">🔓 فك البلوك</button></td>
+        <td><button class="act-btn unblock" ondblclick="event.stopPropagation()" onclick="unblockClient(${c.id},'${c.name}')">🔓 فك البلوك</button></td>
       </tr>`;
     });
     html+='</tbody></table>';
