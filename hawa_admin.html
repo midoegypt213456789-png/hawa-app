@@ -5625,11 +5625,15 @@ async function loadEmployees(){
       const jrBadge = jr
         ? `<span class="badge active" style="background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.35)">🔑 ${jr.name}</span>${e.perms_override?' <span title="صلاحيات مخصصة" style="font-size:11px">✏️</span>':''}`
         : '<span style="color:var(--text-dim);font-size:11px">—</span>';
+      // 🏭 صلاحية المخزن تظهر بس لموظفين المخازن — وظيفة لوحة التحكم = «—»
+      const whCell = (jr && jr.landing==='admin')
+        ? '<span style="color:var(--text-dim);font-size:11px">—</span>'
+        : (roleBadge[e.role]||e.role);
       html+=`<tr>
         <td style="color:var(--text-dim)">${e.id}</td>
         <td><b>${e.name}</b></td>
         <td style="color:var(--text-dim)">${e.username}</td>
-        <td>${roleBadge[e.role]||e.role}</td>
+        <td>${whCell}</td>
         <td>${jrBadge}</td>
         <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
         <td><div class="act-btns">
