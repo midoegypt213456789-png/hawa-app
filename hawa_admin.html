@@ -5689,30 +5689,39 @@ async function saveEmployee(){
   const body={name,username,role,role_id:roleIdRaw?parseInt(roleIdRaw):null,perms_override:empOverrideDraft};
   if(password)body.password=password;
 
+  const sbtn=document.querySelector('#empModal .modal-save');
+  const orig=sbtn?sbtn.textContent:'';
+  if(sbtn){sbtn.disabled=true;sbtn.textContent='⏳ جاري الحفظ...';}
   try{
     let r;
     if(editEmpId){
       r=await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
     }else{
-      if(!password){alert('أدخل كلمة المرور');return;}
+      if(!password){alert('أدخل كلمة المرور');if(sbtn){sbtn.disabled=false;sbtn.textContent=orig;}return;}
       body.password=password;
       r=await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
     }
     if(!r.ok){
       const txt=await r.text();
-      if(/role_id|perms_override/.test(txt)){
-        alert('⚠️ أعمدة الصلاحيات لسه متعملتش فى قاعدة البيانات — شغّل ملف SQL الأول.\n\nهحفظ باقى البيانات من غيرها.');
+      if(/schema cache/i.test(txt) && /role_id|perms_override/.test(txt)){
+        // PostgREST لسه ما حدّثش الـ schema cache — احفظ الباقى وبلّغ بوضوح
         delete body.role_id; delete body.perms_override;
-        if(editEmpId){
-          await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-        }else{
-          await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-        }
-      } else { throw new Error(txt); }
+        const r2=editEmpId
+          ? await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)})
+          : await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+        if(!r2.ok) throw new Error(await r2.text());
+        alert('⚠️ اتحفظ الاسم واليوزر والمخزن — لكن الوظيفة والصلاحيات ما اتحفظوش (السيرفر لسه بيحدّث نفسه).\n\nاستنى دقيقة وجرّب تانى.');
+      } else { throw new Error(`HTTP ${r.status}: ${txt}`); }
     }
     closeModal('empModal');
     loadEmployees();
-  }catch(e){alert('خطأ في الحفظ');}
+    if(typeof showToast==='function') showToast('✅ اتحفظ الموظف');
+  }catch(e){
+    console.error('saveEmployee:',e);
+    alert('❌ خطأ في الحفظ:\n'+(e.message||e));
+  }finally{
+    if(sbtn){sbtn.disabled=false;sbtn.textContent=orig;}
+  }
 }
 
 async function toggleEmployee(id,isActive){
