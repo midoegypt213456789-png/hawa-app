@@ -2653,6 +2653,20 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
 
+    <!-- 🔑 ROLES & PERMISSIONS -->
+    <div class="section" id="sec-roles">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🔑 <span>الوظائف والصلاحيات</span></div>
+          <div class="page-sub">كل وظيفة ليها صلاحيات على الشاشات (دخول / تعديل / مسح / طباعة) — والموظف بياخد صلاحيات وظيفته أو تخصيص خاص بيه</div>
+        </div>
+        <button class="add-btn" onclick="openRoleModal()">+ إضافة وظيفة</button>
+      </div>
+      <div class="tbl-wrap">
+        <div id="roles-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
     <!-- PENDING CLIENTS (عملاء تحت الانتظار) -->
     <div class="section" id="sec-pending-clients">
       <div class="page-hd">
@@ -3795,9 +3809,50 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <option value="عام">موظف عام</option>
       </select>
     </div>
+    <div class="fg">
+      <label>🔑 الوظيفة (صلاحيات لوحة التحكم)</label>
+      <select id="em-roleid">
+        <option value="">— من غير وظيفة (شاشة المخازن بس) —</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>تخصيص الصلاحيات (اختياري)</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button type="button" class="add-btn" style="font-size:12px;padding:7px 12px" onclick="openEmpPermsOverride()">🔑 تخصيص صلاحيات الموظف ده</button>
+        <button type="button" class="add-btn" style="font-size:12px;padding:7px 12px;background:transparent;border:1px solid var(--border);color:var(--text-dim)" onclick="clearEmpOverride()">🔄 استخدم صلاحيات الوظيفة</button>
+        <span id="em-ov-state" style="font-size:11px;color:var(--text-dim)"></span>
+      </div>
+    </div>
     <div class="modal-btns">
       <button class="modal-save" onclick="saveEmployee()">💾 حفظ</button>
       <button class="modal-cancel" onclick="closeModal('empModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🔑 ROLE / PERMISSIONS MATRIX MODAL -->
+<div class="modal-overlay" id="roleModal">
+  <div class="modal" style="max-width:760px;width:95%">
+    <div class="modal-title">
+      <span id="roleModalTitle">إضافة وظيفة</span>
+      <button class="modal-close" onclick="closeModal('roleModal')">✕</button>
+    </div>
+    <div class="fg" id="role-name-fg"><label>اسم الوظيفة</label><div class="iw"><span class="ic">🔑</span><input type="text" id="role-name" placeholder="مثلاً: مشرف حجوزات"></div></div>
+    <div class="fg">
+      <label>🚪 بعد تسجيل الدخول يفتح على</label>
+      <select id="role-landing">
+        <option value="warehouse">🏭 شاشة المخازن (الموظفين)</option>
+        <option value="admin">🖥️ لوحة التحكم (الشاشة الأم)</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>📋 صلاحيات الشاشات</label>
+      <div id="role-matrix" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
+    </div>
+    <div id="roleModalError" style="display:none;background:rgba(224,85,85,0.1);border:1px solid rgba(224,85,85,0.3);color:var(--error);padding:10px 14px;border-radius:8px;font-size:13px;margin:12px 0"></div>
+    <div class="modal-btns">
+      <button class="modal-save" id="roleSaveBtn" onclick="saveRoleModal()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('roleModal')">إلغاء</button>
     </div>
   </div>
 </div>
@@ -4343,6 +4398,46 @@ let admin = null;
 let editEmpId = null;
 let currentSection = 'bookings';
 
+// ═══════════════════════════════════════════════════════════
+// 🔑 PERMISSIONS SYSTEM — وضع الموظف داخل لوحة التحكم
+// ═══════════════════════════════════════════════════════════
+let EMP_MODE = false;     // true لو اللى فاتح موظف (مش أدمن)
+let EMP_PERMS = null;     // { screen: {view,edit,del,print} } أو { __all__:true }
+
+// هل المستخدم الحالى يقدر يعمل action معين على شاشة معينة؟
+function can(screen, action){
+  if(!EMP_MODE) return true;                    // الأدمن الأصلى = كل حاجة
+  if(!EMP_PERMS) return false;
+  if(EMP_PERMS.__all__ === true) return true;   // وظيفة "كل الصلاحيات"
+  const p = EMP_PERMS[screen];
+  return !!(p && p[action] === true);
+}
+// أول شاشة مسموح بيها للموظف (fallback للتوجيه)
+function firstAllowedSection(){
+  try{ return Object.keys(NAV_META).find(k => can(k,'view')) || null; }catch(e){ return null; }
+}
+// 🛡️ مانع مركزى: أى زرار تعديل/مسح/طباعة من غير صلاحية يتوقف
+document.addEventListener('click', function(ev){
+  if(!EMP_MODE) return;
+  const t = ev.target.closest('button');
+  if(!t) return;
+  // استثناءات: التنقل، قفل/إلغاء المودالات، مودال التعديلات غير المحفوظة، التابات
+  if(t.closest('.nav-item') || t.closest('.dirty-modal') || t.closest('#tabBar') ||
+     t.classList.contains('modal-close') || t.classList.contains('modal-cancel') ||
+     t.classList.contains('btn-cancel') || t.classList.contains('nav-star')) return;
+  const oc = t.getAttribute('onclick') || '';
+  let act = null;
+  if(/print/i.test(oc)) act = 'print';
+  else if(t.classList.contains('del') || /delete/i.test(oc)) act = 'del';
+  else if(t.classList.contains('add-btn') || t.classList.contains('modal-save') ||
+          t.classList.contains('btn-save') || t.classList.contains('act-btn')) act = 'edit';
+  if(!act) return;
+  if(!can(currentSection, act)){
+    ev.stopPropagation(); ev.preventDefault();
+    alert('🚫 معندكش صلاحية "' + (act==='del'?'المسح':act==='print'?'الطباعة':'التعديل') + '" على الشاشة دي\n\nكلم الأدمن لو محتاجها');
+  }
+}, true);
+
 // =================== LOGIN ===================
 async function doAdminLogin(){
   const u=document.getElementById('aUser').value.trim();
@@ -4371,7 +4466,7 @@ function showLoginAlert(msg){
 function enterApp(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').classList.add('show');
-  document.getElementById('adminName').textContent='👑 '+admin.name;
+  document.getElementById('adminName').textContent=(EMP_MODE?'👷 ':'👑 ')+admin.name;
   // 🎨 Load and render sidebar layout (categories, favorites, drag state)
   loadSidebarLayout();
   const todayStr = fmtDate(new Date());
@@ -4383,6 +4478,8 @@ function enterApp(){
   goToDefaultPage();
   // 🚨 تحديث الـ badge بتاع تنبيهات الأذونات
   refreshAlertBadge();
+  // 🔑 حمّل قايمة الوظائف (للمودالات)
+  fetchRoles();
   // كل 30 ثانية، حدّث الـ badge تلقائياً (لو فيه alerts جديدة)
   setInterval(refreshAlertBadge, 30000);
   // 💬 تنبيه الشكاوى والاقتراحات الجديدة (صوت + إشعار) كل 30 ثانية
@@ -4534,6 +4631,8 @@ function doLogout(){
   showConfirm('🚪','تسجيل الخروج','هتخرج من لوحة التحكم؟',false,()=>{
     stopAutoRefresh();
     sessionStorage.removeItem('hawa_admin');
+    sessionStorage.removeItem('hawa_admin_emp');
+    EMP_MODE=false; EMP_PERMS=null;
     admin=null;
     document.getElementById('loginScreen').style.display='flex';
     document.getElementById('app').classList.remove('show');
@@ -4544,6 +4643,13 @@ function doLogout(){
 
 // =================== NAVIGATION ===================
 function goTo(sec){
+  // 🔑 حارس الصلاحيات: شاشة مش مسموح بيها → روح لأول شاشة مسموحة
+  if(EMP_MODE && !can(sec,'view')){
+    const fb = firstAllowedSection();
+    if(!fb){ alert('🚫 معندكش صلاحية على أى شاشة فى لوحة التحكم — كلم الأدمن'); return; }
+    if(sec !== fb) return goTo(fb);
+    return;
+  }
   currentSection=sec;
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   const target = document.getElementById('sec-'+sec);
@@ -4573,6 +4679,7 @@ function goTo(sec){
   if(sec==='bookings')loadBookings();
   else if(sec==='permit-alerts')loadPermitAlerts();
   else if(sec==='employees')loadEmployees();
+  else if(sec==='roles')loadRoles();
   else if(sec==='clients'){ refreshClientActivity(true).then(()=>loadClients()); }
   else if(sec==='client-types')loadClientTypes();
   else if(sec==='extra-contacts')loadExtraContacts();
@@ -5450,17 +5557,29 @@ function renderBookingsTable(data){
 async function loadEmployees(){
   document.getElementById('emp-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
-    const r=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at&order=created_at.asc`,{headers:HDR});
-    const data=await r.json();
+    await fetchRoles();
+    const r=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at,role_id,perms_override&order=created_at.asc`,{headers:HDR});
+    let data=await r.json();
+    // fallback لو الأعمدة الجديدة لسه متعملتش فى القاعدة
+    if(!Array.isArray(data)){
+      const r2=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at&order=created_at.asc`,{headers:HDR});
+      data=await r2.json();
+    }
     if(!data.length){document.getElementById('emp-table').innerHTML='<div class="empty-txt">لا يوجد موظفين</div>';return;}
     const roleBadge={'قليوب':'<span class="badge qalyub">قليوب 🏭</span>','السادات':'<span class="badge sadat">السادات 🏗️</span>','عام':'<span class="badge general">عام 🌐</span>'};
-    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
+    const roleMap={}; allRoles.forEach(x=>roleMap[x.id]=x);
+    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>🔑 الوظيفة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
     data.forEach(e=>{
+      const jr = roleMap[e.role_id];
+      const jrBadge = jr
+        ? `<span class="badge active" style="background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.35)">🔑 ${jr.name}</span>${e.perms_override?' <span title="صلاحيات مخصصة" style="font-size:11px">✏️</span>':''}`
+        : '<span style="color:var(--text-dim);font-size:11px">—</span>';
       html+=`<tr>
         <td style="color:var(--text-dim)">${e.id}</td>
         <td><b>${e.name}</b></td>
         <td style="color:var(--text-dim)">${e.username}</td>
         <td>${roleBadge[e.role]||e.role}</td>
+        <td>${jrBadge}</td>
         <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
         <td><div class="act-btns">
           <button class="act-btn edit" onclick="openEmpModal(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ تعديل</button>
@@ -5481,6 +5600,13 @@ function openEmpModal(emp=null){
   document.getElementById('em-user').value=emp?emp.username:'';
   document.getElementById('em-pass').value='';
   document.getElementById('em-role').value=emp?emp.role:'قليوب';
+  // 🔑 قائمة الوظائف
+  const sel=document.getElementById('em-roleid');
+  sel.innerHTML='<option value="">— من غير وظيفة (شاشة المخازن بس) —</option>'+
+    allRoles.map(r=>`<option value="${r.id}">${r.name} (${r.landing==='admin'?'لوحة التحكم':'المخازن'})</option>`).join('');
+  sel.value = (emp&&emp.role_id) ? String(emp.role_id) : '';
+  empOverrideDraft = (emp&&emp.perms_override) ? emp.perms_override : null;
+  updateOvState();
   document.getElementById('empModal').classList.add('show');
 }
 
@@ -5489,18 +5615,32 @@ async function saveEmployee(){
   const username=document.getElementById('em-user').value.trim();
   const password=document.getElementById('em-pass').value.trim();
   const role=document.getElementById('em-role').value;
+  const roleIdRaw=document.getElementById('em-roleid').value;
   if(!name||!username){alert('أدخل الاسم واليوزر');return;}
 
-  const body={name,username,role};
+  const body={name,username,role,role_id:roleIdRaw?parseInt(roleIdRaw):null,perms_override:empOverrideDraft};
   if(password)body.password=password;
 
   try{
+    let r;
     if(editEmpId){
-      await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+      r=await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
     }else{
       if(!password){alert('أدخل كلمة المرور');return;}
       body.password=password;
-      await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+      r=await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    }
+    if(!r.ok){
+      const txt=await r.text();
+      if(/role_id|perms_override/.test(txt)){
+        alert('⚠️ أعمدة الصلاحيات لسه متعملتش فى قاعدة البيانات — شغّل ملف SQL الأول.\n\nهحفظ باقى البيانات من غيرها.');
+        delete body.role_id; delete body.perms_override;
+        if(editEmpId){
+          await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+        }else{
+          await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+        }
+      } else { throw new Error(txt); }
     }
     closeModal('empModal');
     loadEmployees();
@@ -5516,6 +5656,201 @@ function deleteEmployee(id,name){
   showConfirm('🗑️','حذف موظف',`هتحذف "${name}"؟ مش هتقدر ترجع!`,true,async()=>{
     await fetch(`${SB}/rest/v1/employees?id=eq.${id}`,{method:'DELETE',headers:HDR});
     loadEmployees();
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🔑 ROLES & PERMISSIONS — الوظائف والصلاحيات
+// ═══════════════════════════════════════════════════════════
+let allRoles = [];
+let roleEditingId = null;      // null = وظيفة جديدة
+let roleModalMode = 'role';    // 'role' = تعديل وظيفة | 'emp' = تخصيص موظف
+let empOverrideDraft = null;   // الـ perms_override اللى هيتحفظ مع الموظف
+const PERM_ACTIONS = [
+  { key:'view',  label:'👁️ دخول'  },
+  { key:'edit',  label:'✏️ تعديل' },
+  { key:'del',   label:'🗑️ مسح'   },
+  { key:'print', label:'🖨️ طباعة' }
+];
+
+async function fetchRoles(){
+  try{
+    const r = await fetch(`${SB}/rest/v1/roles?select=*&order=id.asc`,{headers:HDR});
+    if(!r.ok) throw new Error('roles table');
+    allRoles = await r.json();
+    if(!Array.isArray(allRoles)) allRoles=[];
+  }catch(e){ allRoles=[]; }
+  return allRoles;
+}
+
+async function loadRoles(){
+  const el = document.getElementById('roles-table');
+  el.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  await fetchRoles();
+  // عدد الموظفين على كل وظيفة
+  let empCounts = {};
+  try{
+    const r = await fetch(`${SB}/rest/v1/employees?select=id,role_id`,{headers:HDR});
+    const d = await r.json();
+    (d||[]).forEach(e=>{ if(e.role_id) empCounts[e.role_id]=(empCounts[e.role_id]||0)+1; });
+  }catch(e){}
+  if(!allRoles.length){
+    el.innerHTML = '<div class="empty-txt" style="padding:40px">🔑 مفيش وظائف لسه — اعمل أول وظيفة بزرار "+ إضافة وظيفة"<br><br><span style="font-size:12px;color:var(--text-dim)">لو ده أول مرة: لازم جدول roles يتعمل فى قاعدة البيانات الأول (شوف ملف SQL اللى اتبعتلك)</span></div>';
+    return;
+  }
+  let html = `<table><thead><tr><th>#</th><th>الوظيفة</th><th>🚪 يفتح على</th><th>📋 شاشات مسموحة</th><th>👷 موظفين</th><th>إجراءات</th></tr></thead><tbody>`;
+  allRoles.forEach(role=>{
+    const perms = role.permissions||{};
+    const isAll = perms.__all__===true;
+    const screens = isAll ? Object.keys(NAV_META).length : Object.keys(perms).filter(k=>k!=='__all__'&&perms[k]&&perms[k].view).length;
+    const landing = role.landing==='admin' ? '🖥️ لوحة التحكم' : '🏭 شاشة المخازن';
+    html += `<tr>
+      <td style="color:var(--text-dim)">${role.id}</td>
+      <td><b>🔑 ${role.name}</b>${isAll?' <span class="badge active" style="font-size:10px">كل الصلاحيات ⭐</span>':''}</td>
+      <td>${landing}</td>
+      <td>${isAll?`<b style="color:var(--gold)">الكل (${screens})</b>`:`<b>${screens}</b> من ${Object.keys(NAV_META).length}`}</td>
+      <td>${empCounts[role.id]||0}</td>
+      <td><div class="act-btns">
+        <button class="act-btn edit" onclick='openRoleModal(${JSON.stringify(role).replace(/'/g,"&#39;")})'>✏️ تعديل</button>
+        <button class="act-btn del" onclick="deleteRole(${role.id},'${String(role.name).replace(/'/g,"\\'")}')">🗑️ حذف</button>
+      </div></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  el.innerHTML = html;
+}
+
+// 🧩 مصفوفة الصلاحيات (شاشة × دخول/تعديل/مسح/طباعة)
+function buildPermMatrix(perms){
+  perms = perms||{};
+  const isAll = perms.__all__===true;
+  let head = `<tr style="position:sticky;top:0;background:var(--dark2);z-index:2"><th style="text-align:right;padding:9px 12px">الشاشة</th><th style="padding:9px 6px">الكل</th>`;
+  PERM_ACTIONS.forEach(a=>{
+    head += `<th style="padding:9px 6px;font-size:11px"><label style="cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px">${a.label}<input type="checkbox" class="pm-col-all" data-act="${a.key}" onchange="pmToggleCol('${a.key}',this.checked)"></label></th>`;
+  });
+  head += '</tr>';
+  let rows = '';
+  Object.keys(NAV_META).forEach(k=>{
+    const m = NAV_META[k];
+    const p = isAll ? {view:true,edit:true,del:true,print:true} : (perms[k]||{});
+    rows += `<tr style="border-top:1px solid var(--border)">
+      <td style="text-align:right;padding:8px 12px;font-size:13px;white-space:nowrap">${m.icon} ${m.label}</td>
+      <td style="text-align:center;padding:8px 6px"><input type="checkbox" class="pm-row-all" data-scr="${k}" onchange="pmToggleRow('${k}',this.checked)" ${(p.view&&p.edit&&p.del&&p.print)?'checked':''}></td>`;
+    PERM_ACTIONS.forEach(a=>{
+      rows += `<td style="text-align:center;padding:8px 6px"><input type="checkbox" class="pm-cb" data-scr="${k}" data-act="${a.key}" ${p[a.key]?'checked':''} onchange="pmSyncRow('${k}')"></td>`;
+    });
+    rows += '</tr>';
+  });
+  document.getElementById('role-matrix').innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px">${head}${rows}</table>`;
+}
+function pmToggleRow(scr, on){
+  document.querySelectorAll(`.pm-cb[data-scr="${scr}"]`).forEach(cb=>cb.checked=on);
+}
+function pmToggleCol(act, on){
+  document.querySelectorAll(`.pm-cb[data-act="${act}"]`).forEach(cb=>cb.checked=on);
+  document.querySelectorAll('.pm-row-all').forEach(r=>pmSyncRow(r.dataset.scr));
+}
+function pmSyncRow(scr){
+  const cbs = [...document.querySelectorAll(`.pm-cb[data-scr="${scr}"]`)];
+  const all = cbs.length && cbs.every(cb=>cb.checked);
+  const rowAll = document.querySelector(`.pm-row-all[data-scr="${scr}"]`);
+  if(rowAll) rowAll.checked = all;
+}
+function collectPermMatrix(){
+  const out = {};
+  document.querySelectorAll('.pm-cb').forEach(cb=>{
+    if(!cb.checked) return;
+    const s=cb.dataset.scr, a=cb.dataset.act;
+    if(!out[s]) out[s]={};
+    out[s][a]=true;
+  });
+  // أى تعديل/مسح/طباعة من غير دخول = دخول تلقائى
+  Object.keys(out).forEach(s=>{ if(out[s].edit||out[s].del||out[s].print) out[s].view=true; });
+  return out;
+}
+
+// 📝 فتح مودال الوظيفة (إضافة/تعديل)
+function openRoleModal(role=null){
+  roleModalMode = 'role';
+  roleEditingId = role ? role.id : null;
+  document.getElementById('roleModalTitle').textContent = role ? `تعديل وظيفة: ${role.name}` : 'إضافة وظيفة جديدة';
+  document.getElementById('role-name-fg').style.display = '';
+  document.getElementById('role-name').value = role ? role.name : '';
+  document.getElementById('role-landing').value = role ? (role.landing||'warehouse') : 'warehouse';
+  document.getElementById('roleModalError').style.display='none';
+  buildPermMatrix(role ? role.permissions : {});
+  document.getElementById('roleModal').classList.add('show');
+}
+
+// 🔧 فتح نفس المودال لتخصيص صلاحيات موظف بعينه
+async function openEmpPermsOverride(){
+  roleModalMode = 'emp';
+  document.getElementById('roleModalTitle').textContent = '🔧 تخصيص صلاحيات الموظف';
+  document.getElementById('role-name-fg').style.display = 'none';
+  document.getElementById('roleModalError').style.display='none';
+  if(!allRoles.length) await fetchRoles();
+  // ابدأ من التخصيص الحالى، وإلا من صلاحيات الوظيفة المختارة
+  const roleId = parseInt(document.getElementById('em-roleid').value)||null;
+  const role = allRoles.find(r=>r.id===roleId);
+  const base = (empOverrideDraft&&empOverrideDraft.perms) ? empOverrideDraft.perms : (role?role.permissions:{});
+  document.getElementById('role-landing').value = (empOverrideDraft&&empOverrideDraft.landing) ? empOverrideDraft.landing : (role?(role.landing||'warehouse'):'warehouse');
+  buildPermMatrix(base||{});
+  document.getElementById('roleModal').classList.add('show');
+}
+function clearEmpOverride(){
+  empOverrideDraft = null;
+  updateOvState();
+  if(typeof showToast==='function') showToast('🔄 هيورث صلاحيات الوظيفة');
+}
+function updateOvState(){
+  const el=document.getElementById('em-ov-state');
+  if(el) el.textContent = empOverrideDraft ? '✏️ صلاحيات مخصصة لهذا الموظف' : '⬅️ بيورث صلاحيات الوظيفة';
+}
+
+// 💾 حفظ المودال (وظيفة أو تخصيص موظف)
+async function saveRoleModal(){
+  const errEl=document.getElementById('roleModalError');
+  errEl.style.display='none';
+  const perms = collectPermMatrix();
+  const landing = document.getElementById('role-landing').value;
+
+  if(roleModalMode==='emp'){
+    empOverrideDraft = { landing, perms };
+    updateOvState();
+    closeModal('roleModal');
+    if(typeof showToast==='function') showToast('✏️ التخصيص جاهز — اضغط حفظ فى بيانات الموظف');
+    return;
+  }
+
+  const name = document.getElementById('role-name').value.trim();
+  if(!name){ errEl.textContent='⚠️ اكتب اسم الوظيفة'; errEl.style.display='block'; return; }
+  const btn=document.getElementById('roleSaveBtn');
+  btn.disabled=true; btn.textContent='⏳ جاري الحفظ...';
+  try{
+    const body = { name, landing, permissions: perms };
+    let r;
+    if(roleEditingId){
+      r = await fetch(`${SB}/rest/v1/roles?id=eq.${roleEditingId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    }else{
+      r = await fetch(`${SB}/rest/v1/roles`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    }
+    if(!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    if(typeof logActivity==='function') logActivity(roleEditingId?'role_update':'role_create', `🔑 ${roleEditingId?'عدّل':'أضاف'} وظيفة "${name}"`, {landing});
+    closeModal('roleModal');
+    loadRoles();
+    if(typeof showToast==='function') showToast('✅ اتحفظت');
+  }catch(e){
+    errEl.textContent='❌ خطأ فى الحفظ: '+(e.message||'')+(String(e.message||'').includes('404')||String(e.message||'').includes('relation')?' — جدول roles لسه متعملش فى قاعدة البيانات (شغّل ملف SQL الأول)':'');
+    errEl.style.display='block';
+  }finally{
+    btn.disabled=false; btn.textContent='💾 حفظ';
+  }
+}
+
+function deleteRole(id,name){
+  showConfirm('🗑️','حذف وظيفة',`هتحذف وظيفة "${name}"؟\nالموظفين اللى عليها هيبقوا من غير وظيفة (مخزن بس).`,true,async()=>{
+    await fetch(`${SB}/rest/v1/roles?id=eq.${id}`,{method:'DELETE',headers:HDR});
+    loadRoles();
   });
 }
 
@@ -12307,6 +12642,7 @@ const NAV_META = {
   'templates':        { icon: '💌',  label: 'الرسائل المحفوظة' },
 
   'employees':        { icon: '👷',  label: 'الموظفين' },
+  'roles':            { icon: '🔑',  label: 'الوظائف والصلاحيات' },
   'vehicle-types':    { icon: '🚚',  label: 'أنواع العربيات' },
   'schedule':         { icon: '📅',  label: 'إدارة الأيام' },
   'reports':          { icon: '📊',  label: 'التقارير' },
@@ -12322,7 +12658,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['broadcast', 'broadcast-logs', 'feedback', 'templates'] },
-    { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
+    { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
 };
@@ -12465,6 +12801,7 @@ function renderSidebarItems(ids, inFavorites){
   return (ids||[]).map(id => {
     const meta = NAV_META[id];
     if (!meta) return '';
+    if (EMP_MODE && !can(id,'view')) return '';   // 🔑 شاشة من غير صلاحية دخول = متتبانش أصلاً
     const isFav = sidebarLayout.favorites.includes(id);
     const starCls = isFav ? 'starred' : '';
     const starSymbol = isFav ? '★' : '☆';
@@ -13251,6 +13588,19 @@ function initTabSystem(){
 
 const saved=sessionStorage.getItem('hawa_admin');
 if(saved){admin=JSON.parse(saved);enterApp();}
+else{
+  // 🔑 جلسة موظف بصلاحيات (جاى من بوابة الموظفين)
+  const esaved=sessionStorage.getItem('hawa_admin_emp');
+  if(esaved){
+    try{
+      const e=JSON.parse(esaved);
+      EMP_MODE=true;
+      EMP_PERMS=e.perms||{};
+      admin={name:e.name,username:e.username,is_employee:true,emp_id:e.id};
+      enterApp();
+    }catch(err){ sessionStorage.removeItem('hawa_admin_emp'); }
+  }
+}
 </script>
 
 <!-- 🆕 DIRTY MODAL (تعديلات غير محفوظة) -->

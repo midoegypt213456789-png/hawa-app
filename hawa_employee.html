@@ -465,6 +465,27 @@ async function doLogin(){
     const data=_ej?[_ej]:[];
     if(data&&data.length>0){
       emp=data[0];
+      // 🔑 نظام الصلاحيات: لو وظيفة الموظف بتفتح على لوحة التحكم → حوّله هناك
+      try{
+        const pr = await fetch(`${SB}/rest/v1/employees?id=eq.${emp.id}&select=role_id,perms_override`,{headers:HDR});
+        const pd = await pr.json();
+        const row = (Array.isArray(pd)&&pd[0]) ? pd[0] : {};
+        let jrole = null;
+        if(row.role_id){
+          const rr = await fetch(`${SB}/rest/v1/roles?id=eq.${row.role_id}&select=*`,{headers:HDR});
+          const rd = await rr.json();
+          jrole = (Array.isArray(rd)&&rd[0]) ? rd[0] : null;
+        }
+        const ov = row.perms_override || null;
+        const landing = (ov&&ov.landing) || (jrole&&jrole.landing) || 'warehouse';
+        const perms   = (ov&&ov.perms)   || (jrole&&jrole.permissions) || {};
+        if(landing==='admin'){
+          sessionStorage.setItem('hawa_admin_emp', JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms}));
+          logActivity('emp_login','🚪 سجل دخول (لوحة التحكم)',{role:emp.role});
+          window.location.href='hawa_admin.html';
+          return;
+        }
+      }catch(e){ /* لو الأعمدة/الجدول لسه متعملوش → دخول مخزن عادى */ }
       sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
       logActivity('emp_login','🚪 سجل دخول',{role:emp.role});
       enterMain();
