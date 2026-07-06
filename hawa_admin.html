@@ -3801,8 +3801,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="fg"><label>الاسم الكامل</label><div class="iw"><span class="ic">👤</span><input type="text" id="em-name" placeholder="اسم الموظف"></div></div>
     <div class="fg"><label>اسم المستخدم</label><div class="iw"><span class="ic">🔑</span><input type="text" id="em-user" placeholder="username"></div></div>
     <div class="fg"><label>كلمة المرور</label><div class="iw"><span class="ic">🔒</span><input type="password" id="em-pass" placeholder="كلمة المرور"></div></div>
-    <div class="fg">
-      <label>الصلاحية</label>
+    <div class="fg" id="em-wh-fg">
+      <label>🏭 صلاحية المخزن (لشاشة المخازن بس)</label>
       <select id="em-role">
         <option value="قليوب">موظف قليوب</option>
         <option value="السادات">موظف السادات</option>
@@ -3811,7 +3811,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
     <div class="fg">
       <label>🔑 الوظيفة (صلاحيات لوحة التحكم)</label>
-      <select id="em-roleid">
+      <select id="em-roleid" onchange="updateEmpWhVisibility()">
         <option value="">— من غير وظيفة (شاشة المخازن بس) —</option>
       </select>
     </div>
@@ -4453,7 +4453,40 @@ async function doAdminLogin(){
       admin=data[0];
       sessionStorage.setItem('hawa_admin',JSON.stringify(admin));
       enterApp();
-    }else{showLoginAlert('اسم المستخدم أو كلمة المرور غلط');}
+    }else{
+      // 🔑 مش أدمن؟ جرّبه كموظف (نفس شاشة الدخول للكل)
+      const r2=await fetch(`${SB}/rest/v1/rpc/login_employee`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
+      const _ej=await r2.json();
+      const ed=(_ej?[_ej]:[]).filter(Boolean);
+      if(ed.length>0){
+        const emp=ed[0];
+        let jrole=null, ov=null;
+        try{
+          const pr=await fetch(`${SB}/rest/v1/employees?id=eq.${emp.id}&select=role_id,perms_override`,{headers:HDR});
+          const pd=await pr.json();
+          const row=(Array.isArray(pd)&&pd[0])?pd[0]:{};
+          ov=row.perms_override||null;
+          if(row.role_id){
+            const rr=await fetch(`${SB}/rest/v1/roles?id=eq.${row.role_id}&select=*`,{headers:HDR});
+            const rd=await rr.json();
+            jrole=(Array.isArray(rd)&&rd[0])?rd[0]:null;
+          }
+        }catch(e){}
+        const landing=(ov&&ov.landing)||(jrole&&jrole.landing)||'warehouse';
+        const perms=(ov&&ov.perms)||(jrole&&jrole.permissions)||{};
+        if(landing==='admin'){
+          EMP_MODE=true; EMP_PERMS=perms;
+          admin={name:emp.name,username:emp.username,is_employee:true,emp_id:emp.id};
+          sessionStorage.setItem('hawa_admin_emp',JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms}));
+          enterApp();
+        }else{
+          // موظف مخازن → على بوابة الموظفين بجلسة جاهزة
+          sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
+          window.location.href='hawa_employee.html';
+          return;
+        }
+      }else{showLoginAlert('اسم المستخدم أو كلمة المرور غلط');}
+    }
   }catch(e){showLoginAlert('خطأ في الاتصال');}
   btn.disabled=false;btn.innerHTML='دخول';
 }
@@ -5566,9 +5599,27 @@ async function loadEmployees(){
       data=await r2.json();
     }
     if(!data.length){document.getElementById('emp-table').innerHTML='<div class="empty-txt">لا يوجد موظفين</div>';return;}
+    // 👑 الأدمنز الرئيسيين (من جدول admins) يظهروا فى نفس الجدول
+    let adminsData=[];
+    try{
+      const ar=await fetch(`${SB}/rest/v1/admins?select=id,name,username,is_active&order=id.asc`,{headers:HDR});
+      const ad=await ar.json();
+      if(Array.isArray(ad)) adminsData=ad;
+    }catch(e){}
     const roleBadge={'قليوب':'<span class="badge qalyub">قليوب 🏭</span>','السادات':'<span class="badge sadat">السادات 🏗️</span>','عام':'<span class="badge general">عام 🌐</span>'};
     const roleMap={}; allRoles.forEach(x=>roleMap[x.id]=x);
     let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>🔑 الوظيفة</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
+    adminsData.forEach(a=>{
+      html+=`<tr style="background:rgba(201,168,76,0.05)">
+        <td style="color:var(--gold)">👑</td>
+        <td><b style="color:var(--gold)">${a.name}</b></td>
+        <td style="color:var(--text-dim)">${a.username}</td>
+        <td><span class="badge active" style="background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.35)">👑 أدمن رئيسي</span></td>
+        <td><b style="color:var(--gold)">كل الصلاحيات ⭐</b></td>
+        <td>${a.is_active!==false?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
+        <td><span style="font-size:11px;color:var(--text-dim)">🔒 حساب رئيسي — مبيتعدلش من هنا</span></td>
+      </tr>`;
+    });
     data.forEach(e=>{
       const jr = roleMap[e.role_id];
       const jrBadge = jr
@@ -5605,9 +5656,26 @@ function openEmpModal(emp=null){
   sel.innerHTML='<option value="">— من غير وظيفة (شاشة المخازن بس) —</option>'+
     allRoles.map(r=>`<option value="${r.id}">${r.name} (${r.landing==='admin'?'لوحة التحكم':'المخازن'})</option>`).join('');
   sel.value = (emp&&emp.role_id) ? String(emp.role_id) : '';
+  // 🆕 موظف جديد → الافتراضى "موظف مخزن"
+  if(!emp){
+    const def = allRoles.find(r=>r.name==='موظف مخزن');
+    if(def) sel.value = String(def.id);
+  }
   empOverrideDraft = (emp&&emp.perms_override) ? emp.perms_override : null;
   updateOvState();
+  updateEmpWhVisibility();
   document.getElementById('empModal').classList.add('show');
+}
+
+// 🏭 خانة صلاحية المخزن تظهر بس لو الوظيفة بتفتح على شاشة المخازن
+function updateEmpWhVisibility(){
+  const roleId = parseInt(document.getElementById('em-roleid').value)||null;
+  const jr = allRoles.find(r=>r.id===roleId);
+  const landing = (empOverrideDraft&&empOverrideDraft.landing) || (jr?(jr.landing||'warehouse'):'warehouse');
+  const fg = document.getElementById('em-wh-fg');
+  if(fg) fg.style.display = (landing==='admin') ? 'none' : '';
+  // موظف جديد على وظيفة لوحة تحكم → المخزن يبقى "عام" تلقائياً
+  if(landing==='admin' && !editEmpId) document.getElementById('em-role').value='عام';
 }
 
 async function saveEmployee(){
