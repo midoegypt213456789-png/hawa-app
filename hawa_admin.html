@@ -12851,7 +12851,9 @@ function renderSidebar(){
 
   let html = '';
 
-  // Favorites (always rendered, even if empty — drop zone)
+  // Favorites (always rendered, even if empty — drop zone) — للموظف: تتخفى لو فاضية
+  const visibleFavs = EMP_MODE ? sidebarLayout.favorites.filter(id => can(id,'view')) : sidebarLayout.favorites;
+  if(!EMP_MODE || visibleFavs.length){
   const favCollapsed = !!sidebarLayout.collapsed['__favorites__'];
   html += `<div class="sb-cat sb-fav ${favCollapsed ? 'collapsed' : ''}" data-cat-id="__favorites__">
     <div class="sb-cat-header" onclick="toggleSidebarCategory('__favorites__')">
@@ -12863,9 +12865,11 @@ function renderSidebar(){
       ${sidebarLayout.favorites.length === 0 ? '<div class="sb-fav-empty">اسحب صفحة هنا أو دوس ⭐</div>' : ''}
     </div>
   </div>`;
+  }
 
-  // Categories
+  // Categories — 🔑 قسم مفيهوش ولا شاشة مسموحة للموظف = مايظهرش أصلاً
   sidebarLayout.categories.forEach(cat => {
+    if (EMP_MODE && !(cat.items||[]).some(id => can(id,'view'))) return;
     const isCollapsed = !!sidebarLayout.collapsed[cat.id];
     html += `<div class="sb-cat ${isCollapsed ? 'collapsed' : ''}" data-cat-id="${cat.id}">
       <div class="sb-cat-header" onclick="toggleSidebarCategory('${cat.id}')">
