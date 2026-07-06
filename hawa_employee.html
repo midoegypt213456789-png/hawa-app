@@ -480,7 +480,15 @@ async function doLogin(){
         const landing = (ov&&ov.landing) || (jrole&&jrole.landing) || 'warehouse';
         const perms   = (ov&&ov.perms)   || (jrole&&jrole.permissions) || {};
         if(landing==='admin'){
-          sessionStorage.setItem('hawa_admin_emp', JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms}));
+          // 🗺️ نطاق البيانات + محافظات الموظف
+          const scope = (ov&&ov.scope) || (jrole&&jrole.data_scope) || 'own';
+          let govs = [];
+          try{
+            const gr = await fetch(`${SB}/rest/v1/employee_regions?employee_id=eq.${emp.id}&select=governorate`,{headers:HDR});
+            const gd = await gr.json();
+            govs = (Array.isArray(gd)?gd:[]).map(x=>x.governorate);
+          }catch(e){}
+          sessionStorage.setItem('hawa_admin_emp', JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs}));
           logActivity('emp_login','🚪 سجل دخول (لوحة التحكم)',{role:emp.role});
           window.location.href='hawa_admin.html';
           return;
