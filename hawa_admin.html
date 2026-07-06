@@ -2996,6 +2996,10 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <button class="fb-filter-btn"        data-filter="complaint"  onclick="setFeedbackFilter(this,'complaint')">⚠️ شكاوى</button>
         <button class="fb-filter-btn"        data-filter="suggestion" onclick="setFeedbackFilter(this,'suggestion')">💡 اقتراحات</button>
         <button class="fb-filter-btn"        data-filter="replied"    onclick="setFeedbackFilter(this,'replied')">✅ تم الرد</button>
+        <button class="fb-filter-btn"        data-filter="archive"    onclick="setFeedbackFilter(this,'archive')">🗂️ أرشيف</button>
+        <input class="filter-inp" id="fb-from" type="date" onchange="renderFeedback()" style="width:140px;color-scheme:dark" title="من تاريخ">
+        <input class="filter-inp" id="fb-to" type="date" onchange="renderFeedback()" style="width:140px;color-scheme:dark" title="إلى تاريخ">
+        <button id="fb-date-clear" onclick="clearFeedbackDates()" style="display:none;background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:10px;padding:7px 12px;font-family:'Cairo',sans-serif;font-size:12px;font-weight:700;cursor:pointer">🧹 مسح التاريخ</button>
       </div>
 
       <div id="fb-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -4381,6 +4385,9 @@ function enterApp(){
   refreshAlertBadge();
   // كل 30 ثانية، حدّث الـ badge تلقائياً (لو فيه alerts جديدة)
   setInterval(refreshAlertBadge, 30000);
+  // 💬 تنبيه الشكاوى والاقتراحات الجديدة (صوت + إشعار) كل 30 ثانية
+  refreshFeedbackBadge();
+  setInterval(refreshFeedbackBadge, 30000);
   // 🔔 اطلب إذن إشعارات المتصفح (لو الـ user ما رفضش قبل كده)
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
@@ -4737,6 +4744,42 @@ async function refreshAlertBadge() {
       badge.classList.remove('show');
       stopTitleBlink();
     }
+  } catch (e) { /* silent */ }
+}
+
+// 💬 تنبيه الشكاوى والاقتراحات الجديدة — صوت + إشعار متصفح + توست (كل 30 ثانية)
+let lastFeedbackNewCount = -1;   // -1 = أول مرة، ما نـ notify-ش
+async function refreshFeedbackBadge(){
+  try {
+    const r = await fetch(
+      `${SB}/rest/v1/feedback?status=eq.${encodeURIComponent('جديد')}&select=id`,
+      { headers: { ...HDR, 'Prefer': 'count=exact' } }
+    );
+    if (!r.ok) return;
+    const cr = r.headers.get('content-range') || '';
+    const total = parseInt(cr.split('/')[1] || '0', 10);
+
+    if (lastFeedbackNewCount >= 0 && total > lastFeedbackNewCount) {
+      const diff = total - lastFeedbackNewCount;
+      playAlertBeep();
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          const n = new Notification('💬 HAWA CO — شكوى/اقتراح جديد', {
+            body: `وصل ${diff} ${diff===1?'رسالة جديدة':'رسائل جديدة'} من العملاء (إجمالى الجديد: ${total})`,
+            tag: 'hawa-feedback-alert',
+            requireInteraction: false,
+            silent: false
+          });
+          n.onclick = () => { window.focus(); goTo('feedback'); n.close(); };
+        } catch(e){ /* silent */ }
+      }
+      if (document.hidden) startTitleBlink(`💬 (${total}) شكوى/اقتراح جديد!`);
+      if (typeof showToast === 'function') showToast(`💬 ${diff} شكوى/اقتراح جديد وصل!`);
+      // لو واقف على صفحة الشكاوى دلوقتى، حدّثها على طول
+      const sec = document.getElementById('sec-feedback');
+      if (sec && sec.classList.contains('active') && typeof loadFeedback === 'function') loadFeedback();
+    }
+    lastFeedbackNewCount = total;
   } catch (e) { /* silent */ }
 }
 
@@ -5555,6 +5598,28 @@ function onAdminGovChange() {
   filterClients();
 }
 
+// 🖱️ دبل-كليك على أي إحصائية فى فوتر العملاء → فلترة بيها فوراً
+function clFooterFilter(kind, value){
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+  if(kind==='tier'){ set('cl-tier',value); filterClients(); }
+  else if(kind==='region'){ set('cl-region',value); onCLRegionChange(); }
+  else if(kind==='gov'){ set('cl-gov',value); onAdminGovChange(); }
+  else if(kind==='district'){ set('cl-district',value); filterClients(); }
+  else if(kind==='religion'){ set('cl-religion',value); filterClients(); }
+  else if(kind==='status'){ set('cl-status',value); filterClients(); }
+  else if(kind==='clear'){ clearClientFilters(); }
+}
+// 🧹 مسح كل فلاتر العملاء (دبل-كليك على "إجمالي")
+function clearClientFilters(){
+  ['cl-search','cl-region','cl-gov','cl-district','cl-type','cl-tier','cl-religion','cl-status'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const fld=document.getElementById('cl-search-field'); if(fld) fld.value='all';
+  const mode=document.getElementById('cl-search-mode'); if(mode) mode.value='contains';
+  initAdminGovDropdown('');
+  filterClients();
+}
+
 // =================== CLIENTS ===================
 let allClients = [];
 let allReligions = [];
@@ -5854,11 +5919,12 @@ function filterClients(){
   const muslimCount = data.filter(c=>(c.religion||'مسلم')==='مسلم').length;
   const christianCount = data.filter(c=>c.religion==='مسيحي').length;
 
-  // ⭐ tier stats
+  // ⭐ tier stats (الصفر يتخفى + دبل كليك يفلتر)
   let tierStats = '';
   (allTiers||[]).forEach(t => {
     const cnt = data.filter(c => c.tier_id === t.id).length;
-    tierStats += `<span style="color:${t.color}"><b>${t.icon||''} ${t.name}:</b> ${cnt}</span>`;
+    if (cnt === 0) return;
+    tierStats += `<span style="color:${t.color};cursor:pointer;user-select:none" title="دبل كليك للفلترة بالفئة دي" ondblclick="clFooterFilter('tier','${t.id}')"><b>${t.icon||''} ${t.name}:</b> ${cnt}</span>`;
   });
 
   // 🗺️ Smart geographic breakdown — يتكيف مع الـ filter level
@@ -5878,7 +5944,8 @@ function filterClients(){
       if (d) counts[d] = (counts[d] || 0) + 1;
     });
     Object.keys(counts).sort().forEach(d => {
-      regionStats += `<span style="color:var(--text-dim)"><b>🏙️ ${d}:</b> ${counts[d]}</span>`;
+      const dEsc = String(d).replace(/'/g,"\\'");
+      regionStats += `<span style="color:var(--text-dim);cursor:pointer;user-select:none" title="دبل كليك للفلترة بالمركز ده" ondblclick="clFooterFilter('district','${dEsc}')"><b>🏙️ ${d}:</b> ${counts[d]}</span>`;
     });
   } else if (activeRegion) {
     // قطاع مختار → breakdown بـ محافظات الـ region
@@ -5889,27 +5956,33 @@ function filterClients(){
       if (g) counts[g] = (counts[g] || 0) + 1;
     });
     Object.keys(counts).sort().forEach(g => {
-      regionStats += `<span style="color:${meta.color}"><b>🏛️ ${g}:</b> ${counts[g]}</span>`;
+      const gEsc = String(g).replace(/'/g,"\\'");
+      regionStats += `<span style="color:${meta.color};cursor:pointer;user-select:none" title="دبل كليك للفلترة بالمحافظة دي" ondblclick="clFooterFilter('gov','${gEsc}')"><b>🏛️ ${g}:</b> ${counts[g]}</span>`;
     });
   } else {
     // مفيش فلتر → breakdown بـ كل الـ regions
     REGION_ORDER.forEach(reg => {
       const cnt = data.filter(c => (c.region || 'غير محدد') === reg).length;
-      if (cnt === 0 && reg === 'غير محدد') return;
+      if (cnt === 0) return;
       const meta = REGION_META[reg];
-      regionStats += `<span style="color:${meta.color}"><b>${meta.icon} ${meta.label}:</b> ${cnt}</span>`;
+      const dbl = reg==='غير محدد' ? '' : ` title="دبل كليك للفلترة بالقطاع ده" ondblclick="clFooterFilter('region','${reg}')"`;
+      regionStats += `<span style="color:${meta.color}${reg==='غير محدد'?'':';cursor:pointer;user-select:none'}"${dbl}><b>${meta.icon} ${meta.label}:</b> ${cnt}</span>`;
     });
   }
 
-  footer.innerHTML=`<span>إجمالي: <b>${data.length}</b> عميل</span>
+  const activeCnt=data.filter(c=>!c.is_blocked && c.is_active!==false).length;
+  const blockedCnt=data.filter(c=>c.is_blocked).length;
+  const inactiveCnt=data.filter(c=>c.is_active===false).length;
+  const st=(k,v)=>`style="cursor:pointer;user-select:none" title="دبل كليك للفلترة" ondblclick="clFooterFilter('${k}','${v}')"`;
+  footer.innerHTML=`<span style="cursor:pointer;user-select:none" title="دبل كليك لمسح كل الفلاتر" ondblclick="clFooterFilter('clear','')">إجمالي: <b>${data.length}</b> عميل</span>
     ${tierStats}
     ${regionStats}
-    <span>🕌 مسلم: <b>${muslimCount}</b></span>
-    <span>✝️ مسيحي: <b>${christianCount}</b></span>
-    <span>نشط: <b>${data.filter(c=>!c.is_blocked && c.is_active!==false).length}</b></span>
-    <span>محظور: <b style="color:#e88080">${data.filter(c=>c.is_blocked).length}</b></span>
-    <span>لا يستقبل: <b style="color:var(--text-dim)">${data.filter(c=>c.is_active===false).length}</b></span>
-    <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك لفتح ملف العميل</span>`;
+    ${muslimCount>0?`<span ${st('religion','مسلم')}>🕌 مسلم: <b>${muslimCount}</b></span>`:''}
+    ${christianCount>0?`<span ${st('religion','مسيحي')}>✝️ مسيحي: <b>${christianCount}</b></span>`:''}
+    ${activeCnt>0?`<span ${st('status','active')}>نشط: <b>${activeCnt}</b></span>`:''}
+    ${blockedCnt>0?`<span ${st('status','blocked')}>محظور: <b style="color:#e88080">${blockedCnt}</b></span>`:''}
+    ${inactiveCnt>0?`<span ${st('status','inactive')}>لا يستقبل: <b style="color:var(--text-dim)">${inactiveCnt}</b></span>`:''}
+    <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك على أي رقم للفلترة بيه — وعلى الإجمالي لمسح الفلاتر</span>`;
 }
 
 // =================== ADD CLIENT ===================
@@ -8264,14 +8337,14 @@ async function loadFeedback(){
     const compCount  = allFeedback.filter(f=>f.kind==='complaint').length;
     const sugCount   = allFeedback.filter(f=>f.kind==='suggestion').length;
     const repCount   = allFeedback.filter(f=>f.status==='تم الرد').length;
-    const card = (icon,label,val,color)=>`<div style="flex:1;min-width:120px;background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center">
+    const card = (icon,label,val,color,fkey)=>`<div style="flex:1;min-width:120px;background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center${fkey?';cursor:pointer;user-select:none':''}"${fkey?` title="دبل كليك للفلترة" ondblclick="fbCardFilter('${fkey}')"`:''}>
       <div style="font-size:24px;font-weight:800;color:${color}">${val}</div>
       <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${icon} ${label}</div></div>`;
     sumEl.innerHTML =
-      card('🆕','جديدة',newCount, newCount>0?'var(--gold)':'var(--text-dim)') +
-      card('⚠️','شكاوى',compCount,'#e88080') +
-      card('💡','اقتراحات',sugCount,'var(--success)') +
-      card('✅','تم الرد',repCount,'var(--text-dim)');
+      card('🆕','جديدة',newCount, newCount>0?'var(--gold)':'var(--text-dim)','new') +
+      card('⚠️','شكاوى',compCount,'#e88080','complaint') +
+      card('💡','اقتراحات',sugCount,'var(--success)','suggestion') +
+      card('✅','تم الرد',repCount,'var(--text-dim)','replied');
 
     renderFeedback();
   }catch(e){
@@ -8289,10 +8362,28 @@ function setFeedbackFilter(btn, filter){
 function renderFeedback(){
   const listEl = document.getElementById('fb-list');
   let items = allFeedback.slice();
+  // 🗂️ مؤرشف = اترد عليه أو اتأرشف يدوى
+  const isArch = f => f.status==='تم الرد' || f.status==='مؤرشف';
   if(feedbackFilter==='new')        items = items.filter(f=>f.status==='جديد');
-  else if(feedbackFilter==='complaint')  items = items.filter(f=>f.kind==='complaint');
-  else if(feedbackFilter==='suggestion') items = items.filter(f=>f.kind==='suggestion');
+  else if(feedbackFilter==='complaint')  items = items.filter(f=>f.kind==='complaint' && !isArch(f));
+  else if(feedbackFilter==='suggestion') items = items.filter(f=>f.kind==='suggestion' && !isArch(f));
   else if(feedbackFilter==='replied')    items = items.filter(f=>f.status==='تم الرد');
+  else if(feedbackFilter==='archive')    items = items.filter(isArch);
+  else items = items.filter(f=>!isArch(f)); // "الكل" = اللى لسه شغّال (المؤرشف فى تابه)
+
+  // 📅 فلتر التاريخ من/إلى (بتوقيت القاهرة)
+  const ffrom=(document.getElementById('fb-from')||{}).value||'';
+  const fto  =(document.getElementById('fb-to')||{}).value||'';
+  const fClr = document.getElementById('fb-date-clear');
+  if(fClr) fClr.style.display=(ffrom||fto)?'inline-flex':'none';
+  if(ffrom||fto){
+    items = items.filter(f=>{
+      const d = blogDateStr(f.created_at);
+      if(ffrom && d<ffrom) return false;
+      if(fto   && d>fto)   return false;
+      return true;
+    });
+  }
 
   if(!items.length){
     listEl.innerHTML = '<div class="empty-txt" style="padding:40px">📭 مفيش حاجة هنا</div>';
@@ -8312,6 +8403,7 @@ function renderFeedback(){
     // شارة الحالة
     let statusBadge;
     if(f.status==='تم الرد') statusBadge = `<span style="background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.4);color:var(--success);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">✅ تم الرد</span>`;
+    else if(f.status==='مؤرشف') statusBadge = `<span style="background:rgba(138,133,128,0.15);border:1px solid rgba(138,133,128,0.4);color:var(--text-dim);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">🗂️ مؤرشف</span>`;
     else if(f.status==='تحت المعالجة') statusBadge = `<span style="background:rgba(74,144,217,0.15);border:1px solid rgba(74,144,217,0.4);color:var(--blue);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">⏳ تحت المعالجة</span>`;
     else statusBadge = `<span style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">🆕 جديدة</span>`;
 
@@ -8329,10 +8421,16 @@ function renderFeedback(){
 
     // زر الرد (لو مربوط بالبوت وملوش رد لسه)
     let actionBtn = '';
-    if(linked && f.status!=='تم الرد'){
+    if(linked && f.status!=='تم الرد' && f.status!=='مؤرشف'){
       actionBtn = `<button class="add-btn" style="font-size:12px;padding:7px 14px" onclick="openFeedbackReply(${f.id})">↩️ رد على العميل</button>`;
     } else if(!linked){
       actionBtn = `<span style="font-size:11px;color:var(--text-dim)">🔕 مش مربوط بالبوت — مينفعش يتبعتله رد</span>`;
+    }
+    // 🗂️ أرشفة يدوى / استرجاع
+    if(f.status==='مؤرشف'){
+      actionBtn += `<button class="add-btn" style="font-size:12px;padding:7px 14px;background:transparent;border:1px solid var(--border);color:var(--text-dim)" onclick="unarchiveFeedback(${f.id})">↩️ استرجاع</button>`;
+    } else if(f.status!=='تم الرد'){
+      actionBtn += `<button class="add-btn" style="font-size:12px;padding:7px 14px;background:transparent;border:1px solid var(--border);color:var(--text-dim)" onclick="archiveFeedback(${f.id})" title="نقل للأرشيف من غير رد">🗂️ أرشفة</button>`;
     }
 
     html += `<div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;border-right:3px solid ${kindColor}">
@@ -8355,6 +8453,45 @@ function renderFeedback(){
 }
 
 let currentReplyFeedback = null;
+
+// 🧹 مسح فلتر تاريخ الشكاوى
+function clearFeedbackDates(){
+  const f=document.getElementById('fb-from'), t=document.getElementById('fb-to');
+  if(f) f.value=''; if(t) t.value='';
+  renderFeedback();
+}
+// 🖱️ دبل-كليك على كارت الملخص فوق → يفعّل الفلتر المناسب تحت
+function fbCardFilter(key){
+  const btn = document.querySelector(`.fb-filter-btn[data-filter="${key}"]`);
+  if(btn) setFeedbackFilter(btn, key);
+}
+// 🗂️ أرشفة يدوى (من غير رد)
+async function archiveFeedback(id){
+  try{
+    const r = await fetch(`${SB}/rest/v1/feedback?id=eq.${id}`, {
+      method:'PATCH',
+      headers:{ ...HDR, 'Prefer':'return=minimal', 'Content-Type':'application/json' },
+      body: JSON.stringify({ status:'مؤرشف' })
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(typeof showToast === 'function') showToast('🗂️ اتنقلت للأرشيف');
+    loadFeedback();
+  }catch(e){ alert('❌ مقدرتش أأرشف: '+(e.message||'')); }
+}
+// ↩️ استرجاع من الأرشيف
+async function unarchiveFeedback(id){
+  try{
+    const r = await fetch(`${SB}/rest/v1/feedback?id=eq.${id}`, {
+      method:'PATCH',
+      headers:{ ...HDR, 'Prefer':'return=minimal', 'Content-Type':'application/json' },
+      body: JSON.stringify({ status:'جديد' })
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    if(typeof showToast === 'function') showToast('↩️ رجعت من الأرشيف');
+    loadFeedback();
+  }catch(e){ alert('❌ خطأ: '+(e.message||'')); }
+}
+
 function openFeedbackReply(id){
   const f = allFeedback.find(x=>x.id===id);
   if(!f) return;
@@ -8365,6 +8502,9 @@ function openFeedbackReply(id){
   document.getElementById('fbReplyOriginal').innerHTML = `<div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">نص ${kindLabel}:</div><div style="white-space:pre-wrap">${esc(f.message)}</div>`;
   document.getElementById('fbReplyText').value = '';
   document.getElementById('fbReplyError').style.display = 'none';
+  // 🔧 إصلاح: رجّع زرار الإرسال شغال (كان بيفضل مقفول بعد أول رد ناجح)
+  const sbtn = document.getElementById('fbReplyBtn');
+  if(sbtn){ sbtn.disabled = false; sbtn.textContent = '📩 ابعت الرد'; }
   document.getElementById('feedbackReplyModal').classList.add('show');
 }
 
@@ -8417,6 +8557,7 @@ async function sendFeedbackReply(){
       logActivity('feedback_replied', `↩️ رد على ${currentReplyFeedback.kind==='complaint'?'شكوى':'اقتراح'} من ${currentReplyFeedback.client_name||'عميل'}`, { feedback_id: currentReplyFeedback.id });
     }
 
+    btn.disabled = false; btn.textContent = '📩 ابعت الرد';
     closeModal('feedbackReplyModal');
     if(typeof showToast === 'function') showToast('📤 الرد في الطريق للعميل');
     loadFeedback();
@@ -10356,6 +10497,15 @@ function updatePendingBadge(count){
 //
 // لإضافة نوع جديد: ضيف entry هنا + entry فى الـ DB لو محتاج إعداد عام.
 const NOTIF_CATALOG = {
+  new_feedback: {
+    icon: '💬',
+    name: 'شكاوى واقتراحات جديدة',
+    description: 'شكاوى أو اقتراحات وصلت من العملاء ولسه محدش رد عليها',
+    query: `feedback?status=eq.${encodeURIComponent('جديد')}&select=id`,
+    titleFn: n => `${n} ${n===1?'شكوى/اقتراح جديد':'شكاوى واقتراحات جديدة'}`,
+    subtitleFn: n => n===1 ? 'مستنية ردك' : 'مستنيين ردك',
+    page: 'feedback',
+  },
   pending_clients: {
     icon: '⏳',
     name: 'عملاء تحت المراجعة',
