@@ -2564,6 +2564,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="section active" id="sec-bookings">
       <div class="page-hd">
         <div class="page-title">📋 <span>الحجوزات</span></div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="openPrintPicker('bookings','📋 الحجوزات','#bk-table')">🖨️ طباعة</button>
       </div>
       <div class="stat-grid" id="bk-stats"></div>
       <div class="tbl-wrap">
@@ -3048,6 +3049,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div class="page-title">🔗 <span>عملاء لم يربطوا البوت</span></div>
         <div style="display:flex;gap:8px;align-items:center">
           <div id="unlinked-count" style="font-size:13px;color:var(--text-dim)"></div>
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="openPrintPicker('unlinked','🔗 عملاء لم يربطوا البوت','#unlinked-table')">🖨️ طباعة</button>
           <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="copyAllUnlinkedLinks()">📋 نسخ لينكات الكل</button>
         </div>
       </div>
@@ -3239,6 +3241,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="section" id="sec-blocked">
       <div class="page-hd">
         <div class="page-title">🔒 <span>المبلوكين</span></div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="openPrintPicker('blocked','🔒 العملاء المحظورين','#bl-table')">🖨️ طباعة</button>
       </div>
       <div class="tbl-wrap">
         <div id="bl-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -3837,6 +3840,26 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 </div>
 
 <!-- 🔑 ROLE / PERMISSIONS MATRIX MODAL -->
+<!-- 🖨️ PRINT COLUMN PICKER MODAL (عام لكل الشاشات) -->
+<div class="modal-overlay" id="printPickerModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">
+      <span>🖨️ اختار أعمدة الطباعة</span>
+      <button class="modal-close" onclick="closeModal('printPickerModal')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">علّم على الأعمدة اللى عايزها فى الورقة — اختيارك بيتحفظ لكل شاشة لوحدها.</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="act-btn edit" style="font-size:11px" onclick="ppAll(true)">✅ اختار الكل</button>
+      <button class="act-btn edit" style="font-size:11px" onclick="ppAll(false)">⬜ شيل الكل</button>
+    </div>
+    <div id="pp-cols" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:8px 12px"></div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="ppPrint()">🖨️ طباعة</button>
+      <button class="modal-cancel" onclick="closeModal('printPickerModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- 🧭 EMPLOYEE SECTORS (SUPERVISOR) MODAL -->
 <div class="modal-overlay" id="empSectorsModal">
   <div class="modal" style="max-width:520px;width:95%">
@@ -7359,12 +7382,46 @@ async function saveSettings(){
 }
 
 // =================== PRINT CLIENTS ===================
-function printClients(){
-  const table = document.getElementById('cl-table').innerHTML;
-  const count = document.getElementById('cl-count').textContent;
+// ═══ 🖨️ نظام الطباعة الاختيارية — عام لكل جداول السيستم ═══
+let ppCtx = null; // {key, title, tableSel}
+function openPrintPicker(key, title, tableSel){
+  const wrap = document.querySelector(tableSel);
+  const tbl = wrap ? wrap.querySelector('table') : null;
+  if(!tbl){ alert('مفيش جدول معروض للطباعة — افتح الشاشة واستنى التحميل الأول'); return; }
+  const ths=[...tbl.querySelectorAll('thead th')];
+  if(!ths.length){ alert('مفيش أعمدة للطباعة'); return; }
+  ppCtx = {key, title, tableSel};
+  let saved=null;
+  try{ saved=JSON.parse(localStorage.getItem('hawa_print_cols_'+key)||'null'); }catch(e){}
+  const defOff=['إجراءات','الباسورد']; // متعلّمين افتراضياً إنهم مش للطباعة
+  let html='';
+  ths.forEach((th,i)=>{
+    const label=(th.textContent||'').trim()||('عمود '+(i+1));
+    const checked = Array.isArray(saved) ? saved.includes(i) : !defOff.some(x=>label.includes(x));
+    html+=`<label style="display:flex;align-items:center;gap:8px;padding:6px 2px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(42,42,42,0.4)"><input type="checkbox" class="pp-col" value="${i}" ${checked?'checked':''}> ${label}</label>`;
+  });
+  document.getElementById('pp-cols').innerHTML=html;
+  document.getElementById('printPickerModal').classList.add('show');
+}
+function ppAll(v){ document.querySelectorAll('#pp-cols .pp-col').forEach(c=>c.checked=v); }
+function ppPrint(){
+  if(!ppCtx) return;
+  const picked=[...document.querySelectorAll('#pp-cols .pp-col:checked')].map(c=>parseInt(c.value));
+  if(!picked.length){ alert('⚠️ اختار عمود واحد على الأقل'); return; }
+  try{ localStorage.setItem('hawa_print_cols_'+ppCtx.key, JSON.stringify(picked)); }catch(e){}
+  const wrap=document.querySelector(ppCtx.tableSel);
+  const tbl=wrap?wrap.querySelector('table'):null;
+  if(!tbl){ alert('مفيش جدول معروض'); return; }
+  const totalCols=tbl.querySelectorAll('thead th').length;
+  let hideCss='';
+  for(let i=0;i<totalCols;i++){
+    if(!picked.includes(i)) hideCss+=`table th:nth-child(${i+1}),table td:nth-child(${i+1}){display:none}\n`;
+  }
+  const rows=tbl.querySelectorAll('tbody tr').length;
+  closeModal('printPickerModal');
   const win = window.open('','_blank');
   win.document.write(`<html dir="rtl"><head><meta charset="UTF-8">
-    <title>قائمة العملاء - HAWA CO</title>
+    <title>${ppCtx.title} - HAWA CO</title>
     <style>
       body{font-family:Cairo,sans-serif;padding:20px;direction:rtl;color:#111}
       h2{margin-bottom:6px;font-size:18px} .sub{font-size:12px;color:#888;margin-bottom:16px}
@@ -7375,14 +7432,19 @@ function printClients(){
       .badge{padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700}
       .badge.active{background:#e6f9f0;color:#2e8b57}.badge.blocked{background:#fde8e8;color:#c0392b}
       .act-btns,.act-btn{display:none}
+      ${hideCss}
       @media print{button{display:none}}
     </style></head><body>
-    <h2>👥 قائمة العملاء — HAWA CO</h2>
-    <div class="sub">${count} | تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
-    ${table}
+    <h2>${ppCtx.title} — HAWA CO</h2>
+    <div class="sub">${rows} صف | تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
+    ${wrap.innerHTML}
     </body></html>`);
   win.document.close();
   setTimeout(()=>win.print(), 500);
+}
+
+function printClients(){
+  openPrintPicker('clients', '👥 قائمة العملاء', '#cl-table');
 }
 
 // =================== IMPORT CLIENTS ===================
