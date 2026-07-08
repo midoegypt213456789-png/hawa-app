@@ -9120,6 +9120,14 @@ function blogDateStr(ts){
 function clearBroadcastFilter(){
   const f=document.getElementById('blog-from'), t=document.getElementById('blog-to');
   if(f) f.value=''; if(t) t.value='';
+  blogCardMode='';
+  renderBroadcastLogs();
+}
+
+// 🖱️ دبل كليك على كارت → يعرض رسايله تحت (دبل كليك تانى يقفل)
+let blogCardMode = '';   // '' | 'all' | 'sent' | 'failed' | 'blocked'
+function blogCardFilter(k){
+  blogCardMode = (blogCardMode===k) ? '' : k;
   renderBroadcastLogs();
 }
 
@@ -9130,7 +9138,7 @@ function renderBroadcastLogs(){
   const to   = (document.getElementById('blog-to')||{}).value || '';
   const hasDate = !!(from || to);
   const clrBtn = document.getElementById('blog-clear');
-  if(clrBtn) clrBtn.style.display = hasDate ? 'inline-flex' : 'none';
+  if(clrBtn) clrBtn.style.display = (hasDate || blogCardMode) ? 'inline-flex' : 'none';
 
   if(!allBroadcastLogs.length){
     sumEl.innerHTML = '';
@@ -9151,26 +9159,30 @@ function renderBroadcastLogs(){
     const totSent    = logs.reduce((s,l)=>s+(l.sent||0),0);
     const totFailed  = logs.reduce((s,l)=>s+(l.failed||0),0);
     const totBlocked = logs.reduce((s,l)=>s+(l.blocked||0),0);
-    const card = (icon,label,val,color)=>`<div style="flex:1;min-width:130px;background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center">
+    const card = (icon,label,val,color,fkey)=>`<div style="flex:1;min-width:130px;background:${blogCardMode===fkey?'rgba(201,168,76,0.07)':'var(--dark2)'};border:1px solid ${blogCardMode===fkey?'var(--gold)':'var(--border)'};border-radius:12px;padding:14px 16px;text-align:center;cursor:pointer;user-select:none" title="دبل كليك لعرض الرسايل" ondblclick="blogCardFilter('${fkey}')">
       <div style="font-size:24px;font-weight:800;color:${color}">${val}</div>
-      <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${icon} ${label}</div></div>`;
+      <div style="font-size:12px;color:var(--text-dim);margin-top:4px">${icon} ${label}${blogCardMode===fkey?' 👁️':''}</div></div>`;
     sumEl.innerHTML =
-      card('📤','عمليات إرسال',logs.length,'var(--gold)') +
-      card('✅','وصلت',totSent,'var(--success)') +
-      card('❌','فشلت',totFailed, totFailed>0?'var(--error)':'var(--text-dim)') +
-      card('🚫','حظروا البوت',totBlocked, totBlocked>0?'#d4a030':'var(--text-dim)');
+      card('📤','عمليات إرسال',logs.length,'var(--gold)','all') +
+      card('✅','وصلت',totSent,'var(--success)','sent') +
+      card('❌','فشلت',totFailed, totFailed>0?'var(--error)':'var(--text-dim)','failed') +
+      card('🚫','حظروا البوت',totBlocked, totBlocked>0?'#d4a030':'var(--text-dim)','blocked');
 
-    // ── قائمة العمليات: فاضية من غير تاريخ، وبتفاصيل الفترة لو فيه تاريخ ──
-    if(!hasDate){
-      listEl.innerHTML = '<div class="empty-txt" style="padding:40px">📅 اختر فترة (من / إلى) فوق عشان تعرض الرسائل وتفاصيلها</div>';
+    // ── قائمة العمليات: تظهر لو فيه تاريخ أو دبل كليك على كارت ──
+    if(!hasDate && !blogCardMode){
+      listEl.innerHTML = '<div class="empty-txt" style="padding:40px">📅 اختر فترة (من / إلى) فوق — أو 🖱️ دبل كليك على أى كارت لعرض رسايله</div>';
       return;
     }
-    if(!ranged.length){
-      listEl.innerHTML = '<div class="empty-txt" style="padding:40px">📭 مفيش عمليات إرسال في الفترة دي</div>';
+    let shown = ranged;
+    if(blogCardMode==='sent')         shown = shown.filter(l=>(l.sent||0)>0);
+    else if(blogCardMode==='failed')  shown = shown.filter(l=>(l.failed||0)>0);
+    else if(blogCardMode==='blocked') shown = shown.filter(l=>(l.blocked||0)>0);
+    if(!shown.length){
+      listEl.innerHTML = '<div class="empty-txt" style="padding:40px">📭 مفيش عمليات إرسال مطابقة هنا</div>';
       return;
     }
     let html = '';
-    ranged.forEach(log => {
+    shown.forEach(log => {
       const dt = log.created_at ? new Date(log.created_at).toLocaleString('ar-EG',{dateStyle:'medium',timeStyle:'short'}) : '-';
       const preview = (log.message_preview || '(ملفات فقط)').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
       const failed = log.failed || 0;
