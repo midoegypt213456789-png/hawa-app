@@ -2710,7 +2710,6 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="city">المدينة/المركز</option>
             <option value="username">اليوزر نيم</option>
             <option value="address">العنوان</option>
-            <option value="emp">👤 الموظف</option>
           </select>
           <select class="filter-inp" id="cl-search-mode" onchange="filterClients()" style="width:120px">
             <option value="contains">يحتوي على</option>
@@ -2746,9 +2745,11 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="inactive">لا يستقبل رسائل 🔕</option>
             <option value="noemp">⚠️ من غير موظف</option>
           </select>
-          <select class="filter-inp" id="cl-emp" onchange="filterClients()" style="width:170px">
-            <option value="">👤 كل الموظفين</option>
-          </select>
+          <style>.emp-combo-item{padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid rgba(42,42,42,0.5)}.emp-combo-item:hover{background:rgba(201,168,76,0.12);color:var(--gold)}.emp-combo-item:last-child{border-bottom:none}</style>
+          <div style="position:relative;display:inline-block" id="cl-emp-wrap">
+            <input class="filter-inp" id="cl-emp-input" placeholder="👤 كل الموظفين" style="width:170px" oninput="empComboType()" onfocus="empComboOpen()" autocomplete="off">
+            <div id="cl-emp-list" style="display:none;position:absolute;top:calc(100% + 4px);right:0;z-index:60;background:var(--dark2);border:1px solid var(--border);border-radius:10px;max-height:240px;overflow-y:auto;min-width:200px;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
+          </div>
         </div>
         <div class="tbl-scroll-body">
           <div id="cl-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -6366,9 +6367,11 @@ function clFooterFilter(kind, value){
 }
 // 🧹 مسح كل فلاتر العملاء (دبل-كليك على "إجمالي")
 function clearClientFilters(){
-  ['cl-search','cl-region','cl-gov','cl-district','cl-type','cl-tier','cl-religion','cl-status','cl-emp'].forEach(id=>{
+  ['cl-search','cl-region','cl-gov','cl-district','cl-type','cl-tier','cl-religion','cl-status'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
+  clEmpValue='';
+  const cei=document.getElementById('cl-emp-input'); if(cei) cei.value='';
   const fld=document.getElementById('cl-search-field'); if(fld) fld.value='all';
   const mode=document.getElementById('cl-search-mode'); if(mode) mode.value='contains';
   initAdminGovDropdown('');
@@ -6424,18 +6427,51 @@ async function loadClients(){
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
 }
 
-// 👤 فلتر الموظف المسؤول
+// 👤 فلتر الموظف المسؤول — كومبوبوكس واحد: اكتب يفلتر، أو اختار من القايمة
+let clEmpValue = '';   // '' = الكل | 'noemp' | id الموظف
 function initEmpFilter(){
-  const sel=document.getElementById('cl-emp');
-  if(!sel) return;
-  const cur=sel.value;
-  let opts='<option value="">👤 كل الموظفين</option>';
-  (assignableEmps||[]).forEach(e=>{ opts+=`<option value="${e.id}">👤 ${e.name}</option>`; });
-  opts+='<option value="noemp">⚠️ من غير موظف</option>';
-  sel.innerHTML=opts;
-  sel.value=cur||'';
-  if(sel.selectedIndex===-1) sel.value='';
+  // لو الموظف المختار اتشال/اتعطل → رجّع للكل
+  if(clEmpValue && clEmpValue!=='noemp' && !(assignableEmps||[]).some(e=>String(e.id)===String(clEmpValue))){
+    clEmpValue='';
+    const inp=document.getElementById('cl-emp-input'); if(inp) inp.value='';
+  }
 }
+function empComboOpen(){ renderEmpCombo((document.getElementById('cl-emp-input').value||'').trim()); }
+function empComboType(){
+  // أى كتابة = وضع البحث الحى بالاسم (بتلغى أى اختيار سابق)
+  clEmpValue='';
+  const t=(document.getElementById('cl-emp-input').value||'').trim();
+  renderEmpCombo(t);
+  filterClients();
+}
+function renderEmpCombo(term){
+  const list=document.getElementById('cl-emp-list');
+  if(!list) return;
+  const t=(term||'').toLowerCase();
+  let items=`<div class="emp-combo-item" onclick="pickEmpCombo('','')">👤 كل الموظفين</div>`;
+  items+=`<div class="emp-combo-item" style="color:#e88080" onclick="pickEmpCombo('noemp','⚠️ من غير موظف')">⚠️ من غير موظف</div>`;
+  const matches=(assignableEmps||[]).filter(e=>!t||String(e.name).toLowerCase().includes(t));
+  matches.forEach(e=>{
+    items+=`<div class="emp-combo-item" onclick="pickEmpCombo('${e.id}','${String(e.name).replace(/'/g,"\\'")}')">👤 ${e.name}</div>`;
+  });
+  if(t && !matches.length) items+=`<div class="emp-combo-item" style="color:var(--text-dim);cursor:default">مفيش موظف بالاسم ده</div>`;
+  list.innerHTML=items; list.style.display='block';
+}
+function pickEmpCombo(val,label){
+  clEmpValue=String(val||'');
+  const inp=document.getElementById('cl-emp-input');
+  if(inp) inp.value=label||'';
+  const list=document.getElementById('cl-emp-list');
+  if(list) list.style.display='none';
+  filterClients();
+}
+// قفل القايمة عند الضغط برة
+document.addEventListener('click', ev=>{
+  const w=document.getElementById('cl-emp-wrap');
+  if(w && !w.contains(ev.target)){
+    const l=document.getElementById('cl-emp-list'); if(l) l.style.display='none';
+  }
+});
 
 function initTierFilter(){
   const sel = document.getElementById('cl-tier');
@@ -6589,13 +6625,12 @@ function filterClients(){
   if(search){
     data=data.filter(c=>{
       const tierName = tierMap[c.tier_id] || '';
-      const empName = empNameMap[effectiveEmpId(c)] || '';
       const map={
         name:[c.name], code:[c.company_code], phone:[c.phone],
         gov:[c.governorate], city:[c.city,c.district], username:[c.username],
-        address:[c.address], emp:[empName],
+        address:[c.address],
         all:[c.name,c.company_code,c.phone,c.governorate,c.city,c.district,c.address,
-             c.username,String(c.id),c.client_type,c.religion,tierName,c.region,empName]
+             c.username,String(c.id),c.client_type,c.religion,tierName,c.region]
       };
       return matchSearch(map[clField]||map.all, search, clMode);
     });
@@ -6611,10 +6646,11 @@ function filterClients(){
   if(status==='inactive') data=data.filter(c=>c.is_active===false);
   if(status==='noemp') data=data.filter(c=>!effectiveEmpId(c));
 
-  // 👤 فلتر الموظف المسؤول
-  const empF=(document.getElementById('cl-emp')||{}).value||'';
-  if(empF==='noemp') data=data.filter(c=>!effectiveEmpId(c));
-  else if(empF) data=data.filter(c=>effectiveEmpId(c)===parseInt(empF));
+  // 👤 فلتر الموظف المسؤول (كومبوبوكس)
+  const empTxt=((document.getElementById('cl-emp-input')||{}).value||'').trim().toLowerCase();
+  if(clEmpValue==='noemp') data=data.filter(c=>!effectiveEmpId(c));
+  else if(clEmpValue) data=data.filter(c=>effectiveEmpId(c)===parseInt(clEmpValue));
+  else if(empTxt) data=data.filter(c=>String(empNameMap[effectiveEmpId(c)]||'').toLowerCase().includes(empTxt));
 
   document.getElementById('cl-count').textContent=`${data.length} عميل`;
 
