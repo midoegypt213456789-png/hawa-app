@@ -2710,6 +2710,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="city">المدينة/المركز</option>
             <option value="username">اليوزر نيم</option>
             <option value="address">العنوان</option>
+            <option value="emp">👤 الموظف</option>
           </select>
           <select class="filter-inp" id="cl-search-mode" onchange="filterClients()" style="width:120px">
             <option value="contains">يحتوي على</option>
@@ -5514,7 +5515,8 @@ function matchSearch(values, term, mode){
 }
 
 // 👤 توزيع العملاء على الموظفين
-let allEmpsLite = [];   // [{id,name}]
+let allEmpsLite = [];   // [{id,name}] كل الموظفين (للعرض)
+let assignableEmps = [];// موظفين لوحة التحكم بس (لقوايم التخصيص والفلترة)
 let empNameMap = {};    // id → name
 let govOwnerMap = {};   // governorate → employee_id
 // الموظف الفعلى للعميل: التخصيص اليدوى يتغلب، وإلا مالك المحافظة
@@ -5531,7 +5533,7 @@ function openAssignEmp(clientId){
   document.getElementById('ae-client-name').innerHTML = `<b style="color:var(--gold)">${c.name||''}</b> — محافظة ${c.governorate||'غير محددة'}${govOwner?` (مالكها: ${govOwner})`:' (ملهاش موظف)'}`;
   const sel = document.getElementById('ae-emp');
   let opts = `<option value="">🔄 تلقائى حسب المحافظة${govOwner?` (${govOwner})`:' — ⚠️ محافظته ملهاش موظف'}</option>`;
-  (allEmpsLite||[]).forEach(e=>{ opts += `<option value="${e.id}" ${c.assigned_emp_id===e.id?'selected':''}>📌 ${e.name}</option>`; });
+  (assignableEmps||[]).forEach(e=>{ opts += `<option value="${e.id}" ${c.assigned_emp_id===e.id?'selected':''}>📌 ${e.name}</option>`; });
   sel.innerHTML = opts;
   document.getElementById('assignEmpModal').classList.add('show');
 }
@@ -6394,15 +6396,20 @@ async function loadClients(){
 
     // 👤 خريطة الموظفين + مالك كل محافظة (لعمود "الموظف المسؤول")
     try{
-      const [er, gr] = await Promise.all([
-        fetch(`${SB}/rest/v1/employees?select=id,name&is_active=eq.true`,{headers:HDR}),
-        fetch(`${SB}/rest/v1/employee_regions?select=employee_id,governorate`,{headers:HDR})
+      const [er, gr, rr] = await Promise.all([
+        fetch(`${SB}/rest/v1/employees?select=id,name,role_id,perms_override&is_active=eq.true`,{headers:HDR}),
+        fetch(`${SB}/rest/v1/employee_regions?select=employee_id,governorate`,{headers:HDR}),
+        fetch(`${SB}/rest/v1/roles?select=id,landing`,{headers:HDR})
       ]);
-      const ed=await er.json(), gd=await gr.json();
+      const ed=await er.json(), gd=await gr.json(), rd=await rr.json();
       allEmpsLite = Array.isArray(ed)?ed:[];
       empNameMap = {}; allEmpsLite.forEach(e=>empNameMap[e.id]=e.name);
       govOwnerMap = {}; (Array.isArray(gd)?gd:[]).forEach(x=>govOwnerMap[x.governorate]=x.employee_id);
-    }catch(e){ allEmpsLite=[]; empNameMap={}; govOwnerMap={}; }
+      // 👤 اللى يظهروا فى قوايم التخصيص = موظفين لوحة التحكم بس (بياع/مشرف/...) — مش موظفين المخازن
+      const landingMap={}; (Array.isArray(rd)?rd:[]).forEach(r=>landingMap[r.id]=r.landing);
+      assignableEmps = allEmpsLite.filter(e=>
+        (e.perms_override&&e.perms_override.landing) ? e.perms_override.landing==='admin' : landingMap[e.role_id]==='admin');
+    }catch(e){ allEmpsLite=[]; empNameMap={}; govOwnerMap={}; assignableEmps=[]; }
     initEmpFilter();
 
     // 🗺️ نطاق البيانات: الموظف يشوف عملاءه بس
@@ -6423,7 +6430,7 @@ function initEmpFilter(){
   if(!sel) return;
   const cur=sel.value;
   let opts='<option value="">👤 كل الموظفين</option>';
-  (allEmpsLite||[]).forEach(e=>{ opts+=`<option value="${e.id}">👤 ${e.name}</option>`; });
+  (assignableEmps||[]).forEach(e=>{ opts+=`<option value="${e.id}">👤 ${e.name}</option>`; });
   opts+='<option value="noemp">⚠️ من غير موظف</option>';
   sel.innerHTML=opts;
   sel.value=cur||'';
@@ -6582,12 +6589,13 @@ function filterClients(){
   if(search){
     data=data.filter(c=>{
       const tierName = tierMap[c.tier_id] || '';
+      const empName = empNameMap[effectiveEmpId(c)] || '';
       const map={
         name:[c.name], code:[c.company_code], phone:[c.phone],
         gov:[c.governorate], city:[c.city,c.district], username:[c.username],
-        address:[c.address],
+        address:[c.address], emp:[empName],
         all:[c.name,c.company_code,c.phone,c.governorate,c.city,c.district,c.address,
-             c.username,String(c.id),c.client_type,c.religion,tierName,c.region]
+             c.username,String(c.id),c.client_type,c.religion,tierName,c.region,empName]
       };
       return matchSearch(map[clField]||map.all, search, clMode);
     });
