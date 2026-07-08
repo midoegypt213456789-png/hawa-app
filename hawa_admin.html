@@ -5057,6 +5057,18 @@ async function refreshFeedbackBadge(){
     const cr = r.headers.get('content-range') || '';
     const total = parseInt(cr.split('/')[1] || '0', 10);
 
+    // 🔴 البادج الأحمر على "الشكاوى" فى القايمة الجانبية
+    const fbBadge = document.getElementById('feedbackBadge');
+    if (fbBadge) {
+      if (total > 0) { fbBadge.textContent = total; fbBadge.classList.add('show'); }
+      else fbBadge.classList.remove('show');
+    }
+
+    // 📢 أول فتح للوحة وفيه شكاوى مستنية → قوله (من غير صوت)
+    if (lastFeedbackNewCount === -1 && total > 0 && typeof showToast === 'function') {
+      showToast(`💬 فيه ${total} ${total===1?'شكوى/اقتراح مستنى ردك':'شكاوى واقتراحات مستنيين ردك'}`);
+    }
+
     if (lastFeedbackNewCount >= 0 && total > lastFeedbackNewCount) {
       const diff = total - lastFeedbackNewCount;
       playAlertBeep();
@@ -13227,7 +13239,7 @@ const NAV_META = {
 
   'broadcast':        { icon: '📢',  label: 'إرسال رسائل' },
   'broadcast-logs':   { icon: '📬',  label: 'سجل الإرسال' },
-  'feedback':         { icon: '💬',  label: 'الشكاوى والاقتراحات' },
+  'feedback':         { icon: '💬',  label: 'الشكاوى والاقتراحات', badge: { id: 'feedbackBadge', cls: 'pending-badge' } },
   'templates':        { icon: '💌',  label: 'الرسائل المحفوظة' },
 
   'employees':        { icon: '👷',  label: 'الموظفين' },
