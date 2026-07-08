@@ -2745,6 +2745,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="inactive">لا يستقبل رسائل 🔕</option>
             <option value="noemp">⚠️ من غير موظف</option>
           </select>
+          <select class="filter-inp" id="cl-emp" onchange="filterClients()" style="width:170px">
+            <option value="">👤 كل الموظفين</option>
+          </select>
         </div>
         <div class="tbl-scroll-body">
           <div id="cl-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -6361,7 +6364,7 @@ function clFooterFilter(kind, value){
 }
 // 🧹 مسح كل فلاتر العملاء (دبل-كليك على "إجمالي")
 function clearClientFilters(){
-  ['cl-search','cl-region','cl-gov','cl-district','cl-type','cl-tier','cl-religion','cl-status'].forEach(id=>{
+  ['cl-search','cl-region','cl-gov','cl-district','cl-type','cl-tier','cl-religion','cl-status','cl-emp'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const fld=document.getElementById('cl-search-field'); if(fld) fld.value='all';
@@ -6400,6 +6403,7 @@ async function loadClients(){
       empNameMap = {}; allEmpsLite.forEach(e=>empNameMap[e.id]=e.name);
       govOwnerMap = {}; (Array.isArray(gd)?gd:[]).forEach(x=>govOwnerMap[x.governorate]=x.employee_id);
     }catch(e){ allEmpsLite=[]; empNameMap={}; govOwnerMap={}; }
+    initEmpFilter();
 
     // 🗺️ نطاق البيانات: الموظف يشوف عملاءه بس
     await ensureEmpScope();
@@ -6411,6 +6415,19 @@ async function loadClients(){
     initTierFilter();
     filterClients();
   }catch(e){document.getElementById('cl-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل</div>';}
+}
+
+// 👤 فلتر الموظف المسؤول
+function initEmpFilter(){
+  const sel=document.getElementById('cl-emp');
+  if(!sel) return;
+  const cur=sel.value;
+  let opts='<option value="">👤 كل الموظفين</option>';
+  (allEmpsLite||[]).forEach(e=>{ opts+=`<option value="${e.id}">👤 ${e.name}</option>`; });
+  opts+='<option value="noemp">⚠️ من غير موظف</option>';
+  sel.innerHTML=opts;
+  sel.value=cur||'';
+  if(sel.selectedIndex===-1) sel.value='';
 }
 
 function initTierFilter(){
@@ -6585,6 +6602,11 @@ function filterClients(){
   if(status==='blocked') data=data.filter(c=>c.is_blocked);
   if(status==='inactive') data=data.filter(c=>c.is_active===false);
   if(status==='noemp') data=data.filter(c=>!effectiveEmpId(c));
+
+  // 👤 فلتر الموظف المسؤول
+  const empF=(document.getElementById('cl-emp')||{}).value||'';
+  if(empF==='noemp') data=data.filter(c=>!effectiveEmpId(c));
+  else if(empF) data=data.filter(c=>effectiveEmpId(c)===parseInt(empF));
 
   document.getElementById('cl-count').textContent=`${data.length} عميل`;
 
