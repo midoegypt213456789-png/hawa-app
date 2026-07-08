@@ -482,13 +482,20 @@ async function doLogin(){
         if(landing==='admin'){
           // 🗺️ نطاق البيانات + محافظات الموظف
           const scope = (ov&&ov.scope) || (jrole&&jrole.data_scope) || 'own';
-          let govs = [];
+          let govs = [], sectors = [];
           try{
             const gr = await fetch(`${SB}/rest/v1/employee_regions?employee_id=eq.${emp.id}&select=governorate`,{headers:HDR});
             const gd = await gr.json();
             govs = (Array.isArray(gd)?gd:[]).map(x=>x.governorate);
           }catch(e){}
-          sessionStorage.setItem('hawa_admin_emp', JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs}));
+          if(scope==='sector'){
+            try{
+              const sr = await fetch(`${SB}/rest/v1/employee_sectors?employee_id=eq.${emp.id}&select=region`,{headers:HDR});
+              const sd = await sr.json();
+              sectors = (Array.isArray(sd)?sd:[]).map(x=>x.region);
+            }catch(e){}
+          }
+          sessionStorage.setItem('hawa_admin_emp', JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs,sectors}));
           logActivity('emp_login','🚪 سجل دخول (لوحة التحكم)',{role:emp.role});
           window.location.href='hawa_admin.html';
           return;

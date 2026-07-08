@@ -2450,7 +2450,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="sub">لوحة تحكم الإدارة</div>
     </div>
     <div class="login-card">
-      <h3>دخول <span>الأدمن</span></h3>
+      <h3>دخول <span>الموظفين</span></h3>
       <div class="alert-box" id="loginAlert"></div>
       <div class="fg">
         <label>اسم المستخدم</label>
@@ -3832,6 +3832,22 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 </div>
 
 <!-- 🔑 ROLE / PERMISSIONS MATRIX MODAL -->
+<!-- 🧭 EMPLOYEE SECTORS (SUPERVISOR) MODAL -->
+<div class="modal-overlay" id="empSectorsModal">
+  <div class="modal" style="max-width:520px;width:95%">
+    <div class="modal-title">
+      <span id="empSectorsTitle">🧭 قطاعات الإشراف</span>
+      <button class="modal-close" onclick="closeModal('empSectorsModal')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">👥 مشرف القطاع بيشوف <b>كل موظفين وعملاء</b> القطاعات دى — وأى موظف/عميل جديد فى القطاع بيدخل تحته <b>تلقائى</b>. (بتشتغل لما وظيفته/تخصيصه نطاقه 🧭 فريق قطاعاته)</div>
+    <div id="empSectorsBody" style="max-height:420px;overflow-y:auto"></div>
+    <div class="modal-btns">
+      <button class="modal-save" id="empSectorsSaveBtn" onclick="saveEmpSectors()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('empSectorsModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- 🗺️ EMPLOYEE GOVERNORATES MODAL -->
 <div class="modal-overlay" id="empGovsModal">
   <div class="modal" style="max-width:640px;width:95%">
@@ -3886,7 +3902,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <label>👁️ نطاق البيانات (العملاء اللى يشوفهم)</label>
       <select id="role-scope">
         <option value="own">👤 عملاؤه بس (حسب محافظاته + المخصصين له)</option>
-        <option value="all">🌐 كل العملاء (مشرف)</option>
+        <option value="sector">🧭 فريق قطاعاته — مشرف قطاع (موظفين وعملاء قطاعاته)</option>
+        <option value="all">🌐 كل العملاء (مشرف عام)</option>
       </select>
     </div>
     <div class="fg">
@@ -4462,30 +4479,50 @@ function firstAllowedSection(){
 }
 
 // ═══ 🗺️ نطاق البيانات: الموظف يشوف عملاءه بس (حسب محافظاته + التخصيص اليدوى) ═══
-let EMP_SCOPE = 'all';        // 'own' = عملاؤه بس | 'all' = كل العملاء (أدمن/مشرف)
+let EMP_SCOPE = 'all';        // 'own' = عملاؤه بس | 'sector' = فريق قطاعاته (مشرف قطاع) | 'all' = الكل
 let EMP_ID = null;            // id الموظف اللى فاتح
-let EMP_GOVS = [];            // محافظاته
+let EMP_GOVS = [];            // محافظاته (أو محافظات قطاعات إشرافه للمشرف)
+let EMP_SECTORS = [];         // قطاعات إشراف مشرف القطاع
+let EMP_TEAM_IDS = new Set(); // ids موظفين فريقه (لمشرف القطاع)
 let EMP_CLIENT_IDS = new Set(); // ids عملائه (تتبنى مرة واحدة عند الحاجة)
 let __empScopeP = null;
 
 // العميل ده "بتاعه"؟ — التخصيص اليدوى يتغلب، وإلا حسب المحافظة
 function empOwnsClient(c){
-  if(!EMP_MODE || EMP_SCOPE!=='own') return true;
+  if(!EMP_MODE || EMP_SCOPE==='all') return true;
   if(!c) return false;
+  if(EMP_SCOPE==='sector'){
+    // 🧭 مشرف قطاع: أى عميل فى محافظات قطاعاته + المخصصين يدوياً لأى موظف من فريقه
+    if(c.assigned_emp_id) return EMP_TEAM_IDS.has(c.assigned_emp_id);
+    return EMP_GOVS.includes(c.governorate);
+  }
   if(c.assigned_emp_id) return c.assigned_emp_id === EMP_ID;
   return EMP_GOVS.includes(c.governorate);
 }
 // فلترة أى مصفوفة عملاء حسب النطاق
 function empScopeFilter(arr){
-  if(!EMP_MODE || EMP_SCOPE!=='own') return (arr||[]);
+  if(!EMP_MODE || EMP_SCOPE==='all') return (arr||[]);
   return (arr||[]).filter(empOwnsClient);
 }
-// بناء Set بـ ids عملاء الموظف (للشاشات اللى فيها client_id بس زى الحجوزات والشكاوى)
+// بناء نطاق الموظف: (للمشرف) قطاعاته → محافظاتها → فريقه، ثم Set بـ ids عملائه
 async function ensureEmpScope(){
-  if(!EMP_MODE || EMP_SCOPE!=='own') return;
+  if(!EMP_MODE || EMP_SCOPE==='all') return;
   if(__empScopeP) return __empScopeP;
   __empScopeP = (async()=>{
     try{
+      if(EMP_SCOPE==='sector'){
+        // قطاعات المشرف → كل محافظاتها
+        const govSet = new Set();
+        (EMP_SECTORS||[]).forEach(rg => (REGION_GOVS[rg]||[]).forEach(g=>govSet.add(g)));
+        EMP_GOVS = [...govSet];
+        // موظفين الفريق = أصحاب محافظات القطاعات دى (+ المشرف نفسه) — أى موظف جديد بيدخل تلقائى
+        try{
+          const tr = await fetch(`${SB}/rest/v1/employee_regions?select=employee_id,governorate`,{headers:HDR});
+          const td = await tr.json();
+          EMP_TEAM_IDS = new Set((Array.isArray(td)?td:[]).filter(x=>govSet.has(x.governorate)).map(x=>x.employee_id));
+        }catch(e){ EMP_TEAM_IDS = new Set(); }
+        if(EMP_ID) EMP_TEAM_IDS.add(EMP_ID);
+      }
       const r = await fetch(`${SB}/rest/v1/clients?select=id,governorate,assigned_emp_id`,{headers:{...HDR,'Range':'0-1999'}});
       const d = await r.json();
       EMP_CLIENT_IDS = new Set((Array.isArray(d)?d:[]).filter(empOwnsClient).map(c=>c.id));
@@ -4553,17 +4590,24 @@ async function doAdminLogin(){
         const perms=(ov&&ov.perms)||(jrole&&jrole.permissions)||{};
         // 🗺️ نطاق البيانات + محافظات الموظف
         const scope=(ov&&ov.scope)||(jrole&&jrole.data_scope)||'own';
-        let govs=[];
+        let govs=[], sectors=[];
         try{
           const gr=await fetch(`${SB}/rest/v1/employee_regions?employee_id=eq.${emp.id}&select=governorate`,{headers:HDR});
           const gd=await gr.json();
           govs=(Array.isArray(gd)?gd:[]).map(x=>x.governorate);
         }catch(e){}
+        if(scope==='sector'){
+          try{
+            const sr=await fetch(`${SB}/rest/v1/employee_sectors?employee_id=eq.${emp.id}&select=region`,{headers:HDR});
+            const sd=await sr.json();
+            sectors=(Array.isArray(sd)?sd:[]).map(x=>x.region);
+          }catch(e){}
+        }
         if(landing==='admin'){
           EMP_MODE=true; EMP_PERMS=perms;
-          EMP_SCOPE=scope; EMP_ID=emp.id; EMP_GOVS=govs;
+          EMP_SCOPE=scope; EMP_ID=emp.id; EMP_GOVS=govs; EMP_SECTORS=sectors;
           admin={name:emp.name,username:emp.username,is_employee:true,emp_id:emp.id};
-          sessionStorage.setItem('hawa_admin_emp',JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs}));
+          sessionStorage.setItem('hawa_admin_emp',JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs,sectors}));
           enterApp();
         }else{
           // موظف مخازن → على بوابة الموظفين بجلسة جاهزة
@@ -5570,6 +5614,45 @@ async function saveEmpGovs(){
   }finally{ btn.disabled=false; btn.textContent='💾 حفظ'; }
 }
 
+// ═══ 🧭 قطاعات إشراف مشرف القطاع ═══
+let allEmpSectors = [];      // [{employee_id, region}]
+let empSectorsEditingId = null;
+function openEmpSectors(empId, empName){
+  empSectorsEditingId = empId;
+  document.getElementById('empSectorsTitle').textContent = `🧭 قطاعات إشراف: ${empName}`;
+  const mine = new Set(allEmpSectors.filter(x=>x.employee_id===empId).map(x=>x.region));
+  let html='';
+  Object.keys(REGION_GOVS).forEach(region=>{
+    const govs = REGION_GOVS[region]||[];
+    html += `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer">
+      <input type="checkbox" class="es-sector" value="${region}" ${mine.has(region)?'checked':''}>
+      <div><b style="color:var(--gold)">📍 ${region}</b>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${govs.join(' · ')}</div></div>
+    </label>`;
+  });
+  document.getElementById('empSectorsBody').innerHTML = html;
+  document.getElementById('empSectorsModal').classList.add('show');
+}
+async function saveEmpSectors(){
+  const btn=document.getElementById('empSectorsSaveBtn');
+  btn.disabled=true; btn.textContent='⏳ جاري الحفظ...';
+  try{
+    const picked=[...document.querySelectorAll('#empSectorsBody .es-sector:checked')]
+      .map(x=>({employee_id:empSectorsEditingId, region:x.value}));
+    const dr=await fetch(`${SB}/rest/v1/employee_sectors?employee_id=eq.${empSectorsEditingId}`,{method:'DELETE',headers:HDR});
+    if(!dr.ok) throw new Error(`HTTP ${dr.status}: ${await dr.text()}`);
+    if(picked.length){
+      const pr=await fetch(`${SB}/rest/v1/employee_sectors`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal','Content-Type':'application/json'},body:JSON.stringify(picked)});
+      if(!pr.ok) throw new Error(`HTTP ${pr.status}: ${await pr.text()}`);
+    }
+    if(typeof logActivity==='function') logActivity('emp_sectors_update', `🧭 حدّد قطاعات إشراف موظف #${empSectorsEditingId} (${picked.length} قطاع)`, {sectors:picked.map(x=>x.region)});
+    closeModal('empSectorsModal');
+    loadEmployees();
+    if(typeof showToast==='function') showToast('✅ اتحفظت قطاعات الإشراف');
+  }catch(e){ alert('❌ خطأ فى الحفظ: '+(e.message||'')); }
+  finally{ btn.disabled=false; btn.textContent='💾 حفظ'; }
+}
+
 function filterBookingsLocal(){
   const clientSearch=(document.getElementById('bk-client').value||'').trim().toLowerCase();
   const countFilter=document.getElementById('bk-count').value;
@@ -5832,12 +5915,19 @@ async function loadEmployees(){
     const roleMap={}; allRoles.forEach(x=>roleMap[x.id]=x);
     // 🗺️ محافظات كل موظف
     allEmpRegions = [];
+    allEmpSectors = [];
     try{
-      const rg = await fetch(`${SB}/rest/v1/employee_regions?select=employee_id,governorate,region`,{headers:HDR});
+      const [rg, sg] = await Promise.all([
+        fetch(`${SB}/rest/v1/employee_regions?select=employee_id,governorate,region`,{headers:HDR}),
+        fetch(`${SB}/rest/v1/employee_sectors?select=employee_id,region`,{headers:HDR})
+      ]);
       const rgd = await rg.json();
       if(Array.isArray(rgd)) allEmpRegions = rgd;
+      const sgd = await sg.json();
+      if(Array.isArray(sgd)) allEmpSectors = sgd;
     }catch(e){}
     const govCount = {}; allEmpRegions.forEach(x=>{ govCount[x.employee_id]=(govCount[x.employee_id]||0)+1; });
+    const secCount = {}; allEmpSectors.forEach(x=>{ secCount[x.employee_id]=(secCount[x.employee_id]||0)+1; });
     let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>🔑 الوظيفة</th><th>🗺️ محافظاته</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
     adminsData.forEach(a=>{
       html+=`<tr style="background:rgba(201,168,76,0.05)">
@@ -5866,7 +5956,10 @@ async function loadEmployees(){
         <td style="color:var(--text-dim)">${e.username}</td>
         <td>${whCell}</td>
         <td>${jrBadge}</td>
-        <td><button class="act-btn edit" style="font-size:11px" onclick="openEmpGovs(${e.id},'${String(e.name).replace(/'/g,"\\'")}')" title="تحديد محافظات الموظف">🗺️ ${govCount[e.id]||0}</button></td>
+        <td><div style="display:flex;gap:4px">
+          <button class="act-btn edit" style="font-size:11px" onclick="openEmpGovs(${e.id},'${String(e.name).replace(/'/g,"\\'")}')" title="محافظات الموظف (عملاؤه)">🗺️ ${govCount[e.id]||0}</button>
+          <button class="act-btn edit" style="font-size:11px${((jr&&jr.data_scope==='sector')||(e.perms_override&&e.perms_override.scope==='sector'))?';border-color:var(--gold);color:var(--gold)':''}" onclick="openEmpSectors(${e.id},'${String(e.name).replace(/'/g,"\\'")}')" title="قطاعات الإشراف (مشرف قطاع)">🧭 ${secCount[e.id]||0}</button>
+        </div></td>
         <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
         <td><div class="act-btns">
           <button class="act-btn edit" onclick="openEmpModal(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ تعديل</button>
@@ -6022,7 +6115,7 @@ async function loadRoles(){
     const isAll = perms.__all__===true;
     const screens = isAll ? Object.keys(NAV_META).length : Object.keys(perms).filter(k=>k!=='__all__'&&perms[k]&&perms[k].view).length;
     const landing = (role.landing==='admin' ? '🖥️ لوحة التحكم' : '🏭 شاشة المخازن')
-      + (role.landing==='admin' ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px">${role.data_scope==='all'?'🌐 كل العملاء':'👤 عملاؤه بس'}</div>` : '');
+      + (role.landing==='admin' ? `<div style="font-size:10px;color:var(--text-dim);margin-top:2px">${role.data_scope==='all'?'🌐 كل العملاء':role.data_scope==='sector'?'🧭 فريق قطاعاته':'👤 عملاؤه بس'}</div>` : '');
     html += `<tr>
       <td style="color:var(--text-dim)">${role.id}</td>
       <td><b>🔑 ${role.name}</b>${isAll?' <span class="badge active" style="font-size:10px">كل الصلاحيات ⭐</span>':''}</td>
@@ -6309,6 +6402,7 @@ async function loadClients(){
     }catch(e){ allEmpsLite=[]; empNameMap={}; govOwnerMap={}; }
 
     // 🗺️ نطاق البيانات: الموظف يشوف عملاءه بس
+    await ensureEmpScope();
     allClients = empScopeFilter(allClients);
 
     initAdminGovDropdown();
@@ -8659,6 +8753,7 @@ async function calculateBroadcastTargets(){
   // Fetch ALL matching clients (linked + not linked) in one request
   const r0 = await fetch(`${SB}/rest/v1/clients?select=id,name,telegram_id,governorate,assigned_emp_id&${baseFilter}`, {headers:{...HDR,'Range':'0-999'}});
   // 🗺️ نطاق البيانات: الموظف يبعت لعملاءه بس
+  await ensureEmpScope();
   const allMatching = empScopeFilter(await r0.json());
 
   const linkedClients = allMatching.filter(c => c.telegram_id);
@@ -9385,6 +9480,7 @@ async function loadUnlinked(){
   document.getElementById('unlinked-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
     const r = await fetch(`${SB}/rest/v1/clients?select=id,name,company_code,phone,governorate,city,client_type,created_at,assigned_emp_id&telegram_id=is.null&is_active=eq.true&is_blocked=eq.false&order=name.asc`,{headers:{...HDR,'Range':'0-499'}});
+    await ensureEmpScope();
     allUnlinked = empScopeFilter(await r.json());
     filterUnlinked();
   }catch(e){
@@ -10624,6 +10720,7 @@ async function loadBlocked(){
   document.getElementById('bl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
     const r=await fetch(`${SB}/rest/v1/clients?is_blocked=eq.true&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region,assigned_emp_id&order=name.asc`,{headers:HDR});
+    await ensureEmpScope();
     const data=empScopeFilter(await r.json());
     if(!data.length){document.getElementById('bl-table').innerHTML='<div class="empty-txt">✅ لا يوجد عملاء محظورين</div>';return;}
     // خلّي بيانات المبلوكين متاحة لـ openClientProfile (بيدوّر في allClients)
@@ -11049,6 +11146,7 @@ async function loadPendingClients(){
       {headers: HDR}
     );
     if (!r.ok) throw new Error('فشل الاتصال بقاعدة البيانات');
+    await ensureEmpScope();
     allPendingClientsData = empScopeFilter(await r.json());
     renderPendingClients();
     updatePendingBadge(allPendingClientsData.length);
@@ -13951,7 +14049,7 @@ else{
       const e=JSON.parse(esaved);
       EMP_MODE=true;
       EMP_PERMS=e.perms||{};
-      EMP_SCOPE=e.scope||'own'; EMP_ID=e.id; EMP_GOVS=e.govs||[];
+      EMP_SCOPE=e.scope||'own'; EMP_ID=e.id; EMP_GOVS=e.govs||[]; EMP_SECTORS=e.sectors||[];
       admin={name:e.name,username:e.username,is_employee:true,emp_id:e.id};
       enterApp();
     }catch(err){ sessionStorage.removeItem('hawa_admin_emp'); }
