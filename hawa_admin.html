@@ -4576,8 +4576,16 @@ async function ensureEmpScope(){
     try{
       if(EMP_SCOPE==='sector'){
         // 🧭 المشرف بيشرف على: قطاعات + موظفين معيّنين (من غير ملكية ولا قفل)
+        // نجيب القطاعات حيّة (مش من الجلسة) عشان أى تغيير يبان فوراً بدون خروج/دخول
+        let mySectors = EMP_SECTORS || [];
+        try{
+          const secR = await fetch(`${SB}/rest/v1/employee_sectors?employee_id=eq.${EMP_ID}&select=region`,{headers:HDR});
+          const secD = await secR.json();
+          if(Array.isArray(secD)) mySectors = secD.map(x=>x.region);
+        }catch(e){}
+        EMP_SECTORS = mySectors;
         const govSet = new Set();
-        (EMP_SECTORS||[]).forEach(rg => (REGION_GOVS[rg]||[]).forEach(g=>govSet.add(g)));
+        (mySectors||[]).forEach(rg => (REGION_GOVS[rg]||[]).forEach(g=>govSet.add(g)));
         // الموظفين اللى بيشرف عليهم بالاسم
         let superviseeIds = new Set();
         try{
