@@ -6562,7 +6562,7 @@ async function loadClients(){
       // 🗺️ نطاق اللى فاتح: المشرف يشوف موظفينه المباشرين بس | البياع نفسه بس | الأدمن الكل
       if(EMP_MODE && EMP_SCOPE!=='all'){
         await ensureEmpScope();
-        if(EMP_SCOPE==='sector') assignableEmps = allEmpsLite.filter(e=>EMP_SUPERVISEE_IDS.has(e.id));
+        if(EMP_SCOPE==='sector') assignableEmps = allEmpsLite.filter(e=>EMP_TEAM_IDS.has(e.id));
         else assignableEmps = allEmpsLite.filter(e=>e.id===EMP_ID);
       }
     }catch(e){ allEmpsLite=[]; empNameMap={}; govOwnerMap={}; assignableEmps=[]; }
