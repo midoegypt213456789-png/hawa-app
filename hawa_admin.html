@@ -4548,6 +4548,7 @@ let EMP_ID = null;            // id الموظف اللى فاتح
 let EMP_GOVS = [];            // محافظاته (أو محافظات قطاعات إشرافه للمشرف)
 let EMP_SECTORS = [];         // قطاعات إشراف مشرف القطاع
 let EMP_TEAM_IDS = new Set(); // ids موظفين فريقه (لمشرف القطاع)
+let EMP_SUPERVISEE_IDS = new Set(); // موظفينه المباشرين (اللى اختارهم بـ 👥)
 let EMP_CLIENT_IDS = new Set(); // ids عملائه (تتبنى مرة واحدة عند الحاجة)
 let __empScopeP = null;
 
@@ -4593,6 +4594,7 @@ async function ensureEmpScope(){
           const sd = await sr.json();
           (Array.isArray(sd)?sd:[]).forEach(x=>superviseeIds.add(x.employee_id));
         }catch(e){}
+        EMP_SUPERVISEE_IDS = superviseeIds;
         // كل ملكيات المحافظات (عشان نعرف مين صاحب أنهى محافظة)
         let regionRows=[];
         try{
@@ -6557,6 +6559,12 @@ async function loadClients(){
       const landingMap={}; (Array.isArray(rd)?rd:[]).forEach(r=>landingMap[r.id]=r.landing);
       assignableEmps = allEmpsLite.filter(e=>
         (e.perms_override&&e.perms_override.landing) ? e.perms_override.landing==='admin' : landingMap[e.role_id]==='admin');
+      // 🗺️ نطاق اللى فاتح: المشرف يشوف موظفينه المباشرين بس | البياع نفسه بس | الأدمن الكل
+      if(EMP_MODE && EMP_SCOPE!=='all'){
+        await ensureEmpScope();
+        if(EMP_SCOPE==='sector') assignableEmps = allEmpsLite.filter(e=>EMP_SUPERVISEE_IDS.has(e.id));
+        else assignableEmps = allEmpsLite.filter(e=>e.id===EMP_ID);
+      }
     }catch(e){ allEmpsLite=[]; empNameMap={}; govOwnerMap={}; assignableEmps=[]; }
     initEmpFilter();
 
