@@ -5578,12 +5578,19 @@ async function loadBookings(){
     const done=allD.filter(b=>b.status==='تم التنفيذ').length;
     const noshow=allD.filter(b=>b.status==='no-show').length;
     const total=allD.reduce((s,b)=>s+(b.count||0),0);
-    document.getElementById('bk-stats').innerHTML=`
-      <div class="stat-c gold"><div class="sv">${allD.length}</div><div class="sl">إجمالي الحجوزات</div></div>
-      <div class="stat-c blue"><div class="sv">${pending}</div><div class="sl">قيد الانتظار</div></div>
-      <div class="stat-c green"><div class="sv">${done}</div><div class="sl">تم التنفيذ</div></div>
-      <div class="stat-c red"><div class="sv">${noshow}</div><div class="sl">no-show</div></div>
-      <div class="stat-c gold"><div class="sv">${total}</div><div class="sl">إجمالي العربيات</div></div>`;
+    const bkSt=(document.getElementById('bk-status')||{}).value||'';
+    const bkCard=(cls,val,label,fkey)=>{
+      const active = fkey!==null && bkSt===fkey && fkey!=='';
+      const clickable = fkey!==null;
+      return `<div class="stat-c ${cls}" style="${clickable?'cursor:pointer;user-select:none;':''}${active?'border-color:var(--gold);box-shadow:0 0 0 1px var(--gold);background:rgba(201,168,76,0.06);':''}" ${clickable?`title="دبل كليك للفلترة" ondblclick="bkCardFilter('${fkey}')"`:''}>
+        <div class="sv">${val}</div><div class="sl">${label}${active?' 👁️':''}</div></div>`;
+    };
+    document.getElementById('bk-stats').innerHTML=
+      bkCard('gold', allD.length, 'إجمالي الحجوزات', '') +
+      bkCard('blue', pending, 'قيد الانتظار', 'قيد الانتظار') +
+      bkCard('green', done, 'تم التنفيذ', 'تم التنفيذ') +
+      bkCard('red', noshow, 'no-show', 'no-show') +
+      bkCard('gold', total, 'إجمالي العربيات', null);
 
     if(!allBookingsData.length){document.getElementById('bk-table').innerHTML='<div class="empty-txt">لا توجد حجوزات</div>';return;}
 
@@ -5819,6 +5826,27 @@ async function saveEmpSupervisees(){
     if(typeof showToast==='function') showToast('✅ اتحفظ موظفين الإشراف');
   }catch(e){ alert('❌ خطأ فى الحفظ: '+(e.message||'')); }
   finally{ btn.disabled=false; btn.textContent='💾 حفظ'; }
+}
+
+// 📊 من التقارير → الحجوزات بفلاتر جاهزة (فترة + حالة + مخزن)
+function repGoBookings(period, status, wh){
+  const today=fmtDate(new Date());
+  let from=today, to=today;
+  if(period==='week'){ const d=new Date(); d.setDate(d.getDate()-d.getDay()); from=fmtDate(d); }
+  if(period==='month'){ const d=new Date(); d.setDate(1); from=fmtDate(d); }
+  const f=document.getElementById('bk-date-from'), t=document.getElementById('bk-date-to');
+  if(f) f.value=from; if(t) t.value=to;
+  const st=document.getElementById('bk-status'); if(st) st.value=status||'';
+  const w=document.getElementById('bk-wh'); if(w) w.value=wh||'';
+  goTo('bookings');
+}
+
+// 🖱️ دبل كليك على كارت الحجوزات → فلترة بالحالة (الإجمالى = مسح الفلتر)
+function bkCardFilter(k){
+  const sel=document.getElementById('bk-status');
+  if(!sel) return;
+  sel.value = (sel.value===k) ? '' : k;   // دبل كليك تانى على نفس الكارت = إلغاء
+  loadBookings();
 }
 
 function filterBookingsLocal(){
@@ -11028,13 +11056,15 @@ async function loadReports(){
     ]);
 
     const sum=(arr)=>arr.reduce((s,b)=>s+(b.count||0),0);
-    document.getElementById('rep-stats').innerHTML=`
-      <div class="stat-c gold"><div class="sv">${todayR.length}</div><div class="sl">حجوزات اليوم</div></div>
-      <div class="stat-c blue"><div class="sv">${sum(todayR)}</div><div class="sl">عربيات اليوم</div></div>
-      <div class="stat-c green"><div class="sv">${weekR.length}</div><div class="sl">حجوزات الأسبوع</div></div>
-      <div class="stat-c gold"><div class="sv">${monthR.length}</div><div class="sl">حجوزات الشهر</div></div>
-      <div class="stat-c blue"><div class="sv">${clientsR.length}</div><div class="sl">إجمالي العملاء</div></div>
-      <div class="stat-c red"><div class="sv">${blockedR.length}</div><div class="sl">محظورين</div></div>`;
+    const repCard=(cls,val,label,action)=>`<div class="stat-c ${cls}" style="cursor:pointer;user-select:none" title="دبل كليك يفتحلك التفاصيل" ondblclick="${action}">
+      <div class="sv">${val}</div><div class="sl">${label}</div></div>`;
+    document.getElementById('rep-stats').innerHTML=
+      repCard('gold', todayR.length, 'حجوزات اليوم', "repGoBookings('today','')") +
+      repCard('blue', sum(todayR), 'عربيات اليوم', "repGoBookings('today','')") +
+      repCard('green', weekR.length, 'حجوزات الأسبوع', "repGoBookings('week','')") +
+      repCard('gold', monthR.length, 'حجوزات الشهر', "repGoBookings('month','')") +
+      repCard('blue', clientsR.length, 'إجمالي العملاء', "goTo('clients')") +
+      repCard('red', blockedR.length, 'محظورين', "goTo('blocked')");
 
     // تقرير لكل مخزن
     const [qR,sR]=await Promise.all([
@@ -11042,22 +11072,23 @@ async function loadReports(){
       fetch(`${SB}/rest/v1/bookings?loading_date=eq.${today}&warehouse=eq.السادات&select=count,status,vehicle_type,time_slot`,{headers:HDR}).then(r=>r.json()),
     ]);
 
-    const whCard=(name,data)=>{
+    const whCard=(name,data,whName)=>{
       const total=data.length;
       const cars=sum(data);
       const done=data.filter(b=>b.status==='تم التنفيذ').length;
       const noshow=data.filter(b=>b.status==='no-show').length;
+      const wc=(cls,val,label,st)=>`<div class="stat-c ${cls}" style="cursor:pointer;user-select:none" title="دبل كليك يفتح الحجوزات" ondblclick="repGoBookings('today','${st}','${whName}')"><div class="sv">${val}</div><div class="sl">${label}</div></div>`;
       return `<div class="tbl-wrap" style="padding:16px">
         <div style="font-size:15px;font-weight:700;margin-bottom:12px">${name}</div>
         <div class="stat-grid" style="grid-template-columns:1fr 1fr">
-          <div class="stat-c gold"><div class="sv">${total}</div><div class="sl">حجوزات</div></div>
-          <div class="stat-c blue"><div class="sv">${cars}</div><div class="sl">عربيات</div></div>
-          <div class="stat-c green"><div class="sv">${done}</div><div class="sl">حضر</div></div>
-          <div class="stat-c red"><div class="sv">${noshow}</div><div class="sl">no-show</div></div>
+          ${wc('gold',total,'حجوزات','')}
+          ${wc('blue',cars,'عربيات','')}
+          ${wc('green',done,'حضر','تم التنفيذ')}
+          ${wc('red',noshow,'no-show','no-show')}
         </div>
       </div>`;
     };
-    document.getElementById('rep-wh').innerHTML=whCard('🏭 قليوب — اليوم',qR)+whCard('🏗️ السادات — اليوم',sR);
+    document.getElementById('rep-wh').innerHTML=whCard('🏭 قليوب — اليوم',qR,'قليوب')+whCard('🏗️ السادات — اليوم',sR,'السادات');
 
     // 🗺️ Region breakdown — توزيع العملاء حسب القطاع
     await loadRegionBreakdown();
