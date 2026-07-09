@@ -4490,6 +4490,19 @@ let currentSection = 'bookings';
 // ═══════════════════════════════════════════════════════════
 // 🔑 PERMISSIONS SYSTEM — وضع الموظف داخل لوحة التحكم
 // ═══════════════════════════════════════════════════════════
+let SESSION_TOKEN = null;  // 🔑 توكن الجلسة الآمن (المرحلة ٢)
+// دخول آمن يصدر توكن — ولو الـ secure مش موجود لأى سبب بيرجع للقديم (مفيش كسر)
+async function rpcLoginTry(secureFn, oldFn, u, p){
+  try{
+    const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
+    if(r.ok){ const j=await r.json(); return j||null; }
+  }catch(e){}
+  try{
+    const r2=await fetch(`${SB}/rest/v1/rpc/${oldFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
+    if(r2.ok){ const j2=await r2.json(); return j2||null; }
+  }catch(e){}
+  return null;
+}
 let EMP_MODE = false;     // true لو اللى فاتح موظف (مش أدمن)
 let EMP_PERMS = null;     // { screen: {view,edit,del,print} } أو { __all__:true }
 
@@ -4588,20 +4601,17 @@ async function doAdminLogin(){
   const btn=document.getElementById('loginBtn');
   btn.disabled=true;btn.innerHTML='جاري التحقق... <span class="spin"></span>';
   try{
-    const r=await fetch(`${SB}/rest/v1/rpc/login_admin`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
-    const _aj=await r.json();
-    const data=_aj?[_aj]:[];
-    if(data&&data.length>0){
-      admin=data[0];
+    const adm=await rpcLoginTry('login_admin_secure','login_admin',u,p);
+    if(adm){
+      admin=adm;
+      SESSION_TOKEN = adm.token || null;
       sessionStorage.setItem('hawa_admin',JSON.stringify(admin));
       enterApp();
     }else{
       // 🔑 مش أدمن؟ جرّبه كموظف (نفس شاشة الدخول للكل)
-      const r2=await fetch(`${SB}/rest/v1/rpc/login_employee`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
-      const _ej=await r2.json();
-      const ed=(_ej?[_ej]:[]).filter(Boolean);
-      if(ed.length>0){
-        const emp=ed[0];
+      const emp=await rpcLoginTry('login_employee_secure','login_employee',u,p);
+      if(emp){
+        SESSION_TOKEN = emp.token || null;
         let jrole=null, ov=null;
         try{
           const pr=await fetch(`${SB}/rest/v1/employees?id=eq.${emp.id}&select=role_id,perms_override`,{headers:HDR});
@@ -4635,7 +4645,7 @@ async function doAdminLogin(){
           EMP_MODE=true; EMP_PERMS=perms;
           EMP_SCOPE=scope; EMP_ID=emp.id; EMP_GOVS=govs; EMP_SECTORS=sectors;
           admin={name:emp.name,username:emp.username,is_employee:true,emp_id:emp.id};
-          sessionStorage.setItem('hawa_admin_emp',JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs,sectors}));
+          sessionStorage.setItem('hawa_admin_emp',JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs,sectors,token:SESSION_TOKEN}));
           enterApp();
         }else{
           // موظف مخازن → على بوابة الموظفين بجلسة جاهزة
@@ -4821,8 +4831,11 @@ function initResizeHandle(){
 function doLogout(){
   showConfirm('🚪','تسجيل الخروج','هتخرج من لوحة التحكم؟',false,()=>{
     stopAutoRefresh();
+    if(SESSION_TOKEN){ try{ fetch(`${SB}/rest/v1/rpc/logout_session`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}); }catch(e){} }
+    SESSION_TOKEN=null;
     sessionStorage.removeItem('hawa_admin');
     sessionStorage.removeItem('hawa_admin_emp');
+    sessionStorage.removeItem('hawa_emp');
     EMP_MODE=false; EMP_PERMS=null;
     admin=null;
     document.getElementById('loginScreen').style.display='flex';
@@ -14192,7 +14205,7 @@ function initTabSystem(){
 // ═══════════════════════════════════════════════════════════
 
 const saved=sessionStorage.getItem('hawa_admin');
-if(saved){admin=JSON.parse(saved);enterApp();}
+if(saved){admin=JSON.parse(saved);SESSION_TOKEN=admin.token||null;enterApp();}
 else{
   // 🔑 جلسة موظف بصلاحيات (جاى من بوابة الموظفين)
   const esaved=sessionStorage.getItem('hawa_admin_emp');
@@ -14202,6 +14215,7 @@ else{
       EMP_MODE=true;
       EMP_PERMS=e.perms||{};
       EMP_SCOPE=e.scope||'own'; EMP_ID=e.id; EMP_GOVS=e.govs||[]; EMP_SECTORS=e.sectors||[];
+      SESSION_TOKEN=e.token||null;
       admin={name:e.name,username:e.username,is_employee:true,emp_id:e.id};
       enterApp();
     }catch(err){ sessionStorage.removeItem('hawa_admin_emp'); }

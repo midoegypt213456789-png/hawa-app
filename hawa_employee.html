@@ -189,6 +189,18 @@
 const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
+let SESSION_TOKEN = null;  // 🔑 توكن الجلسة الآمن (المرحلة ٢)
+async function rpcLoginTry(secureFn, oldFn, u, p){
+  try{
+    const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_username:u,p_password:p})});
+    if(r.ok){ const j=await r.json(); return j||null; }
+  }catch(e){}
+  try{
+    const r2=await fetch(`${SB}/rest/v1/rpc/${oldFn}`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_username:u,p_password:p})});
+    if(r2.ok){ const j2=await r2.json(); return j2||null; }
+  }catch(e){}
+  return null;
+}
 // ⏰ ============ المواعيد الديناميكية ============
 // SLOTS بتتولد من ساعات عمل المخازن (من الداتابيز) + أي موعد موجود فعلاً في الحجوزات
 // → أي تغيير في ساعات العمل ينعكس هنا تلقائياً، ومفيش حجز يختفي أبداً
@@ -460,11 +472,9 @@ async function doLogin(){
   const btn=document.getElementById('loginBtn');
   btn.disabled=true;btn.innerHTML='جاري التحقق... <span class="spin"></span>';
   try{
-    const r=await fetch(`${SB}/rest/v1/rpc/login_employee`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
-    const _ej=await r.json();
-    const data=_ej?[_ej]:[];
-    if(data&&data.length>0){
-      emp=data[0];
+    emp=await rpcLoginTry('login_employee_secure','login_employee',u,p);
+    if(emp){
+      SESSION_TOKEN = emp.token || null;
       // 🔑 نظام الصلاحيات: لو وظيفة الموظف بتفتح على لوحة التحكم → حوّله هناك
       try{
         const pr = await fetch(`${SB}/rest/v1/employees?id=eq.${emp.id}&select=role_id,perms_override`,{headers:HDR});
@@ -495,12 +505,13 @@ async function doLogin(){
               sectors = (Array.isArray(sd)?sd:[]).map(x=>x.region);
             }catch(e){}
           }
-          sessionStorage.setItem('hawa_admin_emp', JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs,sectors}));
+          sessionStorage.setItem('hawa_admin_emp', JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs,sectors,token:SESSION_TOKEN}));
           logActivity('emp_login','🚪 سجل دخول (لوحة التحكم)',{role:emp.role});
           window.location.href='hawa_admin.html';
           return;
         }
       }catch(e){ /* لو الأعمدة/الجدول لسه متعملوش → دخول مخزن عادى */ }
+      emp.__token = SESSION_TOKEN;
       sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
       logActivity('emp_login','🚪 سجل دخول',{role:emp.role});
       enterMain();
@@ -557,6 +568,8 @@ function enterMain(){
 function doLogout(){
   showDialog('🚪','تسجيل الخروج','هتخرج من الحساب؟',false,()=>{
     logActivity('emp_logout','🚪 خرج من النظام');
+    if(SESSION_TOKEN){ try{ fetch(`${SB}/rest/v1/rpc/logout_session`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_token:SESSION_TOKEN})}); }catch(e){} }
+    SESSION_TOKEN=null;
     sessionStorage.removeItem('hawa_emp');
     emp=null;warehouse=null;allBookings=[];
     document.getElementById('loginView').classList.remove('hide');
@@ -803,6 +816,7 @@ function startRefreshIndicator(){
 }
 
 const saved=sessionStorage.getItem('hawa_emp');
+try{ const _e=saved?JSON.parse(saved):null; if(_e&&_e.__token) SESSION_TOKEN=_e.__token; }catch(e){}
 if(saved){emp=JSON.parse(saved);enterMain();}
 // ⏰ Auto-refresh كل دقيقتين (120 ثانية)
 setInterval(()=>{if(emp)loadBookings();},120000);
