@@ -5290,7 +5290,7 @@ function renderPermitAlertCard(a) {
       <textarea class="permit-alert-notes" id="alert-notes-${a.id}"
                 placeholder="ملاحظات الأدمن (اختيارى)... مثلاً: تم التواصل مع العميل، اتفقنا على كذا"></textarea>
       <div class="permit-alert-actions">
-        <button class="send-msg" onclick="openSendMessageModal(${a.id})" ${canSend ? '' : 'disabled title="مفيش تاجر متصل بالبوت"'}>📩 إرسال رسالة</button>
+        <button class="send-msg" onclick="openSendMessageModal(${a.id})">📩 إرسال رسالة</button>
         <button class="approve" onclick="approvePermitAlert(${a.id})">✅ تمت المراجعة</button>
         <button class="dismiss" onclick="dismissPermitAlert(${a.id})">🗑️ تجاهل</button>
       </div>`;
@@ -12812,11 +12812,27 @@ async function openSendMessageModal(alertId){
     }
   } catch(e) { /* silent — مش حاجة فادحة */ }
 
+  // 🔄 هات البيانات الحالية للعملاء (خصوصاً telegram_id) بدل الـ snapshot القديم اللى اتخزّن وقت التنبيه
+  const liveIds = [a.attempting_client_id, a.original_client_id].filter(Boolean);
+  let liveMap = {};
+  if (liveIds.length) {
+    try {
+      const lr = await fetch(`${SB}/rest/v1/clients?id=in.(${liveIds.join(',')})&select=id,name,phone,telegram_id,company_code,governorate,city`, { headers: HDR });
+      const ld = await lr.json();
+      (Array.isArray(ld) ? ld : []).forEach(c => liveMap[c.id] = c);
+    } catch(e) { /* fallback للـ snapshot */ }
+  }
+  const attSnap = a.attempting_client_data || {};
+  const orgSnap = a.original_client_data || {};
+  const attLive = liveMap[a.attempting_client_id] || {};
+  const orgLive = liveMap[a.original_client_id] || {};
+
   currentSendAlert = {
     id: a.id,
     permit_number: a.permit_number,
-    attempting: a.attempting_client_data || {},
-    original:   a.original_client_data || {}
+    // live بيتغلب على الـ snapshot (telegram_id/الاسم/الهاتف الحاليين)
+    attempting: { ...attSnap, ...attLive, id: a.attempting_client_id || attSnap.id },
+    original:   { ...orgSnap, ...orgLive, id: a.original_client_id  || orgSnap.id }
   };
 
   // بنى recipient options
