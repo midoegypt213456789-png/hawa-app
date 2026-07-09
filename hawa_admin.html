@@ -3860,6 +3860,22 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   </div>
 </div>
 
+<!-- 👥 EMPLOYEE SUPERVISEES MODAL -->
+<div class="modal-overlay" id="empSupModal">
+  <div class="modal" style="max-width:480px;width:95%">
+    <div class="modal-title">
+      <span id="empSupTitle">👥 موظفين الإشراف</span>
+      <button class="modal-close" onclick="closeModal('empSupModal')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">👁️ المشرف بيشوف شغل الموظفين دول (عملاءهم + حجوزاتهم) — <b style="color:var(--gold)">من غير ما يمتلكهم</b>. تقدر تختار أكتر من موظف، وممكن تجمع بينهم وبين القطاعات 🧭.</div>
+    <div id="empSupBody" style="max-height:420px;overflow-y:auto"></div>
+    <div class="modal-btns">
+      <button class="modal-save" id="empSupSaveBtn" onclick="saveEmpSupervisees()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('empSupModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
 <!-- 🧭 EMPLOYEE SECTORS (SUPERVISOR) MODAL -->
 <div class="modal-overlay" id="empSectorsModal">
   <div class="modal" style="max-width:520px;width:95%">
@@ -3867,7 +3883,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <span id="empSectorsTitle">🧭 قطاعات الإشراف</span>
       <button class="modal-close" onclick="closeModal('empSectorsModal')">✕</button>
     </div>
-    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">👥 مشرف القطاع بيشوف <b>كل موظفين وعملاء</b> القطاعات دى — وأى موظف/عميل جديد فى القطاع بيدخل تحته <b>تلقائى</b>. <b style="color:var(--gold)">تقدر تعلّم على أكتر من قطاع</b> (بتشتغل لما وظيفته نطاقها 🧭 فريق قطاعاته).</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">👁️ المشرف بيشوف <b>كل عملاء وحجوزات</b> القطاعات دى — <b style="color:var(--gold)">من غير ما يمتلكها</b> (البياعين هم اللى بيمتلكوا). <b style="color:var(--gold)">تقدر تعلّم على أكتر من قطاع</b>، وتجمعها مع موظفين إشراف 👥.</div>
     <div id="empSectorsBody" style="max-height:420px;overflow-y:auto"></div>
     <div class="modal-btns">
       <button class="modal-save" id="empSectorsSaveBtn" onclick="saveEmpSectors()">💾 حفظ</button>
@@ -4559,16 +4575,28 @@ async function ensureEmpScope(){
   __empScopeP = (async()=>{
     try{
       if(EMP_SCOPE==='sector'){
-        // قطاعات المشرف → كل محافظاتها
+        // 🧭 المشرف بيشرف على: قطاعات + موظفين معيّنين (من غير ملكية ولا قفل)
         const govSet = new Set();
         (EMP_SECTORS||[]).forEach(rg => (REGION_GOVS[rg]||[]).forEach(g=>govSet.add(g)));
-        EMP_GOVS = [...govSet];
-        // موظفين الفريق = أصحاب محافظات القطاعات دى (+ المشرف نفسه) — أى موظف جديد بيدخل تلقائى
+        // الموظفين اللى بيشرف عليهم بالاسم
+        let superviseeIds = new Set();
+        try{
+          const sr = await fetch(`${SB}/rest/v1/employee_supervisees?supervisor_id=eq.${EMP_ID}&select=employee_id`,{headers:HDR});
+          const sd = await sr.json();
+          (Array.isArray(sd)?sd:[]).forEach(x=>superviseeIds.add(x.employee_id));
+        }catch(e){}
+        // كل ملكيات المحافظات (عشان نعرف مين صاحب أنهى محافظة)
+        let regionRows=[];
         try{
           const tr = await fetch(`${SB}/rest/v1/employee_regions?select=employee_id,governorate`,{headers:HDR});
-          const td = await tr.json();
-          EMP_TEAM_IDS = new Set((Array.isArray(td)?td:[]).filter(x=>govSet.has(x.governorate)).map(x=>x.employee_id));
-        }catch(e){ EMP_TEAM_IDS = new Set(); }
+          regionRows = await tr.json(); if(!Array.isArray(regionRows)) regionRows=[];
+        }catch(e){ regionRows=[]; }
+        // محافظات الموظفين اللى بيشرف عليهم تنضم لنطاقه
+        regionRows.forEach(x=>{ if(superviseeIds.has(x.employee_id)) govSet.add(x.governorate); });
+        EMP_GOVS = [...govSet];
+        // الفريق = موظفينه + أصحاب محافظات قطاعاته + نفسه (أى جديد بيدخل تلقائى)
+        EMP_TEAM_IDS = new Set(superviseeIds);
+        regionRows.forEach(x=>{ if(govSet.has(x.governorate)) EMP_TEAM_IDS.add(x.employee_id); });
         if(EMP_ID) EMP_TEAM_IDS.add(EMP_ID);
       }
       const r = await fetch(`${SB}/rest/v1/clients?select=id,governorate,assigned_emp_id`,{headers:{...HDR,'Range':'0-1999'}});
@@ -5678,6 +5706,24 @@ async function saveEmpGovs(){
 // ═══ 🧭 قطاعات إشراف مشرف القطاع ═══
 let allEmpSectors = [];      // [{employee_id, region}]
 let empSectorsEditingId = null;
+// 🗺️ خلية النطاق فى جدول الموظفين: بياع=محافظات | مشرف=قطاعات+موظفين | غيرهم=—
+let allEmpSupervisees = [];   // [{supervisor_id, employee_id}]
+let allEmpsForSup = [];       // [{id,name,username}] للاختيار
+function empScopeCell(e, jr, govCount, secCount, supCount){
+  const esc=(e.perms_override&&e.perms_override.scope)||(jr&&jr.data_scope)||'own';
+  const nm=String(e.name).replace(/'/g,"\\'");
+  if(esc==='sector'){
+    return `<div style="display:flex;gap:4px;flex-wrap:wrap">
+      <button class="act-btn edit" style="font-size:11px;border-color:var(--gold);color:var(--gold)" onclick="openEmpSectors(${e.id},'${nm}')" title="قطاعات الإشراف">🧭 ${secCount[e.id]||0}</button>
+      <button class="act-btn edit" style="font-size:11px;border-color:var(--gold);color:var(--gold)" onclick="openEmpSupervisees(${e.id},'${nm}')" title="موظفين الإشراف">👥 ${supCount[e.id]||0}</button>
+    </div>`;
+  }
+  if(esc==='all' || (jr && jr.landing!=='admin')){
+    return '<span style="color:var(--text-dim);font-size:11px">—</span>';
+  }
+  return `<button class="act-btn edit" style="font-size:11px" onclick="openEmpGovs(${e.id},'${nm}')" title="محافظات الموظف (عملاؤه)">🗺️ ${govCount[e.id]||0}</button>`;
+}
+
 function openEmpSectors(empId, empName){
   empSectorsEditingId = empId;
   document.getElementById('empSectorsTitle').textContent = `🧭 قطاعات إشراف: ${empName}`;
@@ -5718,6 +5764,49 @@ async function saveEmpSectors(){
     closeModal('empSectorsModal');
     loadEmployees();
     if(typeof showToast==='function') showToast('✅ اتحفظت قطاعات الإشراف');
+  }catch(e){ alert('❌ خطأ فى الحفظ: '+(e.message||'')); }
+  finally{ btn.disabled=false; btn.textContent='💾 حفظ'; }
+}
+
+// ═══ 👥 موظفين إشراف المشرف (بيشوف شغلهم — من غير ملكية) ═══
+let empSupEditingId = null;
+function openEmpSupervisees(supId, supName){
+  empSupEditingId = supId;
+  document.getElementById('empSupTitle').textContent = `👥 موظفين إشراف: ${supName}`;
+  const mine = new Set(allEmpSupervisees.filter(x=>x.supervisor_id===supId).map(x=>x.employee_id));
+  let html='';
+  (allEmpsForSup||[]).filter(e=>e.id!==supId).forEach(e=>{
+    const on=mine.has(e.id);
+    html += `<label style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1.5px solid ${on?'var(--gold)':'var(--border)'};background:${on?'rgba(201,168,76,0.06)':'transparent'};border-radius:10px;margin-bottom:8px;cursor:pointer" onclick="setTimeout(esupRefresh,0)">
+      <input type="checkbox" class="esup-emp" value="${e.id}" ${on?'checked':''} style="width:18px;height:18px;flex-shrink:0;accent-color:var(--gold)">
+      <div><b>${e.name}</b> <span style="color:var(--text-dim);font-size:11px">${e.username||''}</span></div>
+    </label>`;
+  });
+  document.getElementById('empSupBody').innerHTML = html || '<div style="color:var(--text-dim);padding:20px;text-align:center">مفيش موظفين تانيين</div>';
+  document.getElementById('empSupModal').classList.add('show');
+}
+function esupRefresh(){
+  document.querySelectorAll('#empSupBody .esup-emp').forEach(c=>{
+    const lbl=c.closest('label');
+    if(lbl){ lbl.style.borderColor=c.checked?'var(--gold)':'var(--border)'; lbl.style.background=c.checked?'rgba(201,168,76,0.06)':'transparent'; }
+  });
+}
+async function saveEmpSupervisees(){
+  const btn=document.getElementById('empSupSaveBtn');
+  btn.disabled=true; btn.textContent='⏳ جاري الحفظ...';
+  try{
+    const picked=[...document.querySelectorAll('#empSupBody .esup-emp:checked')]
+      .map(x=>({supervisor_id:empSupEditingId, employee_id:parseInt(x.value)}));
+    const dr=await fetch(`${SB}/rest/v1/employee_supervisees?supervisor_id=eq.${empSupEditingId}`,{method:'DELETE',headers:HDR});
+    if(!dr.ok) throw new Error(`HTTP ${dr.status}: ${await dr.text()}`);
+    if(picked.length){
+      const pr=await fetch(`${SB}/rest/v1/employee_supervisees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal','Content-Type':'application/json'},body:JSON.stringify(picked)});
+      if(!pr.ok) throw new Error(`HTTP ${pr.status}: ${await pr.text()}`);
+    }
+    if(typeof logActivity==='function') logActivity('emp_supervisees_update', `👥 حدّد موظفين إشراف مشرف #${empSupEditingId} (${picked.length} موظف)`, {ids:picked.map(x=>x.employee_id)});
+    closeModal('empSupModal');
+    loadEmployees();
+    if(typeof showToast==='function') showToast('✅ اتحفظ موظفين الإشراف');
   }catch(e){ alert('❌ خطأ فى الحفظ: '+(e.message||'')); }
   finally{ btn.disabled=false; btn.textContent='💾 حفظ'; }
 }
@@ -5986,18 +6075,23 @@ async function loadEmployees(){
     allEmpRegions = [];
     allEmpSectors = [];
     try{
-      const [rg, sg] = await Promise.all([
+      const [rg, sg, sp] = await Promise.all([
         fetch(`${SB}/rest/v1/employee_regions?select=employee_id,governorate,region`,{headers:HDR}),
-        fetch(`${SB}/rest/v1/employee_sectors?select=employee_id,region`,{headers:HDR})
+        fetch(`${SB}/rest/v1/employee_sectors?select=employee_id,region`,{headers:HDR}),
+        fetch(`${SB}/rest/v1/employee_supervisees?select=supervisor_id,employee_id`,{headers:HDR})
       ]);
       const rgd = await rg.json();
       if(Array.isArray(rgd)) allEmpRegions = rgd;
       const sgd = await sg.json();
       if(Array.isArray(sgd)) allEmpSectors = sgd;
+      const supd = await sp.json();
+      if(Array.isArray(supd)) allEmpSupervisees = supd;
     }catch(e){}
     const govCount = {}; allEmpRegions.forEach(x=>{ govCount[x.employee_id]=(govCount[x.employee_id]||0)+1; });
     const secCount = {}; allEmpSectors.forEach(x=>{ secCount[x.employee_id]=(secCount[x.employee_id]||0)+1; });
-    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>🔑 الوظيفة</th><th>🗺️ محافظاته</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
+    const supCount = {}; allEmpSupervisees.forEach(x=>{ supCount[x.supervisor_id]=(supCount[x.supervisor_id]||0)+1; });
+    allEmpsForSup = data.map(e=>({id:e.id,name:e.name,username:e.username}));
+    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>🔑 الوظيفة</th><th>🗺️ النطاق</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
     adminsData.forEach(a=>{
       html+=`<tr style="background:rgba(201,168,76,0.05)">
         <td style="color:var(--gold)">👑</td>
@@ -6025,10 +6119,7 @@ async function loadEmployees(){
         <td style="color:var(--text-dim)">${e.username}</td>
         <td>${whCell}</td>
         <td>${jrBadge}</td>
-        <td><div style="display:flex;gap:4px">
-          <button class="act-btn edit" style="font-size:11px" onclick="openEmpGovs(${e.id},'${String(e.name).replace(/'/g,"\\'")}')" title="محافظات الموظف (عملاؤه)">🗺️ ${govCount[e.id]||0}</button>
-          <button class="act-btn edit" style="font-size:11px${((jr&&jr.data_scope==='sector')||(e.perms_override&&e.perms_override.scope==='sector'))?';border-color:var(--gold);color:var(--gold)':''}" onclick="openEmpSectors(${e.id},'${String(e.name).replace(/'/g,"\\'")}')" title="قطاعات الإشراف (مشرف قطاع)">🧭 ${secCount[e.id]||0}</button>
-        </div></td>
+        <td>${empScopeCell(e, jr, govCount, secCount, supCount)}</td>
         <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
         <td><div class="act-btns">
           <button class="act-btn edit" onclick="openEmpModal(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ تعديل</button>
