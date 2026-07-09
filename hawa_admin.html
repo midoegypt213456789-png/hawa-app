@@ -4503,6 +4503,13 @@ async function rpcLoginTry(secureFn, oldFn, u, p){
   }catch(e){}
   return null;
 }
+// نداء RPC محمى بالتوكن — يرمى الرسالة العربية من السيرفر لو فشل
+async function rpcSecure(fn, args){
+  const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN, ...args})});
+  const txt=await r.text(); let j=null; try{ j=txt?JSON.parse(txt):null; }catch(e){}
+  if(!r.ok) throw new Error((j&&(j.message||j.error))||txt||('HTTP '+r.status));
+  return j;
+}
 let EMP_MODE = false;     // true لو اللى فاتح موظف (مش أدمن)
 let EMP_PERMS = null;     // { screen: {view,edit,del,print} } أو { __all__:true }
 
@@ -6068,34 +6075,18 @@ async function saveEmployee(){
   const role=document.getElementById('em-role').value;
   const roleIdRaw=document.getElementById('em-roleid').value;
   if(!name||!username){alert('أدخل الاسم واليوزر');return;}
-
-  const body={name,username,role,role_id:roleIdRaw?parseInt(roleIdRaw):null,perms_override:empOverrideDraft};
-  if(password)body.password=password;
+  if(!editEmpId && !password){alert('أدخل كلمة المرور');return;}
 
   const sbtn=document.querySelector('#empModal .modal-save');
   const orig=sbtn?sbtn.textContent:'';
   if(sbtn){sbtn.disabled=true;sbtn.textContent='⏳ جاري الحفظ...';}
   try{
-    let r;
-    if(editEmpId){
-      r=await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-    }else{
-      if(!password){alert('أدخل كلمة المرور');if(sbtn){sbtn.disabled=false;sbtn.textContent=orig;}return;}
-      body.password=password;
-      r=await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-    }
-    if(!r.ok){
-      const txt=await r.text();
-      if(/schema cache/i.test(txt) && /role_id|perms_override/.test(txt)){
-        // PostgREST لسه ما حدّثش الـ schema cache — احفظ الباقى وبلّغ بوضوح
-        delete body.role_id; delete body.perms_override;
-        const r2=editEmpId
-          ? await fetch(`${SB}/rest/v1/employees?id=eq.${editEmpId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)})
-          : await fetch(`${SB}/rest/v1/employees`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-        if(!r2.ok) throw new Error(await r2.text());
-        alert('⚠️ اتحفظ الاسم واليوزر والمخزن — لكن الوظيفة والصلاحيات ما اتحفظوش (السيرفر لسه بيحدّث نفسه).\n\nاستنى دقيقة وجرّب تانى.');
-      } else { throw new Error(`HTTP ${r.status}: ${txt}`); }
-    }
+    await rpcSecure('admin_save_employee', {
+      p_id: editEmpId||null, p_name:name, p_username:username,
+      p_password: password||null, p_role: role,
+      p_role_id: roleIdRaw?parseInt(roleIdRaw):null,
+      p_perms_override: empOverrideDraft
+    });
     closeModal('empModal');
     loadEmployees();
     if(typeof showToast==='function') showToast('✅ اتحفظ الموظف');
@@ -6108,13 +6099,15 @@ async function saveEmployee(){
 }
 
 async function toggleEmployee(id,isActive){
-  await fetch(`${SB}/rest/v1/employees?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:!isActive})});
+  try{ await rpcSecure('admin_toggle_employee',{p_id:id, p_active:!isActive}); }
+  catch(e){ alert('❌ '+(e.message||e)); }
   loadEmployees();
 }
 
 function deleteEmployee(id,name){
   showConfirm('🗑️','حذف موظف',`هتحذف "${name}"؟ مش هتقدر ترجع!`,true,async()=>{
-    await fetch(`${SB}/rest/v1/employees?id=eq.${id}`,{method:'DELETE',headers:HDR});
+    try{ await rpcSecure('admin_delete_employee',{p_id:id}); }
+    catch(e){ alert('❌ '+(e.message||e)); }
     loadEmployees();
   });
 }
@@ -6296,14 +6289,10 @@ async function saveRoleModal(){
   const btn=document.getElementById('roleSaveBtn');
   btn.disabled=true; btn.textContent='⏳ جاري الحفظ...';
   try{
-    const body = { name, landing, data_scope: scope, permissions: perms };
-    let r;
-    if(roleEditingId){
-      r = await fetch(`${SB}/rest/v1/roles?id=eq.${roleEditingId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-    }else{
-      r = await fetch(`${SB}/rest/v1/roles`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-    }
-    if(!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+    await rpcSecure('admin_save_role', {
+      p_id: roleEditingId||null, p_name:name, p_landing:landing,
+      p_scope: scope, p_permissions: perms
+    });
     if(typeof logActivity==='function') logActivity(roleEditingId?'role_update':'role_create', `🔑 ${roleEditingId?'عدّل':'أضاف'} وظيفة "${name}"`, {landing});
     closeModal('roleModal');
     loadRoles();
@@ -6318,7 +6307,8 @@ async function saveRoleModal(){
 
 function deleteRole(id,name){
   showConfirm('🗑️','حذف وظيفة',`هتحذف وظيفة "${name}"؟\nالموظفين اللى عليها هيبقوا من غير وظيفة (مخزن بس).`,true,async()=>{
-    await fetch(`${SB}/rest/v1/roles?id=eq.${id}`,{method:'DELETE',headers:HDR});
+    try{ await rpcSecure('admin_delete_role',{p_id:id}); }
+    catch(e){ alert('❌ '+(e.message||e)); }
     loadRoles();
   });
 }
