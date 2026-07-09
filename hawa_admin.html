@@ -3867,7 +3867,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <span id="empSectorsTitle">🧭 قطاعات الإشراف</span>
       <button class="modal-close" onclick="closeModal('empSectorsModal')">✕</button>
     </div>
-    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">👥 مشرف القطاع بيشوف <b>كل موظفين وعملاء</b> القطاعات دى — وأى موظف/عميل جديد فى القطاع بيدخل تحته <b>تلقائى</b>. (بتشتغل لما وظيفته/تخصيصه نطاقه 🧭 فريق قطاعاته)</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:10px">👥 مشرف القطاع بيشوف <b>كل موظفين وعملاء</b> القطاعات دى — وأى موظف/عميل جديد فى القطاع بيدخل تحته <b>تلقائى</b>. <b style="color:var(--gold)">تقدر تعلّم على أكتر من قطاع</b> (بتشتغل لما وظيفته نطاقها 🧭 فريق قطاعاته).</div>
     <div id="empSectorsBody" style="max-height:420px;overflow-y:auto"></div>
     <div class="modal-btns">
       <button class="modal-save" id="empSectorsSaveBtn" onclick="saveEmpSectors()">💾 حفظ</button>
@@ -5137,7 +5137,7 @@ async function loadPermitAlerts() {
 
     // 🗺️ نطاق البيانات: تنبيهات عملاءه بس
     let alertRows = Array.isArray(data) ? data : [];
-    if(EMP_MODE && EMP_SCOPE==='own'){
+    if(EMP_MODE && EMP_SCOPE!=='all'){
       await ensureEmpScope();
       alertRows = alertRows.filter(a =>
         (a.attempting_client_id && EMP_CLIENT_IDS.has(a.attempting_client_id)) ||
@@ -5505,7 +5505,7 @@ async function loadBookings(){
     allBookingsData=await r.json();
 
     // 🗺️ نطاق البيانات: حجوزات عملاءه بس
-    if(EMP_MODE && EMP_SCOPE==='own'){
+    if(EMP_MODE && EMP_SCOPE!=='all'){
       await ensureEmpScope();
       if(Array.isArray(allBookingsData)) allBookingsData=allBookingsData.filter(b=>EMP_CLIENT_IDS.has(b.client_id));
     }
@@ -5527,7 +5527,7 @@ async function loadBookings(){
       statsUrl+=`&loading_date=eq.${todayStr}`;
     }
     let allD;
-    if(EMP_MODE && EMP_SCOPE==='own'){
+    if(EMP_MODE && EMP_SCOPE!=='all'){
       // 🗺️ إحصائيات على حجوزات عملاءه بس (محسوبة محلياً)
       let src = Array.isArray(allBookingsData)?allBookingsData:[];
       if(!dateFrom && !dateTo){ const t=fmtDate(new Date()); src=src.filter(b=>b.loading_date===t); }
@@ -5682,17 +5682,25 @@ function openEmpSectors(empId, empName){
   empSectorsEditingId = empId;
   document.getElementById('empSectorsTitle').textContent = `🧭 قطاعات إشراف: ${empName}`;
   const mine = new Set(allEmpSectors.filter(x=>x.employee_id===empId).map(x=>x.region));
-  let html='';
+  let html='<div style="display:flex;gap:8px;margin-bottom:10px"><button type="button" class="act-btn edit" style="font-size:11px" onclick="esToggleAll(true)">✅ اختار الكل</button><button type="button" class="act-btn edit" style="font-size:11px" onclick="esToggleAll(false)">⬜ شيل الكل</button></div>';
   Object.keys(REGION_GOVS).forEach(region=>{
     const govs = REGION_GOVS[region]||[];
-    html += `<label style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;margin-bottom:8px;cursor:pointer">
-      <input type="checkbox" class="es-sector" value="${region}" ${mine.has(region)?'checked':''}>
+    const on = mine.has(region);
+    html += `<label style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1.5px solid ${on?'var(--gold)':'var(--border)'};background:${on?'rgba(201,168,76,0.06)':'transparent'};border-radius:10px;margin-bottom:8px;cursor:pointer" onclick="setTimeout(esRefresh,0)">
+      <input type="checkbox" class="es-sector" value="${region}" ${on?'checked':''} style="width:20px;height:20px;flex-shrink:0;cursor:pointer;accent-color:var(--gold)">
       <div><b style="color:var(--gold)">📍 ${region}</b>
       <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${govs.join(' · ')}</div></div>
     </label>`;
   });
   document.getElementById('empSectorsBody').innerHTML = html;
   document.getElementById('empSectorsModal').classList.add('show');
+}
+function esToggleAll(v){ document.querySelectorAll('#empSectorsBody .es-sector').forEach(c=>c.checked=v); esRefresh(); }
+function esRefresh(){
+  document.querySelectorAll('#empSectorsBody .es-sector').forEach(c=>{
+    const lbl=c.closest('label');
+    if(lbl){ lbl.style.borderColor=c.checked?'var(--gold)':'var(--border)'; lbl.style.background=c.checked?'rgba(201,168,76,0.06)':'transparent'; }
+  });
 }
 async function saveEmpSectors(){
   const btn=document.getElementById('empSectorsSaveBtn');
@@ -7658,7 +7666,7 @@ async function openClientProfile(id){
   const c=allClients.find(x=>x.id===id);
   if(!c)return;
   // 🗺️ نطاق البيانات: مايفتحش ملف عميل مش بتاعه
-  if(EMP_MODE && EMP_SCOPE==='own' && !empOwnsClient(c)){
+  if(EMP_MODE && EMP_SCOPE!=='all' && !empOwnsClient(c)){
     alert('🚫 العميل ده مش من عملائك');
     return;
   }
@@ -8905,7 +8913,7 @@ async function calculateBroadcastTargets(){
   // Skip extras if any religion filter is on (extras have no religion field)
   let extras = [];
   let extrasSkippedDueToReligion = false;
-  if(includeExtra && !(EMP_MODE && EMP_SCOPE==='own')){
+  if(includeExtra && !(EMP_MODE && EMP_SCOPE!=='all')){
     if(religions.length > 0){
       extrasSkippedDueToReligion = true;
     }else{
@@ -9263,7 +9271,7 @@ async function loadFeedback(){
     allFeedback = await r.json();
     if(!Array.isArray(allFeedback)) allFeedback = [];
     // 🗺️ نطاق البيانات: شكاوى عملاءه بس
-    if(EMP_MODE && EMP_SCOPE==='own'){
+    if(EMP_MODE && EMP_SCOPE!=='all'){
       await ensureEmpScope();
       allFeedback = allFeedback.filter(f=>f.client_id && EMP_CLIENT_IDS.has(f.client_id));
     }
