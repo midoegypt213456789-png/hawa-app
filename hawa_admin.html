@@ -9553,6 +9553,23 @@ function renderChatThreads(){
   }).join('');
 }
 
+// 📎 عرض مرفقات الشات (صور/فيديو/صوت/ملفات) عبر بروكسى n8n — توكن البوت مش بيظهر فى الصفحة
+const CHAT_MEDIA_PROXY = 'https://n8n.gladiatorverse.net/webhook/chat-media';
+const CHAT_MEDIA_KEY = 'hawa_m3dia_2026';
+function chatMediaUrl(fid){ return CHAT_MEDIA_PROXY + '?fid=' + encodeURIComponent(fid) + '&k=' + CHAT_MEDIA_KEY; }
+function chatMediaHtml(m){
+  if(!m || !m.media_file_id) return '';
+  const u = chatMediaUrl(m.media_file_id);
+  const t = m.media_type || '';
+  if(t==='photo' || t==='sticker')
+    return `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" loading="lazy" style="max-width:100%;max-height:260px;border-radius:8px;display:block;margin-bottom:6px"></a>`;
+  if(t==='video' || t==='video_note')
+    return `<video controls preload="metadata" src="${u}" style="max-width:100%;max-height:260px;border-radius:8px;display:block;margin-bottom:6px"></video>`;
+  if(t==='audio' || t==='voice')
+    return `<audio controls preload="none" src="${u}" style="width:230px;max-width:100%;display:block;margin-bottom:6px"></audio>`;
+  return `<a href="${u}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(74,144,217,0.12);border:1px solid rgba(74,144,217,0.35);color:#4A90D9;border-radius:8px;padding:6px 12px;font-size:12px;text-decoration:none;margin-bottom:6px">📎 فتح / تحميل المرفق</a>`;
+}
+
 async function openChatThread(threadId, keepScroll){
   chatOpenThreadId = threadId;
   const t = chatThreads.find(x=>x.id===threadId);
@@ -9578,6 +9595,7 @@ async function openChatThread(threadId, keepScroll){
         const pend = (m.sender!=='client' && m.delivered===false) ? ' <span style="color:var(--text-dim)">⏳</span>' : (m.sender!=='client'?' <span style="color:var(--success)">✓</span>':'');
         return `<div style="align-self:${mine?'flex-start':'flex-end'};max-width:75%;background:${bg};border:1px solid var(--border);border-radius:12px;padding:8px 12px">
           <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">${escAttr(who)}</div>
+          ${chatMediaHtml(m)}
           <div style="font-size:13px;white-space:pre-wrap;word-break:break-word">${escAttr(m.body)}</div>
           <div style="font-size:9px;color:var(--text-dim);margin-top:4px;text-align:left">${when}${pend}</div>
         </div>`;
