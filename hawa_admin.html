@@ -9559,9 +9559,16 @@ const CHAT_MEDIA_KEY = 'hawa_m3dia_2026';
 function chatMediaUrl(fid){ return CHAT_MEDIA_PROXY + '?fid=' + encodeURIComponent(fid) + '&k=' + CHAT_MEDIA_KEY; }
 function chatMediaHtml(m){
   if(!m || !m.media_file_id) return '';
-  // الأرشيف (Supabase Storage — محفوظ 50 يوم) له الأولوية، وإلا بروكسى تيليجرام
-  const u = (m.media_url && /^https?:/.test(m.media_url)) ? m.media_url : chatMediaUrl(m.media_file_id);
   const t = m.media_type || '';
+  const u = (m.media_url && /^https?:/.test(m.media_url)) ? m.media_url : null;
+  // لسه بيتأرشف من تيليجرام → placeholder (بيتحدث تلقائى كل 15 ثانية)
+  if(!u){
+    if(m.media_url === 'unavailable')
+      return `<div style="font-size:12px;color:var(--text-dim);background:var(--dark3);border:1px dashed var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">📎 المرفق أكبر من المسموح (20MB) — موجود على تيليجرام بس</div>`;
+    if(m.media_url === 'expired')
+      return `<div style="font-size:12px;color:var(--text-dim);background:var(--dark3);border:1px dashed var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">🗓️ المرفق انتهت مدة حفظه (50 يوم)</div>`;
+    return `<div style="font-size:12px;color:var(--gold);background:var(--dark3);border:1px dashed var(--border);border-radius:8px;padding:8px 12px;margin-bottom:6px">⏳ المرفق بيتجهز... ثوانى وهيظهر هنا</div>`;
+  }
   if(t==='photo' || t==='sticker')
     return `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" loading="lazy" style="max-width:100%;max-height:260px;border-radius:8px;display:block;margin-bottom:6px"></a>`;
   if(t==='video' || t==='video_note')
@@ -9651,8 +9658,8 @@ async function refreshChatBadge(){
   }catch(e){}
 }
 
-// بولنج خفيف: لو واقف على شاشة الشات، حدّث كل 15 ثانية
-setInterval(()=>{ if(currentSection==='chat') loadChat(); }, 15000);
+// بولنج خفيف: لو واقف على شاشة الشات، حدّث كل 15 ثانية (والمحادثة المفتوحة كمان — المرفقات الجديدة والرسايل بتظهر لوحدها)
+setInterval(()=>{ if(currentSection==='chat'){ loadChat(); if(chatOpenThreadId) openChatThread(chatOpenThreadId, true); } }, 15000);
 setInterval(refreshChatBadge, 30000);
 
 
