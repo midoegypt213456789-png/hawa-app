@@ -6122,12 +6122,36 @@ function renderBookingsTable(data){
 }
 
 // =================== EMPLOYEES ===================
+// 🤖 خلية كود ربط البوت (بيتولد تلقائياً فى القاعدة لكل موظف جديد)
+function botCodeCell(e){
+  const code = e && e.bot_link_code;
+  if(!code) return '<span style="color:var(--text-dim);font-size:11px">—</span>';
+  const linked = !!(e.telegram_id);
+  const chip = `<span onclick="copyBotCode('${String(code).replace(/[^A-Za-z0-9]/g,'')}')" title="اضغط للنسخ — الموظف يبعت الكود ده لبوت التليجرام مرة واحدة" style="cursor:pointer;background:rgba(74,144,217,0.12);border:1px solid rgba(74,144,217,0.35);color:#4A90D9;border-radius:8px;padding:3px 8px;font-size:12px;font-weight:700;letter-spacing:0.5px;direction:ltr;display:inline-block">${code} 📋</span>`;
+  const dot = linked
+    ? ' <span title="مربوط بتيليجرام ✅" style="font-size:11px">🟢</span>'
+    : ' <span title="لسه مبعتش الكود للبوت" style="font-size:11px;color:var(--text-dim)">⚪</span>';
+  return chip + dot;
+}
+function copyBotCode(code){
+  const done=()=>alert('✅ اتنسخ الكود: '+code+'\n\nابعته للموظف — يبعته للبوت مرة واحدة ويترتبط.');
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(done).catch(()=>{_fallbackCopyBot(code);done();});
+  }else{_fallbackCopyBot(code);done();}
+}
+function _fallbackCopyBot(t){
+  const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  document.body.removeChild(ta);
+}
+
 async function loadEmployees(){
   document.getElementById('emp-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
     await fetchRoles();
     let empColsErr = null;
-    const r=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at,role_id,perms_override&order=created_at.asc`,{headers:HDR});
+    const r=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at,role_id,perms_override,bot_link_code,telegram_id&order=created_at.asc`,{headers:HDR});
     let data=await r.json();
     // fallback لو الأعمدة الجديدة لسه متعملتش فى القاعدة
     if(!Array.isArray(data)){
@@ -6172,7 +6196,7 @@ async function loadEmployees(){
     const secCount = {}; allEmpSectors.forEach(x=>{ secCount[x.employee_id]=(secCount[x.employee_id]||0)+1; });
     const supCount = {}; allEmpSupervisees.forEach(x=>{ supCount[x.supervisor_id]=(supCount[x.supervisor_id]||0)+1; });
     allEmpsForSup = data.map(e=>({id:e.id,name:e.name,username:e.username}));
-    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>🔑 الوظيفة</th><th>🗺️ النطاق</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
+    let html=`<table><thead><tr><th>#</th><th>الاسم</th><th>اليوزر</th><th>الصلاحية</th><th>🔑 الوظيفة</th><th>🗺️ النطاق</th><th>🤖 كود البوت</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
     adminsData.forEach(a=>{
       html+=`<tr style="background:rgba(201,168,76,0.05)">
         <td style="color:var(--gold)">👑</td>
@@ -6181,6 +6205,7 @@ async function loadEmployees(){
         <td><span class="badge active" style="background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.35)">👑 أدمن رئيسي</span></td>
         <td><b style="color:var(--gold)">كل الصلاحيات ⭐</b></td>
         <td><span style="color:var(--gold);font-size:11px">🌐 الكل</span></td>
+        <td><span style="color:var(--text-dim);font-size:11px">—</span></td>
         <td>${a.is_active!==false?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
         <td><span style="font-size:11px;color:var(--text-dim)">🔒 حساب رئيسي — مبيتعدلش من هنا</span></td>
       </tr>`;
@@ -6201,6 +6226,7 @@ async function loadEmployees(){
         <td>${whCell}</td>
         <td>${jrBadge}</td>
         <td>${empScopeCell(e, jr, govCount, secCount, supCount)}</td>
+        <td>${botCodeCell(e)}</td>
         <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
         <td><div class="act-btns">
           <button class="act-btn edit" onclick="openEmpModal(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ تعديل</button>
