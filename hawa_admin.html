@@ -9559,7 +9559,8 @@ const CHAT_MEDIA_KEY = 'hawa_m3dia_2026';
 function chatMediaUrl(fid){ return CHAT_MEDIA_PROXY + '?fid=' + encodeURIComponent(fid) + '&k=' + CHAT_MEDIA_KEY; }
 function chatMediaHtml(m){
   if(!m || !m.media_file_id) return '';
-  const u = chatMediaUrl(m.media_file_id);
+  // الأرشيف (Supabase Storage — محفوظ 50 يوم) له الأولوية، وإلا بروكسى تيليجرام
+  const u = (m.media_url && /^https?:/.test(m.media_url)) ? m.media_url : chatMediaUrl(m.media_file_id);
   const t = m.media_type || '';
   if(t==='photo' || t==='sticker')
     return `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" loading="lazy" style="max-width:100%;max-height:260px;border-radius:8px;display:block;margin-bottom:6px"></a>`;
