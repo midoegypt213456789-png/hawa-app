@@ -6122,6 +6122,133 @@ function renderBookingsTable(data){
 }
 
 // =================== EMPLOYEES ===================
+// ═══════════════════════════════════════════════════════════
+// ⭐ نظام تقييم الموظفين — معايير قابلة للزيادة والنقصان
+// ═══════════════════════════════════════════════════════════
+let _ratingEmpId = null, _ratingEmpName = '', _ratingCriteria = [];
+
+async function openEmpRating(empId, empName){
+  _ratingEmpId = empId; _ratingEmpName = empName;
+  let overlay = document.getElementById('emp-rating-overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'emp-rating-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML = '<div id="emp-rating-box" style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;padding:22px"></div>';
+    overlay.addEventListener('click', ev=>{ if(ev.target===overlay) closeEmpRating(); });
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  document.getElementById('emp-rating-box').innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  await renderEmpRating();
+}
+function closeEmpRating(){
+  const o = document.getElementById('emp-rating-overlay');
+  if(o) o.style.display = 'none';
+}
+
+async function renderEmpRating(){
+  const box = document.getElementById('emp-rating-box');
+  try{
+    const [cr, rr] = await Promise.all([
+      fetch(`${SB}/rest/v1/employee_rating_criteria?select=*&is_active=eq.true&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/employee_ratings?select=criteria_id,score,note&employee_id=eq.${_ratingEmpId}`,{headers:HDR}).then(r=>r.json())
+    ]);
+    _ratingCriteria = Array.isArray(cr)?cr:[];
+    const scores = {};
+    for(const r of (Array.isArray(rr)?rr:[])) scores[r.criteria_id] = r;
+
+    let rows = '';
+    if(!_ratingCriteria.length){
+      rows = '<div style="color:var(--text-dim);font-size:13px;padding:14px;text-align:center">مفيش معايير لسه — ضيف أول معيار من تحت 👇</div>';
+    } else {
+      rows = _ratingCriteria.map(c=>{
+        const cur = scores[c.id] ? Number(scores[c.id].score) : '';
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px 14px">
+          <div style="flex:1;font-size:14px;color:var(--text)">${escAttr(c.name)} <span style="color:var(--text-dim);font-size:11px">(من ${c.max_score})</span></div>
+          <input type="number" min="0" max="${c.max_score}" step="0.5" value="${cur}" data-crit="${c.id}" data-max="${c.max_score}"
+                 class="emp-rate-input" style="width:80px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:16px;padding:6px 10px;text-align:center">
+          <button onclick="removeCriteria(${c.id})" title="حذف المعيار من النظام" style="background:none;border:none;color:var(--error);cursor:pointer;font-size:15px">🗑️</button>
+        </div>`;
+      }).join('');
+    }
+
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3 style="margin:0;color:var(--gold);font-size:18px">⭐ تقييم: ${escAttr(_ratingEmpName)}</h3>
+        <button onclick="closeEmpRating()" style="background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer">✕</button>
+      </div>
+      ${rows}
+      <div style="display:flex;gap:8px;margin:16px 0 6px 0">
+        <input id="new-crit-name" placeholder="معيار جديد (مثلاً: سرعة الرد)" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px 12px">
+        <input id="new-crit-max" type="number" min="1" value="10" title="الدرجة القصوى" style="width:70px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px;text-align:center">
+        <button onclick="addCriteria()" style="background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.5);color:var(--success);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700">+ إضافة</button>
+      </div>
+      <div style="color:var(--text-dim);font-size:11px;margin-bottom:14px">المعايير عامة لكل الموظفين — الإضافة والحذف بيطبّقوا على النظام كله</div>
+      <button onclick="saveEmpRating()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo">💾 حفظ التقييم</button>`;
+  }catch(e){
+    box.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل — حاول تانى</div>';
+  }
+}
+
+async function addCriteria(){
+  const name = (document.getElementById('new-crit-name').value||'').trim();
+  const max = parseInt(document.getElementById('new-crit-max').value||'10',10)||10;
+  if(!name){ alert('اكتب اسم المعيار الأول'); return; }
+  await fetch(`${SB}/rest/v1/employee_rating_criteria`,{
+    method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify({ name, max_score: max })
+  });
+  await renderEmpRating();
+}
+
+async function removeCriteria(id){
+  if(!confirm('حذف المعيار ده من نظام التقييم كله؟ (تقييماته القديمة هتتشال)')) return;
+  await fetch(`${SB}/rest/v1/employee_rating_criteria?id=eq.${id}`,{
+    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify({ is_active: false })
+  });
+  await renderEmpRating();
+}
+
+async function saveEmpRating(){
+  const inputs = document.querySelectorAll('.emp-rate-input');
+  const rows = [];
+  for(const inp of inputs){
+    const v = inp.value === '' ? null : Number(inp.value);
+    if(v === null) continue;
+    const mx = Number(inp.dataset.max)||10;
+    rows.push({ employee_id: _ratingEmpId, criteria_id: Number(inp.dataset.crit), score: Math.max(0, Math.min(mx, v)), updated_at: new Date().toISOString() });
+  }
+  if(!rows.length){ alert('حط درجة لمعيار واحد على الأقل'); return; }
+  const r = await fetch(`${SB}/rest/v1/employee_ratings?on_conflict=employee_id,criteria_id`,{
+    method:'POST',
+    headers:{...HDR,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},
+    body: JSON.stringify(rows)
+  });
+  if(r.ok){ alert('✅ اتحفظ تقييم '+_ratingEmpName); closeEmpRating(); loadEmployees(); }
+  else alert('⚠️ حصل خطأ فى الحفظ — حاول تانى');
+}
+
+// متوسط التقييم لعرضه فى جدول الموظفين
+async function fetchEmpRatingAverages(){
+  try{
+    const rows = await fetch(`${SB}/rest/v1/employee_ratings?select=employee_id,score,criteria_id`,{headers:HDR}).then(r=>r.json());
+    const crits = await fetch(`${SB}/rest/v1/employee_rating_criteria?select=id,max_score&is_active=eq.true`,{headers:HDR}).then(r=>r.json());
+    const maxMap = {}; for(const c of (crits||[])) maxMap[c.id] = Number(c.max_score)||10;
+    const agg = {};
+    for(const r of (Array.isArray(rows)?rows:[])){
+      if(!(r.criteria_id in maxMap)) continue;
+      if(!agg[r.employee_id]) agg[r.employee_id] = { pct: 0, n: 0 };
+      agg[r.employee_id].pct += (Number(r.score)/maxMap[r.criteria_id])*100;
+      agg[r.employee_id].n++;
+    }
+    const out = {};
+    for(const [id,a] of Object.entries(agg)) out[id] = Math.round(a.pct/a.n);
+    return out;
+  }catch(e){ return {}; }
+}
+
 // 🤖 خلية كود ربط البوت (بيتولد تلقائياً فى القاعدة لكل موظف جديد)
 function botCodeCell(e){
   const code = e && e.bot_link_code;
@@ -6176,6 +6303,8 @@ async function loadEmployees(){
     }catch(e){}
     const roleBadge={'قليوب':'<span class="badge qalyub">قليوب 🏭</span>','السادات':'<span class="badge sadat">السادات 🏗️</span>','عام':'<span class="badge general">عام 🌐</span>'};
     const roleMap={}; allRoles.forEach(x=>roleMap[x.id]=x);
+    // ⭐ متوسط تقييم كل موظف (نسبة مئوية من المعايير النشطة)
+    const ratingAvg = await fetchEmpRatingAverages();
     // 🗺️ محافظات كل موظف
     allEmpRegions = [];
     allEmpSectors = [];
@@ -6219,9 +6348,12 @@ async function loadEmployees(){
       const whCell = (jr && jr.landing==='admin')
         ? '<span style="color:var(--text-dim);font-size:11px">—</span>'
         : (roleBadge[e.role]||e.role);
+      const rBadge = (ratingAvg[e.id]!=null)
+        ? ` <span title="متوسط التقييم" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700">⭐ ${ratingAvg[e.id]}%</span>`
+        : '';
       html+=`<tr>
         <td style="color:var(--text-dim)">${e.id}</td>
-        <td><b>${e.name}</b></td>
+        <td><b>${e.name}</b>${rBadge}</td>
         <td style="color:var(--text-dim)">${e.username}</td>
         <td>${whCell}</td>
         <td>${jrBadge}</td>
@@ -6230,6 +6362,7 @@ async function loadEmployees(){
         <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
         <td><div class="act-btns">
           <button class="act-btn edit" onclick="openEmpModal(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ تعديل</button>
+          <button class="act-btn" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="openEmpRating(${e.id}, '${String(e.name||'').replace(/'/g,"\\'")}')">⭐ تقييم</button>
           <button class="act-btn toggle" onclick="toggleEmployee(${e.id},${e.is_active})">${e.is_active?'🔕 تعطيل':'✅ تفعيل'}</button>
           <button class="act-btn del" onclick="deleteEmployee(${e.id},'${e.name}')">🗑️ حذف</button>
         </div></td>
