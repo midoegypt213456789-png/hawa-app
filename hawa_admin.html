@@ -6152,40 +6152,60 @@ async function renderEmpRating(){
   try{
     const [cr, rr] = await Promise.all([
       fetch(`${SB}/rest/v1/employee_rating_criteria?select=*&is_active=eq.true&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()),
-      fetch(`${SB}/rest/v1/employee_ratings?select=criteria_id,score,note&employee_id=eq.${_ratingEmpId}`,{headers:HDR}).then(r=>r.json())
+      fetch(`${SB}/rest/v1/employee_client_ratings?select=criteria_id,client_id,score&employee_id=eq.${_ratingEmpId}`,{headers:HDR}).then(r=>r.json())
     ]);
     _ratingCriteria = Array.isArray(cr)?cr:[];
-    const scores = {};
-    for(const r of (Array.isArray(rr)?rr:[])) scores[r.criteria_id] = r;
+    const ratings = Array.isArray(rr)?rr:[];
+    const raters = new Set(ratings.map(r=>r.client_id)).size;
+
+    // متوسط لكل معيار
+    const agg = {};
+    for(const r of ratings){
+      if(!agg[r.criteria_id]) agg[r.criteria_id] = { sum:0, n:0 };
+      agg[r.criteria_id].sum += Number(r.score)||0;
+      agg[r.criteria_id].n++;
+    }
 
     let rows = '';
     if(!_ratingCriteria.length){
-      rows = '<div style="color:var(--text-dim);font-size:13px;padding:14px;text-align:center">مفيش معايير لسه — ضيف أول معيار من تحت 👇</div>';
+      rows = '<div style="color:var(--text-dim);font-size:13px;padding:14px;text-align:center">مفيش معايير لسه — ضيف أول معيار من تحت 👇<br>التجار هيقيّموا عليها من البوت بعد كل محادثة</div>';
     } else {
       rows = _ratingCriteria.map(c=>{
-        const cur = scores[c.id] ? Number(scores[c.id].score) : '';
-        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px 14px">
-          <div style="flex:1;font-size:14px;color:var(--text)">${escAttr(c.name)} <span style="color:var(--text-dim);font-size:11px">(من ${c.max_score})</span></div>
-          <input type="number" min="0" max="${c.max_score}" step="0.5" value="${cur}" data-crit="${c.id}" data-max="${c.max_score}"
-                 class="emp-rate-input" style="width:80px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:16px;padding:6px 10px;text-align:center">
-          <button onclick="removeCriteria(${c.id})" title="حذف المعيار من النظام" style="background:none;border:none;color:var(--error);cursor:pointer;font-size:15px">🗑️</button>
+        const a = agg[c.id];
+        const avg = a ? (a.sum/a.n) : null;
+        const pct = avg!=null ? Math.round((avg/(Number(c.max_score)||10))*100) : 0;
+        const barColor = pct>=75 ? 'var(--success)' : pct>=45 ? 'var(--gold)' : 'var(--error)';
+        const scoreTxt = avg!=null
+          ? `<b style="color:${barColor}">${avg.toFixed(1)}</b><span style="color:var(--text-dim);font-size:11px">/${c.max_score} (${a.n} تقييم)</span>`
+          : '<span style="color:var(--text-dim);font-size:11px">مفيش تقييمات لسه</span>';
+        return `<div style="margin-bottom:12px;background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px 14px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <div style="font-size:14px;color:var(--text)">${escAttr(c.name)}</div>
+            <div style="display:flex;align-items:center;gap:8px">${scoreTxt}
+              <button onclick="removeCriteria(${c.id})" title="حذف المعيار من النظام" style="background:none;border:none;color:var(--error);cursor:pointer;font-size:14px">🗑️</button>
+            </div>
+          </div>
+          <div style="height:7px;background:#1E1E1E;border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px"></div>
+          </div>
         </div>`;
       }).join('');
     }
 
     box.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h3 style="margin:0;color:var(--gold);font-size:18px">⭐ تقييم: ${escAttr(_ratingEmpName)}</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <h3 style="margin:0;color:var(--gold);font-size:18px">⭐ تقييم التجار: ${escAttr(_ratingEmpName)}</h3>
         <button onclick="closeEmpRating()" style="background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer">✕</button>
       </div>
+      <div style="color:var(--text-dim);font-size:12px;margin-bottom:14px">👥 عدد التجار اللى قيّموا: <b style="color:var(--gold)">${raters}</b> — التقييم بييجى من البوت بعد نهاية كل محادثة</div>
       ${rows}
-      <div style="display:flex;gap:8px;margin:16px 0 6px 0">
+      <div style="border-top:1px solid var(--border);margin:16px 0 10px 0;padding-top:12px;color:var(--gold);font-size:13px;font-weight:700">⚙️ معايير التقييم (عامة لكل الموظفين)</div>
+      <div style="display:flex;gap:8px;margin:0 0 6px 0">
         <input id="new-crit-name" placeholder="معيار جديد (مثلاً: سرعة الرد)" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px 12px">
-        <input id="new-crit-max" type="number" min="1" value="10" title="الدرجة القصوى" style="width:70px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px;text-align:center">
+        <input id="new-crit-max" type="number" min="1" max="10" value="5" title="الدرجة القصوى (لحد 10)" style="width:70px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px;text-align:center">
         <button onclick="addCriteria()" style="background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.5);color:var(--success);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700">+ إضافة</button>
       </div>
-      <div style="color:var(--text-dim);font-size:11px;margin-bottom:14px">المعايير عامة لكل الموظفين — الإضافة والحذف بيطبّقوا على النظام كله</div>
-      <button onclick="saveEmpRating()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:10px;padding:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo">💾 حفظ التقييم</button>`;
+      <div style="color:var(--text-dim);font-size:11px">الإضافة والحذف بيطبّقوا على البوت فورًا — التاجر بيقيّم على المعايير النشطة بس</div>`;
   }catch(e){
     box.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل — حاول تانى</div>';
   }
@@ -6233,7 +6253,7 @@ async function saveEmpRating(){
 // متوسط التقييم لعرضه فى جدول الموظفين
 async function fetchEmpRatingAverages(){
   try{
-    const rows = await fetch(`${SB}/rest/v1/employee_ratings?select=employee_id,score,criteria_id`,{headers:HDR}).then(r=>r.json());
+    const rows = await fetch(`${SB}/rest/v1/employee_client_ratings?select=employee_id,score,criteria_id`,{headers:HDR}).then(r=>r.json());
     const crits = await fetch(`${SB}/rest/v1/employee_rating_criteria?select=id,max_score&is_active=eq.true`,{headers:HDR}).then(r=>r.json());
     const maxMap = {}; for(const c of (crits||[])) maxMap[c.id] = Number(c.max_score)||10;
     const agg = {};
