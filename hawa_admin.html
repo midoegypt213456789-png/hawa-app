@@ -3004,6 +3004,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="page-hd">
         <div class="page-title">💬 <span>محادثات التجار</span></div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="loadChat()">🔄 تحديث</button>
+        <button class="add-btn" style="background:rgba(74,144,217,0.12);border:1.5px solid rgba(74,144,217,0.4);color:#4A90D9" onclick="openKnowledgeBase()">🤖 قاعدة المعرفة</button>
       </div>
       <div style="display:flex;gap:14px;height:calc(100vh - 200px);min-height:480px">
         <!-- قائمة المحادثات -->
@@ -3028,6 +3029,50 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           </div>
         </div>
       </div>
+    </div>
+
+    <div class="section" id="sec-bulletins">
+      <div class="page-hd">
+        <div class="page-title">📄 <span>المنشورات (الكتب الدورية)</span></div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="loadBulletins()">🔄 تحديث</button>
+      </div>
+
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
+        <div style="color:var(--gold);font-weight:800;margin-bottom:12px;font-size:15px">➕ إضافة منشور جديد</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <input id="bl-title" placeholder="اسم المنشور (مثلاً: الكتاب الدورى ١٥ لسنة ٢٠٢٦)" style="flex:2;min-width:220px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+          <input id="bl-no" placeholder="رقم الكتاب" style="width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+          <select id="bl-type" style="width:150px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+            <option value="شاسيه">🔢 أرقام شاسيه</option>
+            <option value="ماتور">⚙️ أرقام ماتور</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <label style="flex:1;min-width:220px;background:var(--dark3);border:2px dashed rgba(74,144,217,0.4);border-radius:10px;padding:14px;cursor:pointer;text-align:center">
+            <div style="color:#4A90D9;font-weight:700;font-size:13px;margin-bottom:4px">🔢 تبويب الأرقام</div>
+            <div id="bl-numbers-name" style="color:var(--text-dim);font-size:11px">اضغط لاختيار PDF أرقام الشاسيه/الماتور</div>
+            <input type="file" id="bl-numbers" accept="application/pdf" style="display:none" onchange="document.getElementById('bl-numbers-name').textContent=this.files[0]?('📎 '+this.files[0].name):'اضغط لاختيار PDF'">
+          </label>
+          <label style="flex:1;min-width:220px;background:var(--dark3);border:2px dashed rgba(76,175,125,0.4);border-radius:10px;padding:14px;cursor:pointer;text-align:center">
+            <div style="color:var(--success);font-weight:700;font-size:13px;margin-bottom:4px">📑 تبويب الموافقات</div>
+            <div id="bl-approvals-name" style="color:var(--text-dim);font-size:11px">اضغط لاختيار PDF موافقات التنمية والمرور</div>
+            <input type="file" id="bl-approvals" accept="application/pdf" style="display:none" onchange="document.getElementById('bl-approvals-name').textContent=this.files[0]?('📎 '+this.files[0].name):'اضغط لاختيار PDF'">
+          </label>
+        </div>
+        <div id="bl-progress" style="display:none;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:10px;color:var(--gold);font-size:13px"></div>
+        <button id="bl-save" onclick="saveBulletin()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo">💾 حفظ وفهرسة المنشور</button>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:8px">⚙️ الفهرسة بتقرا كل صفحة فى ملف الأرقام وتجهزها منفصلة — التاجر يكتب رقمه فى البوت تطلعله <b>صفحته بس</b> + ملف الموافقات جاهزين للطباعة</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+          <div style="color:var(--gold);font-size:13px;font-weight:700;flex-shrink:0">🔎 وضع بحث التجار:</div>
+          <select id="bl-search-mode" onchange="saveBulletinSearchMode()" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:7px 10px">
+            <option value="smart">🧠 ذكى — تطابق تام الأول، ولو ملقاش يدور بـ«يحتوى على» (موصى به)</option>
+            <option value="exact">🎯 تطابق تام بس — الرقم لازم يتكتب كامل زى الملف</option>
+            <option value="contains">🔍 يحتوى على بس — أى جزء من الرقم يجيب النتيجة</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="bl-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
 
     <div class="section" id="sec-feedback">
@@ -4842,6 +4887,7 @@ function autoRefreshTick(){
     if(sec==='bookings' && typeof loadBookings === 'function') loadBookings();
     else if(sec==='permit-alerts' && typeof loadPermitAlerts === 'function') loadPermitAlerts();
     else if(sec==='employees' && typeof loadEmployees === 'function') loadEmployees();
+    else if(sec==='bulletins' && typeof loadBulletins === 'function') loadBulletins();
     else if(sec==='clients' && typeof loadClients === 'function') loadClients();
     else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
     else if(sec==='extra-contacts' && typeof loadExtraContacts === 'function') loadExtraContacts();
@@ -4978,6 +5024,7 @@ function goTo(sec){
   else if(sec==='broadcast-logs')loadBroadcastLogs();
   else if(sec==='feedback')loadFeedback();
   else if(sec==='chat')loadChat();
+  else if(sec==='bulletins')loadBulletins();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='vehicle-types')loadVehicleTypes();
@@ -6122,6 +6169,331 @@ function renderBookingsTable(data){
 }
 
 // =================== EMPLOYEES ===================
+// ═══════════════════════════════════════════════════════════
+// 📄 المنشورات (الكتب الدورية) — فهرسة + تقطيع + استعلام
+// ═══════════════════════════════════════════════════════════
+function _bDigits(s){
+  return String(s||'')
+    .replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+    .replace(/[۰-۹]/g,d=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))
+    .toUpperCase();
+}
+// كلمات مفصولة بمسافات (للتطابق التام) — مع مسافة فى الأول والآخر
+function bNormTokens(s){
+  return ' ' + _bDigits(s).replace(/[^A-Z0-9]+/g,' ').trim() + ' ';
+}
+// مضغوط من غير أى فواصل (لـ«يحتوى على»)
+function bNorm(s){
+  return _bDigits(s).replace(/[^A-Z0-9]/g,'');
+}
+
+let _blLibsReady = null;
+function ensureBulletinLibs(){
+  if(_blLibsReady) return _blLibsReady;
+  _blLibsReady = new Promise((resolve,reject)=>{
+    let need = 2;
+    const done = ()=>{ if(--need===0){
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve();
+    }};
+    const s1 = document.createElement('script');
+    s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s1.onload = done; s1.onerror = ()=>reject(new Error('pdfjs load failed'));
+    const s2 = document.createElement('script');
+    s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    s2.onload = done; s2.onerror = ()=>reject(new Error('pdflib load failed'));
+    document.head.appendChild(s1); document.head.appendChild(s2);
+  });
+  return _blLibsReady;
+}
+
+function blProgress(msg){
+  const p = document.getElementById('bl-progress');
+  if(!p) return;
+  p.style.display = 'block';
+  p.textContent = msg;
+}
+
+async function blUploadStorage(path, blob, mime){
+  const r = await fetch(`${SB}/storage/v1/object/bulletins/${path}`,{
+    method:'POST',
+    headers:{...HDR,'Content-Type':mime,'x-upsert':'true'},
+    body: blob
+  });
+  if(!r.ok) throw new Error('فشل رفع '+path);
+  return `${SB}/storage/v1/object/public/bulletins/${path}`;
+}
+
+async function saveBulletin(){
+  const title = (document.getElementById('bl-title').value||'').trim();
+  const bno = (document.getElementById('bl-no').value||'').trim();
+  const type = document.getElementById('bl-type').value;
+  const fNum = document.getElementById('bl-numbers').files[0];
+  const fApp = document.getElementById('bl-approvals').files[0];
+  if(!title){ alert('اكتب اسم المنشور'); return; }
+  if(!fNum){ alert('اختار ملف الأرقام (PDF)'); return; }
+  if(!fApp){ alert('اختار ملف الموافقات (PDF)'); return; }
+
+  const btn = document.getElementById('bl-save');
+  btn.disabled = true; btn.textContent = '⏳ شغالين...';
+  try{
+    blProgress('⏳ تحميل مكتبات معالجة الـ PDF...');
+    await ensureBulletinLibs();
+
+    // 1) سجل المنشور وخد الـ id
+    blProgress('⏳ تسجيل المنشور...');
+    const ins = await fetch(`${SB}/rest/v1/bulletins`,{
+      method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=representation'},
+      body: JSON.stringify({ title, bulletin_no: bno, number_type: type })
+    }).then(r=>r.json());
+    const bid = ins && ins[0] && ins[0].id;
+    if(!bid) throw new Error('فشل تسجيل المنشور');
+
+    // 2) ارفع ملف الموافقات + ملف الأرقام الكامل
+    blProgress('⏳ رفع ملف الموافقات...');
+    const appUrl = await blUploadStorage(`b${bid}_approvals.pdf`, fApp, 'application/pdf');
+    blProgress('⏳ رفع ملف الأرقام الكامل...');
+    const numBuf = await fNum.arrayBuffer();
+    const numUrl = await blUploadStorage(`b${bid}_numbers.pdf`, new Blob([numBuf],{type:'application/pdf'}), 'application/pdf');
+
+    // 3) اقرا النصوص + قطّع صفحة صفحة
+    blProgress('⏳ قراءة الصفحات...');
+    const pdfDoc = await pdfjsLib.getDocument({ data: numBuf.slice(0) }).promise;
+    const srcLib = await PDFLib.PDFDocument.load(numBuf);
+    const total = pdfDoc.numPages;
+    const rows = [];
+    for(let i=1;i<=total;i++){
+      blProgress(`⏳ فهرسة وتجهيز صفحة ${i} من ${total}...`);
+      // نص الصفحة
+      let txt = '';
+      try{
+        const page = await pdfDoc.getPage(i);
+        const tc = await page.getTextContent();
+        txt = tc.items.map(it=>it.str).join(' ');
+      }catch(e){}
+      // PDF الصفحة الواحدة
+      const nd = await PDFLib.PDFDocument.create();
+      const [pg] = await nd.copyPages(srcLib, [i-1]);
+      nd.addPage(pg);
+      const bytes = await nd.save();
+      const pageUrl = await blUploadStorage(`b${bid}_p${i}.pdf`, new Blob([bytes],{type:'application/pdf'}), 'application/pdf');
+      rows.push({ bulletin_id: bid, page_no: i, text_norm: bNormTokens(txt), text_compact: bNorm(txt), pdf_url: pageUrl });
+    }
+
+    // 4) سجل الفهرس (دفعات)
+    blProgress('⏳ حفظ الفهرس...');
+    for(let i=0;i<rows.length;i+=40){
+      const chunk = rows.slice(i,i+40);
+      const r = await fetch(`${SB}/rest/v1/bulletin_pages`,{
+        method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body: JSON.stringify(chunk)
+      });
+      if(!r.ok) throw new Error('فشل حفظ الفهرس');
+    }
+
+    // 5) كمّل بيانات المنشور
+    await fetch(`${SB}/rest/v1/bulletins?id=eq.${bid}`,{
+      method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ numbers_url: numUrl, approvals_url: appUrl, pages_count: total })
+    });
+
+    // تحقق سريع: كام صفحة فيها نص فعلاً؟
+    const withText = rows.filter(r=>r.text_compact.length>10).length;
+    blProgress(`✅ تم! ${total} صفحة اتفهرست واترفعت.` + (withText < total ? ` ⚠️ ${total-withText} صفحة طلعت من غير نص (غالبًا سكان/صورة) — الأرقام فيها مش هتتلقى بالبحث.` : ''));
+    document.getElementById('bl-title').value=''; document.getElementById('bl-no').value='';
+    document.getElementById('bl-numbers').value=''; document.getElementById('bl-approvals').value='';
+    document.getElementById('bl-numbers-name').textContent='اضغط لاختيار PDF أرقام الشاسيه/الماتور';
+    document.getElementById('bl-approvals-name').textContent='اضغط لاختيار PDF موافقات التنمية والمرور';
+    loadBulletins();
+  }catch(e){
+    blProgress('❌ '+(e.message||'حصل خطأ')+' — حاول تانى');
+  }
+  btn.disabled = false; btn.textContent = '💾 حفظ وفهرسة المنشور';
+}
+
+async function loadBulletinSearchMode(){
+  try{
+    const r = await fetch(`${SB}/rest/v1/app_settings?select=value&key=eq.bulletin_search_mode&limit=1`,{headers:HDR}).then(x=>x.json());
+    const v = (Array.isArray(r)&&r[0]&&r[0].value)||'smart';
+    const sel = document.getElementById('bl-search-mode');
+    if(sel) sel.value = ['smart','exact','contains'].includes(v)?v:'smart';
+  }catch(e){}
+}
+async function saveBulletinSearchMode(){
+  const v = document.getElementById('bl-search-mode').value;
+  await fetch(`${SB}/rest/v1/app_settings?key=eq.bulletin_search_mode`,{
+    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify({ value: v })
+  });
+}
+
+async function loadBulletins(){
+  loadBulletinSearchMode();
+  const el = document.getElementById('bl-list');
+  if(!el) return;
+  el.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const rows = await fetch(`${SB}/rest/v1/bulletins?select=*&is_active=eq.true&order=created_at.desc`,{headers:HDR}).then(r=>r.json());
+    const bl = Array.isArray(rows)?rows:[];
+    if(!bl.length){ el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:24px">مفيش منشورات لسه — ضيف أول منشور من فوق 👆</div>'; return; }
+    let html = `<table><thead><tr><th>#</th><th>المنشور</th><th>رقم الكتاب</th><th>النوع</th><th>الصفحات</th><th>الملفات</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
+    for(const b of bl){
+      const typeBadge = b.number_type==='ماتور' ? '<span class="badge sadat">⚙️ ماتور</span>' : '<span class="badge qalyub">🔢 شاسيه</span>';
+      html += `<tr>
+        <td style="color:var(--text-dim)">${b.id}</td>
+        <td><b>${escAttr(b.title)}</b></td>
+        <td>${escAttr(b.bulletin_no||'—')}</td>
+        <td>${typeBadge}</td>
+        <td>${b.pages_count}</td>
+        <td>
+          ${b.numbers_url?`<a href="${b.numbers_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الأرقام</a>`:''}
+          ${b.approvals_url?` &nbsp;<a href="${b.approvals_url}" target="_blank" style="color:var(--success);font-size:12px;text-decoration:none">📑 الموافقات</a>`:''}
+        </td>
+        <td style="color:var(--text-dim);font-size:12px">${(typeof fmtDate==='function') ? fmtDate(b.created_at) : new Date(b.created_at).toLocaleDateString('ar-EG')}</td>
+        <td><button class="act-btn delete" onclick="deleteBulletin(${b.id})">🗑️ حذف</button></td>
+      </tr>`;
+    }
+    el.innerHTML = html + '</tbody></table>';
+  }catch(e){
+    el.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل</div>';
+  }
+}
+
+async function deleteBulletin(id){
+  if(!confirm('حذف المنشور ده؟ التجار مش هيلاقوه فى الاستعلام تانى.')) return;
+  await fetch(`${SB}/rest/v1/bulletins?id=eq.${id}`,{
+    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify({ is_active:false })
+  });
+  loadBulletins();
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🤖 قاعدة معرفة المساعد الذكى — سؤال/إجابة + مفتاح الـ AI
+// ═══════════════════════════════════════════════════════════
+let _kbEditId = null;
+
+async function openKnowledgeBase(){
+  let overlay = document.getElementById('kb-overlay');
+  if(!overlay){
+    overlay = document.createElement('div');
+    overlay.id = 'kb-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+    overlay.innerHTML = '<div id="kb-box" style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:22px"></div>';
+    overlay.addEventListener('click', ev=>{ if(ev.target===overlay) closeKnowledgeBase(); });
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+  document.getElementById('kb-box').innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  await renderKnowledgeBase();
+}
+function closeKnowledgeBase(){
+  const o = document.getElementById('kb-overlay');
+  if(o) o.style.display = 'none';
+  _kbEditId = null;
+}
+
+async function renderKnowledgeBase(){
+  const box = document.getElementById('kb-box');
+  try{
+    const [rows, keyRow] = await Promise.all([
+      fetch(`${SB}/rest/v1/bot_knowledge?select=*&is_active=eq.true&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/app_settings?select=value&key=eq.ai_api_key&limit=1`,{headers:HDR}).then(r=>r.json())
+    ]);
+    const kb = Array.isArray(rows)?rows:[];
+    const hasKey = !!(Array.isArray(keyRow) && keyRow[0] && String(keyRow[0].value||'').trim());
+
+    const list = kb.length ? kb.map(k=>`
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:700;color:var(--gold)">س: ${escAttr(k.question)}</div>
+            <div style="font-size:12px;color:var(--text);margin-top:4px;white-space:pre-wrap">ج: ${escAttr(k.answer)}</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0">
+            <button onclick='kbEdit(${JSON.stringify(k).replace(/'/g,"&#39;")})' style="background:none;border:none;color:#4A90D9;cursor:pointer;font-size:14px" title="تعديل">✏️</button>
+            <button onclick="kbDelete(${k.id})" style="background:none;border:none;color:var(--error);cursor:pointer;font-size:14px" title="حذف">🗑️</button>
+          </div>
+        </div>
+      </div>`).join('') : '<div style="color:var(--text-dim);font-size:13px;padding:14px;text-align:center">مفيش أسئلة لسه — ضيف أول سؤال وإجابته من تحت 👇</div>';
+
+    box.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 style="margin:0;color:var(--gold);font-size:18px">🤖 قاعدة معرفة المساعد الذكى</h3>
+        <button onclick="closeKnowledgeBase()" style="background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer">✕</button>
+      </div>
+      <div style="color:var(--text-dim);font-size:12px;margin-bottom:14px">المساعد بيجاوب التجار <b>حصريًا</b> من الأسئلة دى — أى تعديل بيسرى على البوت فورًا (${kb.length} سؤال)</div>
+      ${list}
+      <div style="border-top:1px solid var(--border);margin:16px 0 10px 0;padding-top:12px;color:var(--gold);font-size:13px;font-weight:700" id="kb-form-title">➕ إضافة سؤال جديد</div>
+      <input id="kb-q" placeholder="السؤال (مثلاً: مواعيد التحميل إيه؟)" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px;margin-bottom:8px">
+      <textarea id="kb-a" placeholder="الإجابة الكاملة اللى المساعد هيقولها..." rows="3" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px;margin-bottom:8px;font-family:Cairo;resize:vertical"></textarea>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button onclick="kbSave()" style="flex:1;background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.5);color:var(--success);border-radius:8px;padding:9px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo" id="kb-save-btn">💾 إضافة</button>
+        <button onclick="kbCancelEdit()" id="kb-cancel-btn" style="display:none;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text-dim);border-radius:8px;padding:9px 14px;cursor:pointer;font-size:13px;font-family:Cairo">إلغاء</button>
+      </div>
+      <div style="border-top:1px solid var(--border);padding-top:12px">
+        <div style="color:var(--gold);font-size:13px;font-weight:700;margin-bottom:6px">🔑 مفتاح Claude API ${hasKey?'<span style="color:var(--success);font-size:11px">(متسجل ✅)</span>':'<span style="color:var(--error);font-size:11px">(مش متسجل ❌ — المساعد مش هيشتغل من غيره)</span>'}</div>
+        <div style="display:flex;gap:8px">
+          <input id="kb-key" type="password" placeholder="${hasKey?'••••••••  (اكتب مفتاح جديد لو عاوز تغيّره)':'sk-ant-api03-...'}" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:8px 12px;direction:ltr">
+          <button onclick="kbSaveKey()" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.5);color:var(--gold);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo">حفظ</button>
+        </div>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:5px">بتجيبه من console.anthropic.com → API Keys — والمفتاح بيتحفظ فى القاعدة مش فى الصفحة</div>
+      </div>`;
+  }catch(e){
+    box.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل — حاول تانى</div>';
+  }
+}
+
+function kbEdit(k){
+  _kbEditId = k.id;
+  document.getElementById('kb-q').value = k.question;
+  document.getElementById('kb-a').value = k.answer;
+  document.getElementById('kb-form-title').textContent = '✏️ تعديل السؤال #' + k.id;
+  document.getElementById('kb-save-btn').textContent = '💾 حفظ التعديل';
+  document.getElementById('kb-cancel-btn').style.display = 'inline-block';
+  document.getElementById('kb-q').scrollIntoView({behavior:'smooth'});
+}
+function kbCancelEdit(){ _kbEditId = null; renderKnowledgeBase(); }
+
+async function kbSave(){
+  const q = (document.getElementById('kb-q').value||'').trim();
+  const a = (document.getElementById('kb-a').value||'').trim();
+  if(!q || !a){ alert('اكتب السؤال والإجابة الاتنين'); return; }
+  if(_kbEditId){
+    await fetch(`${SB}/rest/v1/bot_knowledge?id=eq.${_kbEditId}`,{
+      method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ question:q, answer:a })
+    });
+  } else {
+    await fetch(`${SB}/rest/v1/bot_knowledge`,{
+      method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ question:q, answer:a })
+    });
+  }
+  _kbEditId = null;
+  await renderKnowledgeBase();
+}
+
+async function kbDelete(id){
+  if(!confirm('حذف السؤال ده من قاعدة المعرفة؟')) return;
+  await fetch(`${SB}/rest/v1/bot_knowledge?id=eq.${id}`,{
+    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify({ is_active:false })
+  });
+  await renderKnowledgeBase();
+}
+
+async function kbSaveKey(){
+  const v = (document.getElementById('kb-key').value||'').trim();
+  if(!v){ alert('الصق المفتاح الأول'); return; }
+  const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.ai_api_key`,{
+    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+    body: JSON.stringify({ value: v })
+  });
+  if(r.ok){ alert('✅ اتحفظ المفتاح — المساعد الذكى اشتغل'); renderKnowledgeBase(); }
+  else alert('⚠️ حصل خطأ فى الحفظ');
+}
+
 // ═══════════════════════════════════════════════════════════
 // ⭐ نظام تقييم الموظفين — معايير قابلة للزيادة والنقصان
 // ═══════════════════════════════════════════════════════════
@@ -13827,6 +14199,7 @@ const NAV_META = {
   'feedback':         { icon: '💬',  label: 'الشكاوى والاقتراحات', badge: { id: 'feedbackBadge', cls: 'pending-badge' } },
   'chat':             { icon: '💬',  label: 'محادثات التجار', badge: { id: 'chatBadge', cls: 'pending-badge' } },
   'templates':        { icon: '💌',  label: 'الرسائل المحفوظة' },
+  'bulletins':        { icon: '📄',  label: 'المنشورات' },
 
   'employees':        { icon: '👷',  label: 'الموظفين' },
   'roles':            { icon: '🔑',  label: 'الوظائف والصلاحيات' },
@@ -13844,7 +14217,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
   categories: [
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
-    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
+    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'bulletins', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
