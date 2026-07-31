@@ -6398,10 +6398,10 @@ async function renderKnowledgeBase(){
   try{
     const [rows, keyRow] = await Promise.all([
       fetch(`${SB}/rest/v1/bot_knowledge?select=*&is_active=eq.true&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()),
-      fetch(`${SB}/rest/v1/app_settings?select=value&key=eq.ai_api_key&limit=1`,{headers:HDR}).then(r=>r.json())
+      fetch(`${SB}/rest/v1/rpc/admin_ai_key_status`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}).then(r=>r.json()).catch(()=>null)
     ]);
     const kb = Array.isArray(rows)?rows:[];
-    const hasKey = !!(Array.isArray(keyRow) && keyRow[0] && String(keyRow[0].value||'').trim());
+    const hasKey = !!(keyRow && keyRow.success && keyRow.is_set);
 
     const list = kb.length ? kb.map(k=>`
       <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px">
@@ -6486,12 +6486,13 @@ async function kbDelete(id){
 async function kbSaveKey(){
   const v = (document.getElementById('kb-key').value||'').trim();
   if(!v){ alert('الصق المفتاح الأول'); return; }
-  const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.ai_api_key`,{
-    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body: JSON.stringify({ value: v })
-  });
-  if(r.ok){ alert('✅ اتحفظ المفتاح — المساعد الذكى اشتغل'); renderKnowledgeBase(); }
-  else alert('⚠️ حصل خطأ فى الحفظ');
+  // 🔐 بيتحفظ فى خزنة مقفولة عبر جلسة الأدمن — مش فى أى جدول مكشوف
+  const r = await fetch(`${SB}/rest/v1/rpc/admin_set_ai_key`,{
+    method:'POST', headers:{...HDR,'Content-Type':'application/json'},
+    body: JSON.stringify({ p_token: SESSION_TOKEN, p_key: v })
+  }).then(x=>x.json()).catch(()=>null);
+  if(r && r.success){ alert('✅ اتحفظ المفتاح فى الخزنة الآمنة — المساعد الذكى اشتغل'); renderKnowledgeBase(); }
+  else alert('⚠️ حصل خطأ فى الحفظ — اتأكد إنك مسجل دخول كأدمن');
 }
 
 // ═══════════════════════════════════════════════════════════
