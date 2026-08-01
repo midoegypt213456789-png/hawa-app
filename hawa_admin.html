@@ -6403,6 +6403,8 @@ async function renderKnowledgeBase(){
     const kb = Array.isArray(rows)?rows:[];
     const hasKey = !!(keyRow && keyRow.success && keyRow.is_set);
     const hasVoiceKey = !!(keyRow && keyRow.success && keyRow.openai_set);
+    const hasEL = !!(keyRow && keyRow.success && keyRow.elevenlabs_set);
+    const elVoice = (keyRow && keyRow.elevenlabs_voice) || '';
 
     const list = kb.length ? kb.map(k=>`
       <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px">
@@ -6446,7 +6448,18 @@ async function renderKnowledgeBase(){
           <input id="kb-voice-key" type="password" placeholder="${hasVoiceKey?'••••••••  (اكتب مفتاح جديد لو عاوز تغيّره)':'sk-proj-...'}" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:8px 12px;direction:ltr">
           <button onclick="kbSaveVoiceKey()" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.5);color:var(--gold);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo">حفظ</button>
         </div>
-        <div style="color:var(--text-dim);font-size:11px;margin-top:5px">بتجيبه من platform.openai.com → API Keys — بيشغّل: التاجر يبعت 🎤 فويس والمساعد يرد فويس</div>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:5px">بتجيبه من platform.openai.com → API Keys — احتياطى للصوت + فهم الفويس</div>
+      </div>
+      <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px">
+        <div style="color:var(--gold);font-size:13px;font-weight:700;margin-bottom:6px">🎙️ ElevenLabs — الصوت البشرى الطبيعى ${hasEL?'<span style="color:var(--success);font-size:11px">(متسجل ✅ — هو اللى بيتكلم دلوقتى)</span>':'<span style="color:var(--text-dim);font-size:11px">(موصى بيه — أفضل صوت مصرى)</span>'}</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="kb-el-key" type="password" placeholder="${hasEL?'••••••••  (مفتاح جديد لو عاوز تغيّره)':'مفتاح ElevenLabs (xi-api-key)'}" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:8px 12px;direction:ltr">
+        </div>
+        <div style="display:flex;gap:8px">
+          <input id="kb-el-voice" placeholder="Voice ID (اختيارى — سيبها فاضية للصوت الافتراضى)" value="${escAttr(elVoice)}" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:8px 12px;direction:ltr">
+          <button onclick="kbSaveEL()" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.5);color:var(--gold);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo">حفظ</button>
+        </div>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:5px">من elevenlabs.io → Profile → API Keys. والـ Voice ID من صفحة الصوت اللى عاجبك فى Voice Library (اختار صوت عربى/مصرى) — لو اتسجل، هو اللى هيرد على التجار</div>
       </div>`;
   }catch(e){
     box.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل — حاول تانى</div>';
@@ -6490,6 +6503,18 @@ async function kbDelete(id){
     body: JSON.stringify({ is_active:false })
   });
   await renderKnowledgeBase();
+}
+
+async function kbSaveEL(){
+  const k = (document.getElementById('kb-el-key').value||'').trim();
+  const v = (document.getElementById('kb-el-voice').value||'').trim();
+  if(!k && !v){ alert('اكتب المفتاح أو الـ Voice ID الأول'); return; }
+  const r = await fetch(`${SB}/rest/v1/rpc/admin_set_elevenlabs`,{
+    method:'POST', headers:{...HDR,'Content-Type':'application/json'},
+    body: JSON.stringify({ p_token: SESSION_TOKEN, p_key: k || null, p_voice_id: v || null })
+  }).then(x=>x.json()).catch(()=>null);
+  if(r && r.success){ alert('✅ اتحفظ — الصوت البشرى اشتغل 🎙️'); renderKnowledgeBase(); }
+  else alert('⚠️ حصل خطأ — اتأكد إنك مسجل دخول كأدمن');
 }
 
 async function kbSaveVoiceKey(){
