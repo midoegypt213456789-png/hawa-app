@@ -6286,12 +6286,26 @@ async function saveBulletin(){
     const rows = [];
     for(let i=1;i<=total;i++){
       blProgress(`⏳ فهرسة وتجهيز صفحة ${i} من ${total}...`);
-      // نص الصفحة
+      // نص الصفحة + إحداثيات الأرقام (للتظليل وقت الاستعلام 🖍️)
       let txt = '';
+      const toks = [];
       try{
         const page = await pdfDoc.getPage(i);
         const tc = await page.getTextContent();
         txt = tc.items.map(it=>it.str).join(' ');
+        for(const it of tc.items){
+          const nrm = bNorm(it.str||'');
+          if(nrm.length>=4 && /\d/.test(nrm) && it.width>0){
+            toks.push({
+              t: nrm,
+              x: +it.transform[4].toFixed(1),
+              y: +it.transform[5].toFixed(1),
+              w: +it.width.toFixed(1),
+              h: +((it.height||Math.abs(it.transform[3])||10)).toFixed(1)
+            });
+            if(toks.length>=900) break;
+          }
+        }
       }catch(e){}
       // PDF الصفحة الواحدة
       const nd = await PDFLib.PDFDocument.create();
@@ -6299,7 +6313,7 @@ async function saveBulletin(){
       nd.addPage(pg);
       const bytes = await nd.save();
       const pageUrl = await blUploadStorage(`b${bid}_p${i}.pdf`, new Blob([bytes],{type:'application/pdf'}), 'application/pdf');
-      rows.push({ bulletin_id: bid, page_no: i, text_norm: bNormTokens(txt), text_compact: bNorm(txt), pdf_url: pageUrl });
+      rows.push({ bulletin_id: bid, page_no: i, text_norm: bNormTokens(txt), text_compact: bNorm(txt), pdf_url: pageUrl, tokens: toks.length ? toks : null });
     }
 
     // 4) سجل الفهرس (دفعات)
@@ -6371,7 +6385,7 @@ async function loadBulletins(){
           ${b.numbers_url?`<a href="${b.numbers_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الأرقام</a>`:''}
           ${b.approvals_url?` &nbsp;<a href="${b.approvals_url}" target="_blank" style="color:var(--success);font-size:12px;text-decoration:none">📑 الموافقات</a>`:''}
         </td>
-        <td style="color:var(--text-dim);font-size:12px">${(typeof fmtDate==='function') ? fmtDate(b.created_at) : new Date(b.created_at).toLocaleDateString('ar-EG')}</td>
+        <td style="color:var(--text-dim);font-size:12px">${new Date(b.created_at).toLocaleDateString('ar-EG')}</td>
         <td><button class="act-btn delete" onclick="deleteBulletin(${b.id})">🗑️ حذف</button></td>
       </tr>`;
     }
