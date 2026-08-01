@@ -6396,10 +6396,12 @@ function closeKnowledgeBase(){
 async function renderKnowledgeBase(){
   const box = document.getElementById('kb-box');
   try{
-    const [rows, keyRow] = await Promise.all([
+    const [rows, keyRow, genderRow] = await Promise.all([
       fetch(`${SB}/rest/v1/bot_knowledge?select=*&is_active=eq.true&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()),
-      fetch(`${SB}/rest/v1/rpc/admin_ai_key_status`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}).then(r=>r.json()).catch(()=>null)
+      fetch(`${SB}/rest/v1/rpc/admin_ai_key_status`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}).then(r=>r.json()).catch(()=>null),
+      fetch(`${SB}/rest/v1/app_settings?select=value&key=eq.ai_gender&limit=1`,{headers:HDR}).then(r=>r.json()).catch(()=>null)
     ]);
+    const aiGender = (Array.isArray(genderRow) && genderRow[0] && genderRow[0].value === 'male') ? 'male' : 'female';
     const kb = Array.isArray(rows)?rows:[];
     const hasKey = !!(keyRow && keyRow.success && keyRow.is_set);
     const hasVoiceKey = !!(keyRow && keyRow.success && keyRow.openai_set);
@@ -6460,6 +6462,12 @@ async function renderKnowledgeBase(){
           <button onclick="kbSaveEL()" style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.5);color:var(--gold);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo">حفظ</button>
         </div>
         <div style="color:var(--text-dim);font-size:11px;margin-top:5px">من elevenlabs.io → Profile → API Keys. والـ Voice ID من صفحة الصوت اللى عاجبك فى Voice Library (اختار صوت عربى/مصرى) — لو اتسجل، هو اللى هيرد على التجار</div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="color:var(--text);font-size:13px;font-weight:700">نوع شخصية المساعد:</span>
+          <button id="kb-gender-f" onclick="kbSetGender('female')" style="border-radius:8px;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo;background:${aiGender==='female'?'rgba(201,168,76,0.2)':'var(--dark3)'};border:2px solid ${aiGender==='female'?'var(--gold)':'var(--border)'};color:${aiGender==='female'?'var(--gold)':'var(--text-dim)'}">🚺 ست</button>
+          <button id="kb-gender-m" onclick="kbSetGender('male')" style="border-radius:8px;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo;background:${aiGender==='male'?'rgba(201,168,76,0.2)':'var(--dark3)'};border:2px solid ${aiGender==='male'?'var(--gold)':'var(--border)'};color:${aiGender==='male'?'var(--gold)':'var(--text-dim)'}">🚹 راجل</button>
+          <span style="color:var(--text-dim);font-size:11px">اختار على حسب الصوت اللى مسجله فوق — لو Voice ID لست اختار «ست» فتتكلم بالمؤنث (هبعتلك، آسفة)، ولو لراجل اختار «راجل»</span>
+        </div>
       </div>`;
   }catch(e){
     box.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل — حاول تانى</div>';
@@ -6503,6 +6511,23 @@ async function kbDelete(id){
     body: JSON.stringify({ is_active:false })
   });
   await renderKnowledgeBase();
+}
+
+async function kbSetGender(g){
+  const r = await fetch(`${SB}/rest/v1/app_settings?key=eq.ai_gender`,{
+    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=representation'},
+    body: JSON.stringify({ value: g })
+  }).then(x=>x.json()).catch(()=>null);
+  if(Array.isArray(r) && r.length){ renderKnowledgeBase(); }
+  else{
+    // لو الـ row مش موجود لأى سبب — نضيفه
+    const ins = await fetch(`${SB}/rest/v1/app_settings`,{
+      method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=representation'},
+      body: JSON.stringify({ key:'ai_gender', value: g })
+    }).then(x=>x.json()).catch(()=>null);
+    if(Array.isArray(ins) && ins.length) renderKnowledgeBase();
+    else alert('⚠️ حصل خطأ فى الحفظ — حاول تانى');
+  }
 }
 
 async function kbSaveEL(){
