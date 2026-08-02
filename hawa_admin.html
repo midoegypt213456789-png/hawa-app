@@ -2437,6 +2437,16 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   padding:60px 20px;text-align:center;color:var(--text-dim);
 }
 
+
+/* 📄 تبويبات صفحة المنشورات */
+.bl-tabs{display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.bl-tab{background:transparent;border:1px solid transparent;color:var(--text-dim);font-family:Cairo;
+  font-size:14px;font-weight:800;padding:10px 18px;cursor:pointer;border-radius:10px 10px 0 0;
+  transition:.15s;position:relative;top:1px}
+.bl-tab:hover{color:var(--text);background:rgba(201,168,76,0.06)}
+.bl-tab.active{color:var(--gold);background:var(--dark2);border-color:var(--border);border-bottom-color:var(--dark2)}
+.bl-tab-count{display:inline-block;background:rgba(201,168,76,0.18);color:var(--gold);border-radius:20px;
+  font-size:11px;padding:1px 8px;margin-right:5px;font-weight:800}
 </style>
 </head>
 <body>
@@ -3033,10 +3043,47 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
     <div class="section" id="sec-bulletins">
       <div class="page-hd">
-        <div class="page-title">📄 <span>المنشورات (الكتب الدورية)</span></div>
-        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="loadBulletins()">🔄 تحديث</button>
+        <div class="page-hd-titles">
+          <div class="page-title">📄 <span>المنشورات (الكتب الدورية)</span></div>
+          <div class="page-sub">الكتاب الدورى الواحد = منشور فيه كذا نوع — كل نوع ليه ملف شاسيهات وملف مواتير</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="loadBulletins()">🔄 تحديث</button>
+          <button class="add-btn" onclick="blTab('add')">➕ إضافة منشور جديد</button>
+        </div>
       </div>
 
+      <div class="bl-tabs">
+        <button class="bl-tab active" id="bl-tab-list" onclick="blTab('list')">📄 المنشورات <span class="bl-tab-count" id="bl-tab-count">0</span></button>
+        <button class="bl-tab" id="bl-tab-add" onclick="blTab('add')">➕ إضافة منشور جديد</button>
+      </div>
+
+      <div id="bl-pane-list">
+        <div class="tbl-wrap scrollable">
+          <div class="tbl-filters">
+            <input class="filter-inp" id="bl-search" type="text" placeholder="🔍 اكتب للبحث..." oninput="filterBulletins()" style="width:220px">
+            <select class="filter-inp" id="bl-search-field" onchange="filterBulletins()" style="width:150px">
+              <option value="all">🔎 كل البيانات</option>
+              <option value="title">اسم المنشور</option>
+              <option value="no">رقم الكتاب</option>
+              <option value="type">اسم النوع</option>
+            </select>
+            <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('bl-search').value='';filterBulletins()">✖️ مسح</button>
+            <div style="flex:1;min-width:10px"></div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="color:var(--gold);font-size:12px;font-weight:700;white-space:nowrap">🔎 وضع بحث التجار:</div>
+              <select id="bl-search-mode" onchange="saveBulletinSearchMode()" class="filter-inp" style="width:260px">
+                <option value="smart">🧠 ذكى — تطابق تام الأول ثم «يحتوى على»</option>
+                <option value="exact">🎯 تطابق تام بس</option>
+                <option value="contains">🔍 يحتوى على بس</option>
+              </select>
+            </div>
+          </div>
+          <div id="bl-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+        </div>
+      </div>
+
+      <div id="bl-pane-add" style="display:none">
       <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;position:relative;z-index:5">
         <div style="color:var(--gold);font-weight:800;margin-bottom:12px;font-size:15px">➕ إضافة منشور جديد</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
@@ -3054,21 +3101,11 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div style="color:var(--gold);font-weight:800;font-size:14px;margin:14px 0 8px">🚚 أنواع الكتاب — كل نوع ليه ملف شاسيهات وملف مواتير</div>
         <div id="bl-groups"></div>
         <button type="button" onclick="blAddGroup()" style="width:100%;background:transparent;border:2px dashed rgba(201,168,76,0.45);color:var(--gold);border-radius:10px;padding:11px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo;margin-bottom:12px">➕ إضافة نوع تانى</button>
-        </div>
         <div id="bl-progress" style="display:none;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:10px;color:var(--gold);font-size:13px"></div>
         <button id="bl-save" onclick="saveBulletin()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo">💾 حفظ وفهرسة المنشور</button>
         <div style="color:var(--text-dim);font-size:11px;margin-top:8px">⚡ الحفظ بيرفع الملفات بس فى ثوانى — <b>الفهرسة كلها بتحصل فى الخلفية على السيرفر</b> من غير ما تستنى. الكتاب الدورى الواحد = منشور واحد فيه كذا نوع، كل نوع ليه ملف شاسيهات وملف مواتير. التاجر يكتب أى رقم والبوت يطلعله <b>صفحته بس</b> مع تظليل الرقم بالأصفر 🖍️ + ملف الموافقات</div>
-        <div style="display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
-          <div style="color:var(--gold);font-size:13px;font-weight:700;flex-shrink:0">🔎 وضع بحث التجار:</div>
-          <select id="bl-search-mode" onchange="saveBulletinSearchMode()" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:7px 10px">
-            <option value="smart">🧠 ذكى — تطابق تام الأول، ولو ملقاش يدور بـ«يحتوى على» (موصى به)</option>
-            <option value="exact">🎯 تطابق تام بس — الرقم لازم يتكتب كامل زى الملف</option>
-            <option value="contains">🔍 يحتوى على بس — أى جزء من الرقم يجيب النتيجة</option>
-          </select>
-        </div>
       </div>
-
-      <div id="bl-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
     </div>
 
     <div class="section" id="sec-feedback">
@@ -3948,6 +3985,32 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="modal-btns">
       <button class="modal-save" onclick="ppPrint()">🖨️ طباعة</button>
       <button class="modal-cancel" onclick="closeModal('printPickerModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✏️ BULLETIN EDIT MODAL -->
+<div class="modal-overlay" id="blEditModal">
+  <div class="modal" style="max-width:560px;width:95%">
+    <div class="modal-title">
+      <span>✏️ تعديل المنشور</span>
+      <button class="modal-close" onclick="closeModal('blEditModal')">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px">تقدر تعدل اسم المنشور ورقم الكتاب وأسماء الأنواع، وتستبدل ملف الموافقات. <b style="color:var(--gold)">ملفات الأرقام نفسها متتغيرش من هنا</b> — لو عايز تغيرها احذف المنشور وارفعه من جديد.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <input id="bl-ed-title" placeholder="اسم المنشور" style="flex:2;min-width:200px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+      <input id="bl-ed-no" placeholder="رقم الكتاب" style="width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+    </div>
+    <div style="color:var(--gold);font-weight:800;font-size:13px;margin-bottom:8px">🚚 أنواع الكتاب</div>
+    <div id="bl-ed-groups" style="max-height:300px;overflow-y:auto;margin-bottom:12px"></div>
+    <label style="display:block;background:var(--dark3);border:2px dashed rgba(76,175,125,0.4);border-radius:10px;padding:12px;cursor:pointer;text-align:center;margin-bottom:6px">
+      <div style="color:var(--success);font-weight:700;font-size:13px;margin-bottom:4px">📑 استبدال ملف الموافقات (اختيارى)</div>
+      <div id="bl-ed-appr-name" style="color:var(--text-dim);font-size:11px">اختار PDF جديد بس لو عايز تستبدله</div>
+      <input type="file" id="bl-ed-appr" accept="application/pdf" style="display:none" onchange="document.getElementById('bl-ed-appr-name').textContent=this.files[0]?('📎 '+this.files[0].name):'اختار PDF جديد بس لو عايز تستبدله'">
+    </label>
+    <div class="modal-btns">
+      <button class="modal-save" id="bl-ed-save" onclick="saveBulletinEdit()">💾 حفظ التعديلات</button>
+      <button class="modal-cancel" onclick="closeModal('blEditModal')">إلغاء</button>
     </div>
   </div>
 </div>
@@ -6344,6 +6407,7 @@ async function saveBulletin(){
     document.getElementById('bl-approvals').value='';
     document.getElementById('bl-approvals-name').textContent='اضغط لاختيار PDF موافقات التنمية والمرور';
     document.getElementById('bl-groups').innerHTML=''; blAddGroup();
+    try{ blTab('list'); }catch(e){}
     loadBulletins();
   }catch(e){
     blProgress('❌ '+(e.message||'حصل خطأ')+' — حاول تانى');
@@ -6367,74 +6431,193 @@ async function saveBulletinSearchMode(){
   });
 }
 
+let _blRows = [];
+let _blProg = {};
+let _blEditId = null;
+
+// 📑 تبديل تبويبات صفحة المنشورات
+function blTab(which){
+  const paneL = document.getElementById('bl-pane-list');
+  const paneA = document.getElementById('bl-pane-add');
+  const tabL  = document.getElementById('bl-tab-list');
+  const tabA  = document.getElementById('bl-tab-add');
+  if(!paneL || !paneA) return;
+  const isAdd = (which === 'add');
+  paneL.style.display = isAdd ? 'none' : 'block';
+  paneA.style.display = isAdd ? 'block' : 'none';
+  if(tabL) tabL.classList.toggle('active', !isAdd);
+  if(tabA) tabA.classList.toggle('active', isAdd);
+  if(isAdd){
+    try{ const gc = document.getElementById('bl-groups'); if(gc && !gc.children.length) blAddGroup(); }catch(e){}
+  }
+}
+
 async function loadBulletins(){
   loadBulletinSearchMode();
-  try{ const gc = document.getElementById('bl-groups'); if(gc && !gc.children.length) blAddGroup(); }catch(e){}
   const el = document.getElementById('bl-list');
   if(!el) return;
   el.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
     const rows = await fetch(`${SB}/rest/v1/bulletins?select=*&is_active=eq.true&order=created_at.desc`,{headers:HDR}).then(r=>r.json());
-    const bl = Array.isArray(rows)?rows:[];
-    if(!bl.length){ el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:24px">مفيش منشورات لسه — ضيف أول منشور من فوق 👆</div>'; return; }
+    _blRows = Array.isArray(rows)?rows:[];
     // عدّاد التقدم للمنشورات اللى لسه بتتفهرس
-    const prog = {};
-    for(const b of bl){
+    _blProg = {};
+    for(const b of _blRows){
       if(b.status === 'indexing'){
         try{
           const pr = await fetch(`${SB}/rest/v1/bulletin_pages?select=id&bulletin_id=eq.${b.id}`,{headers:{...HDR,'Prefer':'count=exact','Range':'0-0'}});
           const cr = pr.headers.get('content-range')||'';
-          const m = cr.match(/\/(\d+)/); prog[b.id] = m ? Number(m[1]) : 0;
-        }catch(e){ prog[b.id] = 0; }
+          const m = cr.match(/\/(\d+)/); _blProg[b.id] = m ? Number(m[1]) : 0;
+        }catch(e){ _blProg[b.id] = 0; }
       }
     }
-    let html = `<table><thead><tr><th>#</th><th>المنشور</th><th>رقم الكتاب</th><th>النوع</th><th>الحالة</th><th>الصفحات</th><th>الملفات</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
-    for(const b of bl){
-      const typeBadge = b.number_type==='شاسيه + ماتور' ? '<span class="badge qalyub">🔢 شاسيه</span> <span class="badge sadat">⚙️ ماتور</span>'
-        : (b.number_type==='ماتور' ? '<span class="badge sadat">⚙️ ماتور</span>' : '<span class="badge qalyub">🔢 شاسيه</span>');
-      const gArr = Array.isArray(b.groups) ? b.groups : [];
-      const gCount = gArr.length;
-      const gLabel = gCount ? `<div style="color:var(--text-dim);font-size:11px;margin-top:4px">📦 ${gCount} ${gCount===1?'نوع':'أنواع'}</div>` : '';
-      const gPages = (g)=>({ ch: Number(g.chassis_pages||g.chassis_total||0), mo: Number(g.motor_pages||g.motor_total||0) });
-      const gName  = (g,gi)=> g && g.name ? escAttr(g.name) : ('نوع '+(gi+1));
-      html += `<tr>
-        <td style="color:var(--text-dim)">${b.id}</td>
-        <td><b>${escAttr(b.title)}</b></td>
-        <td>${escAttr(b.bulletin_no||'—')}</td>
-        <td>${typeBadge}${gLabel}</td>
-        <td>${b.status==='indexing'
-          ? `<span style="color:var(--gold);font-size:12px;font-weight:700">⏳ بيتفهرس — ${prog[b.id]||0} صفحة</span><br><button class="act-btn" style="margin-top:4px;font-size:11px" onclick="resumeBulletinIndex(${b.id})">▶️ استكمال</button>`
-          : (String(b.status||'').startsWith('error')
-            ? `<span style="color:var(--error);font-size:12px" title="${escAttr(b.status)}">❌ خطأ</span> <button class="act-btn" style="font-size:11px" onclick="resumeBulletinIndex(${b.id},true)">🔁 إعادة</button>`
-            : '<span style="color:var(--success);font-size:12px;font-weight:700">✅ جاهز</span>')}</td>
-        <td>${gCount
-          ? `<div style="font-size:12px;line-height:1.8">${gArr.map((g,gi)=>{
-                const p = gPages(g);
-                const parts = [];
-                if(p.ch) parts.push(`<b style="color:#4A90D9">🔢 ${p.ch}</b>`);
-                if(p.mo) parts.push(`<b style="color:var(--gold)">⚙️ ${p.mo}</b>`);
-                return `<div style="white-space:nowrap"><span style="color:var(--text-dim)">${gName(g,gi)}:</span> ${parts.join(' + ')||'—'}</div>`;
-              }).join('')}<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px;font-weight:800;font-size:12px;white-space:nowrap">📄 الإجمالى: ${b.pages_count||0} صفحة</div></div>`
-          : ((b.chassis_pages||b.motor_pages)?[(b.chassis_pages?`🔢 ${b.chassis_pages}`:''),(b.motor_pages?`⚙️ ${b.motor_pages}`:'')].filter(Boolean).join(' + '):b.pages_count)}</td>
-        <td>
-          ${gCount
-            ? gArr.map((g,gi)=>{
-                const links = [];
-                if(g.chassis_url) links.push(`<a href="${g.chassis_url}" target="_blank" style="color:#4A90D9;text-decoration:none">🔢 شاسيهات</a>`);
-                if(g.motor_url) links.push(`<a href="${g.motor_url}" target="_blank" style="color:var(--gold);text-decoration:none">⚙️ مواتير</a>`);
-                return `<div style="font-size:12px;white-space:nowrap;line-height:1.8"><span style="color:var(--text-dim)">${gName(g,gi)}:</span> ${links.join(' &nbsp;')||'—'}</div>`;
-              }).join('')
-            : `${b.chassis_url?`<a href="${b.chassis_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الشاسيهات</a>`:(b.numbers_url&&!b.motor_url?`<a href="${b.numbers_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الأرقام</a>`:'')}
-          ${b.motor_url?` &nbsp;<a href="${b.motor_url}" target="_blank" style="color:var(--gold);font-size:12px;text-decoration:none">⚙️ المواتير</a>`:''}`}
-          ${b.approvals_url?` &nbsp;<a href="${b.approvals_url}" target="_blank" style="color:var(--success);font-size:12px;text-decoration:none">📑 الموافقات</a>`:''}
-        </td>
-        <td style="color:var(--text-dim);font-size:12px">${new Date(b.created_at).toLocaleDateString('ar-EG')}</td>
-        <td><button class="act-btn delete" onclick="deleteBulletin(${b.id})">🗑️ حذف</button></td>
-      </tr>`;
-    }
-    el.innerHTML = '<div style="max-height:65vh;overflow:auto;border:1px solid var(--border);border-radius:12px;position:relative;z-index:1">' + html + '</tbody></table></div>';
+    renderBulletins();
   }catch(e){
     el.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل</div>';
+  }
+}
+
+function filterBulletins(){ renderBulletins(); }
+
+function renderBulletins(){
+  const el = document.getElementById('bl-list');
+  if(!el) return;
+  const prog = _blProg || {};
+  const qEl = document.getElementById('bl-search');
+  const fEl = document.getElementById('bl-search-field');
+  const q  = (qEl ? qEl.value : '').trim().toLowerCase();
+  const fld = fEl ? fEl.value : 'all';
+  const gNames = (b)=> (Array.isArray(b.groups)?b.groups:[]).map(g=>String(g&&g.name||'')).join(' ').toLowerCase();
+  const bl = (_blRows||[]).filter(b=>{
+    if(!q) return true;
+    const t = String(b.title||'').toLowerCase();
+    const n = String(b.bulletin_no||'').toLowerCase();
+    if(fld==='title') return t.includes(q);
+    if(fld==='no')    return n.includes(q);
+    if(fld==='type')  return gNames(b).includes(q);
+    return t.includes(q) || n.includes(q) || gNames(b).includes(q) || String(b.id)===q;
+  });
+
+  const cnt = document.getElementById('bl-tab-count');
+  if(cnt) cnt.textContent = (_blRows||[]).length;
+
+  if(!(_blRows||[]).length){
+    el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:24px">مفيش منشورات لسه — اضغط «➕ إضافة منشور جديد» 👆</div>';
+    return;
+  }
+  if(!bl.length){
+    el.innerHTML = `<div style="color:var(--text-dim);text-align:center;padding:24px">🔍 مفيش منشور بيطابق «<b style="color:var(--gold)">${escAttr(q)}</b>»</div>`;
+    return;
+  }
+
+  let html = `<table><thead><tr><th>#</th><th>المنشور</th><th>رقم الكتاب</th><th>النوع</th><th>الحالة</th><th>الصفحات</th><th>الملفات</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
+  for(const b of bl){
+    const typeBadge = b.number_type==='شاسيه + ماتور' ? '<span class="badge qalyub">🔢 شاسيه</span> <span class="badge sadat">⚙️ ماتور</span>'
+      : (b.number_type==='ماتور' ? '<span class="badge sadat">⚙️ ماتور</span>' : '<span class="badge qalyub">🔢 شاسيه</span>');
+    const gArr   = Array.isArray(b.groups) ? b.groups : [];
+    const gCount = gArr.length;
+    const gLabel = gCount ? `<div style="color:var(--text-dim);font-size:11px;margin-top:4px">📦 ${gCount} ${gCount===1?'نوع':'أنواع'}</div>` : '';
+    const gPages = (g)=>({ ch: Number(g.chassis_pages||g.chassis_total||0), mo: Number(g.motor_pages||g.motor_total||0) });
+    const gName  = (g,gi)=> g && g.name ? escAttr(g.name) : ('نوع '+(gi+1));
+    html += `<tr>
+      <td style="color:var(--text-dim)">${b.id}</td>
+      <td><b>${escAttr(b.title)}</b></td>
+      <td>${escAttr(b.bulletin_no||'—')}</td>
+      <td>${typeBadge}${gLabel}</td>
+      <td>${b.status==='indexing'
+        ? `<span style="color:var(--gold);font-size:12px;font-weight:700">⏳ بيتفهرس — ${prog[b.id]||0} صفحة</span><br><button class="act-btn" style="margin-top:4px;font-size:11px" onclick="resumeBulletinIndex(${b.id})">▶️ استكمال</button>`
+        : (String(b.status||'').startsWith('error')
+          ? `<span style="color:var(--error);font-size:12px" title="${escAttr(b.status)}">❌ خطأ</span> <button class="act-btn" style="font-size:11px" onclick="resumeBulletinIndex(${b.id},true)">🔁 إعادة</button>`
+          : '<span style="color:var(--success);font-size:12px;font-weight:700">✅ جاهز</span>')}</td>
+      <td>${gCount
+        ? `<div style="font-size:12px;line-height:1.8">${gArr.map((g,gi)=>{
+              const pg = gPages(g); const parts = [];
+              if(pg.ch) parts.push(`<b style="color:#4A90D9">🔢 ${pg.ch}</b>`);
+              if(pg.mo) parts.push(`<b style="color:var(--gold)">⚙️ ${pg.mo}</b>`);
+              return `<div style="white-space:nowrap"><span style="color:var(--text-dim)">${gName(g,gi)}:</span> ${parts.join(' + ')||'—'}</div>`;
+            }).join('')}<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px;font-weight:800;font-size:12px;white-space:nowrap">📄 الإجمالى: ${b.pages_count||0} صفحة</div></div>`
+        : ((b.chassis_pages||b.motor_pages)?[(b.chassis_pages?`🔢 ${b.chassis_pages}`:''),(b.motor_pages?`⚙️ ${b.motor_pages}`:'')].filter(Boolean).join(' + '):b.pages_count)}</td>
+      <td>
+        ${gCount
+          ? gArr.map((g,gi)=>{
+              const links = [];
+              if(g.chassis_url) links.push(`<a href="${g.chassis_url}" target="_blank" style="color:#4A90D9;text-decoration:none">🔢 شاسيهات</a>`);
+              if(g.motor_url) links.push(`<a href="${g.motor_url}" target="_blank" style="color:var(--gold);text-decoration:none">⚙️ مواتير</a>`);
+              return `<div style="font-size:12px;white-space:nowrap;line-height:1.8"><span style="color:var(--text-dim)">${gName(g,gi)}:</span> ${links.join(' &nbsp;')||'—'}</div>`;
+            }).join('')
+          : `${b.chassis_url?`<a href="${b.chassis_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الشاسيهات</a>`:(b.numbers_url&&!b.motor_url?`<a href="${b.numbers_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الأرقام</a>`:'')}
+        ${b.motor_url?` &nbsp;<a href="${b.motor_url}" target="_blank" style="color:var(--gold);font-size:12px;text-decoration:none">⚙️ المواتير</a>`:''}`}
+        ${b.approvals_url?`<div style="margin-top:3px"><a href="${b.approvals_url}" target="_blank" style="color:var(--success);font-size:12px;text-decoration:none">📑 الموافقات</a></div>`:''}
+      </td>
+      <td style="color:var(--text-dim);font-size:12px">${new Date(b.created_at).toLocaleDateString('ar-EG')}</td>
+      <td style="white-space:nowrap">
+        <button class="act-btn edit" onclick="openBulletinEdit(${b.id})">✏️ تعديل</button>
+        <button class="act-btn delete" onclick="deleteBulletin(${b.id})">🗑️ حذف</button>
+      </td>
+    </tr>`;
+  }
+  el.innerHTML = '<div style="max-height:65vh;overflow:auto;border:1px solid var(--border);border-radius:12px;position:relative;z-index:1">' + html + '</tbody></table></div>';
+}
+
+// ✏️ تعديل منشور — الاسم ورقم الكتاب وأسماء الأنواع واستبدال ملف الموافقات
+function openBulletinEdit(id){
+  const b = (_blRows||[]).find(x=>Number(x.id)===Number(id));
+  if(!b){ alert('المنشور مش موجود — اضغط 🔄 تحديث'); return; }
+  _blEditId = b.id;
+  document.getElementById('bl-ed-title').value = b.title || '';
+  document.getElementById('bl-ed-no').value    = b.bulletin_no || '';
+  document.getElementById('bl-ed-appr-name').textContent = 'الملف الحالى محفوظ — اختار PDF جديد بس لو عايز تستبدله';
+  document.getElementById('bl-ed-appr').value = '';
+  const gArr = Array.isArray(b.groups) ? b.groups : [];
+  const box = document.getElementById('bl-ed-groups');
+  box.innerHTML = gArr.length ? gArr.map((g,gi)=>{
+    const ch = Number(g.chassis_pages||g.chassis_total||0), mo = Number(g.motor_pages||g.motor_total||0);
+    return `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:800;white-space:nowrap">🚚 نوع ${gi+1}</div>
+        <input class="bl-ed-gname" data-gi="${gi}" value="${escAttr(g.name||'')}" placeholder="اسم النوع (مثلاً: VIGOREY 3 150سم موديل 2026)" style="flex:1;min-width:0;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:8px 10px">
+      </div>
+      <div style="color:var(--text-dim);font-size:11px">🔢 ${ch} صفحة شاسيهات &nbsp;•&nbsp; ⚙️ ${mo} صفحة مواتير</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--text-dim);font-size:12px">مفيش أنواع مسجلة للمنشور ده</div>';
+  document.getElementById('blEditModal').classList.add('show');
+}
+
+async function saveBulletinEdit(){
+  if(!_blEditId) return;
+  const title = (document.getElementById('bl-ed-title').value||'').trim();
+  if(!title){ alert('اكتب اسم المنشور'); return; }
+  const btn = document.getElementById('bl-ed-save');
+  btn.disabled = true; btn.textContent = '⏳ بنحفظ...';
+  try{
+    const b = (_blRows||[]).find(x=>Number(x.id)===Number(_blEditId)) || {};
+    const groups = (Array.isArray(b.groups)?b.groups:[]).map(g=>Object.assign({}, g));
+    document.querySelectorAll('#bl-ed-groups .bl-ed-gname').forEach(inp=>{
+      const gi = Number(inp.dataset.gi);
+      if(groups[gi]) groups[gi].name = (inp.value||'').trim() || null;
+    });
+    const body = {
+      title,
+      bulletin_no: (document.getElementById('bl-ed-no').value||'').trim(),
+      groups
+    };
+    const f = document.getElementById('bl-ed-appr').files[0];
+    if(f){
+      btn.textContent = '⏳ بنرفع الموافقات...';
+      body.approvals_url = await blUploadStorage(`b${_blEditId}_approvals.pdf`, f, 'application/pdf') + '?v=' + Date.now();
+    }
+    const r = await fetch(`${SB}/rest/v1/bulletins?id=eq.${_blEditId}`,{
+      method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error('فشل الحفظ');
+    closeModal('blEditModal');
+    _blEditId = null;
+    loadBulletins();
+  }catch(e){
+    alert('⚠️ ' + (e.message||'حصل خطأ — حاول تانى'));
+  }finally{
+    btn.disabled = false; btn.textContent = '💾 حفظ التعديلات';
   }
 }
 
@@ -6457,12 +6640,15 @@ async function resumeBulletinIndex(id, isRetry){
 }
 
 async function deleteBulletin(id){
-  if(!confirm('حذف المنشور ده؟ التجار مش هيلاقوه فى الاستعلام تانى.')) return;
-  await fetch(`${SB}/rest/v1/bulletins?id=eq.${id}`,{
-    method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
-    body: JSON.stringify({ is_active:false })
+  const b = (_blRows||[]).find(x=>Number(x.id)===Number(id));
+  const nm = b ? (b.title||('#'+id)) : ('#'+id);
+  showConfirm('🗑️','حذف المنشور','هتحذف «'+nm+'» — التجار مش هيلاقوه فى الاستعلام تانى. تكمل؟',true, async()=>{
+    await fetch(`${SB}/rest/v1/bulletins?id=eq.${id}`,{
+      method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify({ is_active:false })
+    });
+    loadBulletins();
   });
-  loadBulletins();
 }
 
 // ═══════════════════════════════════════════════════════════
