@@ -6392,25 +6392,37 @@ async function loadBulletins(){
     for(const b of bl){
       const typeBadge = b.number_type==='شاسيه + ماتور' ? '<span class="badge qalyub">🔢 شاسيه</span> <span class="badge sadat">⚙️ ماتور</span>'
         : (b.number_type==='ماتور' ? '<span class="badge sadat">⚙️ ماتور</span>' : '<span class="badge qalyub">🔢 شاسيه</span>');
+      const gArr = Array.isArray(b.groups) ? b.groups : [];
+      const gCount = gArr.length;
+      const gLabel = gCount ? `<div style="color:var(--text-dim);font-size:11px;margin-top:4px">📦 ${gCount} ${gCount===1?'نوع':'أنواع'}</div>` : '';
+      const gPages = (g)=>({ ch: Number(g.chassis_pages||g.chassis_total||0), mo: Number(g.motor_pages||g.motor_total||0) });
+      const gName  = (g,gi)=> g && g.name ? escAttr(g.name) : ('نوع '+(gi+1));
       html += `<tr>
         <td style="color:var(--text-dim)">${b.id}</td>
         <td><b>${escAttr(b.title)}</b></td>
         <td>${escAttr(b.bulletin_no||'—')}</td>
-        <td>${typeBadge}</td>
+        <td>${typeBadge}${gLabel}</td>
         <td>${b.status==='indexing'
           ? `<span style="color:var(--gold);font-size:12px;font-weight:700">⏳ بيتفهرس — ${prog[b.id]||0} صفحة</span><br><button class="act-btn" style="margin-top:4px;font-size:11px" onclick="resumeBulletinIndex(${b.id})">▶️ استكمال</button>`
           : (String(b.status||'').startsWith('error')
             ? `<span style="color:var(--error);font-size:12px" title="${escAttr(b.status)}">❌ خطأ</span> <button class="act-btn" style="font-size:11px" onclick="resumeBulletinIndex(${b.id},true)">🔁 إعادة</button>`
             : '<span style="color:var(--success);font-size:12px;font-weight:700">✅ جاهز</span>')}</td>
-        <td>${(b.chassis_pages||b.motor_pages)?[(b.chassis_pages?`🔢 ${b.chassis_pages}`:''),(b.motor_pages?`⚙️ ${b.motor_pages}`:'')].filter(Boolean).join(' + '):b.pages_count}</td>
+        <td>${gCount
+          ? `<div style="font-size:12px;line-height:1.8">${gArr.map((g,gi)=>{
+                const p = gPages(g);
+                const parts = [];
+                if(p.ch) parts.push(`<b style="color:#4A90D9">🔢 ${p.ch}</b>`);
+                if(p.mo) parts.push(`<b style="color:var(--gold)">⚙️ ${p.mo}</b>`);
+                return `<div style="white-space:nowrap"><span style="color:var(--text-dim)">${gName(g,gi)}:</span> ${parts.join(' + ')||'—'}</div>`;
+              }).join('')}<div style="border-top:1px solid var(--border);margin-top:5px;padding-top:5px;font-weight:800;font-size:12px;white-space:nowrap">📄 الإجمالى: ${b.pages_count||0} صفحة</div></div>`
+          : ((b.chassis_pages||b.motor_pages)?[(b.chassis_pages?`🔢 ${b.chassis_pages}`:''),(b.motor_pages?`⚙️ ${b.motor_pages}`:'')].filter(Boolean).join(' + '):b.pages_count)}</td>
         <td>
-          ${Array.isArray(b.groups)&&b.groups.length
-            ? b.groups.map((g,gi)=>{
-                const nm = g.name ? escAttr(g.name) : ('نوع '+(gi+1));
+          ${gCount
+            ? gArr.map((g,gi)=>{
                 const links = [];
-                if(g.chassis_url) links.push(`<a href="${g.chassis_url}" target="_blank" style="color:#4A90D9;text-decoration:none">🔢</a>`);
-                if(g.motor_url) links.push(`<a href="${g.motor_url}" target="_blank" style="color:var(--gold);text-decoration:none">⚙️</a>`);
-                return `<div style="font-size:12px;white-space:nowrap">${nm}: ${links.join(' ')}</div>`;
+                if(g.chassis_url) links.push(`<a href="${g.chassis_url}" target="_blank" style="color:#4A90D9;text-decoration:none">🔢 شاسيهات</a>`);
+                if(g.motor_url) links.push(`<a href="${g.motor_url}" target="_blank" style="color:var(--gold);text-decoration:none">⚙️ مواتير</a>`);
+                return `<div style="font-size:12px;white-space:nowrap;line-height:1.8"><span style="color:var(--text-dim)">${gName(g,gi)}:</span> ${links.join(' &nbsp;')||'—'}</div>`;
               }).join('')
             : `${b.chassis_url?`<a href="${b.chassis_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الشاسيهات</a>`:(b.numbers_url&&!b.motor_url?`<a href="${b.numbers_url}" target="_blank" style="color:#4A90D9;font-size:12px;text-decoration:none">🔢 الأرقام</a>`:'')}
           ${b.motor_url?` &nbsp;<a href="${b.motor_url}" target="_blank" style="color:var(--gold);font-size:12px;text-decoration:none">⚙️ المواتير</a>`:''}`}
