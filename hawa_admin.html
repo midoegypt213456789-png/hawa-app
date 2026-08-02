@@ -3037,7 +3037,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="loadBulletins()">🔄 تحديث</button>
       </div>
 
-      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px">
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:16px;position:relative;z-index:5">
         <div style="color:var(--gold);font-weight:800;margin-bottom:12px;font-size:15px">➕ إضافة منشور جديد</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
           <input id="bl-title" placeholder="اسم المنشور (مثلاً: الكتاب الدورى ١٥ لسنة ٢٠٢٦)" style="flex:2;min-width:220px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
@@ -6420,7 +6420,7 @@ async function loadBulletins(){
         <td><button class="act-btn delete" onclick="deleteBulletin(${b.id})">🗑️ حذف</button></td>
       </tr>`;
     }
-    el.innerHTML = html + '</tbody></table>';
+    el.innerHTML = '<div style="max-height:65vh;overflow:auto;border:1px solid var(--border);border-radius:12px;position:relative;z-index:1">' + html + '</tbody></table></div>';
   }catch(e){
     el.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل</div>';
   }
