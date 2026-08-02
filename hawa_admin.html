@@ -3057,7 +3057,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         </div>
         <div id="bl-progress" style="display:none;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:10px;color:var(--gold);font-size:13px"></div>
         <button id="bl-save" onclick="saveBulletin()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo">💾 حفظ وفهرسة المنشور</button>
-        <div style="color:var(--text-dim);font-size:11px;margin-top:8px">⚙️ الكتاب الدورى الواحد = منشور واحد فيه ملف الشاسيهات + ملف المواتير (واحد منهم على الأقل). التاجر يكتب أى رقم (شاسيه أو ماتور) والبوت يطلعله <b>صفحته بس</b> من الملف بتاعه مع تظليل الرقم بالأصفر 🖍️ + ملف الموافقات</div>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:8px">⚡ الحفظ بيرفع الملفات بس فى ثوانى — <b>الفهرسة كلها بتحصل فى الخلفية على السيرفر</b> من غير ما تستنى. الكتاب الدورى الواحد = منشور واحد فيه كذا نوع، كل نوع ليه ملف شاسيهات وملف مواتير. التاجر يكتب أى رقم والبوت يطلعله <b>صفحته بس</b> مع تظليل الرقم بالأصفر 🖍️ + ملف الموافقات</div>
         <div style="display:flex;align-items:center;gap:10px;margin-top:12px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
           <div style="color:var(--gold);font-size:13px;font-weight:700;flex-shrink:0">🔎 وضع بحث التجار:</div>
           <select id="bl-search-mode" onchange="saveBulletinSearchMode()" style="flex:1;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:7px 10px">
@@ -6253,19 +6253,20 @@ function blAddGroup(){
   row.dataset.g = n;
   row.style.cssText = 'background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px';
   row.innerHTML = `
-    <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-      <input id="bl-g${n}-name" placeholder="اسم النوع (اختيارى — مثلاً: VIGOREY 3 150سم موديل 2026)" style="flex:1;min-width:200px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:8px 12px">
-      <button type="button" onclick="this.closest('.bl-group-row').remove()" style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.4);color:var(--error);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo">🗑️ شيل النوع</button>
+    <div style="display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;margin-bottom:10px">
+      <div style="background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.4);color:var(--gold);border-radius:8px;padding:7px 12px;font-size:12px;font-weight:800;white-space:nowrap">🚚 نوع</div>
+      <input id="bl-g${n}-name" placeholder="اسم النوع (اختيارى — مثلاً: VIGOREY 3 150سم موديل 2026)" style="width:100%;min-width:0;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 12px;box-sizing:border-box">
+      <button type="button" onclick="this.closest('.bl-group-row').remove()" style="background:rgba(224,85,85,0.12);border:1px solid rgba(224,85,85,0.4);color:var(--error);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:Cairo;white-space:nowrap">🗑️ شيل النوع</button>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <label style="flex:1;min-width:190px;background:var(--dark2);border:2px dashed rgba(74,144,217,0.4);border-radius:10px;padding:12px;cursor:pointer;text-align:center">
-        <div style="color:#4A90D9;font-weight:700;font-size:13px;margin-bottom:4px">🔢 ملف الشاسيهات</div>
-        <div id="bl-g${n}-ch-name" style="color:var(--text-dim);font-size:11px">اضغط لاختيار PDF</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <label style="min-width:0;background:var(--dark2);border:2px dashed rgba(74,144,217,0.4);border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;box-sizing:border-box">
+        <div style="color:#4A90D9;font-weight:700;font-size:13px;margin-bottom:5px">🔢 ملف الشاسيهات</div>
+        <div id="bl-g${n}-ch-name" style="color:var(--text-dim);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">اضغط لاختيار PDF</div>
         <input type="file" id="bl-g${n}-ch" accept="application/pdf" style="display:none" onchange="document.getElementById('bl-g${n}-ch-name').textContent=this.files[0]?('📎 '+this.files[0].name):'اضغط لاختيار PDF'">
       </label>
-      <label style="flex:1;min-width:190px;background:var(--dark2);border:2px dashed rgba(201,168,76,0.4);border-radius:10px;padding:12px;cursor:pointer;text-align:center">
-        <div style="color:var(--gold);font-weight:700;font-size:13px;margin-bottom:4px">⚙️ ملف المواتير</div>
-        <div id="bl-g${n}-mo-name" style="color:var(--text-dim);font-size:11px">اضغط لاختيار PDF</div>
+      <label style="min-width:0;background:var(--dark2);border:2px dashed rgba(201,168,76,0.4);border-radius:10px;padding:14px 10px;cursor:pointer;text-align:center;box-sizing:border-box">
+        <div style="color:var(--gold);font-weight:700;font-size:13px;margin-bottom:5px">⚙️ ملف المواتير</div>
+        <div id="bl-g${n}-mo-name" style="color:var(--text-dim);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">اضغط لاختيار PDF</div>
         <input type="file" id="bl-g${n}-mo" accept="application/pdf" style="display:none" onchange="document.getElementById('bl-g${n}-mo-name').textContent=this.files[0]?('📎 '+this.files[0].name):'اضغط لاختيار PDF'">
       </label>
     </div>`;
@@ -6293,115 +6294,52 @@ async function saveBulletin(){
   if(!groups.length){ alert('ضيف نوع واحد على الأقل فيه ملف شاسيهات أو مواتير'); return; }
 
   const btn = document.getElementById('bl-save');
-  btn.disabled = true; btn.textContent = '⏳ شغالين...';
+  btn.disabled = true; btn.textContent = '⏳ بنرفع الملفات...';
   try{
-    blProgress('⏳ تحميل مكتبات معالجة الـ PDF...');
-    await ensureBulletinLibs();
-
-    // 1) سجل المنشور وخد الـ id
+    // 1) سجل المنشور بحالة «قيد الفهرسة»
     blProgress('⏳ تسجيل المنشور...');
     const hasCh = groups.some(g=>g.fCh), hasMo = groups.some(g=>g.fMo);
     const numberType = (hasCh && hasMo) ? 'شاسيه + ماتور' : (hasCh ? 'شاسيه' : 'ماتور');
     const ins = await fetch(`${SB}/rest/v1/bulletins`,{
       method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=representation'},
-      body: JSON.stringify({ title, bulletin_no: bno, number_type: numberType })
+      body: JSON.stringify({ title, bulletin_no: bno, number_type: numberType, status: 'indexing' })
     }).then(r=>r.json());
     const bid = ins && ins[0] && ins[0].id;
     if(!bid) throw new Error('فشل تسجيل المنشور');
 
-    // 2) ارفع ملف الموافقات
+    // 2) ارفع الملفات بس (سريع) — الفهرسة كلها هتحصل فى الخلفية على السيرفر
     blProgress('⏳ رفع ملف الموافقات...');
     const appUrl = await blUploadStorage(`b${bid}_approvals.pdf`, fApp, 'application/pdf');
-
-    // 3) فهرسة ملف أرقام (شاسيه أو ماتور) لنوع معين
-    async function blIndexNumbersFile(file, docType, modelName, prefix, label){
-      const buf = await file.arrayBuffer();
-      blProgress(`⏳ رفع ${label} الكامل...`);
-      const fullUrl = await blUploadStorage(`b${bid}_${prefix}.pdf`, new Blob([buf],{type:'application/pdf'}), 'application/pdf');
-      const pdfDoc = await pdfjsLib.getDocument({ data: buf.slice(0) }).promise;
-      const srcLib = await PDFLib.PDFDocument.load(buf);
-      const total = pdfDoc.numPages;
-      const rows = [];
-      for(let i=1;i<=total;i++){
-        blProgress(`⏳ ${label}: فهرسة وتجهيز صفحة ${i} من ${total}...`);
-        // نص الصفحة + إحداثيات الأرقام (للتظليل وقت الاستعلام 🖍️)
-        let txt = '';
-        const toks = [];
-        try{
-          const page = await pdfDoc.getPage(i);
-          const tc = await page.getTextContent();
-          txt = tc.items.map(it=>it.str).join(' ');
-          for(const it of tc.items){
-            const nrm = bNorm(it.str||'');
-            if(nrm.length>=4 && /\d/.test(nrm) && it.width>0){
-              toks.push({
-                t: nrm,
-                x: +it.transform[4].toFixed(1),
-                y: +it.transform[5].toFixed(1),
-                w: +it.width.toFixed(1),
-                h: +((it.height||Math.abs(it.transform[3])||10)).toFixed(1)
-              });
-              if(toks.length>=900) break;
-            }
-          }
-        }catch(e){}
-        // PDF الصفحة الواحدة
-        const nd = await PDFLib.PDFDocument.create();
-        const [pg] = await nd.copyPages(srcLib, [i-1]);
-        nd.addPage(pg);
-        const bytes = await nd.save();
-        const pageUrl = await blUploadStorage(`b${bid}_${prefix}_p${i}.pdf`, new Blob([bytes],{type:'application/pdf'}), 'application/pdf');
-        rows.push({ bulletin_id: bid, page_no: i, doc_type: docType, model_name: modelName || null, text_norm: bNormTokens(txt), text_compact: bNorm(txt), pdf_url: pageUrl, tokens: toks.length ? toks : null });
-      }
-      return { rows, total, fullUrl };
-    }
-
-    // 4) لف على الأنواع وفهرس ملفاتها
-    const allRows = [];
     const groupsMeta = [];
-    let totalPages = 0;
     for(let g=0; g<groups.length; g++){
       const grp = groups[g];
       const gLabel = grp.name ? `«${grp.name}»` : `النوع ${g+1}`;
-      const meta = { name: grp.name || null, chassis_url: null, motor_url: null, chassis_pages: null, motor_pages: null };
+      const meta = { name: grp.name || null, chassis_url: null, motor_url: null };
       if(grp.fCh){
-        const r = await blIndexNumbersFile(grp.fCh, 'شاسيه', grp.name, `g${g+1}_chassis`, `شاسيهات ${gLabel}`);
-        allRows.push(...r.rows); meta.chassis_url = r.fullUrl; meta.chassis_pages = r.total; totalPages += r.total;
+        blProgress(`⏳ رفع ملف شاسيهات ${gLabel}...`);
+        meta.chassis_url = await blUploadStorage(`b${bid}_g${g+1}_chassis.pdf`, grp.fCh, 'application/pdf');
       }
       if(grp.fMo){
-        const r = await blIndexNumbersFile(grp.fMo, 'ماتور', grp.name, `g${g+1}_motor`, `مواتير ${gLabel}`);
-        allRows.push(...r.rows); meta.motor_url = r.fullUrl; meta.motor_pages = r.total; totalPages += r.total;
+        blProgress(`⏳ رفع ملف مواتير ${gLabel}...`);
+        meta.motor_url = await blUploadStorage(`b${bid}_g${g+1}_motor.pdf`, grp.fMo, 'application/pdf');
       }
       groupsMeta.push(meta);
     }
 
-    // 5) سجل الفهرس (دفعات)
-    blProgress('⏳ حفظ الفهرس...');
-    for(let i=0;i<allRows.length;i+=40){
-      const chunk = allRows.slice(i,i+40);
-      const r = await fetch(`${SB}/rest/v1/bulletin_pages`,{
-        method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
-        body: JSON.stringify(chunk)
-      });
-      if(!r.ok) throw new Error('فشل حفظ الفهرس');
-    }
-
-    // 6) كمّل بيانات المنشور
+    // 3) كمّل بيانات المنشور
     const firstUrl = (groupsMeta.find(m=>m.chassis_url)||{}).chassis_url || (groupsMeta.find(m=>m.motor_url)||{}).motor_url || null;
     await fetch(`${SB}/rest/v1/bulletins?id=eq.${bid}`,{
       method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body: JSON.stringify({
-        numbers_url: firstUrl,
-        groups: groupsMeta,
-        chassis_pages: groupsMeta.reduce((s,m)=>s+(m.chassis_pages||0),0) || null,
-        motor_pages: groupsMeta.reduce((s,m)=>s+(m.motor_pages||0),0) || null,
-        approvals_url: appUrl, pages_count: totalPages
-      })
+      body: JSON.stringify({ numbers_url: firstUrl, groups: groupsMeta, approvals_url: appUrl })
     });
 
-    // تحقق سريع: كام صفحة فيها نص فعلاً؟
-    const withText = allRows.filter(r=>r.text_compact.length>10).length;
-    blProgress(`✅ تم! ${groups.length} نوع — إجمالى ${totalPages} صفحة اتفهرست واترفعت.` + (withText < totalPages ? ` ⚠️ ${totalPages-withText} صفحة طلعت من غير نص (غالبًا سكان/صورة) — الأرقام فيها مش هتتلقى بالبحث.` : ''));
+    // 4) شغّل الفهرسة فى الخلفية على السيرفر — انت خلصت خلاص 🛰️
+    fetch(`${SB}/functions/v1/bulletin-index`,{
+      method:'POST', headers:{...HDR,'Content-Type':'application/json'},
+      body: JSON.stringify({ bulletin_id: bid })
+    }).catch(()=>{});
+
+    blProgress('✅ الملفات اترفعت! 🛰️ الفهرسة شغالة دلوقتى فى الخلفية على السيرفر — مش محتاج تستنى، تقدر تكمل شغلك أو تقفل الصفحة. تابع التقدم من الجدول تحت بزرار 🔄 تحديث.');
     document.getElementById('bl-title').value=''; document.getElementById('bl-no').value='';
     document.getElementById('bl-approvals').value='';
     document.getElementById('bl-approvals-name').textContent='اضغط لاختيار PDF موافقات التنمية والمرور';
@@ -6439,7 +6377,18 @@ async function loadBulletins(){
     const rows = await fetch(`${SB}/rest/v1/bulletins?select=*&is_active=eq.true&order=created_at.desc`,{headers:HDR}).then(r=>r.json());
     const bl = Array.isArray(rows)?rows:[];
     if(!bl.length){ el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:24px">مفيش منشورات لسه — ضيف أول منشور من فوق 👆</div>'; return; }
-    let html = `<table><thead><tr><th>#</th><th>المنشور</th><th>رقم الكتاب</th><th>النوع</th><th>الصفحات</th><th>الملفات</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
+    // عدّاد التقدم للمنشورات اللى لسه بتتفهرس
+    const prog = {};
+    for(const b of bl){
+      if(b.status === 'indexing'){
+        try{
+          const pr = await fetch(`${SB}/rest/v1/bulletin_pages?select=id&bulletin_id=eq.${b.id}`,{headers:{...HDR,'Prefer':'count=exact','Range':'0-0'}});
+          const cr = pr.headers.get('content-range')||'';
+          const m = cr.match(/\/(\d+)/); prog[b.id] = m ? Number(m[1]) : 0;
+        }catch(e){ prog[b.id] = 0; }
+      }
+    }
+    let html = `<table><thead><tr><th>#</th><th>المنشور</th><th>رقم الكتاب</th><th>النوع</th><th>الحالة</th><th>الصفحات</th><th>الملفات</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
     for(const b of bl){
       const typeBadge = b.number_type==='شاسيه + ماتور' ? '<span class="badge qalyub">🔢 شاسيه</span> <span class="badge sadat">⚙️ ماتور</span>'
         : (b.number_type==='ماتور' ? '<span class="badge sadat">⚙️ ماتور</span>' : '<span class="badge qalyub">🔢 شاسيه</span>');
@@ -6448,6 +6397,11 @@ async function loadBulletins(){
         <td><b>${escAttr(b.title)}</b></td>
         <td>${escAttr(b.bulletin_no||'—')}</td>
         <td>${typeBadge}</td>
+        <td>${b.status==='indexing'
+          ? `<span style="color:var(--gold);font-size:12px;font-weight:700">⏳ بيتفهرس — ${prog[b.id]||0} صفحة</span><br><button class="act-btn" style="margin-top:4px;font-size:11px" onclick="resumeBulletinIndex(${b.id})">▶️ استكمال</button>`
+          : (String(b.status||'').startsWith('error')
+            ? `<span style="color:var(--error);font-size:12px" title="${escAttr(b.status)}">❌ خطأ</span> <button class="act-btn" style="font-size:11px" onclick="resumeBulletinIndex(${b.id},true)">🔁 إعادة</button>`
+            : '<span style="color:var(--success);font-size:12px;font-weight:700">✅ جاهز</span>')}</td>
         <td>${(b.chassis_pages||b.motor_pages)?[(b.chassis_pages?`🔢 ${b.chassis_pages}`:''),(b.motor_pages?`⚙️ ${b.motor_pages}`:'')].filter(Boolean).join(' + '):b.pages_count}</td>
         <td>
           ${Array.isArray(b.groups)&&b.groups.length
@@ -6470,6 +6424,24 @@ async function loadBulletins(){
   }catch(e){
     el.innerHTML = '<div style="color:var(--error);padding:14px">⚠️ حصل خطأ فى التحميل</div>';
   }
+}
+
+// ▶️ استكمال أو إعادة فهرسة منشور فى الخلفية
+async function resumeBulletinIndex(id, isRetry){
+  try{
+    if(isRetry){
+      await fetch(`${SB}/rest/v1/bulletins?id=eq.${id}`,{
+        method:'PATCH', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
+        body: JSON.stringify({ status:'indexing' })
+      });
+    }
+    fetch(`${SB}/functions/v1/bulletin-index`,{
+      method:'POST', headers:{...HDR,'Content-Type':'application/json'},
+      body: JSON.stringify({ bulletin_id: id })
+    }).catch(()=>{});
+    alert('🛰️ الفهرسة اتشغلت فى الخلفية — اضغط 🔄 تحديث بعد شوية تشوف التقدم');
+    setTimeout(loadBulletins, 1500);
+  }catch(e){ alert('حصل خطأ — حاول تانى'); }
 }
 
 async function deleteBulletin(id){
