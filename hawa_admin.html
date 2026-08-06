@@ -3041,6 +3041,94 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
 
+    <div class="section" id="sec-leads">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">📥 <span>العملاء المحتملين</span></div>
+          <div class="page-sub">طلبات الشراء من صفحة المبيعات وحالتها مع التجار</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="ldLoad()">🔄 تحديث</button>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="ld-q" type="text" placeholder="🔍 اكتب للبحث..." oninput="ldRender()" style="width:220px">
+          <select class="filter-inp" id="ld-status" onchange="ldRender()" style="width:150px">
+            <option value="">كل الحالات</option><option>جديد</option><option>اتوزعت</option>
+            <option>اتستلمت</option><option>تمت</option><option>مقفولة</option>
+          </select>
+          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('ld-q').value='';ldRender()">✖️ مسح</button>
+          <div style="flex:1;min-width:10px"></div>
+          <div id="ld-count" style="color:var(--text-dim);font-size:12px"></div>
+        </div>
+        <div id="ld-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-waitlist">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">⏳ <span>قايمة الانتظار</span></div>
+          <div class="page-sub">عملاء مستنيين موديلات مش متوفرة — بيتبلغوا تلقائياً أول ما توصل</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="wlLoad()">🔄 تحديث</button>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="wl-q" type="text" placeholder="🔍 اكتب للبحث..." oninput="wlRender()" style="width:220px">
+          
+          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('wl-q').value='';wlRender()">✖️ مسح</button>
+          <div style="flex:1;min-width:10px"></div>
+          <div id="wl-count" style="color:var(--text-dim);font-size:12px"></div>
+        </div>
+        <div id="wl-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-parts">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🔧 <span>طلبات قطع الغيار</span></div>
+          <div class="page-sub">طلبات عملائك وحالتها مع التجار</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="ptLoad()">🔄 تحديث</button>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="pt-q" type="text" placeholder="🔍 اكتب للبحث..." oninput="ptRender()" style="width:220px">
+          <select class="filter-inp" id="pt-status" onchange="ptRender()" style="width:170px">
+            <option value="">كل الحالات</option><option>اتبعت للتاجر</option><option>التاجر عنده</option>
+            <option>اتصعد للشركة</option><option>اتنفذ</option>
+          </select>
+          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('pt-q').value='';ptRender()">✖️ مسح</button>
+          <div style="flex:1;min-width:10px"></div>
+          <div id="pt-count" style="color:var(--text-dim);font-size:12px"></div>
+        </div>
+        <div id="pt-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-purchases">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🧾 <span>المشتريات والجوابات</span></div>
+          <div class="page-sub">ملف كل بيعة كامل — جاهز لموظف الجوابات</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="pcLoad()">🔄 تحديث</button>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="pc-q" type="text" placeholder="🔍 اسم / شاسيه / ماتور..." oninput="pcRender()" style="width:240px">
+          <select class="filter-inp" id="pc-status" onchange="pcRender()" style="width:170px">
+            <option value="">الكل</option><option>بانتظار التسليم</option><option>اتسلم</option>
+          </select>
+          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('pc-q').value='';pcRender()">✖️ مسح</button>
+          <div style="flex:1;min-width:10px"></div>
+          <div id="pc-count" style="color:var(--text-dim);font-size:12px"></div>
+        </div>
+        <div id="pc-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
     <div class="section" id="sec-catalog">
       <div class="page-hd">
         <div class="page-hd-titles">
@@ -4048,6 +4136,22 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <input id="mc-engine" placeholder="سعة الموتور (150 سى سى)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-strokes" placeholder="عدد الأشواط (رباعى الأشواط)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-cooling" placeholder="التبريد (هوائى / مائى)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-trans" placeholder="ناقل الحركة" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-brakes" placeholder="الفرامل" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-tires" placeholder="الكاوتش (18-325)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-tank" placeholder="سعة التانك" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-consumption" placeholder="استهلاك البنزين" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-speed" placeholder="أقصى سرعة" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-weight" placeholder="الوزن" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-warranty" placeholder="الضمان" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
       </div>
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">📦 التوفر</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
+        <label style="display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer">
+          <input type="checkbox" id="mc-instock" checked style="width:16px;height:16px;cursor:pointer" onchange="mcStockToggle()"> متوفر دلوقتى
+        </label>
+        <div id="mc-stock-wrap" style="display:none;gap:8px;flex:1;flex-wrap:wrap">
+          <input id="mc-expected" type="date" style="width:170px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px;font-family:Cairo">
+          <input id="mc-stocknote" placeholder="ملاحظة (اختيارى)" style="flex:1;min-width:150px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+        </div>
+      </div>
+      <div style="color:var(--text-dim);font-size:11px;margin-bottom:12px">💡 لما تشيل العلامة، المساعد بيقول للعميل الميعاد المتوقع وبيحطه فى قايمة الانتظار. وأول ما ترجّعها، كل اللى مستنيين ياخدوا رسالة خلال ربع ساعة.</div>
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">🔤 أسماء تانية بيتسمى بيها</div>
+      <input id="mc-aliases" placeholder="مفصولة بفاصلة: ديون, Dayun, دايون ٤, ابو اربعة" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+      <div style="color:var(--text-dim);font-size:11px;margin:4px 0 12px">كل شكل الزبون ممكن يكتبه — بيخلى البحث مضمون 100%</div>
 
       <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">🎨 الألوان</div>
       <input id="mc-colors" placeholder="الألوان مفصولة بفاصلة: أزرق, أحمر, أسود" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
@@ -5060,6 +5164,10 @@ function autoRefreshTick(){
     else if(sec==='employees' && typeof loadEmployees === 'function') loadEmployees();
     else if(sec==='bulletins' && typeof loadBulletins === 'function') loadBulletins();
     else if(sec==='catalog' && typeof mcLoad === 'function') mcLoad();
+    else if(sec==='leads' && typeof ldLoad === 'function') ldLoad();
+    else if(sec==='waitlist' && typeof wlLoad === 'function') wlLoad();
+    else if(sec==='parts' && typeof ptLoad === 'function') ptLoad();
+    else if(sec==='purchases' && typeof pcLoad === 'function') pcLoad();
     else if(sec==='clients' && typeof loadClients === 'function') loadClients();
     else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
     else if(sec==='extra-contacts' && typeof loadExtraContacts === 'function') loadExtraContacts();
@@ -5199,6 +5307,10 @@ function goTo(sec){
   else if(sec==='chat')loadChat();
   else if(sec==='bulletins')loadBulletins();
   else if(sec==='catalog')mcLoad();
+  else if(sec==='leads')ldLoad();
+  else if(sec==='waitlist')wlLoad();
+  else if(sec==='parts')ptLoad();
+  else if(sec==='purchases')pcLoad();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='vehicle-types')loadVehicleTypes();
@@ -6714,6 +6826,224 @@ async function saveBulletinEdit(){
   }
 }
 
+// ═══════════ 📥 العملاء المحتملين / ⏳ الانتظار / 🔧 قطع الغيار ═══════════
+let _ldRows = [], _wlRows = [], _ptRows = [];
+const arDT = d => d ? new Date(d).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'}) : '—';
+const arD  = d => d ? new Date(d).toLocaleDateString('ar-EG',{day:'numeric',month:'long'}) : '—';
+function pill(txt, color){ return `<span style="background:${color}22;border:1px solid ${color}66;color:${color};font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap">${escAttr(txt)}</span>`; }
+function ldPill(st){
+  const c = st==='تمت' ? 'var(--success)' : st==='مقفولة' ? 'var(--text-dim)'
+          : st==='اتستلمت' ? 'var(--blue)' : st==='اتوزعت' ? 'var(--gold)' : 'var(--error)';
+  return pill(st||'—', c);
+}
+function ptPill(st){
+  const c = st==='التاجر عنده' ? 'var(--success)' : st==='اتنفذ' ? 'var(--success)'
+          : st==='اتصعد للشركة' ? 'var(--error)' : st==='اتبعت للتاجر' ? 'var(--gold)' : 'var(--text-dim)';
+  return pill(st||'—', c);
+}
+function emptyBox(t){ return `<div style="color:var(--text-dim);text-align:center;padding:26px">${t}</div>`; }
+function wrapTbl(html){ return '<div style="max-height:65vh;overflow:auto;border:1px solid var(--border);border-radius:12px;position:relative;z-index:1">' + html + '</tbody></table></div>'; }
+async function salesLoad(fn, setter, render, listId){
+  const el = document.getElementById(listId);
+  if(!el) return;
+  el.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{ const r = await rpcSecure(fn, {}); setter(Array.isArray(r)?r:[]); render(); }
+  catch(e){ el.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
+}
+function matchQ(row, q, keys){
+  if(!q) return true;
+  return keys.some(k => String(row[k]||'').toLowerCase().includes(q));
+}
+
+// ── 📥 العملاء المحتملين ──
+async function ldLoad(){ await salesLoad('admin_list_leads', v=>_ldRows=v, ldRender, 'ld-list'); }
+function ldRender(){
+  const el = document.getElementById('ld-list'); if(!el) return;
+  const q = (document.getElementById('ld-q')?.value||'').trim().toLowerCase();
+  const st = document.getElementById('ld-status')?.value || '';
+  const rows = (_ldRows||[]).filter(r => (!st || r.status===st) && matchQ(r,q,['name','phone','model_text','city','governorate','trader_name']));
+  const cnt = document.getElementById('ld-count');
+  if(cnt) cnt.textContent = `📥 ${(_ldRows||[]).length} طلب`;
+  if(!(_ldRows||[]).length) return void(el.innerHTML = emptyBox('مفيش طلبات لسه — أول ما عميل يطلب من صفحة المبيعات هيظهر هنا'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  let h = `<table><thead><tr><th>#</th><th>العميل</th><th>المطلوب</th><th>المنطقة</th><th>الحالة</th><th>التاجر</th><th>المتابعة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
+  for(const r of rows){
+    h += `<tr>
+      <td style="color:var(--text-dim)">${r.id}</td>
+      <td><b>${escAttr(r.name)}</b><div style="color:var(--text-dim);font-size:11px" dir="ltr">${escAttr(r.phone||'')}</div>
+        ${r.consumer_stage==='عميل'?'<div style="color:var(--gold);font-size:11px">⭐ عميل اشترى</div>':''}</td>
+      <td>${escAttr(r.model_text||'—')}${r.payment_method?`<div style="color:var(--text-dim);font-size:11px">💳 ${escAttr(r.payment_method)}</div>`:''}</td>
+      <td style="font-size:12px">${escAttr(r.city||'')}<div style="color:var(--text-dim);font-size:11px">${escAttr(r.governorate||'')}</div></td>
+      <td>${ldPill(r.status)}${r.outcome?`<div style="color:var(--text-dim);font-size:11px;margin-top:3px">${escAttr(r.outcome)}</div>`:''}</td>
+      <td style="font-size:12px">${r.trader_name?`<b>${escAttr(r.trader_name)}</b><div style="color:var(--text-dim);font-size:11px">${arDT(r.claimed_at)}</div>`:`<span style="color:var(--text-dim)">محدش استلم</span><div style="color:var(--text-dim);font-size:11px">📨 ${r.offers_sent||0} تاجر</div>`}</td>
+      <td style="text-align:center">${r.followup_count||0}</td>
+      <td style="color:var(--text-dim);font-size:12px">${arDT(r.created_at)}</td>
+      <td style="white-space:nowrap">${r.status!=='مقفولة'?`<button class="act-btn delete" onclick="ldClose(${r.id})">🔒 قفل</button>`:'—'}</td>
+    </tr>`;
+  }
+  el.innerHTML = wrapTbl(h);
+}
+function ldClose(id){
+  const r = (_ldRows||[]).find(x=>Number(x.id)===Number(id));
+  showConfirm('🔒','قفل الطلب','هتقفل طلب «'+((r&&r.name)||id)+'» ويتوقف أى متابعة مع العميل. تكمل؟',true, async()=>{
+    try{ await rpcSecure('admin_close_lead',{ p_id:Number(id), p_outcome:'اتقفل من الإدارة' }); ldLoad(); }
+    catch(e){ alert('⚠️ '+(e.message||'فشل')); }
+  });
+}
+
+// ── ⏳ قايمة الانتظار ──
+async function wlLoad(){ await salesLoad('admin_list_waitlist', v=>_wlRows=v, wlRender, 'wl-list'); }
+function wlRender(){
+  const el = document.getElementById('wl-list'); if(!el) return;
+  const q = (document.getElementById('wl-q')?.value||'').trim().toLowerCase();
+  const rows = (_wlRows||[]).filter(r => matchQ(r,q,['model_name','consumer_name','phone','city','governorate']));
+  const waiting = (_wlRows||[]).filter(r=>r.status==='منتظر').length;
+  const cnt = document.getElementById('wl-count');
+  if(cnt) cnt.textContent = `⏳ ${waiting} مستنى من ${(_wlRows||[]).length}`;
+  if(!(_wlRows||[]).length) return void(el.innerHTML = emptyBox('مفيش حد فى قايمة الانتظار — بيتسجلوا لما يسألوا على موديل مش متوفر'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  // تجميع حسب الموديل
+  const byModel = {};
+  rows.forEach(r=>{ const k=r.model_name||'—'; (byModel[k]=byModel[k]||[]).push(r); });
+  let h = '';
+  Object.keys(byModel).forEach(mk=>{
+    const list = byModel[mk];
+    const m = list[0];
+    const w = list.filter(x=>x.status==='منتظر').length;
+    h += `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px">
+        <div><b style="font-size:15px">🏍️ ${escAttr(mk)}</b>
+          <div style="font-size:11px;margin-top:3px">${m.in_stock===false
+            ? `<span style="color:var(--error)">📦 مش متوفر${m.expected_at?` — متوقع ${arD(m.expected_at)}`:''}</span>`
+            : '<span style="color:var(--success)">📦 وصل ومتوفر</span>'}</div></div>
+        <div>${pill(w+' مستنى', w?'var(--gold)':'var(--text-dim)')}</div>
+      </div>
+      ${m.in_stock===false ? '<div style="color:var(--text-dim);font-size:11px;margin-bottom:8px">💡 شيل علامة «مش متوفر» من الكتالوج — وكل دول هياخدوا رسالة خلال ربع ساعة تلقائياً</div>' : ''}
+      <table style="margin:0"><thead><tr><th>العميل</th><th>الموبايل</th><th>المنطقة</th><th>الحالة</th><th>مستنى من</th></tr></thead><tbody>
+      ${list.map(r=>`<tr>
+        <td><b>${escAttr(r.consumer_name||'—')}</b></td>
+        <td dir="ltr" style="font-size:12px">${escAttr(r.phone||'')}</td>
+        <td style="font-size:12px">${escAttr(r.city||'')} <span style="color:var(--text-dim)">${escAttr(r.governorate||'')}</span></td>
+        <td>${pill(r.status, r.status==='منتظر'?'var(--gold)':r.status==='اتبلغ'?'var(--success)':'var(--text-dim)')}
+          ${r.notified_at?`<div style="color:var(--text-dim);font-size:11px;margin-top:3px">اتبلغ ${arDT(r.notified_at)}</div>`:''}</td>
+        <td style="color:var(--text-dim);font-size:12px">${arDT(r.created_at)}</td>
+      </tr>`).join('')}
+      </tbody></table></div>`;
+  });
+  el.innerHTML = `<div style="max-height:66vh;overflow:auto">${h}</div>`;
+}
+
+// ── 🔧 قطع الغيار ──
+async function ptLoad(){ await salesLoad('admin_list_parts', v=>_ptRows=v, ptRender, 'pt-list'); }
+function ptRender(){
+  const el = document.getElementById('pt-list'); if(!el) return;
+  const q = (document.getElementById('pt-q')?.value||'').trim().toLowerCase();
+  const st = document.getElementById('pt-status')?.value || '';
+  const rows = (_ptRows||[]).filter(r => (!st || r.status===st) && matchQ(r,q,['consumer_name','phone','trader_name','request_text','model_text']));
+  const open = (_ptRows||[]).filter(r=>r.status==='اتصعد للشركة').length;
+  const cnt = document.getElementById('pt-count');
+  if(cnt) cnt.textContent = `🔧 ${(_ptRows||[]).length} طلب${open?` — ${open} عند الشركة`:''}`;
+  if(!(_ptRows||[]).length) return void(el.innerHTML = emptyBox('مفيش طلبات قطع غيار لسه'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  let h = `<table><thead><tr><th>#</th><th>العميل</th><th>المطلوب</th><th>الموتوسيكل</th><th>التاجر</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
+  for(const r of rows){
+    const late = r.status==='اتبعت للتاجر' && r.due_at && new Date(r.due_at) < new Date();
+    h += `<tr>
+      <td style="color:var(--text-dim)">${r.id}</td>
+      <td><b>${escAttr(r.consumer_name||'—')}</b><div style="color:var(--text-dim);font-size:11px" dir="ltr">${escAttr(r.phone||'')}</div></td>
+      <td style="max-width:230px"><b>${escAttr(r.request_text||'')}</b>${r.admin_note?`<div style="color:var(--text-dim);font-size:11px;margin-top:3px">📝 ${escAttr(r.admin_note)}</div>`:''}</td>
+      <td style="font-size:12px">${escAttr(r.model_text||'—')}</td>
+      <td style="font-size:12px">${escAttr(r.trader_name||'—')}</td>
+      <td>${ptPill(r.status)}${late?'<div style="color:var(--error);font-size:11px;margin-top:3px">⏰ عدّت المهلة</div>':''}</td>
+      <td style="color:var(--text-dim);font-size:12px">${arDT(r.created_at)}</td>
+      <td style="white-space:nowrap">${r.status!=='اتنفذ'?`<button class="act-btn edit" onclick="ptDone(${r.id})">✅ اتنفذ</button>`:'—'}</td>
+    </tr>`;
+  }
+  el.innerHTML = wrapTbl(h);
+}
+function ptDone(id){
+  const r = (_ptRows||[]).find(x=>Number(x.id)===Number(id));
+  showConfirm('✅','تنفيذ الطلب','هتسجل إن قطعة «'+((r&&r.request_text)||id)+'» اتوفرت للعميل. تكمل؟',false, async()=>{
+    try{ await rpcSecure('admin_part_status',{ p_id:Number(id), p_status:'اتنفذ', p_note:null }); ptLoad(); }
+    catch(e){ alert('⚠️ '+(e.message||'فشل')); }
+  });
+}
+
+// ═══════════ 🧾 المشتريات والجوابات ═══════════
+let _pcRows = [];
+async function pcLoad(){ await salesLoad('admin_list_purchases', v=>_pcRows=v, pcRender, 'pc-list'); }
+function pcRender(){
+  const el = document.getElementById('pc-list'); if(!el) return;
+  const q = (document.getElementById('pc-q')?.value||'').trim().toLowerCase();
+  const st = document.getElementById('pc-status')?.value || '';
+  const rows = (_pcRows||[]).filter(r => (!st || r.letter_status===st) &&
+    matchQ(r,q,['consumer_name','phone','chassis_no','motor_no','model_text','trader_name','color']));
+  const pend = (_pcRows||[]).filter(r=>r.letter_status!=='اتسلم').length;
+  const cnt = document.getElementById('pc-count');
+  if(cnt) cnt.textContent = `🧾 ${(_pcRows||[]).length} بيعة${pend?` — ${pend} بانتظار التسليم`:''}`;
+  if(!(_pcRows||[]).length) return void(el.innerHTML = emptyBox('مفيش بيعات مسجلة لسه'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  let h = '';
+  for(const r of rows){
+    const done = r.letter_status === 'اتسلم';
+    h += `<div style="background:var(--dark3);border:1px solid ${done?'var(--border)':'rgba(201,168,76,0.35)'};border-radius:12px;padding:13px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <b style="font-size:15px">${escAttr(r.consumer_name||'—')}</b>
+          <div style="color:var(--text-dim);font-size:12px;margin-top:2px" dir="ltr">${escAttr(r.phone||'')}</div>
+          <div style="color:var(--text-dim);font-size:12px">${escAttr(r.city||'')} — ${escAttr(r.governorate||'')}</div>
+        </div>
+        <div style="text-align:end">
+          ${done ? pill('✅ اتسلم','var(--success)') : pill('⏳ بانتظار التسليم','var(--gold)')}
+          <div style="color:var(--text-dim);font-size:11px;margin-top:4px">${arDT(r.created_at)}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px">
+        ${[['🏍️ الموديل', r.model_text],['🎨 اللون', r.color],['🏪 التاجر', r.trader_name],['🏠 العنوان', r.address]]
+          .map(([k,v])=>`<div style="background:var(--dark2);border:1px solid var(--border);border-radius:9px;padding:8px 10px">
+            <div style="color:var(--text-dim);font-size:10.5px">${k}</div>
+            <div style="font-size:13px;font-weight:700;margin-top:2px">${escAttr(v||'—')}</div></div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="flex:1;min-width:200px;background:var(--dark2);border:1px solid var(--border);border-radius:9px;padding:8px 10px">
+          <div style="color:var(--text-dim);font-size:10.5px">🔢 الشاسيه</div>
+          <div dir="ltr" style="font-size:14px;font-weight:800;letter-spacing:.5px;color:var(--gold-light);margin-top:2px">${escAttr(r.chassis_no||'—')}</div>
+        </div>
+        <div style="flex:1;min-width:160px;background:var(--dark2);border:1px solid var(--border);border-radius:9px;padding:8px 10px">
+          <div style="color:var(--text-dim);font-size:10.5px">⚙️ الماتور</div>
+          <div dir="ltr" style="font-size:14px;font-weight:800;letter-spacing:.5px;margin-top:2px">${escAttr(r.motor_no||'—')}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${r.id_card_url
+          ? `<button class="act-btn edit" onclick="pcIdCard(${r.id})">🪪 عرض البطاقة</button>`
+          : `<span style="color:var(--error);font-size:12px;align-self:center">⚠️ صورة البطاقة لسه مجتش</span>`}
+        ${!done ? `<button class="act-btn" style="background:rgba(76,175,125,0.15);border-color:rgba(76,175,125,0.5);color:var(--success)" onclick="pcTaken(${r.id})">✅ استلمت الملف</button>` : ''}
+      </div>
+    </div>`;
+  }
+  el.innerHTML = `<div style="max-height:66vh;overflow:auto">${h}</div>`;
+}
+async function pcIdCard(id){
+  try{
+    const path = await rpcSecure('admin_id_card_path', { p_id: Number(id) });
+    if(!path){ alert('مفيش صورة بطاقة مرفوعة'); return; }
+    const r = await fetch(`${SB}/storage/v1/object/sign/consumer_docs/${path}`,{
+      method:'POST', headers:{...HDR,'Content-Type':'application/json'}, body: JSON.stringify({ expiresIn: 300 })
+    });
+    const j = await r.json();
+    if(j && j.signedURL) window.open(SB + '/storage/v1' + j.signedURL, '_blank');
+    else alert('مقدرتش أفتح الصورة — جرّب تانى');
+  }catch(e){ alert('⚠️ ' + (e.message||'فشل')); }
+}
+function pcTaken(id){
+  const r = (_pcRows||[]).find(x=>Number(x.id)===Number(id));
+  showConfirm('✅','استلام الملف','هتسجل إن ملف «'+((r&&r.consumer_name)||id)+'» اتسلم لقسم الجوابات. تكمل؟',false, async()=>{
+    try{ await rpcSecure('admin_letter_taken',{ p_id:Number(id) }); pcLoad(); }
+    catch(e){ alert('⚠️ '+(e.message||'فشل')); }
+  });
+}
+
 // ═══════════ 🏍️ كتالوج الموتوسيكلات ═══════════
 let _mcRows = [];
 let _mcEditId = 0;
@@ -6770,7 +7100,8 @@ function mcRender(){
       <td><span class="badge qalyub">${escAttr(m.category||'')}</span></td>
       <td>${m.price ? `<b style="color:var(--gold)">${Number(m.price).toLocaleString('ar-EG')}</b> ج${m.installment?'<div style="color:var(--text-dim);font-size:11px">💳 تقسيط متاح</div>':''}` : '<span style="color:var(--text-dim);font-size:11px">—</span>'}</td>
       <td style="font-size:12px;color:var(--text-dim);max-width:220px">${specs || '—'}</td>
-      <td>${m.is_active ? '<span style="color:var(--success);font-size:12px;font-weight:700">✅ متاح</span>' : '<span style="color:var(--text-dim);font-size:12px">⛔ مخفى</span>'}</td>
+      <td>${m.is_active ? '<span style="color:var(--success);font-size:12px;font-weight:700">✅ معروض</span>' : '<span style="color:var(--text-dim);font-size:12px">⛔ مخفى</span>'}
+        ${m.in_stock === false ? `<div style="color:var(--error);font-size:11px;margin-top:3px">📦 مش متوفر${m.expected_at?` — متوقع ${new Date(m.expected_at).toLocaleDateString('ar-EG',{day:'numeric',month:'long'})}`:''}</div>` : '<div style="color:var(--success);font-size:11px;margin-top:3px">📦 متوفر</div>'}</td>
       <td style="white-space:nowrap">
         <button class="act-btn edit" onclick="openMcEdit(${m.id})">✏️ تعديل</button>
         <button class="act-btn delete" onclick="deleteMotorcycle(${m.id})">🗑️ حذف</button>
@@ -6778,6 +7109,12 @@ function mcRender(){
     </tr>`;
   }
   el.innerHTML = '<div style="max-height:65vh;overflow:auto;border:1px solid var(--border);border-radius:12px;position:relative;z-index:1">' + html + '</tbody></table></div>';
+}
+
+function mcStockToggle(){
+  const on = document.getElementById('mc-instock').checked;
+  const w = document.getElementById('mc-stock-wrap');
+  if(w) w.style.display = on ? 'none' : 'flex';
 }
 
 function mcRenderImages(){
@@ -6844,6 +7181,11 @@ function openMcEdit(id){
   document.getElementById('mc-pitch').value       = g('pitch');
   document.getElementById('mc-active').checked    = m ? !!m.is_active : true;
   document.getElementById('mc-sort').value        = g('sort_order', 0);
+  document.getElementById('mc-instock').checked   = m ? (m.in_stock !== false) : true;
+  document.getElementById('mc-expected').value    = (m && m.expected_at) ? String(m.expected_at).slice(0,10) : '';
+  document.getElementById('mc-stocknote').value   = g('stock_note');
+  document.getElementById('mc-aliases').value     = (m && Array.isArray(m.aliases)) ? m.aliases.join('، ') : '';
+  mcStockToggle();
   document.getElementById('mc-img-hint').textContent = 'JPG أو PNG — أقصى 20 ميجا للصورة';
   _mcImages = (m && Array.isArray(m.images)) ? m.images.slice() : [];
   mcRenderImages();
@@ -6881,7 +7223,11 @@ async function saveMotorcycle(){
       videos:       splitList(document.getElementById('mc-videos').value, /\n/),
       pitch:        (document.getElementById('mc-pitch').value||'').trim(),
       is_active:    document.getElementById('mc-active').checked,
-      sort_order:   Number(document.getElementById('mc-sort').value||0) || 0
+      sort_order:   Number(document.getElementById('mc-sort').value||0) || 0,
+      aliases:      splitList(document.getElementById('mc-aliases').value, /[,،]/),
+      in_stock:     document.getElementById('mc-instock').checked,
+      expected_at:  document.getElementById('mc-instock').checked ? '' : (document.getElementById('mc-expected').value||''),
+      stock_note:   document.getElementById('mc-instock').checked ? '' : (document.getElementById('mc-stocknote').value||'').trim()
     };
     await rpcSecure('admin_save_motorcycle', { p_id: _mcEditId || null, p_data: data });
     closeModal('mcModal');
@@ -14964,7 +15310,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.06-b';
+const APP_VERSION = 'v2026.08.07-b';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
@@ -14997,7 +15343,11 @@ const NAV_META = {
   'settings':         { icon: '⚙️', label: 'إعدادات عامة' },
   'ai-assistant':     { icon: '🤖',  label: 'المساعد الذكى' },
 
-  'catalog':          { icon: '🏍️', label: 'كتالوج الموتوسيكلات' }
+  'catalog':          { icon: '🏍️', label: 'كتالوج الموتوسيكلات' },
+  'leads':            { icon: '📥',  label: 'العملاء المحتملين' },
+  'waitlist':         { icon: '⏳',  label: 'قايمة الانتظار' },
+  'parts':            { icon: '🔧',  label: 'طلبات قطع الغيار' },
+  'purchases':        { icon: '🧾',  label: 'المشتريات والجوابات' }
 };
 
 // ── Default sidebar layout
@@ -15007,7 +15357,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
-    { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog'] },
+    { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -15019,7 +15369,11 @@ let __sidebarLoaded = false;
 
 // ── الشاشات الجديدة اللى ليها قسم مخصص — بتتحط فى قسمها تلقائياً حتى لو الترتيب محفوظ من قبل
 const NAV_PREFERRED_CAT = {
-  'catalog': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 }
+  'catalog':  { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
+  'leads':    { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
+  'waitlist': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
+  'parts':     { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
+  'purchases': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids

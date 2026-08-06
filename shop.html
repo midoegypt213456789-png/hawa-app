@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>أبو حوا — موتوسيكلات</title>
+<meta name="description" content="اسأل عن أى موتوسيكل، شوف المواصفات والأسعار، واحنا نوصلك بأقرب تاجر معتمد فى منطقتك.">
+<meta name="theme-color" content="#0B0B0D">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B0B0D; --panel:#141417; --raise:#1C1C21; --line:#2A2A31;
+  --gold:#C9A84C; --gold-lite:#E8C97A; --gold-dim:rgba(201,168,76,.14);
+  --text:#F2EFE9; --dim:#8E8A83; --ok:#4CAF7D; --err:#E05555;
+  --sent:#2A2415; --recv:#17171B;
+  --shell:min(560px,100%);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{
+  background:var(--ink); color:var(--text);
+  font-family:'Cairo',system-ui,sans-serif; font-size:15px; line-height:1.6;
+  display:flex; justify-content:center; overflow:hidden;
+}
+.app{width:var(--shell);height:100dvh;display:flex;flex-direction:column;background:var(--panel);position:relative;overflow:hidden}
+@media(min-width:600px){.app{border-inline:1px solid var(--line)}}
+
+/* ── الهيدر ── */
+.hd{display:flex;align-items:center;gap:11px;padding:12px 14px;background:var(--raise);border-bottom:1px solid var(--line);flex-shrink:0;z-index:5}
+.ava{width:42px;height:42px;border-radius:50%;flex-shrink:0;position:relative;
+  background:linear-gradient(140deg,var(--gold),var(--gold-lite));
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:#111}
+.ava::after{content:'';position:absolute;inset-inline-end:1px;bottom:1px;width:11px;height:11px;border-radius:50%;background:var(--ok);border:2px solid var(--raise)}
+.hd-t{flex:1;min-width:0}
+.hd-name{font-weight:900;font-size:15px;letter-spacing:.2px}
+.hd-sub{font-size:11.5px;color:var(--dim);display:flex;align-items:center;gap:5px}
+.icon-btn{background:transparent;border:none;color:var(--dim);font-size:19px;cursor:pointer;padding:7px;border-radius:10px;transition:.15s;font-family:inherit}
+.icon-btn:hover{background:rgba(255,255,255,.05);color:var(--text)}
+
+/* ── مجرى الرسايل ── */
+.feed{flex:1;overflow-y:auto;overflow-x:hidden;padding:16px 12px 8px;scroll-behavior:smooth;
+  background-image:radial-gradient(circle at 20% 12%,rgba(201,168,76,.05),transparent 42%),
+                   radial-gradient(circle at 82% 78%,rgba(201,168,76,.035),transparent 46%)}
+.row{display:flex;margin-bottom:9px;animation:rise .26s cubic-bezier(.2,.8,.3,1) both}
+.row.me{justify-content:flex-start}
+.row.her{justify-content:flex-end}
+@keyframes rise{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.row{animation:none}}
+.bub{max-width:84%;padding:9px 13px;border-radius:16px;font-size:14.5px;white-space:pre-wrap;word-break:break-word;position:relative}
+.me .bub{background:var(--sent);border:1px solid rgba(201,168,76,.32);border-end-start-radius:5px}
+.her .bub{background:var(--recv);border:1px solid var(--line);border-end-end-radius:5px}
+.bub b{color:var(--gold-lite);font-weight:700}
+.tm{font-size:10px;color:var(--dim);margin-top:3px;text-align:start;opacity:.75}
+
+/* ── مؤشر الكتابة ── */
+.typing{display:flex;gap:4px;padding:13px 15px;background:var(--recv);border:1px solid var(--line);border-radius:16px;border-end-end-radius:5px;width:fit-content}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--gold);opacity:.45;animation:blink 1.3s infinite}
+.typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+/* ── ✨ كارت الموتوسيكل — العنصر المميز ── */
+.card{max-width:88%;background:var(--recv);border:1px solid var(--line);border-radius:16px;border-end-end-radius:5px;overflow:hidden;margin-bottom:9px}
+.card-img{width:100%;aspect-ratio:4/3;object-fit:cover;background:#0e0e11;display:block}
+.card-imgs{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:2px}
+.card-imgs img{width:100%;flex:0 0 100%;scroll-snap-align:center;aspect-ratio:4/3;object-fit:cover;background:#0e0e11}
+.card-b{padding:12px 13px}
+.card-nm{font-weight:900;font-size:16px;line-height:1.3}
+.card-br{font-size:11.5px;color:var(--dim);margin-bottom:9px}
+.price{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;margin-bottom:3px}
+.price-v{font-size:20px;font-weight:900;color:var(--gold-lite);letter-spacing:-.3px}
+.price-l{font-size:11px;color:var(--dim)}
+.price-note{font-size:10.5px;color:var(--dim);line-height:1.5;margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.chip{background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);color:var(--gold-lite);
+  font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.chip.n{background:rgba(255,255,255,.04);border-color:var(--line);color:var(--dim)}
+.card-cta{width:100%;background:linear-gradient(140deg,var(--gold),var(--gold-lite));border:none;color:#141005;
+  font-family:inherit;font-weight:900;font-size:14px;padding:11px;border-radius:11px;cursor:pointer;transition:.15s}
+.card-cta:active{transform:scale(.985)}
+
+/* ── الملحن ── */
+.composer{display:flex;align-items:flex-end;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--raise);border-top:1px solid var(--line);flex-shrink:0}
+.inp{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:22px;color:var(--text);
+  font-family:inherit;font-size:15px;padding:11px 16px;resize:none;max-height:110px;line-height:1.5;outline:none;transition:border-color .15s}
+.inp:focus{border-color:rgba(201,168,76,.5)}
+.clip{width:40px;height:44px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  font-size:20px;color:var(--dim);cursor:pointer;border-radius:12px;transition:.15s;user-select:none}
+.clip:hover{background:rgba(255,255,255,.05);color:var(--gold)}
+.clip.busy{opacity:.45;pointer-events:none}
+.send{width:44px;height:44px;flex-shrink:0;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(140deg,var(--gold),var(--gold-lite));color:#141005;font-size:19px;transition:.15s}
+.send:disabled{opacity:.35;cursor:default}
+.send:not(:disabled):active{transform:scale(.92)}
+
+/* ── شريط التسجيل ── */
+.nudge{margin:4px 4px 12px;background:linear-gradient(135deg,rgba(201,168,76,.14),rgba(201,168,76,.05));
+  border:1px solid rgba(201,168,76,.34);border-radius:15px;padding:14px}
+.nudge h4{margin:0 0 4px;font-size:14.5px;color:var(--gold-lite);font-weight:900}
+.nudge p{margin:0 0 11px;font-size:12.5px;color:var(--dim);line-height:1.65}
+.nudge-btns{display:flex;gap:8px}
+.btn{flex:1;font-family:inherit;font-weight:800;font-size:13.5px;padding:10px;border-radius:11px;cursor:pointer;transition:.15s;border:1px solid transparent}
+.btn-p{background:linear-gradient(140deg,var(--gold),var(--gold-lite));color:#141005}
+.btn-g{background:transparent;border-color:var(--line);color:var(--text)}
+.btn:active{transform:scale(.98)}
+
+/* ── الشيت ── */
+.veil{position:absolute;inset:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.22s;z-index:20}
+.veil.on{opacity:1;pointer-events:auto}
+.sheet{position:absolute;inset-inline:0;bottom:0;background:var(--raise);border-radius:22px 22px 0 0;
+  border-top:1px solid var(--line);padding:8px 18px calc(20px + env(safe-area-inset-bottom));
+  transform:translateY(101%);transition:transform .28s cubic-bezier(.2,.85,.3,1);z-index:21;max-height:92dvh;overflow-y:auto}
+.sheet.on{transform:none}
+.grab{width:38px;height:4px;border-radius:4px;background:var(--line);margin:6px auto 14px}
+.sheet h3{margin:0 0 5px;font-size:18px;font-weight:900}
+.sheet .lead{margin:0 0 16px;font-size:12.5px;color:var(--dim);line-height:1.65}
+.fld{margin-bottom:11px}
+.fld label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:var(--text)}
+.fld input,.fld select{width:100%;background:var(--panel);border:1px solid var(--line);border-radius:11px;
+  color:var(--text);font-family:inherit;font-size:15px;padding:11px 13px;outline:none;transition:border-color .15s}
+.fld input:focus,.fld select:focus{border-color:rgba(201,168,76,.55)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.msg{font-size:12.5px;padding:9px 12px;border-radius:10px;margin-bottom:11px;display:none;line-height:1.6}
+.msg.err{display:block;background:rgba(224,85,85,.12);border:1px solid rgba(224,85,85,.35);color:#F4A0A0}
+.msg.ok{display:block;background:rgba(76,175,125,.12);border:1px solid rgba(76,175,125,.35);color:#8FDCB4}
+.swap{text-align:center;font-size:12.5px;color:var(--dim);margin-top:13px}
+.swap b{color:var(--gold-lite);cursor:pointer;font-weight:800}
+
+/* ── حسابى ── */
+.me-row{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.me-row span{color:var(--dim)}
+.me-row b{font-weight:700;text-align:end}
+
+.feed::-webkit-scrollbar,.sheet::-webkit-scrollbar{width:5px}
+.feed::-webkit-scrollbar-thumb,.sheet::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="hd">
+    <div class="ava" id="ava">🏍️</div>
+    <div class="hd-t">
+      <div class="hd-name" id="hdName">أبو حوا للموتوسيكلات</div>
+      <div class="hd-sub" id="hdSub">اسأل عن أى موديل — الرد فورى</div>
+    </div>
+    <button class="icon-btn" id="meBtn" onclick="openMe()" title="حسابى" style="display:none">👤</button>
+  </header>
+
+  <main class="feed" id="feed"></main>
+
+  <div class="composer">
+    <label class="clip" id="clipBtn" title="ابعت صورة بطاقتك" style="display:none">📎
+      <input type="file" id="idFile" accept="image/*" style="display:none" onchange="uploadId(this)">
+    </label>
+    <textarea class="inp" id="inp" rows="1" placeholder="اكتب سؤالك..." autocomplete="off"></textarea>
+    <button class="send" id="sendBtn" onclick="send()" title="ابعت">➤</button>
+  </div>
+
+  <div class="veil" id="veil" onclick="closeSheet()"></div>
+
+  <!-- تسجيل / دخول -->
+  <div class="sheet" id="authSheet">
+    <div class="grab"></div>
+    <h3 id="authTitle">اعمل حسابك فى دقيقة</h3>
+    <p class="lead" id="authLead">عشان نوصلك بأقرب تاجر معتمد فى منطقتك ونتابع معاك لحد ما تستلم.</p>
+    <div class="msg" id="authMsg"></div>
+
+    <div id="regFields">
+      <div class="fld"><label for="rName">الاسم بالكامل</label><input id="rName" autocomplete="name" placeholder="محمد أحمد على"></div>
+      <div class="fld"><label for="rPhone">رقم الموبايل</label><input id="rPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="01xxxxxxxxx"></div>
+      <div class="two">
+        <div class="fld"><label for="rGov">المحافظة</label><select id="rGov"><option value="">اختار</option></select></div>
+        <div class="fld"><label for="rCity">المركز</label><select id="rCity"><option value="">اختار المحافظة الأول</option></select></div>
+      </div>
+      <div class="fld"><label for="rAddr">العنوان</label><input id="rAddr" placeholder="الشارع والعلامة المميزة"></div>
+    </div>
+
+    <div class="fld"><label for="rUser">اسم المستخدم</label><input id="rUser" autocomplete="username" placeholder="بحروف إنجليزى وأرقام" dir="ltr" style="text-align:start"></div>
+    <div class="fld"><label for="rPass">الباسورد</label><input id="rPass" type="password" autocomplete="current-password" placeholder="6 خانات على الأقل"></div>
+
+    <button class="btn btn-p" id="authBtn" style="width:100%;margin-top:6px" onclick="submitAuth()">إنشاء الحساب</button>
+    <div class="swap" id="authSwap">عندك حساب؟ <b onclick="setMode('login')">سجّل دخول</b></div>
+  </div>
+
+  <!-- حسابى -->
+  <div class="sheet" id="meSheet">
+    <div class="grab"></div>
+    <h3>حسابى</h3>
+    <p class="lead">بياناتك اللى بنوصل بيها التاجر.</p>
+    <div id="meBody"></div>
+    <button class="btn btn-g" style="width:100%;margin-top:16px" onclick="logout()">تسجيل الخروج</button>
+  </div>
+
+</div>
+
+<script>
+const SB   = 'https://oqsowwtjutpjdypjpcum.supabase.co';
+const ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
+const HDR  = { apikey: ANON, Authorization: 'Bearer ' + ANON, 'Content-Type': 'application/json' };
+const FN   = SB + '/functions/v1/sales-chat';
+
+let TOKEN = localStorage.getItem('hawa_shop_token') || '';
+let ME    = null;
+let HIST  = [];
+let BUSY  = false;
+let AUTH_MODE = 'register';
+
+let GKEY = localStorage.getItem('hawa_shop_guest');
+if(!GKEY){
+  GKEY = 'g_' + Date.now().toString(36) + Math.random().toString(36).slice(2,10);
+  localStorage.setItem('hawa_shop_guest', GKEY);
+}
+
+const $  = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nowTime = () => new Date().toLocaleTimeString('ar-EG',{hour:'numeric',minute:'2-digit'});
+
+// **غامق** → <b>
+function fmt(t){
+  return esc(t).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/\n{3,}/g,'\n\n');
+}
+
+function bubble(role, text, at){
+  const row = document.createElement('div');
+  row.className = 'row ' + (role === 'user' ? 'me' : 'her');
+  row.innerHTML = `<div class="bub">${fmt(text)}<div class="tm">${at || nowTime()}</div></div>`;
+  $('feed').appendChild(row);
+  scroll();
+  return row;
+}
+
+function bikeCard(c){
+  const row = document.createElement('div');
+  row.className = 'row her';
+  const imgs = Array.isArray(c.images) ? c.images.filter(Boolean) : [];
+  const specs = c.specs || {};
+  const chips = Object.keys(specs).slice(0,6).map(k=>`<span class="chip">${esc(k)}: ${esc(specs[k])}</span>`).join('');
+  const colors = (c.colors||[]).slice(0,4).map(x=>`<span class="chip n">🎨 ${esc(x)}</span>`).join('');
+  row.innerHTML = `<div class="card">
+    ${imgs.length ? (imgs.length>1
+        ? `<div class="card-imgs">${imgs.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`).join('')}</div>`
+        : `<img class="card-img" src="${esc(imgs[0])}" alt="" loading="lazy" onerror="this.remove()">`) : ''}
+    <div class="card-b">
+      <div class="card-nm">${esc(c.name)}</div>
+      <div class="card-br">${esc(c.brand||'')}${c.category?' · '+esc(c.category):''}</div>
+      <div class="price"><span class="price-l">يبدأ من</span><span class="price-v">${esc(c.price)}</span></div>
+      <div class="price-note">${esc(c.price_note||'')}${c.installment?' · '+esc(c.installment):''}${c.min_down?' · مقدم من '+esc(c.min_down):''}</div>
+      ${chips||colors ? `<div class="chips">${chips}${colors}</div>` : ''}
+      <button class="card-cta" onclick="wantIt(${JSON.stringify(String(c.name)).replace(/"/g,'&quot;')})">عايز أشترى دى</button>
+    </div></div>`;
+  $('feed').appendChild(row);
+  scroll();
+}
+
+function wantIt(name){
+  $('inp').value = 'عايز أشترى ' + name;
+  send();
+}
+
+function nudge(){
+  if(ME) return;
+  if($('feed').querySelector('.nudge')) return;
+  const d = document.createElement('div');
+  d.className = 'nudge';
+  d.innerHTML = `<h4>🏍️ خطوة واحدة وتوصلك العروض</h4>
+    <p>اعمل حساب سريع ونبعت طلبك لتجار منطقتك على طول — ونفضل متابعين معاك لحد ما تستلم موتوسيكلك.</p>
+    <div class="nudge-btns">
+      <button class="btn btn-p" onclick="openAuth('register')">اعمل حساب</button>
+      <button class="btn btn-g" onclick="openAuth('login')">عندى حساب</button>
+    </div>`;
+  $('feed').appendChild(d);
+  scroll();
+}
+
+function scroll(){ requestAnimationFrame(()=>{ const f=$('feed'); f.scrollTop = f.scrollHeight; }); }
+
+let typingEl = null;
+function typing(on){
+  if(on){
+    if(typingEl) return;
+    typingEl = document.createElement('div');
+    typingEl.className = 'row her';
+    typingEl.innerHTML = '<div class="typing"><i></i><i></i><i></i></div>';
+    $('feed').appendChild(typingEl); scroll();
+    $('hdSub').textContent = 'بتكتب...';
+  } else {
+    if(typingEl){ typingEl.remove(); typingEl = null; }
+    $('hdSub').textContent = ME ? 'أهلاً ' + ME.name.split(' ')[0] : 'اسأل عن أى موديل — الرد فورى';
+  }
+}
+
+// ═══ الشات ═══
+async function send(){
+  const el = $('inp');
+  const q = el.value.trim();
+  if(!q || BUSY) return;
+  el.value = ''; el.style.height = 'auto';
+  bubble('user', q);
+  HIST.push({ u: q });
+  BUSY = true; $('sendBtn').disabled = true; typing(true);
+  try{
+    const r = await fetch(FN, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ question:q, token:TOKEN, guest_key:GKEY, history:HIST.slice(-6) })
+    });
+    const j = await r.json();
+    typing(false);
+    if(!j.ok){
+      bubble('assistant', j.error === 'no_key'
+        ? 'فيه مشكلة مؤقتة فى الخدمة. جرّب تانى بعد شوية.'
+        : 'مقدرتش أرد دلوقتى. ابعت سؤالك تانى من فضلك.');
+      return;
+    }
+    bubble('assistant', j.answer);
+    HIST.push({ a: j.answer });
+    (j.cards||[]).forEach(bikeCard);
+    if(j.needSignup || j.limit_reached) nudge();
+  }catch(e){
+    typing(false);
+    bubble('assistant', 'النت فصل لحظة. ابعت تانى.');
+  }finally{
+    BUSY = false; $('sendBtn').disabled = false; el.focus();
+  }
+}
+
+$('inp').addEventListener('input', function(){
+  this.style.height='auto'; this.style.height = Math.min(this.scrollHeight,110)+'px';
+});
+$('inp').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey && window.innerWidth>700){ e.preventDefault(); send(); }
+});
+
+// ═══ الشيتات ═══
+function openSheet(id){ $('veil').classList.add('on'); $(id).classList.add('on'); }
+function closeSheet(){ $('veil').classList.remove('on'); document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on')); }
+
+function openAuth(mode){ setMode(mode||'register'); $('authMsg').className='msg'; openSheet('authSheet'); loadGovs(); }
+function setMode(m){
+  AUTH_MODE = m;
+  const reg = m === 'register';
+  $('regFields').style.display = reg ? '' : 'none';
+  $('authTitle').textContent = reg ? 'اعمل حسابك فى دقيقة' : 'سجّل دخول';
+  $('authLead').textContent  = reg ? 'عشان نوصلك بأقرب تاجر معتمد فى منطقتك ونتابع معاك لحد ما تستلم.'
+                                   : 'ادخل باسم المستخدم أو رقم موبايلك.';
+  $('authBtn').textContent   = reg ? 'إنشاء الحساب' : 'دخول';
+  $('authSwap').innerHTML    = reg ? 'عندك حساب؟ <b onclick="setMode(\'login\')">سجّل دخول</b>'
+                                   : 'لسه معملتش حساب؟ <b onclick="setMode(\'register\')">اعمل واحد</b>';
+}
+function authErr(t){ const m=$('authMsg'); m.className='msg err'; m.textContent=t; }
+function authOk(t){ const m=$('authMsg'); m.className='msg ok'; m.textContent=t; }
+
+async function rpc(fn, args){
+  const r = await fetch(SB+'/rest/v1/rpc/'+fn, { method:'POST', headers:HDR, body:JSON.stringify(args) });
+  const txt = await r.text(); let j=null; try{ j = txt?JSON.parse(txt):null; }catch(e){}
+  if(!r.ok) throw new Error((j && (j.message||j.error)) || 'حصل خطأ — حاول تانى');
+  return j;
+}
+
+let GOVS = {};
+async function loadGovs(){
+  if(Object.keys(GOVS).length) return;
+  try{
+    const rows = await rpc('get_governorate_cities', {});
+    (Array.isArray(rows)?rows:[]).forEach(r=>{
+      const g = r.governorate || r.gov || r.name;
+      const c = r.city || r.cities;
+      if(!g) return;
+      if(!GOVS[g]) GOVS[g] = [];
+      if(Array.isArray(c)) GOVS[g].push(...c); else if(c) GOVS[g].push(c);
+    });
+  }catch(e){}
+  const sel = $('rGov');
+  sel.innerHTML = '<option value="">اختار</option>' +
+    Object.keys(GOVS).map(g=>`<option>${esc(g)}</option>`).join('');
+}
+$('rGov').addEventListener('change', function(){
+  const list = GOVS[this.value] || [];
+  $('rCity').innerHTML = list.length
+    ? '<option value="">اختار</option>' + [...new Set(list)].map(c=>`<option>${esc(c)}</option>`).join('')
+    : '<option value="">اكتب المركز فى العنوان</option>';
+});
+
+async function submitAuth(){
+  const btn = $('authBtn'); btn.disabled = true;
+  const old = btn.textContent; btn.textContent = 'ثانية...';
+  try{
+    const user = ($('rUser').value||'').trim();
+    const pass = ($('rPass').value||'');
+    let res;
+    if(AUTH_MODE === 'register'){
+      res = await rpc('consumer_register', { p_data: {
+        name: ($('rName').value||'').trim(), phone: ($('rPhone').value||'').trim(),
+        username: user, password: pass,
+        governorate: $('rGov').value, city: $('rCity').value,
+        address: ($('rAddr').value||'').trim()
+      }});
+    } else {
+      res = await rpc('consumer_login', { p_user: user, p_pass: pass });
+    }
+    if(!res || !res.token) throw new Error('حصل خطأ — حاول تانى');
+    TOKEN = res.token;
+    localStorage.setItem('hawa_shop_token', TOKEN);
+    authOk('تمام! حسابك جاهز ✅');
+    await loadMe();
+    setTimeout(()=>{ closeSheet(); document.querySelectorAll('.nudge').forEach(n=>n.remove());
+      $('clipBtn').style.display='flex';
+      bubble('assistant','تمام يا '+ME.name.split(' ')[0]+'! دلوقتى قولى الموديل اللى عايزه وأنا أوصّل طلبك لتجار منطقتك على طول 🏍️');
+    }, 700);
+  }catch(e){
+    authErr(e.message || 'حصل خطأ — حاول تانى');
+  }finally{
+    btn.disabled = false; btn.textContent = old;
+  }
+}
+
+async function loadMe(){
+  if(!TOKEN) return;
+  try{
+    ME = await rpc('consumer_me', { p_token: TOKEN });
+    $('meBtn').style.display = '';
+    $('clipBtn').style.display = 'flex';
+    $('hdSub').textContent = 'أهلاً ' + ME.name.split(' ')[0];
+  }catch(e){
+    TOKEN=''; ME=null; localStorage.removeItem('hawa_shop_token');
+  }
+}
+
+function openMe(){
+  if(!ME) return;
+  $('meBody').innerHTML = [
+    ['الاسم', ME.name], ['الموبايل', ME.phone],
+    ['المحافظة', ME.governorate||'—'], ['المركز', ME.city||'—'],
+    ['العنوان', ME.address||'—'], ['نقاطك', (ME.points||0) + ' نقطة']
+  ].map(([k,v])=>`<div class="me-row"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join('');
+  openSheet('meSheet');
+}
+
+async function logout(){
+  try{ await rpc('consumer_logout', { p_token: TOKEN }); }catch(e){}
+  TOKEN=''; ME=null; localStorage.removeItem('hawa_shop_token');
+  $('meBtn').style.display='none'; $('clipBtn').style.display='none'; closeSheet();
+  $('hdSub').textContent = 'اسأل عن أى موديل — الرد فورى';
+}
+
+// ═══ رفع صورة البطاقة ═══
+async function uploadId(input){
+  const f = input.files && input.files[0];
+  input.value = '';
+  if(!f) return;
+  if(!ME){ bubble('assistant','عشان أستقبل صورة بطاقتك لازم تسجّل دخول الأول 🙏'); return; }
+  if(f.size > 6 * 1024 * 1024){ bubble('assistant','الصورة كبيرة شوية — ابعت واحدة أصغر من 6 ميجا.'); return; }
+  const clip = $('clipBtn'); clip.classList.add('busy');
+  bubble('user','📎 ' + f.name);
+  typing(true);
+  try{
+    const b64 = await new Promise((res, rej)=>{
+      const r = new FileReader();
+      r.onload = ()=> res(String(r.result).split(',')[1] || '');
+      r.onerror = ()=> rej(new Error('read'));
+      r.readAsDataURL(f);
+    });
+    const ext = (f.name.split('.').pop() || 'jpg').toLowerCase();
+    const r = await fetch(FN, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ mode:'upload_id', token:TOKEN, file_b64:b64, ext }) });
+    const j = await r.json();
+    typing(false);
+    bubble('assistant', j.ok
+      ? 'وصلتنى صورة البطاقة ✅ تمام كده، الجواب بيتجهز وهنطمنك أول بأول 🤝'
+      : (j.error || 'مقدرتش أستقبل الصورة — جرّب تانى.'));
+  }catch(e){
+    typing(false);
+    bubble('assistant','حصلت مشكلة فى رفع الصورة — جرّب تانى.');
+  }finally{ clip.classList.remove('busy'); }
+}
+
+// ═══ البداية ═══
+async function boot(){
+  await loadMe();
+  let msgs = [];
+  try{
+    const r = await fetch(FN, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ mode:'history', token:TOKEN, guest_key:GKEY }) });
+    const j = await r.json();
+    msgs = (j && j.messages) || [];
+  }catch(e){}
+
+  if(msgs.length){
+    msgs.slice(-40).forEach(m=>{
+      bubble(m.role, m.content, new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'numeric',minute:'2-digit'}));
+      HIST.push(m.role==='user' ? {u:m.content} : {a:m.content});
+    });
+  } else {
+    bubble('assistant', 'أهلاً بيك فى **أبو حوا** 🏍️\nأنا سالى — اسألنى عن أى موتوسيكل وأقولك المواصفات والسعر، ولو عجبك أوصّلك بأقرب تاجر معتمد فى منطقتك.\n\nعايز تعرف إيه؟');
+  }
+  $('inp').focus();
+}
+boot();
+</script>
+</body>
+</html>
