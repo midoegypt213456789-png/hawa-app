@@ -2516,7 +2516,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <button class="sidebar-toggle" onclick="toggleSidebar()" title="إخفاء/إظهار القائمة">
           <span class="sidebar-toggle-icon">◀</span>
         </button>
-        <div class="sb-logo">👑 HAWA CO</div>
+        <div class="sb-logo" title="نسخة الملف" onclick="alert('نسخة الصفحة: '+APP_VERSION)" style="cursor:pointer">👑 HAWA CO <span style="font-size:10px;font-weight:700;color:var(--text-dim);letter-spacing:0" id="appVer"></span></div>
         <button class="notif-bell" id="notifBell" onclick="event.stopPropagation();toggleNotifPanel()" title="التنبيهات">
           🔔
           <span class="notif-count" id="notifCount">0</span>
@@ -14941,6 +14941,9 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
+const APP_VERSION = 'v2026.08.06-a';
+try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
+
 const NAV_META = {
   'bookings':         { icon: '📋',  label: 'الحجوزات' },
   'pending-clients':  { icon: '⏳',  label: 'عملاء تحت الانتظار', badge: { id: 'pendingBadge', cls: 'pending-badge' } },
