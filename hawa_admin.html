@@ -3041,6 +3041,33 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
 
+    <div class="section" id="sec-catalog">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🏍️ <span>كتالوج الموتوسيكلات</span></div>
+          <div class="page-sub">دى البيانات اللى المساعد بيعرضها للعميل النهائى على صفحة المبيعات</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="mcLoad()">🔄 تحديث</button>
+          <button class="add-btn" onclick="openMcEdit(0)">➕ إضافة موديل</button>
+        </div>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="mc-search" type="text" placeholder="🔍 اكتب للبحث..." oninput="mcRender()" style="width:220px">
+          <select class="filter-inp" id="mc-filter-active" onchange="mcRender()" style="width:150px">
+            <option value="all">الكل</option>
+            <option value="1">✅ متاح</option>
+            <option value="0">⛔ مش متاح</option>
+          </select>
+          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('mc-search').value='';mcRender()">✖️ مسح</button>
+          <div style="flex:1;min-width:10px"></div>
+          <div id="mc-count" style="color:var(--text-dim);font-size:12px"></div>
+        </div>
+        <div id="mc-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
     <div class="section" id="sec-bulletins">
       <div class="page-hd">
         <div class="page-hd-titles">
@@ -3985,6 +4012,70 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div class="modal-btns">
       <button class="modal-save" onclick="ppPrint()">🖨️ طباعة</button>
       <button class="modal-cancel" onclick="closeModal('printPickerModal')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🏍️ MOTORCYCLE EDIT MODAL -->
+<div class="modal-overlay" id="mcModal">
+  <div class="modal" style="max-width:720px;width:96%">
+    <div class="modal-title">
+      <span id="mc-modal-title">🏍️ إضافة موديل</span>
+      <button class="modal-close" onclick="closeModal('mcModal')">✕</button>
+    </div>
+    <div style="max-height:70vh;overflow-y:auto;padding-left:4px">
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">📌 أساسى</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <input id="mc-name" placeholder="اسم الموديل (مثلاً: دايون 4)" style="flex:2;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+        <input id="mc-brand" placeholder="الماركة (دايون / VIGOREY / هوجان...)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+        <select id="mc-category" style="width:150px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+          <option>موتوسيكل</option><option>تروسيكل</option><option>سكوتر كهربا</option><option>أخرى</option>
+        </select>
+      </div>
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">💰 السعر</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <input id="mc-price" placeholder="السعر الإرشادى بالجنيه" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+        <input id="mc-min-down" placeholder="أقل مقدم (لو تقسيط)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+        <label style="display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer">
+          <input type="checkbox" id="mc-installment" checked style="width:16px;height:16px;cursor:pointer"> متاح تقسيط
+        </label>
+      </div>
+      <div style="color:var(--text-dim);font-size:11px;margin-bottom:12px">💡 المساعد بيقول للعميل «يبدأ من كذا» ويوضح إن السعر النهائى من التاجر</div>
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">⚙️ المواصفات التقنية</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input id="mc-engine" placeholder="سعة الموتور (150 سى سى)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-strokes" placeholder="عدد الأشواط (رباعى الأشواط)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-cooling" placeholder="التبريد (هوائى / مائى)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-trans" placeholder="ناقل الحركة" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-brakes" placeholder="الفرامل" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-tires" placeholder="الكاوتش (18-325)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-tank" placeholder="سعة التانك" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-consumption" placeholder="استهلاك البنزين" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-speed" placeholder="أقصى سرعة" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-weight" placeholder="الوزن" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px"><input id="mc-warranty" placeholder="الضمان" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+      </div>
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">🎨 الألوان</div>
+      <input id="mc-colors" placeholder="الألوان مفصولة بفاصلة: أزرق, أحمر, أسود" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:14px 0 8px">🖼️ الصور</div>
+      <label style="display:block;background:var(--dark3);border:2px dashed rgba(201,168,76,0.45);border-radius:10px;padding:12px;cursor:pointer;text-align:center;margin-bottom:8px">
+        <div style="color:var(--gold);font-weight:700;font-size:13px">📷 اضغط لاختيار صور (تقدر تختار أكتر من واحدة)</div>
+        <div id="mc-img-hint" style="color:var(--text-dim);font-size:11px;margin-top:3px">JPG أو PNG — أقصى 20 ميجا للصورة</div>
+        <input type="file" id="mc-img-input" accept="image/*" multiple style="display:none" onchange="mcUploadImages(this)">
+      </label>
+      <div id="mc-images" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px"></div>
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">🎬 الفيديوهات</div>
+      <textarea id="mc-videos" placeholder="لينك فى كل سطر (يوتيوب أو أى لينك مباشر)" style="width:100%;min-height:60px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px;font-family:Cairo;margin-bottom:12px"></textarea>
+
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">🗣️ الوصف البيعى</div>
+      <textarea id="mc-pitch" placeholder="جملة أو اتنين بالعامية المساعد يقولهم للعميل عن الموديل ده" style="width:100%;min-height:70px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px;font-family:Cairo;margin-bottom:12px"></textarea>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <label style="display:flex;align-items:center;gap:6px;color:var(--text);font-size:13px;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;cursor:pointer">
+          <input type="checkbox" id="mc-active" checked style="width:16px;height:16px;cursor:pointer"> متاح للعرض
+        </label>
+        <input id="mc-sort" placeholder="ترتيب العرض (رقم)" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-save" id="mc-save-btn" onclick="saveMotorcycle()">💾 حفظ</button>
+      <button class="modal-cancel" onclick="closeModal('mcModal')">إلغاء</button>
     </div>
   </div>
 </div>
@@ -4968,6 +5059,7 @@ function autoRefreshTick(){
     else if(sec==='permit-alerts' && typeof loadPermitAlerts === 'function') loadPermitAlerts();
     else if(sec==='employees' && typeof loadEmployees === 'function') loadEmployees();
     else if(sec==='bulletins' && typeof loadBulletins === 'function') loadBulletins();
+    else if(sec==='catalog' && typeof mcLoad === 'function') mcLoad();
     else if(sec==='clients' && typeof loadClients === 'function') loadClients();
     else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
     else if(sec==='extra-contacts' && typeof loadExtraContacts === 'function') loadExtraContacts();
@@ -5106,6 +5198,7 @@ function goTo(sec){
   else if(sec==='ai-assistant')loadAiAssistant();
   else if(sec==='chat')loadChat();
   else if(sec==='bulletins')loadBulletins();
+  else if(sec==='catalog')mcLoad();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='vehicle-types')loadVehicleTypes();
@@ -6619,6 +6712,196 @@ async function saveBulletinEdit(){
   }finally{
     btn.disabled = false; btn.textContent = '💾 حفظ التعديلات';
   }
+}
+
+// ═══════════ 🏍️ كتالوج الموتوسيكلات ═══════════
+let _mcRows = [];
+let _mcEditId = 0;
+let _mcImages = [];
+
+async function mcLoad(){
+  const el = document.getElementById('mc-list');
+  if(!el) return;
+  el.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const rows = await rpcSecure('admin_list_motorcycles', {});
+    _mcRows = Array.isArray(rows) ? rows : [];
+    mcRender();
+  }catch(e){
+    el.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ فى التحميل')}</div>`;
+  }
+}
+
+function mcRender(){
+  const el = document.getElementById('mc-list');
+  if(!el) return;
+  const q = (document.getElementById('mc-search')?.value || '').trim().toLowerCase();
+  const af = document.getElementById('mc-filter-active')?.value || 'all';
+  const rows = (_mcRows||[]).filter(m=>{
+    if(af === '1' && !m.is_active) return false;
+    if(af === '0' && m.is_active) return false;
+    if(!q) return true;
+    return [m.name, m.brand, m.category, m.engine_cc].some(x => String(x||'').toLowerCase().includes(q));
+  });
+  const cnt = document.getElementById('mc-count');
+  if(cnt) cnt.textContent = `🏍️ ${(_mcRows||[]).length} موديل`;
+
+  if(!(_mcRows||[]).length){
+    el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:24px">الكتالوج فاضى — اضغط «➕ إضافة موديل» 👆</div>';
+    return;
+  }
+  if(!rows.length){
+    el.innerHTML = '<div style="color:var(--text-dim);text-align:center;padding:24px">🔍 مفيش نتيجة</div>';
+    return;
+  }
+
+  let html = `<table><thead><tr><th>الصورة</th><th>الموديل</th><th>الماركة</th><th>الفئة</th><th>السعر</th><th>المواصفات</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>`;
+  for(const m of rows){
+    const img = (Array.isArray(m.images) && m.images[0]) ? m.images[0] : '';
+    const specs = [
+      m.engine_cc ? `⚙️ ${escAttr(m.engine_cc)}` : '',
+      m.strokes ? `🔧 ${escAttr(m.strokes)}` : '',
+      m.tires ? `🛞 ${escAttr(m.tires)}` : ''
+    ].filter(Boolean).join(' • ');
+    html += `<tr>
+      <td>${img ? `<img src="${img}" style="width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">` : '<span style="color:var(--text-dim);font-size:11px">مفيش صورة</span>'}</td>
+      <td><b>${escAttr(m.name)}</b>${Array.isArray(m.colors)&&m.colors.length?`<div style="color:var(--text-dim);font-size:11px;margin-top:3px">🎨 ${escAttr(m.colors.join('، '))}</div>`:''}</td>
+      <td>${escAttr(m.brand)}</td>
+      <td><span class="badge qalyub">${escAttr(m.category||'')}</span></td>
+      <td>${m.price ? `<b style="color:var(--gold)">${Number(m.price).toLocaleString('ar-EG')}</b> ج${m.installment?'<div style="color:var(--text-dim);font-size:11px">💳 تقسيط متاح</div>':''}` : '<span style="color:var(--text-dim);font-size:11px">—</span>'}</td>
+      <td style="font-size:12px;color:var(--text-dim);max-width:220px">${specs || '—'}</td>
+      <td>${m.is_active ? '<span style="color:var(--success);font-size:12px;font-weight:700">✅ متاح</span>' : '<span style="color:var(--text-dim);font-size:12px">⛔ مخفى</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="act-btn edit" onclick="openMcEdit(${m.id})">✏️ تعديل</button>
+        <button class="act-btn delete" onclick="deleteMotorcycle(${m.id})">🗑️ حذف</button>
+      </td>
+    </tr>`;
+  }
+  el.innerHTML = '<div style="max-height:65vh;overflow:auto;border:1px solid var(--border);border-radius:12px;position:relative;z-index:1">' + html + '</tbody></table></div>';
+}
+
+function mcRenderImages(){
+  const box = document.getElementById('mc-images');
+  if(!box) return;
+  box.innerHTML = (_mcImages||[]).map((u,i)=>`
+    <div style="position:relative;width:88px;height:66px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+      <img src="${u}" style="width:100%;height:100%;object-fit:cover">
+      <button type="button" onclick="mcRemoveImage(${i})" title="شيل الصورة"
+        style="position:absolute;top:2px;left:2px;background:rgba(224,85,85,0.92);border:none;color:#fff;border-radius:6px;width:22px;height:22px;cursor:pointer;font-size:12px;line-height:1">✕</button>
+      ${i===0?'<div style="position:absolute;bottom:0;right:0;left:0;background:rgba(201,168,76,0.85);color:#0A0A0A;font-size:10px;font-weight:800;text-align:center">الرئيسية</div>':''}
+    </div>`).join('');
+}
+function mcRemoveImage(i){ _mcImages.splice(i,1); mcRenderImages(); }
+
+async function mcUploadImages(input){
+  const files = [...(input.files||[])];
+  if(!files.length) return;
+  const hint = document.getElementById('mc-img-hint');
+  try{
+    for(let i=0;i<files.length;i++){
+      const f = files[i];
+      if(hint) hint.textContent = `⏳ بنرفع ${i+1} من ${files.length}...`;
+      const ext = (f.name.split('.').pop()||'jpg').toLowerCase();
+      const path = `mc_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
+      const r = await fetch(`${SB}/storage/v1/object/catalog/${path}`,{
+        method:'POST', headers:{...HDR,'Content-Type':f.type||'image/jpeg','x-upsert':'true'}, body:f
+      });
+      if(!r.ok) throw new Error('فشل رفع '+f.name);
+      _mcImages.push(`${SB}/storage/v1/object/public/catalog/${path}`);
+    }
+    mcRenderImages();
+    if(hint) hint.textContent = '✅ اترفعت — تقدر تضيف كمان';
+  }catch(e){
+    if(hint) hint.textContent = '⚠️ ' + (e.message||'فشل الرفع');
+  }finally{ input.value=''; }
+}
+
+function openMcEdit(id){
+  _mcEditId = Number(id)||0;
+  const m = _mcEditId ? (_mcRows||[]).find(x=>Number(x.id)===_mcEditId) : null;
+  if(_mcEditId && !m){ alert('الموديل مش موجود — اضغط 🔄 تحديث'); return; }
+  const g = (k,d='') => m ? (m[k]==null?d:m[k]) : d;
+  document.getElementById('mc-modal-title').textContent = _mcEditId ? ('✏️ تعديل: ' + (m.name||'')) : '🏍️ إضافة موديل';
+  document.getElementById('mc-name').value        = g('name');
+  document.getElementById('mc-brand').value       = g('brand');
+  document.getElementById('mc-category').value    = g('category','موتوسيكل');
+  document.getElementById('mc-price').value       = g('price');
+  document.getElementById('mc-min-down').value    = g('min_down');
+  document.getElementById('mc-installment').checked = m ? !!m.installment : true;
+  document.getElementById('mc-engine').value      = g('engine_cc');
+  document.getElementById('mc-strokes').value     = g('strokes');
+  document.getElementById('mc-cooling').value     = g('cooling');
+  document.getElementById('mc-trans').value       = g('transmission');
+  document.getElementById('mc-brakes').value      = g('brakes');
+  document.getElementById('mc-tires').value       = g('tires');
+  document.getElementById('mc-tank').value        = g('tank');
+  document.getElementById('mc-consumption').value = g('consumption');
+  document.getElementById('mc-speed').value       = g('top_speed');
+  document.getElementById('mc-weight').value      = g('weight');
+  document.getElementById('mc-warranty').value    = g('warranty');
+  document.getElementById('mc-colors').value      = (m && Array.isArray(m.colors)) ? m.colors.join('، ') : '';
+  document.getElementById('mc-videos').value      = (m && Array.isArray(m.videos)) ? m.videos.join('\n') : '';
+  document.getElementById('mc-pitch').value       = g('pitch');
+  document.getElementById('mc-active').checked    = m ? !!m.is_active : true;
+  document.getElementById('mc-sort').value        = g('sort_order', 0);
+  document.getElementById('mc-img-hint').textContent = 'JPG أو PNG — أقصى 20 ميجا للصورة';
+  _mcImages = (m && Array.isArray(m.images)) ? m.images.slice() : [];
+  mcRenderImages();
+  document.getElementById('mcModal').classList.add('show');
+}
+
+async function saveMotorcycle(){
+  const name  = (document.getElementById('mc-name').value||'').trim();
+  const brand = (document.getElementById('mc-brand').value||'').trim();
+  if(!name){ alert('اكتب اسم الموديل'); return; }
+  if(!brand){ alert('اكتب الماركة'); return; }
+  const btn = document.getElementById('mc-save-btn');
+  btn.disabled = true; btn.textContent = '⏳ بنحفظ...';
+  try{
+    const splitList = (v, sep) => String(v||'').split(sep).map(x=>x.trim()).filter(Boolean);
+    const data = {
+      name, brand,
+      category:     document.getElementById('mc-category').value,
+      price:        (document.getElementById('mc-price').value||'').trim(),
+      min_down:     (document.getElementById('mc-min-down').value||'').trim(),
+      installment:  document.getElementById('mc-installment').checked,
+      engine_cc:    (document.getElementById('mc-engine').value||'').trim(),
+      strokes:      (document.getElementById('mc-strokes').value||'').trim(),
+      cooling:      (document.getElementById('mc-cooling').value||'').trim(),
+      transmission: (document.getElementById('mc-trans').value||'').trim(),
+      brakes:       (document.getElementById('mc-brakes').value||'').trim(),
+      tires:        (document.getElementById('mc-tires').value||'').trim(),
+      tank:         (document.getElementById('mc-tank').value||'').trim(),
+      consumption:  (document.getElementById('mc-consumption').value||'').trim(),
+      top_speed:    (document.getElementById('mc-speed').value||'').trim(),
+      weight:       (document.getElementById('mc-weight').value||'').trim(),
+      warranty:     (document.getElementById('mc-warranty').value||'').trim(),
+      colors:       splitList(document.getElementById('mc-colors').value, /[,،]/),
+      images:       _mcImages.slice(),
+      videos:       splitList(document.getElementById('mc-videos').value, /\n/),
+      pitch:        (document.getElementById('mc-pitch').value||'').trim(),
+      is_active:    document.getElementById('mc-active').checked,
+      sort_order:   Number(document.getElementById('mc-sort').value||0) || 0
+    };
+    await rpcSecure('admin_save_motorcycle', { p_id: _mcEditId || null, p_data: data });
+    closeModal('mcModal');
+    _mcEditId = 0;
+    mcLoad();
+  }catch(e){
+    alert('⚠️ ' + (e.message||'حصل خطأ — حاول تانى'));
+  }finally{
+    btn.disabled = false; btn.textContent = '💾 حفظ';
+  }
+}
+
+async function deleteMotorcycle(id){
+  const m = (_mcRows||[]).find(x=>Number(x.id)===Number(id));
+  showConfirm('🗑️','حذف الموديل','هتحذف «'+((m&&m.name)||('#'+id))+'» من الكتالوج نهائياً. تكمل؟',true, async()=>{
+    try{
+      await rpcSecure('admin_delete_motorcycle', { p_id: Number(id) });
+      mcLoad();
+    }catch(e){ alert('⚠️ ' + (e.message||'فشل الحذف')); }
+  });
 }
 
 // ▶️ استكمال أو إعادة فهرسة منشور فى الخلفية
@@ -14686,7 +14969,9 @@ const NAV_META = {
   'warehouses':       { icon: '📦',  label: 'إيميلات المخازن' },
   'activity-log':     { icon: '📜',  label: 'سجل الأنشطة' },
   'settings':         { icon: '⚙️', label: 'إعدادات عامة' },
-  'ai-assistant':     { icon: '🤖',  label: 'المساعد الذكى' }
+  'ai-assistant':     { icon: '🤖',  label: 'المساعد الذكى' },
+
+  'catalog':          { icon: '🏍️', label: 'كتالوج الموتوسيكلات' }
 };
 
 // ── Default sidebar layout
@@ -14696,6 +14981,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
+    { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
