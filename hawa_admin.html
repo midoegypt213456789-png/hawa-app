@@ -14991,6 +14991,11 @@ let sidebarLayout = JSON.parse(JSON.stringify(DEFAULT_SIDEBAR_LAYOUT));
 let __sidebarSaveTimer = null;
 let __sidebarLoaded = false;
 
+// ── الشاشات الجديدة اللى ليها قسم مخصص — بتتحط فى قسمها تلقائياً حتى لو الترتيب محفوظ من قبل
+const NAV_PREFERRED_CAT = {
+  'catalog': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 }
+};
+
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
 function repairSidebarLayout(layout){
   const known = new Set(Object.keys(NAV_META));
@@ -15004,15 +15009,29 @@ function repairSidebarLayout(layout){
   // 3. Find ids placed somewhere (favorites OR any category)
   const placed = new Set(layout.favorites);
   layout.categories.forEach(c => c.items.forEach(id => placed.add(id)));
-  // 4. For any missing nav meta id → add to last category as catchall
+  // 4. For any missing nav meta id → add to its preferred category (or system as catchall)
   const missing = [...known].filter(id => !placed.has(id));
   if (missing.length) {
-    let target = layout.categories.find(c => c.id === 'system') || layout.categories[layout.categories.length - 1];
-    if (!target) {
+    let fallback = layout.categories.find(c => c.id === 'system') || layout.categories[layout.categories.length - 1];
+    if (!fallback) {
       // Layout completely broken — fallback to defaults
       return JSON.parse(JSON.stringify(DEFAULT_SIDEBAR_LAYOUT));
     }
-    target.items.push(...missing);
+    missing.forEach(id => {
+      const pref = NAV_PREFERRED_CAT[id];
+      if (pref) {
+        // الشاشة ليها قسم مخصص — نلاقيه أو نعمله بدل ما تتكوّم فى «النظام»
+        let cat = layout.categories.find(c => c.id === pref.id);
+        if (!cat) {
+          cat = { id: pref.id, icon: pref.icon, title: pref.title, items: [] };
+          const at = Number.isInteger(pref.index) ? pref.index : layout.categories.length;
+          layout.categories.splice(at, 0, cat);
+        }
+        cat.items.push(id);
+      } else {
+        fallback.items.push(id);
+      }
+    });
   }
   // 5. Ensure every category has an id, icon, title
   layout.categories.forEach((c, i) => {
