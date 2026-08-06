@@ -7110,11 +7110,23 @@ function aiToneLabel(v){
   return '😄 خفيف الدم وبيهزر';
 }
 
+// 🧠 النماذج المتاحة — الاختيار بيتحفظ فى app_settings.ai_model وبتقراه الـ Edge Functions
+const AI_MODEL_OPTIONS = [
+  { v: 'claude-sonnet-4-6', t: '⚖️ Sonnet — متوازن (موصى بيه)' },
+  { v: 'claude-haiku-4-5-20251001', t: '⚡ Haiku — الأسرع والأرخص' },
+  { v: 'claude-opus-4-8', t: '🧠 Opus — الأقوى والأغلى' }
+];
+function AI_MODEL_NOTE(v){
+  if(v === 'claude-haiku-4-5-20251001') return '⚡ أسرع وأرخص بكتير — مناسب للردود البسيطة، بس أقل دقة فى المواقف المعقدة زى الحجز والتعديل.';
+  if(v === 'claude-opus-4-8') return '⚠️ الأقوى فى الفهم بس تكلفته أعلى بكتير من Sonnet — استخدمه لو محتاج دقة قصوى.';
+  return '⚖️ أحسن توازن بين الذكاء والتكلفة — ده الاختيار المناسب لمعظم الشغل.';
+}
+
 async function aiRenderPersona(){
   const box = document.getElementById('ai-persona-box');
   if(!box) return;
   box.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
-  const rows = await fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(ai_name,ai_tone,ai_style,ai_scope,ai_gender)`,{headers:HDR}).then(r=>r.json()).catch(()=>[]);
+  const rows = await fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(ai_name,ai_tone,ai_style,ai_scope,ai_gender,ai_model)`,{headers:HDR}).then(r=>r.json()).catch(()=>[]);
   const m = {}; (Array.isArray(rows)?rows:[]).forEach(r=>m[r.key]=r.value);
   const g = m.ai_gender === 'male' ? 'male' : 'female';
   const tone = Math.max(0, Math.min(100, Number(m.ai_tone)||40));
@@ -7141,6 +7153,16 @@ async function aiRenderPersona(){
         <textarea id="ai-p-scope" rows="3" placeholder="مثال: مسموح يرد على السلامات والدعوات الطيبة ويهنى بالأعياد. ممنوع يتكلم فى السياسة أو الدين أو ينصح فى حاجة برّه شغلنا..." style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 12px;font-family:Cairo;resize:vertical">${escAttr(m.ai_scope||'')}</textarea>
       </div>
     </div>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin-bottom:6px">🧠 نموذج الذكاء المستخدم</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <select id="ai-p-model" onchange="document.getElementById('ai-model-note').innerHTML=AI_MODEL_NOTE(this.value)" style="min-width:280px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px;font-family:Cairo">
+          ${AI_MODEL_OPTIONS.map(o => `<option value="${o.v}" ${(m.ai_model||'claude-sonnet-4-6')===o.v?'selected':''}>${o.t}</option>`).join('')}
+        </select>
+        <div id="ai-model-note" style="color:var(--text-dim);font-size:11px;max-width:340px">${AI_MODEL_NOTE(m.ai_model||'claude-sonnet-4-6')}</div>
+      </div>
+      <div style="color:var(--text-dim);font-size:11px;margin-top:6px">بيسرى على مساعد التجار ومساعد المبيعات — التغيير فورى من غير أى رفع ملفات</div>
+    </div>
     <button onclick="aiSavePersona()" style="margin-top:14px;background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.5);color:var(--success);border-radius:10px;padding:10px 26px;cursor:pointer;font-size:14px;font-weight:700;font-family:Cairo">💾 حفظ الشخصية</button>
     <style>@media(max-width:900px){ #ai-persona-grid{grid-template-columns:1fr !important} }</style>`;
 }
@@ -7159,7 +7181,8 @@ async function aiSavePersona(){
     setAppSetting('ai_name', name),
     setAppSetting('ai_tone', tone),
     setAppSetting('ai_style', style),
-    setAppSetting('ai_scope', scope)
+    setAppSetting('ai_scope', scope),
+    setAppSetting('ai_model', (document.getElementById('ai-p-model')||{}).value || 'claude-sonnet-4-6')
   ]);
   if(ok.every(Boolean)) alert('✅ اتحفظت شخصية المساعد — سارية على البوت فورًا');
   else alert('⚠️ حصل خطأ فى حفظ جزء من الإعدادات — حاول تانى');
@@ -14941,7 +14964,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.06-a';
+const APP_VERSION = 'v2026.08.06-b';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
