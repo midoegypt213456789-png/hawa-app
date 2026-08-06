@@ -3056,7 +3056,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="">كل الحالات</option><option>جديد</option><option>اتوزعت</option>
             <option>اتستلمت</option><option>تمت</option><option>مقفولة</option>
           </select>
-          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('ld-q').value='';ldRender()">✖️ مسح</button>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="color:var(--text-dim);font-size:11.5px">من</span>
+            <input class="filter-inp" id="ld-from" type="date" onchange="ldRender()" style="width:145px">
+            <span style="color:var(--text-dim);font-size:11.5px">إلى</span>
+            <input class="filter-inp" id="ld-to" type="date" onchange="ldRender()" style="width:145px">
+          </div>
+          <button class="act-btn edit" style="font-size:12px" onclick="clearFilters('ld','ldRender')">✖️ مسح</button>
           <div style="flex:1;min-width:10px"></div>
           <div id="ld-count" style="color:var(--text-dim);font-size:12px"></div>
         </div>
@@ -3076,7 +3082,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div class="tbl-filters">
           <input class="filter-inp" id="wl-q" type="text" placeholder="🔍 اكتب للبحث..." oninput="wlRender()" style="width:220px">
           
-          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('wl-q').value='';wlRender()">✖️ مسح</button>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="color:var(--text-dim);font-size:11.5px">من</span>
+            <input class="filter-inp" id="wl-from" type="date" onchange="wlRender()" style="width:145px">
+            <span style="color:var(--text-dim);font-size:11.5px">إلى</span>
+            <input class="filter-inp" id="wl-to" type="date" onchange="wlRender()" style="width:145px">
+          </div>
+          <button class="act-btn edit" style="font-size:12px" onclick="clearFilters('wl','wlRender')">✖️ مسح</button>
           <div style="flex:1;min-width:10px"></div>
           <div id="wl-count" style="color:var(--text-dim);font-size:12px"></div>
         </div>
@@ -3099,7 +3111,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
             <option value="">كل الحالات</option><option>اتبعت للتاجر</option><option>التاجر عنده</option>
             <option>اتصعد للشركة</option><option>اتنفذ</option>
           </select>
-          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('pt-q').value='';ptRender()">✖️ مسح</button>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="color:var(--text-dim);font-size:11.5px">من</span>
+            <input class="filter-inp" id="pt-from" type="date" onchange="ptRender()" style="width:145px">
+            <span style="color:var(--text-dim);font-size:11.5px">إلى</span>
+            <input class="filter-inp" id="pt-to" type="date" onchange="ptRender()" style="width:145px">
+          </div>
+          <button class="act-btn edit" style="font-size:12px" onclick="clearFilters('pt','ptRender')">✖️ مسح</button>
           <div style="flex:1;min-width:10px"></div>
           <div id="pt-count" style="color:var(--text-dim);font-size:12px"></div>
         </div>
@@ -3121,7 +3139,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <select class="filter-inp" id="pc-status" onchange="pcRender()" style="width:170px">
             <option value="">الكل</option><option>بانتظار التسليم</option><option>اتسلم</option>
           </select>
-          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('pc-q').value='';pcRender()">✖️ مسح</button>
+          <div style="display:flex;align-items:center;gap:5px">
+            <span style="color:var(--text-dim);font-size:11.5px">من</span>
+            <input class="filter-inp" id="pc-from" type="date" onchange="pcRender()" style="width:145px">
+            <span style="color:var(--text-dim);font-size:11.5px">إلى</span>
+            <input class="filter-inp" id="pc-to" type="date" onchange="pcRender()" style="width:145px">
+          </div>
+          <button class="act-btn edit" style="font-size:12px" onclick="clearFilters('pc','pcRender')">✖️ مسح</button>
           <div style="flex:1;min-width:10px"></div>
           <div id="pc-count" style="color:var(--text-dim);font-size:12px"></div>
         </div>
@@ -6850,6 +6874,32 @@ async function salesLoad(fn, setter, render, listId){
   try{ const r = await rpcSecure(fn, {}); setter(Array.isArray(r)?r:[]); render(); }
   catch(e){ el.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
 }
+// 📅 فلترة بالتاريخ (من/إلى) — بتوقيت القاهرة المحلى
+function inDateRange(pfx, iso){
+  const f = document.getElementById(pfx+'-from')?.value || '';
+  const t = document.getElementById(pfx+'-to')?.value || '';
+  if(!f && !t) return true;
+  if(!iso) return false;
+  const d = new Date(iso);
+  if(isNaN(d)) return false;
+  const day = new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  if(f && day < f) return false;
+  if(t && day > t) return false;
+  return true;
+}
+function clearFilters(pfx, render){
+  ['-q','-from','-to'].forEach(k=>{ const e=document.getElementById(pfx+k); if(e) e.value=''; });
+  const st = document.getElementById(pfx+'-status'); if(st) st.value='';
+  if(typeof window[render] === 'function') window[render]();
+}
+function dateNote(pfx){
+  const f = document.getElementById(pfx+'-from')?.value || '';
+  const t = document.getElementById(pfx+'-to')?.value || '';
+  if(!f && !t) return '';
+  const d = x => x ? new Date(x+'T00:00:00').toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'}) : '';
+  return f && t ? ` — من ${d(f)} لـ ${d(t)}` : (f ? ` — من ${d(f)}` : ` — لحد ${d(t)}`);
+}
+
 function matchQ(row, q, keys){
   if(!q) return true;
   return keys.some(k => String(row[k]||'').toLowerCase().includes(q));
@@ -6861,11 +6911,11 @@ function ldRender(){
   const el = document.getElementById('ld-list'); if(!el) return;
   const q = (document.getElementById('ld-q')?.value||'').trim().toLowerCase();
   const st = document.getElementById('ld-status')?.value || '';
-  const rows = (_ldRows||[]).filter(r => (!st || r.status===st) && matchQ(r,q,['name','phone','model_text','city','governorate','trader_name']));
+  const rows = (_ldRows||[]).filter(r => (!st || r.status===st) && inDateRange('ld', r.created_at) && matchQ(r,q,['name','phone','model_text','city','governorate','trader_name']));
   const cnt = document.getElementById('ld-count');
-  if(cnt) cnt.textContent = `📥 ${(_ldRows||[]).length} طلب`;
+  if(cnt) cnt.textContent = `📥 ${rows.length} من ${(_ldRows||[]).length} طلب${dateNote('ld')}`;
   if(!(_ldRows||[]).length) return void(el.innerHTML = emptyBox('مفيش طلبات لسه — أول ما عميل يطلب من صفحة المبيعات هيظهر هنا'));
-  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة فى النطاق ده — جرّب توسّع المدة أو تمسح البحث'));
   let h = `<table><thead><tr><th>#</th><th>العميل</th><th>المطلوب</th><th>المنطقة</th><th>الحالة</th><th>التاجر</th><th>المتابعة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
   for(const r of rows){
     h += `<tr>
@@ -6896,12 +6946,12 @@ async function wlLoad(){ await salesLoad('admin_list_waitlist', v=>_wlRows=v, wl
 function wlRender(){
   const el = document.getElementById('wl-list'); if(!el) return;
   const q = (document.getElementById('wl-q')?.value||'').trim().toLowerCase();
-  const rows = (_wlRows||[]).filter(r => matchQ(r,q,['model_name','consumer_name','phone','city','governorate']));
+  const rows = (_wlRows||[]).filter(r => inDateRange('wl', r.created_at) && matchQ(r,q,['model_name','consumer_name','phone','city','governorate']));
   const waiting = (_wlRows||[]).filter(r=>r.status==='منتظر').length;
   const cnt = document.getElementById('wl-count');
-  if(cnt) cnt.textContent = `⏳ ${waiting} مستنى من ${(_wlRows||[]).length}`;
+  if(cnt) cnt.textContent = `⏳ ${waiting} مستنى من ${(_wlRows||[]).length}${dateNote('wl')}`;
   if(!(_wlRows||[]).length) return void(el.innerHTML = emptyBox('مفيش حد فى قايمة الانتظار — بيتسجلوا لما يسألوا على موديل مش متوفر'));
-  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة فى النطاق ده — جرّب توسّع المدة أو تمسح البحث'));
   // تجميع حسب الموديل
   const byModel = {};
   rows.forEach(r=>{ const k=r.model_name||'—'; (byModel[k]=byModel[k]||[]).push(r); });
@@ -6939,12 +6989,12 @@ function ptRender(){
   const el = document.getElementById('pt-list'); if(!el) return;
   const q = (document.getElementById('pt-q')?.value||'').trim().toLowerCase();
   const st = document.getElementById('pt-status')?.value || '';
-  const rows = (_ptRows||[]).filter(r => (!st || r.status===st) && matchQ(r,q,['consumer_name','phone','trader_name','request_text','model_text']));
+  const rows = (_ptRows||[]).filter(r => (!st || r.status===st) && inDateRange('pt', r.created_at) && matchQ(r,q,['consumer_name','phone','trader_name','request_text','model_text']));
   const open = (_ptRows||[]).filter(r=>r.status==='اتصعد للشركة').length;
   const cnt = document.getElementById('pt-count');
-  if(cnt) cnt.textContent = `🔧 ${(_ptRows||[]).length} طلب${open?` — ${open} عند الشركة`:''}`;
+  if(cnt) cnt.textContent = `🔧 ${rows.length} من ${(_ptRows||[]).length}${open?` — ${open} عند الشركة`:''}${dateNote('pt')}`;
   if(!(_ptRows||[]).length) return void(el.innerHTML = emptyBox('مفيش طلبات قطع غيار لسه'));
-  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة فى النطاق ده — جرّب توسّع المدة أو تمسح البحث'));
   let h = `<table><thead><tr><th>#</th><th>العميل</th><th>المطلوب</th><th>الموتوسيكل</th><th>التاجر</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
   for(const r of rows){
     const late = r.status==='اتبعت للتاجر' && r.due_at && new Date(r.due_at) < new Date();
@@ -6976,13 +7026,13 @@ function pcRender(){
   const el = document.getElementById('pc-list'); if(!el) return;
   const q = (document.getElementById('pc-q')?.value||'').trim().toLowerCase();
   const st = document.getElementById('pc-status')?.value || '';
-  const rows = (_pcRows||[]).filter(r => (!st || r.letter_status===st) &&
+  const rows = (_pcRows||[]).filter(r => (!st || r.letter_status===st) && inDateRange('pc', r.created_at) &&
     matchQ(r,q,['consumer_name','phone','chassis_no','motor_no','model_text','trader_name','color']));
   const pend = (_pcRows||[]).filter(r=>r.letter_status!=='اتسلم').length;
   const cnt = document.getElementById('pc-count');
-  if(cnt) cnt.textContent = `🧾 ${(_pcRows||[]).length} بيعة${pend?` — ${pend} بانتظار التسليم`:''}`;
+  if(cnt) cnt.textContent = `🧾 ${rows.length} من ${(_pcRows||[]).length} بيعة${pend?` — ${pend} بانتظار التسليم`:''}${dateNote('pc')}`;
   if(!(_pcRows||[]).length) return void(el.innerHTML = emptyBox('مفيش بيعات مسجلة لسه'));
-  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة فى النطاق ده — جرّب توسّع المدة أو تمسح البحث'));
   let h = '';
   for(const r of rows){
     const done = r.letter_status === 'اتسلم';
@@ -15310,7 +15360,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.07-b';
+const APP_VERSION = 'v2026.08.07-c';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
