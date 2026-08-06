@@ -364,23 +364,45 @@ let GOVS = {};
 async function loadGovs(){
   if(Object.keys(GOVS).length) return;
   try{
-    const rows = await rpc('get_governorate_cities', {});
-    (Array.isArray(rows)?rows:[]).forEach(r=>{
-      const g = r.governorate || r.gov || r.name;
-      const c = r.city || r.cities;
-      if(!g) return;
-      if(!GOVS[g]) GOVS[g] = [];
-      if(Array.isArray(c)) GOVS[g].push(...c); else if(c) GOVS[g].push(c);
-    });
+    const data = await rpc('get_governorate_cities', {});
+    // الدالة بترجع كائن: { "الشرقية": ["أولاد صقر", ...], ... }
+    if(data && !Array.isArray(data) && typeof data === 'object'){
+      Object.keys(data).forEach(g=>{
+        const c = data[g];
+        GOVS[g] = Array.isArray(c) ? c.slice() : (c ? [c] : []);
+      });
+    } else if(Array.isArray(data)){
+      data.forEach(r=>{
+        const g = r.governorate || r.gov || r.name;
+        const c = r.city || r.cities;
+        if(!g) return;
+        if(!GOVS[g]) GOVS[g] = [];
+        if(Array.isArray(c)) GOVS[g].push(...c); else if(c) GOVS[g].push(c);
+      });
+    }
   }catch(e){}
+  if(!Object.keys(GOVS).length){
+    // الشبكة فصلت — خلى الخانتين كتابة حرة بدل ما يقف
+    const g = document.getElementById('rGov'), c = document.getElementById('rCity');
+    if(g && g.tagName === 'SELECT'){
+      g.outerHTML = '<input id="rGov" placeholder="اكتب المحافظة">';
+      c.outerHTML = '<input id="rCity" placeholder="اكتب المركز">';
+    }
+    return;
+  }
   const sel = $('rGov');
-  sel.innerHTML = '<option value="">اختار</option>' +
-    Object.keys(GOVS).map(g=>`<option>${esc(g)}</option>`).join('');
+  if(sel && sel.tagName === 'SELECT'){
+    sel.innerHTML = '<option value="">اختار</option>' +
+      Object.keys(GOVS).sort((a,b)=>a.localeCompare(b,'ar')).map(g=>`<option>${esc(g)}</option>`).join('');
+  }
 }
-$('rGov').addEventListener('change', function(){
-  const list = GOVS[this.value] || [];
-  $('rCity').innerHTML = list.length
-    ? '<option value="">اختار</option>' + [...new Set(list)].map(c=>`<option>${esc(c)}</option>`).join('')
+document.addEventListener('change', function(e){
+  if(!e.target || e.target.id !== 'rGov') return;
+  const city = $('rCity');
+  if(!city || city.tagName !== 'SELECT') return;
+  const list = [...new Set(GOVS[e.target.value] || [])].sort((a,b)=>a.localeCompare(b,'ar'));
+  city.innerHTML = list.length
+    ? '<option value="">اختار</option>' + list.map(c=>`<option>${esc(c)}</option>`).join('')
     : '<option value="">اكتب المركز فى العنوان</option>';
 });
 
@@ -395,7 +417,7 @@ async function submitAuth(){
       res = await rpc('consumer_register', { p_data: {
         name: ($('rName').value||'').trim(), phone: ($('rPhone').value||'').trim(),
         username: user, password: pass,
-        governorate: $('rGov').value, city: $('rCity').value,
+        governorate: ($('rGov')||{}).value || '', city: ($('rCity')||{}).value || '',
         address: ($('rAddr').value||'').trim()
       }});
     } else {
