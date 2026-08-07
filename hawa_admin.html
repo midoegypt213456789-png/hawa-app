@@ -7548,7 +7548,7 @@ async function aiRenderPersona(){
   const box = document.getElementById('ai-persona-box');
   if(!box) return;
   box.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
-  const keys = 'ai_name,ai_tone,ai_style,ai_scope,ai_gender,ai_model,sales_name,sales_tone,sales_style,sales_scope,sales_gender,sales_voice_on,sales_voice_provider,sales_voice_id,sales_gemini_voice,shop_brand_name,shop_tagline,shop_logo_url,shop_welcome';
+  const keys = 'ai_name,ai_tone,ai_style,ai_scope,ai_gender,ai_model,sales_name,sales_tone,sales_style,sales_scope,sales_gender,sales_voice_on,sales_voice_provider,sales_voice_id,sales_gemini_voice,ai_voice_provider,ai_gemini_voice,shop_brand_name,shop_tagline,shop_logo_url,shop_welcome';
   const rows = await fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(${keys})`,{headers:HDR}).then(r=>r.json()).catch(()=>[]);
   const m = {}; (Array.isArray(rows)?rows:[]).forEach(r=>m[r.key]=r.value);
   _personaSettings = m;
@@ -7585,6 +7585,19 @@ async function aiRenderPersona(){
         <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin:14px 0 6px 0">🎚️ النبرة: <span id="ai-tone-lbl" style="color:var(--gold)">${aiToneLabel(tone)}</span></label>
         <input id="ai-p-tone" type="range" min="0" max="100" value="${tone}" oninput="document.getElementById('ai-tone-lbl').textContent=aiToneLabel(this.value)" style="width:100%;accent-color:var(--gold)">
         <div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:11px"><span>🎩 جد رسمى</span><span>🙂 متوازن</span><span>😄 هزار</span></div>
+        ${!isC ? `<label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin:14px 0 6px 0">🔊 مزوّد الصوت</label>
+        <select id="ai-p-vprov" onchange="vprovToggle()" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13.5px;padding:9px 12px;font-family:Cairo">
+          <option value="elevenlabs" ${m.ai_voice_provider!=='gemini'?'selected':''}>🎙️ ElevenLabs — أقرب للصوت البشرى</option>
+          <option value="gemini" ${m.ai_voice_provider==='gemini'?'selected':''}>✨ Gemini — أرخص بكتير (11 ساعة بـ $10)</option>
+        </select>
+        <div id="vprov-el" style="margin-top:8px;${m.ai_voice_provider==='gemini'?'display:none':''}">
+          <div style="color:var(--text-dim);font-size:11px">بيستخدم صوت ElevenLabs المسجّل تحت فى قسم المفاتيح</div>
+        </div>
+        <div id="vprov-gm" style="margin-top:8px;${m.ai_voice_provider==='gemini'?'':'display:none'}">
+          <select id="ai-p-gmvoice" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13.5px;padding:9px 12px;font-family:Cairo">
+            ${GEMINI_VOICES.map(o=>`<option value="${o.v}" ${(m.ai_gemini_voice||'Kore')===o.v?'selected':''}>${o.t}</option>`).join('')}
+          </select>
+        </div>` : ''}
         ${isC ? `<label style="display:flex;align-items:center;gap:8px;margin-top:14px;background:var(--dark3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;cursor:pointer;font-size:13px">
           <input type="checkbox" id="ai-p-voice" ${m.sales_voice_on !== '0' ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
           🎙️ تفعيل الرد الصوتى للعملاء
@@ -7696,6 +7709,8 @@ async function aiSavePersona(){
   const scope = (document.getElementById('ai-p-scope').value||'').trim();
   const jobs = [
     setAppSetting(P+'_name', name),
+    setAppSetting(P+'_voice_provider', document.getElementById('ai-p-vprov')?.value || 'elevenlabs'),
+    setAppSetting(P+'_gemini_voice',   document.getElementById('ai-p-gmvoice')?.value || 'Kore'),
     setAppSetting(P+'_tone', tone),
     setAppSetting(P+'_style', style),
     setAppSetting(P+'_scope', scope),
@@ -7703,9 +7718,7 @@ async function aiSavePersona(){
   ];
   if(isC){
     jobs.push(setAppSetting('sales_voice_on', document.getElementById('ai-p-voice')?.checked ? '1' : '0'));
-    jobs.push(setAppSetting('sales_voice_provider', document.getElementById('ai-p-vprov')?.value || 'elevenlabs'));
-    jobs.push(setAppSetting('sales_voice_id',     (document.getElementById('ai-p-elvoice')?.value||'').trim()));
-    jobs.push(setAppSetting('sales_gemini_voice',  document.getElementById('ai-p-gmvoice')?.value || 'Kore'));
+    jobs.push(setAppSetting('sales_voice_id', (document.getElementById('ai-p-elvoice')?.value||'').trim()));
     jobs.push(setAppSetting('shop_brand_name', (document.getElementById('brand-name')?.value||'').trim()));
     jobs.push(setAppSetting('shop_tagline',    (document.getElementById('brand-tag')?.value||'').trim()));
     jobs.push(setAppSetting('shop_welcome',    (document.getElementById('brand-welcome')?.value||'').trim()));
@@ -15563,7 +15576,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.07-g';
+const APP_VERSION = 'v2026.08.07-h';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
