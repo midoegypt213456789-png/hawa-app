@@ -11367,6 +11367,59 @@ function chatMediaHtml(m){
   return `<a href="${u}" target="_blank" rel="noopener" style="display:inline-block;background:rgba(74,144,217,0.12);border:1px solid rgba(74,144,217,0.35);color:#4A90D9;border-radius:8px;padding:6px 12px;font-size:12px;text-decoration:none;margin-bottom:6px">📎 فتح / تحميل المرفق</a>`;
 }
 
+let _chatMsgs = [];
+
+// 🤖 شريط حالة المساعد فى المحادثة
+function renderAiBar(t){
+  const head = document.getElementById('chat-conv-head');
+  if(!head) return;
+  let bar = document.getElementById('chat-ai-bar');
+  if(!bar){
+    bar = document.createElement('div');
+    bar.id = 'chat-ai-bar';
+    bar.style.cssText = 'display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)';
+    head.appendChild(bar);
+  }
+  const paused = t.ai_paused_until && new Date(t.ai_paused_until) > new Date();
+  const off = t.ai_enabled === false;
+  const mins = paused ? Math.max(1, Math.round((new Date(t.ai_paused_until) - new Date())/60000)) : 0;
+  const state = off
+    ? `<span style="color:var(--text-dim);font-size:12px;font-weight:700">🤖 المساعد متوقف على المحادثة دى</span>`
+    : paused
+      ? `<span style="color:var(--gold);font-size:12px;font-weight:700">🤖 المساعد ساكت — هيرجع بعد ${mins} دقيقة</span>`
+      : `<span style="color:var(--success);font-size:12px;font-weight:700">🤖 المساعد بيرد تلقائياً</span>`;
+  bar.innerHTML = state +
+    ((paused || off) ? `<button class="act-btn edit" style="font-size:11.5px" onclick="aiChatResume(${t.id})">▶️ رجّع المساعد</button>` : '') +
+    (!off ? `<button class="act-btn delete" style="font-size:11.5px" onclick="aiChatToggle(${t.id},false)">⏸️ أوقفه هنا</button>` : '');
+}
+
+async function aiChatResume(id){
+  try{ await rpcSecure('chat_ai_resume', { p_thread: Number(id) }); await loadChat(); openChatThread(Number(id), true); }
+  catch(e){ alert('⚠️ ' + (e.message||'فشل')); }
+}
+async function aiChatToggle(id, on){
+  try{ await rpcSecure('chat_ai_toggle', { p_thread: Number(id), p_on: !!on }); await loadChat(); openChatThread(Number(id), true); }
+  catch(e){ alert('⚠️ ' + (e.message||'فشل')); }
+}
+
+// 📚 علّم على سؤال وجواب → قاعدة المعرفة
+async function kbLearn(msgId){
+  const idx = (_chatMsgs||[]).findIndex(x=>Number(x.id)===Number(msgId));
+  if(idx < 0) return;
+  const ans = _chatMsgs[idx];
+  let q = null;
+  for(let i = idx - 1; i >= 0; i--){ if(_chatMsgs[i].sender === 'client'){ q = _chatMsgs[i]; break; } }
+  if(!q){ alert('مفيش سؤال من التاجر قبل الرد ده'); return; }
+  const question = prompt('السؤال اللى هيتحفظ (تقدر تعدله):', (q.body||'').trim());
+  if(question === null) return;
+  const answer = prompt('الرد اللى هيتحفظ (تقدر تعدله):', (ans.body||'').trim());
+  if(answer === null) return;
+  try{
+    await rpcSecure('kb_add_from_chat', { p_question: question, p_answer: answer });
+    alert('✅ اتحفظ فى قاعدة المعرفة — المساعد هيستخدمه من دلوقتى');
+  }catch(e){ alert('⚠️ ' + (e.message||'فشل الحفظ')); }
+}
+
 async function openChatThread(threadId, keepScroll){
   chatOpenThreadId = threadId;
   const t = chatThreads.find(x=>x.id===threadId);
@@ -11376,6 +11429,7 @@ async function openChatThread(threadId, keepScroll){
   document.getElementById('chat-conv-input').style.display='flex';
   document.getElementById('chat-conv-title').innerHTML = escAttr(L.name)+'<span style="color:var(--text-dim);font-weight:400;font-size:13px">'+escAttr(L.code)+'</span>';
   document.getElementById('chat-conv-sub').textContent = L.dest;
+  renderAiBar(t);
   if(!keepScroll) renderChatThreads();
 
   const bodyEl = document.getElementById('chat-conv-body');
@@ -11384,14 +11438,28 @@ async function openChatThread(threadId, keepScroll){
     const msgs = await r.json();
     if(!Array.isArray(msgs) || !msgs.length){ bodyEl.innerHTML='<div class="empty-txt" style="margin:auto">مفيش رسائل لسه</div>'; }
     else{
+      _chatMsgs = msgs;
       bodyEl.innerHTML = msgs.map(m=>{
         const mine = m.sender!=='client'; // ردود الطاقم على اليمين
-        const bg = m.sender==='client' ? 'var(--dark3)' : (m.sender==='admin' ? 'rgba(201,168,76,0.18)' : (m.sender==='contact' ? 'rgba(76,175,125,0.15)' : 'rgba(74,144,217,0.18)'));
-        const who = m.sender==='client' ? (L.name) : (m.sender==='admin'?'👑 '+(m.sender_name||'الأدمن'):(m.sender==='contact'?'🏪 '+(m.sender_name||'أمين المخزن'):'👤 '+(m.sender_name||'الموظف')));
+        const bg = m.sender==='client' ? 'var(--dark3)'
+          : (m.sender==='ai' ? 'rgba(155,120,220,0.16)'
+          : (m.sender==='admin' ? 'rgba(201,168,76,0.18)'
+          : (m.sender==='contact' ? 'rgba(76,175,125,0.15)' : 'rgba(74,144,217,0.18)')));
+        const who = m.sender==='client' ? (L.name)
+          : (m.sender==='ai' ? '🤖 '+(m.sender_name||'المساعد الذكى')
+          : (m.sender==='admin'?'👑 '+(m.sender_name||'الأدمن')
+          : (m.sender==='contact'?'🏪 '+(m.sender_name||'أمين المخزن'):'👤 '+(m.sender_name||'الموظف'))));
         const when = m.created_at ? new Date(m.created_at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}) : '';
         const pend = (m.sender!=='client' && m.delivered===false) ? ' <span style="color:var(--text-dim)">⏳</span>' : (m.sender!=='client'?' <span style="color:var(--success)">✓</span>':'');
+        const learn = (m.sender!=='client')
+          ? `<button title="علّم على السؤال والرد ده — هيتحفظ فى قاعدة معرفة المساعد"
+               onclick="kbLearn(${m.id})"
+               style="background:transparent;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:0 3px">📚</button>`
+          : '';
         return `<div style="align-self:${mine?'flex-start':'flex-end'};max-width:75%;background:${bg};border:1px solid var(--border);border-radius:12px;padding:8px 12px">
-          <div style="font-size:10px;color:var(--text-dim);margin-bottom:3px">${escAttr(who)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:3px">
+            <div style="font-size:10px;color:var(--text-dim)">${escAttr(who)}</div>${learn}
+          </div>
           ${chatMediaHtml(m)}
           <div style="font-size:13px;white-space:pre-wrap;word-break:break-word">${escAttr(m.body)}</div>
           <div style="font-size:9px;color:var(--text-dim);margin-top:4px;text-align:left">${when}${pend}</div>
@@ -11426,6 +11494,10 @@ async function sendChatReply(){
     if(typeof logActivity==='function') logActivity('chat_reply', `💬 رد على محادثة تاجر`, {thread_id:t.id});
     await loadChat();
     openChatThread(t.id, true);
+    const mins = 30;
+    const note = document.getElementById('chat-ai-bar');
+    if(note) note.insertAdjacentHTML('beforeend',
+      `<span style="color:var(--text-dim);font-size:11px">تدخلت — المساعد هيسكت ${mins} دقيقة</span>`);
   }catch(e){ alert('❌ فشل الإرسال: '+(e.message||e)); }
   finally{ btn.disabled=false; btn.textContent='📤 إرسال'; }
 }
@@ -15445,7 +15517,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.07-d';
+const APP_VERSION = 'v2026.08.07-e';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
