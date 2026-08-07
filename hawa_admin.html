@@ -7357,12 +7357,14 @@ function closeKnowledgeBase(){
 }
 
 let _kbTarget = 'kb-box';
+let _kbAud = 'trader';   // trader | consumer
+function kbAud(a){ _kbAud = a; renderKnowledgeBase(); }
 async function renderKnowledgeBase(){
   const box = document.getElementById(_kbTarget) || document.getElementById('kb-box') || document.getElementById('kb-inline-box');
   if(!box) return;
   try{
     const [rows, keyRow, genderRow] = await Promise.all([
-      fetch(`${SB}/rest/v1/bot_knowledge?select=*&is_active=eq.true&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()),
+      fetch(`${SB}/rest/v1/bot_knowledge?select=*&is_active=eq.true&audience=eq.${_kbAud}&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()),
       fetch(`${SB}/rest/v1/rpc/admin_ai_key_status`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}).then(r=>r.json()).catch(()=>null),
       fetch(`${SB}/rest/v1/app_settings?select=value&key=eq.ai_gender&limit=1`,{headers:HDR}).then(r=>r.json()).catch(()=>null)
     ]);
@@ -7392,7 +7394,16 @@ async function renderKnowledgeBase(){
         <h3 style="margin:0;color:var(--gold);font-size:18px">🤖 قاعدة معرفة المساعد الذكى</h3>
         ${_kbTarget==='kb-box' ? '<button onclick="closeKnowledgeBase()" style="background:none;border:none;color:var(--text-dim);font-size:22px;cursor:pointer">✕</button>' : ''}
       </div>
-      <div style="color:var(--text-dim);font-size:12px;margin-bottom:14px">المساعد بيجاوب التجار <b>حصريًا</b> من الأسئلة دى — أى تعديل بيسرى على البوت فورًا (${kb.length} سؤال)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 12px">
+        ${[['trader','🚚','أسئلة التجار','بوت تليجرام'],['consumer','🏍️','أسئلة العميل النهائى','صفحة المبيعات']]
+          .map(([v,ic,lb,sb])=>`<button onclick="kbAud('${v}')" style="flex:1;min-width:170px;text-align:start;border-radius:11px;padding:9px 13px;cursor:pointer;font-family:Cairo;
+            background:${_kbAud===v?'rgba(201,168,76,0.14)':'var(--dark3)'};border:2px solid ${_kbAud===v?'var(--gold)':'var(--border)'};color:${_kbAud===v?'var(--gold)':'var(--text)'}">
+            <div style="font-size:13px;font-weight:900">${ic} ${lb}</div>
+            <div style="font-size:10.5px;color:var(--text-dim);margin-top:1px">${sb}</div></button>`).join('')}
+      </div>
+      <div style="color:var(--text-dim);font-size:12px;margin-bottom:14px">${_kbAud==='consumer'
+        ? `أسئلة <b>العميل النهائى</b> بس — مساعد المبيعات بيستخدمها هى والكتالوج (${kb.length} سؤال)`
+        : `أسئلة <b>التجار</b> بس — مساعد التليجرام بيجاوب منها حصريًا (${kb.length} سؤال)`}</div>
       ${list}
       <div style="border-top:1px solid var(--border);margin:16px 0 10px 0;padding-top:12px;color:var(--gold);font-size:13px;font-weight:700" id="kb-form-title">➕ إضافة سؤال جديد</div>
       <input id="kb-q" placeholder="السؤال (مثلاً: مواعيد التحميل إيه؟)" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px;margin-bottom:8px">
@@ -7462,7 +7473,7 @@ async function kbSave(){
   } else {
     await fetch(`${SB}/rest/v1/bot_knowledge`,{
       method:'POST', headers:{...HDR,'Content-Type':'application/json','Prefer':'return=minimal'},
-      body: JSON.stringify({ question:q, answer:a })
+      body: JSON.stringify({ question:q, answer:a , audience: _kbAud })
     });
   }
   _kbEditId = null;
@@ -11415,7 +11426,7 @@ async function kbLearn(msgId){
   const answer = prompt('الرد اللى هيتحفظ (تقدر تعدله):', (ans.body||'').trim());
   if(answer === null) return;
   try{
-    await rpcSecure('kb_add_from_chat', { p_question: question, p_answer: answer });
+    await rpcSecure('kb_add_from_chat', { p_question: question, p_answer: answer, p_audience: 'trader' });
     alert('✅ اتحفظ فى قاعدة المعرفة — المساعد هيستخدمه من دلوقتى');
   }catch(e){ alert('⚠️ ' + (e.message||'فشل الحفظ')); }
 }
@@ -15517,7 +15528,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.07-e';
+const APP_VERSION = 'v2026.08.07-f';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
