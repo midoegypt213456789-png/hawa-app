@@ -7518,37 +7518,89 @@ function AI_MODEL_NOTE(v){
   return '⚖️ أحسن توازن بين الذكاء والتكلفة — ده الاختيار المناسب لمعظم الشغل.';
 }
 
+let _personaAud = 'trader';   // trader | consumer
+
+function aiAud(a){ _personaAud = a; aiRenderPersona(); }
+
 async function aiRenderPersona(){
   const box = document.getElementById('ai-persona-box');
   if(!box) return;
   box.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
-  const rows = await fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(ai_name,ai_tone,ai_style,ai_scope,ai_gender,ai_model)`,{headers:HDR}).then(r=>r.json()).catch(()=>[]);
+  const keys = 'ai_name,ai_tone,ai_style,ai_scope,ai_gender,ai_model,sales_name,sales_tone,sales_style,sales_scope,sales_gender,sales_voice_on,shop_brand_name,shop_tagline,shop_logo_url,shop_welcome';
+  const rows = await fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(${keys})`,{headers:HDR}).then(r=>r.json()).catch(()=>[]);
   const m = {}; (Array.isArray(rows)?rows:[]).forEach(r=>m[r.key]=r.value);
-  const g = m.ai_gender === 'male' ? 'male' : 'female';
-  const tone = Math.max(0, Math.min(100, Number(m.ai_tone)||40));
+  _personaSettings = m;
+
+  const isC = _personaAud === 'consumer';
+  const P = isC ? 'sales' : 'ai';
+  const g = (m[P+'_gender'] === 'male') ? 'male' : 'female';
+  const tone = Math.max(0, Math.min(100, Number(m[P+'_tone']) || (isC ? 60 : 40)));
   const gBtn = (val, ico, lbl) => `<button onclick="aiSetGender('${val}')" style="border-radius:8px;padding:7px 16px;cursor:pointer;font-size:13px;font-weight:700;font-family:Cairo;background:${g===val?'rgba(201,168,76,0.2)':'var(--dark3)'};border:2px solid ${g===val?'var(--gold)':'var(--border)'};color:${g===val?'var(--gold)':'var(--text-dim)'}">${ico} ${lbl}</button>`;
+  const tabBtn = (val, ico, lbl, sub) => `<button onclick="aiAud('${val}')" style="flex:1;min-width:190px;text-align:start;border-radius:12px;padding:11px 14px;cursor:pointer;font-family:Cairo;
+      background:${_personaAud===val?'rgba(201,168,76,0.14)':'var(--dark3)'};
+      border:2px solid ${_personaAud===val?'var(--gold)':'var(--border)'};
+      color:${_personaAud===val?'var(--gold)':'var(--text)'}">
+      <div style="font-size:14px;font-weight:900">${ico} ${lbl}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px">${sub}</div></button>`;
+
   box.innerHTML = `
     <h3 style="margin:0 0 4px 0;color:var(--gold);font-size:16px">🎭 شخصية المساعد — ابرمجه زى ما تحب</h3>
-    <div style="color:var(--text-dim);font-size:12px;margin-bottom:16px">أى تغيير هنا بيسرى على البوت <b>فورًا</b> فى كل الردود (نص وصوت)</div>
+    <div style="color:var(--text-dim);font-size:12px;margin-bottom:14px">لكل جمهور شخصية مستقلة — أى تغيير بيسرى <b>فورًا</b></div>
+
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:16px">
+      ${tabBtn('trader','🚚','مساعد التجار','بوت تليجرام — الحجز والمنشورات')}
+      ${tabBtn('consumer','🏍️','مساعد العميل النهائى','صفحة المبيعات — الموتوسيكلات')}
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="ai-persona-grid">
       <div>
         <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin-bottom:6px">📛 اسم المساعد</label>
-        <input id="ai-p-name" value="${escAttr(m.ai_name||'')}" placeholder="مثال: نور — سارة — كابتن هوا" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
-        <div style="color:var(--text-dim);font-size:11px;margin-top:4px">لو التاجر سأله «اسمك إيه؟» هيقول الاسم ده</div>
+        <input id="ai-p-name" value="${escAttr(m[P+'_name']||'')}" placeholder="${isC?'مثال: سالى — نور':'مثال: نور — سارة — كابتن هوا'}" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+        <div style="color:var(--text-dim);font-size:11px;margin-top:4px">لو سأله «اسمك إيه؟» هيقول الاسم ده</div>
         <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin:14px 0 6px 0">🚻 نوعه</label>
         <div style="display:flex;gap:8px">${gBtn('female','🚺','ست')}${gBtn('male','🚹','راجل')}</div>
-        <div style="color:var(--text-dim);font-size:11px;margin-top:4px">لازم يطابق نوع الصوت اللى مختاره فى ElevenLabs</div>
+        <div style="color:var(--text-dim);font-size:11px;margin-top:4px">لازم يطابق نوع الصوت المختار</div>
         <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin:14px 0 6px 0">🎚️ النبرة: <span id="ai-tone-lbl" style="color:var(--gold)">${aiToneLabel(tone)}</span></label>
         <input id="ai-p-tone" type="range" min="0" max="100" value="${tone}" oninput="document.getElementById('ai-tone-lbl').textContent=aiToneLabel(this.value)" style="width:100%;accent-color:var(--gold)">
         <div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:11px"><span>🎩 جد رسمى</span><span>🙂 متوازن</span><span>😄 هزار</span></div>
+        ${isC ? `<label style="display:flex;align-items:center;gap:8px;margin-top:14px;background:var(--dark3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;cursor:pointer;font-size:13px">
+          <input type="checkbox" id="ai-p-voice" ${m.sales_voice_on !== '0' ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer">
+          🎙️ تفعيل الرد الصوتى للعملاء
+        </label>` : ''}
       </div>
       <div>
         <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin-bottom:6px">✍️ أسلوب الرد (تعليماتك ليه)</label>
-        <textarea id="ai-p-style" rows="3" placeholder="مثال: ابدأ دايمًا بـ«يا فندم»، خلى الردود قصيرة، متستخدمش إيموجى كتير..." style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 12px;font-family:Cairo;resize:vertical">${escAttr(m.ai_style||'')}</textarea>
+        <textarea id="ai-p-style" rows="3" placeholder="${isC?'مثال: ابدأى بالترحيب باسمه، ركزى على المميزات مش المواصفات، اقفلى كل رد بسؤال...':'مثال: ابدأ دايمًا بـ«يا فندم»، خلى الردود قصيرة...'}" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 12px;font-family:Cairo;resize:vertical">${escAttr(m[P+'_style']||'')}</textarea>
         <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin:10px 0 6px 0">🚧 نطاق الكلام المسموح خارج أسئلة الشغل</label>
-        <textarea id="ai-p-scope" rows="3" placeholder="مثال: مسموح يرد على السلامات والدعوات الطيبة ويهنى بالأعياد. ممنوع يتكلم فى السياسة أو الدين أو ينصح فى حاجة برّه شغلنا..." style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 12px;font-family:Cairo;resize:vertical">${escAttr(m.ai_scope||'')}</textarea>
+        <textarea id="ai-p-scope" rows="3" placeholder="مثال: مسموح يرد على السلامات ويهنى بالأعياد. ممنوع يتكلم فى السياسة أو الدين..." style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 12px;font-family:Cairo;resize:vertical">${escAttr(m[P+'_scope']||'')}</textarea>
       </div>
     </div>
+
+    ${isC ? `
+    <div style="margin-top:18px;padding-top:15px;border-top:1px solid var(--border)">
+      <div style="color:var(--gold);font-weight:900;font-size:14px;margin-bottom:3px">🎨 هوية صفحة المبيعات</div>
+      <div style="color:var(--text-dim);font-size:11.5px;margin-bottom:12px">اللوجو والاسم اللى العميل بيشوفهم فوق الشات</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+        <div style="text-align:center">
+          <div id="brand-logo-box" style="width:96px;height:96px;border-radius:24px;border:2px dashed rgba(201,168,76,0.45);background:var(--dark3);display:flex;align-items:center;justify-content:center;overflow:hidden;margin-bottom:7px">
+            ${m.shop_logo_url ? `<img src="${escAttr(m.shop_logo_url)}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:32px">🏍️</span>'}
+          </div>
+          <label style="display:inline-block;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;color:var(--gold)">
+            📷 ارفع لوجو
+            <input type="file" accept="image/*" style="display:none" onchange="brandUpload(this)">
+          </label>
+        </div>
+        <div style="flex:1;min-width:230px">
+          <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin-bottom:6px">اسم البراند</label>
+          <input id="brand-name" value="${escAttr(m.shop_brand_name||'')}" placeholder="أبو حوا للموتوسيكلات" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+          <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin:11px 0 6px 0">السطر التحتانى</label>
+          <input id="brand-tag" value="${escAttr(m.shop_tagline||'')}" placeholder="اسأل عن أى موديل — الرد فورى" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:9px 12px">
+          <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin:11px 0 6px 0">رسالة الترحيب الأولى</label>
+          <textarea id="brand-welcome" rows="2" placeholder="سيبها فاضية عشان المساعد يرحب بكلامه" style="width:100%;box-sizing:border-box;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 12px;font-family:Cairo;resize:vertical">${escAttr(m.shop_welcome||'')}</textarea>
+        </div>
+      </div>
+    </div>` : ''}
+
     <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
       <label style="display:block;color:var(--text);font-size:13px;font-weight:700;margin-bottom:6px">🧠 نموذج الذكاء المستخدم</label>
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -7557,30 +7609,63 @@ async function aiRenderPersona(){
         </select>
         <div id="ai-model-note" style="color:var(--text-dim);font-size:11px;max-width:340px">${AI_MODEL_NOTE(m.ai_model||'claude-sonnet-4-6')}</div>
       </div>
-      <div style="color:var(--text-dim);font-size:11px;margin-top:6px">بيسرى على مساعد التجار ومساعد المبيعات — التغيير فورى من غير أى رفع ملفات</div>
+      <div style="color:var(--text-dim);font-size:11px;margin-top:6px">بيسرى على المساعدين الاتنين — التغيير فورى من غير رفع ملفات</div>
     </div>
-    <button onclick="aiSavePersona()" style="margin-top:14px;background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.5);color:var(--success);border-radius:10px;padding:10px 26px;cursor:pointer;font-size:14px;font-weight:700;font-family:Cairo">💾 حفظ الشخصية</button>
+
+    <button onclick="aiSavePersona()" style="margin-top:14px;background:rgba(76,175,125,0.15);border:1px solid rgba(76,175,125,0.5);color:var(--success);border-radius:10px;padding:10px 26px;cursor:pointer;font-size:14px;font-weight:700;font-family:Cairo">💾 حفظ ${isC?'شخصية المبيعات':'شخصية التجار'}</button>
     <style>@media(max-width:900px){ #ai-persona-grid{grid-template-columns:1fr !important} }</style>`;
+}
+let _personaSettings = {};
+
+async function brandUpload(input){
+  const f = input.files && input.files[0];
+  input.value = '';
+  if(!f) return;
+  const box = document.getElementById('brand-logo-box');
+  if(box) box.innerHTML = '<span style="font-size:12px;color:var(--text-dim)">⏳ بنرفع...</span>';
+  try{
+    const ext = (f.name.split('.').pop()||'png').toLowerCase();
+    const path = `logo_${Date.now()}.${ext}`;
+    const r = await fetch(`${SB}/storage/v1/object/branding/${path}`,{
+      method:'POST', headers:{...HDR,'Content-Type':f.type||'image/png','x-upsert':'true'}, body:f
+    });
+    if(!r.ok) throw new Error('فشل الرفع');
+    const url = `${SB}/storage/v1/object/public/branding/${path}`;
+    await setAppSetting('shop_logo_url', url);
+    if(box) box.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover">`;
+  }catch(e){
+    if(box) box.innerHTML = '<span style="font-size:11px;color:var(--error)">⚠️ فشل</span>';
+  }
 }
 
 async function aiSetGender(g){
-  await kbSetGender(g);
+  if(_personaAud === 'consumer'){ await setAppSetting('sales_gender', g); }
+  else { await kbSetGender(g); }
   aiRenderPersona();
 }
 
 async function aiSavePersona(){
+  const isC = _personaAud === 'consumer';
+  const P = isC ? 'sales' : 'ai';
   const name = (document.getElementById('ai-p-name').value||'').trim();
   const tone = document.getElementById('ai-p-tone').value;
   const style = (document.getElementById('ai-p-style').value||'').trim();
   const scope = (document.getElementById('ai-p-scope').value||'').trim();
-  const ok = await Promise.all([
-    setAppSetting('ai_name', name),
-    setAppSetting('ai_tone', tone),
-    setAppSetting('ai_style', style),
-    setAppSetting('ai_scope', scope),
+  const jobs = [
+    setAppSetting(P+'_name', name),
+    setAppSetting(P+'_tone', tone),
+    setAppSetting(P+'_style', style),
+    setAppSetting(P+'_scope', scope),
     setAppSetting('ai_model', (document.getElementById('ai-p-model')||{}).value || 'claude-sonnet-4-6')
-  ]);
-  if(ok.every(Boolean)) alert('✅ اتحفظت شخصية المساعد — سارية على البوت فورًا');
+  ];
+  if(isC){
+    jobs.push(setAppSetting('sales_voice_on', document.getElementById('ai-p-voice')?.checked ? '1' : '0'));
+    jobs.push(setAppSetting('shop_brand_name', (document.getElementById('brand-name')?.value||'').trim()));
+    jobs.push(setAppSetting('shop_tagline',    (document.getElementById('brand-tag')?.value||'').trim()));
+    jobs.push(setAppSetting('shop_welcome',    (document.getElementById('brand-welcome')?.value||'').trim()));
+  }
+  const ok = await Promise.all(jobs);
+  if(ok.every(Boolean)) alert(isC ? '✅ اتحفظت شخصية المبيعات وهوية الصفحة — سارية فورًا' : '✅ اتحفظت شخصية التجار — سارية على البوت فورًا');
   else alert('⚠️ حصل خطأ فى حفظ جزء من الإعدادات — حاول تانى');
 }
 
@@ -15360,7 +15445,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.07-c';
+const APP_VERSION = 'v2026.08.07-d';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
