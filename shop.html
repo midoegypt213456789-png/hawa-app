@@ -156,6 +156,7 @@ body{
 .feed::-webkit-scrollbar,.sheet::-webkit-scrollbar{width:5px}
 .feed::-webkit-scrollbar-thumb,.sheet::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.f-lbl{display:block;font-size:12.5px;color:var(--dim);margin:10px 0 5px}
 </style>
 </head>
 <body>
@@ -194,7 +195,9 @@ body{
 
     <div id="regFields">
       <div class="fld"><label for="rName">الاسم بالكامل</label><input id="rName" autocomplete="name" placeholder="محمد أحمد على"></div>
-      <div class="fld"><label for="rPhone">رقم الموبايل</label><input id="rPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="01xxxxxxxxx"></div>
+      <div class="fld"><label for="rPhone">رقم الموبايل</label><input id="rPhone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="01xxxxxxxxx">
+      <label class="f-lbl">الرقم القومى <span style="color:var(--err)">*</span></label>
+      <input id="rNatId" inputmode="numeric" maxlength="14" placeholder="14 رقم زى ما هو فى البطاقة" dir="ltr" style="text-align:end;letter-spacing:1px"></div>
       <div class="two">
         <div class="fld"><label for="rGov">المحافظة</label><select id="rGov"><option value="">اختار</option></select></div>
         <div class="fld"><label for="rCity">المركز</label><select id="rCity"><option value="">اختار المحافظة الأول</option></select></div>
@@ -464,7 +467,10 @@ async function submitAuth(){
     const pass = ($('rPass').value||'');
     let res;
     if(AUTH_MODE === 'register'){
+      const natId = ($('rNatId')?.value||'').replace(/[^0-9٠-٩]/g,'').replace(/[٠-٩]/g, d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+      if(natId.length !== 14){ authErr('الرقم القومى لازم يكون 14 رقم زى ما هو فى البطاقة'); return; }
       res = await rpc('consumer_register', { p_data: {
+        national_id: natId,
         name: ($('rName').value||'').trim(), phone: ($('rPhone').value||'').trim(),
         username: user, password: pass,
         governorate: ($('rGov')||{}).value || '', city: ($('rCity')||{}).value || '',

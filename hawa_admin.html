@@ -2701,7 +2701,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <!-- CLIENTS -->
     <div class="section" id="sec-clients">
       <div class="page-hd" style="flex-shrink:0">
-        <div class="page-title">👥 <span>العملاء</span></div>
+        <div class="page-title">🚚 <span>التجار</span></div>
         <div style="display:flex;gap:8px;align-items:center">
           <div id="cl-count" style="font-size:13px;color:var(--text-dim)"></div>
           <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="printClients()">🖨️ طباعة</button>
@@ -3122,6 +3122,25 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <div id="pt-count" style="color:var(--text-dim);font-size:12px"></div>
         </div>
         <div id="pt-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-consumers">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">👥 <span>العملاء</span></div>
+          <div class="page-sub">المستهلكين اللى اشتروا فعلاً — بياناتهم كاملة</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="cnLoad()">🔄 تحديث</button>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-filters">
+          <input class="filter-inp" id="cn-q" type="text" placeholder="🔍 اسم / موبايل / رقم قومى / موديل..." oninput="cnRender()" style="width:250px">
+          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('cn-q').value='';cnRender()">✖️ مسح</button>
+          <div style="flex:1;min-width:10px"></div>
+          <div id="cn-count" style="color:var(--text-dim);font-size:12px"></div>
+        </div>
+        <div id="cn-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       </div>
     </div>
 
@@ -5192,6 +5211,7 @@ function autoRefreshTick(){
     else if(sec==='waitlist' && typeof wlLoad === 'function') wlLoad();
     else if(sec==='parts' && typeof ptLoad === 'function') ptLoad();
     else if(sec==='purchases' && typeof pcLoad === 'function') pcLoad();
+    else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
     else if(sec==='clients' && typeof loadClients === 'function') loadClients();
     else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
     else if(sec==='extra-contacts' && typeof loadExtraContacts === 'function') loadExtraContacts();
@@ -5335,6 +5355,7 @@ function goTo(sec){
   else if(sec==='waitlist')wlLoad();
   else if(sec==='parts')ptLoad();
   else if(sec==='purchases')pcLoad();
+  else if(sec==='consumers')cnLoad();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='vehicle-types')loadVehicleTypes();
@@ -7017,6 +7038,39 @@ function ptDone(id){
     try{ await rpcSecure('admin_part_status',{ p_id:Number(id), p_status:'اتنفذ', p_note:null }); ptLoad(); }
     catch(e){ alert('⚠️ '+(e.message||'فشل')); }
   });
+}
+
+// ═══════════ 👥 العملاء (المشترين الفعليين) ═══════════
+let _cnRows = [];
+async function cnLoad(){ await salesLoad('admin_list_consumers', v=>_cnRows=v, cnRender, 'cn-list'); }
+function cnRender(){
+  const el = document.getElementById('cn-list'); if(!el) return;
+  const q = (document.getElementById('cn-q')?.value||'').trim().toLowerCase();
+  const rows = (_cnRows||[]).filter(r => matchQ(r,q,['name','phone','national_id','model_text','governorate','city','sector']));
+  const cnt = document.getElementById('cn-count');
+  if(cnt) cnt.textContent = `👥 ${rows.length} من ${(_cnRows||[]).length} عميل`;
+  if(!(_cnRows||[]).length) return void(el.innerHTML = emptyBox('مفيش عملاء اشتروا لسه — أول بيعة تتسجل هتظهر هنا'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة'));
+  let h = `<div style="max-height:66vh;overflow:auto"><table class="tbl"><thead><tr>
+    <th>م</th><th>الاسم</th><th>الرقم القومى</th><th>نوع الموتوسيكل</th><th>الموبايل</th>
+    <th>القطاع</th><th>المحافظة</th><th>الحى</th><th>العنوان</th><th>مشترياته</th></tr></thead><tbody>`;
+  let i = 0;
+  for(const r of rows){
+    i++;
+    h += `<tr>
+      <td style="color:var(--text-dim)">${i}</td>
+      <td><b>${escAttr(r.name||'—')}</b></td>
+      <td dir="ltr" style="font-family:monospace;letter-spacing:.5px">${escAttr(r.national_id||'—')}</td>
+      <td style="color:var(--gold-light);font-weight:700">${escAttr(r.model_text||'—')}</td>
+      <td dir="ltr">${escAttr(r.phone||'—')}</td>
+      <td>${escAttr(r.sector||'—')}</td>
+      <td>${escAttr(r.governorate||'—')}</td>
+      <td>${escAttr(r.city||'—')}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escAttr(r.address||'')}">${escAttr(r.address||'—')}</td>
+      <td style="text-align:center">${Number(r.purchases_count)||0}${Number(r.purchases_count)>1?' 🌟':''}</td>
+    </tr>`;
+  }
+  el.innerHTML = h + '</tbody></table></div>';
 }
 
 // ═══════════ 🧾 المشتريات والجوابات ═══════════
@@ -15576,7 +15630,7 @@ async function saveChangeClientTier(){
 // ═══════════════════════════════════════════════════════════
 
 // ── Nav metadata (single source of truth)
-const APP_VERSION = 'v2026.08.07-h';
+const APP_VERSION = 'v2026.08.08-a';
 try{ document.addEventListener('DOMContentLoaded', ()=>{ const e=document.getElementById('appVer'); if(e) e.textContent = APP_VERSION; }); }catch(e){}
 
 const NAV_META = {
@@ -15586,7 +15640,7 @@ const NAV_META = {
   'blocked':          { icon: '🔒',  label: 'المبلوكين' },
   'booking-limits':   { icon: '📊',  label: 'حدود الحجز' },
 
-  'clients':          { icon: '👥',  label: 'العملاء' },
+  'clients':          { icon: '🚚',  label: 'التجار' },
   'client-types':     { icon: '🏷️', label: 'أنواع العملاء' },
   'client-tiers':     { icon: '🏆',  label: 'فئات العملاء' },
   'extra-contacts':   { icon: '📞',  label: 'جهات إضافية' },
@@ -15613,7 +15667,8 @@ const NAV_META = {
   'leads':            { icon: '📥',  label: 'العملاء المحتملين' },
   'waitlist':         { icon: '⏳',  label: 'قايمة الانتظار' },
   'parts':            { icon: '🔧',  label: 'طلبات قطع الغيار' },
-  'purchases':        { icon: '🧾',  label: 'المشتريات والجوابات' }
+  'purchases':        { icon: '🧾',  label: 'المشتريات والجوابات' },
+  'consumers':        { icon: '👥',  label: 'العملاء' }
 };
 
 // ── Default sidebar layout
@@ -15623,7 +15678,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
-    { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases'] },
+    { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'consumers'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -15639,7 +15694,8 @@ const NAV_PREFERRED_CAT = {
   'leads':    { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'waitlist': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'parts':     { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
-  'purchases': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 }
+  'purchases': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
+  'consumers': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
