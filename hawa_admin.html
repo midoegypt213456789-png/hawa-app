@@ -11389,6 +11389,8 @@ let chatWhFilter = '';    // 💬 فلتر الرئيسى: '' = الكل | اس�
 // 🗺️ نطاق شاتات موحّد: رئيسى = الكل | أدمن مخزن = مخزنه + شاتاته | موظف = تجاره + المعيّن عليها
 async function chatScopeFilter(threads){
   if(!EMP_MODE) return threads;
+  // 👑 رسايل الأدمن الرئيسى مش بتظهر لغير الأدمن الرئيسى
+  threads = threads.filter(t => t.kind!=='admin');
   if(EMP_WH) return threads.filter(t =>
     (t.kind==='warehouse' && t.warehouse===EMP_WH) ||
     (t.kind==='employee'  && t.employee_id===EMP_ID));
@@ -11409,8 +11411,9 @@ function populateChatWhFilter(){
   const cur = chatWhFilter;
   sel.innerHTML = `<option value="">🗂️ كل المحادثات</option>`
     + whs.map(w=>`<option value="${escAttr(w)}">🏪 ${escAttr(w)}</option>`).join('')
-    + `<option value="__emp__">👤 شاتات الموظفين</option>`;
-  sel.value = (cur==='' || cur==='__emp__' || whs.includes(cur)) ? cur : '';
+    + `<option value="__emp__">👤 شاتات الموظفين</option>`
+    + `<option value="__admin__">👑 رسايل الأدمن الرئيسى</option>`;
+  sel.value = (cur==='' || cur==='__emp__' || cur==='__admin__' || whs.includes(cur)) ? cur : '';
   chatWhFilter = sel.value;
 }
 
@@ -11454,7 +11457,7 @@ function chatThreadLabel(t){
   const c = chatClientMap[t.client_id] || {};
   const name = c.name || ('عميل #'+t.client_id);
   const code = c.company_code ? (' — '+c.company_code) : '';
-  const dest = t.kind==='warehouse' ? ('🏪 مخزن '+(t.warehouse||'')) : ('👤 '+(chatEmpMap[t.employee_id]||'موظفه'));
+  const dest = t.kind==='warehouse' ? ('🏪 مخزن '+(t.warehouse||'')) : t.kind==='admin' ? '👑 الأدمن الرئيسى' : ('👤 '+(chatEmpMap[t.employee_id]||'موظفه'));
   return {name, code, dest};
 }
 
@@ -11464,6 +11467,7 @@ function renderChatThreads(){
   const q = (document.getElementById('chat-search')?.value||'').trim().toLowerCase();
   let rows = chatThreads.slice();
   if(chatWhFilter==='__emp__') rows = rows.filter(t=>t.kind==='employee');
+  else if(chatWhFilter==='__admin__') rows = rows.filter(t=>t.kind==='admin');
   else if(chatWhFilter) rows = rows.filter(t=>t.kind==='warehouse' && t.warehouse===chatWhFilter);
   if(q){
     rows = rows.filter(t=>{

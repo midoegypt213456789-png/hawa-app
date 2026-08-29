@@ -754,7 +754,11 @@
   <!-- ═══ 💬 تاب تواصل معانا (شات بشرى مع المخزن/الموظف) ═══ -->
   <div class="view" id="viewChat">
     <div class="ai-wrap">
-      <div id="chDests" style="display:flex;gap:6px;padding:10px 10px 4px;flex-wrap:wrap"></div>
+      <div style="padding:10px 10px 4px">
+        <select id="chDestSel" onchange="chPickSel(this.value)" style="width:100%;background:var(--dark3);border:1.5px solid var(--gold);border-radius:10px;color:var(--gold-light);padding:11px 12px;font-family:Cairo,sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">
+          <option value="">⏳ جارى التحميل...</option>
+        </select>
+      </div>
       <div class="ai-msgs" id="chMsgs"></div>
       <div id="chAttachBar" style="display:none;padding:6px 10px 0"><span id="chAttachChip" style="display:inline-flex;align-items:center;gap:7px;background:var(--dark3);border:1px solid var(--gold);border-radius:8px;padding:5px 10px;font-size:11.5px;color:var(--gold-light);max-width:100%;overflow:hidden"></span></div>
       <div class="ai-inputrow">
@@ -4193,24 +4197,43 @@ async function chWarehouses(){
   return chWhList;
 }
 
-function chChip(label, on, onclick){
-  return `<button onclick="${onclick}" style="flex:1;min-width:88px;padding:9px 6px;border-radius:10px;border:1.5px solid ${on?'var(--gold)':'var(--border)'};background:${on?'linear-gradient(135deg,rgba(201,168,76,.25),rgba(201,168,76,.1))':'var(--dark3)'};color:${on?'var(--gold-light)':'var(--text-dim)'};font-family:Cairo,sans-serif;font-size:12.5px;font-weight:800;cursor:pointer;transition:all .2s">${label}</button>`;
+// 🩹 self-heal: لو الجلسة قديمة والـ username اتغير فى السيرفر (تعديل أدمن / استرداد بيانات) — نصلّحها تلقائى
+let chUserSynced = false;
+async function chSyncUser(){
+  if(!user.id || chUserSynced) return;
+  try{
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=username,name`, { headers: HDR });
+    const d = await r.json();
+    if(Array.isArray(d) && d[0]){
+      let changed = false;
+      if(d[0].username && d[0].username !== user.username){ user.username = d[0].username; changed = true; }
+      if(d[0].name && d[0].name !== user.name){ user.name = d[0].name; changed = true; }
+      if(changed) localStorage.setItem('hawa_user', JSON.stringify(user));
+    }
+  }catch(e){}
+  chUserSynced = true;
 }
 
 async function initChatTab(){
+  await chSyncUser();
   const whs = await chWarehouses();
-  const el = document.getElementById('chDests');
-  let html = whs.map(w=>chChip('🏪 '+aiEsc(w), chDest&&chDest.kind==='warehouse'&&chDest.warehouse===w, `chPick('warehouse','${aiEsc(w)}')`)).join('');
-  html += chChip('👤 موظف المبيعات', chDest&&chDest.kind==='employee', `chPick('employee','')`);
-  el.innerHTML = html;
-  if(!chDest){ if(whs.length){ chPick('warehouse', whs[0]); } return; }
-  chLoadThread();
+  const sel = document.getElementById('chDestSel');
+  const cur = chDest ? (chDest.kind==='warehouse' ? 'w|'+chDest.warehouse : chDest.kind) : '';
+  sel.innerHTML =
+    whs.map(w=>`<option value="w|${aiEsc(w)}">🏪 مخزن ${aiEsc(w)}</option>`).join('')
+    + `<option value="employee">👤 موظف المبيعات</option>`
+    + `<option value="admin">👑 الأدمن الرئيسى</option>`;
+  const vals = [...sel.options].map(o=>o.value);
+  sel.value = vals.includes(cur) ? cur : (vals[0]||'');
+  chPickSel(sel.value, true);
 }
 
-function chPick(kind, wh){
-  chDest = { kind, warehouse: kind==='warehouse' ? wh : null };
-  chThreadId = null; chLastCount = -1;
-  initChatTab();
+function chPickSel(v, refresh){
+  if(!v) return;
+  const nd = v.indexOf('w|')===0 ? { kind:'warehouse', warehouse:v.slice(2) } : { kind:v, warehouse:null };
+  if(!refresh && chDest && chDest.kind===nd.kind && chDest.warehouse===nd.warehouse) return;
+  chDest = nd; chThreadId = null; chLastCount = -1;
+  chLoadThread();
 }
 
 function chMediaHtml(m){
