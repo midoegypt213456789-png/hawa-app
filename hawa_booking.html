@@ -4220,7 +4220,7 @@ function chMediaHtml(m){
   return `<a href="${u}" target="_blank" rel="noopener" style="color:var(--gold-light)">📎 تحميل المرفق</a>`;
 }
 
-const CH_EMPTY = '<div class="ai-msg note">👋 ابعت رسالتك من هنا — الرد هيوصلك فى الصفحة دى وعلى تليجرام كمان</div>';
+const CH_EMPTY = '<div class="ai-msg note">👋 ابعت رسالتك من هنا — 🤖 المساعد الذكى هيرد عليك فوراً، ولو محتاج، الفريق بيتدخل. الردود بتوصلك هنا وعلى تليجرام كمان</div>';
 
 async function chLoadThread(silent){
   if(!chDest || !user.id) return;
@@ -4260,17 +4260,31 @@ async function chSend(){
   if(!body) return;
   chBusy = true;
   const btn = document.getElementById('chSendBtn'); btn.disabled = true; btn.textContent = '⏳';
+  const box = document.getElementById('chMsgs');
+  // فقاعة متفائلة + مؤشر كتابة (الـ AI بيرد زى التليجرام)
+  const emptyNote = box.querySelector('.ai-msg.note'); if(emptyNote) emptyNote.remove();
+  box.insertAdjacentHTML('beforeend', `<div class="ai-msg me"><div style="white-space:pre-wrap">${aiEsc(body)}</div></div>`);
+  box.insertAdjacentHTML('beforeend', `<div class="ai-msg bot" id="chTyping">✍️ بكتبلك<span class="aidots">...</span></div>`);
+  box.scrollTop = box.scrollHeight;
+  inp.value = '';
   try{
-    const r = await fetch(`${SB}/rest/v1/rpc/chat_post_message`, { method:'POST', headers: HDR,
-      body: JSON.stringify({ p_client_id:user.id, p_kind:chDest.kind, p_warehouse:chDest.warehouse, p_sender:'client', p_sender_name:user.name||'التاجر', p_body:body }) });
-    if(!r.ok) throw new Error(await r.text());
-    inp.value = '';
-    logActivity('cl_chat_send','💬 بعت رسالة للفريق',{ kind:chDest.kind, warehouse:chDest.warehouse||null });
+    // 🤖 نفس سلوك التليجرام: الرسالة بتتسجل + المساعد بيرد فوراً لو مفيش تدخل موظف
+    const r = await fetch(AI_FN, { method:'POST', headers: HDR,
+      body: JSON.stringify(aiAuthBody({ mode:'human_chat', kind:chDest.kind, warehouse:chDest.warehouse, text:body })) });
+    let j = null; try{ j = await r.json(); }catch(e){}
+    if(!j || !j.ok) throw new Error((j&&j.error)||'network');
+    logActivity('cl_chat_send','💬 بعت رسالة للفريق',{ kind:chDest.kind, warehouse:chDest.warehouse||null, ai:j.ai_active });
+    if(j.ai_active && !j.answer){
+      document.getElementById('chTyping')?.remove();
+      box.insertAdjacentHTML('beforeend','<div class="ai-msg note">📨 رسالتك وصلت — المساعد مش متاح دلوقتى والفريق هيرد عليك قريب</div>');
+    }
     chLastCount = -1;
     await chLoadThread(true);
   }catch(e){
-    document.getElementById('chMsgs').insertAdjacentHTML('beforeend','<div class="ai-msg err">❌ الرسالة ماتبعتتش — جرّب تانى</div>');
+    document.getElementById('chTyping')?.remove();
+    box.insertAdjacentHTML('beforeend','<div class="ai-msg err">❌ الرسالة ماتبعتتش — جرّب تانى</div>');
   }
+  document.getElementById('chTyping')?.remove();
   chBusy = false; btn.disabled = false; btn.textContent = '➤';
 }
 
