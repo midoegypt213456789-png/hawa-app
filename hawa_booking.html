@@ -395,6 +395,7 @@
     <button class="tab-btn"        id="tabMy"  onclick="switchTab('my')">📋 حجوزاتي</button>
     <button class="tab-btn"        id="tabBulletin" onclick="switchTab('bulletin')">📖 الكتاب الدورى</button>
     <button class="tab-btn"        id="tabAI"  onclick="switchTab('ai')">🤖 المساعد الذكى</button>
+    <button class="tab-btn"        id="tabChat" onclick="switchTab('chat')" style="grid-column:1 / -1;position:relative">💬 تواصل معانا<span id="chatTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
   </div>
 
   <!-- Telegram Link Banner (shown if not linked) -->
@@ -746,6 +747,18 @@
         <button class="ai-mic" id="aiMic" onclick="toggleAiRec()" title="رسالة صوتية">🎙️</button>
         <input id="aiInput" class="ai-input" placeholder="اكتب سؤالك هنا..." autocomplete="off" onkeypress="if(event.key==='Enter')sendAiText()">
         <button class="ai-send" id="aiSend" onclick="sendAiText()">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ 💬 تاب تواصل معانا (شات بشرى مع المخزن/الموظف) ═══ -->
+  <div class="view" id="viewChat">
+    <div class="ai-wrap">
+      <div id="chDests" style="display:flex;gap:6px;padding:10px 10px 4px;flex-wrap:wrap"></div>
+      <div class="ai-msgs" id="chMsgs"></div>
+      <div class="ai-inputrow">
+        <input id="chInput" class="ai-input" placeholder="اكتب رسالتك للفريق..." autocomplete="off" onkeypress="if(event.key==='Enter')chSend()">
+        <button class="ai-send" id="chSendBtn" onclick="chSend()">➤</button>
       </div>
     </div>
   </div>
@@ -2718,7 +2731,7 @@ let editMode = null; // { id, oldCount }
 
 // ===================== TABS =====================
 function switchTab(tab) {
-  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], ai:['tabAI','viewAI'] };
+  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], ai:['tabAI','viewAI'], chat:['tabChat','viewChat'] };
   Object.keys(tabMap).forEach(t => {
     document.getElementById(tabMap[t][0]).classList.toggle('active', t === tab);
     document.getElementById(tabMap[t][1]).classList.toggle('active', t === tab);
@@ -2730,6 +2743,7 @@ function switchTab(tab) {
   }
   if (tab === 'bulletin') { logActivity('cl_view_bulletin','📖 فتح استعلام الكتاب الدورى'); setTimeout(()=>{ const i=document.getElementById('bltInput'); if(i) i.focus(); }, 150); }
   if (tab === 'ai') { logActivity('cl_open_ai','🤖 فتح المساعد الذكى'); initAiTab(); }
+  if (tab === 'chat') { logActivity('cl_open_chat','💬 فتح تواصل معانا'); initChatTab(); }
 }
 
 // ===================== FORM NAV =====================
@@ -4157,6 +4171,125 @@ async function onAiRecStop() {
   }
   aiBusy = false; setAiControls();
 }
+
+// ═══════════════ 💬 تواصل معانا — شات بشرى مع المخزن/الموظف ═══════════════
+// نفس threads بتاعة التليجرام والأدمن: chat_post_message بـ sender='client'
+let chDest = null;          // {kind:'warehouse',warehouse:'قليوب'} أو {kind:'employee',warehouse:null}
+let chThreadId = null;
+let chBusy = false;
+let chWhList = null;        // كاش أسماء المخازن
+let chLastCount = -1;
+
+async function chWarehouses(){
+  if(chWhList) return chWhList;
+  try{
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=name&order=id`, { headers: HDR });
+    const d = await r.json();
+    chWhList = (Array.isArray(d)?d:[]).map(w=>w.name).filter(Boolean);
+  }catch(e){ chWhList = []; }
+  return chWhList;
+}
+
+function chChip(label, on, onclick){
+  return `<button onclick="${onclick}" style="flex:1;min-width:88px;padding:9px 6px;border-radius:10px;border:1.5px solid ${on?'var(--gold)':'var(--border)'};background:${on?'linear-gradient(135deg,rgba(201,168,76,.25),rgba(201,168,76,.1))':'var(--dark3)'};color:${on?'var(--gold-light)':'var(--text-dim)'};font-family:Cairo,sans-serif;font-size:12.5px;font-weight:800;cursor:pointer;transition:all .2s">${label}</button>`;
+}
+
+async function initChatTab(){
+  const whs = await chWarehouses();
+  const el = document.getElementById('chDests');
+  let html = whs.map(w=>chChip('🏪 '+aiEsc(w), chDest&&chDest.kind==='warehouse'&&chDest.warehouse===w, `chPick('warehouse','${aiEsc(w)}')`)).join('');
+  html += chChip('👤 موظف المبيعات', chDest&&chDest.kind==='employee', `chPick('employee','')`);
+  el.innerHTML = html;
+  if(!chDest){ if(whs.length){ chPick('warehouse', whs[0]); } return; }
+  chLoadThread();
+}
+
+function chPick(kind, wh){
+  chDest = { kind, warehouse: kind==='warehouse' ? wh : null };
+  chThreadId = null; chLastCount = -1;
+  initChatTab();
+}
+
+function chMediaHtml(m){
+  if(!m.media_type && !m.media_file_id) return '';
+  const u = (m.media_url && /^https?:/.test(m.media_url)) ? m.media_url : null;
+  if(!u) return `<div style="font-size:11.5px;color:var(--text-dim)">📎 مرفق — اتفرج عليه من تليجرام</div>`;
+  if(m.media_type==='photo') return `<a href="${u}" target="_blank" rel="noopener"><img src="${u}" style="max-width:100%;border-radius:8px;display:block;margin-bottom:5px" loading="lazy"></a>`;
+  if(m.media_type==='voice'||m.media_type==='audio') return `<audio controls src="${u}"></audio>`;
+  if(m.media_type==='video') return `<video controls src="${u}" style="max-width:100%;border-radius:8px;display:block;margin-bottom:5px" preload="metadata"></video>`;
+  return `<a href="${u}" target="_blank" rel="noopener" style="color:var(--gold-light)">📎 تحميل المرفق</a>`;
+}
+
+const CH_EMPTY = '<div class="ai-msg note">👋 ابعت رسالتك من هنا — الرد هيوصلك فى الصفحة دى وعلى تليجرام كمان</div>';
+
+async function chLoadThread(silent){
+  if(!chDest || !user.id) return;
+  const box = document.getElementById('chMsgs');
+  if(!silent) box.innerHTML = '<div class="ai-msg note">⏳ جارى التحميل...</div>';
+  try{
+    const q = chDest.kind==='employee'
+      ? `client_id=eq.${user.id}&kind=eq.employee`
+      : `client_id=eq.${user.id}&kind=eq.warehouse&warehouse=eq.${encodeURIComponent(chDest.warehouse)}`;
+    const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client&order=last_at.desc&limit=1`, { headers: HDR });
+    const td = await tr.json();
+    const t = (Array.isArray(td)&&td[0])?td[0]:null;
+    if(!t){ chThreadId=null; chLastCount=0; box.innerHTML = CH_EMPTY; return; }
+    chThreadId = t.id;
+    const mr = await fetch(`${SB}/rest/v1/chat_messages?thread_id=eq.${t.id}&select=*&order=created_at.asc`, { headers: {...HDR,'Range':'0-299'} });
+    let msgs = await mr.json(); if(!Array.isArray(msgs)) msgs=[];
+    if(!(silent && msgs.length===chLastCount)){
+      chLastCount = msgs.length;
+      box.innerHTML = msgs.map(m=>{
+        const mine = m.sender==='client';
+        const who = mine ? '' : `<div style="font-size:10.5px;color:var(--text-dim);margin-bottom:3px">${m.sender==='ai'?'🤖 المساعد':aiEsc(m.sender_name||'الفريق')}</div>`;
+        const when = m.created_at ? new Date(m.created_at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}) : '';
+        return `<div class="ai-msg ${mine?'me':'bot'}">${who}${chMediaHtml(m)}${m.body?`<div style="white-space:pre-wrap">${aiEsc(m.body)}</div>`:''}<div style="font-size:9.5px;color:var(--text-dim);margin-top:4px">${when}</div></div>`;
+      }).join('') || CH_EMPTY;
+      box.scrollTop = box.scrollHeight;
+    }
+    if(t.unread_client>0){
+      fetch(`${SB}/rest/v1/chat_threads?id=eq.${t.id}`, { method:'PATCH', headers: HDR, body: JSON.stringify({unread_client:0}) }).then(()=>chBadge()).catch(()=>{});
+    }
+  }catch(e){ if(!silent) box.innerHTML = '<div class="ai-msg err">❌ مشكلة فى تحميل المحادثة — جرّب تانى</div>'; }
+}
+
+async function chSend(){
+  if(chBusy || !chDest || !user.id) return;
+  const inp = document.getElementById('chInput');
+  const body = (inp.value||'').trim();
+  if(!body) return;
+  chBusy = true;
+  const btn = document.getElementById('chSendBtn'); btn.disabled = true; btn.textContent = '⏳';
+  try{
+    const r = await fetch(`${SB}/rest/v1/rpc/chat_post_message`, { method:'POST', headers: HDR,
+      body: JSON.stringify({ p_client_id:user.id, p_kind:chDest.kind, p_warehouse:chDest.warehouse, p_sender:'client', p_sender_name:user.name||'التاجر', p_body:body }) });
+    if(!r.ok) throw new Error(await r.text());
+    inp.value = '';
+    logActivity('cl_chat_send','💬 بعت رسالة للفريق',{ kind:chDest.kind, warehouse:chDest.warehouse||null });
+    chLastCount = -1;
+    await chLoadThread(true);
+  }catch(e){
+    document.getElementById('chMsgs').insertAdjacentHTML('beforeend','<div class="ai-msg err">❌ الرسالة ماتبعتتش — جرّب تانى</div>');
+  }
+  chBusy = false; btn.disabled = false; btn.textContent = '➤';
+}
+
+// 🔴 عداد الرسايل الجديدة على زرار التاب
+async function chBadge(){
+  if(!user.id) return;
+  try{
+    const r = await fetch(`${SB}/rest/v1/chat_threads?client_id=eq.${user.id}&unread_client=gt.0&select=unread_client`, { headers: HDR });
+    const d = await r.json();
+    const total = (Array.isArray(d)?d:[]).reduce((s,t)=>s+(t.unread_client||0),0);
+    const b = document.getElementById('chatTabBadge');
+    if(b){ b.textContent = total>99?'99+':total; b.style.display = total>0?'':'none'; }
+  }catch(e){}
+}
+
+// بولنج خفيف: المحادثة المفتوحة كل 12 ثانية + العداد كل 30 ثانية
+setInterval(()=>{ if(document.getElementById('viewChat')?.classList.contains('active')) chLoadThread(true); }, 12000);
+setInterval(chBadge, 30000);
+chBadge();
 
 </script>
 </body>
