@@ -3019,7 +3019,10 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div style="display:flex;gap:14px;height:calc(100vh - 200px);min-height:480px">
         <!-- قائمة المحادثات -->
         <div class="tbl-wrap" style="width:340px;flex-shrink:0;display:flex;flex-direction:column;padding:0;overflow:hidden">
-          <div style="padding:12px;border-bottom:1px solid var(--border)">
+          <div style="padding:12px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px">
+            <select id="chat-wh-filter" onchange="chatWhFilter=this.value;renderChatThreads()" style="width:100%;background:var(--dark3);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:9px 10px;font-family:inherit;font-size:13px">
+              <option value="">🗂️ كل المحادثات</option>
+            </select>
             <input class="filter-inp" id="chat-search" placeholder="🔍 دور بالاسم أو الكود..." oninput="renderChatThreads()" style="width:100%">
           </div>
           <div id="chat-thread-list" style="flex:1;overflow-y:auto"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -4933,6 +4936,7 @@ async function rpcSecure(fn, args){
 }
 let EMP_MODE = false;     // true لو اللى فاتح موظف (مش أدمن)
 let EMP_PERMS = null;     // { screen: {view,edit,del,print} } أو { __all__:true }
+let EMP_WH = null;        // 💬 مخزن الموظف (قليوب/السادات) — 'عام' أو null = مش أدمن مخزن
 
 // هل المستخدم الحالى يقدر يعمل action معين على شاشة معينة؟
 function can(screen, action){
@@ -5094,6 +5098,7 @@ async function doAdminLogin(){
         if(landing==='admin'){
           EMP_MODE=true; EMP_PERMS=perms;
           EMP_SCOPE=scope; EMP_ID=emp.id; EMP_GOVS=govs; EMP_SECTORS=sectors;
+          EMP_WH=(emp.role&&emp.role!=='عام')?emp.role:null;
           admin={name:emp.name,username:emp.username,is_employee:true,emp_id:emp.id};
           sessionStorage.setItem('hawa_admin_emp',JSON.stringify({id:emp.id,name:emp.name,username:emp.username,wh_role:emp.role,perms,scope,govs,sectors,token:SESSION_TOKEN}));
           enterApp();
@@ -11379,6 +11384,35 @@ let chatClientMap = {};   // client_id → {name,company_code,governorate}
 let chatEmpMap = {};      // employee_id → name
 let chatOpenThreadId = null;
 let __chatPollTimer = null;
+let chatWhFilter = '';    // 💬 فلتر الرئيسى: '' = الكل | اسم مخزن | '__emp__' = شاتات الموظفين
+
+// 🗺️ نطاق شاتات موحّد: رئيسى = الكل | أدمن مخزن = مخزنه + شاتاته | موظف = تجاره + المعيّن عليها
+async function chatScopeFilter(threads){
+  if(!EMP_MODE) return threads;
+  if(EMP_WH) return threads.filter(t =>
+    (t.kind==='warehouse' && t.warehouse===EMP_WH) ||
+    (t.kind==='employee'  && t.employee_id===EMP_ID));
+  if(EMP_SCOPE!=='all'){
+    await ensureEmpScope();
+    return threads.filter(t => EMP_CLIENT_IDS.has(t.client_id) ||
+      (t.kind==='employee' && t.employee_id===EMP_ID));
+  }
+  return threads;
+}
+
+// 🏪 فلتر المخازن فوق القايمة — للرئيسى بس (أدمن المخزن مقفول على مخزنه تلقائى)
+function populateChatWhFilter(){
+  const sel = document.getElementById('chat-wh-filter');
+  if(!sel) return;
+  if(EMP_MODE && EMP_WH){ sel.style.display='none'; return; }
+  const whs = [...new Set(chatThreads.filter(t=>t.kind==='warehouse'&&t.warehouse).map(t=>t.warehouse))].sort();
+  const cur = chatWhFilter;
+  sel.innerHTML = `<option value="">🗂️ كل المحادثات</option>`
+    + whs.map(w=>`<option value="${escAttr(w)}">🏪 ${escAttr(w)}</option>`).join('')
+    + `<option value="__emp__">👤 شاتات الموظفين</option>`;
+  sel.value = (cur==='' || cur==='__emp__' || whs.includes(cur)) ? cur : '';
+  chatWhFilter = sel.value;
+}
 
 async function loadChat(){
   const listEl = document.getElementById('chat-thread-list');
@@ -11388,12 +11422,10 @@ async function loadChat(){
     let threads = await tr.json();
     if(!Array.isArray(threads)) threads = [];
 
-    // 🗺️ نطاق البيانات: الموظف يشوف محادثات تجاره بس
-    if(EMP_MODE && EMP_SCOPE!=='all'){
-      await ensureEmpScope();
-      threads = threads.filter(t => EMP_CLIENT_IDS.has(t.client_id));
-    }
+    // 🗺️ نطاق البيانات (رئيسى/أدمن مخزن/موظف)
+    threads = await chatScopeFilter(threads);
     chatThreads = threads;
+    populateChatWhFilter();
 
     // هات بيانات العملاء + الموظفين للأسماء
     const cids = [...new Set(threads.map(t=>t.client_id).filter(Boolean))];
@@ -11431,6 +11463,8 @@ function renderChatThreads(){
   if(!listEl) return;
   const q = (document.getElementById('chat-search')?.value||'').trim().toLowerCase();
   let rows = chatThreads.slice();
+  if(chatWhFilter==='__emp__') rows = rows.filter(t=>t.kind==='employee');
+  else if(chatWhFilter) rows = rows.filter(t=>t.kind==='warehouse' && t.warehouse===chatWhFilter);
   if(q){
     rows = rows.filter(t=>{
       const c = chatClientMap[t.client_id]||{};
@@ -11622,9 +11656,9 @@ async function refreshChatBadge(){
       total = chatThreads.reduce((s,t)=>s+(t.unread_staff||0),0);
     }else{
       // لو الشاشة لسه ماتفتحتش، اسأل السيرفر
-      const r = await fetch(`${SB}/rest/v1/chat_threads?select=client_id,unread_staff&unread_staff=gt.0`,{headers:{...HDR,'Range':'0-499'}});
+      const r = await fetch(`${SB}/rest/v1/chat_threads?select=client_id,kind,warehouse,employee_id,unread_staff&unread_staff=gt.0`,{headers:{...HDR,'Range':'0-499'}});
       let d = await r.json(); if(!Array.isArray(d)) d=[];
-      if(EMP_MODE && EMP_SCOPE!=='all'){ await ensureEmpScope(); d = d.filter(t=>EMP_CLIENT_IDS.has(t.client_id)); }
+      d = await chatScopeFilter(d);
       total = d.reduce((s,t)=>s+(t.unread_staff||0),0);
     }
     const b = document.getElementById('chatBadge');
@@ -16647,6 +16681,7 @@ else{
       EMP_MODE=true;
       EMP_PERMS=e.perms||{};
       EMP_SCOPE=e.scope||'own'; EMP_ID=e.id; EMP_GOVS=e.govs||[]; EMP_SECTORS=e.sectors||[];
+      EMP_WH=(e.wh_role&&e.wh_role!=='عام')?e.wh_role:null;
       SESSION_TOKEN=e.token||null;
       admin={name:e.name,username:e.username,is_employee:true,emp_id:e.id};
       enterApp();
