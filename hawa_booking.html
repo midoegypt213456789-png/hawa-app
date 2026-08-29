@@ -756,7 +756,10 @@
     <div class="ai-wrap">
       <div id="chDests" style="display:flex;gap:6px;padding:10px 10px 4px;flex-wrap:wrap"></div>
       <div class="ai-msgs" id="chMsgs"></div>
+      <div id="chAttachBar" style="display:none;padding:6px 10px 0"><span id="chAttachChip" style="display:inline-flex;align-items:center;gap:7px;background:var(--dark3);border:1px solid var(--gold);border-radius:8px;padding:5px 10px;font-size:11.5px;color:var(--gold-light);max-width:100%;overflow:hidden"></span></div>
       <div class="ai-inputrow">
+        <button class="ai-mic" id="chAttachBtn" onclick="document.getElementById('chFile').click()" title="إرفاق صورة أو ملف">📎</button>
+        <input type="file" id="chFile" accept="image/*,video/*,audio/*,.pdf,application/pdf" style="display:none" onchange="chPickFile(this)">
         <input id="chInput" class="ai-input" placeholder="اكتب رسالتك للفريق..." autocomplete="off" onkeypress="if(event.key==='Enter')chSend()">
         <button class="ai-send" id="chSendBtn" onclick="chSend()">➤</button>
       </div>
@@ -4253,28 +4256,59 @@ async function chLoadThread(silent){
   }catch(e){ if(!silent) box.innerHTML = '<div class="ai-msg err">❌ مشكلة فى تحميل المحادثة — جرّب تانى</div>'; }
 }
 
+// 📎 مرفق التاجر (صورة/فيديو/صوت/PDF — حد 8MB)
+let chFile = null; // {b64, durl, mime, name}
+function chPickFile(inp){
+  const f = inp.files && inp.files[0]; inp.value = '';
+  if(!f) return;
+  const okMime = /^(image|video|audio)\//.test(f.type) || f.type === 'application/pdf';
+  if(!okMime){ document.getElementById('chMsgs').insertAdjacentHTML('beforeend','<div class="ai-msg err">❌ النوع ده مش مدعوم — صورة أو فيديو أو صوت أو PDF</div>'); return; }
+  if(f.size > 8*1024*1024){ document.getElementById('chMsgs').insertAdjacentHTML('beforeend','<div class="ai-msg err">❌ الملف أكبر من 8 ميجا</div>'); return; }
+  const rd = new FileReader();
+  rd.onload = () => {
+    const durl = String(rd.result || '');
+    chFile = { b64: durl.split(',')[1] || '', durl, mime: f.type || 'application/octet-stream', name: f.name || '' };
+    const chip = document.getElementById('chAttachChip');
+    chip.innerHTML = '📎 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">' + aiEsc(f.name || 'مرفق') + '</span> <span onclick="chClearFile()" style="cursor:pointer;color:var(--error);font-weight:900">✕</span>';
+    document.getElementById('chAttachBar').style.display = '';
+  };
+  rd.readAsDataURL(f);
+}
+function chClearFile(){ chFile = null; document.getElementById('chAttachBar').style.display = 'none'; }
+
 async function chSend(){
   if(chBusy || !chDest || !user.id) return;
   const inp = document.getElementById('chInput');
   const body = (inp.value||'').trim();
-  if(!body) return;
+  const f = chFile;
+  if(!body && !f) return;
   chBusy = true;
   const btn = document.getElementById('chSendBtn'); btn.disabled = true; btn.textContent = '⏳';
   const box = document.getElementById('chMsgs');
-  // فقاعة متفائلة + مؤشر كتابة (الـ AI بيرد زى التليجرام)
+  // فقاعة متفائلة (بمعاينة المرفق) + مؤشر كتابة لو فيه نص (الـ AI بيرد على النص)
   const emptyNote = box.querySelector('.ai-msg.note'); if(emptyNote) emptyNote.remove();
-  box.insertAdjacentHTML('beforeend', `<div class="ai-msg me"><div style="white-space:pre-wrap">${aiEsc(body)}</div></div>`);
-  box.insertAdjacentHTML('beforeend', `<div class="ai-msg bot" id="chTyping">✍️ بكتبلك<span class="aidots">...</span></div>`);
+  let mine = '';
+  if(f) mine += f.mime.indexOf('image/')===0
+    ? `<img src="${f.durl}" style="max-width:100%;border-radius:8px;display:block;margin-bottom:5px">`
+    : `<div>📎 ${aiEsc(f.name||'مرفق')}</div>`;
+  if(body) mine += `<div style="white-space:pre-wrap">${aiEsc(body)}</div>`;
+  box.insertAdjacentHTML('beforeend', `<div class="ai-msg me">${mine}</div>`);
+  if(body) box.insertAdjacentHTML('beforeend', `<div class="ai-msg bot" id="chTyping">✍️ بكتبلك<span class="aidots">...</span></div>`);
   box.scrollTop = box.scrollHeight;
   inp.value = '';
+  chClearFile();
   try{
     // 🤖 نفس سلوك التليجرام: الرسالة بتتسجل + المساعد بيرد فوراً لو مفيش تدخل موظف
-    const r = await fetch(AI_FN, { method:'POST', headers: HDR,
-      body: JSON.stringify(aiAuthBody({ mode:'human_chat', kind:chDest.kind, warehouse:chDest.warehouse, text:body })) });
+    const payload = { mode:'human_chat', kind:chDest.kind, warehouse:chDest.warehouse, text:body };
+    if(f){ payload.media_base64 = f.b64; payload.media_mime = f.mime; payload.media_name = f.name; }
+    const r = await fetch(AI_FN, { method:'POST', headers: HDR, body: JSON.stringify(aiAuthBody(payload)) });
     let j = null; try{ j = await r.json(); }catch(e){}
-    if(!j || !j.ok) throw new Error((j&&j.error)||'network');
-    logActivity('cl_chat_send','💬 بعت رسالة للفريق',{ kind:chDest.kind, warehouse:chDest.warehouse||null, ai:j.ai_active });
-    if(j.ai_active && !j.answer){
+    if(!j || !j.ok){
+      const em = j && j.error==='too_big' ? '❌ الملف أكبر من 8 ميجا' : j && j.error==='bad_media' ? '❌ النوع ده مش مدعوم' : '❌ الرسالة ماتبعتتش — جرّب تانى';
+      throw new Error(em);
+    }
+    logActivity('cl_chat_send','💬 بعت رسالة للفريق',{ kind:chDest.kind, warehouse:chDest.warehouse||null, ai:j.ai_active, media: f?f.mime:null });
+    if(body && j.ai_active && !j.answer){
       document.getElementById('chTyping')?.remove();
       box.insertAdjacentHTML('beforeend','<div class="ai-msg note">📨 رسالتك وصلت — المساعد مش متاح دلوقتى والفريق هيرد عليك قريب</div>');
     }
@@ -4282,7 +4316,7 @@ async function chSend(){
     await chLoadThread(true);
   }catch(e){
     document.getElementById('chTyping')?.remove();
-    box.insertAdjacentHTML('beforeend','<div class="ai-msg err">❌ الرسالة ماتبعتتش — جرّب تانى</div>');
+    box.insertAdjacentHTML('beforeend', `<div class="ai-msg err">${aiEsc((e&&e.message&&e.message.indexOf('❌')===0)?e.message:'❌ الرسالة ماتبعتتش — جرّب تانى')}</div>`);
   }
   document.getElementById('chTyping')?.remove();
   chBusy = false; btn.disabled = false; btn.textContent = '➤';
