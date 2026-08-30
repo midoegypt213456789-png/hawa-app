@@ -4203,6 +4203,15 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <input id="mc-colors" placeholder="الألوان مفصولة بفاصلة: أزرق, أحمر, أسود" oninput="mcRenderColorImgs()" style="flex:1;min-width:130px;background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:13px;padding:9px 11px">
       <div id="mc-color-imgs" style="margin-top:8px"></div>
       <div style="color:var(--text-dim);font-size:11px;margin:4px 0 12px">💡 ارفع صور لكل لون — العميل يدوس اللون فى الشوب والصورة تتبدل. وكل ما ترفع صور من زوايا أكتر، اللفة الـ360° بتبقى أحلى</div>
+      <div style="color:var(--gold);font-weight:800;font-size:13px;margin:4px 0 8px">🧊 موديل ثلاثى الأبعاد (اختيارى)</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+        <label style="background:rgba(201,168,76,.12);border:1px dashed var(--gold);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--gold);font-size:12px;font-weight:800">📦 رفع ملف GLB
+          <input type="file" accept=".glb" style="display:none" onchange="mcUploadGlb(this)">
+        </label>
+        <span id="mc-glb-status" style="color:var(--text-dim);font-size:11px">مفيش ملف 3D</span>
+        <button type="button" id="mc-glb-remove" onclick="mcRemoveGlb()" style="display:none;background:rgba(224,85,85,.15);border:1px solid var(--error);color:var(--error);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:11px;font-weight:800">🗑️ شيل الـ3D</button>
+      </div>
+      <div style="color:var(--text-dim);font-size:11px;margin:0 0 12px">لو مرفوع، العميل هيلاقى زرار 🧊 على صورة الموديل يلفه بيه 360° حقيقى</div>
 
       <div style="color:var(--gold);font-weight:800;font-size:13px;margin:14px 0 8px">🖼️ الصور</div>
       <label style="display:block;background:var(--dark3);border:2px dashed rgba(201,168,76,0.45);border-radius:10px;padding:12px;cursor:pointer;text-align:center;margin-bottom:8px">
@@ -7359,6 +7368,31 @@ async function mcUploadColorImgs(input, i){
 }
 function mcRemoveColorImg(i,j){ const c=mcColorsList()[i]; if(!c||!_mcColorImgs[c]) return; _mcColorImgs[c].splice(j,1); mcRenderColorImgs(); }
 
+// ── 🧊 موديل 3D (GLB) ──
+let _mcGlb = '';
+function mcRenderGlb(){
+  const st = document.getElementById('mc-glb-status'), rm = document.getElementById('mc-glb-remove');
+  if(!st) return;
+  if(_mcGlb){ st.innerHTML = '✅ <a href="'+_mcGlb+'" target="_blank" style="color:var(--gold)">ملف 3D مرفوع ↗</a>'; if(rm) rm.style.display=''; }
+  else { st.textContent = 'مفيش ملف 3D'; if(rm) rm.style.display='none'; }
+}
+async function mcUploadGlb(input){
+  const f = (input.files||[])[0]; if(!f) return;
+  if(f.size > 60*1024*1024){ alert('⚠️ الملف أكبر من 60MB'); input.value=''; return; }
+  const st = document.getElementById('mc-glb-status');
+  if(st) st.textContent = '⏳ بنرفع ملف الـ3D...';
+  try{
+    const path = `glb_${Date.now()}_${Math.random().toString(36).slice(2,8)}.glb`;
+    const r = await fetch(`${SB}/storage/v1/object/catalog/${path}`,{
+      method:'POST', headers:{...HDR,'Content-Type':'model/gltf-binary','x-upsert':'true'}, body:f
+    });
+    if(!r.ok) throw new Error('فشل رفع الملف');
+    _mcGlb = `${SB}/storage/v1/object/public/catalog/${path}`;
+  }catch(e){ alert('⚠️ '+(e.message||'فشل الرفع')); }
+  finally{ input.value=''; mcRenderGlb(); }
+}
+function mcRemoveGlb(){ _mcGlb=''; mcRenderGlb(); }
+
 async function mcUploadImages(input){
   const files = [...(input.files||[])];
   if(!files.length) return;
@@ -7420,6 +7454,8 @@ function openMcEdit(id){
   mcRenderImages();
   _mcColorImgs = (m && m.color_images && typeof m.color_images==='object' && !Array.isArray(m.color_images)) ? JSON.parse(JSON.stringify(m.color_images)) : {};
   mcRenderColorImgs();
+  _mcGlb = (m && m.glb_url) ? m.glb_url : '';
+  mcRenderGlb();
   document.getElementById('mcModal').classList.add('show');
 }
 
@@ -7451,6 +7487,7 @@ async function saveMotorcycle(){
       warranty:     (document.getElementById('mc-warranty').value||'').trim(),
       colors:       splitList(document.getElementById('mc-colors').value, /[,،]/),
       color_images: Object.fromEntries(Object.entries(_mcColorImgs).filter(([k,v])=>Array.isArray(v)&&v.length)),
+      glb_url:      _mcGlb || '',
       images:       _mcImages.slice(),
       videos:       splitList(document.getElementById('mc-videos').value, /\n/),
       pitch:        (document.getElementById('mc-pitch').value||'').trim(),
