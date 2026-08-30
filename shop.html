@@ -206,6 +206,7 @@ body{
       <div class="fld"><label for="rAddr">العنوان</label><input id="rAddr" placeholder="الشارع والعلامة المميزة"></div>
     </div>
 
+    <div class="fld" id="fpPhoneFld" style="display:none"><label for="fpPhone">رقم الموبايل المسجل بيه</label><input id="fpPhone" type="tel" inputmode="numeric" placeholder="01xxxxxxxxx"></div>
     <div class="fld"><label for="rUser">اسم المستخدم</label><input id="rUser" autocomplete="username" placeholder="بحروف إنجليزى وأرقام" dir="ltr" style="text-align:start"></div>
     <div class="fld"><label for="rPass">الباسورد</label><input id="rPass" type="password" autocomplete="current-password" placeholder="6 خانات على الأقل"></div>
 
@@ -497,14 +498,19 @@ function closeSheet(){ $('veil').classList.remove('on'); document.querySelectorA
 function openAuth(mode){ setMode(mode||'register'); $('authMsg').className='msg'; openSheet('authSheet'); loadGovs(); }
 function setMode(m){
   AUTH_MODE = m;
-  const reg = m === 'register';
+  const reg = m === 'register', fp = m === 'forgot';
   $('regFields').style.display = reg ? '' : 'none';
-  $('authTitle').textContent = reg ? 'اعمل حسابك فى دقيقة' : 'سجّل دخول';
+  $('fpPhoneFld').style.display = fp ? '' : 'none';
+  $('authTitle').textContent = reg ? 'اعمل حسابك فى دقيقة' : fp ? 'استرجاع كلمة السر' : 'سجّل دخول';
   $('authLead').textContent  = reg ? 'عشان نوصلك بأقرب تاجر معتمد فى منطقتك ونتابع معاك لحد ما تستلم.'
-                                   : 'ادخل باسم المستخدم أو رقم موبايلك.';
-  $('authBtn').textContent   = reg ? 'إنشاء الحساب' : 'دخول';
+                             : fp ? 'اكتب اسم المستخدم ورقم الموبايل المسجل بيه، وحط كلمة سر جديدة.'
+                                  : 'ادخل باسم المستخدم أو رقم موبايلك.';
+  $('authBtn').textContent   = reg ? 'إنشاء الحساب' : fp ? '🔑 غيّر كلمة السر' : 'دخول';
+  const pl = document.querySelector('label[for="rPass"]');
+  if(pl) pl.textContent = fp ? 'كلمة السر الجديدة' : 'الباسورد';
   $('authSwap').innerHTML    = reg ? 'عندك حساب؟ <b onclick="setMode(\'login\')">سجّل دخول</b>'
-                                   : 'لسه معملتش حساب؟ <b onclick="setMode(\'register\')">اعمل واحد</b>';
+                             : fp ? 'افتكرتها؟ <b onclick="setMode(\'login\')">ارجع لتسجيل الدخول</b>'
+                                  : 'لسه معملتش حساب؟ <b onclick="setMode(\'register\')">اعمل واحد</b> · <b onclick="setMode(\'forgot\')" style="color:var(--text-dim)">نسيت كلمة السر؟</b>';
 }
 function authErr(t){ const m=$('authMsg'); m.className='msg err'; m.textContent=t; }
 function authOk(t){ const m=$('authMsg'); m.className='msg ok'; m.textContent=t; }
@@ -569,6 +575,15 @@ async function submitAuth(){
     const user = ($('rUser').value||'').trim();
     const pass = ($('rPass').value||'');
     let res;
+    if(AUTH_MODE === 'forgot'){
+      const fPhone = ($('fpPhone').value||'').trim();
+      if(!user || !fPhone || pass.length < 4){ authErr('اكتب اسم المستخدم ورقم الموبايل وكلمة سر جديدة (4 خانات على الأقل)'); return; }
+      await rpc('consumer_forgot_password', { p_user: user, p_phone: fPhone, p_new_pass: pass });
+      authOk('اتغيرت كلمة السر ✅ سجّل دخول بيها دلوقتى');
+      $('rPass').value = '';
+      setTimeout(()=>setMode('login'), 1200);
+      return;
+    }
     if(AUTH_MODE === 'register'){
       const natId = ($('rNatId')?.value||'').replace(/[^0-9٠-٩]/g,'').replace(/[٠-٩]/g, d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
       if(natId.length !== 14){ authErr('الرقم القومى لازم يكون 14 رقم زى ما هو فى البطاقة'); return; }
