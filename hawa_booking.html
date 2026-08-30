@@ -4187,6 +4187,7 @@ let chThreadId = null;
 let chBusy = false;
 let chWhList = null;        // كاش أسماء المخازن
 let chLastCount = -1;
+let chLastUnreadStaff = null; // لتحديث علامات ✓✓ لما الفريق يقرا
 
 async function chWarehouses(){
   if(chWhList) return chWhList;
@@ -4244,13 +4245,19 @@ async function initChatTab(){
   const cur = chDest ? (chDest.kind==='warehouse' ? 'w|'+chDest.warehouse : chDest.kind) : '';
   const found = chDestOptions.find(o=>o.v===cur) || chDestOptions[0];
   if(found){ inp.value = found.label; inp.placeholder = '🔍 اكتب للبحث...'; chPickSel(found.v, true); }
+  chBadge();
 }
 
 function chDestRender(list){
   const box = document.getElementById('chDestList');
-  box.innerHTML = list.length ? list.map(o=>
-    `<div onmousedown="chDestChoose('${o.v}')" style="padding:11px 14px;cursor:pointer;font-size:13.5px;font-weight:800;color:${chDest && o.v===(chDest.kind==='warehouse'?'w|'+chDest.warehouse:chDest.kind)?'var(--gold)':'var(--text)'};border-bottom:1px solid rgba(42,42,42,.5)">${o.label}</div>`
-  ).join('') : '<div style="padding:12px 14px;font-size:12.5px;color:var(--text-dim)">مفيش وجهة بالاسم ده</div>';
+  box.innerHTML = list.length ? list.map(o=>{
+    const n = chUnreadMap[o.v]||0;
+    const active = chDest && o.v===(chDest.kind==='warehouse'?'w|'+chDest.warehouse:chDest.kind);
+    return `<div onmousedown="chDestChoose('${o.v}')" style="padding:11px 14px;cursor:pointer;font-size:13.5px;font-weight:800;color:${active?'var(--gold)':'var(--text)'};border-bottom:1px solid rgba(42,42,42,.5);display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span>${o.label}</span>
+      ${n?`<span style="background:var(--error);color:#fff;font-size:10.5px;font-weight:800;border-radius:9px;min-width:18px;height:18px;line-height:18px;text-align:center;padding:0 5px;flex-shrink:0">${n>99?'99+':n}</span>`:''}
+    </div>`;
+  }).join('') : '<div style="padding:12px 14px;font-size:12.5px;color:var(--text-dim)">مفيش وجهة بالاسم ده</div>';
   box.style.display = '';
 }
 function chDestOpen(){
@@ -4284,7 +4291,7 @@ function chPickSel(v, refresh){
   if(!v) return;
   const nd = v.indexOf('w|')===0 ? { kind:'warehouse', warehouse:v.slice(2) } : { kind:v, warehouse:null };
   if(!refresh && chDest && chDest.kind===nd.kind && chDest.warehouse===nd.warehouse) return;
-  chDest = nd; chThreadId = null; chLastCount = -1;
+  chDest = nd; chThreadId = null; chLastCount = -1; chLastUnreadStaff = null;
   chLoadThread();
 }
 
@@ -4308,20 +4315,28 @@ async function chLoadThread(silent){
     const q = chDest.kind==='warehouse'
       ? `client_id=eq.${user.id}&kind=eq.warehouse&warehouse=eq.${encodeURIComponent(chDest.warehouse)}`
       : `client_id=eq.${user.id}&kind=eq.${chDest.kind}`;
-    const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client&order=last_at.desc&limit=1`, { headers: HDR });
+    const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client,unread_staff&order=last_at.desc&limit=1`, { headers: HDR });
     const td = await tr.json();
     const t = (Array.isArray(td)&&td[0])?td[0]:null;
     if(!t){ chThreadId=null; chLastCount=0; box.innerHTML = CH_EMPTY; return; }
     chThreadId = t.id;
     const mr = await fetch(`${SB}/rest/v1/chat_messages?thread_id=eq.${t.id}&select=*&order=created_at.asc`, { headers: {...HDR,'Range':'0-299'} });
     let msgs = await mr.json(); if(!Array.isArray(msgs)) msgs=[];
-    if(!(silent && msgs.length===chLastCount)){
+    const staffSeenChanged = (typeof chLastUnreadStaff==='number') && chLastUnreadStaff !== (t.unread_staff||0);
+    chLastUnreadStaff = (t.unread_staff||0);
+    if(!(silent && msgs.length===chLastCount && !staffSeenChanged)){
       chLastCount = msgs.length;
-      box.innerHTML = msgs.map(m=>{
+      // ✓ علامات القراءة: آخر (unread_staff) رسالة منّى لسه ماتفتحتش عند الفريق → صح واحدة؛ الباقى ✓✓ زرقا
+      const myIdxs = []; msgs.forEach((m,i)=>{ if(m.sender==='client') myIdxs.push(i); });
+      const unseen = new Set(myIdxs.slice(Math.max(0, myIdxs.length - (t.unread_staff||0))));
+      box.innerHTML = msgs.map((m,i)=>{
         const mine = m.sender==='client';
         const who = mine ? '' : `<div style="font-size:10.5px;color:var(--text-dim);margin-bottom:3px">${m.sender==='ai'?'🤖 المساعد':aiEsc(m.sender_name||'الفريق')}</div>`;
         const when = m.created_at ? new Date(m.created_at).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'}) : '';
-        return `<div class="ai-msg ${mine?'me':'bot'}">${who}${chMediaHtml(m)}${m.body?`<div style="white-space:pre-wrap">${aiEsc(m.body)}</div>`:''}<div style="font-size:9.5px;color:var(--text-dim);margin-top:4px">${when}</div></div>`;
+        const tick = !mine ? '' : (unseen.has(i)
+          ? `<span style="color:var(--text-dim);font-size:12px;font-weight:900">✓</span>`
+          : `<span style="color:var(--blue);font-size:12px;font-weight:900;letter-spacing:-3px">✓✓</span>`);
+        return `<div class="ai-msg ${mine?'me':'bot'}">${who}${chMediaHtml(m)}${m.body?`<div style="white-space:pre-wrap">${aiEsc(m.body)}</div>`:''}<div style="font-size:9.5px;color:var(--text-dim);margin-top:4px;display:flex;align-items:center;gap:5px">${tick}<span>${when}</span></div></div>`;
       }).join('') || CH_EMPTY;
       box.scrollTop = box.scrollHeight;
     }
@@ -4372,6 +4387,7 @@ async function chSend(){
     ? `<img src="${f.durl}" style="max-width:100%;border-radius:8px;display:block;margin-bottom:5px">`
     : `<div>📎 ${aiEsc(f.name||'مرفق')}</div>`;
   if(body) mine += `<div style="white-space:pre-wrap">${aiEsc(body)}</div>`;
+  mine += `<div style="font-size:9.5px;color:var(--text-dim);margin-top:4px"><span style="font-size:12px;font-weight:900">✓</span></div>`;
   box.insertAdjacentHTML('beforeend', `<div class="ai-msg me">${mine}</div>`);
   if(body) box.insertAdjacentHTML('beforeend', `<div class="ai-msg bot" id="chTyping">✍️ بكتبلك<span class="aidots">...</span></div>`);
   box.scrollTop = box.scrollHeight;
@@ -4410,15 +4426,25 @@ async function chSend(){
   chBusy = false; btn.disabled = false; btn.textContent = '➤';
 }
 
-// 🔴 عداد الرسايل الجديدة على زرار التاب
+// 🔴 عدادات الرسايل الجديدة: الإجمالى على زرار التاب + رقم جنب كل وجهة فى المنيو
+let chUnreadMap = {};   // 'w|السادات' / 'employee' / 'admin' → عدد غير مقروء
 async function chBadge(){
   if(!user.id) return;
   try{
-    const r = await fetch(`${SB}/rest/v1/chat_threads?client_id=eq.${user.id}&unread_client=gt.0&select=unread_client`, { headers: HDR });
+    const r = await fetch(`${SB}/rest/v1/chat_threads?client_id=eq.${user.id}&unread_client=gt.0&select=kind,warehouse,unread_client`, { headers: HDR });
     const d = await r.json();
-    const total = (Array.isArray(d)?d:[]).reduce((s,t)=>s+(t.unread_client||0),0);
+    chUnreadMap = {};
+    let total = 0;
+    (Array.isArray(d)?d:[]).forEach(t=>{
+      const k = t.kind==='warehouse' ? 'w|'+(t.warehouse||'') : t.kind;
+      chUnreadMap[k] = (chUnreadMap[k]||0) + (t.unread_client||0);
+      total += (t.unread_client||0);
+    });
     const b = document.getElementById('chatTabBadge');
     if(b){ b.textContent = total>99?'99+':total; b.style.display = total>0?'':'none'; }
+    // لو القايمة مفتوحة حدّث أرقامها على طول
+    const list = document.getElementById('chDestList');
+    if(list && list.style.display!=='none') chDestFilter();
   }catch(e){}
 }
 
