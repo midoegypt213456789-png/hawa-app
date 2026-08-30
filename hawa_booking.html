@@ -4305,9 +4305,9 @@ async function chLoadThread(silent){
   const box = document.getElementById('chMsgs');
   if(!silent) box.innerHTML = '<div class="ai-msg note">⏳ جارى التحميل...</div>';
   try{
-    const q = chDest.kind==='employee'
-      ? `client_id=eq.${user.id}&kind=eq.employee`
-      : `client_id=eq.${user.id}&kind=eq.warehouse&warehouse=eq.${encodeURIComponent(chDest.warehouse)}`;
+    const q = chDest.kind==='warehouse'
+      ? `client_id=eq.${user.id}&kind=eq.warehouse&warehouse=eq.${encodeURIComponent(chDest.warehouse)}`
+      : `client_id=eq.${user.id}&kind=eq.${chDest.kind}`;
     const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client&order=last_at.desc&limit=1`, { headers: HDR });
     const td = await tr.json();
     const t = (Array.isArray(td)&&td[0])?td[0]:null;
