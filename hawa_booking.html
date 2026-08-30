@@ -754,10 +754,11 @@
   <!-- ═══ 💬 تاب تواصل معانا (شات بشرى مع المخزن/الموظف) ═══ -->
   <div class="view" id="viewChat">
     <div class="ai-wrap">
-      <div style="padding:10px 10px 4px">
-        <select id="chDestSel" onchange="chPickSel(this.value)" style="width:100%;background:var(--dark3);border:1.5px solid var(--gold);border-radius:10px;color:var(--gold-light);padding:11px 12px;font-family:Cairo,sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">
-          <option value="">⏳ جارى التحميل...</option>
-        </select>
+      <div style="padding:10px 10px 4px;position:relative" id="chDestWrap">
+        <input id="chDestInp" placeholder="⏳ جارى التحميل..." autocomplete="off"
+          onfocus="chDestOpen()" oninput="chDestFilter()"
+          style="width:100%;box-sizing:border-box;background:var(--dark3);border:1.5px solid var(--gold);border-radius:10px;color:var(--gold-light);padding:11px 12px;font-family:Cairo,sans-serif;font-size:13.5px;font-weight:800;cursor:pointer">
+        <div id="chDestList" style="display:none;position:absolute;top:calc(100% - 2px);right:10px;left:10px;z-index:30;background:var(--dark2);border:1.5px solid var(--gold);border-radius:12px;overflow:hidden;max-height:230px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.6)"></div>
       </div>
       <div class="ai-msgs" id="chMsgs"></div>
       <div id="chAttachBar" style="display:none;padding:6px 10px 0"><span id="chAttachChip" style="display:inline-flex;align-items:center;gap:7px;background:var(--dark3);border:1px solid var(--gold);border-radius:8px;padding:5px 10px;font-size:11.5px;color:var(--gold-light);max-width:100%;overflow:hidden"></span></div>
@@ -4218,6 +4219,9 @@ async function chSyncUser(){
   chUserSynced = true;
 }
 
+let chDestOptions = [];   // [{v,label}] وجهات الشات
+let chDestBound = false;
+
 async function initChatTab(){
   await chSyncUser();
   if(chDeadSession){
@@ -4226,15 +4230,54 @@ async function initChatTab(){
     return;
   }
   const whs = await chWarehouses();
-  const sel = document.getElementById('chDestSel');
+  chDestOptions =
+    whs.map(w=>({ v:'w|'+w, label:'🏪 مخزن '+w }))
+    .concat([{ v:'employee', label:'👤 موظف المبيعات' }, { v:'admin', label:'👑 الأدمن الرئيسى' }]);
+  const inp = document.getElementById('chDestInp');
+  if(!chDestBound){
+    chDestBound = true;
+    document.addEventListener('click', (ev)=>{
+      const w = document.getElementById('chDestWrap');
+      if(w && !w.contains(ev.target)) chDestClose();
+    });
+  }
   const cur = chDest ? (chDest.kind==='warehouse' ? 'w|'+chDest.warehouse : chDest.kind) : '';
-  sel.innerHTML =
-    whs.map(w=>`<option value="w|${aiEsc(w)}">🏪 مخزن ${aiEsc(w)}</option>`).join('')
-    + `<option value="employee">👤 موظف المبيعات</option>`
-    + `<option value="admin">👑 الأدمن الرئيسى</option>`;
-  const vals = [...sel.options].map(o=>o.value);
-  sel.value = vals.includes(cur) ? cur : (vals[0]||'');
-  chPickSel(sel.value, true);
+  const found = chDestOptions.find(o=>o.v===cur) || chDestOptions[0];
+  if(found){ inp.value = found.label; inp.placeholder = '🔍 اكتب للبحث...'; chPickSel(found.v, true); }
+}
+
+function chDestRender(list){
+  const box = document.getElementById('chDestList');
+  box.innerHTML = list.length ? list.map(o=>
+    `<div onmousedown="chDestChoose('${o.v}')" style="padding:11px 14px;cursor:pointer;font-size:13.5px;font-weight:800;color:${chDest && o.v===(chDest.kind==='warehouse'?'w|'+chDest.warehouse:chDest.kind)?'var(--gold)':'var(--text)'};border-bottom:1px solid rgba(42,42,42,.5)">${o.label}</div>`
+  ).join('') : '<div style="padding:12px 14px;font-size:12.5px;color:var(--text-dim)">مفيش وجهة بالاسم ده</div>';
+  box.style.display = '';
+}
+function chDestOpen(){
+  const inp = document.getElementById('chDestInp');
+  inp.select();
+  chDestRender(chDestOptions);
+}
+function chDestFilter(){
+  const q = (document.getElementById('chDestInp').value||'').trim();
+  chDestRender(!q ? chDestOptions : chDestOptions.filter(o=>o.label.indexOf(q)!==-1));
+}
+function chDestClose(){
+  const box = document.getElementById('chDestList');
+  if(box) box.style.display = 'none';
+  // رجّع اسم الوجهة المختارة لو المستخدم ساب كتابة ناقصة
+  const inp = document.getElementById('chDestInp');
+  if(inp && chDest){
+    const cur = chDest.kind==='warehouse' ? 'w|'+chDest.warehouse : chDest.kind;
+    const found = chDestOptions.find(o=>o.v===cur);
+    if(found) inp.value = found.label;
+  }
+}
+function chDestChoose(v){
+  const found = chDestOptions.find(o=>o.v===v);
+  if(found) document.getElementById('chDestInp').value = found.label;
+  chDestClose();
+  chPickSel(v);
 }
 
 function chPickSel(v, refresh){
@@ -4341,8 +4384,15 @@ async function chSend(){
     const r = await fetch(AI_FN, { method:'POST', headers: HDR, body: JSON.stringify(aiAuthBody(payload)) });
     let j = null; try{ j = await r.json(); }catch(e){}
     if(!j || !j.ok){
-      const em = j && j.error==='too_big' ? '❌ الملف أكبر من 8 ميجا' : j && j.error==='bad_media' ? '❌ النوع ده مش مدعوم' : '❌ الرسالة ماتبعتتش — جرّب تانى';
-      throw new Error(em);
+      const errMap = {
+        too_big:      '❌ الملف أكبر من 8 ميجا',
+        bad_media:    '❌ النوع ده مش مدعوم',
+        not_approved: '⚠️ حسابك موقوف أو لسه غير مفعّل — كلم الإدارة',
+        blocked:      '⛔ الحساب محظور — اتصل بالإدارة',
+        forbidden:    '⚠️ بيانات الجلسة مش متطابقة — اعمل تسجيل خروج وادخل تانى',
+        rate_limit:   '⏳ وصلت للحد المسموح دلوقتى — جرّب بعد شوية'
+      };
+      throw new Error(errMap[j && j.error] || '❌ الرسالة ماتبعتتش — جرّب تانى');
     }
     logActivity('cl_chat_send','💬 بعت رسالة للفريق',{ kind:chDest.kind, warehouse:chDest.warehouse||null, ai:j.ai_active, media: f?f.mime:null });
     if(body && j.ai_active && !j.answer){
@@ -4353,7 +4403,8 @@ async function chSend(){
     await chLoadThread(true);
   }catch(e){
     document.getElementById('chTyping')?.remove();
-    box.insertAdjacentHTML('beforeend', `<div class="ai-msg err">${aiEsc((e&&e.message&&e.message.indexOf('❌')===0)?e.message:'❌ الرسالة ماتبعتتش — جرّب تانى')}</div>`);
+    const msg = (e && e.message && /^[❌⚠️⛔⏳]/.test(e.message)) ? e.message : '❌ الرسالة ماتبعتتش — جرّب تانى';
+    box.insertAdjacentHTML('beforeend', `<div class="ai-msg err">${aiEsc(msg)}</div>`);
   }
   document.getElementById('chTyping')?.remove();
   chBusy = false; btn.disabled = false; btn.textContent = '➤';
