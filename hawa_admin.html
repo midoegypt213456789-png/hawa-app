@@ -6944,7 +6944,7 @@ function ldRender(){
   if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة فى النطاق ده — جرّب توسّع المدة أو تمسح البحث'));
   let h = `<table><thead><tr><th>#</th><th>العميل</th><th>المطلوب</th><th>المنطقة</th><th>الحالة</th><th>التاجر</th><th>المتابعة</th><th>التاريخ</th><th>إجراءات</th></tr></thead><tbody>`;
   for(const r of rows){
-    h += `<tr>
+    h += `<tr ondblclick="ldTimeline(${r.id})" style="cursor:pointer" title="دابل كليك لعرض حركة الطلب">
       <td style="color:var(--text-dim)">${r.id}</td>
       <td><b>${escAttr(r.name)}</b><div style="color:var(--text-dim);font-size:11px" dir="ltr">${escAttr(r.phone||'')}</div>
         ${r.consumer_stage==='عميل'?'<div style="color:var(--gold);font-size:11px">⭐ عميل اشترى</div>':''}</td>
@@ -6965,6 +6965,37 @@ function ldClose(id){
     try{ await rpcSecure('admin_close_lead',{ p_id:Number(id), p_outcome:'اتقفل من الإدارة' }); ldLoad(); }
     catch(e){ alert('⚠️ '+(e.message||'فشل')); }
   });
+}
+
+// ── 📜 حركة الطلب مع التجار (دابل كليك على الصف) ──
+async function ldTimeline(id){
+  const r = (_ldRows||[]).find(x=>Number(x.id)===Number(id));
+  let ov = document.getElementById('ldTlOverlay');
+  if(!ov){
+    ov = document.createElement('div');
+    ov.id = 'ldTlOverlay';
+    ov.className = 'modal-overlay';
+    ov.onclick = e => { if(e.target===ov) ov.classList.remove('show'); };
+    ov.innerHTML = '<div class="modal wide"><div class="modal-title"><span id="ldTlTitle"></span><button class="modal-close" onclick="document.getElementById(\'ldTlOverlay\').classList.remove(\'show\')">✕</button></div><div id="ldTlBody"></div></div>';
+    document.body.appendChild(ov);
+  }
+  document.getElementById('ldTlTitle').innerHTML = '📜 حركة طلب «' + escAttr((r&&r.name)||('#'+id)) + '»';
+  const body = document.getElementById('ldTlBody');
+  body.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  ov.classList.add('show');
+  try{
+    const ev = await rpcSecure('admin_lead_timeline', { p_id: Number(id) });
+    const list = (Array.isArray(ev)?ev:[]).slice().sort((a,b)=>{
+      if(!a.at) return 1; if(!b.at) return -1;
+      return new Date(a.at) - new Date(b.at);
+    });
+    if(!list.length){ body.innerHTML = emptyBox('مفيش حركة متسجلة للطلب ده'); return; }
+    body.innerHTML = '<div style="max-height:60vh;overflow:auto">' + list.map(e=>`
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--border)">
+        <div style="min-width:118px;color:var(--text-dim);font-size:11px;padding-top:2px;white-space:nowrap">${e.at?arDT(e.at):'—'}</div>
+        <div style="font-size:13px;line-height:1.9">${escAttr(e.txt||'')}</div>
+      </div>`).join('') + '</div>';
+  }catch(e){ body.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
 }
 
 // ── ⏳ قايمة الانتظار ──
