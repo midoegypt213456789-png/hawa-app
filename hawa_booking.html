@@ -396,6 +396,8 @@
     <button class="tab-btn"        id="tabBulletin" onclick="switchTab('bulletin')">📖 الكتاب الدورى</button>
     <button class="tab-btn"        id="tabAI"  onclick="switchTab('ai')">🤖 المساعد الذكى</button>
     <button class="tab-btn"        id="tabChat" onclick="switchTab('chat')" style="grid-column:1 / -1;position:relative">💬 تواصل معانا<span id="chatTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
+    <button class="tab-btn" id="tabRefer" onclick="switchTab('refer')" style="position:relative;padding-bottom:6px">🎁 ترشيحات العملاء<div style="font-size:9px;font-weight:800;color:var(--gold);margin-top:2px;letter-spacing:1px">✨ قريباً</div></button>
+    <button class="tab-btn" id="tabPoints" onclick="switchTab('points')" style="position:relative;padding-bottom:6px">💎 صرف النقط<div style="font-size:9px;font-weight:800;color:var(--gold);margin-top:2px;letter-spacing:1px">✨ قريباً</div></button>
   </div>
 
   <!-- Telegram Link Banner (shown if not linked) -->
@@ -768,6 +770,26 @@
         <input id="chInput" class="ai-input" placeholder="اكتب رسالتك للفريق..." autocomplete="off" onkeypress="if(event.key==='Enter')chSend()">
         <button class="ai-send" id="chSendBtn" onclick="chSend()">➤</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ═══ 🎁 ترشيحات العملاء (تشويقة — قريباً) ═══ -->
+  <div class="view" id="viewRefer">
+    <div style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:34px 20px;text-align:center">
+      <div style="font-size:52px;line-height:1">🎁</div>
+      <div style="font-size:18px;font-weight:900;color:var(--gold-light);margin-top:12px">ترشيحات العملاء</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-top:10px;line-height:2">رشّح تاجر تعرفه ينضم لـ HAWA…<br>وكل ترشيح ناجح ليه مكافأة 👀</div>
+      <div style="display:inline-block;margin-top:18px;background:linear-gradient(135deg,rgba(201,168,76,.22),rgba(201,168,76,.08));border:1.5px solid var(--gold);border-radius:999px;padding:8px 22px;font-size:13px;font-weight:900;color:var(--gold-light)">✨ قريباً جداً</div>
+    </div>
+  </div>
+
+  <!-- ═══ 💎 صرف النقط (تشويقة — قريباً) ═══ -->
+  <div class="view" id="viewPoints">
+    <div style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:34px 20px;text-align:center">
+      <div style="font-size:52px;line-height:1">💎</div>
+      <div style="font-size:18px;font-weight:900;color:var(--gold-light);margin-top:12px">صرف النقط</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-top:10px;line-height:2">كل حجز بتحمّله بيجمعلك نقط…<br>والنقط هتتصرف مكافآت وخصومات 🔥</div>
+      <div style="display:inline-block;margin-top:18px;background:linear-gradient(135deg,rgba(201,168,76,.22),rgba(201,168,76,.08));border:1.5px solid var(--gold);border-radius:999px;padding:8px 22px;font-size:13px;font-weight:900;color:var(--gold-light)">✨ قريباً جداً</div>
     </div>
   </div>
 
@@ -2739,7 +2761,7 @@ let editMode = null; // { id, oldCount }
 
 // ===================== TABS =====================
 function switchTab(tab) {
-  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], ai:['tabAI','viewAI'], chat:['tabChat','viewChat'] };
+  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], ai:['tabAI','viewAI'], chat:['tabChat','viewChat'], refer:['tabRefer','viewRefer'], points:['tabPoints','viewPoints'] };
   Object.keys(tabMap).forEach(t => {
     document.getElementById(tabMap[t][0]).classList.toggle('active', t === tab);
     document.getElementById(tabMap[t][1]).classList.toggle('active', t === tab);
