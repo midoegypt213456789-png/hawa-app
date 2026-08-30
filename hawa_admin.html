@@ -7228,6 +7228,21 @@ async function mcLoad(){
   }
 }
 
+// 🎨 بلتة الألوان — اسم اللون بالعربى → دايرة بلونه الحقيقى
+const AR_COLOR_MAP = {'ازرق':'#2E6FD8','كحلي':'#1B2A5B','لبني':'#5BB8E8','تركواز':'#3BB8C4','اسود':'#151515','احمر':'#D83A3A','نبيتي':'#7B1E3B','اخضر':'#2FA75A','زيتي':'#5A6B3B','ابيض':'#F2F2F2','اصفر':'#E8C531','ذهبي':'#C9A84C','دهبي':'#C9A84C','برتقاني':'#E87B2E','برتقالي':'#E87B2E','رمادي':'#9AA0A6','فضي':'#C0C0C0','سيلفر':'#C0C0C0','تيتانيوم':'#8A8D8F','بني':'#7B4A2D','موف':'#8E5AC8','بنفسجي':'#8E5AC8','بينك':'#E56BA6','وردي':'#E56BA6','روز':'#E56BA6'};
+function colorHex(nm){
+  const n = String(nm||'').trim().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');
+  if(AR_COLOR_MAP[n]) return AR_COLOR_MAP[n];
+  for(const k in AR_COLOR_MAP){ if(n.length>=3 && (n.startsWith(k)||k.startsWith(n))) return AR_COLOR_MAP[k]; }
+  return null;
+}
+function colorDot(nm){
+  const hex = colorHex(nm);
+  const bg = hex ? `background:${hex};` : 'background:linear-gradient(135deg,#666,#999);';
+  const bd = (!hex || ['#F2F2F2','#151515','#E8C531','#C0C0C0'].includes(hex)) ? 'border:1.5px solid rgba(255,255,255,.4);' : 'border:1.5px solid rgba(255,255,255,.15);';
+  return `<span style="display:inline-flex;align-items:center;gap:5px;margin-inline-end:9px;margin-top:3px"><span style="width:16px;height:16px;border-radius:50%;flex-shrink:0;${bg}${bd}box-shadow:0 1px 4px rgba(0,0,0,.5)"></span><span style="font-size:11px;color:var(--text-dim)">${escAttr(nm)}</span></span>`;
+}
+
 function mcRender(){
   const el = document.getElementById('mc-list');
   if(!el) return;
@@ -7259,9 +7274,9 @@ function mcRender(){
       m.strokes ? `🔧 ${escAttr(m.strokes)}` : '',
       m.tires ? `🛞 ${escAttr(m.tires)}` : ''
     ].filter(Boolean).join(' • ');
-    html += `<tr>
+    html += `<tr ondblclick="openMcEdit(${m.id})" style="cursor:pointer" title="دابل كليك للتعديل">
       <td>${img ? `<img src="${img}" style="width:64px;height:48px;object-fit:cover;border-radius:8px;border:1px solid var(--border)">` : '<span style="color:var(--text-dim);font-size:11px">مفيش صورة</span>'}</td>
-      <td><b>${escAttr(m.name)}</b>${Array.isArray(m.colors)&&m.colors.length?`<div style="color:var(--text-dim);font-size:11px;margin-top:3px">🎨 ${escAttr(m.colors.join('، '))}</div>`:''}</td>
+      <td><b>${escAttr(m.name)}</b>${Array.isArray(m.colors)&&m.colors.length?`<div style="display:flex;flex-wrap:wrap;align-items:center;margin-top:4px">${m.colors.map(colorDot).join('')}</div>`:''}</td>
       <td>${escAttr(m.brand)}</td>
       <td><span class="badge qalyub">${escAttr(m.category||'')}</span></td>
       <td>${m.price ? `<b style="color:var(--gold)">${Number(m.price).toLocaleString('ar-EG')}</b> ج${m.installment?'<div style="color:var(--text-dim);font-size:11px">💳 تقسيط متاح</div>':''}` : '<span style="color:var(--text-dim);font-size:11px">—</span>'}</td>

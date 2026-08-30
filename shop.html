@@ -267,7 +267,19 @@ function bikeCard(c){
   const imgs = Array.isArray(c.images) ? c.images.filter(Boolean) : [];
   const specs = c.specs || {};
   const chips = Object.keys(specs).slice(0,6).map(k=>`<span class="chip">${esc(k)}: ${esc(specs[k])}</span>`).join('');
-  const colors = (c.colors||[]).slice(0,4).map(x=>`<span class="chip n">🎨 ${esc(x)}</span>`).join('');
+  const AR_COLOR_MAP = {'ازرق':'#2E6FD8','كحلي':'#1B2A5B','لبني':'#5BB8E8','تركواز':'#3BB8C4','اسود':'#151515','احمر':'#D83A3A','نبيتي':'#7B1E3B','اخضر':'#2FA75A','زيتي':'#5A6B3B','ابيض':'#F2F2F2','اصفر':'#E8C531','ذهبي':'#C9A84C','دهبي':'#C9A84C','برتقاني':'#E87B2E','برتقالي':'#E87B2E','رمادي':'#9AA0A6','فضي':'#C0C0C0','سيلفر':'#C0C0C0','تيتانيوم':'#8A8D8F','بني':'#7B4A2D','موف':'#8E5AC8','بنفسجي':'#8E5AC8','بينك':'#E56BA6','وردي':'#E56BA6','روز':'#E56BA6'};
+  const colorHex = nm => {
+    const n = String(nm||'').trim().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');
+    if(AR_COLOR_MAP[n]) return AR_COLOR_MAP[n];
+    for(const k in AR_COLOR_MAP){ if(n.length>=3 && (n.startsWith(k)||k.startsWith(n))) return AR_COLOR_MAP[k]; }
+    return null;
+  };
+  const colors = (c.colors||[]).slice(0,6).map(x=>{
+    const hx = colorHex(x);
+    const bg = hx ? `background:${hx};` : 'background:linear-gradient(135deg,#666,#999);';
+    const bd = (!hx || ['#F2F2F2','#151515','#E8C531','#C0C0C0'].includes(hx)) ? 'border:1.5px solid rgba(255,255,255,.4);' : 'border:1.5px solid rgba(255,255,255,.15);';
+    return `<span style="display:inline-flex;align-items:center;gap:5px;margin-inline-end:4px"><span style="width:15px;height:15px;border-radius:50%;flex-shrink:0;${bg}${bd}box-shadow:0 1px 4px rgba(0,0,0,.5)"></span><span style="font-size:11px;opacity:.75">${esc(x)}</span></span>`;
+  }).join('');
   row.innerHTML = `<div class="card">
     ${imgs.length ? (imgs.length>1
         ? `<div class="card-imgs">${imgs.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`).join('')}</div>`
