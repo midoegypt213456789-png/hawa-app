@@ -3709,6 +3709,28 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         </div>
       </div>
 
+      <!-- 🔁 دورة شراء الموتوسيكلات (الشوب) -->
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🔁 دورة شراء الموتوسيكلات (الشوب)</div>
+        <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
+          ℹ️ التاجر اللى بيستلم الطلب بياخده <b>حصرى</b> للمدة الأولى. بعدها بنسأل العميل، وبنستنى مدة الرد، ولو مفيش شراء الطلب بيتوزع تانى على باقى تجار المنطقة تلقائياً.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+          <div class="fg" style="margin:0">
+            <label>⏱️ حصرية التاجر (ساعات)</label>
+            <input type="number" id="set-cycle-exclusive" min="1" max="720" placeholder="48">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>⏳ انتظار رد العميل قبل إعادة التوزيع (ساعات)</label>
+            <input type="number" id="set-cycle-rewait" min="1" max="720" placeholder="24">
+          </div>
+          <div class="fg" style="margin:0">
+            <label>📅 متابعة قايمة الانتظار كل (أيام)</label>
+            <input type="number" id="set-cycle-wldays" min="1" max="365" placeholder="10">
+          </div>
+        </div>
+      </div>
+
       <!-- إدارة نشاط العملاء -->
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
         <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">💤 إدارة نشاط العملاء</div>
@@ -9220,6 +9242,11 @@ async function loadSettings(){
     // 🆕 Default Admin Page
     document.getElementById('set-default-page').value = map.default_admin_page || 'bookings';
 
+    // 🔁 دورة شراء الموتوسيكلات
+    document.getElementById('set-cycle-exclusive').value = map.lead_exclusive_hours || '48';
+    document.getElementById('set-cycle-rewait').value    = map.lead_redistribute_wait_hours || '24';
+    document.getElementById('set-cycle-wldays').value    = map.waitlist_followup_days || '10';
+
     // 💤 إعدادات نشاط العملاء
     document.getElementById('set-inactive-value').value = map.inactive_period_value || '30';
     document.getElementById('set-inactive-unit').value  = map.inactive_period_unit  || 'day';
@@ -9637,6 +9664,10 @@ async function saveSettings(){
     ['report_schedule_type',   reportType],
     ['report_schedule_hour',   isNaN(reportHour) ? '1' : String(reportHour)],
     ['report_schedule_days',   reportDays || '0,1,2,3,4,5,6'],
+    // 🔁 دورة شراء الموتوسيكلات
+    ['lead_exclusive_hours',          String(parseInt(document.getElementById('set-cycle-exclusive').value) || 48)],
+    ['lead_redistribute_wait_hours',  String(parseInt(document.getElementById('set-cycle-rewait').value) || 24)],
+    ['waitlist_followup_days',        String(parseInt(document.getElementById('set-cycle-wldays').value) || 10)],
     // 💤 إعدادات نشاط العملاء
     ['inactive_period_value',  String(parseInt(document.getElementById('set-inactive-value').value) || 30)],
     ['inactive_period_unit',   document.getElementById('set-inactive-unit').value || 'day'],
