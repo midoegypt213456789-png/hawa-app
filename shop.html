@@ -261,39 +261,93 @@ function bubble(role, text, at){
   return row;
 }
 
+const CARD_ST = {};
+const AR_COLOR_MAP = {'ازرق':'#2E6FD8','كحلي':'#1B2A5B','لبني':'#5BB8E8','تركواز':'#3BB8C4','اسود':'#151515','احمر':'#D83A3A','نبيتي':'#7B1E3B','اخضر':'#2FA75A','زيتي':'#5A6B3B','ابيض':'#F2F2F2','اصفر':'#E8C531','ذهبي':'#C9A84C','دهبي':'#C9A84C','برتقاني':'#E87B2E','برتقالي':'#E87B2E','رمادي':'#9AA0A6','فضي':'#C0C0C0','سيلفر':'#C0C0C0','تيتانيوم':'#8A8D8F','بني':'#7B4A2D','موف':'#8E5AC8','بنفسجي':'#8E5AC8','بينك':'#E56BA6','وردي':'#E56BA6','روز':'#E56BA6'};
+function normColor(nm){ return String(nm||'').trim().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه'); }
+function colorHex(nm){
+  const n = normColor(nm);
+  if(AR_COLOR_MAP[n]) return AR_COLOR_MAP[n];
+  for(const k in AR_COLOR_MAP){ if(n.length>=3 && (n.startsWith(k)||k.startsWith(n))) return AR_COLOR_MAP[k]; }
+  return null;
+}
+function cardShow(cid){
+  const st = CARD_ST[cid]; const img = document.getElementById(cid+'-img');
+  if(!st || !img || !st.frames.length) return;
+  const n = st.frames.length;
+  img.src = st.frames[((st.idx % n) + n) % n];
+  const hint = document.getElementById(cid+'-hint');
+  if(hint) hint.style.display = n>1 ? '' : 'none';
+}
+function pickColor(cid, ci){
+  const st = CARD_ST[cid]; if(!st) return;
+  const name = st.colors[ci]; if(name==null) return;
+  let fr = null;
+  const map = st.map || {};
+  for(const k in map){ if(normColor(k)===normColor(name) && Array.isArray(map[k]) && map[k].length){ fr = map[k]; break; } }
+  st.frames = (fr || st.all).slice();
+  st.idx = 0;
+  cardShow(cid);
+  document.querySelectorAll(`[data-cid="${cid}"]`).forEach((el,i)=>{
+    el.style.outline = i===ci ? '2px solid rgba(255,255,255,.85)' : 'none';
+    el.style.outlineOffset = '1px';
+  });
+}
+function initSpin(cid){
+  const el = document.getElementById(cid); if(!el) return;
+  let sx = null, sIdx = 0;
+  el.addEventListener('pointerdown', e=>{ const st=CARD_ST[cid]; if(!st||st.frames.length<2) return; sx=e.clientX; sIdx=st.idx; try{el.setPointerCapture(e.pointerId);}catch(_){} });
+  el.addEventListener('pointermove', e=>{ const st=CARD_ST[cid]; if(sx==null||!st) return; const step=Math.round((e.clientX-sx)/38); if(st.idx!==sIdx-step){ st.idx=sIdx-step; cardShow(cid); } });
+  const end = ()=>{ sx=null; };
+  el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+}
 function bikeCard(c){
   const row = document.createElement('div');
   row.className = 'row her';
   const imgs = Array.isArray(c.images) ? c.images.filter(Boolean) : [];
   const specs = c.specs || {};
   const chips = Object.keys(specs).slice(0,6).map(k=>`<span class="chip">${esc(k)}: ${esc(specs[k])}</span>`).join('');
-  const AR_COLOR_MAP = {'ازرق':'#2E6FD8','كحلي':'#1B2A5B','لبني':'#5BB8E8','تركواز':'#3BB8C4','اسود':'#151515','احمر':'#D83A3A','نبيتي':'#7B1E3B','اخضر':'#2FA75A','زيتي':'#5A6B3B','ابيض':'#F2F2F2','اصفر':'#E8C531','ذهبي':'#C9A84C','دهبي':'#C9A84C','برتقاني':'#E87B2E','برتقالي':'#E87B2E','رمادي':'#9AA0A6','فضي':'#C0C0C0','سيلفر':'#C0C0C0','تيتانيوم':'#8A8D8F','بني':'#7B4A2D','موف':'#8E5AC8','بنفسجي':'#8E5AC8','بينك':'#E56BA6','وردي':'#E56BA6','روز':'#E56BA6'};
-  const colorHex = nm => {
-    const n = String(nm||'').trim().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه');
-    if(AR_COLOR_MAP[n]) return AR_COLOR_MAP[n];
-    for(const k in AR_COLOR_MAP){ if(n.length>=3 && (n.startsWith(k)||k.startsWith(n))) return AR_COLOR_MAP[k]; }
-    return null;
-  };
-  const colors = (c.colors||[]).slice(0,6).map(x=>{
+  const cid = 'bk' + Math.random().toString(36).slice(2,8);
+  const colorNames = (c.colors||[]).slice(0,6);
+  const colors = colorNames.map((x,i)=>{
     const hx = colorHex(x);
     const bg = hx ? `background:${hx};` : 'background:linear-gradient(135deg,#666,#999);';
     const bd = (!hx || ['#F2F2F2','#151515','#E8C531','#C0C0C0'].includes(hx)) ? 'border:1.5px solid rgba(255,255,255,.4);' : 'border:1.5px solid rgba(255,255,255,.15);';
-    return `<span style="display:inline-flex;align-items:center;gap:5px;margin-inline-end:4px"><span style="width:15px;height:15px;border-radius:50%;flex-shrink:0;${bg}${bd}box-shadow:0 1px 4px rgba(0,0,0,.5)"></span><span style="font-size:11px;opacity:.75">${esc(x)}</span></span>`;
+    return `<span data-cid="${cid}" onclick="pickColor('${cid}',${i})" style="display:inline-flex;align-items:center;gap:5px;margin-inline-end:4px;cursor:pointer;border-radius:20px;padding:2px 4px"><span style="width:15px;height:15px;border-radius:50%;flex-shrink:0;${bg}${bd}box-shadow:0 1px 4px rgba(0,0,0,.5)"></span><span style="font-size:11px;opacity:.75">${esc(x)}</span></span>`;
   }).join('');
+  const viewer = imgs.length ? `<div id="${cid}" style="position:relative;touch-action:pan-y;user-select:none">
+      <img class="card-img" id="${cid}-img" src="${esc(imgs[0])}" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">
+      <div id="${cid}-hint" style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;border-radius:20px;padding:3px 9px;pointer-events:none;${imgs.length>1?'':'display:none'}">↻ اسحب الصورة تلف 360°</div>
+    </div>` : '';
   row.innerHTML = `<div class="card">
-    ${imgs.length ? (imgs.length>1
-        ? `<div class="card-imgs">${imgs.map(u=>`<img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`).join('')}</div>`
-        : `<img class="card-img" src="${esc(imgs[0])}" alt="" loading="lazy" onerror="this.remove()">`) : ''}
+    ${viewer}
     <div class="card-b">
       <div class="card-nm">${esc(c.name)}</div>
       <div class="card-br">${esc(c.brand||'')}${c.category?' · '+esc(c.category):''}</div>
       <div class="price"><span class="price-l">يبدأ من</span><span class="price-v">${esc(c.price)}</span></div>
       <div class="price-note">${esc(c.price_note||'')}${c.installment?' · '+esc(c.installment):''}${c.min_down?' · مقدم من '+esc(c.min_down):''}</div>
-      ${chips||colors ? `<div class="chips">${chips}${colors}</div>` : ''}
+      ${chips||colors ? `<div class="chips" style="align-items:center">${chips}${colors}</div>` : ''}
       <button class="card-cta" onclick="wantIt(${JSON.stringify(String(c.name)).replace(/"/g,'&quot;')})">عايز أشترى دى</button>
     </div></div>`;
   $('feed').appendChild(row);
+  CARD_ST[cid] = { all: imgs.slice(), frames: imgs.slice(), idx: 0, colors: colorNames, map: (c.color_images && typeof c.color_images==='object' && !Array.isArray(c.color_images)) ? c.color_images : {} };
+  initSpin(cid);
   scroll();
+}
+async function enrichCards(cards){
+  const list = Array.isArray(cards) ? cards : [];
+  const names = list.map(c=>c && c.name).filter(Boolean);
+  if(!names.length) return list;
+  try{
+    const rows = await rpc('shop_color_images', { p_names: names });
+    if(Array.isArray(rows)) for(const r of rows){
+      const c = list.find(x=>x && x.name===r.name);
+      if(!c) continue;
+      c.color_images = r.color_images || {};
+      if((!c.images || !c.images.length) && Array.isArray(r.images)) c.images = r.images;
+      if((!c.colors || !c.colors.length) && Array.isArray(r.colors)) c.colors = r.colors;
+    }
+  }catch(e){}
+  return list;
 }
 
 function wantIt(name){
@@ -382,7 +436,7 @@ async function send(){
     }
     bubble('assistant', j.answer);
     HIST.push({ a: j.answer });
-    (j.cards||[]).forEach(bikeCard);
+    enrichCards(j.cards||[]).then(cs=>cs.forEach(bikeCard));
     if(j.needSignup || j.limit_reached) nudge();
   }catch(e){
     typing(false);
@@ -593,7 +647,7 @@ async function sendVoice(blob){
     if(j.audio) voiceBubble('assistant', j.answer, 'data:' + (j.mime||'audio/mpeg') + ';base64,' + j.audio);
     else bubble('assistant', j.answer);
     HIST.push({ a: j.answer });
-    (j.cards||[]).forEach(bikeCard);
+    enrichCards(j.cards||[]).then(cs=>cs.forEach(bikeCard));
     if(j.needSignup) nudge();
   }catch(e){
     typing(false);
