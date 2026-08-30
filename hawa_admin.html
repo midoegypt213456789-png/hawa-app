@@ -6979,22 +6979,48 @@ async function ldTimeline(id){
     ov.innerHTML = '<div class="modal wide"><div class="modal-title"><span id="ldTlTitle"></span><button class="modal-close" onclick="document.getElementById(\'ldTlOverlay\').classList.remove(\'show\')">✕</button></div><div id="ldTlBody"></div></div>';
     document.body.appendChild(ov);
   }
-  document.getElementById('ldTlTitle').innerHTML = '📜 حركة طلب «' + escAttr((r&&r.name)||('#'+id)) + '»';
+  document.getElementById('ldTlTitle').innerHTML = '📜 صفحة عميل «' + escAttr((r&&r.name)||('#'+id)) + '»';
   const body = document.getElementById('ldTlBody');
   body.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
   ov.classList.add('show');
   try{
-    const ev = await rpcSecure('admin_lead_timeline', { p_id: Number(id) });
+    const [pf, ev] = await Promise.all([
+      rpcSecure('admin_lead_profile',  { p_id: Number(id) }),
+      rpcSecure('admin_lead_timeline', { p_id: Number(id) })
+    ]);
+    // ── كارت بيانات العميل ──
+    const fld = (label, val, extra) => val ? `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:8px 12px"><div style="color:var(--text-dim);font-size:10px;margin-bottom:2px">${label}</div><div style="font-size:13px;font-weight:700">${val}${extra||''}</div></div>` : '';
+    const p = pf || {};
+    let ph = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-bottom:14px">';
+    ph += fld('👤 الاسم', escAttr(p.name||''), p.is_guest?' <span style="color:var(--text-dim);font-size:11px">(زائر — مش مسجل)</span>':'');
+    ph += fld('📱 الموبايل', p.phone?`<span dir="ltr">${escAttr(p.phone)}</span>`:'', p.phone_verified?' <span style="color:var(--success);font-size:11px">✓ موثق</span>':'');
+    ph += fld('🪪 الرقم القومى', p.national_id?`<span dir="ltr">${escAttr(p.national_id)}</span>`:'');
+    ph += fld('🔑 اليوزر نيم', escAttr(p.username||''));
+    ph += fld('📧 الإيميل', p.email?`<span dir="ltr">${escAttr(p.email)}</span>`:'');
+    ph += fld('📍 المحافظة', escAttr(p.governorate||''));
+    ph += fld('🏙️ المدينة', escAttr(p.city||''));
+    ph += fld('🏠 العنوان', escAttr(p.address||''));
+    ph += fld('🏍️ المطلوب', escAttr(p.model_text||''));
+    ph += fld('💳 طريقة الدفع', escAttr(p.payment_method||''), p.down_payment?` — مقدم ${Number(p.down_payment).toLocaleString('ar-EG')} ج`:'');
+    ph += fld('🕐 وقت التواصل المفضل', escAttr(p.contact_time||''));
+    ph += fld('⭐ المرحلة', escAttr(p.stage||''), p.is_blocked?' <span style="color:var(--error);font-size:11px">🚫 محظور</span>':'');
+    ph += fld('💎 النقط', (p.points!=null && !p.is_guest)?String(p.points):'');
+    ph += fld('📅 مسجل من', p.consumer_since?arDT(p.consumer_since):'');
+    ph += fld('🕓 آخر دخول', p.last_login?arDT(p.last_login):'');
+    ph += '</div>';
+    if(p.id_card_url) ph += `<div style="margin-bottom:14px"><a href="${escAttr(p.id_card_url)}" target="_blank" style="color:var(--gold);font-size:12px;font-weight:700">🪪 عرض صورة البطاقة ↗</a></div>`;
+    // ── الحركة ──
     const list = (Array.isArray(ev)?ev:[]).slice().sort((a,b)=>{
       if(!a.at) return 1; if(!b.at) return -1;
       return new Date(a.at) - new Date(b.at);
     });
-    if(!list.length){ body.innerHTML = emptyBox('مفيش حركة متسجلة للطلب ده'); return; }
-    body.innerHTML = '<div style="max-height:60vh;overflow:auto">' + list.map(e=>`
+    const tl = !list.length ? emptyBox('مفيش حركة متسجلة للطلب ده')
+      : '<div style="max-height:44vh;overflow:auto">' + list.map(e=>`
       <div style="display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-bottom:1px solid var(--border)">
         <div style="min-width:118px;color:var(--text-dim);font-size:11px;padding-top:2px;white-space:nowrap">${e.at?arDT(e.at):'—'}</div>
         <div style="font-size:13px;line-height:1.9">${escAttr(e.txt||'')}</div>
       </div>`).join('') + '</div>';
+    body.innerHTML = ph + '<div style="color:var(--gold);font-size:12px;font-weight:800;margin-bottom:6px">📜 حركة الطلب</div>' + tl;
   }catch(e){ body.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
 }
 
