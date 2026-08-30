@@ -4197,8 +4197,10 @@ async function chWarehouses(){
   return chWhList;
 }
 
-// 🩹 self-heal: لو الجلسة قديمة والـ username اتغير فى السيرفر (تعديل أدمن / استرداد بيانات) — نصلّحها تلقائى
+// 🩹 self-heal: لو الجلسة قديمة والـ username اتغير فى السيرفر — نصلّحها تلقائى
+// ولو الحساب نفسه اتمسح → رسالة واضحة بدل فشل مبهم
 let chUserSynced = false;
+let chDeadSession = false;
 async function chSyncUser(){
   if(!user.id || chUserSynced) return;
   try{
@@ -4209,6 +4211,8 @@ async function chSyncUser(){
       if(d[0].username && d[0].username !== user.username){ user.username = d[0].username; changed = true; }
       if(d[0].name && d[0].name !== user.name){ user.name = d[0].name; changed = true; }
       if(changed) localStorage.setItem('hawa_user', JSON.stringify(user));
+    } else if(Array.isArray(d)){
+      chDeadSession = true; // الحساب مش موجود فى السيرفر (اتمسح أو الجلسة بايظة)
     }
   }catch(e){}
   chUserSynced = true;
@@ -4216,6 +4220,11 @@ async function chSyncUser(){
 
 async function initChatTab(){
   await chSyncUser();
+  if(chDeadSession){
+    document.getElementById('chMsgs').innerHTML =
+      '<div class="ai-msg err">⚠️ الجلسة دى لحساب مش موجود على السيرفر (اتمسح أو اتغير) — اعمل <b>تسجيل خروج</b> وادخل تانى بحسابك</div>';
+    return;
+  }
   const whs = await chWarehouses();
   const sel = document.getElementById('chDestSel');
   const cur = chDest ? (chDest.kind==='warehouse' ? 'w|'+chDest.warehouse : chDest.kind) : '';
@@ -4301,6 +4310,11 @@ function chClearFile(){ chFile = null; document.getElementById('chAttachBar').st
 
 async function chSend(){
   if(chBusy || !chDest || !user.id) return;
+  if(chDeadSession){
+    document.getElementById('chMsgs').insertAdjacentHTML('beforeend',
+      '<div class="ai-msg err">⚠️ اعمل تسجيل خروج وادخل تانى بحسابك الأول</div>');
+    return;
+  }
   const inp = document.getElementById('chInput');
   const body = (inp.value||'').trim();
   const f = chFile;
