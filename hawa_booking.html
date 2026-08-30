@@ -4315,12 +4315,19 @@ async function chLoadThread(silent){
     const q = chDest.kind==='warehouse'
       ? `client_id=eq.${user.id}&kind=eq.warehouse&warehouse=eq.${encodeURIComponent(chDest.warehouse)}`
       : `client_id=eq.${user.id}&kind=eq.${chDest.kind}`;
-    const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client,unread_staff&order=last_at.desc&limit=1`, { headers: HDR });
+    // 🧩 ممكن يكون فيه أكتر من ثريد لنفس الوجهة (موظفين مختلفين مثلاً) — نجمعهم كلهم فى محادثة واحدة
+    const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client,unread_staff&order=last_at.desc&limit=6`, { headers: HDR });
     const td = await tr.json();
-    const t = (Array.isArray(td)&&td[0])?td[0]:null;
-    if(!t){ chThreadId=null; chLastCount=0; box.innerHTML = CH_EMPTY; return; }
+    const tds = Array.isArray(td) ? td : [];
+    if(!tds.length){ chThreadId=null; chLastCount=0; box.innerHTML = CH_EMPTY; return; }
+    const t = {
+      id: tds[0].id,
+      unread_client: tds.reduce((s,x)=>s+(x.unread_client||0),0),
+      unread_staff:  tds.reduce((s,x)=>s+(x.unread_staff||0),0)
+    };
+    const tIds = tds.map(x=>x.id);
     chThreadId = t.id;
-    const mr = await fetch(`${SB}/rest/v1/chat_messages?thread_id=eq.${t.id}&select=*&order=created_at.asc`, { headers: {...HDR,'Range':'0-299'} });
+    const mr = await fetch(`${SB}/rest/v1/chat_messages?thread_id=in.(${tIds.join(',')})&select=*&order=created_at.asc`, { headers: {...HDR,'Range':'0-299'} });
     let msgs = await mr.json(); if(!Array.isArray(msgs)) msgs=[];
     const staffSeenChanged = (typeof chLastUnreadStaff==='number') && chLastUnreadStaff !== (t.unread_staff||0);
     chLastUnreadStaff = (t.unread_staff||0);
@@ -4341,7 +4348,8 @@ async function chLoadThread(silent){
       box.scrollTop = box.scrollHeight;
     }
     if(t.unread_client>0){
-      fetch(`${SB}/rest/v1/chat_threads?id=eq.${t.id}`, { method:'PATCH', headers: HDR, body: JSON.stringify({unread_client:0}) }).then(()=>chBadge()).catch(()=>{});
+      const zids = tds.filter(x=>(x.unread_client||0)>0).map(x=>x.id);
+      fetch(`${SB}/rest/v1/chat_threads?id=in.(${zids.join(',')})`, { method:'PATCH', headers: HDR, body: JSON.stringify({unread_client:0}) }).then(()=>chBadge()).catch(()=>{});
     }
   }catch(e){ if(!silent) box.innerHTML = '<div class="ai-msg err">❌ مشكلة فى تحميل المحادثة — جرّب تانى</div>'; }
 }
