@@ -4936,6 +4936,24 @@ const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
 
+// ⬆️ رفع للتخزين بـ XHR عشان نعرف نسبة التقدم (fetch مبيدعمش upload progress)
+function sbUploadX(objPath, body, mime, onPct){
+  return new Promise(resolve=>{
+    try{
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${SB}/storage/v1/object/${objPath}`);
+      xhr.setRequestHeader('apikey', KEY);
+      xhr.setRequestHeader('Authorization', 'Bearer '+KEY);
+      xhr.setRequestHeader('Content-Type', mime || 'application/octet-stream');
+      xhr.setRequestHeader('x-upsert', 'true');
+      xhr.upload.onprogress = e=>{ if(e.lengthComputable && typeof onPct==='function') onPct(Math.min(100, Math.round(e.loaded/e.total*100))); };
+      xhr.onload  = ()=> resolve({ ok: xhr.status>=200 && xhr.status<300, status: xhr.status, text: async ()=> String(xhr.responseText||'') });
+      xhr.onerror = ()=> resolve({ ok:false, status:0, text: async ()=> 'network error' });
+      xhr.send(body);
+    }catch(e){ resolve({ ok:false, status:0, text: async ()=> String((e&&e.message)||'error') }); }
+  });
+}
+
 // 📅 Helper: تنسيق التاريخ بـ local time (Cairo) — مش UTC
 //    عشان مصر UTC+2/+3، toISOString بترجع تاريخ غلط بعد منتصف الليل
 const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
@@ -6584,11 +6602,7 @@ function blProgress(msg){
 }
 
 async function blUploadStorage(path, blob, mime){
-  const r = await fetch(`${SB}/storage/v1/object/bulletins/${path}`,{
-    method:'POST',
-    headers:{...HDR,'Content-Type':mime,'x-upsert':'true'},
-    body: blob
-  });
+  const r = await sbUploadX(`bulletins/${path}`, blob, mime, p=>blProgress(`⏳ بنرفع الملف... ${p}%`));
   if(!r.ok) throw new Error('فشل رفع '+path);
   return `${SB}/storage/v1/object/public/bulletins/${path}`;
 }
@@ -7379,9 +7393,7 @@ async function mcUploadColorImgs(input, i){
       if(hint) hint.textContent = `⏳ بنرفع ${k+1} من ${files.length}...`;
       const ext = (f.name.split('.').pop()||'jpg').toLowerCase();
       const path = `mcc_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-      const r = await fetch(`${SB}/storage/v1/object/catalog/${path}`,{
-        method:'POST', headers:{...HDR,'Content-Type':f.type||'image/jpeg','x-upsert':'true'}, body:f
-      });
+      const r = await sbUploadX(`catalog/${path}`, f, f.type||'image/jpeg', p=>{ if(hint) hint.textContent = `⏳ بنرفع ${k+1} من ${files.length} — ${p}%`; });
       if(!r.ok) throw new Error('فشل رفع '+f.name);
       (_mcColorImgs[color]=_mcColorImgs[color]||[]).push(`${SB}/storage/v1/object/public/catalog/${path}`);
     }
@@ -7405,9 +7417,7 @@ async function mcUploadGlb(input){
   if(st) st.textContent = '⏳ بنرفع ملف الـ3D...';
   try{
     const path = `glb_${Date.now()}_${Math.random().toString(36).slice(2,8)}.glb`;
-    const r = await fetch(`${SB}/storage/v1/object/catalog/${path}`,{
-      method:'POST', headers:{...HDR,'Content-Type':'model/gltf-binary','x-upsert':'true'}, body:f
-    });
+    const r = await sbUploadX(`catalog/${path}`, f, 'model/gltf-binary', p=>{ if(st) st.textContent = `⏳ بنرفع ملف الـ3D... ${p}%`; });
     if(!r.ok) throw new Error('فشل رفع الملف');
     _mcGlb = `${SB}/storage/v1/object/public/catalog/${path}`;
   }catch(e){ alert('⚠️ '+(e.message||'فشل الرفع')); }
@@ -7425,9 +7435,7 @@ async function mcUploadImages(input){
       if(hint) hint.textContent = `⏳ بنرفع ${i+1} من ${files.length}...`;
       const ext = (f.name.split('.').pop()||'jpg').toLowerCase();
       const path = `mc_${Date.now()}_${Math.random().toString(36).slice(2,8)}.${ext}`;
-      const r = await fetch(`${SB}/storage/v1/object/catalog/${path}`,{
-        method:'POST', headers:{...HDR,'Content-Type':f.type||'image/jpeg','x-upsert':'true'}, body:f
-      });
+      const r = await sbUploadX(`catalog/${path}`, f, f.type||'image/jpeg', p=>{ if(hint) hint.textContent = `⏳ بنرفع ${i+1} من ${files.length} — ${p}%`; });
       if(!r.ok) throw new Error('فشل رفع '+f.name);
       _mcImages.push(`${SB}/storage/v1/object/public/catalog/${path}`);
     }
@@ -7923,9 +7931,7 @@ async function brandUpload(input){
   try{
     const ext = (f.name.split('.').pop()||'png').toLowerCase();
     const path = `logo_${Date.now()}.${ext}`;
-    const r = await fetch(`${SB}/storage/v1/object/branding/${path}`,{
-      method:'POST', headers:{...HDR,'Content-Type':f.type||'image/png','x-upsert':'true'}, body:f
-    });
+    const r = await sbUploadX(`branding/${path}`, f, f.type||'image/png', p=>{ if(box) box.innerHTML = '<span style="font-size:12px;color:var(--text-dim)">⏳ بنرفع... '+p+'%</span>'; });
     if(!r.ok) throw new Error('فشل الرفع');
     const url = `${SB}/storage/v1/object/public/branding/${path}`;
     await setAppSetting('shop_logo_url', url);
@@ -10994,7 +11000,7 @@ function renderBroadcastFiles(){
   let totalSize = 0;
   broadcastFiles.forEach((f, idx) => {
     totalSize += f.size;
-    const statusBadge = f.status === 'uploading' ? '<span style="color:#d4a957;font-size:10px;margin-right:6px">⏳ جاري الرفع...</span>'
+    const statusBadge = f.status === 'uploading' ? '<span id="bc-upl-pct-'+idx+'" style="color:#d4a957;font-size:10px;margin-right:6px">⏳ جاري الرفع... '+(f.pct||0)+'%</span>'
       : f.status === 'done' ? '<span style="color:#6dc49a;font-size:10px;margin-right:6px">✓ تم</span>'
       : f.status === 'error' ? '<span style="color:#e88080;font-size:10px;margin-right:6px">❌ فشل</span>'
       : '';
@@ -11043,15 +11049,10 @@ async function uploadBroadcastFile(idx){
   const safeName = item.filename.replace(/[^\w.\-]/g, '_').substring(0, 100);
   const path = `${Date.now()}_${Math.random().toString(36).slice(2, 10)}_${safeName}`;
 
-  const res = await fetch(`${SB}/storage/v1/object/broadcast_media/${encodeURIComponent(path)}`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${KEY}`,
-      'apikey': KEY,
-      'Content-Type': item.mime,
-      'x-upsert': 'true'
-    },
-    body: item.file
+  const res = await sbUploadX(`broadcast_media/${encodeURIComponent(path)}`, item.file, item.mime, p=>{
+    item.pct = p;
+    const el = document.getElementById('bc-upl-pct-'+idx);
+    if(el) el.textContent = '⏳ جاري الرفع... '+p+'%';
   });
 
   if(!res.ok){
