@@ -373,6 +373,9 @@
     scrollbar-width:thin;
     scrollbar-color:rgba(201,168,76,0.4) transparent;
   }
+@keyframes pmRun{0%{left:0%}50%{left:100%}100%{left:0%}}
+.pm-running #permitBarBike{animation:pmRun 1.6s ease-in-out infinite}
+.pm-running #permitBarFill{background:repeating-linear-gradient(90deg,var(--gold) 0 14px,var(--gold-light) 14px 28px);width:100%!important;opacity:.55}
 </style>
 </head>
 <body>
@@ -648,7 +651,15 @@
         <div id="permitScanBox" style="display:none;margin-top:10px">
           <div id="permitScanHint" style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.7">الإذن ده لسه متسجلش عندنا — صوّره مرة واحدة بس، وبعدها هيتقبل بالرقم على طول</div>
           <label for="permitFile" style="display:block;text-align:center;cursor:pointer;padding:13px;border-radius:12px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:15px">📷 صوّر الإذن</label>
-          <input type="file" id="permitFile" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="onPermitFile(this)">
+          <input type="file" id="permitFile" accept="image/*" capture="environment" style="display:none" onchange="onPermitFile(this)">
+          <div style="text-align:center;margin-top:7px"><label for="permitFileAny" style="font-size:11.5px;color:var(--text-dim);cursor:pointer;text-decoration:underline">أو اختار صورة/PDF من الجهاز</label></div>
+          <input type="file" id="permitFileAny" accept="image/*,application/pdf" style="display:none" onchange="onPermitFile(this)">
+          <div id="permitScanBar" style="display:none;margin-top:14px;direction:ltr">
+            <div style="position:relative;height:14px;background:var(--dark3);border:1px solid var(--border);border-radius:20px">
+              <div id="permitBarFill" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:20px;transition:width .25s"></div>
+              <div id="permitBarBike" style="position:absolute;top:-11px;left:0%;font-size:24px;transform:translateX(-50%) scaleX(-1);transition:left .25s;filter:drop-shadow(0 2px 3px rgba(0,0,0,.6))">🏍️</div>
+            </div>
+          </div>
           <div id="permitScanProg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
         </div>
       </div>
@@ -3139,13 +3150,13 @@ function permitFileToBase64(file) {
     const url = URL.createObjectURL(file);
     img.onload = () => {
       try {
-        const MAX = 1800;
+        const MAX = 1500;
         let w = img.naturalWidth, h = img.naturalHeight;
         const sc = Math.min(1, MAX / Math.max(w, h));
         w = Math.round(w * sc); h = Math.round(h * sc);
         const c = document.createElement('canvas'); c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUrl = c.toDataURL('image/jpeg', 0.82);
+        const dataUrl = c.toDataURL('image/jpeg', 0.78);
         URL.revokeObjectURL(url);
         resolve({ b64: dataUrl.split(',')[1], mime: 'image/jpeg' });
       } catch (e) { reject(e); }
@@ -3169,6 +3180,14 @@ function permitScanRequest(payload, onPct) {
   });
 }
 
+function permitBar(pct, running) {
+  const bar = document.getElementById('permitScanBar'), fill = document.getElementById('permitBarFill'), bike = document.getElementById('permitBarBike');
+  if (!bar) return;
+  if (pct == null) { bar.style.display = 'none'; bar.classList.remove('pm-running'); return; }
+  bar.style.display = '';
+  bar.classList.toggle('pm-running', !!running);
+  if (!running) { fill.style.width = pct + '%'; bike.style.left = pct + '%'; }
+}
 async function onPermitFile(input) {
   const f = (input.files || [])[0];
   if (!f) return;
@@ -3179,12 +3198,14 @@ async function onPermitFile(input) {
   try {
     prog.style.color = 'var(--text-dim)';
     prog.textContent = '⏳ بنجهّز الصورة...';
+    permitBar(0, false);
     const { b64, mime } = await permitFileToBase64(f);
     prog.textContent = '⬆️ بنرفع الإذن... 0%';
     const res = await permitScanRequest(
       { client_id: user.id, username: user.username || '', image_base64: b64, mime },
-      p => { prog.textContent = p < 100 ? `⬆️ بنرفع الإذن... ${p}%` : '🤖 بنقرأ الإذن... ثوانى'; }
+      p => { if (p < 100) { permitBar(p, false); prog.textContent = `⬆️ بنرفع الإذن... ${p}%`; } else { permitBar(100, true); prog.textContent = '🤖 بنقرأ الإذن... ثوانى'; } }
     );
+    permitBar(null);
     if (!res || !res.ok) {
       const map = {
         unreadable: 'مقدرتش أقرأ الإذن — صوّره تانى بوضوح وفى نور كويس والورقة كاملة',
@@ -3212,6 +3233,7 @@ async function onPermitFile(input) {
     document.getElementById('permitScanBox').style.display = 'none';
     await goStep2();
   } catch (e) {
+    permitBar(null);
     prog.style.color = 'var(--error)';
     prog.textContent = '❌ حصل خطأ فى قراءة الملف — حاول تانى';
   } finally {
