@@ -2447,6 +2447,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .bl-tab.active{color:var(--gold);background:var(--dark2);border-color:var(--border);border-bottom-color:var(--dark2)}
 .bl-tab-count{display:inline-block;background:rgba(201,168,76,0.18);color:var(--gold);border-radius:20px;
   font-size:11px;padding:1px 8px;margin-right:5px;font-weight:800}
+.pm-tab.sel{background:var(--gold)!important;color:#0A0A0A!important;border-color:var(--gold)!important}
 </style>
 </head>
 <body>
@@ -3144,6 +3145,63 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <div id="cn-count" style="color:var(--text-dim);font-size:12px"></div>
         </div>
         <div id="cn-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <div class="section" id="sec-permits">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🧾 <span>أذونات الصرف</span></div>
+          <div class="page-sub">كل إذن مصوّر ورصيده لكل مخزن ونوع — والمحاولات المرفوضة والإعدادات</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="pmReload()">🔄 تحديث</button>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="act-btn edit pm-tab sel" data-tab="list" onclick="pmTab('list')">🧾 الأذونات</button>
+          <button class="act-btn edit pm-tab" data-tab="attempts" onclick="pmTab('attempts')">🚫 المحاولات المرفوضة <span id="pm-att-badge" style="display:none;background:var(--error);color:#fff;border-radius:20px;padding:0 7px;font-size:11px"></span></button>
+          <button class="act-btn edit pm-tab" data-tab="capacity" onclick="pmTab('capacity')">📊 سعة اليوم بالقطع</button>
+          <button class="act-btn edit pm-tab" data-tab="settings" onclick="pmTab('settings')">⚙️ الإعدادات والتفعيل</button>
+          <div style="flex:1"></div>
+          <div id="pm-rule-state" style="font-size:12px;align-self:center"></div>
+        </div>
+
+        <div id="pm-pane-list">
+          <div class="tbl-filters">
+            <input class="filter-inp" id="pm-q" type="text" placeholder="🔍 رقم الإذن / اسم التاجر / الكود..." oninput="pmRender()" style="width:240px">
+            <select class="filter-inp" id="pm-status" onchange="pmRender()" style="width:150px">
+              <option value="">كل الحالات</option><option>نشط</option><option>مستنفد</option><option>ملغى</option>
+            </select>
+            <div style="display:flex;align-items:center;gap:5px">
+              <span style="color:var(--text-dim);font-size:11.5px">من</span>
+              <input class="filter-inp" id="pm-from" type="date" onchange="pmRender()" style="width:145px">
+              <span style="color:var(--text-dim);font-size:11.5px">إلى</span>
+              <input class="filter-inp" id="pm-to" type="date" onchange="pmRender()" style="width:145px">
+            </div>
+            <button class="act-btn edit" style="font-size:12px" onclick="clearFilters('pm','pmRender')">✖️ مسح</button>
+            <div style="flex:1;min-width:10px"></div>
+            <div id="pm-count" style="color:var(--text-dim);font-size:12px"></div>
+          </div>
+          <div id="pm-list"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+        </div>
+
+        <div id="pm-pane-attempts" style="display:none">
+          <div id="pm-attempts"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+        </div>
+
+        <div id="pm-pane-capacity" style="display:none">
+          <div class="tbl-filters">
+            <input class="filter-inp" id="pm-cap-date" type="date" onchange="pmLoadCapacity()" style="width:150px">
+            <select class="filter-inp" id="pm-cap-wh" onchange="pmLoadCapacity()" style="width:130px"></select>
+            <select class="filter-inp" id="pm-cap-vt" onchange="pmLoadCapacity()" style="width:140px"></select>
+            <div style="flex:1"></div>
+            <div id="pm-cap-sum" style="font-size:12px;color:var(--text-dim)"></div>
+          </div>
+          <div id="pm-capacity"><div class="loading-txt">اختار اليوم والمخزن والنوع</div></div>
+        </div>
+        <div id="pm-pane-settings" style="display:none">
+          <div id="pm-settings"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+        </div>
       </div>
     </div>
 
@@ -3920,6 +3978,15 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 <!-- ═════════════════════════════════════════════════════════
      📊 BOOKING LIMITS — Modal للنسخة الجديدة
      ═════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="pmModal">
+  <div class="modal" style="max-width:820px">
+    <div class="modal-title">
+      <span id="pm-modal-title">🧾 إذن</span>
+      <button class="modal-close" onclick="closeModal('pmModal')">×</button>
+    </div>
+    <div class="modal-body" style="max-height:78vh;overflow-y:auto" id="pm-modal-body"></div>
+  </div>
+</div>
 <div class="modal-overlay" id="blModal">
   <div class="modal" style="max-width:680px">
     <div class="modal-title">
@@ -5267,6 +5334,7 @@ function autoRefreshTick(){
     else if(sec==='waitlist' && typeof wlLoad === 'function') wlLoad();
     else if(sec==='parts' && typeof ptLoad === 'function') ptLoad();
     else if(sec==='purchases' && typeof pcLoad === 'function') pcLoad();
+    else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
     else if(sec==='clients' && typeof loadClients === 'function') loadClients();
     else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
@@ -5411,6 +5479,7 @@ function goTo(sec){
   else if(sec==='waitlist')wlLoad();
   else if(sec==='parts')ptLoad();
   else if(sec==='purchases')pcLoad();
+  else if(sec==='permits')pmLoad();
   else if(sec==='consumers')cnLoad();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
@@ -7180,6 +7249,306 @@ function cnRender(){
     </tr>`;
   }
   el.innerHTML = h + '</tbody></table></div>';
+}
+
+// ═══════════ 🧾 أذونات الصرف ═══════════
+let _pmRows = [], _pmAttempts = null, _pmSettings = null, _pmTab = 'list';
+const PM_IMG = p => p ? `${SB}/storage/v1/object/public/permits/${p}` : '';
+const PM_REASON = { unreadable:'📷 مش مقروء', code_mismatch:'🚫 كود عميل مختلف', belongs_to_other:'🚫 إذن تاجر تانى', ai_error:'⚠️ خطأ فى القراءة الآلية' };
+const PM_ST_COLOR = { 'نشط':'var(--success)', 'مستنفد':'var(--text-dim)', 'ملغى':'var(--error)' };
+
+async function pmLoad(){
+  await salesLoad('admin_list_permits', v=>_pmRows=v, pmRender, 'pm-list');
+  pmRuleState();
+  if(_pmTab==='attempts') pmLoadAttempts();
+  if(_pmTab==='settings') pmLoadSettings();
+}
+function pmReload(){ _pmAttempts=null; _pmSettings=null; pmLoad(); if(_pmTab==='attempts') pmLoadAttempts(); if(_pmTab==='settings') pmLoadSettings(); }
+function pmTab(t){
+  _pmTab = t;
+  document.querySelectorAll('.pm-tab').forEach(b=>b.classList.toggle('sel', b.dataset.tab===t));
+  ['list','attempts','capacity','settings'].forEach(k=>{ const el=document.getElementById('pm-pane-'+k); if(el) el.style.display = (k===t)?'':'none'; });
+  if(t==='attempts' && !_pmAttempts) pmLoadAttempts();
+  if(t==='settings') pmLoadSettings();
+  if(t==='capacity') pmInitCapacity();
+}
+async function pmRuleState(){
+  try{
+    const s = await rpcSecure('admin_permit_settings_get', {});
+    _pmSettings = s;
+    const el = document.getElementById('pm-rule-state'); if(!el) return;
+    el.innerHTML = s.rule_active
+      ? pill('🟢 القاعدة مفعّلة من '+escAttr(s.rule_since),'var(--success)')
+      : (s.rule_since ? pill('🟡 هتتفعل يوم '+escAttr(s.rule_since),'var(--gold)') : pill('⚪ القاعدة مقفولة — الحجز بالنظام القديم','var(--text-dim)'));
+  }catch(e){}
+}
+function pmAllowChips(rows){
+  return (rows||[]).map(a=>`<span style="display:inline-block;background:var(--dark2);border:1px solid var(--border);border-radius:8px;padding:3px 8px;font-size:11.5px;margin:2px">
+    ${escAttr(a.warehouse)} · ${escAttr(a.vehicle_type)}: <b style="color:${a.left>0?'var(--success)':'var(--error)'}">${a.left}</b>/${a.vehicles_max}${a.manual?' ✏️':''}</span>`).join('') || '<span style="color:var(--text-dim);font-size:12px">مفيش رصيد</span>';
+}
+function pmRender(){
+  const el = document.getElementById('pm-list'); if(!el) return;
+  const q = (document.getElementById('pm-q')?.value||'').trim().toLowerCase();
+  const st = document.getElementById('pm-status')?.value || '';
+  const rows = (_pmRows||[]).filter(r => (!st || r.status===st) && inDateRange('pm', r.created_at) &&
+    matchQ(r,q,['permit_no','client_name','company_code','client_name_on_permit']));
+  const act = (_pmRows||[]).filter(r=>r.status==='نشط').length;
+  const cnt = document.getElementById('pm-count');
+  if(cnt) cnt.textContent = `🧾 ${rows.length} من ${(_pmRows||[]).length} إذن — ${act} نشط${dateNote('pm')}`;
+  if(!(_pmRows||[]).length) return void(el.innerHTML = emptyBox('مفيش أذونات متسجلة لسه — أول تاجر يصوّر إذن هيظهر هنا'));
+  if(!rows.length) return void(el.innerHTML = emptyBox('🔍 مفيش نتيجة — جرّب تمسح البحث أو توسّع المدة'));
+  let h = '';
+  for(const r of rows){
+    h += `<div style="background:var(--dark3);border:1px solid ${r.status==='نشط'?'rgba(201,168,76,0.35)':'var(--border)'};border-radius:12px;padding:12px 13px;margin-bottom:9px;cursor:pointer" onclick="pmOpen(${r.id})">
+      <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start">
+        <div>
+          <b style="font-size:15px;color:var(--gold)">#${escAttr(r.permit_no)}</b>
+          <span style="color:var(--text-dim);font-size:12px;margin-right:8px">${r.permit_date ? escAttr(r.permit_date) : ''}</span>
+          <div style="font-size:13px;margin-top:3px"><b>${escAttr(r.client_name||'—')}</b> <span style="color:var(--text-dim);font-size:11.5px">(كود ${escAttr(r.company_code||'')})</span></div>
+          <div style="margin-top:6px">${pmAllowChips(r.allowances)}</div>
+        </div>
+        <div style="text-align:end">
+          ${pill(r.status, PM_ST_COLOR[r.status]||'var(--text-dim)')}
+          <div style="color:var(--text-dim);font-size:11px;margin-top:4px">${arDT(r.created_at)}</div>
+          <div style="color:var(--text-dim);font-size:11px">📋 ${r.bookings_count||0} حجز</div>
+        </div>
+      </div>
+    </div>`;
+  }
+  el.innerHTML = h;
+}
+async function pmOpen(id){
+  const body = document.getElementById('pm-modal-body');
+  document.getElementById('pmModal').classList.add('show');
+  body.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const d = await rpcSecure('admin_permit_detail', { p_id: id });
+    const p = d.permit;
+    document.getElementById('pm-modal-title').textContent = `🧾 إذن #${p.permit_no} — ${p.client_name||''}`;
+    const s = _pmSettings || {};
+    const whs = (s.warehouses||['قليوب','السادات']);
+    const types = (s.vehicle_types||[]).filter(t=>t.active!==false).map(t=>t.name);
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          ${p.image_url ? `<a href="${PM_IMG(p.image_url)}" target="_blank"><img src="${PM_IMG(p.image_url)}" style="width:100%;max-height:340px;object-fit:contain;background:#000;border-radius:10px;border:1px solid var(--border)"></a>
+            <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:4px">اضغط الصورة تفتح بالحجم الكامل</div>` : emptyBox('مفيش صورة (إذن يدوى)')}
+        </div>
+        <div>
+          <div style="background:rgba(201,168,76,.08);border:1px solid var(--gold);border-radius:10px;padding:10px;font-size:12.5px;line-height:1.9;white-space:pre-line">${escAttr(d.explain||'')}</div>
+          <div style="margin-top:8px;font-size:12px;color:var(--text-dim)">
+            ${pill(p.status, PM_ST_COLOR[p.status]||'var(--text-dim)')} &nbsp; الاسم على الإذن: <b>${escAttr(p.client_name_on_permit||'—')}</b> · كود ${escAttr(p.company_code)} · اتسجل ${arDT(p.created_at)}${p.note?`<div>📝 ${escAttr(p.note)}</div>`:''}
+          </div>
+        </div>
+      </div>
+
+      <div class="bl-section-title" style="margin-top:14px">🚚 الرصيد لكل مخزن ونوع <span style="font-size:11px;color:var(--text-dim);font-weight:400">— عدّل السقف يدوياً لو القراءة الآلية غلطت</span></div>
+      <table style="width:100%;font-size:12.5px;border-collapse:collapse">
+        <tr style="color:var(--text-dim)"><th style="text-align:right;padding:5px">المخزن</th><th style="text-align:right;padding:5px">النوع</th><th style="padding:5px">صافى الكمية</th><th style="padding:5px">مستخدم</th><th style="padding:5px">السقف (عربيات)</th><th></th></tr>
+        ${(d.allowances||[]).map(a=>`<tr style="border-top:1px solid var(--border)">
+          <td style="padding:6px">${escAttr(a.warehouse)}</td><td style="padding:6px">${escAttr(a.vehicle_type)}</td>
+          <td style="text-align:center">${a.qty_net}${a.manual?'':''}</td><td style="text-align:center">${a.used}</td>
+          <td style="text-align:center"><input type="number" min="0" id="pm-al-${a.id}" value="${a.vehicles_max}" style="width:70px;text-align:center;background:var(--dark2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px"></td>
+          <td style="text-align:center"><button class="act-btn edit" style="font-size:11px" onclick="pmSetAllow(${p.id},${a.id})">💾</button></td>
+        </tr>`).join('') || `<tr><td colspan="6">${emptyBox('مفيش صفوف رصيد — ضيف واحد تحت')}</td></tr>`}
+      </table>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text-dim)">➕ إضافة رصيد يدوى:</span>
+        <select id="pm-add-wh" class="filter-inp" style="width:120px">${whs.map(w=>`<option>${escAttr(w)}</option>`).join('')}</select>
+        <select id="pm-add-vt" class="filter-inp" style="width:130px">${types.map(t=>`<option>${escAttr(t)}</option>`).join('')}</select>
+        <input id="pm-add-n" type="number" min="0" placeholder="عربيات" class="filter-inp" style="width:90px">
+        <button class="act-btn edit" style="font-size:12px" onclick="pmAddAllow(${p.id})">إضافة</button>
+      </div>
+
+      <div class="bl-section-title" style="margin-top:14px">📋 الحجوزات على الإذن ده</div>
+      ${(d.bookings||[]).length ? `<table style="width:100%;font-size:12.5px;border-collapse:collapse">
+        <tr style="color:var(--text-dim)"><th style="text-align:right;padding:5px">#</th><th style="text-align:right;padding:5px">المخزن</th><th style="text-align:right;padding:5px">النوع</th><th>عربيات</th><th style="text-align:right;padding:5px">التاريخ</th><th style="text-align:right;padding:5px">الحالة</th></tr>
+        ${d.bookings.map(b=>`<tr style="border-top:1px solid var(--border)"><td style="padding:5px">${b.seq_number||b.id}</td><td>${escAttr(b.warehouse)}</td><td>${escAttr(b.vehicle_type)}</td><td style="text-align:center">${b.count}</td><td>${escAttr(b.loading_date)} ${escAttr(b.time_slot||'')}</td><td>${escAttr(b.status)}</td></tr>`).join('')}
+      </table>` : emptyBox('لسه مفيش حجوزات على الإذن ده')}
+
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        ${p.status==='ملغى'
+          ? `<button class="act-btn edit" onclick="pmSetStatus(${p.id},'نشط')">↩️ إعادة تفعيل الإذن</button>`
+          : `<button class="act-btn del" onclick="pmSetStatus(${p.id},'ملغى')">🚫 إلغاء الإذن (التاجر مش هيقدر يحجز عليه)</button>`}
+      </div>`;
+  }catch(e){ body.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
+}
+async function pmSetAllow(pid, aid){
+  const v = parseInt(document.getElementById('pm-al-'+aid)?.value||'0',10);
+  try{ await rpcSecure('admin_permit_set_allowance', { p_allowance_id: aid, p_vehicles_max: isNaN(v)?0:v }); await pmOpen(pid); pmLoad(); }
+  catch(e){ alert('⚠️ '+(e.message||'فشل الحفظ')); }
+}
+async function pmAddAllow(pid){
+  const wh = document.getElementById('pm-add-wh')?.value, vt = document.getElementById('pm-add-vt')?.value;
+  const n = parseInt(document.getElementById('pm-add-n')?.value||'0',10);
+  if(!wh||!vt) return;
+  try{ await rpcSecure('admin_permit_add_allowance', { p_permit_id: pid, p_warehouse: wh, p_vehicle_type: vt, p_vehicles_max: isNaN(n)?0:n }); await pmOpen(pid); pmLoad(); }
+  catch(e){ alert('⚠️ '+(e.message||'فشل الإضافة')); }
+}
+function pmSetStatus(pid, st){
+  const danger = st==='ملغى';
+  showConfirm(danger?'🚫':'↩️', danger?'إلغاء الإذن':'إعادة تفعيل الإذن', danger?'التاجر مش هيقدر يحجز على الإذن ده تانى. متأكد؟':'هيرجع الإذن شغال بالرصيد المتبقى.', danger, async()=>{
+    try{ await rpcSecure('admin_permit_set_status', { p_id: pid, p_status: st, p_note: null }); await pmOpen(pid); pmLoad(); }
+    catch(e){ alert('⚠️ '+(e.message||'فشل')); }
+  });
+}
+async function pmLoadAttempts(){
+  const el = document.getElementById('pm-attempts'); if(!el) return;
+  el.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    _pmAttempts = await rpcSecure('admin_list_permit_attempts', {}) || [];
+    const badge = document.getElementById('pm-att-badge');
+    const recent = _pmAttempts.filter(a=>Date.now()-new Date(a.created_at).getTime() < 86400000).length;
+    if(badge){ badge.style.display = recent?'':'none'; badge.textContent = recent; }
+    if(!_pmAttempts.length) return void(el.innerHTML = emptyBox('مفيش محاولات مرفوضة — تمام كده ✅'));
+    el.innerHTML = _pmAttempts.map(a=>{
+      const det = a.details||{};
+      return `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-bottom:8px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div>${pill(PM_REASON[a.reason]||a.reason,'var(--error)')} <b style="margin-right:6px">${escAttr(a.client_name||'—')}</b> <span style="color:var(--text-dim);font-size:11.5px">(كود ${escAttr(a.company_code||'')})</span></div>
+          <div style="font-size:12px;color:var(--text-dim);margin-top:4px">إذن ${escAttr(a.permit_no||'—')}${det.on_permit?` — الكود على الإذن: <b style="color:var(--error)">${escAttr(det.on_permit)}</b>${det.name_on_permit?' ('+escAttr(det.name_on_permit)+')':''}`:''}${det.owner_client_id?` — متسجل لتاجر رقم ${det.owner_client_id}`:''}</div>
+        </div>
+        <div style="text-align:end;font-size:11px;color:var(--text-dim)">${arDT(a.created_at)}${a.image_url?`<div><a href="${PM_IMG(a.image_url)}" target="_blank" style="color:var(--gold)">📷 الصورة</a></div>`:''}</div>
+      </div>`; }).join('');
+  }catch(e){ el.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
+}
+async function pmInitCapacity(){
+  try{
+    if(!_pmSettings) _pmSettings = await rpcSecure('admin_permit_settings_get', {});
+    const wh = document.getElementById('pm-cap-wh'), vt = document.getElementById('pm-cap-vt'), dt = document.getElementById('pm-cap-date');
+    if(wh && !wh.options.length) wh.innerHTML = (_pmSettings.warehouses||[]).map(w=>`<option>${escAttr(w)}</option>`).join('');
+    if(vt && !vt.options.length) vt.innerHTML = (_pmSettings.vehicle_types||[]).filter(t=>t.active!==false).map(t=>`<option>${escAttr(t.name)}</option>`).join('');
+    if(dt && !dt.value) dt.value = new Date(Date.now()+86400000).toISOString().slice(0,10);
+    pmLoadCapacity();
+  }catch(e){}
+}
+async function pmLoadCapacity(){
+  const el = document.getElementById('pm-capacity'); if(!el) return;
+  const d = document.getElementById('pm-cap-date')?.value, wh = document.getElementById('pm-cap-wh')?.value, vt = document.getElementById('pm-cap-vt')?.value;
+  if(!d||!wh||!vt) return;
+  el.innerHTML = '<div class="loading-txt">⏳ جاري الحساب...</div>';
+  try{
+    const r = await rpcSecure('admin_capacity_day', { p_warehouse: wh, p_vtype: vt, p_date: d });
+    const rows = r.hours||[];
+    const modeLbl = { hourly:'ساعة بساعة', twice:'نص اليوم وآخره', end:'آخر اليوم بس', off:'مقفول' }[r.mode] || r.mode;
+    const sum = document.getElementById('pm-cap-sum');
+    if(sum) sum.innerHTML = `اليوم: <b style="color:var(--gold)">${r.day_used}</b> من <b>${r.day_cap}</b> قطعة · العربية = ${r.units_per_vehicle} قطعة · الترحيل: ${escAttr(modeLbl)}`;
+    if(!rows.length) return void(el.innerHTML = emptyBox('اليوم ده مقفول — مفيش ساعات شغل'));
+    const fmt = h => h > 12 ? (h-12) : h;
+    el.innerHTML = `<table style="width:100%;font-size:12.5px;border-collapse:collapse">
+      <tr style="color:var(--text-dim)"><th style="text-align:right;padding:6px">الساعة</th><th>السعة</th><th>المحجوز (قطع)</th><th>عربيات</th><th>مرحّل من قبلها</th><th>الباقى التراكمى</th><th></th></tr>
+      ${rows.map(h=>{
+        const pct = h.cap_units ? Math.min(100, Math.round(h.used_units/h.cap_units*100)) : 0;
+        const col = pct>=100?'var(--error)':pct>=75?'var(--gold)':'var(--success)';
+        return `<tr style="border-top:1px solid var(--border)">
+          <td style="padding:6px;font-weight:700">${fmt(h.hour)}:00 - ${fmt(h.hour+1)}:00 ${h.is_checkpoint?'<span title="ساعة ترحيل" style="font-size:10px;color:var(--gold)">⟳</span>':''}</td>
+          <td style="text-align:center">${h.cap_units}</td>
+          <td style="text-align:center"><b style="color:${col}">${h.used_units}</b> <span style="color:var(--text-dim);font-size:11px">(${pct}%)</span></td>
+          <td style="text-align:center">${h.vehicles}</td>
+          <td style="text-align:center;color:var(--text-dim)">${h.carried_in||0}</td>
+          <td style="text-align:center;color:${h.cum_left<0?'var(--error)':'var(--text)'}">${h.cum_left}</td>
+          <td style="width:120px"><div style="background:var(--dark2);border-radius:6px;height:8px;overflow:hidden"><div style="width:${pct}%;height:100%;background:${col}"></div></div></td>
+        </tr>`; }).join('')}
+    </table>
+    <div style="font-size:11.5px;color:var(--text-dim);margin-top:8px;line-height:1.8">⟳ = ساعة بيتسمحلها تاخد الباقى من الساعات اللى قبلها (حسب إعداد الترحيل). الحجوزات القديمة من غير إذن بتتحسب عربيات × القطع/عربية.</div>`;
+  }catch(e){ el.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
+}
+async function pmLoadSettings(){
+  const el = document.getElementById('pm-settings'); if(!el) return;
+  el.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const s = await rpcSecure('admin_permit_settings_get', {});
+    _pmSettings = s;
+    const whs = s.warehouses||[];
+    el.innerHTML = `
+      <div style="background:var(--dark3);border:1px solid var(--gold);border-radius:12px;padding:14px;margin-bottom:12px">
+        <div class="bl-section-title">🚦 تفعيل القاعدة</div>
+        <div style="font-size:12.5px;color:var(--text-dim);line-height:1.8;margin-bottom:8px">حدد التاريخ اللى من يومه أى حجز جديد لازم يبقى على إذن مصوّر ومتسجل. سيب الخانة فاضية = القاعدة مقفولة والحجز شغال بالنظام القديم. الحجوزات اللى قبل التاريخ مش بتتأثر.</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="date" id="pm-set-since" class="filter-inp" value="${escAttr(s.rule_since||'')}" style="width:170px">
+          <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('pm-set-since').value=''">✖️ تفريغ (إيقاف)</button>
+          <span style="font-size:12px">${s.rule_active?pill('🟢 مفعّلة دلوقتى','var(--success)'):pill('⚪ مقفولة دلوقتى','var(--text-dim)')}</span>
+        </div>
+      </div>
+
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+        <div class="bl-section-title">📦 سعة الساعة بالقطع وترحيل الفروقات</div>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8;margin-bottom:8px">كل حجز بيخصم القطع الفعلية (مش عدد العربيات) — والباقى من ساعة بيتنقل للساعات اللى بعدها جوه نفس اليوم عشان اليوم يقفل على سعته كاملة. داخلى للإدارة، التاجر مش بيشوفه.</div>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12.5px">طريقة الترحيل
+            <select id="pm-set-carry" class="filter-inp" style="width:190px;margin-right:6px">
+              <option value="hourly" ${s.carry_mode==='hourly'?'selected':''}>ساعة بساعة (الأخف)</option>
+              <option value="twice" ${s.carry_mode==='twice'?'selected':''}>مرتين: نص اليوم وآخره</option>
+              <option value="end" ${s.carry_mode==='end'?'selected':''}>آخر ساعة بس</option>
+              <option value="off" ${s.carry_mode==='off'?'selected':''}>مقفول (كل ساعة بسعتها)</option>
+            </select>
+          </label>
+          <label style="font-size:12.5px">أقصى زيادة فى الساعة بسبب الترحيل
+            <input type="number" min="0" max="200" id="pm-set-carrypct" value="${s.carry_pct??30}" style="width:70px;text-align:center;background:var(--dark2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px;margin-right:6px"> %
+          </label>
+        </div>
+      </div>
+
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+        <div class="bl-section-title">🚚 رقم القسمة لكل نوع عربية</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">عدد القطع اللى بتتحمل فى العربية الواحدة — الرصيد = ⌈(الكمية − المسحوب) ÷ الرقم ده⌉. والوصف بيساعد القراءة الآلية تصنّف الأصناف صح.</div>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="pm-set-types">
+          <tr style="color:var(--text-dim)"><th style="text-align:right;padding:5px">النوع</th><th style="padding:5px">قطعة / عربية</th><th style="text-align:right;padding:5px">وصف للتصنيف الآلى</th></tr>
+          ${(s.vehicle_types||[]).map(t=>`<tr style="border-top:1px solid var(--border)" data-id="${t.id}">
+            <td style="padding:6px">${escAttr(t.icon||'')} ${escAttr(t.name)}${t.active===false?' <span style="color:var(--text-dim);font-size:11px">(معطل)</span>':''}</td>
+            <td style="text-align:center"><input type="number" min="1" class="pm-t-units" value="${t.units}" style="width:80px;text-align:center;background:var(--dark2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:4px"></td>
+            <td style="padding:4px"><input type="text" class="pm-t-hint" value="${escAttr(t.hint||'')}" placeholder="مثال: تروسيكل / توك توك" style="width:100%;background:var(--dark2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 8px"></td>
+          </tr>`).join('')}
+        </table>
+      </div>
+
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+        <div class="bl-section-title">🏭 ترجمة أسماء المخازن اللى على الإذن</div>
+        <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">أى اسم مخزن على الإذن <b>فيه</b> الكلمة دى بيتحسب للمخزن المختار — أو «يتجاهل». الترتيب مهم: أول تطابق بيكسب.</div>
+        <table style="width:100%;font-size:12.5px;border-collapse:collapse" id="pm-set-map">
+          <tr style="color:var(--text-dim)"><th style="text-align:right;padding:5px">الكلمة على الإذن</th><th style="text-align:right;padding:5px">يتحسب لمخزن</th><th>مفعّل</th><th></th></tr>
+          ${(s.store_map||[]).map(m=>pmMapRow(m, whs)).join('')}
+        </table>
+        <button class="act-btn edit" style="font-size:12px;margin-top:8px" onclick="pmMapAdd()">➕ سطر جديد</button>
+      </div>
+
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="add-btn" onclick="pmSaveSettings()">💾 حفظ الإعدادات</button>
+        <span id="pm-set-msg" style="font-size:12px;color:var(--text-dim)"></span>
+      </div>`;
+  }catch(e){ el.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
+}
+function pmMapRow(m, whs){
+  const opts = [`<option value="" ${!m.warehouse?'selected':''}>— يتجاهل —</option>`].concat(whs.map(w=>`<option ${m.warehouse===w?'selected':''}>${escAttr(w)}</option>`)).join('');
+  return `<tr style="border-top:1px solid var(--border)" data-id="${m.id||''}">
+    <td style="padding:4px"><input type="text" class="pm-m-pat" value="${escAttr(m.pattern||'')}" placeholder="مثال: ماكرو" style="width:100%;background:var(--dark2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px 8px"></td>
+    <td style="padding:4px"><select class="pm-m-wh filter-inp" style="width:150px">${opts}</select></td>
+    <td style="text-align:center"><input type="checkbox" class="pm-m-act" ${m.active!==false?'checked':''}></td>
+    <td style="text-align:center"><button class="act-btn del" style="font-size:11px" onclick="this.closest('tr').remove()">🗑️</button></td>
+  </tr>`;
+}
+function pmMapAdd(){
+  const t = document.getElementById('pm-set-map'); if(!t) return;
+  t.insertAdjacentHTML('beforeend', pmMapRow({pattern:'',warehouse:'',active:true}, (_pmSettings&&_pmSettings.warehouses)||[]));
+}
+async function pmSaveSettings(){
+  const msg = document.getElementById('pm-set-msg');
+  const since = document.getElementById('pm-set-since')?.value || '';
+  const types = [...document.querySelectorAll('#pm-set-types tr[data-id]')].map(tr=>({ id: parseInt(tr.dataset.id,10), units: parseInt(tr.querySelector('.pm-t-units')?.value||'50',10)||50, hint: tr.querySelector('.pm-t-hint')?.value||'' }));
+  const map = [...document.querySelectorAll('#pm-set-map tr[data-id]')].map((tr,i)=>({ id: tr.dataset.id||null, pattern: tr.querySelector('.pm-m-pat')?.value||'', warehouse: tr.querySelector('.pm-m-wh')?.value||'', active: !!tr.querySelector('.pm-m-act')?.checked, sort: i+1 })).filter(m=>m.pattern.trim());
+  const doSave = async()=>{
+    try{
+      await rpcSecure('admin_permit_settings_save', { p_rule_since: since, p_types: types, p_store_map: map,
+        p_carry_mode: document.getElementById('pm-set-carry')?.value || null,
+        p_carry_pct: parseInt(document.getElementById('pm-set-carrypct')?.value||'30',10) });
+      if(msg){ msg.textContent = '✅ اتحفظ'; msg.style.color='var(--success)'; }
+      _pmSettings = null; pmRuleState(); pmLoadSettings();
+    }catch(e){ if(msg){ msg.textContent = '⚠️ '+(e.message||'فشل الحفظ'); msg.style.color='var(--error)'; } }
+  };
+  const wasActive = !!(_pmSettings && _pmSettings.rule_active);
+  const willActivate = since && since <= new Date().toISOString().slice(0,10);
+  if(willActivate && !wasActive) showConfirm('🚦','تفعيل قاعدة الأذونات','من دلوقتى أى حجز جديد لازم يبقى على إذن مصوّر ومتسجل. متأكد؟', true, doSave);
+  else doSave();
 }
 
 // ═══════════ 🧾 المشتريات والجوابات ═══════════
@@ -15884,6 +16253,7 @@ const NAV_META = {
   'bookings':         { icon: '📋',  label: 'الحجوزات' },
   'pending-clients':  { icon: '⏳',  label: 'عملاء تحت الانتظار', badge: { id: 'pendingBadge', cls: 'pending-badge' } },
   'permit-alerts':    { icon: '🚨',  label: 'تنبيهات الأذونات',    badge: { id: 'alertBadge',   cls: 'alert-badge' } },
+  'permits':          { icon: '🧾',  label: 'أذونات الصرف' },
   'blocked':          { icon: '🔒',  label: 'المبلوكين' },
   'booking-limits':   { icon: '📊',  label: 'حدود الحجز' },
 
@@ -15922,7 +16292,7 @@ const NAV_META = {
 const DEFAULT_SIDEBAR_LAYOUT = {
   favorites: [],
   categories: [
-    { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permit-alerts', 'blocked', 'booking-limits'] },
+    { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permits', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'consumers'] },
@@ -15937,6 +16307,7 @@ let __sidebarLoaded = false;
 
 // ── الشاشات الجديدة اللى ليها قسم مخصص — بتتحط فى قسمها تلقائياً حتى لو الترتيب محفوظ من قبل
 const NAV_PREFERRED_CAT = {
+  'permits':  { id: 'booking', icon: '📋', title: 'الحجز', index: 0 },
   'catalog':  { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'leads':    { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'waitlist': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
@@ -16312,6 +16683,7 @@ const DIRTY_SECTIONS = {
 const SECTION_LABELS_DEFAULT = {
   'bookings':        '📋 الحجوزات',
   'permit-alerts':   '🚨 تنبيهات الأذونات',
+  'permits':         '🧾 أذونات الصرف',
   'employees':       '👷 الموظفين',
   'pending-clients': '⏳ عملاء تحت الانتظار',
   'clients':         '👥 العملاء',

@@ -644,6 +644,13 @@
           color:var(--text);font-family:Cairo,sans-serif;font-size:15px;font-weight:700;outline:none;text-align:center"
           oninput="onPermitInput()" />
         <div id="permitMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
+        <div id="permitAllow" style="display:none;margin-top:10px"></div>
+        <div id="permitScanBox" style="display:none;margin-top:10px">
+          <div id="permitScanHint" style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.7">الإذن ده لسه متسجلش عندنا — صوّره مرة واحدة بس، وبعدها هيتقبل بالرقم على طول</div>
+          <label for="permitFile" style="display:block;text-align:center;cursor:pointer;padding:13px;border-radius:12px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:15px">📷 صوّر الإذن</label>
+          <input type="file" id="permitFile" accept="image/*,application/pdf" capture="environment" style="display:none" onchange="onPermitFile(this)">
+          <div id="permitScanProg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
+        </div>
       </div>
       <button class="btn-gold" id="b1" onclick="goStep2()" disabled>التالي ←</button>
     </div>
@@ -655,6 +662,7 @@
         <div class="opts3" id="vehicleOpts">
           <div class="slots-loading" style="grid-column:1/-1">⏳ جاري تحميل الأنواع...</div>
         </div>
+        <div id="vehPermitMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
       </div>
       <button class="btn-gold" id="b2" onclick="go(3)" disabled>التالي ←</button>
       <button class="btn-back" onclick="go(1)">→ رجوع</button>
@@ -2752,7 +2760,7 @@ ensureSettingsLoaded().then(() => renderWarehouseOptions());
 loadVehicleTypesData();
 
 // Booking state
-const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, remaining: 10, count: 1, permit: null, perBookingMax: 10 };
+const bk = { warehouse: null, vehicle: null, cap: 0, dateStr: null, slot: null, remaining: 10, count: 1, permit: null, perBookingMax: 10, permitId: null, permitLeft: null, permitAllow: null, slotMax: null };
 
 // Edit state: null = new | object = editing
 let editMode = null; // { id, oldCount }
@@ -2803,10 +2811,18 @@ function pick(field, val, el, step) {
     document.getElementById('permitInput').value = '';
     document.getElementById('permitMsg').textContent = '';
     bk.permit = null;
+    hidePermitExtras();
     document.getElementById('b1').disabled = true;
   } else {
     document.getElementById('b' + num).disabled = false;
   }
+}
+
+function hidePermitExtras() {
+  bk.permitId = null; bk.permitLeft = null; bk.permitAllow = null;
+  const a = document.getElementById('permitAllow'); if (a) { a.style.display = 'none'; a.innerHTML = ''; }
+  const s = document.getElementById('permitScanBox'); if (s) s.style.display = 'none';
+  const p = document.getElementById('permitScanProg'); if (p) p.textContent = '';
 }
 
 function onPermitInput() {
@@ -2820,6 +2836,7 @@ function onPermitInput() {
     try { inp.setSelectionRange(cursor, cursor); } catch(e){}
   }
   bk.permit = cleaned || null;
+  hidePermitExtras();
   document.getElementById('b1').disabled = !cleaned;
   document.getElementById('permitMsg').textContent = '';
   document.getElementById('permitMsg').style.color = '';
@@ -2931,6 +2948,12 @@ async function goStep2() {
   msgEl.style.color = 'var(--text-dim)';
   document.getElementById('b1').disabled = true;
 
+  // 🧾 نظام الأذونات الجديد — بيشتغل بس لما القاعدة تتفعل من الإعدادات، غير كده المسار القديم
+  try {
+    const lk = await permitLookup(permit);
+    if (lk && lk.ok && lk.rule_active) { await permitFlowNew(lk, permit); return; }
+  } catch (_) { /* لو الاستعلام فشل نكمل بالمسار القديم */ }
+
   let success = false;
   try {
     // ⚡ Parallel: permit-check + cached settings + vehicle types (3 in flight at once)
@@ -3020,7 +3043,180 @@ function pickVehicle(v, cap, el) {
   bk.vehicle = v; bk.cap = cap;
   document.querySelectorAll('#s2 .opt').forEach(o => o.classList.remove('sel'));
   el.classList.add('sel');
+  const m = document.getElementById('vehPermitMsg');
+  if (Array.isArray(bk.permitAllow)) {
+    const a = bk.permitAllow.find(x => x.warehouse === bk.warehouse && x.vehicle_type === v);
+    const left = a ? Number(a.left) : 0;
+    bk.permitLeft = left;
+    if (left <= 0) {
+      if (m) { m.textContent = `⛔ الإذن ${bk.permit} ملوش رصيد ${v} فى ${bk.warehouse} — اختار نوع تانى أو صوّر إذن جديد`; m.style.color = 'var(--error)'; }
+      document.getElementById('b2').disabled = true;
+      return;
+    }
+    if (m) { m.textContent = `✅ باقى على الإذن ${left} عربية ${v} فى ${bk.warehouse}`; m.style.color = 'var(--success)'; }
+  } else if (m) { m.textContent = ''; }
   document.getElementById('b2').disabled = false;
+}
+
+// ===================== 🧾 نظام أذونات الصرف =====================
+async function permitLookup(permit) {
+  const r = await fetch(`${SB}/rest/v1/rpc/permit_lookup`, {
+    method: 'POST', headers: { ...HDR, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_permit_no: String(permit) })
+  });
+  return await r.json();
+}
+
+function renderPermitAllow(lk) {
+  const box = document.getElementById('permitAllow');
+  const rows = (lk.allowances || []);
+  if (!rows.length) { box.style.display = 'none'; return; }
+  const byWh = {};
+  rows.forEach(a => { (byWh[a.warehouse] = byWh[a.warehouse] || []).push(a); });
+  const explain = String(lk.explain || '').trim();
+  const explainHtml = explain
+    ? `<div style="background:rgba(201,168,76,.10);border:1px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:8px;font-size:12.5px;line-height:1.9;white-space:pre-line;text-align:right">${explain.replace(/</g,'&lt;')}</div>`
+    : '';
+  box.innerHTML = explainHtml + `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:10px 12px">
+    <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">🧾 إذن رقم <b style="color:var(--gold)">${lk.permit.permit_no}</b>${lk.permit.permit_date ? ' — ' + lk.permit.permit_date : ''}</div>
+    ${Object.keys(byWh).map(wh => {
+      const cur = wh === bk.warehouse;
+      return `<div style="padding:6px 0;border-top:1px solid var(--border);${cur ? '' : 'opacity:.6'}">
+        <div style="font-weight:800;margin-bottom:3px">${cur ? '📍 ' : ''}${wh}</div>
+        ${byWh[wh].map(a => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0 2px 8px">
+          <span>${a.vehicle_type}</span>
+          <span style="color:${a.left > 0 ? 'var(--success)' : 'var(--error)'}">باقى ${a.left} من ${a.vehicles_max} عربية</span>
+        </div>`).join('')}
+      </div>`;
+    }).join('')}
+  </div>`;
+  box.style.display = '';
+}
+
+async function permitFlowNew(lk, permit) {
+  const msgEl = document.getElementById('permitMsg');
+  const b1 = document.getElementById('b1');
+  hidePermitExtras();
+  const fail = (t) => { msgEl.innerHTML = t; msgEl.style.color = 'var(--error)'; b1.disabled = true; };
+
+  if (lk.status === 'not_yours') { fail('❌ الإذن ده متسجل لتاجر تانى'); return; }
+  if (lk.status === 'void')      { fail('❌ الإذن ده ملغى — راجع الإدارة'); return; }
+  if (lk.status === 'not_found') {
+    msgEl.textContent = '📷 الإذن ده مش متسجل — صوّره عشان نسجّله';
+    msgEl.style.color = 'var(--gold)';
+    document.getElementById('permitScanHint').textContent = `الإذن رقم ${permit} لسه متسجلش عندنا — صوّره مرة واحدة بس، وبعدها هيتقبل بالرقم على طول`;
+    document.getElementById('permitScanBox').style.display = '';
+    b1.disabled = true;
+    return;
+  }
+  renderPermitAllow(lk);
+  const here = (lk.allowances || []).filter(x => x.warehouse === bk.warehouse && Number(x.left) > 0);
+  if (!here.length) {
+    fail(`❌ الإذن ${permit} خلص رصيده فى ${bk.warehouse}<br><span style="font-size:11px;font-weight:400">اكتب رقم إذن تانى وصوّره لو مش متسجل</span>`);
+    return;
+  }
+  bk.permitId = lk.permit.id; bk.permitAllow = lk.allowances || []; bk.permitLeft = null;
+  msgEl.textContent = `✅ إذن ${permit} — ${bk.warehouse}: ` + here.map(x => `${x.vehicle_type} ${x.left}`).join(' · ');
+  msgEl.style.color = 'var(--success)';
+  const vm = document.getElementById('vehPermitMsg'); if (vm) vm.textContent = '';
+  try { await loadVehicleTypesData(); renderVehicleOptions(); } catch (_) {}
+  b1.disabled = false;
+  go(2);
+}
+
+// تصغير الصورة على الموبايل قبل الرفع (أسرع + أرخص) — الـPDF بيتبعت زى ما هو
+function permitFileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const isPdf = /pdf$/i.test(file.type) || /\.pdf$/i.test(file.name || '');
+    if (isPdf) {
+      const fr = new FileReader();
+      fr.onload = () => resolve({ b64: String(fr.result).split(',')[1], mime: 'application/pdf' });
+      fr.onerror = () => reject(new Error('read'));
+      fr.readAsDataURL(file);
+      return;
+    }
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        const MAX = 1800;
+        let w = img.naturalWidth, h = img.naturalHeight;
+        const sc = Math.min(1, MAX / Math.max(w, h));
+        w = Math.round(w * sc); h = Math.round(h * sc);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUrl = c.toDataURL('image/jpeg', 0.82);
+        URL.revokeObjectURL(url);
+        resolve({ b64: dataUrl.split(',')[1], mime: 'image/jpeg' });
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img')); };
+    img.src = url;
+  });
+}
+
+function permitScanRequest(payload, onPct) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${SB}/functions/v1/permit-scan`);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+    xhr.timeout = 120000;
+    xhr.upload.onprogress = e => { if (e.lengthComputable && onPct) onPct(Math.min(100, Math.round(e.loaded / e.total * 100))); };
+    xhr.onload = () => { try { resolve(JSON.parse(xhr.responseText || '{}')); } catch (_) { resolve({ ok: false, error: 'bad_response' }); } };
+    xhr.onerror = () => resolve({ ok: false, error: 'network' });
+    xhr.ontimeout = () => resolve({ ok: false, error: 'timeout' });
+    xhr.send(JSON.stringify(payload));
+  });
+}
+
+async function onPermitFile(input) {
+  const f = (input.files || [])[0];
+  if (!f) return;
+  const prog = document.getElementById('permitScanProg');
+  const msgEl = document.getElementById('permitMsg');
+  const b1 = document.getElementById('b1');
+  b1.disabled = true;
+  try {
+    prog.style.color = 'var(--text-dim)';
+    prog.textContent = '⏳ بنجهّز الصورة...';
+    const { b64, mime } = await permitFileToBase64(f);
+    prog.textContent = '⬆️ بنرفع الإذن... 0%';
+    const res = await permitScanRequest(
+      { client_id: user.id, username: user.username || '', image_base64: b64, mime },
+      p => { prog.textContent = p < 100 ? `⬆️ بنرفع الإذن... ${p}%` : '🤖 بنقرأ الإذن... ثوانى'; }
+    );
+    if (!res || !res.ok) {
+      const map = {
+        unreadable: 'مقدرتش أقرأ الإذن — صوّره تانى بوضوح وفى نور كويس والورقة كاملة',
+        code_mismatch: 'الإذن ده مش بكود عميلك — مرفوض',
+        belongs_to_other: 'الإذن ده متسجل لتاجر تانى — مرفوض',
+        too_many: 'عديت الحد اليومى لتصوير الأذونات — حاول بكرة أو كلم الإدارة',
+        too_big: 'الملف كبير أوى — صوّر بجودة أقل',
+        network: 'النت قطع أثناء الرفع — حاول تانى',
+        timeout: 'الرفع خد وقت طويل — حاول تانى',
+      };
+      prog.style.color = 'var(--error)';
+      prog.textContent = '❌ ' + (res && (map[res.error] || res.message)) || '❌ فشل — حاول تانى';
+      return;
+    }
+    prog.style.color = 'var(--success)';
+    prog.textContent = res.existing ? '✅ الإذن ده كان متسجل بالفعل' : (res.telegram_sent ? '✅ اتسجل الإذن — والشرح وصلك على تليجرام كمان' : '✅ اتسجل الإذن بنجاح');
+    const scannedNo = String((res.permit && res.permit.permit_no) || '');
+    if (scannedNo && scannedNo !== String(bk.permit)) {
+      // الرقم المقروء من الصورة هو المعتمد
+      document.getElementById('permitInput').value = scannedNo;
+      bk.permit = scannedNo;
+      msgEl.textContent = `ℹ️ رقم الإذن فى الصورة ${scannedNo} — اتعدل تلقائى`;
+      msgEl.style.color = 'var(--gold)';
+    }
+    document.getElementById('permitScanBox').style.display = 'none';
+    await goStep2();
+  } catch (e) {
+    prog.style.color = 'var(--error)';
+    prog.textContent = '❌ حصل خطأ فى قراءة الملف — حاول تانى';
+  } finally {
+    input.value = '';
+  }
 }
 
 // ===================== CALENDAR =====================
@@ -3268,11 +3464,31 @@ async function loadSlots() {
       totals[b.time_slot] = (totals[b.time_slot] || 0) + (b.count || 0);
     });
 
+    // 📦 القاعدة الجديدة: السعة بالقطع مع الترحيل — من السيرفر (داخلى، التاجر بيشوف متاح/ممتلئ بس)
+    bk.slotMax = null;
+    if (bk.permitId) {
+      try {
+        const rs = await fetch(`${SB}/rest/v1/rpc/slot_capacity_info`, {
+          method: 'POST', headers: { ...HDR, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_warehouse: bk.warehouse, p_vtype: bk.vehicle, p_date: bk.dateStr, p_permit_id: bk.permitId })
+        });
+        const ci = await rs.json();
+        if (ci && ci.ok && ci.rule_active && Array.isArray(ci.slots)) {
+          bk.slotMax = {};
+          ci.slots.forEach(x => { bk.slotMax[x.hour] = Number(x.max_vehicles) || 0; });
+        }
+      } catch (_) { bk.slotMax = null; }
+    }
+
     let html = '';
     let availableCount = 0;
     slots.forEach(sl => {
       const used = totals[sl] || 0;
-      const rem  = bk.cap - used;
+      let rem  = bk.cap - used;
+      if (bk.slotMax) {
+        const sh = slotStartHour24(sl, hours.ws, hours.we);
+        if (sh != null && bk.slotMax[sh] != null) rem = bk.slotMax[sh];   // السيرفر هو المرجع
+      }
       // 🚫 Hide full slots completely (used to show "ممتلئ ❌")
       if (rem <= 0) return;
       availableCount++;
@@ -3306,14 +3522,15 @@ function pickSlot(sl, el, rem) {
     const row = bk.limitsForRange.find(r => r.effective_from <= bk.dateStr);
     if (row) bk.perBookingMax = row.per_booking_vehicles;
   }
-  const cap = Math.min(bk.perBookingMax || 10, rem);
+  const cap = permitCap(Math.min(bk.perBookingMax || 10, rem));
   bk.count = Math.min(bk.count, cap);
   document.getElementById('cntNum').textContent = bk.count;
 }
 
 // ===================== COUNT =====================
+function permitCap(x) { return (bk.permitLeft != null) ? Math.min(x, bk.permitLeft) : x; }
 function chCnt(d) {
-  const mx = Math.min(bk.perBookingMax || 10, bk.remaining);
+  const mx = permitCap(Math.min(bk.perBookingMax || 10, bk.remaining));
   bk.count = Math.max(1, Math.min(mx, bk.count + d));
   document.getElementById('cntNum').textContent = bk.count;
 }
@@ -3329,7 +3546,7 @@ function buildSummary() {
     new Date(bk.dateStr + 'T12:00:00').toLocaleDateString('ar-EG', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   document.getElementById('sSlot').textContent  = bk.slot;
   document.getElementById('sCount').textContent = bk.count + ' عربية';
-  document.getElementById('cntInfo').textContent = `الحد الأقصى ${Math.min(bk.perBookingMax || 10, bk.remaining)} عربية في هذا الموعد`;
+  document.getElementById('cntInfo').textContent = `الحد الأقصى ${permitCap(Math.min(bk.perBookingMax || 10, bk.remaining))} عربية في هذا الموعد` + ((bk.permitLeft != null) ? ` — باقى على الإذن ${bk.permitLeft}` : '');
   document.getElementById('bConfirm').textContent = editMode ? '💾 حفظ التعديل' : '💾 حفظ الحجز';
 }
 
@@ -3426,6 +3643,7 @@ async function confirm_booking() {
           warehouse: bk.warehouse, vehicle_type: bk.vehicle, count: bk.count,
           loading_date: bk.dateStr, time_slot: bk.slot,
           permit_number: bk.permit || null,
+          permit_id: bk.permitId || null,
           status: 'قيد الانتظار'
         })
       });
@@ -3469,7 +3687,7 @@ async function confirm_booking() {
           `${snap.warehouse} | ${snap.vehicle_type} | ${snap.count} عربية<br>${snap.time_slot}`,
           'edit'
         );
-      } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
+      } else { showErr(await permitErrText(res, 'حدث خطأ في التعديل، حاول مرة أخرى')); }
 
     } else {
       // POST
@@ -3481,6 +3699,7 @@ async function confirm_booking() {
           count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot,
           phone: user.phone || null, governorate: user.governorate || null,
           permit_number: bk.permit || null,
+          permit_id: bk.permitId || null,
           status: 'قيد الانتظار'
         })
       });
@@ -3507,11 +3726,22 @@ async function confirm_booking() {
           `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
           'new'
         );
-      } else { showErr('حدث خطأ في الحجز، حاول مرة أخرى'); }
+      } else { showErr(await permitErrText(res, 'حدث خطأ في الحجز، حاول مرة أخرى')); }
     }
 
   } catch(e) { showErr('خطأ في الاتصال بالسيرفر'); }
   resetBtn();
+}
+
+// رسالة الرفض من السيرفر (تريجر الأذونات) بدل الرسالة العامة
+async function permitErrText(res, dflt) {
+  try {
+    const j = await res.json();
+    const m = String((j && (j.message || j.details)) || '');
+    const hit = m.match(/(?:PERMIT|CAPACITY)_[A-Z_]+:\s*(.+)$/);
+    if (hit) return '⛔ ' + hit[1].trim();
+  } catch (_) {}
+  return dflt;
 }
 
 function resetBtn() {
@@ -3649,7 +3879,7 @@ function exitEditMode() {
   editMode = null;
   document.getElementById('editBanner').classList.remove('show');
   bk.warehouse = null; bk.vehicle = null; bk.cap = 0;
-  bk.dateStr   = null; bk.slot    = null; bk.remaining = 10; bk.count = 1; bk.permit = null;
+  bk.dateStr   = null; bk.slot    = null; bk.remaining = 10; bk.count = 1; bk.permit = null; bk.permitId = null; bk.permitLeft = null;
   document.querySelectorAll('.opt').forEach(o => o.classList.remove('sel'));
   ['b1','b2','b3','b4'].forEach(id => document.getElementById(id).disabled = true);
   document.getElementById('permitCard').style.display = 'none';
