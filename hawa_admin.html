@@ -3166,6 +3166,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <div id="pm-rule-state" style="font-size:12px;align-self:center"></div>
         </div>
 
+        <div class="tbl-scroll-body">
         <div id="pm-pane-list">
           <div class="tbl-filters">
             <input class="filter-inp" id="pm-q" type="text" placeholder="🔍 رقم الإذن / اسم التاجر / الكود..." oninput="pmRender()" style="width:240px">
@@ -3201,6 +3202,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         </div>
         <div id="pm-pane-settings" style="display:none">
           <div id="pm-settings"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+        </div>
         </div>
       </div>
     </div>
@@ -7366,6 +7368,10 @@ async function pmOpen(id){
         ${d.bookings.map(b=>`<tr style="border-top:1px solid var(--border)"><td style="padding:5px">${b.seq_number||b.id}</td><td>${escAttr(b.warehouse)}</td><td>${escAttr(b.vehicle_type)}</td><td style="text-align:center">${b.count}</td><td>${escAttr(b.loading_date)} ${escAttr(b.time_slot||'')}</td><td>${escAttr(b.status)}</td></tr>`).join('')}
       </table>` : emptyBox('لسه مفيش حجوزات على الإذن ده')}
 
+      ${p.legacy_locked ? `<div style="background:rgba(224,85,85,.10);border:1px solid var(--error);border-radius:10px;padding:10px;margin-top:14px;font-size:12.5px;line-height:1.8">
+        🔒 <b>إذن قديم (قبل تشغيل النظام)</b> — بيتعامل كأنه اتحمّل بالكامل. ${d.grace_open ? 'تقدر تفتحه <b>مرة واحدة</b> لو التاجر عنده ملاحظة صح، وهيتحسب رصيده من الكميات اللى على الإذن.' : '<b>فترة السماح انتهت</b> — مينفعش يتفتح.'}
+        ${d.grace_open ? `<div style="margin-top:8px"><button class="act-btn edit" onclick="pmUnlock(${p.id})">🔓 فتح الإذن لمرة واحدة</button></div>` : ''}
+      </div>` : (p.unlocked_at ? `<div style="font-size:11.5px;color:var(--text-dim);margin-top:10px">🔓 اتفتح يدوياً ${arDT(p.unlocked_at)}</div>` : '')}
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
         ${p.status==='ملغى'
           ? `<button class="act-btn edit" onclick="pmSetStatus(${p.id},'نشط')">↩️ إعادة تفعيل الإذن</button>`
@@ -7384,6 +7390,12 @@ async function pmAddAllow(pid){
   if(!wh||!vt) return;
   try{ await rpcSecure('admin_permit_add_allowance', { p_permit_id: pid, p_warehouse: wh, p_vehicle_type: vt, p_vehicles_max: isNaN(n)?0:n }); await pmOpen(pid); pmLoad(); }
   catch(e){ alert('⚠️ '+(e.message||'فشل الإضافة')); }
+}
+function pmUnlock(pid){
+  showConfirm('🔓','فتح إذن قديم لمرة واحدة','هيتحسب رصيده من الكميات اللى على الإذن ويبقى التاجر يقدر يحجز عليه. ده بيتعمل مرة واحدة بس. متأكد؟', true, async()=>{
+    try{ const r = await rpcSecure('admin_permit_unlock_once', { p_id: pid, p_note: 'فتح لمرة واحدة من الأدمن' }); if(r && r.ok===false) alert('⚠️ '+r.error); await pmOpen(pid); pmLoad(); }
+    catch(e){ alert('⚠️ '+(e.message||'فشل')); }
+  });
 }
 function pmSetStatus(pid, st){
   const danger = st==='ملغى';
@@ -7469,6 +7481,14 @@ async function pmLoadSettings(){
           <button class="act-btn edit" style="font-size:12px" onclick="document.getElementById('pm-set-since').value=''">✖️ تفريغ (إيقاف)</button>
           <span style="font-size:12px">${s.rule_active?pill('🟢 مفعّلة دلوقتى','var(--success)'):pill('⚪ مقفولة دلوقتى','var(--text-dim)')}</span>
         </div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:12.5px">
+          <label>الأذونات اللى تاريخها قبل <input type="date" id="pm-set-cutoff" class="filter-inp" value="${escAttr(s.old_cutoff||'')}" style="width:160px;margin-right:6px"> بتتعامل كأنها اتحمّلت بالكامل</label>
+          <label>وتقدر تفتحها مرة واحدة لحد <input type="date" id="pm-set-grace" class="filter-inp" value="${escAttr(s.grace_until||'')}" style="width:160px;margin-right:6px"></label>
+        </div>
+        <div style="margin-top:10px;font-size:12.5px">
+          <label>🧪 تفعيل تجريبى لأرقام حسابات معينة (قبل التفعيل العام) — أرقام العملاء مفصولة بفاصلة:
+            <input type="text" id="pm-set-pilot" class="filter-inp" value="${escAttr(s.pilot_clients||'')}" placeholder="مثال: 850, 912" style="width:220px;margin-right:6px"></label>
+        </div>
       </div>
 
       <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
@@ -7540,7 +7560,10 @@ async function pmSaveSettings(){
     try{
       await rpcSecure('admin_permit_settings_save', { p_rule_since: since, p_types: types, p_store_map: map,
         p_carry_mode: document.getElementById('pm-set-carry')?.value || null,
-        p_carry_pct: parseInt(document.getElementById('pm-set-carrypct')?.value||'30',10) });
+        p_carry_pct: parseInt(document.getElementById('pm-set-carrypct')?.value||'30',10),
+        p_old_cutoff: document.getElementById('pm-set-cutoff')?.value || '',
+        p_grace_until: document.getElementById('pm-set-grace')?.value || '',
+        p_pilot: document.getElementById('pm-set-pilot')?.value || '' });
       if(msg){ msg.textContent = '✅ اتحفظ'; msg.style.color='var(--success)'; }
       _pmSettings = null; pmRuleState(); pmLoadSettings();
     }catch(e){ if(msg){ msg.textContent = '⚠️ '+(e.message||'فشل الحفظ'); msg.style.color='var(--error)'; } }
