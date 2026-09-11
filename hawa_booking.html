@@ -4653,6 +4653,7 @@ async function sendTelegramConfirm(booking) {
     date_label:    dateLabel,
     time_slot:     booking.time_slot    || bk.slot,
     permit_number: booking.permit_number || bk.permit || null,
+    units:         booking.units ?? null,
     is_edit:       isEdit
   };
 
