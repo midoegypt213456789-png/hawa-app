@@ -784,7 +784,7 @@
         <div style="font-size:16.5px;font-weight:800;color:var(--gold-light);margin-top:6px">الاستعلام عن موديل</div>
         <div style="font-size:12px;color:#999;margin-top:6px;line-height:1.8">اكتب اسم الموديل (زى: دايون، ATLAS، فيجورى ماكس) وهتطلعلك كل تفاصيله: الصور، الألوان، المواصفات، الفيديو والـ3D</div>
       </div>
-      <input id="mdlInput" class="blt-input" placeholder="اسم الموديل..." autocomplete="off" onkeypress="if(event.key==='Enter')mdlSearch(false)">
+      <input id="mdlInput" class="blt-input" type="text" lang="ar" dir="auto" inputmode="text" autocapitalize="off" spellcheck="false" style="letter-spacing:0" placeholder="اسم الموديل بالعربى أو الإنجليزى..." autocomplete="off" onkeypress="if(event.key==='Enter')mdlSearch(false)">
       <div style="display:flex;gap:8px">
         <button class="blt-go" style="flex:1" onclick="mdlSearch(false)">🔍 استعلم</button>
         <button class="blt-go" style="flex:1;background:transparent;border:1px solid var(--gold);color:var(--gold)" onclick="mdlSearch(true)">📋 كل الموديلات</button>
