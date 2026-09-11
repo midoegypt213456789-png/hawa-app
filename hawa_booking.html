@@ -665,6 +665,7 @@
           oninput="onPermitInput()" />
         <div id="permitMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
         <div id="permitAllow" style="display:none;margin-top:10px"></div>
+        <div id="qtyPanel" style="display:none;margin-top:12px"></div>
         <div id="permitScanBox" style="display:none;margin-top:10px">
           <div id="permitScanHint" style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.7">الإذن ده لسه متسجلش عندنا — صوّره مرة واحدة بس، وبعدها هيتقبل بالرقم على طول</div>
           <button type="button" onclick="openPermitCamera()" style="display:block;width:100%;text-align:center;cursor:pointer;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:15px;font-family:inherit">📷 صوّر الإذن</button>
@@ -3134,6 +3135,7 @@ function pick(field, val, el, step) {
 
 function hidePermitExtras() {
   bk.permitId = null; bk.permitLeft = null; bk.permitAllow = null;
+  const qp = document.getElementById('qtyPanel'); if (qp) { qp.style.display = 'none'; qp.innerHTML = ''; }
   const a = document.getElementById('permitAllow'); if (a) { a.style.display = 'none'; a.innerHTML = ''; }
   const s = document.getElementById('permitScanBox'); if (s) s.style.display = 'none';
   const p = document.getElementById('permitScanProg'); if (p) p.textContent = '';
@@ -3435,7 +3437,128 @@ async function permitFlowNew(lk, permit) {
   msgEl.style.color = 'var(--success)';
   const vm = document.getElementById('vehPermitMsg'); if (vm) vm.textContent = '';
   try { await loadVehicleTypesData(); renderVehicleOptions(); } catch (_) {}
-  b1.disabled = false;
+  // 📦 شاشة الكميات (المطلوب تحميله لكل نوع) + اقتراح أقرب ميعاد
+  b1.disabled = true;
+  await qtyLoad();
+}
+
+// ===================== 📦 الكميات + اقتراح الميعاد =====================
+let _qty = { rows: [], perMax: 10, suggest: null, options: [] };
+const AR_DAYS = ['الأحد','الاتنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+function fmtSlotHour(h){ const f = x => x > 12 ? x - 12 : x; return `${f(h)}:00 - ${f(h+1)}:00`; }
+function fmtDayAr(ds){ const d = new Date(ds + 'T12:00:00'); return `${AR_DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; }
+async function qtyLoad(){
+  const panel = document.getElementById('qtyPanel'); if (!panel) return;
+  panel.style.display = ''; panel.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:12px">⏳ بنجهّز الكميات...</div>';
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/permit_quantities`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' },
+      body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_permit_id: bk.permitId, p_warehouse: bk.warehouse }) });
+    const j = await r.json();
+    if (!j || !j.ok || !Array.isArray(j.rows) || !j.rows.length) { panel.innerHTML = '<div style="text-align:center;color:var(--error);font-size:12px">مفيش كميات متاحة على الإذن ده فى المخزن ده</div>'; return; }
+    _qty = { rows: j.rows.map(x => ({ ...x, available: Math.max(0, (x.qty_net||0) - (x.units_booked||0)), req: 0 })), perMax: Number(j.per_booking_max)||10, suggest: null, options: [] };
+    qtyRender();
+  } catch (e) { panel.innerHTML = '<div style="text-align:center;color:var(--error);font-size:12px">⚠️ مشكلة فى الاتصال — حاول تانى</div>'; }
+}
+function qtyRender(){
+  const panel = document.getElementById('qtyPanel'); if (!panel) return;
+  panel.innerHTML = `
+    <div style="background:var(--dark3);border:1px solid var(--gold);border-radius:12px;padding:12px">
+      <div style="font-weight:800;font-size:13.5px;margin-bottom:8px;text-align:center">📦 عايز تحمّل كام النهاردة من ${esc(bk.warehouse)}؟</div>
+      <table style="width:100%;font-size:12.5px;border-collapse:collapse">
+        <tr style="color:var(--text-dim);font-size:11px"><th style="text-align:right;padding:4px">النوع</th><th style="padding:4px">الإجمالى المتاح</th><th style="padding:4px">المطلوب تحميله</th><th style="padding:4px">المتبقى</th></tr>
+        ${_qty.rows.map((r,i)=>`<tr style="border-top:1px solid var(--border)">
+          <td style="padding:7px 4px;font-weight:700">${esc(r.vehicle_type)}</td>
+          <td style="text-align:center">${r.available}</td>
+          <td style="text-align:center"><input type="number" inputmode="numeric" min="0" max="${r.available}" value="${r.req||''}" placeholder="0" oninput="qtyInput(${i}, this.value)" style="width:78px;text-align:center;background:var(--dark2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:6px;font-family:inherit;font-weight:700"></td>
+          <td style="text-align:center" id="qty-left-${i}">${r.available - (r.req||0)}</td>
+        </tr>`).join('')}
+      </table>
+      <div id="qtySummary" style="margin-top:10px;text-align:center;font-size:12.5px;line-height:1.8"></div>
+      <div id="qtySuggest" style="margin-top:8px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn-gold" id="qtyGo" style="flex:1" onclick="qtySuggest()" disabled>🔍 اقترح لى أقرب ميعاد</button>
+      </div>
+      <div style="text-align:center;margin-top:8px"><a href="javascript:void(0)" onclick="qtyManual()" style="font-size:11.5px;color:var(--text-dim);text-decoration:underline">أو اختار النوع واليوم والساعة بنفسى</a></div>
+    </div>`;
+  qtySummary();
+}
+function qtyInput(i, v){
+  const r = _qty.rows[i]; if (!r) return;
+  let n = parseInt(arabicToEnglish(v).replace(/[^\d]/g,''), 10); if (isNaN(n) || n < 0) n = 0;
+  if (n > r.available) n = r.available;
+  r.req = n;
+  const left = document.getElementById('qty-left-'+i); if (left) left.textContent = r.available - n;
+  _qty.suggest = null; const sg = document.getElementById('qtySuggest'); if (sg) sg.innerHTML = '';
+  qtySummary();
+}
+function qtyPlan(){ return _qty.rows.filter(r => r.req > 0).map(r => ({ vehicle_type: r.vehicle_type, units: r.req, vehicles: Math.ceil(r.req / (r.units_per_vehicle||50)) })); }
+function qtySummary(){
+  const el = document.getElementById('qtySummary'), btn = document.getElementById('qtyGo'); if (!el) return;
+  const plan = qtyPlan();
+  if (!plan.length) { el.innerHTML = '<span style="color:var(--text-dim)">اكتب الكمية اللى عايز تحمّلها لكل نوع</span>'; if (btn) btn.disabled = true; return; }
+  const over = plan.filter(p => p.vehicles > _qty.perMax);
+  const total = plan.reduce((s,p)=>s+p.vehicles,0);
+  el.innerHTML = plan.map(p => `${esc(p.vehicle_type)}: ${p.units} قطعة = <b>${p.vehicles} عربية</b>`).join(' · ') + `<br><b style="color:var(--gold-light)">الإجمالى: ${total} عربية</b>` +
+    (over.length ? `<br><span style="color:var(--error)">⛔ الحد الأقصى ${_qty.perMax} عربية فى الحجز الواحد — قلّل كمية ${esc(over[0].vehicle_type)}</span>` : '');
+  if (btn) btn.disabled = over.length > 0;
+}
+async function qtySuggest(){
+  const box = document.getElementById('qtySuggest'), btn = document.getElementById('qtyGo');
+  const plan = qtyPlan(); if (!plan.length) return;
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ بندوّر على أقرب ميعاد...'; }
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/suggest_slot`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' },
+      body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_warehouse: bk.warehouse, p_permit_id: bk.permitId, p_requests: plan.map(p => ({ vehicle_type: p.vehicle_type, units: p.units })) }) });
+    const j = await r.json();
+    if (!j || !j.ok) throw new Error('x');
+    // الاختيار 1: مع بعض (أول ساعة تسع الكل) — الاختيار 2: مقسّم (أبكر، على أكتر من ساعة)
+    const together = j.together ? plan.map(p => ({ vehicle_type: p.vehicle_type, units: p.units, vehicles: p.vehicles, date: j.together.date, hour: j.together.hour })) : null;
+    const split = (Array.isArray(j.split) && j.split.length && j.split_complete) ? j.split.map(c => ({ vehicle_type: c.vehicle_type, units: c.units, vehicles: c.vehicles, date: c.date, hour: c.hour })) : null;
+    const sameAsTogether = together && split && split.length === together.length && split.every(c => together.find(t => t.vehicle_type === c.vehicle_type && t.date === c.date && t.hour === c.hour && t.units === c.units));
+    const opts = [];
+    if (split && !sameAsTogether) opts.push({ key: 'split', title: '⚡ أبكر — مقسّم على أكتر من ساعة', reqs: split });
+    if (together) opts.push({ key: 'together', title: split && !sameAsTogether ? '📦 مع بعض — كله فى ساعة واحدة' : '📅 أقرب ميعاد متاح', reqs: together });
+    if (!opts.length && split) opts.push({ key: 'split', title: '📅 أقرب مواعيد متاحة (مقسّم)', reqs: split });
+    if (!opts.length) { box.innerHTML = '<div style="color:var(--error);font-size:12px;text-align:center">😕 مفيش ميعاد متاح خلال الأسبوع الجاى للكميات دى — قلّل الكمية أو اختار بنفسك</div>'; return; }
+    _qty.options = opts; _qty.suggest = null;
+    const groupLines = reqs => {
+      const g = {}; reqs.forEach(r => { const k = r.date + '|' + r.hour; (g[k] = g[k] || []).push(r); });
+      return Object.keys(g).sort().map(k => { const [d,h] = k.split('|'); return `• <b>${fmtDayAr(d)}</b> الساعة <b>${fmtSlotHour(parseInt(h,10))}</b>: ` + g[k].map(r => `${esc(r.vehicle_type)} ${r.vehicles} عربية (${r.units} قطعة)`).join(' + '); }).join('<br>');
+    };
+    box.innerHTML = opts.map((o, i) => `<div style="background:rgba(201,168,76,.10);border:1px solid var(--gold);border-radius:10px;padding:10px;font-size:12.5px;line-height:1.9;margin-bottom:8px">
+      <div style="font-weight:800;margin-bottom:4px">${o.title}</div>
+      ${groupLines(o.reqs)}
+      <div style="display:flex;gap:8px;margin-top:10px"><button class="btn-gold" style="flex:1" onclick="qtyBook(${i})">✅ احجز ده</button></div>
+    </div>`).join('') + (opts.length > 1 ? '<div style="text-align:center;font-size:11px;color:var(--text-dim)">اختار اللى يريحك — الاتنين بيخصموا نفس الكمية من الإذن</div>' : '');
+  } catch (e) { box.innerHTML = '<div style="color:var(--error);font-size:12px;text-align:center">⚠️ مشكلة فى الاتصال — حاول تانى</div>'; }
+  finally { if (btn) { btn.disabled = false; btn.textContent = '🔍 اقترح لى أقرب ميعاد'; } }
+}
+async function qtyBook(optIdx){
+  const opt = (_qty.options || [])[optIdx || 0];
+  const reqs = opt ? opt.reqs : _qty.suggest; if (!reqs || !reqs.length) return;
+  const box = document.getElementById('qtySuggest');
+  box.querySelectorAll('button').forEach(b => { b.disabled = true; b.textContent = '⏳ بنحجز...'; });
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/book_from_permit`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' },
+      body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_warehouse: bk.warehouse, p_permit_id: bk.permitId,
+        p_requests: reqs.map(x => ({ vehicle_type: x.vehicle_type, units: x.units, date: x.date, hour: x.hour })) }) });
+    const j = await r.json();
+    if (!j || !j.ok) { showErr('⛔ ' + ((j && j.error) || 'فشل الحجز')); qtySuggest(); return; }
+    const list = j.bookings || [];
+    list.forEach(b => {
+      try { logActivity('cl_create_booking','➕ حجز جديد #'+(b.seq_number||b.id),{ booking_id:b.id, seq_number:b.seq_number, warehouse:b.warehouse, vehicle_type:b.vehicle_type, count:b.count, loading_date:b.loading_date, time_slot:b.time_slot }); } catch(_){}
+      try { sendTelegramConfirm(b); } catch(_){}
+    });
+    showSuccessScreen(
+      list.length === 1 ? `تم الحجز بنجاح! #${list[0].seq_number||list[0].id}` : `تم الحجز بنجاح! (${list.length} حجوزات)`,
+      list.map(b => `#${b.seq_number||b.id} — ${esc(b.warehouse)} | ${esc(b.vehicle_type)} | ${b.count} عربية (${b.units} قطعة)<br>${fmtDayAr(b.loading_date)} ${esc(b.time_slot)}`).join('<br>'),
+      'new'
+    );
+  } catch (e) { showErr('خطأ فى الاتصال بالسيرفر'); qtySuggest(); }
+}
+function qtyManual(){
+  // المسار اليدوى: النوع → اليوم → الساعة → العدد (زى النظام العادى)
+  const b1 = document.getElementById('b1'); if (b1) b1.disabled = false;
   go(2);
 }
 
@@ -3984,12 +4107,12 @@ async function confirm_booking() {
     //    الحجوزات القديمة (loading_date < today) مش بـ تتحسب هنا — دى بتدخل no-show counter
     const todayForOpen = `${new Date().getFullYear()}-${String(new Date().getMonth()+1).padStart(2,'0')}-${String(new Date().getDate()).padStart(2,'0')}`;
     const openEnd = getRollingEnd(limits.open_bookings_period, todayForOpen);
-    const or  = await fetch(`${SB}/rest/v1/bookings?select=id,loading_date&client_id=eq.${user.id}&status=eq.${encodeURIComponent('قيد الانتظار')}&loading_date=gte.${todayForOpen}&loading_date=lte.${openEnd}`, { headers: HDR });
+    const or  = await fetch(`${SB}/rest/v1/bookings?select=id,loading_date&client_id=eq.${user.id}&vehicle_type=eq.${encodeURIComponent(bk.vehicle)}&status=eq.${encodeURIComponent('قيد الانتظار')}&loading_date=gte.${todayForOpen}&loading_date=lte.${openEnd}`, { headers: HDR });
     const od  = await or.json();
     const openCount = od.filter(b => !(editMode && b.id === editMode.id)).length;
     if (openCount >= limits.open_bookings_max) {
       const pl = periodLabelAr(limits.open_bookings_period);
-      showErr(`عندك ${openCount} حجز مفتوح فى ${pl} الجاى\nحمّل واحد منهم قبل ما تحجز جديد (الحد ${limits.open_bookings_max})`);
+      showErr(`عندك ${openCount} حجز ${bk.vehicle} مفتوح فى ${pl} الجاى\nحمّل واحد منهم قبل ما تحجز جديد (الحد ${limits.open_bookings_max} لكل نوع)`);
       resetBtn(); return;
     }
 
