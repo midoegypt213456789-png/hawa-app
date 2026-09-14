@@ -7354,6 +7354,10 @@ async function pmOpen(id){
           <td style="text-align:center"><button class="act-btn edit" style="font-size:11px" onclick="pmSetAllow(${p.id},${a.id})">💾</button></td>
         </tr>`).join('') || `<tr><td colspan="6">${emptyBox('مفيش صفوف رصيد — ضيف واحد تحت')}</td></tr>`}
       </table>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+        <button class="act-btn edit" onclick="pmRescan(${p.id})">🔁 إعادة قراءة الإذن من الصورة</button>
+        <span id="pm-rescan-msg" style="font-size:11.5px;color:var(--text-dim)"></span>
+      </div>
       <div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--text-dim)">➕ إضافة رصيد يدوى:</span>
         <select id="pm-add-wh" class="filter-inp" style="width:120px">${whs.map(w=>`<option>${escAttr(w)}</option>`).join('')}</select>
@@ -7390,6 +7394,19 @@ async function pmAddAllow(pid){
   if(!wh||!vt) return;
   try{ await rpcSecure('admin_permit_add_allowance', { p_permit_id: pid, p_warehouse: wh, p_vehicle_type: vt, p_vehicles_max: isNaN(n)?0:n }); await pmOpen(pid); pmLoad(); }
   catch(e){ alert('⚠️ '+(e.message||'فشل الإضافة')); }
+}
+async function pmRescan(pid){
+  const msg = document.getElementById('pm-rescan-msg');
+  if (msg) { msg.textContent = '⏳ بنعيد القراءة بالموديل الدقيق... (لحد 30 ثانية)'; msg.style.color = 'var(--text-dim)'; }
+  try{
+    const r = await fetch(`${SB}/functions/v1/permit-rescan`, { method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ token: SESSION_TOKEN, permit_id: pid }) });
+    const j = await r.json();
+    if (!j || !j.ok) { if (msg) { msg.textContent = '⚠️ ' + ((j && (j.message || j.error)) || 'فشلت إعادة القراءة'); msg.style.color = 'var(--error)'; } return; }
+    const sum = (j.allowances||[]).map(a => `${a.warehouse} ${a.vehicle_type}: ${a.vehicles_max} عربية (${a.qty_net})`).join(' · ') || 'مفيش رصيد';
+    if (msg) { msg.textContent = '✅ ' + sum + ((j.unknown||[]).length ? ` — مخازن مجهولة: ${j.unknown.join('، ')}` : ''); msg.style.color = 'var(--success)'; }
+    setTimeout(()=>{ pmOpen(pid); pmLoad(); }, 1200);
+  }catch(e){ if (msg) { msg.textContent = '⚠️ مشكلة فى الاتصال'; msg.style.color='var(--error)'; } }
 }
 function pmUnlock(pid){
   showConfirm('🔓','فتح إذن قديم لمرة واحدة','هيتحسب رصيده من الكميات اللى على الإذن ويبقى التاجر يقدر يحجز عليه. ده بيتعمل مرة واحدة بس. متأكد؟', true, async()=>{
