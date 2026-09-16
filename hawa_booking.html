@@ -3592,11 +3592,16 @@ async function qtyBook(optIdx){
       try { logActivity('cl_create_booking','➕ حجز جديد #'+(b.seq_number||b.id),{ booking_id:b.id, seq_number:b.seq_number, warehouse:b.warehouse, vehicle_type:b.vehicle_type, count:b.count, loading_date:b.loading_date, time_slot:b.time_slot }); } catch(_){}
       try { sendTelegramConfirm(b); } catch(_){}
     });
+    // شاشة النجاح جوه الخطوة 5 — لازم نظهرها (احنا لسه فى الخطوة 1)
+    document.querySelectorAll('.sec').forEach(el => el.classList.remove('active'));
+    const s5 = document.getElementById('s5'); if (s5) s5.classList.add('active');
+    const qp = document.getElementById('qtyPanel'); if (qp) qp.style.display = 'none';
     showSuccessScreen(
       list.length === 1 ? `تم الحجز بنجاح! #${list[0].seq_number||list[0].id}` : `تم الحجز بنجاح! (${list.length} حجوزات)`,
       list.map(b => `#${b.seq_number||b.id} — ${esc(b.warehouse)} | ${esc(b.vehicle_type)} | ${b.count} عربية (${b.units} قطعة)<br>${fmtDayAr(b.loading_date)} ${esc(b.time_slot)}`).join('<br>'),
       'new'
     );
+    try { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('successScreen').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch(_){}
   } catch (e) { showErr('خطأ فى الاتصال بالسيرفر'); qtySuggest(); }
 }
 function qtyManual(){
