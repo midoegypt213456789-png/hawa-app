@@ -4251,9 +4251,11 @@ async function confirm_booking() {
 async function permitErrText(res, dflt) {
   try {
     const j = await res.json();
-    const m = String((j && (j.message || j.details)) || '');
-    const hit = m.match(/(?:PERMIT|CAPACITY)_[A-Z_]+:\s*(.+)$/);
+    const m = String((j && (j.message || j.details || j.hint)) || '');
+    const hit = m.match(/(?:PERMIT|CAPACITY|DUPLICATE)_[A-Z_]+:\s*(.+)$/);
     if (hit) return '⛔ ' + hit[1].trim();
+    // أى رسالة عربية من السيرفر (تريجرات الحجز) تتعرض زى ما هى بدل الرسالة العامة
+    if (/[\u0600-\u06FF]/.test(m)) return '⛔ ' + m.replace(/^[A-Z_]+:\s*/, '').trim();
   } catch (_) {}
   return dflt;
 }
