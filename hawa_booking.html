@@ -3265,10 +3265,21 @@ async function goStep2() {
   document.getElementById('b1').disabled = true;
 
   // 🧾 نظام الأذونات الجديد — بيشتغل بس لما القاعدة تتفعل من الإعدادات، غير كده المسار القديم
-  try {
-    const lk = await permitLookup(permit);
-    if (lk && lk.ok && lk.rule_active) { await permitFlowNew(lk, permit); return; }
-  } catch (_) { /* لو الاستعلام فشل نكمل بالمسار القديم */ }
+  // القاعدة شغالة على السيرفر: لو الاستعلام فشل (نت ضعيف) منكملش بالمسار القديم — نطلب منه يحاول تانى
+  let lk = null;
+  for (let attempt = 0; attempt < 3 && !lk; attempt++) {
+    try { lk = await permitLookup(permit); } catch (_) { lk = null; }
+    if (!lk && attempt < 2) await new Promise(r => setTimeout(r, 700));
+  }
+  if (lk && lk.ok && lk.rule_active) { await permitFlowNew(lk, permit); return; }
+  if (!lk || !lk.ok) {
+    msgEl.textContent = (lk && lk.error === 'forbidden')
+      ? '⛔ حسابك مش معتمد للحجز — كلم الإدارة'
+      : '⚠️ تعذّر التحقق من الإذن — تأكد من الإنترنت واضغط «التالى» تانى';
+    msgEl.style.color = 'var(--error)';
+    document.getElementById('b1').disabled = false;
+    return;
+  }
 
   let success = false;
   try {
