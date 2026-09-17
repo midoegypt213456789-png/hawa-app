@@ -2,6 +2,25 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<meta name="hawa-build" content="20260917a">
+<script>
+// 🔄 تحديث ذاتى: تليجرام بيكاش صفحة الـ Mini App — نقرأ رقم النسخة الحى ولو اختلف نعيد التحميل بلينك جديد
+(function(){
+  try{
+    var mine=(document.querySelector('meta[name="hawa-build"]')||{}).content||'';
+    if(!mine||sessionStorage.getItem('hawa_upd')===mine) return;
+    fetch(location.pathname+'?vchk='+Date.now(),{cache:'no-store',headers:{'Range':'bytes=0-1500'}})
+      .then(function(r){return r.text();})
+      .then(function(t){
+        var m=t.match(/name="hawa-build" content="([^"]+)"/);
+        if(m&&m[1]!==mine){
+          sessionStorage.setItem('hawa_upd',m[1]);
+          var u=new URL(location.href); u.searchParams.set('v',m[1]); location.replace(u.toString());
+        }
+      }).catch(function(){});
+  }catch(_){}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>HAWA CO - حجز دور</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
