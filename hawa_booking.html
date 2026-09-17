@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="hawa-build" content="20260917a">
+<meta name="hawa-build" content="20260917b">
 <script>
 // 🔄 تحديث ذاتى: تليجرام بيكاش صفحة الـ Mini App — نقرأ رقم النسخة الحى ولو اختلف نعيد التحميل بلينك جديد
 (function(){
@@ -3408,7 +3408,7 @@ function pickVehicle(v, cap, el) {
 async function permitLookup(permit) {
   const r = await fetch(`${SB}/rest/v1/rpc/permit_lookup`, {
     method: 'POST', headers: { ...HDR, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_permit_no: String(permit) })
+    body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_permit_no: String(permit), p_exclude_booking: (editMode && editMode.id) ? editMode.id : null })
   });
   return await r.json();
 }
@@ -3467,6 +3467,14 @@ async function permitFlowNew(lk, permit) {
   msgEl.style.color = 'var(--success)';
   const vm = document.getElementById('vehPermitMsg'); if (vm) vm.textContent = '';
   try { await loadVehicleTypesData(); renderVehicleOptions(); } catch (_) {}
+  // ✏️ وضع التعديل: الحجز اللى بنعدّله مش محسوب من الرصيد (السيرفر استثناه) — نكمّل بمسار التعديل العادى (حفظ على نفس الحجز)
+  if (editMode && editMode.id) {
+    const qp = document.getElementById('qtyPanel'); if (qp) { qp.style.display = 'none'; qp.innerHTML = ''; }
+    msgEl.textContent = `✏️ تعديل حجز #${editMode.seq_number || editMode.id} — ` + here.map(x => `${x.vehicle_type}: متاح ${x.left}`).join(' · ');
+    b1.disabled = false;
+    go(2);
+    return;
+  }
   // 📦 شاشة الكميات (المطلوب تحميله لكل نوع) + اقتراح أقرب ميعاد
   b1.disabled = true;
   await qtyLoad();
