@@ -3024,6 +3024,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         </div>
       </div>
 
+      <div id="arp-box-fbc" class="arp-box"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="fbc-tabs">
         <button class="tab-pill active" id="fbc-tab-queue" onclick="fbcTab('queue')">📥 المراجعة والسجل <span id="fbc-review-count" style="display:none;background:var(--error);color:#fff;border-radius:10px;padding:0 7px;font-size:11px;margin-inline-start:4px"></span></button>
         <button class="tab-pill" id="fbc-tab-policies" onclick="fbcTab('policies')">🎯 السياسات (إيه اللى يتعمل مع كل نوع)</button>
@@ -3038,6 +3039,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
               <option value="review">⏳ منتظر موافقتك</option>
               <option value="">📋 الكل</option>
               <option value="queued">🕒 فى الطابور</option>
+              <option value="shadow">🕶️ تدريب (الرد كان مقفول)</option>
               <option value="done">✅ تم التنفيذ</option>
               <option value="skipped">➖ متجاهَل</option>
               <option value="rejected">❌ مرفوض</option>
@@ -3995,6 +3997,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <h2>🤖 المساعد الذكى</h2>
         <button class="add-btn" onclick="loadAiAssistant()">🔄 تحديث</button>
       </div>
+      <div id="arp-box-ai" class="arp-box"></div>
       <div id="ai-persona-box" style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start" id="ai-grid">
         <div id="kb-inline-box" style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:20px"></div>
@@ -8299,6 +8302,7 @@ async function kbDelete(id){
 // ═══════════ 🤖 شاشة المساعد الذكى الكاملة ═══════════
 async function loadAiAssistant(){
   _kbTarget = 'kb-inline-box';
+  if(typeof arpRender==='function') arpRender();
   aiRenderPersona();
   renderKnowledgeBase();
   loadAiConversations();
@@ -17383,7 +17387,7 @@ if (typeof goTo === 'function' && typeof _hawa_originalGoTo !== 'function'){
 // ═══════════════════════════════════════════════════════════
 const FBC_FN = `${SB}/functions/v1/fb-comment-brain`;
 const FBC_INTENT_LABELS = { question:'❓ سؤال', price:'💰 سعر', praise:'👏 مدح', sarcasm:'😅 تريقة', complaint:'😠 شكوى', insult:'🚫 إساءة', spam:'🗑️ سبام', mention:'🏷️ منشن', emoji:'🙂 إيموجى', other:'💬 عادى' };
-const FBC_STATUS_LABELS = { new:'🆕 جديد', review:'⏳ منتظر موافقتك', queued:'🕒 فى الطابور', running:'⚙️ بيتنفذ', done:'✅ تم', skipped:'➖ متجاهَل', rejected:'❌ مرفوض', failed:'⚠️ فشل' };
+const FBC_STATUS_LABELS = { new:'🆕 جديد', shadow:'🕶️ تدريب (الرد مقفول)', review:'⏳ منتظر موافقتك', queued:'🕒 فى الطابور', running:'⚙️ بيتنفذ', done:'✅ تم', skipped:'➖ متجاهَل', rejected:'❌ مرفوض', failed:'⚠️ فشل' };
 let _fbcRows = [], _fbcPolicies = [], _fbcSettings = {}, _fbcTab = 'queue', _fbcLoaded = false;
 
 function fbcTab(t){
@@ -17414,8 +17418,8 @@ async function fbcLoad(){
   }catch(e){ document.getElementById('fbc-list').innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'خطأ فى التحميل')}</div>`; return; }
   const pill = document.getElementById('fbc-engine-pill');
   const on = _fbcSettings.fb_c_enabled!=='0' && _fbcSettings.fb_c_engine!=='0';
-  if(pill){ pill.textContent = on ? (_fbcSettings.fb_c_review_mode==='1' ? '🟢 شغال — وضع المراجعة' : '🟢 شغال — أوتوماتيك') : '🔴 المحرك مقفول'; pill.style.color = on ? 'var(--success)' : 'var(--error)'; pill.style.borderColor = on ? 'rgba(76,175,125,0.5)' : 'rgba(224,85,85,0.5)'; }
-  fbcTab(_fbcTab); fbcRender(); fbcRefreshBadge();
+  if(pill){ pill.textContent = on ? (_fbcSettings.fb_c_review_mode==='1' ? '🟢 شغال — وضع المراجعة' : '🟢 شغال — أوتوماتيك') : '🕶️ الرد مقفول — بيتعلم بس (تدريب)'; pill.style.color = on ? 'var(--success)' : 'var(--error)'; pill.style.borderColor = on ? 'rgba(76,175,125,0.5)' : 'rgba(224,85,85,0.5)'; }
+  fbcTab(_fbcTab); fbcRender(); fbcRefreshBadge(); arpRender();
 }
 function fbcActsChips(p, r){
   p = p||{}; const res = (r&&r.result)||{};
@@ -17451,7 +17455,7 @@ function fbcRender(){
     const actions = isReview ? `
       <button class="fbc-btn ok" onclick="fbcApprove(${r.id})">✅ اعتمد وابعت</button>
       <button class="fbc-btn no" onclick="fbcReject(${r.id})">❌ ارفض (متبعتش)</button>` : '';
-    const feedback = (r.status==='done' || r.status==='review' || r.status==='skipped') && !r.feedback ? `
+    const feedback = (r.status==='done' || r.status==='review' || r.status==='skipped' || r.status==='shadow') && !r.feedback ? `
       <button class="fbc-btn" onclick="fbcFeedback(${r.id},'good')">👍 رد ممتاز</button>
       <button class="fbc-btn" onclick="fbcFeedback(${r.id},'bad_reply')">👎 رد وحش</button>
       <select class="fbc-btn" onchange="if(this.value){fbcFeedback(${r.id},'bad_intent',this.value)}" style="padding:5px 8px;width:auto;max-width:280px;flex:0 0 auto"><option value="">🏷️ التصنيف غلط — النوع الصح…</option>${Object.entries(FBC_INTENT_LABELS).filter(([k])=>k!==r.intent).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>` : '';
@@ -17587,6 +17591,57 @@ async function fbcTest(){
     </div>`;
   }catch(e){ out.innerHTML = `<div style="color:var(--error);font-size:13px">⚠️ ${escAttr(e.message)}</div>`; }
   btn.disabled = false;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// 🤖 AUTO-REPLY CONTROL — تشغيل/إيقاف الرد الآلى لكل قناة (بيسرى فوراً على الـ webhooks)
+// fb_enabled = رسايل ماسنجر · wa_enabled = واتساب · fb_c_enabled = كومنتات فيسبوك (لما يتقفل: تدريب — يصنّف ويكتب المسودة من غير تنفيذ)
+// ═══════════════════════════════════════════════════════════
+const ARP_CH = [
+  { key:'fb_enabled',   icon:'📘', label:'فيسبوك — رسايل ماسنجر',  off:'الرسايل بتتسجل وبيجيلك تنبيه تليجرام بكل رسالة — من غير رد' },
+  { key:'wa_enabled',   icon:'🟢', label:'واتساب — رسايل',          off:'الرسايل بتتسجل وبيجيلك تنبيه تليجرام بكل رسالة — من غير رد' },
+  { key:'fb_c_enabled', icon:'💭', label:'فيسبوك — كومنتات البوستات (عام)', off:'🕶️ تدريب: بيصنّف الكومنت ويكتب المسودة ويحفظها من غير أى تنفيذ — تقيّمه من صفحة الكومنتات' },
+];
+let _arpVals = {};
+async function arpRender(){
+  const boxes = ['arp-box-ai','arp-box-fbc'].map(id=>document.getElementById(id)).filter(Boolean);
+  if(!boxes.length) return;
+  try{
+    const rows = await fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(fb_enabled,wa_enabled,fb_c_enabled)`,{headers:HDR}).then(r=>r.json());
+    _arpVals = {}; (Array.isArray(rows)?rows:[]).forEach(r=>_arpVals[r.key]=String(r.value??''));
+  }catch(e){ return; }
+  const onCount = ARP_CH.filter(c=>_arpVals[c.key]==='1').length;
+  const master = onCount>0;
+  const html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      <div>
+        <h3 style="margin:0;color:var(--gold);font-size:16px">🤖 الرد الآلى</h3>
+        <div style="color:var(--text-dim);font-size:12px;margin-top:2px">${master?`🟢 شغال على ${onCount} من ${ARP_CH.length} قنوات`:'🔴 متوقف على كل القنوات'} — أى تغيير بيسرى <b style="color:var(--text)">فوراً</b> على الرسايل الجديدة</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--text);cursor:pointer;background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:8px 14px">
+        ${master?'تشغيل الكل':'تشغيل الكل'} <label class="switch"><input type="checkbox" ${master?'checked':''} onchange="arpMaster(this.checked)"><span class="slider"></span></label>
+      </label>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px">
+      ${ARP_CH.map(c=>{ const on=_arpVals[c.key]==='1'; return `
+      <label style="display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--dark3);border:1px solid ${on?'rgba(76,175,125,0.45)':'var(--border)'};border-radius:10px;padding:10px 12px;cursor:pointer">
+        <div><div style="font-size:13px;font-weight:700;color:var(--text)">${c.icon} ${c.label}</div><div style="font-size:11px;color:${on?'var(--success)':'var(--text-dim)'};margin-top:3px">${on?'شغال — بيرد أوتوماتيك':'متوقف — '+c.off}</div></div>
+        <label class="switch"><input type="checkbox" ${on?'checked':''} onchange="arpSet('${c.key}', this.checked)"><span class="slider"></span></label>
+      </label>`; }).join('')}
+    </div>`;
+  boxes.forEach(b=>{ b.style.cssText='background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:16px'; b.innerHTML = html; });
+}
+async function arpSet(key, on){
+  const ok = await setAppSetting(key, on?'1':'0');
+  if(!ok) alert('⚠️ مقدرت أحفظ الإعداد — جرّب تانى');
+  else if(typeof adminLogActivity==='function') adminLogActivity('auto_reply_toggle', (on?'تشغيل':'إيقاف')+' الرد الآلى — '+key, {key, on});
+  arpRender(); if(typeof fbcLoad==='function' && currentSection==='fb-comments') fbcLoad();
+}
+async function arpMaster(on){
+  for(const c of ARP_CH){ await setAppSetting(c.key, on?'1':'0'); }
+  if(typeof adminLogActivity==='function') adminLogActivity('auto_reply_master', (on?'تشغيل':'إيقاف')+' الرد الآلى على كل القنوات', {on});
+  arpRender(); if(typeof fbcLoad==='function' && currentSection==='fb-comments') fbcLoad();
 }
 
 // ═══ INIT (called after enterApp + renderSidebar) ═══
