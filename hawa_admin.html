@@ -17813,12 +17813,9 @@ function ibBubble(m){
 async function ibLoadMsgs(scroll){
   if(!_ibOpen) return;
   const { channel, chat_key } = _ibOpen;
-  const url = channel==='whatsapp'
-    ? `${SB}/rest/v1/wa_messages?select=id,direction,msg_type,body,agent,created_at&wa_phone=eq.${encodeURIComponent(chat_key)}&order=id.desc&limit=150`
-    : `${SB}/rest/v1/fb_messages?select=id,direction,msg_type,body,agent,created_at&psid=eq.${encodeURIComponent(chat_key)}&kind=eq.dm&order=id.desc&limit=150`;
   let rows = [];
-  try{ rows = await fetch(url,{headers:HDR}).then(r=>r.json()); }catch(e){}
-  rows = (Array.isArray(rows)?rows:[]).reverse();
+  try{ rows = await fetch(`${SB}/rest/v1/rpc/inbox_messages`,{method:'POST',headers:HDR,body:JSON.stringify({p_channel:channel,p_key:chat_key,p_limit:150})}).then(r=>r.json()); }catch(e){}
+  rows = Array.isArray(rows)?rows:[];
   const box = document.getElementById('ib-msgs'); if(!box) return;
   const changed = rows.length !== _ibLastCount; _ibLastCount = rows.length; _ibMsgs = rows;
   let html = '', lastDay = '';
