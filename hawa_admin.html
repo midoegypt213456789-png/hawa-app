@@ -3011,6 +3011,64 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     </div>
 
     <!-- FEEDBACK (الشكاوى والاقتراحات) -->
+    <!-- ========== 📨 INBOX — واتساب + ماسنجر ========== -->
+    <div class="section" id="sec-inbox">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">📨 <span>الرسايل — واتساب وماسنجر</span></div>
+          <div class="page-sub">كل محادثات العملاء مع البوت — تقدر ترد بنفسك من نفس الرقم/الصفحة، ولما تتدخل البوت بيسكت فى المحادثة دى لحد ما ترجّعه</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="ibLoad(true)">🔄 تحديث</button>
+      </div>
+      <div id="ib-wrap" style="display:grid;grid-template-columns:340px 1fr;gap:12px;height:calc(100vh - 190px);min-height:520px">
+        <!-- threads -->
+        <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;overflow:hidden">
+          <div style="padding:10px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px">
+            <input class="fbc-inp" id="ib-q" placeholder="🔍 اسم / رقم / نص..." oninput="ibRenderThreads()" style="padding:8px 10px;font-size:13px">
+            <div style="display:flex;gap:6px" id="ib-chan">
+              <button class="ib-chip sel" data-ch="" onclick="ibChan('')">الكل</button>
+              <button class="ib-chip" data-ch="whatsapp" onclick="ibChan('whatsapp')">🟢 واتساب</button>
+              <button class="ib-chip" data-ch="facebook" onclick="ibChan('facebook')">📘 ماسنجر</button>
+              <button class="ib-chip" data-ch="unread" onclick="ibChan('unread')">🔴 غير مقروء</button>
+            </div>
+          </div>
+          <div id="ib-threads" style="flex:1;overflow-y:auto"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+        </div>
+        <!-- conversation -->
+        <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;overflow:hidden">
+          <div id="ib-head" style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;min-height:52px">
+            <div style="color:var(--text-dim);font-size:13px">اختار محادثة من القائمة</div>
+          </div>
+          <div id="ib-msgs" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px"></div>
+          <div id="ib-composer" style="display:none;padding:10px 12px;border-top:1px solid var(--border)">
+            <div id="ib-warn" style="font-size:11.5px;color:var(--text-dim);margin-bottom:6px"></div>
+            <div style="display:flex;gap:8px;align-items:flex-end">
+              <textarea class="fbc-inp" id="ib-text" rows="2" placeholder="اكتب ردك... (Enter للإرسال — Shift+Enter سطر جديد)" style="flex:1;resize:vertical;min-height:44px" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();ibSend();}"></textarea>
+              <button class="add-btn" id="ib-send-btn" onclick="ibSend()" style="white-space:nowrap">📤 إرسال</button>
+            </div>
+            <div id="ib-send-msg" style="font-size:12px;margin-top:6px;min-height:14px"></div>
+          </div>
+        </div>
+      </div>
+      <style>
+        .ib-chip{flex:1;border-radius:8px;padding:6px 4px;font-size:11.5px;font-weight:700;font-family:Cairo;cursor:pointer;background:var(--dark3);border:1px solid var(--border);color:var(--text-dim)}
+        .ib-chip.sel{background:rgba(201,168,76,0.15);border-color:rgba(201,168,76,0.5);color:var(--gold)}
+        .ib-th{padding:10px 12px;border-bottom:1px solid rgba(42,42,42,0.6);cursor:pointer;display:flex;gap:10px;align-items:flex-start}
+        .ib-th:hover{background:rgba(255,255,255,0.02)}
+        .ib-th.active{background:rgba(201,168,76,0.08);border-right:3px solid var(--gold)}
+        .ib-av{width:38px;height:38px;border-radius:50%;background:var(--dark3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+        .ib-bubble{max-width:78%;padding:9px 12px;border-radius:14px;font-size:13.5px;line-height:1.65;white-space:pre-wrap;word-break:break-word;position:relative}
+        .ib-in{align-self:flex-start;background:var(--dark3);border:1px solid var(--border);color:var(--text);border-bottom-right-radius:4px}
+        .ib-out{align-self:flex-end;background:rgba(201,168,76,0.14);border:1px solid rgba(201,168,76,0.35);color:var(--text);border-bottom-left-radius:4px}
+        .ib-out.admin{background:rgba(74,144,217,0.16);border-color:rgba(74,144,217,0.45)}
+        .ib-meta{font-size:10.5px;color:var(--text-dim);margin-top:4px;text-align:end}
+        .ib-in .ib-meta{text-align:start}
+        .ib-day{align-self:center;font-size:11px;color:var(--text-dim);background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:2px 10px;margin:6px 0}
+        .ib-bubble img{max-width:220px;border-radius:8px;display:block;margin-top:4px}
+        @media(max-width:900px){ #ib-wrap{grid-template-columns:1fr !important;height:auto !important} #ib-threads{max-height:40vh} #ib-msgs{min-height:300px;max-height:50vh} }
+      </style>
+    </div>
+
     <!-- ========== 💭 FACEBOOK COMMENTS ENGINE ========== -->
     <div class="section" id="sec-fb-comments">
       <div class="page-hd">
@@ -5468,6 +5526,7 @@ function autoRefreshTick(){
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
     else if(sec==='fb-comments' && typeof fbcLoad === 'function') fbcLoad();
+    else if(sec==='inbox' && typeof ibLoad === 'function') ibLoad(true);
     else if(sec==='clients' && typeof loadClients === 'function') loadClients();
     else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
     else if(sec==='extra-contacts' && typeof loadExtraContacts === 'function') loadExtraContacts();
@@ -5606,6 +5665,7 @@ function goTo(sec){
   else if(sec==='ai-assistant')loadAiAssistant();
   else if(sec==='chat')loadChat();
   else if(sec==='fb-comments')fbcLoad();
+  else if(sec==='inbox')ibLoad(true);
   else if(sec==='bulletins')loadBulletins();
   else if(sec==='catalog')mcLoad();
   else if(sec==='leads')ldLoad();
@@ -16462,7 +16522,8 @@ const NAV_META = {
   'parts':            { icon: '🔧',  label: 'طلبات قطع الغيار' },
   'purchases':        { icon: '🧾',  label: 'المشتريات والجوابات' },
   'consumers':        { icon: '👥',  label: 'العملاء' },
-  'fb-comments':      { icon: '💭',  label: 'كومنتات فيسبوك', badge: { id: 'fbcBadge', cls: 'pending-badge' } }
+  'fb-comments':      { icon: '💭',  label: 'كومنتات فيسبوك', badge: { id: 'fbcBadge', cls: 'pending-badge' } },
+  'inbox':            { icon: '📨',  label: 'الرسايل (واتساب + ماسنجر)', badge: { id: 'inboxBadge', cls: 'pending-badge' } }
 };
 
 // ── Default sidebar layout
@@ -16471,7 +16532,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
   categories: [
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permits', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
-    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'fb-comments', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
+    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'consumers'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
@@ -16491,7 +16552,8 @@ const NAV_PREFERRED_CAT = {
   'parts':     { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'purchases': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'consumers': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
-  'fb-comments': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 }
+  'fb-comments': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
+  'inbox': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
@@ -17643,6 +17705,166 @@ async function arpMaster(on){
   if(typeof adminLogActivity==='function') adminLogActivity('auto_reply_master', (on?'تشغيل':'إيقاف')+' الرد الآلى على كل القنوات', {on});
   arpRender(); if(typeof fbcLoad==='function' && currentSection==='fb-comments') fbcLoad();
 }
+
+// ═══════════════════════════════════════════════════════════
+// 📨 INBOX — واتساب + ماسنجر: عرض كل المحادثات + رد يدوى + ✋ إيقاف البوت للمحادثة
+// البيانات: RPC inbox_threads_list (wa_messages + fb_messages kind=dm) — الإرسال عبر Edge Function admin-inbox (بتوكن الجلسة)
+// ═══════════════════════════════════════════════════════════
+const IB_FN = `${SB}/functions/v1/admin-inbox`;
+const IB_CH_ICON = { whatsapp:'🟢', facebook:'📘', instagram:'📷' };
+const IB_CH_LABEL = { whatsapp:'واتساب', facebook:'ماسنجر', instagram:'إنستجرام' };
+let _ibThreads = [], _ibChan = '', _ibOpen = null, _ibMsgs = [], _ibTimer = null, _ibLastCount = 0;
+
+async function ibLoad(force){
+  try{
+    const r = await fetch(`${SB}/rest/v1/rpc/inbox_threads_list`,{method:'POST',headers:HDR,body:JSON.stringify({p_limit:400})});
+    const rows = await r.json(); _ibThreads = Array.isArray(rows)?rows:[];
+  }catch(e){ document.getElementById('ib-threads').innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'خطأ')}</div>`; return; }
+  ibRenderThreads(); ibRefreshBadge();
+  if(_ibOpen) ibLoadMsgs(false);
+  if(!_ibTimer) _ibTimer = setInterval(()=>{ if(currentSection==='inbox'){ ibLoad(false); } }, 10000);
+}
+function ibChan(c){ _ibChan = c; document.querySelectorAll('#ib-chan .ib-chip').forEach(b=>b.classList.toggle('sel', b.dataset.ch===c)); ibRenderThreads(); }
+function ibAgo(iso){
+  if(!iso) return ''; const d = new Date(iso), diff = (Date.now()-d.getTime())/60000;
+  if(diff<1) return 'الآن'; if(diff<60) return Math.floor(diff)+' د'; if(diff<1440) return Math.floor(diff/60)+' س';
+  return d.toLocaleDateString('ar-EG',{day:'numeric',month:'short'});
+}
+function ibRenderThreads(){
+  const el = document.getElementById('ib-threads'); if(!el) return;
+  const q = (document.getElementById('ib-q')?.value||'').trim().toLowerCase();
+  let rows = _ibThreads.slice();
+  if(_ibChan==='unread') rows = rows.filter(t=>t.unread>0);
+  else if(_ibChan) rows = rows.filter(t=>t.channel===_ibChan);
+  if(q) rows = rows.filter(t=>String(t.name||'').toLowerCase().includes(q) || String(t.chat_key||'').includes(q) || String(t.last_body||'').toLowerCase().includes(q));
+  if(!rows.length){ el.innerHTML = '<div class="empty-txt" style="padding:30px">📭 مفيش محادثات</div>'; return; }
+  el.innerHTML = rows.map(t=>{
+    const active = _ibOpen && _ibOpen.channel===t.channel && _ibOpen.chat_key===t.chat_key;
+    const who = t.name || (t.channel==='whatsapp' ? '+'+t.chat_key : 'عميل فيسبوك');
+    const preview = String(t.last_body||'').replace(/\s+/g,' ').slice(0,70);
+    const pfx = t.last_direction==='out' ? (t.last_agent ? '👤 أنت: ' : '🤖 ') : '';
+    return `<div class="ib-th ${active?'active':''}" onclick="ibOpen('${t.channel}','${escAttr(t.chat_key)}')">
+      <div class="ib-av">${IB_CH_ICON[t.channel]||'💬'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;gap:6px;align-items:center">
+          <div style="font-weight:700;font-size:13px;color:${active?'var(--gold)':'var(--text)'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAttr(who)}${t.paused?' <span title="البوت متوقف — انت ماسك المحادثة" style="font-size:11px">✋</span>':''}</div>
+          <div style="font-size:10.5px;color:var(--text-dim);flex-shrink:0">${ibAgo(t.last_at)}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;gap:6px;align-items:center;margin-top:3px">
+          <div style="font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pfx}${escAttr(preview||'—')}</div>
+          ${t.unread?`<span style="background:var(--error);color:#fff;border-radius:10px;font-size:10.5px;padding:1px 7px;font-weight:700;flex-shrink:0">${t.unread}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function ibOpen(channel, key){
+  _ibOpen = { channel, chat_key: key };
+  ibRenderThreads();
+  document.getElementById('ib-composer').style.display = '';
+  document.getElementById('ib-msgs').innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  await ibLoadMsgs(true);
+  // تعليم كمقروء
+  fetch(IB_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'read',token:SESSION_TOKEN,channel,chat_key:key})}).then(()=>{ const t=_ibThreads.find(x=>x.channel===channel&&x.chat_key===key); if(t){ t.unread=0; ibRenderThreads(); ibRefreshBadge(); } }).catch(()=>{});
+  // اسم فيسبوك لو ناقص
+  const th = _ibThreads.find(x=>x.channel===channel&&x.chat_key===key);
+  if(th && !th.name && channel!=='whatsapp'){
+    fetch(IB_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'profile',token:SESSION_TOKEN,channel,chat_key:key})}).then(r=>r.json()).then(j=>{ if(j&&j.name){ th.name=j.name; ibRenderThreads(); ibRenderHead(); } }).catch(()=>{});
+  }
+}
+function ibRenderHead(){
+  const h = document.getElementById('ib-head'); if(!h || !_ibOpen) return;
+  const t = _ibThreads.find(x=>x.channel===_ibOpen.channel&&x.chat_key===_ibOpen.chat_key) || {};
+  const who = t.name || (_ibOpen.channel==='whatsapp' ? '+'+_ibOpen.chat_key : 'عميل فيسبوك');
+  const paused = !!t.paused;
+  h.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;min-width:0">
+      <div class="ib-av">${IB_CH_ICON[_ibOpen.channel]||'💬'}</div>
+      <div style="min-width:0">
+        <div style="font-weight:800;font-size:14px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escAttr(who)}</div>
+        <div style="font-size:11px;color:var(--text-dim)" dir="ltr">${IB_CH_LABEL[_ibOpen.channel]||''} · ${escAttr(_ibOpen.chat_key)}${_ibOpen.channel==='whatsapp'?` · <a href="https://wa.me/${escAttr(_ibOpen.chat_key)}" target="_blank" style="color:var(--blue);text-decoration:none">wa.me ↗</a>`:''}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span style="font-size:12px;font-weight:700;color:${paused?'#4A90D9':'var(--success)'}">${paused?'✋ انت ماسك المحادثة — البوت ساكت':'🤖 البوت بيرد'}</span>
+      <button class="fbc-btn ${paused?'ok':'gold'}" onclick="ibPause(${paused?'false':'true'})">${paused?'🤖 رجّع البوت':'✋ أمسك المحادثة'}</button>
+    </div>`;
+  const w = document.getElementById('ib-warn');
+  if(w) w.textContent = paused ? 'البوت متوقف فى المحادثة دى — أى رسالة جديدة من العميل هتوصلك على تليجرام من غير رد آلى (بيرجع تلقائى بعد '+(_ibTakeoverHours||12)+' ساعة).' : 'أول ما تبعت رد، البوت هيسكت فى المحادثة دى تلقائياً وتبقى انت اللى بترد.';
+}
+let _ibTakeoverHours = 12;
+function ibBubble(m){
+  const isOut = m.direction==='out', admin = isOut && !!m.agent;
+  let body = String(m.body||'');
+  let extra = '';
+  const t = String(m.msg_type||'');
+  const imgMatch = body.match(/https?:\/\/\S+\.(?:jpg|jpeg|png|webp|gif)(?:\?\S*)?/i);
+  if(t==='image' && imgMatch){ extra = `<img src="${escAttr(imgMatch[0])}" loading="lazy">`; body = body.replace(imgMatch[0],'').replace(/\|\s*$/,'').trim(); }
+  else if(t==='image') body = body || '📷 صورة';
+  else if(t==='audio') body = body || '🎙️ رسالة صوتية';
+  else if(t==='video') body = body || '🎬 فيديو';
+  else if(t==='document' || t==='file') body = body || '📎 ملف';
+  else if(t==='sticker') body = '🩵 ستيكر';
+  else if(!body) body = '['+t+']';
+  const when = m.created_at ? new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
+  const who = isOut ? (admin ? '👤 أنت' : '🤖 البوت') : '';
+  return `<div class="ib-bubble ${isOut?'ib-out':'ib-in'} ${admin?'admin':''}">${escAttr(body)}${extra}<div class="ib-meta">${who?who+' · ':''}${when}</div></div>`;
+}
+async function ibLoadMsgs(scroll){
+  if(!_ibOpen) return;
+  const { channel, chat_key } = _ibOpen;
+  const url = channel==='whatsapp'
+    ? `${SB}/rest/v1/wa_messages?select=id,direction,msg_type,body,agent,created_at&wa_phone=eq.${encodeURIComponent(chat_key)}&order=id.desc&limit=150`
+    : `${SB}/rest/v1/fb_messages?select=id,direction,msg_type,body,agent,created_at&psid=eq.${encodeURIComponent(chat_key)}&kind=eq.dm&order=id.desc&limit=150`;
+  let rows = [];
+  try{ rows = await fetch(url,{headers:HDR}).then(r=>r.json()); }catch(e){}
+  rows = (Array.isArray(rows)?rows:[]).reverse();
+  const box = document.getElementById('ib-msgs'); if(!box) return;
+  const changed = rows.length !== _ibLastCount; _ibLastCount = rows.length; _ibMsgs = rows;
+  let html = '', lastDay = '';
+  for(const m of rows){
+    const day = m.created_at ? new Date(m.created_at).toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'}) : '';
+    if(day && day!==lastDay){ html += `<div class="ib-day">${day}</div>`; lastDay = day; }
+    html += ibBubble(m);
+  }
+  box.innerHTML = html || '<div class="empty-txt" style="padding:30px">مفيش رسايل</div>';
+  if(scroll || changed) box.scrollTop = box.scrollHeight;
+  ibRenderHead();
+}
+async function ibSend(){
+  if(!_ibOpen) return;
+  const ta = document.getElementById('ib-text'), btn = document.getElementById('ib-send-btn'), msg = document.getElementById('ib-send-msg');
+  const text = ta.value.trim(); if(!text) return;
+  btn.disabled = true; msg.textContent = '⏳ بيبعت...'; msg.style.color = 'var(--text-dim)';
+  try{
+    const j = await fetch(IB_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'send',token:SESSION_TOKEN,channel:_ibOpen.channel,chat_key:_ibOpen.chat_key,text})}).then(r=>r.json());
+    if(!j||!j.ok) throw new Error((j&&j.error)||'فشل الإرسال');
+    ta.value=''; msg.textContent = '✅ اتبعتت'; msg.style.color = 'var(--success)';
+    const t = _ibThreads.find(x=>x.channel===_ibOpen.channel&&x.chat_key===_ibOpen.chat_key); if(t){ t.paused = true; t.last_body = text; t.last_direction='out'; t.last_agent='admin'; t.last_at = new Date().toISOString(); }
+    if(typeof adminLogActivity==='function') adminLogActivity('inbox_reply','رد يدوى على '+(IB_CH_LABEL[_ibOpen.channel]||''),{to:_ibOpen.chat_key});
+    await ibLoadMsgs(true); ibRenderThreads();
+    setTimeout(()=>{ msg.textContent=''; }, 2500);
+  }catch(e){ msg.textContent = '⚠️ '+e.message; msg.style.color = 'var(--error)'; }
+  btn.disabled = false; ta.focus();
+}
+async function ibPause(on){
+  if(!_ibOpen) return;
+  try{
+    const j = await fetch(IB_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'pause',token:SESSION_TOKEN,channel:_ibOpen.channel,chat_key:_ibOpen.chat_key,on})}).then(r=>r.json());
+    if(!j||!j.ok) throw new Error((j&&j.error)||'فشل');
+    const t = _ibThreads.find(x=>x.channel===_ibOpen.channel&&x.chat_key===_ibOpen.chat_key); if(t) t.paused = on;
+    ibRenderHead(); ibRenderThreads();
+  }catch(e){ alert('⚠️ '+e.message); }
+}
+async function ibRefreshBadge(){
+  try{
+    const r = await fetch(`${SB}/rest/v1/rpc/inbox_unread_total`,{method:'POST',headers:HDR,body:'{}'});
+    const n = Number(await r.json())||0;
+    const b = document.getElementById('inboxBadge'); if(b){ b.textContent = n; b.classList.toggle('show', n>0); }
+  }catch(e){}
+}
+setInterval(ibRefreshBadge, 45000);
+(async()=>{ try{ const r = await fetch(`${SB}/rest/v1/app_settings?select=value&key=eq.inbox_takeover_hours&limit=1`,{headers:HDR}).then(x=>x.json()); if(Array.isArray(r)&&r[0]) _ibTakeoverHours = Number(r[0].value)||12; }catch(e){} })();
 
 // ═══ INIT (called after enterApp + renderSidebar) ═══
 function initTabSystem(){
