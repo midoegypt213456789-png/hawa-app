@@ -3064,7 +3064,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         .ib-meta{font-size:10.5px;color:var(--text-dim);margin-top:4px;text-align:end}
         .ib-in .ib-meta{text-align:start}
         .ib-day{align-self:center;font-size:11px;color:var(--text-dim);background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:2px 10px;margin:6px 0}
-        .ib-bubble img{max-width:220px;border-radius:8px;display:block;margin-top:4px}
+        .ib-bubble img{max-width:240px;max-height:300px;border-radius:8px;display:block;margin-top:4px;cursor:zoom-in}
         @media(max-width:900px){ #ib-wrap{grid-template-columns:1fr !important;height:auto !important} #ib-threads{max-height:40vh} #ib-msgs{min-height:300px;max-height:50vh} }
       </style>
     </div>
@@ -17793,22 +17793,44 @@ function ibRenderHead(){
   if(w) w.textContent = paused ? 'البوت متوقف فى المحادثة دى — أى رسالة جديدة من العميل هتوصلك على تليجرام من غير رد آلى (بيرجع تلقائى بعد '+(_ibTakeoverHours||12)+' ساعة).' : 'أول ما تبعت رد، البوت هيسكت فى المحادثة دى تلقائياً وتبقى انت اللى بترد.';
 }
 let _ibTakeoverHours = 12;
+function ibMediaHtml(m){
+  const t = String(m.msg_type||''), u = m.media_url, mime = String(m.media_mime||'');
+  if(!u) return '';
+  if(t==='image' || t==='sticker' || mime.startsWith('image/')) return `<a href="${escAttr(u)}" target="_blank"><img src="${escAttr(u)}" loading="lazy" alt=""></a>`;
+  if(t==='audio' || mime.startsWith('audio/')) return `<audio controls preload="none" src="${escAttr(u)}" style="display:block;margin-top:6px;max-width:260px;height:36px"></audio>`;
+  if(t==='video' || mime.startsWith('video/')) return `<video controls preload="metadata" src="${escAttr(u)}" style="display:block;margin-top:6px;max-width:280px;border-radius:8px"></video>`;
+  const nm = m.media_name || ('ملف'+(mime.split('/')[1]?' .'+mime.split('/')[1].slice(0,6):''));
+  return `<a href="${escAttr(u)}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;background:var(--dark2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--blue);text-decoration:none;font-size:12.5px">📎 ${escAttr(nm)} ⬇️</a>`;
+}
 function ibBubble(m){
   const isOut = m.direction==='out', admin = isOut && !!m.agent;
   let body = String(m.body||'');
   let extra = '';
   const t = String(m.msg_type||'');
   const imgMatch = body.match(/https?:\/\/\S+\.(?:jpg|jpeg|png|webp|gif)(?:\?\S*)?/i);
-  if(t==='image' && imgMatch){ extra = `<img src="${escAttr(imgMatch[0])}" loading="lazy">`; body = body.replace(imgMatch[0],'').replace(/\|\s*$/,'').trim(); }
-  else if(t==='image') body = body || '📷 صورة';
-  else if(t==='audio') body = body || '🎙️ رسالة صوتية';
-  else if(t==='video') body = body || '🎬 فيديو';
-  else if(t==='document' || t==='file') body = body || '📎 ملف';
-  else if(t==='sticker') body = '🩵 ستيكر';
-  else if(!body) body = '['+t+']';
+  if(m.media_url){ extra = ibMediaHtml(m); if(t==='audio' && body.startsWith('🎙️')) body = body; else if(t!=='text' && !body) body=''; }
+  else if(m.has_media){ extra = `<div class="ib-media-pending" data-mid="${m.id}" style="margin-top:6px;font-size:11.5px;color:var(--text-dim)">⏳ بيحمّل ${t==='image'?'الصورة':t==='audio'?'الصوت':t==='video'?'الفيديو':'الملف'}...</div>`; }
+  else if(t==='image' && imgMatch){ extra = `<a href="${escAttr(imgMatch[0])}" target="_blank"><img src="${escAttr(imgMatch[0])}" loading="lazy"></a>`; body = body.replace(imgMatch[0],'').replace(/\|\s*$/,'').trim(); }
+  if(!body && !extra){ body = t==='image'?'📷 صورة':t==='audio'?'🎙️ رسالة صوتية':t==='video'?'🎬 فيديو':(t==='document'||t==='file')?'📎 ملف':t==='sticker'?'🩵 ستيكر':'['+t+']'; }
+  if(t==='image' && body && /^[^|]+\|\s*https?:/.test(body)) body = body.split('|')[0].trim();
   const when = m.created_at ? new Date(m.created_at).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) : '';
   const who = isOut ? (admin ? '👤 أنت' : '🤖 البوت') : '';
-  return `<div class="ib-bubble ${isOut?'ib-out':'ib-in'} ${admin?'admin':''}">${escAttr(body)}${extra}<div class="ib-meta">${who?who+' · ':''}${when}</div></div>`;
+  return `<div class="ib-bubble ${isOut?'ib-out':'ib-in'} ${admin?'admin':''}" id="ib-m-${m.id}">${body?escAttr(body):''}${extra}<div class="ib-meta">${who?who+' · ':''}${when}</div></div>`;
+}
+// 📎 تحميل ميديا الرسايل الداخلة (مرة واحدة — بتتخزن فى Storage بعدها)
+const _ibMediaBusy = new Set();
+async function ibFetchPendingMedia(){
+  if(!_ibOpen) return;
+  const pend = Array.from(document.querySelectorAll('#ib-msgs .ib-media-pending')).slice(0, 6);
+  for(const el of pend){
+    const id = Number(el.dataset.mid); if(!id || _ibMediaBusy.has(id)) continue;
+    _ibMediaBusy.add(id);
+    fetch(IB_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'media',token:SESSION_TOKEN,channel:_ibOpen.channel,msg_id:id})}).then(r=>r.json()).then(j=>{
+      const m = _ibMsgs.find(x=>x.id===id); const box = document.getElementById('ib-m-'+id);
+      if(j&&j.ok&&m){ m.media_url=j.url; m.media_mime=j.mime; m.media_name=j.name; m.has_media=false; if(box){ box.outerHTML = ibBubble(m); } }
+      else { const p = box && box.querySelector('.ib-media-pending'); if(p){ p.textContent = '⚠️ '+((j&&j.error)||'مقدرت أحمّل الميديا'); p.classList.remove('ib-media-pending'); } if(m) m.has_media=false; }
+    }).catch(()=>{ _ibMediaBusy.delete(id); });
+  }
 }
 async function ibLoadMsgs(scroll){
   if(!_ibOpen) return;
@@ -17827,6 +17849,7 @@ async function ibLoadMsgs(scroll){
   box.innerHTML = html || '<div class="empty-txt" style="padding:30px">مفيش رسايل</div>';
   if(scroll || changed) box.scrollTop = box.scrollHeight;
   ibRenderHead();
+  ibFetchPendingMedia();
 }
 async function ibSend(){
   if(!_ibOpen) return;
