@@ -686,11 +686,20 @@
         <div id="permitAllow" style="display:none;margin-top:10px"></div>
         <div id="qtyPanel" style="display:none;margin-top:12px"></div>
         <div id="permitScanBox" style="display:none;margin-top:10px">
-          <div id="permitScanHint" style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.7">الإذن ده لسه متسجلش عندنا — صوّره مرة واحدة بس، وبعدها هيتقبل بالرقم على طول</div>
-          <button type="button" onclick="openPermitCamera()" style="display:block;width:100%;text-align:center;cursor:pointer;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:15px;font-family:inherit">📷 صوّر الإذن</button>
+          <div id="permitScanHint" style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.7">الإذن ده لسه متسجلش عندنا — صوّره مرة واحدة بس، وبعدها هيتقبل بالرقم على طول.<br><b style="color:var(--gold)">لو الإذن على أكتر من صفحة، صوّر كل الصفحات بالترتيب</b> (مكتوب تحت كل ورقة «صفحه ١ من ٢»)</div>
+          <button type="button" id="permitCamBtn" onclick="openPermitCamera()" style="display:block;width:100%;text-align:center;cursor:pointer;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:15px;font-family:inherit">📷 صوّر الإذن</button>
           <input type="file" id="permitFile" accept="image/*" capture="environment" style="display:none" onchange="onPermitFile(this)">
-          <div style="text-align:center;margin-top:7px"><label for="permitFileAny" style="font-size:11.5px;color:var(--text-dim);cursor:pointer;text-decoration:underline">أو اختار صورة/PDF من الجهاز</label></div>
-          <input type="file" id="permitFileAny" accept="image/*,application/pdf" style="display:none" onchange="onPermitFile(this)">
+          <div style="text-align:center;margin-top:7px"><label for="permitFileAny" style="font-size:11.5px;color:var(--text-dim);cursor:pointer;text-decoration:underline">أو اختار صور الصفحات / PDF من الجهاز</label></div>
+          <input type="file" id="permitFileAny" accept="image/*,application/pdf" multiple style="display:none" onchange="onPermitFile(this)">
+          <!-- 📄 صفحات الإذن اللى اتصوّرت (متعدد الصفحات) -->
+          <div id="permitPages" style="display:none;margin-top:12px;background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:10px">
+            <div id="permitPagesList" style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:10px"></div>
+            <div style="display:flex;gap:8px">
+              <button type="button" onclick="openPermitCamera()" style="flex:1;padding:11px;border:1.5px solid rgba(201,168,76,.5);border-radius:10px;background:transparent;color:var(--gold);font-weight:800;font-size:13px;font-family:inherit;cursor:pointer">➕ صوّر صفحة تانية</button>
+              <button type="button" id="permitSendBtn" onclick="sendPermitPages()" style="flex:1.3;padding:11px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:13px;font-family:inherit;cursor:pointer">✅ خلاص — اقرأ الإذن</button>
+            </div>
+            <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:8px">لو الإذن صفحة واحدة بس اضغط «اقرأ الإذن» على طول</div>
+          </div>
           <div id="permitScanBar" style="display:none;margin-top:14px;direction:ltr">
             <div style="position:relative;height:14px;background:var(--dark3);border:1px solid var(--border);border-radius:20px">
               <div id="permitBarFill" style="height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:20px;transition:width .25s"></div>
@@ -3673,7 +3682,7 @@ function permitScanRequest(payload, onPct) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${SB}/functions/v1/permit-scan`);
     xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.timeout = 120000;
+    xhr.timeout = 180000;
     xhr.upload.onprogress = e => { if (e.lengthComputable && onPct) onPct(Math.min(100, Math.round(e.loaded / e.total * 100))); };
     xhr.onload = () => { try { resolve(JSON.parse(xhr.responseText || '{}')); } catch (_) { resolve({ ok: false, error: 'bad_response' }); } };
     xhr.onerror = () => resolve({ ok: false, error: 'network' });
@@ -3718,29 +3727,71 @@ function snapPermitPhoto() {
   c.width = v.videoWidth; c.height = v.videoHeight;
   c.getContext('2d').drawImage(v, 0, 0);
   closePermitCamera();
-  c.toBlob(b => { if (b) { b.name = 'permit.jpg'; processPermitFile(b); } }, 'image/jpeg', 0.92);
+  c.toBlob(b => { if (b) { b.name = 'permit.jpg'; addPermitPage(b); } }, 'image/jpeg', 0.92);
 }
+// 📄 صفحات الإذن: بنجمّعها الأول وبعدين نبعتها مرة واحدة
+let _pmPages = [];
 async function onPermitFile(input) {
-  const f = (input.files || [])[0];
+  const files = Array.from(input.files || []);
   input.value = '';
-  if (f) await processPermitFile(f);
+  if (!files.length) return;
+  // PDF = ملف واحد فيه كل الصفحات → يتبعت لوحده على طول
+  const pdf = files.find(f => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name || ''));
+  if (pdf) { _pmPages = []; renderPermitPages(); await processPermitFile(pdf); return; }
+  for (const f of files) await addPermitPage(f, files.length > 1);
 }
-async function processPermitFile(f) {
-  if (!f) return;
+async function addPermitPage(f, silent) {
+  const prog = document.getElementById('permitScanProg');
+  try {
+    if (!silent) { prog.style.color = 'var(--text-dim)'; prog.textContent = '⏳ بنجهّز الصورة...'; }
+    const pg = await permitFileToBase64(f);
+    _pmPages.push(pg);
+    renderPermitPages();
+    prog.style.color = 'var(--text-dim)';
+    prog.textContent = _pmPages.length === 1 ? 'لو الإذن فيه صفحة تانية صوّرها — أو اضغط «اقرأ الإذن»' : `📄 ${_pmPages.length} صفحات جاهزة — فيه صفحة كمان؟ ولا نقرأ؟`;
+  } catch (e) { prog.style.color = 'var(--error)'; prog.textContent = '❌ حصل خطأ فى قراءة الصورة — حاول تانى'; }
+}
+function removePermitPage(i) { _pmPages.splice(i, 1); renderPermitPages(); }
+function renderPermitPages() {
+  const box = document.getElementById('permitPages'), list = document.getElementById('permitPagesList'), camBtn = document.getElementById('permitCamBtn');
+  if (!box) return;
+  if (!_pmPages.length) { box.style.display = 'none'; if (camBtn) camBtn.style.display = ''; return; }
+  box.style.display = '';
+  if (camBtn) camBtn.style.display = 'none';
+  list.innerHTML = _pmPages.map((pg, i) => `<div style="position:relative;width:64px;height:84px;border:1.5px solid rgba(201,168,76,.5);border-radius:8px;overflow:hidden;background:#000">
+      <img src="data:${pg.mime};base64,${pg.b64}" style="width:100%;height:100%;object-fit:cover" alt="">
+      <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);color:var(--gold);font-size:10.5px;text-align:center;padding:2px 0;font-weight:800">صفحة ${i + 1}</div>
+      <button type="button" onclick="removePermitPage(${i})" style="position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;border:none;background:var(--error);color:#fff;font-size:12px;line-height:20px;padding:0;cursor:pointer">✕</button>
+    </div>`).join('');
+  const sb = document.getElementById('permitSendBtn'); if (sb) sb.textContent = _pmPages.length > 1 ? `✅ اقرأ الإذن (${_pmPages.length} صفحات)` : '✅ خلاص — اقرأ الإذن';
+}
+async function sendPermitPages() {
+  if (!_pmPages.length) return;
+  const pages = _pmPages.slice();
+  await processPermitFile(null, pages);
+}
+async function processPermitFile(f, pages) {
+  if (!f && !(pages && pages.length)) return;
   const prog = document.getElementById('permitScanProg');
   const msgEl = document.getElementById('permitMsg');
   const b1 = document.getElementById('b1');
+  const sendBtn = document.getElementById('permitSendBtn');
   b1.disabled = true;
+  if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '⏳ ...'; }
   try {
     prog.style.color = 'var(--text-dim)';
     prog.textContent = '⏳ بنجهّز الصورة...';
     permitBar(0, false);
-    const { b64, mime } = await permitFileToBase64(f);
-    prog.textContent = '⬆️ بنرفع الإذن... 0%';
+    const pgs = pages && pages.length ? pages : [await permitFileToBase64(f)];
+    const lbl = pgs.length > 1 ? `الإذن (${pgs.length} صفحات)` : 'الإذن';
+    prog.textContent = `⬆️ بنرفع ${lbl}... 0%`;
     const res = await permitScanRequest(
-      { client_id: user.id, username: user.username || '', image_base64: b64, mime },
-      p => { if (p < 100) { permitBar(p, false); prog.textContent = `⬆️ بنرفع الإذن... ${p}%`; } else { permitBar(100, true); prog.textContent = '🤖 بنقرأ الإذن... ثوانى'; } }
+      pgs.length > 1
+        ? { client_id: user.id, username: user.username || '', pages: pgs.map(p => ({ image_base64: p.b64, mime: p.mime })) }
+        : { client_id: user.id, username: user.username || '', image_base64: pgs[0].b64, mime: pgs[0].mime },
+      p => { if (p < 100) { permitBar(p, false); prog.textContent = `⬆️ بنرفع ${lbl}... ${p}%`; } else { permitBar(100, true); prog.textContent = pgs.length > 1 ? `🤖 بنقرأ ${pgs.length} صفحات... ثوانى` : '🤖 بنقرأ الإذن... ثوانى'; } }
     );
+    if (sendBtn) { sendBtn.disabled = false; renderPermitPages(); }
     permitBar(null);
     if (!res || !res.ok) {
       const map = {
@@ -3754,9 +3805,10 @@ async function processPermitFile(f) {
         timeout: 'الرفع خد وقت طويل — حاول تانى',
       };
       prog.style.color = 'var(--error)';
-      prog.textContent = '❌ ' + (res && (map[res.error] || res.message)) || '❌ فشل — حاول تانى';
+      prog.textContent = '❌ ' + ((res && (res.message || map[res.error])) || 'فشل — حاول تانى');
       return;
     }
+    _pmPages = []; renderPermitPages();
     prog.style.color = 'var(--success)';
     prog.textContent = res.existing ? '✅ الإذن ده كان متسجل بالفعل' : (res.telegram_sent ? '✅ اتسجل الإذن — والشرح وصلك على تليجرام كمان' : '✅ اتسجل الإذن بنجاح');
     const scannedNo = String((res.permit && res.permit.permit_no) || '');

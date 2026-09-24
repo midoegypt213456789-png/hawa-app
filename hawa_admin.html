@@ -5223,10 +5223,13 @@ let currentSection = 'bookings';
 // ═══════════════════════════════════════════════════════════
 let SESSION_TOKEN = null;  // 🔑 توكن الجلسة الآمن (المرحلة ٢)
 // دخول آمن يصدر توكن — ولو الـ secure مش موجود لأى سبب بيرجع للقديم (مفيش كسر)
+let LOGIN_LOCK_MSG='';
 async function rpcLoginTry(secureFn, oldFn, u, p){
   try{
     const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
     if(r.ok){ const j=await r.json(); return j||null; }
+    // 🔒 قفل مؤقت بعد محاولات غلط كتير — نعرض رسالة السيرفر بدل «الباسورد غلط»
+    try{ const e=await r.json(); if(e&&e.message&&/محاولات دخول/.test(e.message)){ LOGIN_LOCK_MSG=e.message; return null; } }catch(_){}
   }catch(e){}
   try{
     const r2=await fetch(`${SB}/rest/v1/rpc/${oldFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
@@ -5362,6 +5365,7 @@ async function doAdminLogin(){
   const btn=document.getElementById('loginBtn');
   btn.disabled=true;btn.innerHTML='جاري التحقق... <span class="spin"></span>';
   try{
+    LOGIN_LOCK_MSG='';
     const adm=await rpcLoginTry('login_admin_secure','login_admin',u,p);
     if(adm){
       admin=adm;
@@ -5415,7 +5419,7 @@ async function doAdminLogin(){
           window.location.href='hawa_employee.html';
           return;
         }
-      }else{showLoginAlert('اسم المستخدم أو كلمة المرور غلط');}
+      }else{showLoginAlert(LOGIN_LOCK_MSG||'اسم المستخدم أو كلمة المرور غلط'); LOGIN_LOCK_MSG='';}
     }
   }catch(e){showLoginAlert('خطأ في الاتصال');}
   btn.disabled=false;btn.innerHTML='دخول';
