@@ -4079,7 +4079,7 @@ async function loadSlots() {
       try {
         const rs = await fetch(`${SB}/rest/v1/rpc/slot_capacity_info`, {
           method: 'POST', headers: { ...HDR, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_warehouse: bk.warehouse, p_vtype: bk.vehicle, p_date: bk.dateStr, p_permit_id: bk.permitId })
+          body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_warehouse: bk.warehouse, p_vtype: bk.vehicle, p_date: bk.dateStr, p_permit_id: bk.permitId, p_exclude_booking: (editMode && editMode.id) ? editMode.id : null })
         });
         const ci = await rs.json();
         if (ci && ci.ok && ci.rule_active && Array.isArray(ci.slots)) {
