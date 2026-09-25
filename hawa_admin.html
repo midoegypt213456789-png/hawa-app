@@ -9352,7 +9352,7 @@ async function loadClients(){
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
     const [r1, r2, r3, r4] = await Promise.all([
-      fetch(`${SB}/rest/v1/clients?select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region,assigned_emp_id&order=name.asc`,{headers:{...HDR,'Range':'0-499'}}),
+      fetch(`${SB}/rest/v1/clients?approval_status=neq.rejected&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region,assigned_emp_id&order=name.asc`,{headers:{...HDR,'Range':'0-4999'}}),
       fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
       fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
       fetch(`${SB}/rest/v1/client_tiers?select=*&is_active=eq.true&order=sort_order.asc`,{headers:HDR})
