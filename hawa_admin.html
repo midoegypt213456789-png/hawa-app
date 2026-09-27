@@ -2818,7 +2818,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
 
       <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--gold);line-height:1.8;margin-bottom:14px">
-        ℹ️ الرسالة بتتبعت فقط للعملاء اللي <b>ربطوا البوت</b> و <b>نشطين 🔔</b>. <b>الهيدر والفوتر</b> من صفحة "⚙️ إعدادات عامة" بيتضافوا تلقائياً.
+        ℹ️ الرسالة بتتبعت فقط للعملاء اللي <b>ربطوا البوت</b> و <b>نشطين 🔔</b>. <b>الهيدر والفوتر</b> اختارهم تحت لكل رسالة (الافتراضى بدون) — وتعملهم/تعدلهم من "⚙️ إعدادات عامة".
       </div>
 
       <!-- Message composer -->
@@ -2826,6 +2826,16 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
           <div style="font-size:13px;font-weight:700;color:var(--gold)">✍️ نص الرسالة</div>
           <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold);padding:6px 14px;font-size:12px" onclick="openTemplatePicker()">📂 من المحفوظة</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:10px">
+          <div>
+            <label style="display:block;font-size:11.5px;font-weight:700;color:var(--text-dim);margin-bottom:5px">📤 الهيدر</label>
+            <select id="bc-header-sel" onchange="updateBroadcastFullPreview()" style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:9px 12px;font-size:13.5px;border-radius:10px;font-family:Cairo,sans-serif"><option value="">— بدون هيدر —</option></select>
+          </div>
+          <div>
+            <label style="display:block;font-size:11.5px;font-weight:700;color:var(--text-dim);margin-bottom:5px">📥 الفوتر</label>
+            <select id="bc-footer-sel" onchange="updateBroadcastFullPreview()" style="width:100%;background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:9px 12px;font-size:13.5px;border-radius:10px;font-family:Cairo,sans-serif"><option value="">— بدون فوتر —</option></select>
+          </div>
         </div>
         <textarea id="bc-message" rows="6" placeholder="اكتب الرسالة هنا، أو اختر من المحفوظة..." oninput="updateMessageCount()" style="font-size:14px;line-height:1.7"></textarea>
         <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px">
@@ -2835,7 +2845,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
         <!-- Full message preview (with header/footer) -->
         <div style="margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)">
-          <div style="font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:8px">👁️ معاينة الرسالة الكاملة (مع الهيدر والفوتر):</div>
+          <div style="font-size:11px;font-weight:700;color:var(--text-dim);margin-bottom:8px">👁️ معاينة الرسالة الكاملة (زى ما هتوصل بالظبط):</div>
           <div id="bc-full-preview" style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:var(--text);min-height:60px;max-height:280px;overflow-y:auto;overflow-wrap:anywhere;word-wrap:break-word;word-break:break-word;"></div>
         </div>
 
@@ -4031,20 +4041,21 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
         <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">💬 الهيدر والفوتر للرسائل</div>
         <div style="background:rgba(74,144,217,0.08);border:1px solid rgba(74,144,217,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:#7fb8e8;line-height:1.7;margin-bottom:16px">
-          ℹ️ بيتضافوا تلقائياً فوق وتحت كل رسالة broadcast. سيبهم فاضيين لو مش عاوزهم.
+          ℹ️ اعمل أكتر من هيدر وأكتر من فوتر بأسماء — ومن صفحة «📢 إرسال رسائل» بتختار واحد منهم لكل رسالة، أو «بدون» (الافتراضى بدون = الرسالة بس). متنساش «💾 حفظ الإعدادات» تحت.
         </div>
-        <div style="margin-bottom:16px">
-          <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">📤 الهيدر (فوق الرسالة)</label>
-          <textarea id="set-header" rows="3" placeholder="مثال: HAWA CO — إشعار من إدارة المخزن" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:500;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:90px;resize:vertical;line-height:1.7"></textarea>
+        <div style="margin-bottom:18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <label style="font-size:13px;font-weight:700;color:#D8D3CE">📤 الهيدرات (فوق الرسالة)</label>
+            <button type="button" class="add-btn" style="padding:6px 14px;font-size:12px" onclick="hfAdd('headers')">➕ هيدر جديد</button>
+          </div>
+          <div id="set-hf-headers"></div>
         </div>
         <div>
-          <label style="display:block;font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:8px">📥 الفوتر (تحت الرسالة)</label>
-          <textarea id="set-footer" rows="3" placeholder="مثال: للاستفسار: 01xxxxxxxxx" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:13px 16px;font-size:15px;font-weight:500;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;min-height:90px;resize:vertical;line-height:1.7"></textarea>
-        </div>
-
-        <div style="margin-top:20px">
-          <div style="font-size:13px;font-weight:700;color:#D8D3CE;margin-bottom:10px">👁️ معاينة الشكل النهائى للرسالة:</div>
-          <div id="set-preview" style="background:#0A0A0A;border:2px dashed #3A3A3A;border-radius:12px;padding:16px;font-size:14px;line-height:1.8;white-space:pre-wrap;color:#E8E5E0;min-height:90px"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <label style="font-size:13px;font-weight:700;color:#D8D3CE">📥 الفوترات (تحت الرسالة)</label>
+            <button type="button" class="add-btn" style="padding:6px 14px;font-size:12px" onclick="hfAdd('footers')">➕ فوتر جديد</button>
+          </div>
+          <div id="set-hf-footers"></div>
         </div>
       </div>
     </div>
@@ -9868,8 +9879,9 @@ async function loadSettings(){
 
     document.getElementById('set-permit-min').value  = map.permit_min || '14000';
     document.getElementById('set-permit-max').value  = map.permit_max || '15000';
-    document.getElementById('set-header').value      = map.broadcast_header || '';
-    document.getElementById('set-footer').value      = map.broadcast_footer || '';
+    _hf.headers = hfParse(map.broadcast_headers, map.broadcast_header, 'الهيدر الأساسى');
+    _hf.footers = hfParse(map.broadcast_footers, map.broadcast_footer, 'الفوتر الأساسى');
+    hfRender('headers'); hfRender('footers');
 
     // 🆕 Default Admin Page
     document.getElementById('set-default-page').value = map.default_admin_page || 'bookings';
@@ -9906,8 +9918,6 @@ async function loadSettings(){
     updateReportSummary();
 
     // Bind preview update on change
-    document.getElementById('set-header').oninput = updateMessagePreview;
-    document.getElementById('set-footer').oninput = updateMessagePreview;
     document.getElementById('set-report-hour').oninput = updateReportSummary;
     document.querySelectorAll('#set-report-days input[type="checkbox"]').forEach(cb => {
       cb.onchange = updateReportSummary;
@@ -9952,15 +9962,43 @@ function updateReportSummary(){
   out.innerHTML = msg;
 }
 
-function updateMessagePreview(){
-  const header = (document.getElementById('set-header').value || '').trim();
-  const footer = (document.getElementById('set-footer').value || '').trim();
-  const sample = '📌 مثال على نص الرسالة اللي هتكتبها قبل الإرسال.';
-  let preview = '';
-  if(header) preview += header + '\n\n';
-  preview += sample;
-  if(footer) preview += '\n\n' + footer;
-  document.getElementById('set-preview').textContent = preview;
+function updateMessagePreview(){ /* الهيدر/الفوتر بقوا قوايم — المعاينة فى صفحة الإرسال */ }
+
+// 💬 قوايم الهيدر والفوتر (app_settings.broadcast_headers / broadcast_footers = JSON [{id,name,text}])
+let _hf = { headers: [], footers: [] };
+function hfParse(json, legacy, legacyName){
+  try { const a = JSON.parse(json || '[]'); if (Array.isArray(a)) return a.filter(x => x && typeof x === 'object').map((x,i) => ({ id: String(x.id || ('x' + Date.now() + i)), name: String(x.name || ''), text: String(x.text || '') })); } catch(_){}
+  return (legacy && String(legacy).trim()) ? [{ id: 'l1', name: legacyName, text: String(legacy) }] : [];
+}
+function hfRender(kind){
+  const box = document.getElementById('set-hf-' + kind); if (!box) return;
+  const list = _hf[kind];
+  const word = kind === 'headers' ? 'هيدر' : 'فوتر';
+  if (!list.length) { box.innerHTML = `<div style="text-align:center;color:#8A8580;font-size:12.5px;padding:14px;border:1px dashed #3A3A3A;border-radius:10px">مفيش ${word} — اضغط «➕ ${word} جديد»</div>`; return; }
+  box.innerHTML = list.map((it, i) => `
+    <div style="background:#141414;border:1px solid #2F2B25;border-radius:12px;padding:12px;margin-bottom:10px">
+      <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+        <input type="text" value="${escAttr(it.name)}" placeholder="اسم ال${word} (مثلاً: تهنئة / تحميل / عام)" oninput="_hf.${kind}[${i}].name=this.value" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14.5px;font-weight:500;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;line-height:1.7;flex:1;padding:9px 12px">
+        <button type="button" onclick="hfDel('${kind}',${i})" title="مسح" style="background:rgba(224,85,85,.12);border:1.5px solid rgba(224,85,85,.5);color:#E05555;border-radius:10px;padding:8px 12px;cursor:pointer;font-family:inherit;font-weight:700">🗑</button>
+      </div>
+      <textarea rows="3" placeholder="نص ال${word}..." oninput="_hf.${kind}[${i}].text=this.value" style="background:#1E1E1E;border:2px solid #4A4540;color:#FFFFFF;padding:11px 14px;font-size:14.5px;font-weight:500;border-radius:10px;width:100%;font-family:Cairo,sans-serif;outline:none;box-sizing:border-box;line-height:1.7;min-height:80px;resize:vertical">${escAttr(it.text)}</textarea>
+    </div>`).join('');
+}
+function hfAdd(kind){
+  _hf[kind].push({ id: (kind === 'headers' ? 'h' : 'f') + Date.now().toString(36), name: '', text: '' });
+  hfRender(kind);
+  const box = document.getElementById('set-hf-' + kind);
+  const inputs = box ? box.querySelectorAll('input[type="text"]') : [];
+  if (inputs.length) inputs[inputs.length - 1].focus();
+}
+function hfDel(kind, i){
+  const it = _hf[kind][i]; if (!it) return;
+  if ((it.text || '').trim() && !confirm(`تمسح «${it.name || 'بدون اسم'}»؟`)) return;
+  _hf[kind].splice(i, 1); hfRender(kind);
+}
+function hfClean(kind){
+  const word = kind === 'headers' ? 'هيدر' : 'فوتر';
+  return _hf[kind].filter(x => (x.text || '').trim()).map((x, i) => ({ id: x.id, name: (x.name || '').trim() || `${word} ${i + 1}`, text: x.text.trim() }));
 }
 
 // 🏭 Per-Warehouse working hours
@@ -10262,8 +10300,8 @@ async function saveSettings(){
 
   const pmin  = parseInt(document.getElementById('set-permit-min').value);
   const pmax  = parseInt(document.getElementById('set-permit-max').value);
-  const header = document.getElementById('set-header').value;
-  const footer = document.getElementById('set-footer').value;
+  const hfHeaders = JSON.stringify(hfClean('headers'));
+  const hfFooters = JSON.stringify(hfClean('footers'));
 
   // 🆕 Default page + Report schedule
   const defaultPage = document.getElementById('set-default-page').value;
@@ -10289,8 +10327,8 @@ async function saveSettings(){
   const updates = [
     ['permit_min',         String(pmin)],
     ['permit_max',         String(pmax)],
-    ['broadcast_header',   header],
-    ['broadcast_footer',   footer],
+    ['broadcast_headers',  hfHeaders],
+    ['broadcast_footers',  hfFooters],
     // 🆕 New settings
     ['default_admin_page',     defaultPage],
     ['report_schedule_type',   reportType],
@@ -11244,7 +11282,7 @@ const N8N_BASE = 'https://n8n.gladiatorverse.net';
 const BROADCAST_WEBHOOK = `${N8N_BASE}/webhook/broadcast`;
 let broadcastTargets = null; // cached last preview result
 let allBroadcastTemplates = [];
-let cachedBroadcastSettings = {header:'', footer:''};
+let cachedBroadcastSettings = {headers:[], footers:[]};
 
 // ═══════════════════════════════════════════════════════════
 // MULTI-SELECT COMPONENT (Reusable for any filter)
@@ -11432,18 +11470,19 @@ async function loadBroadcast(){
         ? Promise.resolve({json: async () => allReligions})
         : fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
       fetch(`${SB}/rest/v1/message_templates?select=*&order=id.desc`,{headers:HDR}),
-      fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(broadcast_header,broadcast_footer)`,{headers:HDR})
+      fetch(`${SB}/rest/v1/app_settings?select=key,value&key=in.(broadcast_headers,broadcast_footers)`,{headers:HDR})
     ]);
     allClientTypes = await r1.json();
     allReligions = await r2.json();
     allBroadcastTemplates = await r3.json();
     const settings = await r4.json();
-    cachedBroadcastSettings = {header:'', footer:''};
+    cachedBroadcastSettings = {headers:[], footers:[]};
     settings.forEach(s => {
-      if(s.key === 'broadcast_header') cachedBroadcastSettings.header = s.value || '';
-      if(s.key === 'broadcast_footer') cachedBroadcastSettings.footer = s.value || '';
+      if(s.key === 'broadcast_headers') cachedBroadcastSettings.headers = hfParse(s.value, '', '');
+      if(s.key === 'broadcast_footers') cachedBroadcastSettings.footers = hfParse(s.value, '', '');
     });
   }catch(e){}
+  bcFillHFSelects();
 
   initBroadcastFilters();
 
@@ -11713,9 +11752,27 @@ async function uploadAllBroadcastFiles(){
   }));
 }
 
+// اختيار الهيدر/الفوتر لكل رسالة — الافتراضى «بدون» (الرسالة بس)
+function bcFillHFSelects(){
+  [['bc-header-sel','headers','— بدون هيدر —'],['bc-footer-sel','footers','— بدون فوتر —']].forEach(([id, kind, none]) => {
+    const sel = document.getElementById(id); if (!sel) return;
+    const keep = sel.value;
+    const list = (cachedBroadcastSettings && cachedBroadcastSettings[kind]) || [];
+    sel.innerHTML = `<option value="">${none}</option>` + list.map(x => `<option value="${escAttr(x.id)}">${escAttr(x.name)}</option>`).join('');
+    sel.value = list.some(x => x.id === keep) ? keep : '';
+  });
+  updateBroadcastFullPreview();
+}
+function bcPickedHF(kind){
+  const sel = document.getElementById(kind === 'headers' ? 'bc-header-sel' : 'bc-footer-sel');
+  const id = sel ? sel.value : '';
+  if (!id) return '';
+  const it = ((cachedBroadcastSettings && cachedBroadcastSettings[kind]) || []).find(x => x.id === id);
+  return it ? (it.text || '') : '';
+}
 function buildFullMessage(content){
-  const header = (cachedBroadcastSettings?.header || '').trim();
-  const footer = (cachedBroadcastSettings?.footer || '').trim();
+  const header = bcPickedHF('headers').trim();
+  const footer = bcPickedHF('footers').trim();
   const body = (content || '').trim();
   const parts = [];
   if(header) parts.push(header);
@@ -12030,6 +12087,7 @@ async function sendBroadcast(){
       alert(`✅ تم إرسال الطلب لـ n8n بنجاح\n\n📬 هيتم توصيل الرسالة لـ ${broadcastTargets.total} شخص خلال دقايق.${filesInfo}\n\n💡 الملفات هتتمسح تلقائياً من Storage بعد الإرسال.`);
       // Reset form
       document.getElementById('bc-message').value = '';
+      ['bc-header-sel','bc-footer-sel'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
       broadcastFiles = [];
       renderBroadcastFiles();
       updateMessageCount();
