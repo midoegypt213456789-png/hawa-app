@@ -2688,10 +2688,14 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 
       <div class="tbl-wrap" style="padding:18px;margin-bottom:14px;background:rgba(224,135,58,0.06);border:1px solid rgba(224,135,58,0.2)">
         <div style="font-size:13px;color:#E0A874;line-height:1.8">
-          ℹ️ العملاء اللى سجّلوا لسه لكن مش موافق عليهم. راجع بياناتهم واضغط <b>✅ موافقة</b> عشان يقدروا يدخلوا، أو <b>❌ رفض</b> لو فيه مشكلة.
+          ℹ️ العملاء اللى سجّلوا لسه لكن مش موافق عليهم. راجع بياناتهم واضغط <b>✅ موافقة</b> عشان يقدروا يدخلوا، أو <b>❌ رفض</b> لو فيه مشكلة (الرفض محتاج سبب).
           <br/>
-          ⚠️ <b>الرفض نهائى</b> — العميل المرفوض مش هيقدر يسجّل تانى بنفس الـ username أو رقم الهاتف.
+          ↩️ لو حد اترفض بالغلط: افتح <b>«❌ المرفوضين»</b> تحت واضغط <b>موافقة</b> — بيدخل على طول بنفس بياناته. وكل رفض/موافقة بيتسجّل مين عمله وإمتى.
         </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button id="pc-tab-pending" onclick="setPendingView('pending')" class="add-btn" style="padding:8px 16px;font-size:13px">⏳ تحت الانتظار</button>
+        <button id="pc-tab-rejected" onclick="setPendingView('rejected')" class="add-btn" style="padding:8px 16px;font-size:13px;background:transparent;color:var(--text-dim);border:1.5px solid var(--border)">❌ المرفوضين</button>
       </div>
 
       <div id="pending-list">
@@ -14592,20 +14596,35 @@ function showWHToast(msg, type){
 
 // =================== PENDING CLIENTS (عملاء تحت الانتظار) ===================
 let allPendingClientsData = [];
+let pendingView = 'pending';
+function setPendingView(v){
+  pendingView = v === 'rejected' ? 'rejected' : 'pending';
+  const on = 'padding:8px 16px;font-size:13px', off = on + ';background:transparent;color:var(--text-dim);border:1.5px solid var(--border)';
+  const a = document.getElementById('pc-tab-pending'), b = document.getElementById('pc-tab-rejected');
+  if (a) a.style.cssText = pendingView === 'pending' ? on : off;
+  if (b) b.style.cssText = pendingView === 'rejected' ? on : off;
+  loadPendingClients();
+}
+// اسم اللى عامل الإجراء (أدمن أو موظف) — بيتسجّل مع الرفض/الموافقة
+function hawaWho(){
+  try { const e = JSON.parse(sessionStorage.getItem('hawa_admin_emp') || 'null'); if (e && (e.name || e.username)) return 'موظف: ' + (e.name || e.username); } catch(_){}
+  try { const a = JSON.parse(sessionStorage.getItem('hawa_admin') || 'null'); if (a) return 'أدمن: ' + (a.name || a.username || a.full_name || 'admin'); } catch(_){}
+  return 'الأدمن';
+}
 
 async function loadPendingClients(){
   const c = document.getElementById('pending-list');
   c.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
   try {
     const r = await fetch(
-      `${SB}/rest/v1/clients?approval_status=eq.pending&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region,assigned_emp_id&order=created_at.desc`,
+      `${SB}/rest/v1/clients?approval_status=eq.${pendingView}&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region,assigned_emp_id,approval_changed_at,approval_changed_by,approval_note&order=${pendingView === 'rejected' ? 'approval_changed_at.desc.nullslast,created_at.desc' : 'created_at.desc'}`,
       {headers: HDR}
     );
     if (!r.ok) throw new Error('فشل الاتصال بقاعدة البيانات');
     await ensureEmpScope();
     allPendingClientsData = empScopeFilter(await r.json());
     renderPendingClients();
-    updatePendingBadge(allPendingClientsData.length);
+    if (pendingView === 'pending') updatePendingBadge(allPendingClientsData.length);
   } catch(e) {
     c.innerHTML = `<div class="loading-txt" style="color:var(--error)">❌ ${e.message}</div>`;
   }
@@ -14617,8 +14636,8 @@ function renderPendingClients(){
     c.innerHTML = `
       <div class="pc-empty">
         <div class="pc-empty-icon">✨</div>
-        <div class="pc-empty-title">مفيش عملاء تحت الانتظار</div>
-        <div class="pc-empty-sub">كل العملاء الجداد اتمت مراجعتهم</div>
+        <div class="pc-empty-title">${pendingView === 'rejected' ? 'مفيش عملاء مرفوضين' : 'مفيش عملاء تحت الانتظار'}</div>
+        <div class="pc-empty-sub">${pendingView === 'rejected' ? '' : 'كل العملاء الجداد اتمت مراجعتهم'}</div>
       </div>`;
     return;
   }
@@ -14664,9 +14683,13 @@ function renderPendingClients(){
           </div>
         </div>
 
+        ${cl.approval_status === 'rejected' ? `<div style="margin-top:10px;background:rgba(224,85,85,.08);border:1px solid rgba(224,85,85,.3);border-radius:10px;padding:9px 12px;font-size:12.5px;line-height:1.8;color:#E8A0A0">
+          ❌ اترفض${cl.approval_changed_at ? ' ' + new Date(cl.approval_changed_at).toLocaleString('ar-EG',{timeZone:'Africa/Cairo',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : ''}${cl.approval_changed_by ? ' — بواسطة ' + pcEscape(cl.approval_changed_by) : ' — (قبل تسجيل مين رفض)'}
+          ${cl.approval_note ? `<br>📝 السبب: ${pcEscape(cl.approval_note)}` : ''}
+        </div>` : ''}
         <div class="pc-actions">
-          <button class="pc-approve" onclick="approvePendingClient(${cl.id})">✅ موافقة</button>
-          <button class="pc-reject" onclick="rejectPendingClient(${cl.id})">❌ رفض</button>
+          <button class="pc-approve" onclick="approvePendingClient(${cl.id})">${cl.approval_status === 'rejected' ? '↩️ موافقة (رجّعه)' : '✅ موافقة'}</button>
+          ${cl.approval_status === 'rejected' ? '' : `<button class="pc-reject" onclick="rejectPendingClient(${cl.id})">❌ رفض</button>`}
         </div>
       </div>`;
   }).join('');
@@ -14681,7 +14704,7 @@ async function approvePendingClient(id){
     const r = await fetch(`${SB}/rest/v1/clients?id=eq.${id}`, {
       method: 'PATCH',
       headers: HDR,
-      body: JSON.stringify({ approval_status: 'approved', is_active: true })
+      body: JSON.stringify({ approval_status: 'approved', is_active: true, approval_changed_by: hawaWho(), approval_note: null })
     });
     if (!r.ok) throw new Error(await r.text());
     await loadPendingClients();
@@ -14694,13 +14717,15 @@ async function approvePendingClient(id){
 async function rejectPendingClient(id){
   const cl = allPendingClientsData.find(c => c.id === id);
   if (!cl) return;
-  if (!confirm(`❌ هترفض العميل "${cl.name}"؟\n\n⚠️ ده قرار نهائى — مش هيقدر يسجّل تانى بنفس الـ username أو الهاتف.`)) return;
+  const reason = prompt(`❌ رفض العميل "${cl.name}" (كود ${cl.company_code || '—'})\n\nاكتب سبب الرفض (إجبارى):`);
+  if (reason === null) return;
+  if (!reason.trim()) { alert('لازم تكتب سبب الرفض'); return; }
 
   try {
     const r = await fetch(`${SB}/rest/v1/clients?id=eq.${id}`, {
       method: 'PATCH',
       headers: HDR,
-      body: JSON.stringify({ approval_status: 'rejected', is_active: false })
+      body: JSON.stringify({ approval_status: 'rejected', is_active: false, approval_changed_by: hawaWho(), approval_note: reason.trim().slice(0, 300) })
     });
     if (!r.ok) throw new Error(await r.text());
     await loadPendingClients();
