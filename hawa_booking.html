@@ -3537,8 +3537,19 @@ async function qtyLoad(){
     const j = await r.json();
     if (!j || !j.ok || !Array.isArray(j.rows) || !j.rows.length) { panel.innerHTML = '<div style="text-align:center;color:var(--error);font-size:12px">مفيش كميات متاحة على الإذن ده فى المخزن ده</div>'; return; }
     const types = j.rows.map(x => ({ ...x, available: Math.max(0, (x.qty_net||0) - (x.units_booked||0)), req: 0 }));
-    const items = (Array.isArray(j.items) ? j.items : []).filter(it => types.find(t => t.vehicle_type === it.vehicle_type));
-    _qty = { rows: types, items: items.map(it => ({ ...it, req: 0 })), perMax: Number(j.per_booking_max)||10, suggest: null, options: [] };
+    // 🧮 رصيد الأصناف لازم يتخصم منه اللى اتحمّل/اتحجز قبل كده على نفس النوع (الإذن نفسه مابيعرفش أنهى صنف اتحمّل)
+    const avail = {}; types.forEach(t => { avail[t.vehicle_type] = t.available; });
+    const notes = [];
+    types.forEach(t => {
+      const itemsSum = (Array.isArray(j.items) ? j.items : []).filter(it => it.vehicle_type === t.vehicle_type).reduce((s, it) => s + (Number(it.net) || 0), 0);
+      if (t.available <= 0 && (t.units_booked || 0) > 0) notes.push(`✅ <b>${esc(t.vehicle_type)}</b>: اتحمّل/اتحجز بالكامل قبل كده (${t.units_booked} قطعة) — مفيش منه رصيد`);
+      else if ((t.units_booked || 0) > 0 && itemsSum > t.available) notes.push(`ℹ️ <b>${esc(t.vehicle_type)}</b>: اتحمّل/اتحجز منه ${t.units_booked} قطعة قبل كده — باقى لك <b>${t.available}</b> قطعة بس، وزّعهم على الأصناف`);
+    });
+    const items = (Array.isArray(j.items) ? j.items : [])
+      .filter(it => types.find(t => t.vehicle_type === it.vehicle_type) && (avail[it.vehicle_type] || 0) > 0)
+      .map(it => ({ ...it, net: Math.min(Number(it.net) || 0, avail[it.vehicle_type] || 0) }));
+    if (!types.some(t => t.available > 0)) { panel.innerHTML = `<div style="text-align:center;color:var(--error);font-size:12.5px;line-height:1.9">${notes.join('<br>') || 'مفيش كميات متاحة على الإذن ده فى المخزن ده'}</div>`; return; }
+    _qty = { rows: types, items: items.map(it => ({ ...it, req: 0 })), perMax: Number(j.per_booking_max)||10, suggest: null, options: [], notes };
     qtyRender();
   } catch (e) { panel.innerHTML = '<div style="text-align:center;color:var(--error);font-size:12px">⚠️ مشكلة فى الاتصال — حاول تانى</div>'; }
 }
@@ -3549,13 +3560,14 @@ function qtyRender(){
     <div style="background:var(--dark3);border:1px solid var(--gold);border-radius:12px;padding:12px">
       <div style="font-weight:800;font-size:13.5px;margin-bottom:8px;text-align:center">📦 عايز تحمّل كام النهاردة من ${esc(bk.warehouse)}؟</div>
       <div style="font-size:11px;color:var(--text-dim);text-align:center;margin-bottom:8px">اكتب العدد اللى هتحمّله قدام كل صنف</div>
+      ${(_qty.notes || []).length ? `<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.35);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.9;margin-bottom:8px">${_qty.notes.join('<br>')}</div>` : ''}
       <table style="width:100%;font-size:12.5px;border-collapse:collapse">
         <tr style="color:var(--text-dim);font-size:11px"><th style="text-align:right;padding:4px">${useItems ? 'الصنف' : 'النوع'}</th><th style="padding:4px">المتاح</th><th style="padding:4px">المطلوب تحميله</th><th style="padding:4px">المتبقى</th></tr>
         ${useItems
           ? _qty.items.map((it,i)=>`<tr style="border-top:1px solid var(--border)">
               <td style="padding:7px 4px;font-weight:700;line-height:1.5">${esc(it.name || it.vehicle_type)}<div style="font-size:10.5px;color:var(--text-dim);font-weight:400">${esc(it.vehicle_type)}</div></td>
               <td style="text-align:center">${it.net}</td>
-              <td style="text-align:center"><input type="number" inputmode="numeric" min="0" max="${it.net}" value="${it.req||''}" placeholder="0" oninput="qtyItemInput(${i}, this.value)" style="width:74px;text-align:center;background:var(--dark2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:6px;font-family:inherit;font-weight:700"></td>
+              <td style="text-align:center"><input type="number" inputmode="numeric" min="0" max="${it.net}" value="${it.req||''}" placeholder="0" oninput="qtyItemInput(${i}, this.value, this)" style="width:74px;text-align:center;background:var(--dark2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:6px;font-family:inherit;font-weight:700"></td>
               <td style="text-align:center" id="qty-ileft-${i}">${it.net - (it.req||0)}</td>
             </tr>`).join('')
           : _qty.rows.map((r,i)=>`<tr style="border-top:1px solid var(--border)">
@@ -3583,11 +3595,18 @@ function qtyInput(i, v){
   _qty.suggest = null; const sg = document.getElementById('qtySuggest'); if (sg) sg.innerHTML = '';
   qtySummary();
 }
-function qtyItemInput(i, v){
+function qtyItemInput(i, v, el){
   const it = (_qty.items || [])[i]; if (!it) return;
   let n = parseInt(arabicToEnglish(v).replace(/[^\d]/g,''), 10); if (isNaN(n) || n < 0) n = 0;
   if (n > it.net) n = it.net;
+  // مجموع أصناف النوع الواحد مايعدّيش الباقى من النوع على الإذن
+  const t = (_qty.rows || []).find(r => r.vehicle_type === it.vehicle_type);
+  if (t && t.available != null) {
+    const others = _qty.items.reduce((s, x, k) => (k !== i && x.vehicle_type === it.vehicle_type) ? s + (x.req || 0) : s, 0);
+    if (n > t.available - others) n = Math.max(0, t.available - others);
+  }
   it.req = n;
+  if (el && String(el.value) !== '' && Number(arabicToEnglish(el.value)) !== n) el.value = n;
   const left = document.getElementById('qty-ileft-'+i); if (left) left.textContent = it.net - n;
   _qty.suggest = null; _qty.options = []; const sg = document.getElementById('qtySuggest'); if (sg) sg.innerHTML = '';
   qtySummary();
