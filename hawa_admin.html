@@ -12086,6 +12086,13 @@ async function sendBroadcast(){
     });
 
     if(res.ok){
+      // 📩 نسخة فى «رسائلى» عند كل تاجر فى صفحة الحجز (نفس رسالة تليجرام)
+      try{
+        const ids = (broadcastTargets.recipients || []).filter(r => r.source === 'client' && r.source_id).map(r => r.source_id);
+        const inboxBody = (fullMsg || '').trim() + (mediaFiles.length ? ((fullMsg || '').trim() ? '\n\n' : '') + '📎 الرسالة فيها مرفقات — افتح تليجرام تشوفها' : '');
+        if (ids.length && inboxBody && SESSION_TOKEN) fetch(`${SB}/rest/v1/rpc/inbox_add_bulk`, { method:'POST', headers:{...HDR,'Content-Type':'application/json'},
+          body: JSON.stringify({ p_token: SESSION_TOKEN, p_client_ids: ids, p_kind: 'broadcast', p_title: '📢 رسالة من الإدارة', p_body: inboxBody }) }).catch(()=>{});
+      }catch(_){}
       closeModal('broadcastConfirmModal');
       const filesInfo = mediaFiles.length ? `\n📎 مع ${mediaFiles.length} ملف مرفق` : '';
       alert(`✅ تم إرسال الطلب لـ n8n بنجاح\n\n📬 هيتم توصيل الرسالة لـ ${broadcastTargets.total} شخص خلال دقايق.${filesInfo}\n\n💡 الملفات هتتمسح تلقائياً من Storage بعد الإرسال.`);
