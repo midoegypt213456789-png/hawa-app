@@ -3854,6 +3854,7 @@ async function processPermitFile(f, pages) {
         belongs_to_other: 'الإذن ده متسجل لتاجر تانى — مرفوض',
         too_many: 'عديت الحد اليومى لتصوير الأذونات — حاول بكرة أو كلم الإدارة',
         rescan_limit: 'الإذن ده اتصوّر من جديد كتير — كلم الإدارة تحدّث رصيده',
+        unverified: 'مقدرناش نتأكد من قراءة الإذن دلوقتى — الرصيد القديم زى ما هو، جرّب تانى بعد شوية',
         void: 'الإذن ده ملغى — راجع الإدارة',
         too_big: 'الملف كبير أوى — صوّر بجودة أقل',
         network: 'النت قطع أثناء الرفع — حاول تانى',
@@ -3865,7 +3866,7 @@ async function processPermitFile(f, pages) {
     }
     _pmPages = []; renderPermitPages();
     prog.style.color = 'var(--success)';
-    prog.textContent = res.rescanned ? '✅ الإذن اتحدّث من الصورة الجديدة' : res.existing ? '✅ الإذن ده كان متسجل بالفعل' : (res.telegram_sent ? '✅ اتسجل الإذن — والشرح وصلك على تليجرام كمان' : '✅ اتسجل الإذن بنجاح');
+    prog.textContent = res.unchanged ? 'ℹ️ ده نفس الإذن المتسجل بالظبط — مفيش تغيير فى الكميات' : res.rescanned ? '✅ الإذن اتحدّث من الصورة الجديدة' : res.existing ? '✅ الإذن ده كان متسجل بالفعل' : (res.telegram_sent ? '✅ اتسجل الإذن — والشرح وصلك على تليجرام كمان' : '✅ اتسجل الإذن بنجاح');
     const wasRescan = !!res.rescanned;
     if (wasRescan && editMode) editMode.permitShown = null;
     const scannedNo = String((res.permit && res.permit.permit_no) || '');
