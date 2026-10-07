@@ -284,6 +284,19 @@ function rebuildSlotsReport(bookings){
 // بنستخدم sessionStorage عشان تنتهي لما الـ browser يتقفل
 const emp = JSON.parse(sessionStorage.getItem('hawa_emp') || 'null');
 if (!emp) { window.location.href = 'hawa_employee.html'; }
+// 🔐 تقرير التحميل مقفول على موظفين الشاسيهات والمواتير (ليهم «📊 تقرير التاجر» جوه شاشتهم) — التحقق من السيرفر
+document.documentElement.style.visibility = 'hidden';
+(async () => {
+  try {
+    const tok = emp && (emp.__token || emp.token);
+    if (!tok) { sessionStorage.removeItem('hawa_emp'); window.location.href = 'hawa_employee.html'; return; }
+    const r = await fetch(`${SB}/rest/v1/rpc/emp_page_access`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' }, body: JSON.stringify({ p_token: tok }) });
+    const j = await r.json();
+    if (!j || !j.ok) { sessionStorage.removeItem('hawa_emp'); window.location.href = 'hawa_employee.html'; return; }
+    if (!j.loading_report) { alert('⛔ تقرير التحميل مش متاح لوظيفتك — تقرير التاجر موجود جوه شاشة «📦 تسليم النواقص»'); window.location.href = 'hawa_employee.html'; return; }
+    document.documentElement.style.visibility = '';
+  } catch (e) { document.documentElement.style.visibility = ''; }
+})();
 
 const empRole = emp ? (emp.role || emp.warehouse || 'عام') : 'عام';
 document.getElementById('empName').textContent = '👤 ' + (emp ? emp.name : '') + ' — ' + empRole;

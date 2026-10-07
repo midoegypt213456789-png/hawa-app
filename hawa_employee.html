@@ -207,10 +207,14 @@
         <button id="shTab-due" class="active" onclick="shTab('due')">⏰ مستحق / متأخر <span id="shCntDue"></span></button>
         <button id="shTab-upcoming" onclick="shTab('upcoming')">📅 جاى <span id="shCntUp"></span></button>
         <button id="shTab-done" onclick="shTab('done')">✅ اتسلّم</button>
+        <button id="shTab-report" onclick="shTab('report')">📊 تقرير التاجر</button>
       </div>
+      <div id="shQueue">
       <input id="shQ" class="m-inp" placeholder="🔍 اسم التاجر / الكود / رقم الإذن / رقم المستند" oninput="shRender()" style="margin-bottom:10px">
       <div id="shInfo" style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px;text-align:center"></div>
       <div id="shList"><div class="loading-state">⏳ جاري التحميل...</div></div>
+      </div>
+      <div id="shReport" style="display:none"><div id="trBox"></div></div>
     </div>
   </div>
 </div>
@@ -669,6 +673,8 @@ async function setupModes(){
   const hasSh = permOn(p,'shortage-chassis') || permOn(p,'shortage-motor') || (p && p.shortages && p.shortages.edit);
   const hasBk = !hasSh || p.__all__ === true || permOn(p,'warehouse-checkin');
   document.getElementById('modeTabs').style.display = (hasSh && hasBk) ? '' : 'none';
+  // 📊 تقرير التحميل العام للمخازن بس — موظف النواقص ليه «📊 تقرير التاجر» جوه شاشته
+  const rb = document.querySelector('.header-right button[onclick="goReport()"]'); if (rb) rb.style.display = hasBk ? '' : 'none';
   if (hasSh && hasBk) shCounts();
   setMode(hasBk ? 'bk' : 'sh');
 }
@@ -774,7 +780,201 @@ async function ciSave(){
 
 // ═══════════════ 🤝 تسليم النواقص ═══════════════
 let _sh = { mode: 'due', docs: [], counts: {} }, _dl = null;
-function shTab(m){ _sh.mode = m; ['due','upcoming','done'].forEach(k => document.getElementById('shTab-'+k).classList.toggle('active', k === m)); shLoad(); }
+function shTab(m){
+  ['due','upcoming','done','report'].forEach(k => document.getElementById('shTab-'+k).classList.toggle('active', k === m));
+  document.getElementById('shQueue').style.display = m === 'report' ? 'none' : '';
+  document.getElementById('shReport').style.display = m === 'report' ? '' : 'none';
+  if (m === 'report') { if (!document.getElementById('trQ')) trMount('trBox'); return; }
+  _sh.mode = m; shLoad();
+}
+function trRpc(fn, args){ return rpcEmp(fn, args); }
+// ═══════════════════════════════════════════════════════════
+// 👤 تقرير التاجر الشامل — الأذون، المحمّل والغير محمّل، المواعيد، الشاسيه والماتور
+//    (نفس الكود فى لوحة التحكم وشاشة المخازن — الصفحة بتعرّف trRpc)
+// ═══════════════════════════════════════════════════════════
+var _tr = { data: null, timer: null, boxId: null };
+function trE(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function trDay(ds){ if(!ds) return '-'; const d = new Date(String(ds).slice(0,10)+'T12:00:00'); return ['الأحد','الاتنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1)+'/'+String(d.getFullYear()).slice(2); }
+function trNorm(t){ return String(t||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ؤ]/g,'و').replace(/[ئ]/g,'ي').replace(/[ًٌٍَُِّْـ]/g,'').replace(/[\s"'“”«»()\-_.,/]+/g,' ').trim(); }
+function trItemOk(name, q){ q = trNorm(q); if(!q) return true; const n = ' '+trNorm(name)+' ', nz = n.replace(/ /g,''); return q.split(' ').every(t => n.includes(t) || nz.includes(t)); }
+function trMount(boxId){
+  _tr.boxId = boxId;
+  const box = document.getElementById(boxId); if(!box) return;
+  box.innerHTML = `
+  <div style="position:relative;margin-bottom:10px">
+    <input id="trQ" autocomplete="off" placeholder="🔍 اكتب كود التاجر أو اسمه..." oninput="trSearch()" onkeydown="if(event.key==='Enter'){event.preventDefault();trSearch(true)}"
+      style="width:100%;box-sizing:border-box;background:var(--dark3);border:1.5px solid var(--gold);border-radius:12px;padding:11px 14px;font-family:inherit;font-size:14px;color:var(--text);outline:none">
+    <div id="trSug" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:50;background:var(--dark2);border:1px solid var(--border);border-radius:12px;margin-top:4px;max-height:320px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.5)"></div>
+  </div>
+  <div id="trFilters" style="display:none;gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center"></div>
+  <div id="trOut"><div style="text-align:center;color:var(--text-dim);padding:40px 10px;font-size:13px;line-height:2">👤 اكتب كود التاجر أو اسمه فوق<br>وهيطلعلك تقرير كامل عنه</div></div>`;
+}
+function trSearch(now){
+  clearTimeout(_tr.timer);
+  _tr.timer = setTimeout(async () => {
+    const q = (document.getElementById('trQ').value || '').trim(), sug = document.getElementById('trSug');
+    if(!q){ sug.style.display = 'none'; return; }
+    try{
+      const list = await trRpc('report_client_search', { p_q: q }) || [];
+      if(list.length === 1 && now){ sug.style.display='none'; return trOpen(list[0].id); }
+      sug.innerHTML = list.length ? list.map(c => `<div onclick="trOpen(${c.id})" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px" onmouseover="this.style.background='rgba(201,168,76,.1)'" onmouseout="this.style.background=''">
+          <b>${trE(c.name)}</b> <span style="color:var(--gold)">${trE(c.code||'')}</span> <span style="color:var(--text-dim);font-size:11.5px">${trE(c.governorate||'')}${c.city?' / '+trE(c.city):''}</span></div>`).join('')
+        : '<div style="padding:12px;color:var(--text-dim);font-size:12.5px">مفيش تاجر بالبيانات دى</div>';
+      sug.style.display = '';
+    }catch(e){ sug.innerHTML = `<div style="padding:12px;color:var(--error);font-size:12.5px">⚠️ ${trE(e.message)}</div>`; sug.style.display=''; }
+  }, now ? 0 : 300);
+}
+async function trOpen(id){
+  document.getElementById('trSug').style.display = 'none';
+  const out = document.getElementById('trOut');
+  out.innerHTML = '<div style="text-align:center;color:var(--text-dim);padding:30px">⏳ بنجهّز التقرير...</div>';
+  try{
+    const j = await trRpc('trader_report', { p_client_id: id });
+    if(!j || !j.ok) throw new Error((j && j.error) || 'مشكلة');
+    _tr.data = j;
+    document.getElementById('trQ').value = (j.client.code ? j.client.code + ' — ' : '') + j.client.name;
+    trFiltersRender(); trRender();
+  }catch(e){ out.innerHTML = `<div style="text-align:center;color:var(--error);padding:30px">⚠️ ${trE(e.message)}</div>`; }
+}
+function trFiltersRender(){
+  const j = _tr.data, f = document.getElementById('trFilters');
+  const permits = (j.permits||[]).map(p => p.permit_no);
+  const vts = [...new Set([].concat(...(j.permits||[]).map(p => (p.allowances||[]).map(a => a.vehicle_type)), (j.bookings||[]).map(b => b.vehicle_type), (j.shortages||[]).map(d => d.vehicle_type)).filter(Boolean))];
+  const whs = [...new Set([].concat(...(j.permits||[]).map(p => (p.allowances||[]).map(a => a.warehouse)), (j.bookings||[]).map(b => b.warehouse)).filter(Boolean))];
+  const sel = (id, all, arr) => `<select id="${id}" onchange="trRender()" style="width:auto;min-width:120px;flex:0 0 auto;background:var(--dark3);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-family:inherit;font-size:12.5px"><option value="">${all}</option>${arr.map(v => `<option>${trE(v)}</option>`).join('')}</select>`;
+  f.innerHTML = sel('trFP','🎫 كل الأذون',permits) + sel('trFT','🚚 كل الأنواع',vts) + sel('trFW','🏭 كل المخازن',whs) +
+    `<input id="trFI" placeholder="🔩 الصنف: مثلاً دايون 4" oninput="trRender()" style="flex:0 0 auto;background:var(--dark3);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-family:inherit;font-size:12.5px;width:170px">` +
+    `<div style="flex:1"></div><button onclick="trPdf(this)" style="width:auto;flex:0 0 auto;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:10px;padding:7px 14px;font-family:inherit;font-size:12.5px;cursor:pointer">📄 PDF</button>`;
+  f.style.display = 'flex';
+}
+function trRender(){
+  const j = _tr.data; if(!j) return;
+  const out = document.getElementById('trOut'), lim = j.limited, today = j.today;
+  const fp = document.getElementById('trFP').value, ft = document.getElementById('trFT').value, fw = document.getElementById('trFW').value, fi = document.getElementById('trFI').value;
+  const okP = no => !fp || String(no) === fp, okT = vt => !ft || vt === ft, okW = w => !fw || w === fw;
+  const c = j.client;
+  // ── تجميع
+  const permits = (j.permits||[]).filter(p => okP(p.permit_no));
+  let tot = 0, loaded = 0, pend = 0, carsLeft = 0, carsLoaded = 0;
+  const allowRows = [];
+  permits.forEach(p => (p.allowances||[]).filter(a => okT(a.vehicle_type) && okW(a.warehouse)).forEach(a => {
+    const pool = a.manual ? Math.max(a.qty_net||0, (a.vehicles_max||0)*(a.upv||1)) : (a.qty_net||0);
+    tot += pool; loaded += a.units_loaded||0; pend += a.units_pending||0; carsLeft += a.cars_left||0; carsLoaded += a.cars_loaded||0;
+    allowRows.push({ p, a, pool, left: Math.max(pool - (a.units_loaded||0) - (a.units_pending||0), 0) });
+  }));
+  const shorts = (j.shortages||[]).filter(d => okP(d.permit_no) && okT(d.vehicle_type) && okW(d.warehouse));
+  const openSh = shorts.filter(d => d.status === 'مفتوح');
+  const remOf = (d, part) => d.part === part ? (d.lines||[]).filter(l => trItemOk(l.name, fi)).reduce((s,l)=>s+(+l.remaining||0),0) : 0;
+  const chOwed = openSh.reduce((s,d)=>s+remOf(d,'شاسيه'),0), moOwed = openSh.reduce((s,d)=>s+remOf(d,'ماتور'),0);
+  const shDelivered = shorts.reduce((s,d)=>s+(d.lines||[]).filter(l=>trItemOk(l.name,fi)).reduce((a,l)=>a+(+l.delivered||0),0),0);
+  const books = (j.bookings||[]).filter(b => okP(b.permit_number) && okT(b.vehicle_type) && okW(b.warehouse));
+  const upcoming = books.filter(b => b.status === 'قيد الانتظار' && b.loading_date >= today).sort((a,b)=>a.loading_date.localeCompare(b.loading_date));
+  const done = books.filter(b => b.status === 'تم التنفيذ');
+  // الأصناف
+  const items = [];
+  permits.forEach(p => (p.items||[]).forEach(it => {
+    if(!okW(it.warehouse) || !okT(it.category) || !trItemOk(it.name, fi)) return;
+    const owed = part => openSh.filter(d => String(d.permit_no) === String(p.permit_no) && d.part === part).reduce((s,d)=>s+(d.lines||[]).filter(l => l.name === it.name).reduce((a,l)=>a+(+l.remaining||0),0),0);
+    const row = { permit: p.permit_no, ...it, chOwed: owed('شاسيه'), moOwed: owed('ماتور') };
+    if(lim && !(row.loaded > 0 || row.chOwed || row.moOwed)) return;
+    items.push(row);
+  }));
+  // ── عرض
+  const tile = (v, l, col) => `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:14px;padding:12px 8px;text-align:center;min-width:110px;flex:1"><div style="font-size:22px;font-weight:900;color:${col||'var(--gold-light)'}">${v}</div><div style="font-size:11.5px;color:var(--text-dim);margin-top:2px">${l}</div></div>`;
+  const sec = (t, body, n) => `<div style="background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:14px;margin-top:12px"><div style="font-size:14.5px;font-weight:800;color:var(--gold);margin-bottom:10px">${t}${n!=null?` <span style="font-size:11.5px;color:var(--text-dim);font-weight:600">(${n})</span>`:''}</div>${body}</div>`;
+  const tbl = (head, rows) => rows.length ? `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr>${head.map(h=>`<th style="text-align:right;padding:7px 8px;border-bottom:1px solid var(--border);color:var(--text-dim);font-weight:700;white-space:nowrap">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(v=>`<td style="padding:7px 8px;border-bottom:1px dashed var(--border);vertical-align:top">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '<div style="color:var(--text-dim);font-size:12.5px;text-align:center;padding:10px">مفيش بيانات</div>';
+  const pill = (t, col) => `<span style="background:${col}22;border:1px solid ${col}66;color:${col};font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap">${t}</span>`;
+
+  let html = `<div id="trPrintArea">
+  <div style="background:linear-gradient(135deg,rgba(201,168,76,.14),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.45);border-radius:18px;padding:16px">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:flex-start">
+      <div><div style="font-size:19px;font-weight:900">👤 ${trE(c.name)}</div>
+        <div style="font-size:13px;color:var(--text-dim);margin-top:3px;line-height:1.9">كود <b style="color:var(--gold)">${trE(c.code||'-')}</b> · ${trE(c.governorate||'')}${c.city?' / '+trE(c.city):''}${c.phone?` · 📞 ${trE(c.phone)}`:''}</div></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${c.is_blocked?pill('🔒 محظور','#E05555'):''}${c.approval_status && c.approval_status!=='approved'?pill(c.approval_status==='rejected'?'❌ مرفوض':'⏳ تحت المراجعة','#E05555'):''}${!lim && c.no_show_count?pill('غياب '+c.no_show_count,'#E0B040'):''}${lim?pill('👷 عرض موظف النواقص — المحمّل بس','#4A90D9'):''}</div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+      ${lim ? '' : tile(tot, '📄 إجمالى على الأذون (قطعة)')}
+      ${tile(loaded, '✅ اتحمّل (قطعة)', 'var(--success)')}
+      ${lim ? '' : tile(pend, '⏳ محجوز لسه (قطعة)', 'var(--gold-light)')}
+      ${lim ? '' : tile(Math.max(tot-loaded-pend,0), '📦 باقى لسه متحمّلش', 'var(--gold)')}
+      ${lim ? '' : tile(upcoming.length ? trDay(upcoming[0].loading_date) : '—', '📅 أقرب تحميل جاى', '#4A90D9')}
+      ${tile(chOwed, '🔩 شاسيه ليه', chOwed ? 'var(--error)' : 'var(--success)')}
+      ${tile(moOwed, '⚙️ ماتور ليه', moOwed ? 'var(--error)' : 'var(--success)')}
+      ${tile(shDelivered, '🤝 اتسلّم من النواقص', 'var(--success)')}
+    </div>
+  </div>`;
+
+  // الأذون
+  html += sec('🧾 الأذون والرصيد', tbl(lim ? ['الإذن','التاريخ','المخزن','النوع','اتحمّل'] : ['الإذن','التاريخ','المخزن','النوع','على الإذن','اتحمّل','محجوز','باقى','عربيات باقية'],
+    allowRows.map(r => lim
+      ? [`<b>${trE(r.p.permit_no)}</b>`, trDay(r.p.permit_date), trE(r.a.warehouse), trE(r.a.vehicle_type), `${r.a.units_loaded} قطعة · ${r.a.cars_loaded} عربية`]
+      : [`<b>${trE(r.p.permit_no)}</b>${r.p.status!=='نشط'?' '+pill(r.p.status,'#8A8580'):''}`, trDay(r.p.permit_date), trE(r.a.warehouse), trE(r.a.vehicle_type), r.pool,
+         `<span style="color:var(--success)">${r.a.units_loaded}</span>`, r.a.units_pending||0, `<b style="color:${r.left?'var(--gold-light)':'var(--text-dim)'}">${r.left}</b>`, r.a.cars_left])), allowRows.length);
+
+  // الأصناف
+  html += sec('📦 الأصناف — المحمّل والشاسيه والماتور', tbl(
+    lim ? ['الصنف','الإذن','المخزن','اتحمّل','🔩 شاسيه اتسلّم','⚙️ ماتور اتسلّم','🔩 ليه','⚙️ ليه'] : ['الصنف','الإذن','المخزن','الكمية','مسحوب (ورق)','اتحمّل (النظام)','محجوز','🔩 شاسيه اتسلّم','⚙️ ماتور اتسلّم','🔩 ليه','⚙️ ليه'],
+    items.map(it => lim
+      ? [trE(it.name), trE(it.permit), trE(it.warehouse||it.store||''), it.loaded, it.chassis_recv, it.motor_recv, it.chOwed?`<b style="color:var(--error)">${it.chOwed}</b>`:'0', it.moOwed?`<b style="color:var(--error)">${it.moOwed}</b>`:'0']
+      : [trE(it.name), trE(it.permit), trE(it.warehouse||it.store||''), it.qty, it.withdrawn_paper, it.loaded, it.booked_pending||0, it.chassis_recv, it.motor_recv, it.chOwed?`<b style="color:var(--error)">${it.chOwed}</b>`:'0', it.moOwed?`<b style="color:var(--error)">${it.moOwed}</b>`:'0'])), items.length);
+  if(!lim) html += `<div style="font-size:11px;color:var(--text-dim);margin-top:4px">«مسحوب (ورق)» = المكتوب على الإذن نفسه وقت التصوير · «اتحمّل (النظام)» = اللى عامل المخزن سجّله صنف صنف من يوم تشغيل النواقص</div>`;
+
+  // المواعيد الجاية (الإدارة بس)
+  if(!lim) html += sec('📅 مواعيد التحميل الجاية', tbl(['اليوم','الساعة','المخزن','النوع','العدد','الإذن','الأصناف'],
+    upcoming.map(b => [`<b>${trDay(b.loading_date)}</b>`, trE(b.time_slot||''), trE(b.warehouse), trE(b.vehicle_type), `${b.count} عربية${b.units?` (${b.units} قطعة)`:''}`, trE(b.permit_number||'-'),
+      (b.items||[]).filter(x=>trItemOk(x.name,fi)).map(x=>`${trE(x.name)}: ${x.qty}`).join('<br>') || '<span style="color:var(--text-dim)">—</span>'])), upcoming.length);
+
+  // سجل التحميل
+  html += sec('🚚 سجل التحميل (آخر سنة)', tbl(['اليوم','المخزن','النوع','العدد','الإذن','الأصناف (اتحمّل / شاسيه / ماتور)'],
+    done.slice(0, 120).map(b => [trDay(b.loading_date), trE(b.warehouse), trE(b.vehicle_type), `${b.count} عربية${b.units?` (${b.units})`:''}`, trE(b.permit_number||'-'),
+      (b.items||[]).filter(x=>x.loaded!=null && trItemOk(x.name,fi)).map(x=>`${trE(x.name)}: ${x.loaded} / <span style="color:${x.chassis<x.loaded?'var(--error)':'inherit'}">${x.chassis}</span> / <span style="color:${x.motor<x.loaded?'var(--error)':'inherit'}">${x.motor}</span>`).join('<br>') || '<span style="color:var(--text-dim)">قبل نظام الأصناف</span>'])), done.length);
+
+  // النواقص
+  html += sec('📋 مستندات النواقص', tbl(['المستند','الجزء','الإذن','المخزن','الأصناف','الاستحقاق','الحالة'],
+    shorts.map(d => {
+      const st = d.status !== 'مفتوح' ? pill(d.status, '#4CAF7D') : d.due_date < today ? pill('⚠️ متأخر '+(d.days_late||'')+' يوم', '#E05555') : pill('📅 مفتوح', '#C9A84C');
+      return [`<b>${trE(d.doc_no)}</b>`, (d.part==='شاسيه'?'🔩 ':'⚙️ ')+trE(d.part), trE(d.permit_no||'-'), trE(d.warehouse),
+        (d.lines||[]).filter(l=>trItemOk(l.name,fi)).map(l=>`${trE(l.name)}: ${d.status==='مفتوح'?'باقى '+l.remaining+' من '+l.qty:l.delivered+'/'+l.qty}`).join('<br>'), trDay(d.due_date), st];
+    })), shorts.length);
+  html += `<div style="font-size:11px;color:var(--text-dim);text-align:left;margin-top:10px">اتعمل: ${new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'})}</div></div>`;
+  out.innerHTML = html;
+}
+// 📄 PDF للتقرير (المتصفح بيرسم العربى + jsPDF، وبيتقسّم صفحات A4)
+function trLoadScript(src){ return new Promise((res, rej) => { if (window.jspdf) return res(); const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => rej(new Error('مقدرناش نحمّل أداة الـ PDF')); document.head.appendChild(sc); }); }
+async function trPdf(btn){
+  const area = document.getElementById('trPrintArea'); if(!area || !_tr.data) return;
+  const old = btn.textContent; btn.disabled = true; btn.textContent = '⏳...';
+  let holder = null;
+  try{
+    await trLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const W = 1000;
+    const css = '*{box-sizing:border-box}table{width:100%;border-collapse:collapse}td,th{border:1px solid #bbb !important;padding:5px 7px !important;color:#111 !important;text-align:right}th{background:#eee}div{color:#111}span,b{color:#111 !important}';
+    holder = document.createElement('div');
+    holder.setAttribute('dir','rtl');
+    holder.setAttribute('style', `position:fixed;left:0;top:0;visibility:hidden;width:${W}px;padding:24px;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;font-size:13px;line-height:1.8;direction:rtl;--dark2:#fff;--dark3:#f6f6f6;--border:#bbb;--text:#111;--text-dim:#555;--gold:#7a5b10;--gold-light:#7a5b10;--success:#1d7a4a;--error:#b02a2a`);
+    holder.innerHTML = `<style>${css}</style><div style="font-size:20px;font-weight:900;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px">HAWA CO — تقرير التاجر</div>` + area.innerHTML;
+    document.body.appendChild(holder);
+    const H = Math.ceil(holder.scrollHeight) + 10;
+    holder.style.position = ''; holder.style.left = ''; holder.style.top = ''; holder.style.visibility = '';
+    const xhtml = new XMLSerializer().serializeToString(holder);
+    holder.remove(); holder = null;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject></svg>`;
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('مقدرناش نرسم التقرير')); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pw = 210, ph = 297, pagePx = Math.floor(W * ph / pw);
+    for (let y = 0, i = 0; y < H; y += pagePx, i++) {
+      const hh = Math.min(pagePx, H - y);
+      const cv = document.createElement('canvas'); cv.width = W * 2; cv.height = hh * 2;
+      const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.scale(2, 2); cx.drawImage(img, 0, -y);
+      if (i) pdf.addPage();
+      pdf.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pw, hh * pw / W);
+    }
+    pdf.save('HAWA_trader_' + (_tr.data.client.code || _tr.data.client.id) + '.pdf');
+  }catch(e){ alert('❌ ' + (e.message || e)); }
+  finally { if (holder) holder.remove(); btn.disabled = false; btn.textContent = old; }
+}
+
 async function shCounts(){
   try{ const j = await rpcEmp('shortage_queue', { p_mode: 'due' }); shBadges(j && j.counts); }catch(_){}
 }
@@ -1119,7 +1319,7 @@ const saved=sessionStorage.getItem('hawa_emp');
 try{ const _e=saved?JSON.parse(saved):null; if(_e&&_e.__token) SESSION_TOKEN=_e.__token; }catch(e){}
 if(saved){emp=JSON.parse(saved);enterMain();}
 // ⏰ Auto-refresh كل دقيقتين (120 ثانية)
-setInterval(()=>{ if(!emp) return; if(MODE==='bk') loadBookings(); else shLoad(); },120000);
+setInterval(()=>{ if(!emp) return; if(MODE==='bk') loadBookings(); else if(document.getElementById('shReport').style.display==='none') shLoad(); },120000);
 </script>
 </body>
 </html>
