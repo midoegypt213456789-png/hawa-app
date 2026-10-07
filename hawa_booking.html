@@ -3161,17 +3161,23 @@ function switchTab(tab) {
 }
 
 // ===================== 📦 نواقصى =====================
-let _short = null;
-function shortDayAr(ds){ if (!ds) return '-'; const d = new Date(ds + 'T12:00:00'); return `${AR_DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; }
-function shortTodayStr(){ return new Date().toLocaleDateString('en-CA', { timeZone:'Africa/Cairo' }); }
+var _short = null, _shortErr = '';
+function shortDayAr(ds){ if (!ds) return '-'; const d = new Date(ds + 'T12:00:00'); return `${['الأحد','الاتنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; }
+function shortTodayStr(){ try { const t = new Date().toLocaleDateString('en-CA', { timeZone:'Africa/Cairo' }); if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t; } catch (_) {} const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 async function shortFetch(){
-  if (!user || !user.id) return null;
+  _shortErr = '';
+  if (!user || !user.id) { _shortErr = 'سجّل دخول الأول'; return null; }
   try {
+    // ⏱️ مهلة 20 ثانية علشان لو النت ضعيف الشاشة متفضلش «جارى التحميل» على طول
+    const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const tm = ctl ? setTimeout(() => ctl.abort(), 20000) : null;
     const r = await fetch(`${SB}/rest/v1/rpc/shortage_my`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' },
-      body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '' }) });
+      body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '' }), signal: ctl ? ctl.signal : undefined });
+    if (tm) clearTimeout(tm);
     const j = await r.json();
-    if (j && j.ok) { _short = j; shortBadge(); shortBannerShow(); return j; }
-  } catch (_) {}
+    if (!j || !j.ok) _shortErr = (j && j.error === 'forbidden') ? 'اخرج وادخل تانى بحسابك' : 'السيرفر مردّش صح';
+    if (j && j.ok) { _short = j; try { shortBadge(); shortBannerShow(); } catch (_) {} return j; }
+  } catch (e) { _shortErr = (e && e.name === 'AbortError') ? 'النت بطىء — اضغط تحديث' : 'مشكلة فى الاتصال — اضغط تحديث'; }
   return null;
 }
 function shortBadge(){
@@ -3219,8 +3225,13 @@ function shortDocCard(d){
 }
 async function shortLoad(){
   const box = document.getElementById('shortList'), sm = document.getElementById('shortSummary'); if (!box) return;
+  box.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:12px;padding:20px">⏳ جارى التحميل...</div>';
   const j = await shortFetch();
-  if (!j) { box.innerHTML = '<div style="text-align:center;color:var(--error);font-size:12px;padding:20px">⚠️ مقدرناش نحمّل النواقص — اضغط تحديث</div>'; return; }
+  if (!j) { box.innerHTML = `<div style="text-align:center;color:var(--error);font-size:12.5px;padding:20px">⚠️ مقدرناش نحمّل النواقص — ${esc(_shortErr || 'اضغط تحديث')}<br><button onclick="shortLoad()" style="margin-top:10px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:10px;padding:6px 16px;font-family:inherit;cursor:pointer">🔄 حاول تانى</button></div>`; return; }
+  try { shortRender(j, box, sm); }
+  catch (e) { box.innerHTML = '<div style="text-align:center;color:var(--error);font-size:12px;padding:20px">⚠️ حصلت مشكلة فى العرض: ' + esc(e.message || '') + '</div>'; }
+}
+function shortRender(j, box, sm){
   const s = j.summary || {}; const docs = Array.isArray(j.docs) ? j.docs : [];
   const ch = Number(s.chassis)||0, mo = Number(s.motor)||0;
   sm.innerHTML = (ch + mo) ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">

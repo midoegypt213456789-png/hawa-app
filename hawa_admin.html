@@ -9261,7 +9261,7 @@ function shDocOpen(id, mode){
       <input id="sh-dl-note" placeholder="📝 ملاحظة" style="background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px;font-family:inherit">
       <button class="add-btn" onclick="shDeliver(${d.id})">💾 حفظ التسليم</button>
       <div style="font-size:11.5px;color:var(--text-dim)">لو سلّمت أقل من الباقى، الباقى بيتعمل بيه مستند جديد بميعاد جديد ويتبعت للتاجر رسالة.</div></div>`
-      : `<div style="display:flex;gap:8px;margin-top:12px"><button class="act-btn edit" onclick="shPrint()">🖨️ طباعة</button>${open&&_shA.canDeliver?`<button class="act-btn edit" onclick="shDocOpen(${d.id},'deliver')">🤝 تسليم</button>`:''}</div>`}`;
+      : `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="act-btn edit" onclick="shPdf(this)">📄 تنزيل PDF</button><button class="act-btn edit" onclick="shPrint()">🖨️ طباعة</button>${open&&_shA.canDeliver?`<button class="act-btn edit" onclick="shDocOpen(${d.id},'deliver')">🤝 تسليم</button>`:''}</div>`}`;
   document.getElementById('shDocModal').classList.add('show');
 }
 async function shDeliver(id){
@@ -9287,6 +9287,49 @@ async function shCancel(id){
   const why = prompt(`سبب إلغاء المستند ${d?d.doc_no:''} (مطلوب):`,''); if(!why || !why.trim()) return;
   try{ const j = await rpcSecure('admin_shortage_cancel', { p_doc_id: id, p_reason: why }); if(!j.ok) throw new Error(j.error); shLoadAll(); }
   catch(e){ alert('❌ '+(e.message||e)); }
+}
+function shPrintBody(){
+  const el = document.getElementById('shDocPrint'); if(!el) return null;
+  return el.innerHTML.replace(/<button[\s\S]*?<\/button>/g,'').replace(/<input[^>]*>/g,'').replace(/<th>\s*<\/th>/g,'').replace(/<td>\s*<\/td>/g,'');
+}
+// 📄 تنزيل المستند PDF مباشرة (من غير طابعة خالص) — المتصفح نفسه بيرسم العربى صح (SVG foreignObject) وبعدين jsPDF
+function shLoadScript(src){ return new Promise((res, rej) => { const ex = document.querySelector(`script[src="${src}"]`); if (ex && ex.dataset.ok) return res(); const sc = ex || document.createElement('script'); sc.src = src; sc.onload = () => { sc.dataset.ok = '1'; res(); }; sc.onerror = () => rej(new Error('مقدرناش نحمّل أداة الـ PDF — اتأكد من النت')); if (!ex) document.head.appendChild(sc); }); }
+async function shPdf(btn){
+  const body = shPrintBody(); if(!body) return;
+  const title = document.getElementById('shDocTitle').textContent.trim();
+  const old = btn ? btn.textContent : ''; if(btn){ btn.disabled = true; btn.textContent = '⏳ بنجهّز الـ PDF...'; }
+  let holder = null;
+  try{
+    await shLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const W = 794; // A4 @ 96dpi
+    const css = 'table{width:100%;border-collapse:collapse;margin-top:10px}td,th{border:1px solid #777;padding:6px 8px;text-align:right;color:#111}th{background:#eee}span,b{color:#111 !important;background:none !important;border:none !important}';
+    const inner = `<style>${css}</style><h2 style="font-size:18px;margin:0 0 10px;border-bottom:2px solid #111;padding-bottom:6px">HAWA CO — ${escAttr(title)}</h2>${body}
+      <div style="display:flex;justify-content:space-between;margin-top:40px"><div style="width:45%;border-top:1px solid #111;padding-top:6px;text-align:center">توقيع المستلم</div><div style="width:45%;border-top:1px solid #111;padding-top:6px;text-align:center">توقيع الموظف</div></div>
+      <div style="margin-top:14px;font-size:11px;color:#555">اتطبع: ${new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'})}</div>`;
+    // قياس الطول الحقيقى
+    holder = document.createElement('div');
+    holder.style.cssText = `position:fixed;left:0;top:0;visibility:hidden;pointer-events:none;width:${W}px;box-sizing:border-box;padding:28px;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;font-size:13px;line-height:1.9;direction:rtl`;
+    holder.setAttribute('dir','rtl');
+    holder.innerHTML = inner;
+    document.body.appendChild(holder);
+    const H = Math.max(Math.ceil(holder.scrollHeight) + 10, 300);
+    holder.style.visibility = ''; holder.removeAttribute('style');
+    holder.setAttribute('style', `width:${W}px;box-sizing:border-box;padding:28px;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;font-size:13px;line-height:1.9;direction:rtl`);
+    const xhtml = new XMLSerializer().serializeToString(holder);
+    holder.remove(); holder = null;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject></svg>`;
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('مقدرناش نرسم المستند')); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+    const sc = 2, cv = document.createElement('canvas'); cv.width = W * sc; cv.height = H * sc;
+    const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height); cx.scale(sc, sc); cx.drawImage(img, 0, 0);
+    const data = cv.toDataURL('image/jpeg', 0.92);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const pw = 210, ph = 297, ih = H * pw / W;
+    if (ih <= ph) pdf.addImage(data, 'JPEG', 0, 0, pw, ih);
+    else { let y = 0; while (y < ih) { if (y > 0) pdf.addPage(); pdf.addImage(data, 'JPEG', 0, -y, pw, ih); y += ph; } }
+    pdf.save('HAWA_' + ((title.match(/\d+/) || ['doc'])[0]) + '.pdf');
+  }catch(e){ alert('❌ ' + (e.message || e) + '\nجرّب «🖨️ طباعة» واختار Save as PDF'); }
+  finally { if (holder) holder.remove(); if(btn){ btn.disabled = false; btn.textContent = old; } }
 }
 function shPrint(){
   // 🖨️ طباعة من iframe مخفى جوه نفس الصفحة (أضمن من النافذة المنبثقة اللى Edge بيرفضها «Print failed»)
