@@ -9570,20 +9570,30 @@ function trFiltersRender(){
   const permits = (j.permits||[]).map(p => p.permit_no);
   const vts = [...new Set([].concat(...(j.permits||[]).map(p => (p.allowances||[]).map(a => a.vehicle_type)), (j.bookings||[]).map(b => b.vehicle_type), (j.shortages||[]).map(d => d.vehicle_type)).filter(Boolean))];
   const whs = [...new Set([].concat(...(j.permits||[]).map(p => (p.allowances||[]).map(a => a.warehouse)), (j.bookings||[]).map(b => b.warehouse)).filter(Boolean))];
-  const sel = (id, all, arr) => `<select id="${id}" onchange="trRender()" style="width:auto;min-width:120px;flex:0 0 auto;background:var(--dark3);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-family:inherit;font-size:12.5px"><option value="">${all}</option>${arr.map(v => `<option>${trE(v)}</option>`).join('')}</select>`;
-  f.innerHTML = sel('trFP','🎫 كل الأذون',permits) + sel('trFT','🚚 كل الأنواع',vts) + sel('trFW','🏭 كل المخازن',whs) +
-    `<input id="trFI" placeholder="🔩 الصنف: مثلاً دايون 4" oninput="trRender()" style="flex:0 0 auto;background:var(--dark3);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-family:inherit;font-size:12.5px;width:170px">` +
-    `<div style="flex:1"></div><button onclick="trPdf(this)" style="width:auto;flex:0 0 auto;background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:10px;padding:7px 14px;font-family:inherit;font-size:12.5px;cursor:pointer">📄 PDF</button>`;
+  const st = 'background:var(--dark3);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:7px 10px;font-family:inherit;font-size:12.5px;flex:0 0 auto';
+  const sel = (id, all, arr) => `<select id="${id}" onchange="trRender()" style="width:auto;min-width:110px;${st}"><option value="">${all}</option>${arr.map(v => `<option>${trE(v)}</option>`).join('')}</select>`;
+  const btn = `background:transparent;border:1px solid var(--gold);color:var(--gold);border-radius:10px;padding:7px 14px;font-family:inherit;font-size:12.5px;cursor:pointer;width:auto;flex:0 0 auto`;
+  f.innerHTML =
+    `<input id="trFP" list="trFPL" placeholder="🎫 الإذن: اكتب الرقم" oninput="trRender()" style="width:150px;${st}"><datalist id="trFPL">${permits.map(v => `<option value="${trE(v)}">`).join('')}</datalist>` +
+    sel('trFT','🚚 كل الأنواع',vts) + sel('trFW','🏭 كل المخازن',whs) +
+    `<select id="trFPart" onchange="trRender()" style="width:auto;min-width:110px;${st}"><option value="">🔩⚙️ شاسيه + ماتور</option><option value="شاسيه">🔩 شاسيه بس</option><option value="ماتور">⚙️ ماتور بس</option></select>` +
+    `<input id="trFI" placeholder="🔩 الصنف: مثلاً دايون 4" oninput="trRender()" style="width:160px;${st}">` +
+    `<span style="display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;font-size:12px;color:var(--text-dim)">من <input id="trFD1" type="date" onchange="trRender()" style="width:140px;color-scheme:dark;${st}"> إلى <input id="trFD2" type="date" onchange="trRender()" style="width:140px;color-scheme:dark;${st}"></span>` +
+    `<button onclick="['trFP','trFI','trFD1','trFD2'].forEach(i=>document.getElementById(i).value='');['trFT','trFW','trFPart'].forEach(i=>document.getElementById(i).value='');trRender()" style="${btn};border-color:var(--border);color:var(--text-dim)">✖️ مسح</button>` +
+    `<div style="flex:1"></div><button onclick="trPdf(this,'print')" style="${btn}">🖨️ طباعة</button><button onclick="trPdf(this)" style="${btn}">📄 PDF</button>`;
   f.style.display = 'flex';
 }
 function trRender(){
   const j = _tr.data; if(!j) return;
   const out = document.getElementById('trOut'), lim = j.limited, today = j.today;
-  const fp = document.getElementById('trFP').value, ft = document.getElementById('trFT').value, fw = document.getElementById('trFW').value, fi = document.getElementById('trFI').value;
-  const okP = no => !fp || String(no) === fp, okT = vt => !ft || vt === ft, okW = w => !fw || w === fw;
+  const fp = (document.getElementById('trFP').value || '').trim(), ft = document.getElementById('trFT').value, fw = document.getElementById('trFW').value, fi = document.getElementById('trFI').value;
+  const fpart = document.getElementById('trFPart').value, d1 = document.getElementById('trFD1').value, d2 = document.getElementById('trFD2').value;
+  const okP = no => !fp || String(no || '').includes(fp), okT = vt => !ft || vt === ft, okW = w => !fw || w === fw;
+  const okD = ds => { if (!d1 && !d2) return true; if (!ds) return false; ds = String(ds).slice(0, 10); return (!d1 || ds >= d1) && (!d2 || ds <= d2); };
+  const showCh = !fpart || fpart === 'شاسيه', showMo = !fpart || fpart === 'ماتور', okPart = p => !fpart || p === fpart;
   const c = j.client;
   // ── تجميع
-  const permits = (j.permits||[]).filter(p => okP(p.permit_no));
+  const permits = (j.permits||[]).filter(p => okP(p.permit_no) && okD(p.permit_date || p.created_at));
   let tot = 0, loaded = 0, pend = 0, carsLeft = 0, carsLoaded = 0;
   const allowRows = [];
   permits.forEach(p => (p.allowances||[]).filter(a => okT(a.vehicle_type) && okW(a.warehouse)).forEach(a => {
@@ -9591,12 +9601,12 @@ function trRender(){
     tot += pool; loaded += a.units_loaded||0; pend += a.units_pending||0; carsLeft += a.cars_left||0; carsLoaded += a.cars_loaded||0;
     allowRows.push({ p, a, pool, left: Math.max(pool - (a.units_loaded||0) - (a.units_pending||0), 0) });
   }));
-  const shorts = (j.shortages||[]).filter(d => okP(d.permit_no) && okT(d.vehicle_type) && okW(d.warehouse));
+  const shorts = (j.shortages||[]).filter(d => okP(d.permit_no) && okT(d.vehicle_type) && okW(d.warehouse) && okPart(d.part) && okD(d.loading_date));
   const openSh = shorts.filter(d => d.status === 'مفتوح');
   const remOf = (d, part) => d.part === part ? (d.lines||[]).filter(l => trItemOk(l.name, fi)).reduce((s,l)=>s+(+l.remaining||0),0) : 0;
   const chOwed = openSh.reduce((s,d)=>s+remOf(d,'شاسيه'),0), moOwed = openSh.reduce((s,d)=>s+remOf(d,'ماتور'),0);
   const shDelivered = shorts.reduce((s,d)=>s+(d.lines||[]).filter(l=>trItemOk(l.name,fi)).reduce((a,l)=>a+(+l.delivered||0),0),0);
-  const books = (j.bookings||[]).filter(b => okP(b.permit_number) && okT(b.vehicle_type) && okW(b.warehouse));
+  const books = (j.bookings||[]).filter(b => okP(b.permit_number) && okT(b.vehicle_type) && okW(b.warehouse) && okD(b.loading_date));
   const upcoming = books.filter(b => b.status === 'قيد الانتظار' && b.loading_date >= today).sort((a,b)=>a.loading_date.localeCompare(b.loading_date));
   const done = books.filter(b => b.status === 'تم التنفيذ');
   // الأصناف
@@ -9621,14 +9631,15 @@ function trRender(){
         <div style="font-size:13px;color:var(--text-dim);margin-top:3px;line-height:1.9">كود <b style="color:var(--gold)">${trE(c.code||'-')}</b> · ${trE(c.governorate||'')}${c.city?' / '+trE(c.city):''}${c.phone?` · 📞 ${trE(c.phone)}`:''}</div></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">${c.is_blocked?pill('🔒 محظور','#E05555'):''}${c.approval_status && c.approval_status!=='approved'?pill(c.approval_status==='rejected'?'❌ مرفوض':'⏳ تحت المراجعة','#E05555'):''}${!lim && c.no_show_count?pill('غياب '+c.no_show_count,'#E0B040'):''}${lim?pill('👷 عرض موظف النواقص — المحمّل بس','#4A90D9'):''}</div>
     </div>
+    ${(fp||ft||fw||fpart||fi||d1||d2) ? `<div style="font-size:12px;color:var(--gold-light);margin-top:6px">🔎 مفلتر: ${[fp&&('إذن '+trE(fp)), ft&&trE(ft), fw&&trE(fw), fpart&&trE(fpart), fi&&('صنف «'+trE(fi)+'»'), (d1||d2)&&('من '+(d1?trDay(d1):'البداية')+' إلى '+(d2?trDay(d2):'النهارده'))].filter(Boolean).join(' · ')}</div>` : ''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
       ${lim ? '' : tile(tot, '📄 إجمالى على الأذون (قطعة)')}
       ${tile(loaded, '✅ اتحمّل (قطعة)', 'var(--success)')}
       ${lim ? '' : tile(pend, '⏳ محجوز لسه (قطعة)', 'var(--gold-light)')}
       ${lim ? '' : tile(Math.max(tot-loaded-pend,0), '📦 باقى لسه متحمّلش', 'var(--gold)')}
       ${lim ? '' : tile(upcoming.length ? trDay(upcoming[0].loading_date) : '—', '📅 أقرب تحميل جاى', '#4A90D9')}
-      ${tile(chOwed, '🔩 شاسيه ليه', chOwed ? 'var(--error)' : 'var(--success)')}
-      ${tile(moOwed, '⚙️ ماتور ليه', moOwed ? 'var(--error)' : 'var(--success)')}
+      ${showCh ? tile(chOwed, '🔩 شاسيه ليه', chOwed ? 'var(--error)' : 'var(--success)') : ''}
+      ${showMo ? tile(moOwed, '⚙️ ماتور ليه', moOwed ? 'var(--error)' : 'var(--success)') : ''}
       ${tile(shDelivered, '🤝 اتسلّم من النواقص', 'var(--success)')}
     </div>
   </div>`;
@@ -9641,11 +9652,14 @@ function trRender(){
          `<span style="color:var(--success)">${r.a.units_loaded}</span>`, r.a.units_pending||0, `<b style="color:${r.left?'var(--gold-light)':'var(--text-dim)'}">${r.left}</b>`, r.a.cars_left])), allowRows.length);
 
   // الأصناف
-  html += sec('📦 الأصناف — المحمّل والشاسيه والماتور', tbl(
-    lim ? ['الصنف','الإذن','المخزن','اتحمّل','🔩 شاسيه اتسلّم','⚙️ ماتور اتسلّم','🔩 ليه','⚙️ ليه'] : ['الصنف','الإذن','المخزن','الكمية','مسحوب (ورق)','اتحمّل (النظام)','محجوز','🔩 شاسيه اتسلّم','⚙️ ماتور اتسلّم','🔩 ليه','⚙️ ليه'],
-    items.map(it => lim
-      ? [trE(it.name), trE(it.permit), trE(it.warehouse||it.store||''), it.loaded, it.chassis_recv, it.motor_recv, it.chOwed?`<b style="color:var(--error)">${it.chOwed}</b>`:'0', it.moOwed?`<b style="color:var(--error)">${it.moOwed}</b>`:'0']
-      : [trE(it.name), trE(it.permit), trE(it.warehouse||it.store||''), it.qty, it.withdrawn_paper, it.loaded, it.booked_pending||0, it.chassis_recv, it.motor_recv, it.chOwed?`<b style="color:var(--error)">${it.chOwed}</b>`:'0', it.moOwed?`<b style="color:var(--error)">${it.moOwed}</b>`:'0'])), items.length);
+  const owedCell = v => v ? `<b style="color:var(--error)">${v}</b>` : '0';
+  const itHead = (lim ? ['الصنف','الإذن','المخزن','اتحمّل'] : ['الصنف','الإذن','المخزن','الكمية','مسحوب (ورق)','اتحمّل (النظام)','محجوز'])
+    .concat(showCh ? ['🔩 شاسيه اتسلّم'] : [], showMo ? ['⚙️ ماتور اتسلّم'] : [], showCh ? ['🔩 ليه'] : [], showMo ? ['⚙️ ليه'] : []);
+  const itemsShown = items;
+  html += sec('📦 الأصناف — المحمّل' + (showCh ? ' والشاسيه' : '') + (showMo ? ' والماتور' : ''), tbl(itHead,
+    itemsShown.map(it => (lim ? [trE(it.name), trE(it.permit), trE(it.warehouse||it.store||''), it.loaded]
+                              : [trE(it.name), trE(it.permit), trE(it.warehouse||it.store||''), it.qty, it.withdrawn_paper, it.loaded, it.booked_pending||0])
+      .concat(showCh ? [it.chassis_recv] : [], showMo ? [it.motor_recv] : [], showCh ? [owedCell(it.chOwed)] : [], showMo ? [owedCell(it.moOwed)] : []))), itemsShown.length);
   if(!lim) html += `<div style="font-size:11px;color:var(--text-dim);margin-top:4px">«مسحوب (ورق)» = المكتوب على الإذن نفسه وقت التصوير · «اتحمّل (النظام)» = اللى عامل المخزن سجّله صنف صنف من يوم تشغيل النواقص</div>`;
 
   // المواعيد الجاية (الإدارة بس)
@@ -9654,9 +9668,9 @@ function trRender(){
       (b.items||[]).filter(x=>trItemOk(x.name,fi)).map(x=>`${trE(x.name)}: ${x.qty}`).join('<br>') || '<span style="color:var(--text-dim)">—</span>'])), upcoming.length);
 
   // سجل التحميل
-  html += sec('🚚 سجل التحميل (آخر سنة)', tbl(['اليوم','المخزن','النوع','العدد','الإذن','الأصناف (اتحمّل / شاسيه / ماتور)'],
+  html += sec('🚚 سجل التحميل' + ((d1||d2) ? '' : ' (آخر سنة)'), tbl(['اليوم','المخزن','النوع','العدد','الإذن','الأصناف (اتحمّل' + (showCh ? ' / شاسيه' : '') + (showMo ? ' / ماتور' : '') + ')'],
     done.slice(0, 120).map(b => [trDay(b.loading_date), trE(b.warehouse), trE(b.vehicle_type), `${b.count} عربية${b.units?` (${b.units})`:''}`, trE(b.permit_number||'-'),
-      (b.items||[]).filter(x=>x.loaded!=null && trItemOk(x.name,fi)).map(x=>`${trE(x.name)}: ${x.loaded} / <span style="color:${x.chassis<x.loaded?'var(--error)':'inherit'}">${x.chassis}</span> / <span style="color:${x.motor<x.loaded?'var(--error)':'inherit'}">${x.motor}</span>`).join('<br>') || '<span style="color:var(--text-dim)">قبل نظام الأصناف</span>'])), done.length);
+      (b.items||[]).filter(x=>x.loaded!=null && trItemOk(x.name,fi)).map(x=>`${trE(x.name)}: ${x.loaded}` + (showCh ? ` / <span style="color:${x.chassis<x.loaded?'var(--error)':'inherit'}">${x.chassis}</span>` : '') + (showMo ? ` / <span style="color:${x.motor<x.loaded?'var(--error)':'inherit'}">${x.motor}</span>` : '')).join('<br>') || '<span style="color:var(--text-dim)">قبل نظام الأصناف</span>'])), done.length);
 
   // النواقص
   html += sec('📋 مستندات النواقص', tbl(['المستند','الجزء','الإذن','المخزن','الأصناف','الاستحقاق','الحالة'],
@@ -9670,8 +9684,11 @@ function trRender(){
 }
 // 📄 PDF للتقرير (المتصفح بيرسم العربى + jsPDF، وبيتقسّم صفحات A4)
 function trLoadScript(src){ return new Promise((res, rej) => { if (window.jspdf) return res(); const sc = document.createElement('script'); sc.src = src; sc.onload = res; sc.onerror = () => rej(new Error('مقدرناش نحمّل أداة الـ PDF')); document.head.appendChild(sc); }); }
-async function trPdf(btn){
+async function trPdf(btn, mode){
   const area = document.getElementById('trPrintArea'); if(!area || !_tr.data) return;
+  // 🖨️ الطباعة: نفتح التاب فوراً (قبل أى انتظار) علشان المتصفح ميمنعهوش، وبعدين نحط فيه الـ PDF ويطبع من عارض الـ PDF
+  const win = mode === 'print' ? window.open('', '_blank') : null;
+  if (win) { try { win.document.write('<p style="font-family:Tahoma;direction:rtl;padding:30px">⏳ بنجهّز التقرير للطباعة...</p>'); } catch(_){} }
   const old = btn.textContent; btn.disabled = true; btn.textContent = '⏳...';
   let holder = null;
   try{
@@ -9699,8 +9716,10 @@ async function trPdf(btn){
       if (i) pdf.addPage();
       pdf.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', 0, 0, pw, hh * pw / W);
     }
-    pdf.save('HAWA_trader_' + (_tr.data.client.code || _tr.data.client.id) + '.pdf');
-  }catch(e){ alert('❌ ' + (e.message || e)); }
+    const fname = 'HAWA_trader_' + (_tr.data.client.code || _tr.data.client.id) + '.pdf';
+    if (mode === 'print') { pdf.autoPrint(); const url = pdf.output('bloburl'); if (win && !win.closed) win.location.href = url; else window.open(url, '_blank') || pdf.save(fname); }
+    else pdf.save(fname);
+  }catch(e){ if (win && !win.closed) win.close(); alert('❌ ' + (e.message || e)); }
   finally { if (holder) holder.remove(); btn.disabled = false; btn.textContent = old; }
 }
 
