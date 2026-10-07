@@ -9261,7 +9261,7 @@ function shDocOpen(id, mode){
       <input id="sh-dl-note" placeholder="📝 ملاحظة" style="background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px;font-family:inherit">
       <button class="add-btn" onclick="shDeliver(${d.id})">💾 حفظ التسليم</button>
       <div style="font-size:11.5px;color:var(--text-dim)">لو سلّمت أقل من الباقى، الباقى بيتعمل بيه مستند جديد بميعاد جديد ويتبعت للتاجر رسالة.</div></div>`
-      : `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="act-btn edit" onclick="shPdf(this)">📄 تنزيل PDF</button><button class="act-btn edit" onclick="shPrint()">🖨️ طباعة</button>${open&&_shA.canDeliver?`<button class="act-btn edit" onclick="shDocOpen(${d.id},'deliver')">🤝 تسليم</button>`:''}</div>`}`;
+      : `<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="act-btn edit" onclick="shPdf(this,'print')">🖨️ طباعة</button><button class="act-btn edit" onclick="shPdf(this)">📄 تنزيل PDF</button>${open&&_shA.canDeliver?`<button class="act-btn edit" onclick="shDocOpen(${d.id},'deliver')">🤝 تسليم</button>`:''}</div>`}`;
   document.getElementById('shDocModal').classList.add('show');
 }
 async function shDeliver(id){
@@ -9294,8 +9294,11 @@ function shPrintBody(){
 }
 // 📄 تنزيل المستند PDF مباشرة (من غير طابعة خالص) — المتصفح نفسه بيرسم العربى صح (SVG foreignObject) وبعدين jsPDF
 function shLoadScript(src){ return new Promise((res, rej) => { const ex = document.querySelector(`script[src="${src}"]`); if (ex && ex.dataset.ok) return res(); const sc = ex || document.createElement('script'); sc.src = src; sc.onload = () => { sc.dataset.ok = '1'; res(); }; sc.onerror = () => rej(new Error('مقدرناش نحمّل أداة الـ PDF — اتأكد من النت')); if (!ex) document.head.appendChild(sc); }); }
-async function shPdf(btn){
+async function shPdf(btn, mode){
   const body = shPrintBody(); if(!body) return;
+  // 🖨️ وضع الطباعة: نفتح التاب فوراً (قبل أى انتظار) علشان المتصفح ميمنعهوش، وبعدين نحط فيه الـ PDF ويطبع من عارض الـ PDF
+  const win = mode === 'print' ? window.open('', '_blank') : null;
+  if (win) { try { win.document.write('<p style="font-family:Tahoma;direction:rtl;padding:30px">⏳ بنجهّز المستند للطباعة...</p>'); } catch(_){} }
   const title = document.getElementById('shDocTitle').textContent.trim();
   const old = btn ? btn.textContent : ''; if(btn){ btn.disabled = true; btn.textContent = '⏳ بنجهّز الـ PDF...'; }
   let holder = null;
@@ -9327,8 +9330,13 @@ async function shPdf(btn){
     const pw = 210, ph = 297, ih = H * pw / W;
     if (ih <= ph) pdf.addImage(data, 'JPEG', 0, 0, pw, ih);
     else { let y = 0; while (y < ih) { if (y > 0) pdf.addPage(); pdf.addImage(data, 'JPEG', 0, -y, pw, ih); y += ph; } }
-    pdf.save('HAWA_' + ((title.match(/\d+/) || ['doc'])[0]) + '.pdf');
-  }catch(e){ alert('❌ ' + (e.message || e) + '\nجرّب «🖨️ طباعة» واختار Save as PDF'); }
+    const fname = 'HAWA_' + ((title.match(/\d+/) || ['doc'])[0]) + '.pdf';
+    if (mode === 'print') {
+      pdf.autoPrint();
+      const url = pdf.output('bloburl');
+      if (win && !win.closed) win.location.href = url; else window.open(url, '_blank') || pdf.save(fname);
+    } else pdf.save(fname);
+  }catch(e){ if (win && !win.closed) win.close(); alert('❌ ' + (e.message || e)); }
   finally { if (holder) holder.remove(); if(btn){ btn.disabled = false; btn.textContent = old; } }
 }
 function shPrint(){
@@ -9347,7 +9355,8 @@ function shPrint(){
   if (fr) fr.remove();
   fr = document.createElement('iframe');
   fr.id = 'shPrintFrame';
-  fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  // ⚠️ Edge بيطلع «0 sheets» لو الـ iframe حجمه صفر أو مخفى — لازم يبقى بحجم ورقة A4 حقيقى بس برا الشاشة
+  fr.style.cssText = 'position:fixed;left:-12000px;top:0;width:210mm;height:297mm;border:0;opacity:0;pointer-events:none';
   document.body.appendChild(fr);
   fr.onload = () => {
     setTimeout(() => {
