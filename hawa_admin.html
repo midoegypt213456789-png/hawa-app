@@ -3407,6 +3407,64 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       </div>
     </div>
 
+    <div class="section" id="sec-shortages">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">📦 <span>النواقص</span></div>
+          <div class="page-sub">الشاسيهات والمواتير اللى متسلّمتش وقت التحميل — المستندات والتسليم والمعدلات</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="shLoadAll()">🔄 تحديث</button>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <button class="act-btn edit sh-tab sel" data-tab="docs" onclick="shATab('docs')">📋 المستندات</button>
+          <button class="act-btn edit sh-tab" data-tab="stats" onclick="shATab('stats')">📊 المعدلات والتحليل</button>
+          <button class="act-btn edit sh-tab" data-tab="settings" onclick="shATab('settings')">⚙️ الإعدادات والتفعيل</button>
+          <div style="flex:1"></div>
+          <div id="sh-state" style="font-size:12px;align-self:center"></div>
+        </div>
+        <div class="tbl-filters" id="sh-period">
+          <span style="color:var(--text-dim);font-size:11.5px">تاريخ التحميل من</span>
+          <input class="filter-inp" id="sh-from" type="date" onchange="shLoadAll()" style="width:145px">
+          <span style="color:var(--text-dim);font-size:11.5px">إلى</span>
+          <input class="filter-inp" id="sh-to" type="date" onchange="shLoadAll()" style="width:145px">
+          <select class="filter-inp" id="sh-part" onchange="shRenderAll()" style="width:120px"><option value="">شاسيه + ماتور</option><option>شاسيه</option><option>ماتور</option></select>
+          <select class="filter-inp" id="sh-wh" onchange="shRenderAll()" style="width:120px"><option value="">كل المخازن</option><option>قليوب</option><option>السادات</option></select>
+          <select class="filter-inp" id="sh-gov" onchange="shRenderAll()" style="width:140px"><option value="">كل المحافظات</option></select>
+          <div style="font-size:11px;color:var(--text-dim)">المستندات المفتوحة بتظهر دايماً حتى لو برا الفترة</div>
+        </div>
+        <div class="tbl-scroll-body">
+          <div id="sh-pane-docs">
+            <div class="tbl-filters">
+              <input class="filter-inp" id="sh-q" type="text" placeholder="🔍 تاجر / كود / إذن / مستند / صنف..." oninput="shRenderDocs()" style="width:240px">
+              <select class="filter-inp" id="sh-st" onchange="shRenderDocs()" style="width:170px">
+                <option value="open">كل المفتوح</option><option value="late">⚠️ متأخر</option><option value="due">📍 مستحق النهارده</option><option value="soon">📅 لسه ميعاده مجاش</option>
+                <option value="done">✅ اتسلّم (كامل/جزئى)</option><option value="cancel">🚫 ملغى</option><option value="">الكل</option>
+              </select>
+              <button class="act-btn edit" style="font-size:12px" onclick="shExport()">⬇️ Excel</button>
+              <div style="flex:1;min-width:10px"></div>
+              <div id="sh-count" style="color:var(--text-dim);font-size:12px"></div>
+            </div>
+            <div id="sh-docs"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+          </div>
+          <div id="sh-pane-stats" style="display:none">
+            <div id="sh-kpis"></div>
+            <div class="tbl-filters" style="margin-top:12px">
+              <span style="color:var(--text-dim);font-size:12px">قسّم حسب</span>
+              <select class="filter-inp" id="sh-group" onchange="shRenderStats()" style="width:160px">
+                <option value="governorate">المحافظة</option><option value="city">المدينة</option><option value="client">التاجر</option>
+                <option value="item">الصنف</option><option value="permit">الإذن</option><option value="warehouse">المخزن</option><option value="reason">سبب النقص</option>
+              </select>
+            </div>
+            <div id="sh-group-tbl"></div>
+          </div>
+          <div id="sh-pane-settings" style="display:none">
+            <div id="sh-settings"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="section" id="sec-purchases">
       <div class="page-hd">
         <div class="page-hd-titles">
@@ -4628,6 +4686,13 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   </div>
 </div>
 
+<div class="modal-overlay" id="shDocModal">
+      <div class="modal" style="max-width:640px;width:95%">
+        <div class="modal-title"><span id="shDocTitle">مستند نواقص</span><button class="modal-close" onclick="closeModal('shDocModal')">✕</button></div>
+        <div id="shDocBody"></div>
+      </div>
+    </div>
+
 <div class="modal-overlay" id="roleModal">
   <div class="modal" style="max-width:760px;width:95%">
     <div class="modal-title">
@@ -5543,6 +5608,7 @@ function autoRefreshTick(){
     else if(sec==='parts' && typeof ptLoad === 'function') ptLoad();
     else if(sec==='purchases' && typeof pcLoad === 'function') pcLoad();
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
+    else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
     else if(sec==='fb-comments' && typeof fbcLoad === 'function') fbcLoad();
     else if(sec==='inbox' && typeof ibLoad === 'function') ibLoad(true);
@@ -5692,6 +5758,7 @@ function goTo(sec){
   else if(sec==='parts')ptLoad();
   else if(sec==='purchases')pcLoad();
   else if(sec==='permits')pmLoad();
+  else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
@@ -9055,12 +9122,312 @@ function deleteEmployee(id,name){
 }
 
 // ═══════════════════════════════════════════════════════════
+// 📦 النواقص — المستندات + التسليم + المعدلات + الإعدادات
+// ═══════════════════════════════════════════════════════════
+let _shA = { tab: 'docs', docs: [], loaded: [], today: null, canEdit: false, canDel: false, canDeliver: false, settings: null, loadedAt: 0 };
+function shIso(d){ return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function shDay(ds){ if(!ds) return '-'; const d=new Date(ds+'T12:00:00'); return ['الأحد','الاتنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1); }
+function shATab(t){
+  _shA.tab = t;
+  document.querySelectorAll('.sh-tab').forEach(b=>b.classList.toggle('sel', b.dataset.tab===t));
+  ['docs','stats','settings'].forEach(k=>{ const el=document.getElementById('sh-pane-'+k); if(el) el.style.display=(k===t)?'':'none'; });
+  document.getElementById('sh-period').style.display = t==='settings' ? 'none' : '';
+  if(t==='settings') shLoadSettings(); else shRenderAll();
+}
+async function shLoadAll(){
+  const f = document.getElementById('sh-from'), t = document.getElementById('sh-to');
+  if(!f.value){ const d=new Date(); d.setDate(d.getDate()-60); f.value = shIso(d); }
+  if(!t.value){ t.value = shIso(new Date()); }
+  const box = document.getElementById('sh-docs'); if(box) box.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const [a, b] = await Promise.all([
+      rpcSecure('admin_shortage_list', { p_from: f.value, p_to: t.value }),
+      rpcSecure('admin_shortage_loaded', { p_from: f.value, p_to: t.value })
+    ]);
+    _shA.docs = (a && a.docs) || []; _shA.today = a && a.today; _shA.canEdit = !!(a && a.can_edit); _shA.canDel = !!(a && a.can_del); _shA.canDeliver = !!(a && a.can_deliver);
+    _shA.loaded = (b && b.rows) || [];
+    const govs = [...new Set(_shA.docs.map(d=>d.client&&d.client.governorate).concat(_shA.loaded.map(r=>r.governorate)).filter(Boolean))].sort();
+    const gs = document.getElementById('sh-gov'); const cur = gs.value;
+    gs.innerHTML = '<option value="">كل المحافظات</option>' + govs.map(g=>`<option ${g===cur?'selected':''}>${escAttr(g)}</option>`).join('');
+    shRenderAll();
+  }catch(e){ if(box) box.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
+  shState();
+}
+async function shState(){
+  try{
+    const s = await rpcSecure('admin_shortage_settings_get', {}); _shA.settings = s;
+    const st = (s && s.settings) || {}; const el = document.getElementById('sh-state'); if(!el) return;
+    el.innerHTML = s.active_today ? pill('🟢 النظام شغال من '+(st.shortage_start_date||''),'var(--success)')
+      : (st.shortage_enabled==='true' && st.shortage_start_date ? pill('🟡 هيشتغل يوم '+st.shortage_start_date,'var(--gold)') : pill('⚪ النظام مقفول'+(st.shortage_test_clients?' (شغال للتجربة على '+st.shortage_test_clients+')':''),'var(--text-dim)'));
+  }catch(e){}
+}
+function shRenderAll(){ if(_shA.tab==='docs') shRenderDocs(); else if(_shA.tab==='stats') shRenderStats(); }
+function shFilterBase(d){
+  const part = document.getElementById('sh-part').value, wh = document.getElementById('sh-wh').value, gov = document.getElementById('sh-gov').value;
+  return (!part || d.part===part) && (!wh || d.warehouse===wh) && (!gov || (d.client&&d.client.governorate)===gov);
+}
+function shDocState(d){
+  const today = _shA.today || shIso(new Date());
+  if(d.status==='ملغى') return { k:'cancel', t:'🚫 ملغى', c:'var(--text-dim)' };
+  if(d.status!=='مفتوح') return { k:'done', t: d.status==='اتسلّم' ? '✅ اتسلّم' : '🔁 جزئى ← '+(d.child_no||''), c:'var(--success)' };
+  if(d.due_date < today) return { k:'late', t:'⚠️ متأخر '+(d.days_late||'')+' يوم', c:'var(--error)' };
+  if(d.due_date === today) return { k:'due', t:'📍 مستحق النهارده', c:'var(--gold-light)' };
+  return { k:'soon', t:'📅 '+shDay(d.due_date), c:'var(--gold)' };
+}
+function shDocsFiltered(){
+  const q = (document.getElementById('sh-q').value||'').trim(), st = document.getElementById('sh-st').value;
+  return _shA.docs.filter(d => {
+    if(!shFilterBase(d)) return false;
+    const s = shDocState(d).k;
+    if(st==='open' && d.status!=='مفتوح') return false;
+    if(st && st!=='open' && s!==st) return false;
+    if(q){ const hay=[d.doc_no,d.permit_no,d.client&&d.client.name,d.client&&d.client.code,(d.lines||[]).map(l=>l.name).join(' ')].join(' '); if(!hay.includes(q)) return false; }
+    return true;
+  });
+}
+function shRenderDocs(){
+  const box = document.getElementById('sh-docs'); if(!box) return;
+  const rows = shDocsFiltered();
+  document.getElementById('sh-count').textContent = rows.length + ' مستند';
+  if(!rows.length){ box.innerHTML = '<div class="empty-txt" style="padding:30px">مفيش مستندات بالفلاتر دى ✨</div>'; return; }
+  box.innerHTML = `<table><thead><tr><th>المستند</th><th>التاجر</th><th>المنطقة</th><th>الإذن</th><th>الجزء</th><th>الأصناف</th><th>التحميل</th><th>الاستحقاق</th><th>الحالة</th><th></th></tr></thead><tbody>` +
+    rows.map(d => {
+      const s = shDocState(d), c = d.client||{};
+      const rem = (d.lines||[]).reduce((a,l)=>a+(+l.remaining||0),0), tot = (d.lines||[]).reduce((a,l)=>a+(+l.qty||0),0);
+      return `<tr>
+        <td><b>${escAttr(d.doc_no)}</b>${d.cycle>1?`<div style="font-size:10.5px;color:var(--text-dim)">دورة ${d.cycle} · من ${escAttr(d.parent_no||'')}</div>`:''}</td>
+        <td>${escAttr(c.name||'-')}<div style="font-size:11px;color:var(--gold)">${escAttr(c.code||'')}</div></td>
+        <td style="font-size:12px">${escAttr(c.governorate||'')}<div style="color:var(--text-dim)">${escAttr(c.city||'')}</div></td>
+        <td>${escAttr(d.permit_no||'-')}<div style="font-size:11px;color:var(--text-dim)">${escAttr(d.warehouse)}</div></td>
+        <td>${d.part==='شاسيه'?'🔩':'⚙️'} ${escAttr(d.part)}</td>
+        <td style="font-size:12px;max-width:240px">${(d.lines||[]).map(l=>`${escAttr(l.name)}: <b>${d.status==='مفتوح'?l.remaining+'/'+l.qty:l.delivered+'/'+l.qty}</b>`).join('<br>')}<div style="color:var(--text-dim)">${d.status==='مفتوح'?'باقى '+rem+' من '+tot:'الإجمالى '+tot}</div></td>
+        <td style="font-size:12px">${shDay(d.loading_date)}</td>
+        <td style="font-size:12px">${shDay(d.due_date)}</td>
+        <td>${pill(s.t, s.c)}</td>
+        <td><div class="act-btns">
+          <button class="act-btn edit" onclick="shDocOpen(${d.id})">👁️</button>
+          ${d.status==='مفتوح' && _shA.canDeliver ? `<button class="act-btn edit" onclick="shDocOpen(${d.id},'deliver')">🤝</button>` : ''}
+          ${d.status==='مفتوح' && _shA.canDel ? `<button class="act-btn del" onclick="shCancel(${d.id})">🚫</button>` : ''}
+        </div></td></tr>`;
+    }).join('') + '</tbody></table>';
+}
+function shDocOpen(id, mode){
+  const d = _shA.docs.find(x=>x.id===id); if(!d) return;
+  const c = d.client||{}, s = shDocState(d), open = d.status==='مفتوح';
+  document.getElementById('shDocTitle').textContent = `${d.part==='شاسيه'?'🔩':'⚙️'} مستند نواقص ${d.doc_no}`;
+  const deliver = mode==='deliver' && open;
+  document.getElementById('shDocBody').innerHTML = `
+    <div id="shDocPrint">
+    <div style="font-size:13px;line-height:2">
+      <b>${escAttr(c.name||'-')}</b> — كود <b style="color:var(--gold)">${escAttr(c.code||'-')}</b> ${c.phone?' · 📞 '+escAttr(c.phone):''}<br>
+      ${escAttr(c.governorate||'')} ${c.city?' / '+escAttr(c.city):''}<br>
+      🎫 إذن <b>${escAttr(d.permit_no||'-')}</b> · ${escAttr(d.warehouse)} · ${escAttr(d.vehicle_type||'')} · حجز #${escAttr(d.seq_number||d.booking_id||'-')}<br>
+      📅 التحميل: <b>${shDay(d.loading_date)}</b> · الاستحقاق: <b>${shDay(d.due_date)}</b> · ${pill(s.t,s.c)}<br>
+      ${d.parent_no?`🔗 مكمّل لمستند ${escAttr(d.parent_no)} · `:''}${d.child_no?`➡️ الباقى اتنقل لـ ${escAttr(d.child_no)} · `:''}👷 عمله: ${escAttr(d.created_by_name||'-')}
+      ${d.cancel_reason?`<br>🚫 سبب الإلغاء: ${escAttr(d.cancel_reason)}`:''}
+    </div>
+    <table style="margin-top:8px"><thead><tr><th>الصنف</th><th>النقص</th><th>اتسلّم</th><th>باقى</th><th>السبب</th>${deliver?'<th>يتسلّم دلوقتى</th>':''}${open&&_shA.canEdit&&!deliver?'<th></th>':''}</tr></thead><tbody>
+      ${(d.lines||[]).map(l=>`<tr><td>${escAttr(l.name)}</td><td>${l.qty}</td><td>${l.delivered}</td><td><b>${l.remaining}</b></td><td style="font-size:11.5px">${escAttr(l.reason||'')}</td>
+        ${deliver?`<td><input type="number" class="sh-dq" data-line="${l.id}" min="0" max="${l.remaining}" value="${l.remaining}" style="width:80px;background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:5px;text-align:center"></td>`:''}
+        ${open&&_shA.canEdit&&!deliver?`<td><button class="act-btn edit" onclick="shEditLine(${l.id},${l.qty},${l.delivered})">✏️</button></td>`:''}</tr>`).join('')}
+    </tbody></table>
+    ${(d.deliveries||[]).length?`<div style="margin-top:10px;font-size:12px;line-height:1.9"><b>📜 التسليمات:</b><br>${d.deliveries.map(x=>`• ${new Date(x.at).toLocaleString('ar-EG',{timeZone:'Africa/Cairo',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})} — ${x.qty} ${escAttr(x.name)} — 👷 ${escAttr(x.by||'')}${x.receiver?' — استلم: '+escAttr(x.receiver):''}`).join('<br>')}</div>`:''}
+    </div>
+    ${deliver?`<div style="margin-top:10px;display:grid;gap:8px">
+      <input id="sh-dl-rcv" placeholder="👤 اسم اللى استلم (لو مش التاجر)" style="background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px;font-family:inherit">
+      <input id="sh-dl-note" placeholder="📝 ملاحظة" style="background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:9px;font-family:inherit">
+      <button class="add-btn" onclick="shDeliver(${d.id})">💾 حفظ التسليم</button>
+      <div style="font-size:11.5px;color:var(--text-dim)">لو سلّمت أقل من الباقى، الباقى بيتعمل بيه مستند جديد بميعاد جديد ويتبعت للتاجر رسالة.</div></div>`
+      : `<div style="display:flex;gap:8px;margin-top:12px"><button class="act-btn edit" onclick="shPrint()">🖨️ طباعة</button>${open&&_shA.canDeliver?`<button class="act-btn edit" onclick="shDocOpen(${d.id},'deliver')">🤝 تسليم</button>`:''}</div>`}`;
+  document.getElementById('shDocModal').classList.add('show');
+}
+async function shDeliver(id){
+  const lines = [...document.querySelectorAll('.sh-dq')].map(i=>({ line_id: +i.dataset.line, qty: Math.max(0, parseInt(i.value||'0',10)||0) })).filter(x=>x.qty>0);
+  if(!lines.length){ alert('اكتب الكمية اللى اتسلّمت'); return; }
+  try{
+    const j = await rpcSecure('shortage_deliver', { p_doc_id: id, p_lines: lines, p_receiver: document.getElementById('sh-dl-rcv').value||null, p_note: document.getElementById('sh-dl-note').value||null });
+    if(!j || !j.ok) throw new Error((j&&j.error)||'فشل');
+    closeModal('shDocModal');
+    alert(`✅ اتسلّم ${j.delivered}` + (j.remaining>0 ? `\nالباقى ${j.remaining} — مستند جديد ${j.new_doc_no} ميعاده ${shDay(j.new_due)}` : '\nالمستند اتقفل بالكامل'));
+    shLoadAll();
+  }catch(e){ alert('❌ '+(e.message||e)); }
+}
+async function shEditLine(lineId, qty, delivered){
+  const v = prompt(`العدد الصح للنقص (حالياً ${qty}، اتسلّم منه ${delivered}):`, qty); if(v===null) return;
+  const n = parseInt(v,10); if(isNaN(n) || n < delivered){ alert('العدد مينفعش يقل عن اللى اتسلّم'); return; }
+  const why = prompt('سبب التعديل (مطلوب):',''); if(!why || !why.trim()) return;
+  try{ const j = await rpcSecure('admin_shortage_edit_line', { p_line_id: lineId, p_qty: n, p_reason: why }); if(!j.ok) throw new Error(j.error); closeModal('shDocModal'); shLoadAll(); }
+  catch(e){ alert('❌ '+(e.message||e)); }
+}
+async function shCancel(id){
+  const d = _shA.docs.find(x=>x.id===id);
+  const why = prompt(`سبب إلغاء المستند ${d?d.doc_no:''} (مطلوب):`,''); if(!why || !why.trim()) return;
+  try{ const j = await rpcSecure('admin_shortage_cancel', { p_doc_id: id, p_reason: why }); if(!j.ok) throw new Error(j.error); shLoadAll(); }
+  catch(e){ alert('❌ '+(e.message||e)); }
+}
+function shPrint(){
+  const el = document.getElementById('shDocPrint'); if(!el) return;
+  const w = window.open('', '_blank'); if(!w) return;
+  w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>${escAttr(document.getElementById('shDocTitle').textContent)}</title><style>body{font-family:Cairo,Tahoma,sans-serif;padding:20px;color:#111}table{width:100%;border-collapse:collapse;margin-top:10px}td,th{border:1px solid #999;padding:6px;text-align:right}span{border:none!important;background:none!important;color:#111!important}</style></head><body><h2>HAWA CO — ${escAttr(document.getElementById('shDocTitle').textContent)}</h2>${el.innerHTML}<br><br>توقيع المستلم: ____________ &nbsp;&nbsp; توقيع الموظف: ____________</body></html>`);
+  w.document.close(); setTimeout(()=>w.print(), 300);
+}
+function shExport(){
+  const rows = shDocsFiltered(); const out = [['المستند','الحالة','الجزء','التاجر','الكود','المحافظة','المدينة','الإذن','المخزن','الصنف','النقص','اتسلّم','باقى','السبب','التحميل','الاستحقاق','متأخر (يوم)']];
+  rows.forEach(d => (d.lines||[]).forEach(l => out.push([d.doc_no, shDocState(d).t, d.part, d.client&&d.client.name, d.client&&d.client.code, d.client&&d.client.governorate, d.client&&d.client.city, d.permit_no, d.warehouse, l.name, l.qty, l.delivered, l.remaining, l.reason||'', d.loading_date, d.due_date, d.days_late||''])));
+  const csv = '﻿' + out.map(r => r.map(v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); a.download = 'النواقص_' + shIso(new Date()) + '.csv'; a.click();
+}
+// 📊 المعدلات
+function shPct(a, b){ return b > 0 ? Math.round(a * 100 / b) + '%' : '-'; }
+function shRenderStats(){
+  const part = document.getElementById('sh-part').value, wh = document.getElementById('sh-wh').value, gov = document.getElementById('sh-gov').value;
+  const today = _shA.today || shIso(new Date());
+  const loaded = _shA.loaded.filter(r => (!wh || r.warehouse===wh) && (!gov || r.governorate===gov));
+  const docs = _shA.docs.filter(shFilterBase);
+  const partStats = p => {
+    const ld = loaded.reduce((s,r)=>s+(+r.loaded||0),0);
+    const recv = loaded.reduce((s,r)=>s+(+(p==='شاسيه'?r.chassis:r.motor)||0),0);
+    const pd = docs.filter(d=>d.part===p && d.status!=='ملغى');
+    const created = pd.filter(d=>!d.parent_id).reduce((s,d)=>s+(d.lines||[]).reduce((a,l)=>a+(+l.qty||0),0),0);
+    const delivered = pd.reduce((s,d)=>s+(d.lines||[]).reduce((a,l)=>a+(+l.delivered||0),0),0);
+    const openRem = pd.filter(d=>d.status==='مفتوح').reduce((s,d)=>s+(d.lines||[]).reduce((a,l)=>a+(+l.remaining||0),0),0);
+    const late = pd.filter(d=>d.status==='مفتوح' && d.due_date < today);
+    const lateRem = late.reduce((s,d)=>s+(d.lines||[]).reduce((a,l)=>a+(+l.remaining||0),0),0);
+    let onTime = 0, dels = 0, delayDays = 0;
+    pd.forEach(d => (d.deliveries||[]).forEach(x => { dels++; const day = new Date(x.at).toLocaleDateString('en-CA',{timeZone:'Africa/Cairo'}); if(day <= d.due_date) onTime++; else delayDays += Math.round((new Date(day) - new Date(d.due_date))/86400000); }));
+    return { ld, recv, created, delivered, openRem, lateDocs: late.length, lateRem, onTime, dels, avgDelay: dels-onTime>0 ? (delayDays/(dels-onTime)).toFixed(1) : 0 };
+  };
+  const card = (p, s) => `<div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:14px;flex:1;min-width:280px">
+    <div style="font-size:15px;font-weight:800;margin-bottom:8px">${p==='شاسيه'?'🔩':'⚙️'} ${p}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;line-height:1.7">
+      <div>📦 اتحمّل: <b>${s.ld}</b></div><div>✅ اتسلّم وقت التحميل: <b style="color:var(--success)">${shPct(s.recv, s.ld)}</b></div>
+      <div>📋 نواقص اتعملت: <b>${s.created}</b> (${shPct(s.created, s.ld)})</div><div>🤝 اتسلّم من النواقص: <b>${s.delivered}</b> (${shPct(s.delivered, s.created)})</div>
+      <div>⏳ لسه مفتوح: <b style="color:var(--gold-light)">${s.openRem}</b></div><div>⚠️ متأخر: <b style="color:var(--error)">${s.lateRem}</b> (${s.lateDocs} مستند)</div>
+      <div>⏱️ اتسلّم فى ميعاده: <b>${shPct(s.onTime, s.dels)}</b></div><div>🐢 متوسط التأخير: <b>${s.avgDelay}</b> يوم</div>
+    </div></div>`;
+  const parts = part ? [part] : ['شاسيه','ماتور'];
+  // أعمار المفتوح
+  const open = docs.filter(d=>d.status==='مفتوح'); const remOf = d => (d.lines||[]).reduce((a,l)=>a+(+l.remaining||0),0);
+  const b = { soon:0, due:0, l7:0, l7p:0 };
+  open.forEach(d => { const late = d.days_late||0; if(d.due_date > today) b.soon += remOf(d); else if(d.due_date===today) b.due += remOf(d); else if(late <= 7) b.l7 += remOf(d); else b.l7p += remOf(d); });
+  document.getElementById('sh-kpis').innerHTML = `<div style="display:flex;gap:10px;flex-wrap:wrap">${parts.map(p=>card(p, partStats(p))).join('')}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:12.5px">
+      ${pill('📅 لسه ميعاده مجاش: '+b.soon,'var(--gold)')} ${pill('📍 مستحق النهارده: '+b.due,'var(--gold-light)')} ${pill('⚠️ متأخر لحد 7 أيام: '+b.l7,'var(--error)')} ${pill('🚨 متأخر أكتر من 7 أيام: '+b.l7p,'var(--error)')}
+    </div>`;
+  // التقسيم
+  const g = document.getElementById('sh-group').value;
+  const keyOf = (o, isDoc) => {
+    const c = isDoc ? (o.client||{}) : o;
+    if(g==='governorate') return c.governorate || 'غير محدد';
+    if(g==='city') return (c.governorate||'') + ' / ' + (c.city||'غير محدد');
+    if(g==='client') return (isDoc ? c.name : o.client) + ' (' + ((isDoc?c.code:o.code)||'-') + ')';
+    if(g==='permit') return o.permit_no || '-';
+    if(g==='warehouse') return o.warehouse || '-';
+    return null;
+  };
+  const M = {}; const row = k => (M[k] = M[k] || { k, ld:0, chS:0, moS:0, chD:0, moD:0, open:0, late:0 });
+  if(g==='item' || g==='reason'){
+    loaded.forEach(r => {
+      if(g==='item'){ const x=row(r.name||'-'); x.ld+=+r.loaded||0; x.chS+=(+r.loaded||0)-(+r.chassis||0); x.moS+=(+r.loaded||0)-(+r.motor||0); }
+      else { if((+r.loaded||0)>(+r.chassis||0)) row(r.chassis_reason||'بدون سبب').chS += (+r.loaded||0)-(+r.chassis||0);
+             if((+r.loaded||0)>(+r.motor||0)) row(r.motor_reason||'بدون سبب').moS += (+r.loaded||0)-(+r.motor||0); }
+    });
+    docs.filter(d=>d.status!=='ملغى').forEach(d => (d.lines||[]).forEach(l => {
+      const k = g==='item' ? (l.name||'-') : (l.reason||'بدون سبب'); const x=row(k);
+      if(d.part==='شاسيه') x.chD += +l.delivered||0; else x.moD += +l.delivered||0;
+      if(d.status==='مفتوح'){ x.open += +l.remaining||0; if(d.due_date<today) x.late += +l.remaining||0; }
+    }));
+  } else {
+    loaded.forEach(r => { const x=row(keyOf(r,false)); x.ld+=+r.loaded||0; x.chS+=(+r.loaded||0)-(+r.chassis||0); x.moS+=(+r.loaded||0)-(+r.motor||0); });
+    docs.filter(d=>d.status!=='ملغى').forEach(d => { const x=row(keyOf(d,true)); (d.lines||[]).forEach(l => {
+      if(d.part==='شاسيه') x.chD += +l.delivered||0; else x.moD += +l.delivered||0;
+      if(d.status==='مفتوح'){ x.open += +l.remaining||0; if(d.due_date<today) x.late += +l.remaining||0; } }); });
+  }
+  const list = Object.values(M).sort((a,b)=>(b.chS+b.moS)-(a.chS+a.moS) || b.open-a.open);
+  const showCh = !part || part==='شاسيه', showMo = !part || part==='ماتور';
+  document.getElementById('sh-group-tbl').innerHTML = list.length ? `<table><thead><tr><th>${escAttr(document.getElementById('sh-group').selectedOptions[0].text)}</th>${g!=='reason'?'<th>اتحمّل</th>':''}
+    ${showCh?'<th>🔩 نقص شاسيه</th><th>نسبة</th><th>اتسلّم منه</th>':''}${showMo?'<th>⚙️ نقص ماتور</th><th>نسبة</th><th>اتسلّم منه</th>':''}<th>⏳ مفتوح</th><th>⚠️ متأخر</th></tr></thead><tbody>
+    ${list.map(x=>`<tr><td>${escAttr(x.k)}</td>${g!=='reason'?`<td>${x.ld}</td>`:''}
+      ${showCh?`<td><b>${x.chS}</b></td><td>${shPct(x.chS,x.ld)}</td><td>${x.chD} (${shPct(x.chD,x.chS)})</td>`:''}
+      ${showMo?`<td><b>${x.moS}</b></td><td>${shPct(x.moS,x.ld)}</td><td>${x.moD} (${shPct(x.moD,x.moS)})</td>`:''}
+      <td>${x.open}</td><td style="color:${x.late?'var(--error)':'inherit'}">${x.late}</td></tr>`).join('')}</tbody></table>`
+    : '<div class="empty-txt" style="padding:24px">مفيش بيانات فى الفترة دى لسه</div>';
+}
+// ⚙️ الإعدادات
+async function shLoadSettings(){
+  const box = document.getElementById('sh-settings');
+  box.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
+  try{
+    const s = await rpcSecure('admin_shortage_settings_get', {}); _shA.settings = s;
+    const v = (s && s.settings) || {};
+    let vts = [];
+    try{ const r = await fetch(`${SB}/rest/v1/vehicle_types?is_active=eq.true&select=name&order=name`,{headers:HDR}); vts = (await r.json()||[]).map(x=>x.name); }catch(_){}
+    const sel = (v.shortage_vehicle_types||'').split(',').map(x=>x.trim());
+    const inp = (id, val, type='number', w='110px') => `<input id="${id}" type="${type}" value="${escAttr(val||'')}" class="filter-inp" style="width:${w}">`;
+    const ro = !can('shortages','edit');
+    box.innerHTML = `<div style="display:grid;gap:14px;max-width:760px;font-size:13px;line-height:1.9">
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:14px">
+        <b>🔌 تشغيل النظام</b><br>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="shs-en" style="width:18px;height:18px;flex:none" ${v.shortage_enabled==='true'?'checked':''}> النظام مفعّل</label>
+        يبدأ من يوم: ${inp('shs-start', v.shortage_start_date, 'date', '160px')}
+        <div style="font-size:11.5px;color:var(--text-dim)">بيتطبّق على الحجوزات اللى تاريخ تحميلها من اليوم ده وانت رايح — اللى قبله بيتسجل حضوره بالطريقة القديمة.</div>
+        🧪 تجّار التجربة (أرقام العميل مفصولة بفاصلة): ${inp('shs-test', v.shortage_test_clients, 'text', '200px')}
+        <div style="font-size:11.5px;color:var(--text-dim)">النظام بيشتغل عليهم حتى لو مقفول — للتجربة قبل التشغيل.</div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:14px">
+        <b>📅 المدد (بالأيام)</b><br>
+        🔩 تسليم الشاسيه بعد ${inp('shs-dch', v.shortage_days_chassis)} يوم من التحميل<br>
+        ⚙️ تسليم الماتور بعد ${inp('shs-dmo', v.shortage_days_motor)} يوم من التحميل<br>
+        🔁 المتبقى (بعد تسليم جزئى) بعد ${inp('shs-drem', v.shortage_days_remainder)} يوم من يوم التسليم<br>
+        <div style="font-size:11.5px;color:var(--text-dim)">لو الميعاد وقع فى يوم مقفول فى «إدارة الأيام» بيتنقل لأول يوم شغل.</div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:14px">
+        <b>🔔 التذكيرات</b><br>
+        تذكير التاجر قبل الميعاد بـ ${inp('shs-before', v.shortage_remind_before_days)} يوم<br>
+        لو اتأخر: تذكير كل ${inp('shs-every', v.shortage_overdue_every_days)} يوم<br>
+        تنبيه الإدارة لو التأخير عدّى ${inp('shs-adays', v.shortage_admin_alert_days)} يوم — على تليجرام: ${inp('shs-atg', v.shortage_admin_tg, 'text', '200px')}
+        <div style="font-size:11.5px;color:var(--text-dim)">أرقام تليجرام مفصولة بفاصلة. التذكيرات بتتبعت كل يوم الساعة 9 الصبح.${s.outbox?` · فى الطابور: ${s.outbox.pending} · فشل آخر 24 ساعة: ${s.outbox.failed_24h}`:''}</div>
+      </div>
+      <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:14px">
+        <b>🚚 الأنواع اللى عليها نواقص</b><br>
+        ${vts.map(n=>`<label style="margin-left:14px;cursor:pointer"><input type="checkbox" class="shs-vt" style="width:16px;height:16px;vertical-align:middle" value="${escAttr(n)}" ${sel.includes(n)?'checked':''}> ${escAttr(n)}</label>`).join('')}
+        <br><br><b>📝 أسباب النقص</b> (سبب فى كل سطر)<br>
+        <textarea id="shs-reasons" rows="4" style="width:100%;background:var(--dark3);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px;font-family:inherit">${escAttr((v.shortage_reasons||'').split('|').join('\n'))}</textarea>
+      </div>
+      ${ro ? '<div style="color:var(--text-dim)">🔒 معندكش صلاحية تعديل</div>' : '<button class="add-btn" onclick="shSaveSettings()">💾 حفظ الإعدادات</button>'}
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.9">👷 موظفين التسليم: من «الوظائف والصلاحيات» اختار وظيفة «تسليم شاسيهات» أو «تسليم مواتير» للموظف، ومخزنه بيتحدد من بيانات الموظف. بيدخلوا من صفحة الموظفين ويلاقوا شاشة «📦 تسليم النواقص».</div>
+    </div>`;
+  }catch(e){ box.innerHTML = `<div style="color:var(--error);padding:14px">⚠️ ${escAttr(e.message||'حصل خطأ')}</div>`; }
+}
+async function shSaveSettings(){
+  const g = id => (document.getElementById(id).value||'').trim();
+  const p = {
+    shortage_enabled: document.getElementById('shs-en').checked ? 'true' : 'false',
+    shortage_start_date: g('shs-start'), shortage_test_clients: g('shs-test'),
+    shortage_days_chassis: g('shs-dch'), shortage_days_motor: g('shs-dmo'), shortage_days_remainder: g('shs-drem'),
+    shortage_remind_before_days: g('shs-before'), shortage_overdue_every_days: g('shs-every'), shortage_admin_alert_days: g('shs-adays'),
+    shortage_admin_tg: g('shs-atg'),
+    shortage_vehicle_types: [...document.querySelectorAll('.shs-vt:checked')].map(x=>x.value).join(','),
+    shortage_reasons: g('shs-reasons').split('\n').map(x=>x.trim()).filter(Boolean).join('|')
+  };
+  if(p.shortage_enabled==='true' && !p.shortage_start_date){ alert('اختار يوم البداية الأول'); return; }
+  try{ await rpcSecure('admin_shortage_settings_set', { p_settings: p }); alert('✅ اتحفظت'); shLoadSettings(); shState(); }
+  catch(e){ alert('❌ '+(e.message||e)); }
+}
+
+// ═══════════════════════════════════════════════════════════
 // 🔑 ROLES & PERMISSIONS — الوظائف والصلاحيات
 // ═══════════════════════════════════════════════════════════
 let allRoles = [];
 let roleEditingId = null;      // null = وظيفة جديدة
 let roleModalMode = 'role';    // 'role' = تعديل وظيفة | 'emp' = تخصيص موظف
 let empOverrideDraft = null;   // الـ perms_override اللى هيتحفظ مع الموظف
+// 🏭 صلاحيات شاشة المخازن (مش شاشات فى لوحة التحكم)
+const EXTRA_PERMS = {
+  'shortage-chassis':  { icon: '🔩', label: 'تسليم الشاسيهات (شاشة المخازن)' },
+  'shortage-motor':    { icon: '⚙️', label: 'تسليم المواتير (شاشة المخازن)' },
+  'warehouse-checkin': { icon: '✅', label: 'حضور الحجوزات (مع التسليم)' }
+};
 const PERM_ACTIONS = [
   { key:'view',  label:'👁️ دخول'  },
   { key:'edit',  label:'✏️ تعديل' },
@@ -9131,8 +9498,8 @@ function buildPermMatrix(perms){
   });
   head += '</tr>';
   let rows = '';
-  Object.keys(NAV_META).forEach(k=>{
-    const m = NAV_META[k];
+  Object.keys(NAV_META).concat(Object.keys(EXTRA_PERMS)).forEach(k=>{
+    const m = NAV_META[k] || EXTRA_PERMS[k];
     const p = isAll ? {view:true,edit:true,del:true,print:true} : (perms[k]||{});
     rows += `<tr style="border-top:1px solid var(--border)">
       <td style="text-align:right;padding:8px 12px;font-size:13px;white-space:nowrap">${m.icon} ${m.label}</td>
@@ -16584,6 +16951,7 @@ const NAV_META = {
   'pending-clients':  { icon: '⏳',  label: 'عملاء تحت الانتظار', badge: { id: 'pendingBadge', cls: 'pending-badge' } },
   'permit-alerts':    { icon: '🚨',  label: 'تنبيهات الأذونات',    badge: { id: 'alertBadge',   cls: 'alert-badge' } },
   'permits':          { icon: '🧾',  label: 'أذونات الصرف' },
+  'shortages':        { icon: '📦',  label: 'النواقص' },
   'blocked':          { icon: '🔒',  label: 'المبلوكين' },
   'booking-limits':   { icon: '📊',  label: 'حدود الحجز' },
 
@@ -16624,7 +16992,7 @@ const NAV_META = {
 const DEFAULT_SIDEBAR_LAYOUT = {
   favorites: [],
   categories: [
-    { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permits', 'permit-alerts', 'blocked', 'booking-limits'] },
+    { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permits', 'shortages', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'consumers'] },
@@ -16640,6 +17008,7 @@ let __sidebarLoaded = false;
 // ── الشاشات الجديدة اللى ليها قسم مخصص — بتتحط فى قسمها تلقائياً حتى لو الترتيب محفوظ من قبل
 const NAV_PREFERRED_CAT = {
   'permits':  { id: 'booking', icon: '📋', title: 'الحجز', index: 0 },
+  'shortages': { id: 'booking', icon: '📋', title: 'الحجز', index: 0 },
   'catalog':  { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'leads':    { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'waitlist': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
@@ -17018,6 +17387,7 @@ const SECTION_LABELS_DEFAULT = {
   'bookings':        '📋 الحجوزات',
   'permit-alerts':   '🚨 تنبيهات الأذونات',
   'permits':         '🧾 أذونات الصرف',
+  'shortages':       '📦 النواقص',
   'employees':       '👷 الموظفين',
   'pending-clients': '⏳ عملاء تحت الانتظار',
   'clients':         '👥 العملاء',

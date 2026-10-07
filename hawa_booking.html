@@ -435,13 +435,16 @@
     <button class="tab-btn"        id="tabModels" onclick="switchTab('models')">🏍️ الموديلات</button>
     <button class="tab-btn"        id="tabAI"  onclick="switchTab('ai')">🤖 المساعد الذكى</button>
     <button class="tab-btn"        id="tabInbox" onclick="switchTab('inbox')" style="position:relative">📩 رسائلى<span id="inboxTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
-    <button class="tab-btn"        id="tabChat" onclick="switchTab('chat')" style="grid-column:1 / -1;position:relative">💬 تواصل معانا<span id="chatTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
+    <button class="tab-btn"        id="tabChat" onclick="switchTab('chat')" style="position:relative">💬 تواصل معانا<span id="chatTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
+    <button class="tab-btn"        id="tabShort" onclick="switchTab('short')" style="position:relative">📦 نواقصى<span id="shortTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
     <button class="tab-btn" id="tabRefer" onclick="switchTab('refer')" style="position:relative;padding-bottom:6px">🎁 ترشيحات العملاء<div style="font-size:9px;font-weight:800;color:var(--gold);margin-top:2px;letter-spacing:1px">✨ قريباً</div></button>
     <button class="tab-btn" id="tabPoints" onclick="switchTab('points')" style="position:relative;padding-bottom:6px">💎 صرف النقط<div style="font-size:9px;font-weight:800;color:var(--gold);margin-top:2px;letter-spacing:1px">✨ قريباً</div></button>
   </div>
 
   <!-- Telegram Link Banner (shown if not linked) -->
   <div id="tgLinkBanner" style="display:none"></div>
+  <!-- 📦 تنبيه النواقص المفتوحة -->
+  <div id="shortBanner" style="display:none;cursor:pointer;background:rgba(224,85,85,.10);border:1.5px solid rgba(224,85,85,.55);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;line-height:1.8" onclick="switchTab('short')"></div>
 
   <!-- 🔐 Biometric Enroll Banner (يظهر للموبايل لو ما سجّلش بصمة) -->
   <div id="bioEnrollBanner" style="display:none;background:linear-gradient(135deg,rgba(201,168,76,0.18),rgba(201,168,76,0.06));border:1.5px solid rgba(201,168,76,0.5);border-radius:14px;padding:13px 14px;margin-bottom:12px">
@@ -851,6 +854,18 @@
       </div>
       <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:10px;line-height:1.7">رسايل الحجوزات والتنبيهات ورسايل الإدارة — نفس اللى بيوصلك على تليجرام، محفوظة هنا كمان.</div>
       <div id="inboxList"><div style="text-align:center;color:var(--text-dim);font-size:12px;padding:20px">⏳ جارى التحميل...</div></div>
+    </div>
+  </div>
+
+  <!-- ═══ 📦 نواقصى — الشاسيهات والمواتير اللى لسه متسلّمتش ═══ -->
+  <div class="view" id="viewShort">
+    <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:800;font-size:14px">📦 نواقصى</div>
+        <button onclick="shortLoad()" style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:10px;padding:4px 12px;font-family:inherit;font-size:12px;cursor:pointer">🔄 تحديث</button>
+      </div>
+      <div id="shortSummary"></div>
+      <div id="shortList"><div style="text-align:center;color:var(--text-dim);font-size:12px;padding:20px">⏳ جارى التحميل...</div></div>
     </div>
   </div>
 
@@ -3126,7 +3141,7 @@ async function mdlSearch(all){
 }
 
 function switchTab(tab) {
-  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], models:['tabModels','viewModels'], ai:['tabAI','viewAI'], inbox:['tabInbox','viewInbox'], chat:['tabChat','viewChat'], refer:['tabRefer','viewRefer'], points:['tabPoints','viewPoints'] };
+  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], models:['tabModels','viewModels'], ai:['tabAI','viewAI'], inbox:['tabInbox','viewInbox'], short:['tabShort','viewShort'], chat:['tabChat','viewChat'], refer:['tabRefer','viewRefer'], points:['tabPoints','viewPoints'] };
   Object.keys(tabMap).forEach(t => {
     document.getElementById(tabMap[t][0]).classList.toggle('active', t === tab);
     document.getElementById(tabMap[t][1]).classList.toggle('active', t === tab);
@@ -3141,7 +3156,84 @@ function switchTab(tab) {
   if (tab === 'ai') { logActivity('cl_open_ai','🤖 فتح المساعد الذكى'); initAiTab(); }
   if (tab === 'chat') { logActivity('cl_open_chat','💬 فتح تواصل معانا'); initChatTab(); }
   if (tab === 'inbox') { logActivity('cl_open_inbox','📩 فتح رسائلى'); inboxLoad(true); }
+  if (tab === 'short') { logActivity('cl_open_shortages','📦 فتح نواقصى'); shortLoad(); }
+  const sb = document.getElementById('shortBanner'); if (sb && tab === 'short') sb.style.display = 'none'; else if (tab !== 'short') shortBannerShow();
 }
+
+// ===================== 📦 نواقصى =====================
+let _short = null;
+function shortDayAr(ds){ if (!ds) return '-'; const d = new Date(ds + 'T12:00:00'); return `${AR_DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; }
+function shortTodayStr(){ return new Date().toLocaleDateString('en-CA', { timeZone:'Africa/Cairo' }); }
+async function shortFetch(){
+  if (!user || !user.id) return null;
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/shortage_my`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' },
+      body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '' }) });
+    const j = await r.json();
+    if (j && j.ok) { _short = j; shortBadge(); shortBannerShow(); return j; }
+  } catch (_) {}
+  return null;
+}
+function shortBadge(){
+  const b = document.getElementById('shortTabBadge'); if (!b) return;
+  const s = (_short && _short.summary) || {}; const n = (Number(s.chassis)||0) + (Number(s.motor)||0);
+  b.textContent = n > 99 ? '99+' : n; b.style.display = n > 0 ? '' : 'none';
+}
+function shortBannerShow(){
+  const el = document.getElementById('shortBanner'); if (!el) return;
+  const s = (_short && _short.summary) || {}; const ch = Number(s.chassis)||0, mo = Number(s.motor)||0;
+  if (!(ch + mo) || document.getElementById('viewShort')?.classList.contains('active')) { el.style.display = 'none'; return; }
+  const parts = []; if (mo) parts.push(`<b>${mo} ماتور</b>`); if (ch) parts.push(`<b>${ch} شاسيه</b>`);
+  const late = Number(s.late)||0;
+  el.innerHTML = `📦 ليك نواقص لسه متسلّمتش: ${parts.join(' + ')} على ${s.permits || 1} إذن` +
+    (s.next_due ? `<br>📅 أقرب ميعاد تسليم: <b>${esc(shortDayAr(s.next_due))}</b>` : '') +
+    (late ? `<br><span style="color:var(--error);font-weight:800">⚠️ ${late} مستند ميعاده فات — عدّى على المخزن</span>` : '') +
+    `<div style="font-size:11px;color:var(--text-dim)">اضغط هنا للتفاصيل ←</div>`;
+  el.style.display = '';
+}
+function shortDocCard(d){
+  const today = shortTodayStr();
+  const open = d.status === 'مفتوح';
+  const icon = d.part === 'شاسيه' ? '🔩' : '⚙️';
+  const rem = (d.lines || []).reduce((s, l) => s + (Number(l.remaining)||0), 0);
+  const tot = (d.lines || []).reduce((s, l) => s + (Number(l.qty)||0), 0);
+  let state, col;
+  if (!open) { state = d.status === 'اتسلّم' ? '✅ اتسلّم بالكامل' : '🔁 اتسلّم جزء والباقى فى ' + esc(d.child_no || 'مستند جديد'); col = 'var(--success)'; }
+  else if (d.due_date < today) { state = `⚠️ متأخر ${d.days_late || ''} يوم — ميعاده كان ${esc(shortDayAr(d.due_date))}`; col = 'var(--error)'; }
+  else if (d.due_date === today) { state = '📍 ميعاد التسليم النهارده'; col = 'var(--gold-light)'; }
+  else { state = `📅 ميعاد التسليم: ${esc(shortDayAr(d.due_date))}`; col = 'var(--gold)'; }
+  const lines = (d.lines || []).map(l => `<div style="display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--border);padding:4px 0">
+      <span style="overflow-wrap:anywhere">${esc(l.name)}</span>
+      <span style="white-space:nowrap">${open ? `<b style="color:var(--gold-light)">${l.remaining}</b> من ${l.qty}` : `${l.delivered}/${l.qty}`}</span></div>`).join('');
+  const hist = (d.deliveries || []).map(x => `• ${new Date(x.at).toLocaleDateString('ar-EG',{timeZone:'Africa/Cairo',day:'numeric',month:'short'})}: اتسلّم ${x.qty} — ${esc(x.name)}${x.receiver ? ' (استلم: ' + esc(x.receiver) + ')' : ''}`).join('<br>');
+  return `<div style="background:var(--dark3);border:1px solid ${open ? col : 'var(--border)'};border-radius:12px;padding:10px 12px;margin-bottom:9px">
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px">
+      <b style="font-size:13.5px">${icon} ${esc(d.part)} — ${open ? rem : tot} ${open ? 'باقى' : ''}</b>
+      <span style="font-size:11px;color:var(--text-dim)">مستند ${esc(d.doc_no)}</span>
+    </div>
+    <div style="font-size:11.5px;color:var(--text-dim);line-height:1.8">🎫 إذن <b style="color:var(--text)">${esc(d.permit_no || '-')}</b> · ${esc(d.warehouse)} · تحميل ${esc(shortDayAr(d.loading_date))}${d.parent_no ? ` · مكمّل لمستند ${esc(d.parent_no)}` : ''}</div>
+    <div style="font-size:12.5px;font-weight:800;color:${col};margin:5px 0">${state}</div>
+    <div style="font-size:12.5px">${lines}</div>
+    ${hist ? `<div style="font-size:11.5px;color:var(--text-dim);margin-top:6px;line-height:1.8">${hist}</div>` : ''}
+  </div>`;
+}
+async function shortLoad(){
+  const box = document.getElementById('shortList'), sm = document.getElementById('shortSummary'); if (!box) return;
+  const j = await shortFetch();
+  if (!j) { box.innerHTML = '<div style="text-align:center;color:var(--error);font-size:12px;padding:20px">⚠️ مقدرناش نحمّل النواقص — اضغط تحديث</div>'; return; }
+  const s = j.summary || {}; const docs = Array.isArray(j.docs) ? j.docs : [];
+  const ch = Number(s.chassis)||0, mo = Number(s.motor)||0;
+  sm.innerHTML = (ch + mo) ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--gold-light)">${mo}</div><div style="font-size:12px;color:var(--text-dim)">⚙️ ماتور باقى</div></div>
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:800;color:var(--gold-light)">${ch}</div><div style="font-size:12px;color:var(--text-dim)">🔩 شاسيه باقى</div></div>
+    </div>` : '';
+  const open = docs.filter(d => d.status === 'مفتوح'), closed = docs.filter(d => d.status !== 'مفتوح');
+  if (!docs.length) { box.innerHTML = '<div style="text-align:center;color:var(--text-dim);font-size:12.5px;padding:24px">مفيش نواقص عليك ✨</div>'; return; }
+  box.innerHTML = (open.length ? open.map(shortDocCard).join('') : '<div style="text-align:center;color:var(--success);font-size:12.5px;padding:14px">✅ مفيش نواقص مفتوحة عليك</div>') +
+    (closed.length ? `<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12.5px;color:var(--text-dim);padding:6px 0">📜 المستندات المقفولة (${closed.length})</summary>${closed.map(shortDocCard).join('')}</details>` : '');
+}
+setTimeout(shortFetch, 3000);
+setInterval(() => { if (document.getElementById('viewShort')?.classList.contains('active')) shortLoad(); else shortFetch(); }, 120000);
 
 // ===================== 📩 رسائلى =====================
 function inboxClean(t){ return String(t || '').replace(/<[^>]+>/g, ''); }
@@ -3752,7 +3844,7 @@ async function qtyBook(optIdx){
   try {
     const r = await fetch(`${SB}/rest/v1/rpc/book_from_permit`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' },
       body: JSON.stringify({ p_client_id: user.id, p_username: user.username || '', p_warehouse: bk.warehouse, p_permit_id: bk.permitId,
-        p_requests: reqs.map(x => ({ vehicle_type: x.vehicle_type, units: x.units, date: x.date, hour: x.hour })) }) });
+        p_requests: qtyAttachItems(reqs).map(x => ({ vehicle_type: x.vehicle_type, units: x.units, date: x.date, hour: x.hour, items: x.items || [] })) }) });
     const j = await r.json();
     if (!j || !j.ok) { showErr('⛔ ' + ((j && j.error) || 'فشل الحجز')); qtySuggest(); return; }
     const list = j.bookings || [];
@@ -3771,6 +3863,20 @@ async function qtyBook(optIdx){
     );
     try { window.scrollTo({ top: 0, behavior: 'smooth' }); document.getElementById('successScreen').scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch(_){}
   } catch (e) { showErr('خطأ فى الاتصال بالسيرفر'); qtySuggest(); }
+}
+// 📦 وزّع الأصناف اللى التاجر اختارها على الحجوزات (لو الطلب اتقسم على أكتر من ساعة) — بتتحفظ مع الحجز لشاشة النواقص وقت التحميل
+function qtyAttachItems(reqs){
+  const pools = {};
+  (_qty.items || []).filter(it => it.req > 0).forEach(it => { (pools[it.vehicle_type] = pools[it.vehicle_type] || []).push({ idx: it.idx, name: it.name, left: it.req }); });
+  return reqs.map(r => {
+    let need = Number(r.units) || 0; const out = [];
+    for (const it of (pools[r.vehicle_type] || [])) {
+      if (need <= 0) break; if (it.left <= 0) continue;
+      const take = Math.min(it.left, need); it.left -= take; need -= take;
+      out.push({ idx: it.idx, name: it.name, qty: take });
+    }
+    return { ...r, items: out };
+  });
 }
 function qtyManual(){
   // المسار اليدوى: النوع → اليوم → الساعة → العدد (زى النظام العادى)
@@ -4275,6 +4381,7 @@ function pickSlot(sl, el, rem) {
   const cap = permitCap(Math.min(bk.perBookingMax || 10, rem));
   bk.count = Math.min(bk.count, cap);
   document.getElementById('cntNum').textContent = bk.count;
+  const sc = document.getElementById('sCount'); if (sc) sc.textContent = bk.count + ' عربية';
 }
 
 // ===================== COUNT =====================
@@ -4283,6 +4390,8 @@ function chCnt(d) {
   const mx = permitCap(Math.min(bk.perBookingMax || 10, bk.remaining));
   bk.count = Math.max(1, Math.min(mx, bk.count + d));
   document.getElementById('cntNum').textContent = bk.count;
+  // 🔁 خلّى سطر «العدد» فى ملخص التأكيد يتحدّث مع الزرار
+  const sc = document.getElementById('sCount'); if (sc) sc.textContent = bk.count + ' عربية';
 }
 
 // ===================== SUMMARY =====================
@@ -4296,6 +4405,7 @@ function buildSummary() {
     new Date(bk.dateStr + 'T12:00:00').toLocaleDateString('ar-EG', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
   document.getElementById('sSlot').textContent  = bk.slot;
   document.getElementById('sCount').textContent = bk.count + ' عربية';
+  document.getElementById('cntNum').textContent = bk.count;
   document.getElementById('cntInfo').textContent = `الحد الأقصى ${permitCap(Math.min(bk.perBookingMax || 10, bk.remaining))} عربية في هذا الموعد` + ((bk.permitLeft != null) ? ` — باقى على الإذن ${bk.permitLeft}` : '');
   document.getElementById('bConfirm').textContent = editMode ? '💾 حفظ التعديل' : '💾 حفظ الحجز';
 }

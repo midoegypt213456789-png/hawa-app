@@ -88,13 +88,37 @@
   .dialog{background:var(--dark2);border:1px solid var(--border);border-radius:20px;padding:24px;width:100%;max-width:340px;text-align:center;}
   .d-icon{font-size:44px;margin-bottom:12px;}
   .d-title{font-size:16px;font-weight:700;margin-bottom:8px;}
-  .d-msg{font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6;}
+  .d-msg{font-size:13px;color:var(--text-dim);margin-bottom:20px;line-height:1.6;white-space:pre-line;}
   .d-btns{display:flex;gap:10px;}
   .d-yes{flex:1;padding:12px;border-radius:12px;border:none;background:var(--success);color:white;font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
   .d-yes.danger{background:var(--error);}
   .d-no{flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--border);background:transparent;color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
   .spin{width:16px;height:16px;border:2px solid rgba(10,10,10,0.3);border-top-color:#000;border-radius:50%;animation:sp 0.7s linear infinite;display:inline-block;vertical-align:middle;margin-left:6px;}
   @keyframes sp{to{transform:rotate(360deg);}}
+  /* 📦 النواقص */
+  .mode-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+  .sh-sub{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .sh-sub button{flex:1;min-width:90px;padding:9px 6px;border-radius:12px;border:1.5px solid var(--border);background:var(--dark2);color:var(--text-dim);font-family:'Cairo',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer}
+  .sh-sub button.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.1)}
+  .sh-card{background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:12px 14px;margin-bottom:10px}
+  .sh-card.late{border-color:rgba(224,85,85,0.6)}
+  .sh-card.today{border-color:rgba(201,168,76,0.7)}
+  .sh-line{display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px dashed var(--border)}
+  .sh-btn{width:100%;margin-top:10px;padding:11px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);font-family:'Cairo',sans-serif;font-size:14px;font-weight:800;cursor:pointer}
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:120;align-items:flex-start;justify-content:center;padding:14px;overflow-y:auto}
+  .modal.show{display:flex}
+  .modal-box{background:var(--dark2);border:1px solid var(--border);border-radius:18px;padding:16px;width:100%;max-width:460px;margin:auto 0}
+  .ci-row{background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:10px;margin-bottom:8px}
+  .ci-top{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13px;font-weight:700}
+  .ci-qty{width:76px !important;padding:6px 8px !important;text-align:center;font-size:14px !important;font-weight:800}
+  .ci-parts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .ci-part{border:1.5px solid rgba(76,175,125,0.5);background:rgba(76,175,125,0.08);border-radius:10px;padding:7px;font-size:12.5px;font-weight:700;cursor:pointer;text-align:center;user-select:none}
+  .ci-part.off{border-color:rgba(224,85,85,0.6);background:rgba(224,85,85,0.08)}
+  .ci-miss{display:none;margin-top:6px;gap:6px;align-items:center;font-size:11.5px;color:var(--text-dim)}
+  .ci-part.off + .ci-miss, .ci-miss.show{display:flex}
+  .ci-sel{background:#1A1A1A;color:#F0EDE8;border:1px solid var(--border);border-radius:8px;padding:5px;font-family:inherit;font-size:12px;color-scheme:dark;flex:1;min-width:0}
+  .ci-sum{background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.35);border-radius:12px;padding:9px 12px;font-size:12.5px;line-height:1.8;margin:8px 0}
+  .m-inp{width:100%;background:var(--dark3);border:1.5px solid var(--border);border-radius:10px;padding:9px 12px;font-family:'Cairo',sans-serif;font-size:13px;color:var(--text);outline:none}
 </style>
 </head>
 <body>
@@ -144,6 +168,11 @@
         <button class="logout-btn" onclick="doLogout()">خروج</button>
       </div>
     </div>
+    <div class="mode-tabs" id="modeTabs" style="display:none">
+      <button class="wh-btn active" id="modeBk" onclick="setMode('bk')">📋 الحجوزات والحضور</button>
+      <button class="wh-btn" id="modeSh" onclick="setMode('sh')">📦 تسليم النواقص <span id="shDueBadge" style="display:none;background:var(--error);color:#fff;border-radius:10px;padding:0 7px;font-size:11px"></span></button>
+    </div>
+    <div id="bkMode">
     <div class="wh-tabs" id="whTabs"></div>
     <div class="date-bar" style="display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px">
       <span style="font-size:18px">📅</span>
@@ -170,6 +199,57 @@
     </div>
     <div id="bookingsList"></div>
     <button class="noshow-all-btn" id="noshowAllBtn" onclick="showNoshowAllDlg()" style="display:none">❌ تسجيل الغائبين تلقائياً</button>
+    </div>
+
+    <!-- 📦 تسليم النواقص -->
+    <div id="shMode" style="display:none">
+      <div class="sh-sub">
+        <button id="shTab-due" class="active" onclick="shTab('due')">⏰ مستحق / متأخر <span id="shCntDue"></span></button>
+        <button id="shTab-upcoming" onclick="shTab('upcoming')">📅 جاى <span id="shCntUp"></span></button>
+        <button id="shTab-done" onclick="shTab('done')">✅ اتسلّم</button>
+      </div>
+      <input id="shQ" class="m-inp" placeholder="🔍 اسم التاجر / الكود / رقم الإذن / رقم المستند" oninput="shRender()" style="margin-bottom:10px">
+      <div id="shInfo" style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px;text-align:center"></div>
+      <div id="shList"><div class="loading-state">⏳ جاري التحميل...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ شاشة الحضور بالأصناف (شاسيه / ماتور) -->
+<div class="modal" id="ciModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div style="font-size:15px;font-weight:800">✅ تسجيل حضور + استلام</div>
+      <button class="logout-btn" onclick="ciClose()">✖</button>
+    </div>
+    <div id="ciHead" style="font-size:12.5px;color:var(--text-dim);line-height:1.8;margin-bottom:8px"></div>
+    <div id="ciGuess" style="display:none;background:rgba(224,85,85,0.08);border:1px solid rgba(224,85,85,0.4);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.7;margin-bottom:8px"></div>
+    <div style="font-size:11.5px;color:var(--text-dim);margin-bottom:8px;line-height:1.7">جنب كل صنف: اكتب اللى اتحمّل فعلاً، ولو الشاسيه أو الماتور متسلّمش كامل دوس عليه واكتب استلم كام.</div>
+    <div id="ciRows"></div>
+    <div class="ci-sum" id="ciSum"></div>
+    <div style="display:flex;gap:8px">
+      <button class="d-yes" id="ciSave" onclick="ciSave()">💾 حفظ الحضور</button>
+      <button class="d-no" onclick="ciClose()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🤝 تسليم النواقص -->
+<div class="modal" id="dlModal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <div style="font-size:15px;font-weight:800" id="dlTitle">🤝 تسليم نواقص</div>
+      <button class="logout-btn" onclick="dlClose()">✖</button>
+    </div>
+    <div id="dlHead" style="font-size:12.5px;color:var(--text-dim);line-height:1.8;margin-bottom:8px"></div>
+    <div id="dlRows"></div>
+    <input id="dlReceiver" class="m-inp" placeholder="👤 اسم اللى استلم (لو مش التاجر نفسه)" style="margin:6px 0">
+    <input id="dlNote" class="m-inp" placeholder="📝 ملاحظة (اختيارى)" style="margin-bottom:6px">
+    <div class="ci-sum" id="dlSum"></div>
+    <div style="display:flex;gap:8px">
+      <button class="d-yes" id="dlSave" onclick="dlSave()">💾 حفظ التسليم</button>
+      <button class="d-no" onclick="dlClose()">إلغاء</button>
+    </div>
   </div>
 </div>
 
@@ -475,6 +555,7 @@ async function doLogin(){
     emp=await rpcLoginTry('login_employee_secure','login_employee',u,p);
     if(emp){
       SESSION_TOKEN = emp.token || null;
+      let __lp = null;
       // 🔑 نظام الصلاحيات: لو وظيفة الموظف بتفتح على لوحة التحكم → حوّله هناك
       try{
         const pr = await fetch(`${SB}/rest/v1/employees?id=eq.${emp.id}&select=role_id,perms_override`,{headers:HDR});
@@ -489,6 +570,7 @@ async function doLogin(){
         const ov = row.perms_override || null;
         const landing = (ov&&ov.landing) || (jrole&&jrole.landing) || 'warehouse';
         const perms   = (ov&&ov.perms)   || (jrole&&jrole.permissions) || {};
+        __lp = perms;
         if(landing==='admin'){
           // 🗺️ نطاق البيانات + محافظات الموظف
           const scope = (ov&&ov.scope) || (jrole&&jrole.data_scope) || 'own';
@@ -512,6 +594,7 @@ async function doLogin(){
         }
       }catch(e){ /* لو الأعمدة/الجدول لسه متعملوش → دخول مخزن عادى */ }
       emp.__token = SESSION_TOKEN;
+      emp.__perms = __lp || {};
       sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
       logActivity('emp_login','🚪 سجل دخول',{role:emp.role});
       enterMain();
@@ -559,10 +642,225 @@ function enterMain(){
     tabsEl.innerHTML='<button class="wh-btn active">'+(emp.role==='قليوب'?'🏭':'🏗️')+' '+emp.role+'</button>';
     warehouse=emp.role;
   }
-  // 🚛 حمّل الـ vehicle types لكل مخزن + اعمل rebuild للـ filter (parallel مع loadBookings)
-  loadWarehouseVehicleTypes().then(rebuildVehicleFilter);
-  loadBookings();
   startRefreshIndicator();
+  setupModes();
+}
+
+// ═══════════════ 📦 الأوضاع: الحجوزات / تسليم النواقص ═══════════════
+let MODE = 'bk', _bkStarted = false;
+async function ensurePerms(){
+  if (emp.__perms) return emp.__perms;
+  try{
+    const pr = await fetch(`${SB}/rest/v1/employees?id=eq.${emp.id}&select=role_id,perms_override`,{headers:HDR});
+    const row = ((await pr.json())||[])[0] || {};
+    let perms = (row.perms_override && row.perms_override.perms) || null;
+    if (!perms && row.role_id){
+      const rr = await fetch(`${SB}/rest/v1/roles?id=eq.${row.role_id}&select=permissions`,{headers:HDR});
+      perms = (((await rr.json())||[])[0]||{}).permissions || {};
+    }
+    emp.__perms = perms || {};
+    sessionStorage.setItem('hawa_emp',JSON.stringify(emp));
+  }catch(e){ emp.__perms = {}; }
+  return emp.__perms;
+}
+function permOn(p, k){ return !!(p && (p.__all__ === true || (p[k] && (p[k].view || p[k].edit)))); }
+async function setupModes(){
+  const p = await ensurePerms();
+  const hasSh = permOn(p,'shortage-chassis') || permOn(p,'shortage-motor') || (p && p.shortages && p.shortages.edit);
+  const hasBk = !hasSh || p.__all__ === true || permOn(p,'warehouse-checkin');
+  document.getElementById('modeTabs').style.display = (hasSh && hasBk) ? '' : 'none';
+  if (hasSh && hasBk) shCounts();
+  setMode(hasBk ? 'bk' : 'sh');
+}
+function setMode(m){
+  MODE = m;
+  document.getElementById('bkMode').style.display = m === 'bk' ? '' : 'none';
+  document.getElementById('shMode').style.display = m === 'sh' ? '' : 'none';
+  document.getElementById('modeBk').classList.toggle('active', m === 'bk');
+  document.getElementById('modeSh').classList.toggle('active', m === 'sh');
+  if (m === 'bk' && !_bkStarted){
+    _bkStarted = true;
+    // 🚛 حمّل الـ vehicle types لكل مخزن + اعمل rebuild للـ filter (parallel مع loadBookings)
+    loadWarehouseVehicleTypes().then(rebuildVehicleFilter);
+    loadBookings();
+  }
+  if (m === 'sh') shLoad();
+}
+
+async function rpcEmp(fn, args){
+  const r = await fetch(`${SB}/rest/v1/rpc/${fn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN, ...args})});
+  const txt = await r.text(); let j = null; try{ j = txt ? JSON.parse(txt) : null; }catch(e){}
+  if (!r.ok) throw new Error((j && (j.message || j.error)) || txt || ('HTTP ' + r.status));
+  return j;
+}
+function escH(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function dayAr(ds){ if(!ds) return '-'; const d=new Date(ds+'T12:00:00'); return ['الأحد','الاتنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][d.getDay()]+' '+d.getDate()+'/'+(d.getMonth()+1); }
+function needRelogin(msg){
+  showDialog('🔐','لازم تدخل تانى', (msg||'الجلسة انتهت') + '\nاخرج وادخل باسمك وكلمة السر تانى', true, async()=>{
+    sessionStorage.removeItem('hawa_emp'); location.reload();
+  });
+}
+
+// ═══════════════ ✅ الحضور بالأصناف ═══════════════
+let _ci = null;
+async function ciOpen(id, name){
+  if (!SESSION_TOKEN){ needRelogin('محتاجين نسجّل دخولك من جديد علشان نظام النواقص'); return; }
+  let j;
+  try{ j = await rpcEmp('shortage_checkin_items', { p_booking_id: id }); }
+  catch(e){ if(/الجلسة/.test(e.message)) needRelogin(e.message); else alert('❌ '+e.message); return; }
+  if (!j || !j.ok){ alert('❌ ' + ((j && j.error) || 'مشكلة')); return; }
+  if (!j.active){
+    // النظام مش شغال على الحجز ده → الحضور العادى زى الأول
+    showDialog('✅','تأكيد الحضور',`هتسجل حضور "${name}"؟`,false,async()=>{await markStatus(id,'تم التنفيذ');});
+    return;
+  }
+  const b = j.booking || {};
+  _ci = { id, name, b, reasons: j.reasons || [], rows: (j.items || []).map(it => ({ ...it, loaded: Number(it.qty)||0, ch: null, mo: null, chR: '', moR: '' })) };
+  document.getElementById('ciHead').innerHTML = `<b style="color:var(--text);font-size:14px">${escH(b.client_name||name)}</b> — كود ${escH(b.company_code||'-')}<br>` +
+    `#${escH(b.seq_number||b.id)} · ${escH(b.warehouse)} · ${escH(b.vehicle_type)} · ${b.count} عربية${b.units?` (${b.units} قطعة)`:''}${b.permit_number?` · 🎫 ${escH(b.permit_number)}`:''}`;
+  const g = document.getElementById('ciGuess');
+  g.style.display = j.guess ? '' : 'none';
+  g.innerHTML = '⚠️ التاجر محددش الأصناف وقت الحجز — الأعداد دى تقديرية من الإذن، <b>صحّح العدد اللى اتحمّل فعلاً لكل صنف</b> (وخلّى اللى متحمّلش صفر).';
+  ciRender();
+  document.getElementById('ciModal').classList.add('show');
+}
+function ciClose(){ document.getElementById('ciModal').classList.remove('show'); _ci = null; }
+function ciReasonOpts(sel){ return '<option value="">السبب…</option>' + (_ci.reasons||[]).map(r => `<option ${r===sel?'selected':''}>${escH(r)}</option>`).join(''); }
+function ciRender(){
+  const box = document.getElementById('ciRows');
+  box.innerHTML = _ci.rows.map((r, i) => {
+    const chOff = r.ch !== null, moOff = r.mo !== null;
+    return `<div class="ci-row">
+      <div class="ci-top"><span style="overflow-wrap:anywhere">${escH(r.name)}</span>
+        <span style="display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:11.5px;color:var(--text-dim)">اتحمّل <input class="ci-qty" type="number" inputmode="numeric" min="0" value="${r.loaded}" oninput="ciQty(${i},this.value)"></span></div>
+      <div class="ci-parts">
+        <div>
+          <div class="ci-part ${chOff?'off':''}" onclick="ciToggle(${i},'ch')">${chOff?'❌ شاسيه ناقص':'✅ شاسيه كامل'}</div>
+          <div class="ci-miss ${chOff?'show':''}">استلم <input class="ci-qty" style="width:58px !important" type="number" min="0" value="${chOff?r.ch:''}" oninput="ciPart(${i},'ch',this.value)"> <select class="ci-sel" onchange="_ci.rows[${i}].chR=this.value">${ciReasonOpts(r.chR)}</select></div>
+        </div>
+        <div>
+          <div class="ci-part ${moOff?'off':''}" onclick="ciToggle(${i},'mo')">${moOff?'❌ ماتور ناقص':'✅ ماتور كامل'}</div>
+          <div class="ci-miss ${moOff?'show':''}">استلم <input class="ci-qty" style="width:58px !important" type="number" min="0" value="${moOff?r.mo:''}" oninput="ciPart(${i},'mo',this.value)"> <select class="ci-sel" onchange="_ci.rows[${i}].moR=this.value">${ciReasonOpts(r.moR)}</select></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  ciSum();
+}
+function ciQty(i, v){ const r = _ci.rows[i]; r.loaded = Math.max(0, parseInt(v||'0',10)||0); if (r.ch !== null) r.ch = Math.min(r.ch, r.loaded); if (r.mo !== null) r.mo = Math.min(r.mo, r.loaded); ciSum(); }
+function ciToggle(i, k){ const r = _ci.rows[i]; r[k] = (r[k] === null) ? 0 : null; ciRender(); }
+function ciPart(i, k, v){ const r = _ci.rows[i]; r[k] = Math.min(Math.max(0, parseInt(v||'0',10)||0), r.loaded); ciSum(); }
+function ciSum(){
+  let ld = 0, ch = 0, mo = 0;
+  _ci.rows.forEach(r => { ld += r.loaded; if (r.ch !== null) ch += Math.max(r.loaded - r.ch, 0); if (r.mo !== null) mo += Math.max(r.loaded - r.mo, 0); });
+  document.getElementById('ciSum').innerHTML = `📦 اتحمّل: <b>${ld}</b> قطعة` + ((ch+mo) ? `<br>📋 هيتعمل مستند نواقص: ${ch?`<b style="color:var(--error)">${ch} شاسيه</b>`:''}${ch&&mo?' + ':''}${mo?`<b style="color:var(--error)">${mo} ماتور</b>`:''}` : '<br>✅ مفيش نواقص — كله اتسلّم كامل');
+}
+async function ciSave(){
+  const btn = document.getElementById('ciSave'); btn.disabled = true; btn.textContent = '⏳ بنحفظ...';
+  const lines = _ci.rows.map(r => ({ item_idx: r.item_idx, name: r.name, loaded: r.loaded,
+    chassis: r.ch === null ? r.loaded : r.ch, motor: r.mo === null ? r.loaded : r.mo, chassis_reason: r.chR || null, motor_reason: r.moR || null }));
+  try{
+    const j = await rpcEmp('shortage_checkin', { p_booking_id: _ci.id, p_lines: lines });
+    if (!j || !j.ok) throw new Error((j && j.error) || 'فشل الحفظ');
+    const b = allBookings.find(x => x.id === _ci.id); if (b) b.status = 'تم التنفيذ';
+    renderBookings(); updateStats();
+    document.getElementById('noshowAllBtn').style.display=getFilteredBookings().some(b=>b.status==='قيد الانتظار')?'block':'none';
+    const docs = j.docs || [];
+    ciClose();
+    showInfo('✅','اتسجل الحضور', docs.length ? ('واتعمل مستند نواقص:\n' + docs.map(d => `${d.doc_no}: ${d.total} ${d.part} — ميعاده ${dayAr(d.due_date)}`).join('\n') + '\nوالتاجر هيوصله رسالة بالتفاصيل') : 'كله اتسلّم كامل — مفيش نواقص ✅');
+  }catch(e){ alert('❌ ' + e.message); }
+  btn.disabled = false; btn.textContent = '💾 حفظ الحضور';
+}
+
+// ═══════════════ 🤝 تسليم النواقص ═══════════════
+let _sh = { mode: 'due', docs: [], counts: {} }, _dl = null;
+function shTab(m){ _sh.mode = m; ['due','upcoming','done'].forEach(k => document.getElementById('shTab-'+k).classList.toggle('active', k === m)); shLoad(); }
+async function shCounts(){
+  try{ const j = await rpcEmp('shortage_queue', { p_mode: 'due' }); shBadges(j && j.counts); }catch(_){}
+}
+function shBadges(c){
+  c = c || {}; _sh.counts = c;
+  const b = document.getElementById('shDueBadge'); if (b){ b.textContent = c.due || ''; b.style.display = c.due ? '' : 'none'; }
+  const d = document.getElementById('shCntDue'); if (d) d.textContent = c.due ? `(${c.due})` : '';
+  const u = document.getElementById('shCntUp'); if (u) u.textContent = c.upcoming ? `(${c.upcoming})` : '';
+}
+async function shLoad(){
+  const list = document.getElementById('shList');
+  if (!SESSION_TOKEN){ list.innerHTML = '<div class="empty-state"><div class="ei">🔐</div><p>اخرج وادخل تانى علشان تشوف النواقص</p></div>'; return; }
+  list.innerHTML = '<div class="loading-state">⏳ جاري التحميل...</div>';
+  try{
+    const j = await rpcEmp('shortage_queue', { p_mode: _sh.mode });
+    if (!j || !j.ok) throw new Error((j && j.error) || 'مشكلة');
+    _sh.docs = j.docs || []; shBadges(j.counts);
+    const a = j.actor || {};
+    document.getElementById('shInfo').textContent = `👷 ${a.name||''} — ${a.wh==='عام'?'كل المخازن':'مخزن '+a.wh} — بتسلّم: ${(a.parts||[]).join(' + ')}`;
+    shRender();
+  }catch(e){ if(/الجلسة/.test(e.message)) needRelogin(e.message); list.innerHTML = '<div class="loading-state">❌ '+escH(e.message)+'</div>'; }
+}
+function shRender(){
+  const q = (document.getElementById('shQ').value || '').trim();
+  const today = new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Cairo'});
+  const docs = _sh.docs.filter(d => !q || [d.client&&d.client.name, d.client&&d.client.code, d.permit_no, d.doc_no].some(v => String(v||'').includes(q)));
+  const list = document.getElementById('shList');
+  if (!docs.length){ list.innerHTML = `<div class="empty-state"><div class="ei">${_sh.mode==='done'?'📭':'✅'}</div><p>${_sh.mode==='due'?'مفيش نواقص مستحقة دلوقتى':_sh.mode==='upcoming'?'مفيش نواقص جاية':'مفيش تسليمات آخر 30 يوم'}</p></div>`; return; }
+  list.innerHTML = docs.map(d => {
+    const c = d.client || {}; const open = d.status === 'مفتوح';
+    const late = open && d.due_date < today, isToday = open && d.due_date === today;
+    const rem = (d.lines||[]).reduce((s,l)=>s+(+l.remaining||0),0);
+    const st = !open ? `<span style="color:var(--success)">✅ ${escH(d.status)} — ${escH(d.closed_by_name||'')}${d.receiver_name?' · استلم: '+escH(d.receiver_name):''}</span>`
+      : late ? `<span style="color:var(--error)">⚠️ متأخر ${d.days_late} يوم (كان ${dayAr(d.due_date)})</span>`
+      : isToday ? `<span style="color:var(--gold-light)">📍 مستحق النهارده</span>` : `<span style="color:var(--gold)">📅 ميعاده ${dayAr(d.due_date)}</span>`;
+    return `<div class="sh-card ${late?'late':isToday?'today':''}">
+      <div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+        <b style="font-size:14px">${d.part==='شاسيه'?'🔩':'⚙️'} ${escH(d.part)} — ${open?rem:''} ${open?'باقى':''}</b>
+        <span style="font-size:11px;color:var(--text-dim)">${escH(d.doc_no)}${d.cycle>1?' · دورة '+d.cycle:''}</span>
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-top:4px">${escH(c.name||'-')} <span style="color:var(--gold);font-size:12px">كود ${escH(c.code||'-')}</span></div>
+      <div style="font-size:11.5px;color:var(--text-dim);line-height:1.8">${c.phone?`📞 <a href="tel:${escH(c.phone)}" style="color:var(--blue)">${escH(c.phone)}</a> · `:''}${escH(c.governorate||'')}${c.city?' / '+escH(c.city):''}<br>🎫 إذن ${escH(d.permit_no||'-')} · ${escH(d.warehouse)} · تحميل ${dayAr(d.loading_date)}${d.parent_no?' · مكمّل '+escH(d.parent_no):''}</div>
+      <div style="font-size:12.5px;font-weight:800;margin:5px 0">${st}</div>
+      ${(d.lines||[]).map(l => `<div class="sh-line"><span style="overflow-wrap:anywhere">${escH(l.name)}${l.reason?` <span style="color:var(--text-dim);font-size:11px">(${escH(l.reason)})</span>`:''}</span><b style="white-space:nowrap">${open?`${l.remaining} من ${l.qty}`:`${l.delivered}/${l.qty}`}</b></div>`).join('')}
+      ${open ? `<button class="sh-btn" onclick="dlOpen(${d.id})">🤝 تسليم</button>` : ''}
+    </div>`;
+  }).join('');
+}
+function dlOpen(id){
+  const d = _sh.docs.find(x => x.id === id); if (!d) return;
+  const c = d.client || {};
+  _dl = { d, rows: (d.lines||[]).filter(l => l.remaining > 0).map(l => ({ id: l.id, name: l.name, rem: l.remaining, full: true, qty: l.remaining })) };
+  document.getElementById('dlTitle').textContent = `🤝 تسليم ${d.part} — ${d.doc_no}`;
+  document.getElementById('dlHead').innerHTML = `<b style="color:var(--text);font-size:14px">${escH(c.name||'-')}</b> — كود ${escH(c.code||'-')}<br>🎫 إذن ${escH(d.permit_no||'-')} · ${escH(d.warehouse)} · ميعاده ${dayAr(d.due_date)}`;
+  document.getElementById('dlReceiver').value = ''; document.getElementById('dlNote').value = '';
+  dlRender();
+  document.getElementById('dlModal').classList.add('show');
+}
+function dlClose(){ document.getElementById('dlModal').classList.remove('show'); _dl = null; }
+function dlRender(){
+  document.getElementById('dlRows').innerHTML = _dl.rows.map((r, i) => `<div class="ci-row">
+    <div class="ci-top"><span style="overflow-wrap:anywhere">${escH(r.name)}</span><span style="font-size:12px;color:var(--text-dim);white-space:nowrap">باقى <b style="color:var(--gold-light)">${r.rem}</b></span></div>
+    <div class="ci-parts">
+      <div class="ci-part ${r.full?'':'off'}" onclick="dlToggle(${i})">${r.full?'✅ تسليم كامل':'✂️ تسليم جزئى'}</div>
+      <div style="display:${r.full?'none':'flex'};align-items:center;gap:6px;font-size:12px;color:var(--text-dim)">اتسلّم <input class="ci-qty" type="number" min="0" max="${r.rem}" value="${r.qty}" oninput="dlQty(${i},this.value)"></div>
+    </div></div>`).join('');
+  dlSum();
+}
+function dlToggle(i){ const r = _dl.rows[i]; r.full = !r.full; r.qty = r.full ? r.rem : 0; dlRender(); }
+function dlQty(i, v){ const r = _dl.rows[i]; r.qty = Math.min(Math.max(0, parseInt(v||'0',10)||0), r.rem); dlSum(); }
+function dlSum(){
+  const got = _dl.rows.reduce((s,r)=>s+(r.full?r.rem:r.qty),0), rem = _dl.rows.reduce((s,r)=>s+r.rem,0) - got;
+  document.getElementById('dlSum').innerHTML = `🤝 هيتسلّم: <b>${got}</b> ${escH(_dl.d.part)}` + (rem > 0 ? `<br>📌 الباقى <b style="color:var(--error)">${rem}</b> — هيتعمل بيه مستند جديد بميعاد جديد` : '<br>✅ المستند هيتقفل بالكامل');
+}
+async function dlSave(){
+  const lines = _dl.rows.map(r => ({ line_id: r.id, qty: r.full ? r.rem : r.qty })).filter(x => x.qty > 0);
+  if (!lines.length){ alert('اكتب الكمية اللى اتسلّمت'); return; }
+  const btn = document.getElementById('dlSave'); btn.disabled = true; btn.textContent = '⏳ بنحفظ...';
+  try{
+    const j = await rpcEmp('shortage_deliver', { p_doc_id: _dl.d.id, p_lines: lines, p_receiver: document.getElementById('dlReceiver').value || null, p_note: document.getElementById('dlNote').value || null });
+    if (!j || !j.ok) throw new Error((j && j.error) || 'فشل الحفظ');
+    dlClose();
+    showInfo('✅','اتسجل التسليم', `اتسلّم ${j.delivered}` + (j.remaining > 0 ? `\nالباقى ${j.remaining} — مستند جديد ${j.new_doc_no} ميعاده ${dayAr(j.new_due)}` : '\nالمستند اتقفل بالكامل') + '\nوالتاجر هيوصله رسالة');
+    shLoad();
+  }catch(e){ alert('❌ ' + e.message); }
+  btn.disabled = false; btn.textContent = '💾 حفظ التسليم';
 }
 
 function doLogout(){
@@ -571,7 +869,7 @@ function doLogout(){
     if(SESSION_TOKEN){ try{ fetch(`${SB}/rest/v1/rpc/logout_session`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_token:SESSION_TOKEN})}); }catch(e){} }
     SESSION_TOKEN=null;
     sessionStorage.removeItem('hawa_emp');
-    emp=null;warehouse=null;allBookings=[];
+    emp=null;warehouse=null;allBookings=[];_bkStarted=false;
     document.getElementById('loginView').classList.remove('hide');
     document.getElementById('mainView').classList.remove('show');
     document.getElementById('empUser').value='';
@@ -698,7 +996,8 @@ function updateStats(){
 }
 
 function confirmDone(id,name){
-  showDialog('✅','تأكيد الحضور',`هتسجل حضور "${name}"؟`,false,async()=>{await markStatus(id,'تم التنفيذ');});
+  // 📦 لو نظام النواقص شغال: شاشة الأصناف (شاسيه/ماتور) — غير كده الحضور العادى
+  ciOpen(id, name);
 }
 
 async function markStatus(id,status){
@@ -794,7 +1093,8 @@ function showDialog(icon,title,msg,danger,onYes){
   y.onclick=async()=>{hideDialog();await onYes();};
   document.getElementById('overlay').classList.add('show');
 }
-function hideDialog(){document.getElementById('overlay').classList.remove('show');}
+function hideDialog(){document.getElementById('overlay').classList.remove('show'); const n=document.querySelector('#overlay .d-no'); if(n) n.style.display=''; document.getElementById('dlgYes').textContent='تأكيد';}
+function showInfo(icon,title,msg){ showDialog(icon,title,msg,false,async()=>{}); const n=document.querySelector('#overlay .d-no'); if(n) n.style.display='none'; document.getElementById('dlgYes').textContent='تمام 👍'; }
 
 // 📌 متغيرات الـ auto-refresh + indicator
 let lastRefreshTime=Date.now();
@@ -819,7 +1119,7 @@ const saved=sessionStorage.getItem('hawa_emp');
 try{ const _e=saved?JSON.parse(saved):null; if(_e&&_e.__token) SESSION_TOKEN=_e.__token; }catch(e){}
 if(saved){emp=JSON.parse(saved);enterMain();}
 // ⏰ Auto-refresh كل دقيقتين (120 ثانية)
-setInterval(()=>{if(emp)loadBookings();},120000);
+setInterval(()=>{ if(!emp) return; if(MODE==='bk') loadBookings(); else shLoad(); },120000);
 </script>
 </body>
 </html>
