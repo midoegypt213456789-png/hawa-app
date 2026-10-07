@@ -3431,6 +3431,9 @@ tr:hover td{background:rgba(201,168,76,0.03);}
           <select class="filter-inp" id="sh-part" onchange="shRenderAll()" style="width:120px"><option value="">شاسيه + ماتور</option><option>شاسيه</option><option>ماتور</option></select>
           <select class="filter-inp" id="sh-wh" onchange="shRenderAll()" style="width:120px"><option value="">كل المخازن</option><option>قليوب</option><option>السادات</option></select>
           <select class="filter-inp" id="sh-gov" onchange="shRenderAll()" style="width:140px"><option value="">كل المحافظات</option></select>
+          <input class="filter-inp" id="sh-cl" type="text" placeholder="👤 التاجر: اسم أو كود" oninput="shRenderAll()" style="width:170px">
+          <input class="filter-inp" id="sh-it" type="text" placeholder="🔩 الصنف: مثلاً دايون 4" oninput="shRenderAll()" style="width:170px">
+          <button class="act-btn edit" style="font-size:12px" onclick="['sh-cl','sh-it'].forEach(i=>document.getElementById(i).value='');['sh-part','sh-wh','sh-gov'].forEach(i=>document.getElementById(i).value='');shRenderAll()">✖️ مسح</button>
           <div style="font-size:11px;color:var(--text-dim)">المستندات المفتوحة بتظهر دايماً حتى لو برا الفترة</div>
         </div>
         <div class="tbl-scroll-body">
@@ -9162,9 +9165,29 @@ async function shState(){
   }catch(e){}
 }
 function shRenderAll(){ if(_shA.tab==='docs') shRenderDocs(); else if(_shA.tab==='stats') shRenderStats(); }
+// 🔎 تطبيع عربى للبحث (ى/ي، ة/ه، أ/إ/آ/ا، وشيل المسافات والعلامات)
+function shNorm(t){ return String(t||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[ؤ]/g,'و').replace(/[ئ]/g,'ي').replace(/[ًٌٍَُِّْـ]/g,'').replace(/[\s"'“”«»()\-_.,/]+/g,' ').trim(); }
+function shItemOk(name){
+  const q = shNorm(document.getElementById('sh-it')?.value); if(!q) return true;
+  const n = ' ' + shNorm(name) + ' ', nz = n.replace(/ /g,'');
+  return q.split(' ').every(tok => n.includes(tok) || nz.includes(tok));
+}
+function shClientOk(name, code){
+  const q = shNorm(document.getElementById('sh-cl')?.value); if(!q) return true;
+  const c = String(code||'').replace(/^0+/,''), qq = q.replace(/^0+/,'');
+  return shNorm(name).includes(q) || (c && (c === qq || String(code||'').includes(q)));
+}
 function shFilterBase(d){
   const part = document.getElementById('sh-part').value, wh = document.getElementById('sh-wh').value, gov = document.getElementById('sh-gov').value;
-  return (!part || d.part===part) && (!wh || d.warehouse===wh) && (!gov || (d.client&&d.client.governorate)===gov);
+  return (!part || d.part===part) && (!wh || d.warehouse===wh) && (!gov || (d.client&&d.client.governorate)===gov)
+    && shClientOk(d.client&&d.client.name, d.client&&d.client.code)
+    && (d.lines||[]).some(l => shItemOk(l.name));
+}
+// المستند بالأصناف اللى مطابقة لفلتر الصنف بس
+function shDocItems(d){
+  if(!shNorm(document.getElementById('sh-it')?.value)) return d;
+  const lines = (d.lines||[]).filter(l => shItemOk(l.name));
+  return { ...d, lines, deliveries: (d.deliveries||[]).filter(x => shItemOk(x.name)) };
 }
 function shDocState(d){
   const today = _shA.today || shIso(new Date());
@@ -9187,7 +9210,7 @@ function shDocsFiltered(){
 }
 function shRenderDocs(){
   const box = document.getElementById('sh-docs'); if(!box) return;
-  const rows = shDocsFiltered();
+  const rows = shDocsFiltered().map(shDocItems);
   document.getElementById('sh-count').textContent = rows.length + ' مستند';
   if(!rows.length){ box.innerHTML = '<div class="empty-txt" style="padding:30px">مفيش مستندات بالفلاتر دى ✨</div>'; return; }
   box.innerHTML = `<table><thead><tr><th>المستند</th><th>التاجر</th><th>المنطقة</th><th>الإذن</th><th>الجزء</th><th>الأصناف</th><th>التحميل</th><th>الاستحقاق</th><th>الحالة</th><th></th></tr></thead><tbody>` +
@@ -9266,13 +9289,33 @@ async function shCancel(id){
   catch(e){ alert('❌ '+(e.message||e)); }
 }
 function shPrint(){
+  // 🖨️ طباعة من iframe مخفى جوه نفس الصفحة (أضمن من النافذة المنبثقة اللى Edge بيرفضها «Print failed»)
   const el = document.getElementById('shDocPrint'); if(!el) return;
-  const w = window.open('', '_blank'); if(!w) return;
-  w.document.write(`<html dir="rtl"><head><meta charset="utf-8"><title>${escAttr(document.getElementById('shDocTitle').textContent)}</title><style>body{font-family:Cairo,Tahoma,sans-serif;padding:20px;color:#111}table{width:100%;border-collapse:collapse;margin-top:10px}td,th{border:1px solid #999;padding:6px;text-align:right}span{border:none!important;background:none!important;color:#111!important}</style></head><body><h2>HAWA CO — ${escAttr(document.getElementById('shDocTitle').textContent)}</h2>${el.innerHTML}<br><br>توقيع المستلم: ____________ &nbsp;&nbsp; توقيع الموظف: ____________</body></html>`);
-  w.document.close(); setTimeout(()=>w.print(), 300);
+  const title = escAttr(document.getElementById('shDocTitle').textContent);
+  const body = el.innerHTML.replace(/<button[\s\S]*?<\/button>/g,'').replace(/<input[^>]*>/g,'').replace(/<th>\s*<\/th>/g,'').replace(/<td>\s*<\/td>/g,'');
+  const html = `<!DOCTYPE html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${title}</title>
+    <style>@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Tahoma,Arial,sans-serif;color:#111;font-size:13px;line-height:1.9;margin:0}
+    h2{font-size:18px;margin:0 0 10px;border-bottom:2px solid #111;padding-bottom:6px}table{width:100%;border-collapse:collapse;margin-top:10px}
+    td,th{border:1px solid #777;padding:6px 8px;text-align:right}th{background:#eee}span,b{color:#111!important;background:none!important;border:none!important}
+    .sig{display:flex;justify-content:space-between;margin-top:40px}.sig div{width:45%;border-top:1px solid #111;padding-top:6px;text-align:center}</style></head>
+    <body><h2>HAWA CO — ${title}</h2>${body}<div class="sig"><div>توقيع المستلم</div><div>توقيع الموظف</div></div>
+    <div style="margin-top:14px;font-size:11px;color:#555">اتطبع: ${new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'})}</div></body></html>`;
+  let fr = document.getElementById('shPrintFrame');
+  if (fr) fr.remove();
+  fr = document.createElement('iframe');
+  fr.id = 'shPrintFrame';
+  fr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  document.body.appendChild(fr);
+  fr.onload = () => {
+    setTimeout(() => {
+      try { fr.contentWindow.focus(); fr.contentWindow.print(); }
+      catch(e){ alert('❌ الطباعة مش شغالة من المتصفح ده — جرّب Chrome'); }
+    }, 250);
+  };
+  fr.srcdoc = html;
 }
 function shExport(){
-  const rows = shDocsFiltered(); const out = [['المستند','الحالة','الجزء','التاجر','الكود','المحافظة','المدينة','الإذن','المخزن','الصنف','النقص','اتسلّم','باقى','السبب','التحميل','الاستحقاق','متأخر (يوم)']];
+  const rows = shDocsFiltered().map(shDocItems); const out = [['المستند','الحالة','الجزء','التاجر','الكود','المحافظة','المدينة','الإذن','المخزن','الصنف','النقص','اتسلّم','باقى','السبب','التحميل','الاستحقاق','متأخر (يوم)']];
   rows.forEach(d => (d.lines||[]).forEach(l => out.push([d.doc_no, shDocState(d).t, d.part, d.client&&d.client.name, d.client&&d.client.code, d.client&&d.client.governorate, d.client&&d.client.city, d.permit_no, d.warehouse, l.name, l.qty, l.delivered, l.remaining, l.reason||'', d.loading_date, d.due_date, d.days_late||''])));
   const csv = '﻿' + out.map(r => r.map(v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"').join(',')).join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8'})); a.download = 'النواقص_' + shIso(new Date()) + '.csv'; a.click();
@@ -9282,8 +9325,8 @@ function shPct(a, b){ return b > 0 ? Math.round(a * 100 / b) + '%' : '-'; }
 function shRenderStats(){
   const part = document.getElementById('sh-part').value, wh = document.getElementById('sh-wh').value, gov = document.getElementById('sh-gov').value;
   const today = _shA.today || shIso(new Date());
-  const loaded = _shA.loaded.filter(r => (!wh || r.warehouse===wh) && (!gov || r.governorate===gov));
-  const docs = _shA.docs.filter(shFilterBase);
+  const loaded = _shA.loaded.filter(r => (!wh || r.warehouse===wh) && (!gov || r.governorate===gov) && shClientOk(r.client, r.code) && shItemOk(r.name));
+  const docs = _shA.docs.filter(shFilterBase).map(shDocItems);
   const partStats = p => {
     const ld = loaded.reduce((s,r)=>s+(+r.loaded||0),0);
     const recv = loaded.reduce((s,r)=>s+(+(p==='شاسيه'?r.chassis:r.motor)||0),0);
