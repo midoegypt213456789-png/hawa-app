@@ -2515,6 +2515,17 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .pl-brand .s{font-size:11px;color:var(--text-dim)}
 .pl-bar{height:6px;background:var(--dark);border-radius:4px;overflow:hidden;margin-top:3px;min-width:70px}
 .pl-bar i{display:block;height:100%;background:var(--gold)}
+.pl-nums{margin-top:4px;display:flex;flex-direction:column;gap:5px}
+.pl-nrow{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end}
+.pl-nl{font-size:11px;color:var(--text-dim);min-width:74px;padding-bottom:6px}
+.pl-cp{display:inline-flex;flex-direction:column;align-items:center;gap:1px;background:var(--dark3);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:3px 9px 4px;cursor:pointer;font-family:Cairo;color:var(--text);transition:.15s}
+.pl-cp:hover{border-color:var(--gold);background:rgba(201,168,76,0.1)}
+.pl-cp .pl-cp-h{font-size:10px;color:var(--gold);font-weight:700;line-height:1.3}
+.pl-cp .pl-cp-h i{font-style:normal}
+.pl-cp b{font-size:13px;letter-spacing:.6px}
+.pl-cp.done{border-color:var(--success);background:rgba(76,175,125,0.15)}
+.pl-cp.done .pl-cp-h i{display:none}
+.pl-cp.done .pl-cp-h::after{content:' ✅'}
 .pl-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:11px 20px;border-radius:10px;font-weight:800;font-size:14px;font-family:Cairo;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
 .pl-toast.ok{background:#1f3b2c;color:#9be0bb;border:1px solid #4CAF7D}
 .pl-toast.err{background:#3b1f1f;color:#ffb3b3;border:1px solid #E05555}
@@ -18843,6 +18854,25 @@ const PL = { boot:null, letters:[], bulletins:[], loaded:false, tab:'letters',
 
 function plEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function plN(n){ return Number(n||0).toLocaleString('en-US'); }
+// 📋 زرار نسخ فوق كل رقم — علشان يتنسخ ويتحط فى البرنامج الأصلى
+function plCp(v,label){ v=String(v==null?'':v); return `<button type="button" class="pl-cp" data-v="${plEsc(v)}" onclick="plCopy(this)" title="اضغط تنسخ"><span class="pl-cp-h">${plEsc(label)} <i>📋</i></span><b class="pl-mono">${plEsc(v)}</b></button>`; }
+function plNums(i){
+  const s7=x=>String(x).padStart(7,'0');
+  return `<div class="pl-nums">
+    <div class="pl-nrow"><span class="pl-nl">🔢 الشاسيه</span>${plCp(i.chassis_from,'من')}${plCp(i.chassis_to,'إلى')}</div>
+    <div class="pl-nrow"><span class="pl-nl">⚙️ الماتور</span>${plCp(i.engine_from,'من')}${plCp(i.engine_to,'إلى')}</div>
+    <div class="pl-nrow"><span class="pl-nl">🗂️ للبرنامج</span>${plCp(String(i.chassis_from).slice(0,10),'حروف البداية')}${plCp(s7(i.serial_from),'بداية المسلسل')}${plCp(s7(i.serial_to),'نهاية المسلسل')}${plCp(i.qty,'العدد')}</div>
+  </div>`;
+}
+async function plCopy(btn){
+  const v=btn.getAttribute('data-v')||'';
+  let ok=false;
+  try{ await navigator.clipboard.writeText(v); ok=true; }catch(e){
+    try{ const t=document.createElement('textarea'); t.value=v; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); ok=document.execCommand('copy'); t.remove(); }catch(e2){}
+  }
+  if(ok){ btn.classList.add('done'); setTimeout(()=>btn.classList.remove('done'),1400); plToast('📋 اتنسخ: '+v); }
+  else plToast('مقدرتش أنسخ — حدّد الرقم وانسخه بإيدك',false);
+}
 function plToday(){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
 function plD(d){ return d ? String(d).slice(0,10).replace(/-/g,'/') : '—'; }
 function plCanEdit(){ try{ return typeof can!=='function' || can('bulletins','edit'); }catch(e){ return true; } }
@@ -19000,8 +19030,7 @@ function plRenderLettersTable(){
     ${rows.map(l=>{
       const live=!l.is_cancelled;
       const items=l.items.map(i=>`<div class="pl-it"><b>${plEsc(i.brand_name)}</b> — ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>
-        <div class="pl-mono" style="font-size:12px">🔢 ${plEsc(i.chassis_from)} → ${plEsc(i.chassis_to)}</div>
-        <div class="pl-mono" style="font-size:12px;color:var(--text-dim)">⚙️ ${plEsc(i.engine_from)} → ${plEsc(i.engine_to)}</div></div>`).join('');
+        ${plNums(i)}</div>`).join('');
       const dIn = live&&ed ? `<input type="date" class="pl-inp" style="padding:4px 6px;font-size:12px" value="${l.delivered_at||''}" max="${today}" onchange="plUpd(${l.id},{delivered_at:this.value})">
           ${!l.delivered_at?`<div><button class="pl-btn ghost sm" style="margin-top:4px" onclick="plUpd(${l.id},{delivered_at:'${today}'})">📤 اتسلم النهارده</button></div>`:''}` : plD(l.delivered_at);
       const rIn = live&&ed ? (l.delivered_at ? `<input type="date" class="pl-inp" style="padding:4px 6px;font-size:12px" value="${l.received_at||''}" max="${today}" onchange="plUpd(${l.id},{received_at:this.value})">
@@ -19151,7 +19180,7 @@ function plWizRender(){
       </tbody></table></div>` : '';
   const prev = w.preview ? `<div class="pl-card" style="background:var(--dark3);margin-top:10px"><div class="pl-h">👁️ معاينة — ${w.preview.dry?'لسه متحفظش':'✅ اتعمل'}</div>
       ${w.preview.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.vtypes)} — ${plN(l.qty)} رقم
-        ${l.items.map(i=>`<div class="pl-mono" style="font-size:12px">${plEsc(i.brand_name)} ${plEsc(i.model_label)} [درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi>] × ${plN(i.qty)} : ${plEsc(i.chassis_from)} → ${plEsc(i.chassis_to)} &nbsp;|&nbsp; ⚙️ ${plEsc(i.engine_from)} → ${plEsc(i.engine_to)}</div>`).join('')}</div>`).join('')}</div>` : '';
+        ${l.items.map(i=>`<div style="margin:4px 0 8px"><b>${plEsc(i.brand_name)}</b> ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>${plNums(i)}</div>`).join('')}</div>`).join('')}</div>` : '';
   el.innerHTML = `<div class="pl-card" style="border-color:rgba(201,168,76,0.5)">
     <div class="pl-h">➕ كتاب جديد <span class="pl-sub">— موديل ${s.model_year} (حرف ${plEsc(plYearLetter(s.model_year))}) — المستند الجاى رقم ${s.next_doc}</span>
       <div style="flex:1"></div><button class="pl-btn ghost sm" onclick="plWizClose()">✖ قفل</button></div>
@@ -19189,7 +19218,7 @@ async function plWizRun(dry){
     const el=document.getElementById('pl-wiz');
     if(el){ el.innerHTML=`<div class="pl-card" style="border-color:rgba(76,175,125,0.6)"><div class="pl-h">✅ الكتب اتعملت <div style="flex:1"></div><button class="pl-btn ghost sm" onclick="plWizClose()">✖ قفل</button></div>
       ${keep.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.recipient_name||'')} — ${plN(l.qty)} رقم <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button>
-        ${l.items.map(i=>`<div class="pl-mono" style="font-size:12px">${plEsc(i.brand_name)} ${plEsc(i.model_label)} × ${plN(i.qty)} : ${plEsc(i.chassis_from)} → ${plEsc(i.chassis_to)} | ⚙️ ${plEsc(i.engine_from)} → ${plEsc(i.engine_to)}</div>`).join('')}</div>`).join('')}</div>`; }
+        ${l.items.map(i=>`<div style="margin:4px 0 8px"><b>${plEsc(i.brand_name)}</b> ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>${plNums(i)}</div>`).join('')}</div>`).join('')}</div>`; }
     PL.wiz=null;
   }catch(e){
     w.busy=false; const msg=plErr(e);
