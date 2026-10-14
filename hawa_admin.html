@@ -3615,6 +3615,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <button class="bl-tab" id="pl-tab-recipients" onclick="plTab('recipients')">👥 المستلمين</button>
         <button class="bl-tab" id="pl-tab-years" onclick="plTab('years')">🔤 أحرف السنة</button>
         <button class="bl-tab" id="pl-tab-rules" onclick="plTab('rules')">⚙️ قواعد الكتب</button>
+        <button class="bl-tab" id="pl-tab-legacy" onclick="plTab('legacy')">📜 الكتب القديمة</button>
       </div>
 
       <div id="bl-pane-list">
@@ -3673,6 +3674,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div id="pl-pane-recipients" class="pl-pane" style="display:none"></div>
       <div id="pl-pane-years" class="pl-pane" style="display:none"></div>
       <div id="pl-pane-rules" class="pl-pane" style="display:none"></div>
+      <div id="pl-pane-legacy" class="pl-pane" style="display:none"></div>
     </div>
 
     <div class="section" id="sec-feedback">
@@ -18833,7 +18835,7 @@ else{
 // الماتور = كود ماتور الشركة (2) + نفس الـ 7 أرقام
 // ════════════════════════════════════════════════════════════════
 const PL_VTYPES = ['موتسيكل','سكوتر','تروسكل','كهرباء','باجي'];
-const PL_TABS = ['letters','reports','brands','recipients','years','rules'];
+const PL_TABS = ['letters','reports','brands','recipients','years','rules','legacy'];
 const PL = { boot:null, letters:[], bulletins:[], loaded:false, tab:'letters',
   brandFilter:'all', statusFilter:'open', q:'', wiz:null, selBrand:null, modelEdit:null,
   rep:{brand:'',model:'',vtype:'',year:'',rcp:'',status:'',from:'',to:''} };
@@ -18892,7 +18894,7 @@ async function plLoad(force){
   }
 }
 function plRender(){
-  const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules}[PL.tab];
+  const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules,legacy:plRenderLegacy}[PL.tab];
   if(f) f();
   const c=document.getElementById('pl-tab-count'); if(c) c.textContent = PL.letters.filter(l=>['جديد','فى التنمية','اتستلم'].includes(l.status)).length;
 }
@@ -19044,8 +19046,15 @@ async function plSearch(){
   out.innerHTML='<div class="pl-res">⏳ بدوّر...</div>';
   try{
     const res=await plCall('pl_search',{p_q:q});
-    if(!res||!res.length){ out.innerHTML=`<div class="pl-res ok">✅ الرقم <b class="pl-mono">${plEsc(q)}</b> مش موجود فى أى كتاب فى السيستم الجديد.</div>`; return; }
+    if(!res||!res.length){ out.innerHTML=`<div class="pl-res ok">✅ الرقم <b class="pl-mono">${plEsc(q)}</b> مش موجود فى أى كتاب — لا فى الجديد ولا فى الكتب القديمة.</div>`; return; }
     out.innerHTML=res.map(r=>{
+      if(r.legacy){ const g=r.legacy;
+        return `<div class="pl-res warn">📜 ${r.kind!=='كتاب'?`<b>${plEsc(r.kind)}</b> <span class="pl-mono">${plEsc(r.number)}</span> ← `:''}
+          موجود فى <b>كتاب قديم</b> — مستند <b>${plEsc(g.doc_no||'—')}</b> (${plEsc(g.source)} — ${plEsc(g.vtype||'')} ${plEsc(g.cc||'')})
+          ${r.position?` — ترتيبه <b>${plN(r.position)}</b>`:''} — من <span class="pl-mono">${g.num_from}</span> لـ <span class="pl-mono">${g.num_to}</span>
+          ${g.approval_no?` — رقم اعتماد <b>${plEsc(g.approval_no)}</b>`:''}<br><span class="pl-sub">${plEsc(g.extra||'')}</span>
+          ${g.issue?`<div style="color:#f0c75e;font-size:12px">⚠️ ${plEsc(g.issue)}</div>`:''}
+          <div class="pl-sub">السيستم الجديد مش هيطلّع الرقم ده تانى أبداً.</div></div>`; }
       const l=r.letter, it=r.item_id?l.items.find(i=>i.id===r.item_id):null;
       let st='';
       if(l.status==='ملغى') st=`🚫 الكتاب ده <b>اتلغى</b> (${plEsc(l.cancel_reason||'')}) — والرقم محروق ومش هيتكرر.`;
@@ -19307,7 +19316,7 @@ function plRenderBrands(){
       return `<tr style="${m.active?'':'opacity:.55'}"><td><span class="pl-chip vt">${plEsc(m.vtype)}</span></td><td><b>${plEsc(m.cc)}</b></td>
       <td class="pl-mono"><b>${plEsc(m.fingerprint)}</b></td>
       <td class="pl-mono" style="font-size:12px">${plEsc(m.fingerprint)}<b style="color:var(--gold)">${plEsc(y)}</b><b style="color:#7fb4ea">${c0?c0.code:'__'}</b>00001<br><span style="color:var(--text-dim)">${plEsc(b.engine_prefix)}${c0?c0.code:'__'}00001</span></td>
-      <td>${m.codes.map(c=>`<div><span class="pl-chip code">كود ${c.code}</span> ${c.status==='مليان'?'<span class="pl-chip can">مليان</span>':`<span class="pl-sub">فاضل ${plN(c.remaining)}</span><div class="pl-bar"><i style="width:${Math.round((c.next_n-1)/999.99)}%"></i></div>`}</div>`).join('')}
+      <td>${m.codes.map(c=>`<div><span class="pl-chip code">كود ${c.code}</span> ${c.status==='مليان'?'<span class="pl-chip can">مليان</span>':`<span class="pl-sub">فاضل ${plN(c.remaining)}${c.legacy>0?` <span title="أرقام مستخدمة فى الكتب القديمة جوه الكود ده — السيستم بيعدّى عليها">(📜 ${plN(c.legacy)} قديم)</span>`:''}</span><div class="pl-bar"><i style="width:${Math.round((99999-c.remaining)/999.99)}%"></i></div>`}</div>`).join('')}
         ${rem<10000&&m.active?`<div style="color:#ff8a8a;font-size:11px">⚠️ قرّب يخلص</div>`:''}</td>
       <td>${plN(m.used_qty)}<div class="pl-sub">${m.used_letters} كتاب</div></td>
       <td>${m.active?'<span class="pl-chip pub">شغال</span>':'<span class="pl-chip can">متوقف</span>'}</td>
@@ -19338,15 +19347,15 @@ function plCodesMap(){
   const codes=PL.boot.codes||[], map={}; codes.forEach(c=>map[c.code]=c);
   let cells=''; for(let k=10;k<=99;k++){ const c=map[k];
     if(!c){ cells+=`<div class="pl-code" title="فاضى">${k}</div>`; continue; }
-    if(c.status==='محروق'){ cells+=`<div class="pl-code burn" title="محروق — ${plEsc(c.note||'')}">${k}</div>`; continue; }
+    if(c.status==='محروق'){ cells+=`<div class="pl-code burn" title="فيه أرقام من الكتب القديمة — فاضل فيه ${plN(c.remaining)} رقم (بيتاخد آخر حاجة والسيستم بيعدّى على القديم)">${k}</div>`; continue; }
     const m=plModel(c.model_id), b=m&&plBrand(m.brand_id);
     cells+=`<div class="pl-code ${c.status==='مليان'?'full':'open'}" title="${plEsc((b?b.name:'')+' — '+(m?m.label:''))}${c.status==='مليان'?' (مليان)':' — فاضل '+plN(100000-c.next_n)}">${k}</div>`; }
-  const free=90-codes.length;
-  return `<div class="pl-card"><div class="pl-h">🔢 خريطة الأكواد <span class="pl-sub">— فاضل ${free} كود من 90 (كل كود = 99,999 رقم)</span></div>
+  const free=90-codes.length, spare=codes.filter(c=>!c.model_id).length;
+  return `<div class="pl-card"><div class="pl-h">🔢 خريطة الأكواد <span class="pl-sub">— ${free} كود فاضى خالص + ${spare} احتياطى فيهم أرقام قديمة (كل كود = 99,999 رقم)</span></div>
     <div class="pl-codes">${cells}</div>
     <div class="pl-row pl-sub" style="margin-top:8px"><span><span class="pl-code open" style="display:inline-block;padding:0 8px">00</span> شغال</span>
       <span><span class="pl-code full" style="display:inline-block;padding:0 8px">00</span> مليان</span>
-      <span><span class="pl-code burn" style="display:inline-block;padding:0 8px">00</span> محروق (مستخدم فى الكتب القديمة)</span>
+      <span><span class="pl-code burn" style="display:inline-block;padding:0 8px">00</span> فيه أرقام قديمة (احتياطى — السيستم بيعدّى عليها)</span>
       <span><span class="pl-code" style="display:inline-block;padding:0 8px">00</span> فاضى</span></div></div>`;
 }
 async function plBrandAdd(){
@@ -19424,6 +19433,29 @@ function plRenderYears(){
 }
 async function plYearSave(y,l){
   try{ await plCall('pl_year_letter_save',{p_year:y,p_letter:l}); plToast('✅ اتحفظ'); await plLoad(true); }catch(e){ plToast(plErr(e),false); await plLoad(true); }
+}
+
+// ════════════════ 📜 الكتب القديمة (أرشيف للبحث والرفض بس) ════════════════
+async function plRenderLegacy(){
+  const el=document.getElementById('pl-pane-legacy'); if(!el) return;
+  if(!PL.legacy){ el.innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+    try{ PL.legacy=await plCall('pl_legacy_list'); }catch(e){ el.innerHTML=`<div class="pl-card" style="color:var(--error)">❌ ${plEsc(plErr(e))}</div>`; return; } }
+  const q=(PL.legQ||'').trim(), onlyIss=!!PL.legIss;
+  const rows=PL.legacy.filter(g=>(!onlyIss||g.issue)&&(!q||[g.source,g.doc_no,g.vtype,g.cc,g.extra,g.approval_no].join(' ').includes(q)));
+  const iss=PL.legacy.filter(g=>g.issue).length, tot=PL.legacy.reduce((a,g)=>a+Number(g.qty||0),0);
+  el.innerHTML=`<div class="pl-card"><div class="pl-h">📜 الكتب القديمة <span class="pl-sub">— شيت «الكتاب الدورى 2027» + كتابين 1686/1687 من البرنامج القديم. للبحث والمنع بس: أى رقم جديد يقع جوه أى مدى هنا بيترفض أوتوماتيك.</span></div>
+    <div class="pl-kpis"><div class="pl-kpi gold"><div class="v">${PL.legacy.length}</div><div class="l">📄 سطر قديم</div></div>
+      <div class="pl-kpi"><div class="v">${plN(tot)}</div><div class="l">🔢 رقم محجوز</div></div>
+      <div class="pl-kpi red"><div class="v">${iss}</div><div class="l">⚠️ فيه مشكلة (تداخل / عدد غلط)</div></div></div>
+    <div class="pl-row" style="margin-bottom:10px"><input class="pl-inp" style="width:260px" placeholder="فلتر: شيت / مستند / مستلم / سعة" value="${plEsc(PL.legQ||'')}" oninput="PL.legQ=this.value;PL.legFocus=1;plRenderLegacy()">
+      <label class="pl-row" style="gap:6px;cursor:pointer"><input type="checkbox" class="pl-combo" ${onlyIss?'checked':''} onchange="PL.legIss=this.checked;plRenderLegacy()"> المشاكل بس</label></div>
+    <div class="pl-scroll"><table class="pl-tbl"><thead><tr><th>الشيت</th><th>المستند</th><th>كود الكتاب</th><th>النوع</th><th>السعة</th><th>من</th><th>إلى</th><th>العدد</th><th>الاعتماد</th><th>البيانات</th><th>ملاحظة</th></tr></thead><tbody>
+    ${rows.map(g=>`<tr class="${g.issue?'pl-st-dev':''}"><td>${plEsc(g.source)}</td><td><b>${plEsc(g.doc_no||'')}</b></td><td>${plEsc(g.book_code||'')}</td>
+      <td>${plEsc(g.vtype||'')}${g.kind==='ماتور'?' <span class="pl-chip code">ماتور</span>':''}</td><td>${plEsc(g.cc||'')}</td>
+      <td class="pl-mono">${g.num_from}</td><td class="pl-mono">${g.num_to}</td><td>${plN(g.qty)}</td><td>${plEsc(g.approval_no||'')}</td>
+      <td class="pl-sub" style="min-width:180px">${plEsc(g.extra||'')}</td><td style="color:#f0c75e;font-size:12px;min-width:200px">${plEsc(g.issue||'')}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  const inp=el.querySelector('input.pl-inp'); if(inp&&PL.legFocus){ PL.legFocus=0; inp.focus(); inp.setSelectionRange(q.length,q.length); }
 }
 
 // ════════════════ ⚙️ قواعد الكتب ════════════════
