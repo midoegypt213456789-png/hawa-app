@@ -2501,7 +2501,8 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .pl-grid{border-collapse:collapse;font-size:13px}
 .pl-grid td,.pl-grid th{padding:6px 8px;border:1px solid var(--border);text-align:center}
 .pl-grid input{width:96px;text-align:center}
-.pl-codes{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;direction:ltr}
+.pl-codes{display:grid;grid-template-columns:repeat(30,1fr);gap:3px;direction:ltr}
+.pl-codes .pl-code{font-size:10px;padding:3px 0;border-radius:4px}
 .pl-code{border-radius:7px;padding:6px 0;text-align:center;font-weight:800;font-size:13px;border:1px solid var(--border);color:var(--text-dim);background:var(--dark3);cursor:default}
 .pl-code.open{background:rgba(201,168,76,0.18);color:var(--gold);border-color:rgba(201,168,76,0.4)}
 .pl-code.full{background:rgba(74,144,217,0.18);color:#7fb4ea;border-color:rgba(74,144,217,0.4)}
@@ -2517,7 +2518,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .pl-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:11px 20px;border-radius:10px;font-weight:800;font-size:14px;font-family:Cairo;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
 .pl-toast.ok{background:#1f3b2c;color:#9be0bb;border:1px solid #4CAF7D}
 .pl-toast.err{background:#3b1f1f;color:#ffb3b3;border:1px solid #E05555}
-@media(max-width:700px){.pl-codes{grid-template-columns:repeat(6,1fr)}.pl-scroll{max-height:none}}
+@media(max-width:700px){.pl-codes{grid-template-columns:repeat(10,1fr)}.pl-scroll{max-height:none}}
 </style>
 </head>
 <body>
@@ -18998,7 +18999,7 @@ function plRenderLettersTable(){
     <th>التسليم للتنمية</th><th>الاستلام من التنمية</th><th>رقم المنشور</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${rows.map(l=>{
       const live=!l.is_cancelled;
-      const items=l.items.map(i=>`<div class="pl-it"><b>${plEsc(i.brand_name)}</b> — ${plEsc(i.model_label)} <span class="pl-chip code">كود ${i.code}</span> × <b>${plN(i.qty)}</b>
+      const items=l.items.map(i=>`<div class="pl-it"><b>${plEsc(i.brand_name)}</b> — ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>
         <div class="pl-mono" style="font-size:12px">🔢 ${plEsc(i.chassis_from)} → ${plEsc(i.chassis_to)}</div>
         <div class="pl-mono" style="font-size:12px;color:var(--text-dim)">⚙️ ${plEsc(i.engine_from)} → ${plEsc(i.engine_to)}</div></div>`).join('');
       const dIn = live&&ed ? `<input type="date" class="pl-inp" style="padding:4px 6px;font-size:12px" value="${l.delivered_at||''}" max="${today}" onchange="plUpd(${l.id},{delivered_at:this.value})">
@@ -19055,7 +19056,7 @@ async function plSearch(){
           ${g.approval_no?` — رقم اعتماد <b>${plEsc(g.approval_no)}</b>`:''}<br><span class="pl-sub">${plEsc(g.extra||'')}</span>
           ${g.issue?`<div style="color:#f0c75e;font-size:12px">⚠️ ${plEsc(g.issue)}</div>`:''}
           <div class="pl-sub">السيستم الجديد مش هيطلّع الرقم ده تانى أبداً.</div></div>`; }
-      const l=r.letter, it=r.item_id?l.items.find(i=>i.id===r.item_id):null;
+      const l=r.letter, sNum=Number(String(r.number||'').slice(-7)); const it=r.kind!=='كتاب'?l.items.find(i=>sNum>=Number(i.serial_from)&&sNum<=Number(i.serial_to)):null; if(it) r.position=sNum-Number(it.serial_from)+1;
       let st='';
       if(l.status==='ملغى') st=`🚫 الكتاب ده <b>اتلغى</b> (${plEsc(l.cancel_reason||'')}) — والرقم محروق ومش هيتكرر.`;
       else if(l.status==='جديد') st='🆕 الكتاب <b>لسه متسلمش للتنمية</b>.';
@@ -19141,7 +19142,7 @@ function plWizRender(){
       <select class="pl-inp" style="min-width:200px" onchange="plWizSet(${j},'model_id',this.value)" ${ln.brand_id?'':'disabled'}><option value="">— الموديل —</option>
         ${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(x.label)}</option>`).join('')}</select>
       <input class="pl-inp" type="number" min="1" style="width:120px" placeholder="العدد" value="${plEsc(ln.qty)}" onchange="plWizSet(${j},'qty',this.value)">
-      ${m?`<span class="pl-chip vt">${plEsc(m.vtype)}</span><span class="pl-sub">فاضل فى أكواده ${plN(rem)} رقم</span>`:''}
+      ${m?`<span class="pl-chip vt">${plEsc(m.vtype)}</span><span class="pl-sub">الدرج الحالى فاضل فيه ${plN(rem)} — والباقى بيفتح أدراج جديدة لوحده</span>`:''}
       ${w.lines.length>1?`<button class="act-btn delete" onclick="PL.wiz.lines.splice(${j},1);plWizRegrid();plWizRender()">✖</button>`:''}
     </div>`; }).join('');
   const grid = w.n>1 || w.lines.length>1 ? `<div style="overflow:auto;margin:10px 0"><table class="pl-grid"><thead><tr><th>الكتاب</th>
@@ -19150,7 +19151,7 @@ function plWizRender(){
       </tbody></table></div>` : '';
   const prev = w.preview ? `<div class="pl-card" style="background:var(--dark3);margin-top:10px"><div class="pl-h">👁️ معاينة — ${w.preview.dry?'لسه متحفظش':'✅ اتعمل'}</div>
       ${w.preview.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.vtypes)} — ${plN(l.qty)} رقم
-        ${l.items.map(i=>`<div class="pl-mono" style="font-size:12px">${plEsc(i.brand_name)} ${plEsc(i.model_label)} [كود ${i.code}] × ${plN(i.qty)} : ${plEsc(i.chassis_from)} → ${plEsc(i.chassis_to)} &nbsp;|&nbsp; ⚙️ ${plEsc(i.engine_from)} → ${plEsc(i.engine_to)}</div>`).join('')}</div>`).join('')}</div>` : '';
+        ${l.items.map(i=>`<div class="pl-mono" style="font-size:12px">${plEsc(i.brand_name)} ${plEsc(i.model_label)} [درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi>] × ${plN(i.qty)} : ${plEsc(i.chassis_from)} → ${plEsc(i.chassis_to)} &nbsp;|&nbsp; ⚙️ ${plEsc(i.engine_from)} → ${plEsc(i.engine_to)}</div>`).join('')}</div>`).join('')}</div>` : '';
   el.innerHTML = `<div class="pl-card" style="border-color:rgba(201,168,76,0.5)">
     <div class="pl-h">➕ كتاب جديد <span class="pl-sub">— موديل ${s.model_year} (حرف ${plEsc(plYearLetter(s.model_year))}) — المستند الجاى رقم ${s.next_doc}</span>
       <div style="flex:1"></div><button class="pl-btn ghost sm" onclick="plWizClose()">✖ قفل</button></div>
@@ -19194,8 +19195,8 @@ async function plWizRun(dry){
     w.busy=false; const msg=plErr(e);
     if(msg.indexOf('PL_NEED_CODE|')>=0){
       const p=msg.slice(msg.indexOf('PL_NEED_CODE|')).split('|'); const mid=Number(p[1]), label=p[2], rem=Number(p[3]), free=p[4];
-      if(!free){ plToast('مفيش أكواد فاضية خالص — كلّمنى',false); plWizRender(); return; }
-      if(confirm(`أكواد «${label}» مش مكفّية — محتاج ${plN(rem)} رقم كمان.\n\nأفتحله كود جديد رقم ${free} (فيه 99,999 رقم)؟`)){
+      if(!free){ plToast('مفيش أدراج فاضية خالص — كلّمنى',false); plWizRender(); return; }
+      if(confirm(`أدراج «${label}» مش مكفّية — محتاج ${plN(rem)} رقم كمان.\n\nأفتحله درج جديد رقم ${free}؟`)){
         try{ await plCall('pl_code_open',{p_model_id:mid,p_code:Number(free)}); PL.loaded=false; const keepW=PL.wiz; await plLoad(true); PL.wiz=keepW; return plWizRun(dry); }
         catch(e2){ plToast(plErr(e2),false); }
       }
@@ -19290,7 +19291,7 @@ function plFpInput(inp){
 function plFpPreview(){
   const fp=(document.getElementById('pl-m-fp')||{}).value||'', cd=(document.getElementById('pl-m-code')||{}).value||'';
   const b=plBrand(PL.selBrand), y=plYearLetter(PL.boot.settings.model_year), e=document.getElementById('pl-m-prev');
-  if(e) e.innerHTML = `شكل أول شاسيه: <b class="pl-mono">${plEsc((fp||'_________').padEnd(9,'_'))}${plEsc(y)}${plEsc(String(cd||'__').padStart(2,'_'))}00001</b> &nbsp; أول ماتور: <b class="pl-mono">${plEsc(b?b.engine_prefix:'__')}${plEsc(String(cd||'__'))}00001</b>`;
+  if(e) e.innerHTML = `شكل أول شاسيه: <b class="pl-mono">${plEsc((fp||'_________').padEnd(9,'_'))}${plEsc(y)}${plEsc(String(cd||'___').padStart(3,'_'))}0000</b> &nbsp; أول ماتور: <b class="pl-mono">${plEsc(b?b.engine_prefix:'__')}${plEsc(String(cd||'___'))}0000</b>`;
 }
 function plRenderBrands(){
   const el=document.getElementById('pl-pane-brands'); if(!el) return;
@@ -19311,17 +19312,18 @@ function plRenderBrands(){
     <div class="pl-h">🏍️ ${plEsc(b.name)} <span class="pl-chip code">⚙️ ماتور ${plEsc(b.engine_prefix)}</span>${b.active?'':'<span class="pl-chip can">متوقفة</span>'}
       <div style="flex:1"></div>${ed?`<button class="pl-btn ghost sm" onclick="plBrandEdit()">✏️ تعديل الشركة</button>
       <button class="pl-btn ${b.active?'red':'ghost'} sm" onclick="plBrandToggle()">${b.active?'⏸️ وقّف الشركة':'▶️ شغّل الشركة'}</button>`:''}</div>
-    <div class="pl-scroll" style="max-height:none"><table class="pl-tbl"><thead><tr><th>النوع</th><th>السعة</th><th>البصمة (9)</th><th>شكل الشاسيه / الماتور</th><th>الأكواد والمتبقى</th><th>اتصرف</th><th>الحالة</th><th></th></tr></thead><tbody>
+    <div class="pl-scroll" style="max-height:none"><table class="pl-tbl"><thead><tr><th>النوع</th><th>السعة</th><th>البصمة (9)</th><th>شكل الشاسيه / الماتور</th><th>الأدراج والمتبقى</th><th>اتصرف</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${models.map(m=>{ const open=m.codes.filter(c=>c.status==='مفتوح'); const rem=open.reduce((a,c)=>a+c.remaining,0); const c0=m.codes[0];
       return `<tr style="${m.active?'':'opacity:.55'}"><td><span class="pl-chip vt">${plEsc(m.vtype)}</span></td><td><b>${plEsc(m.cc)}</b></td>
       <td class="pl-mono"><b>${plEsc(m.fingerprint)}</b></td>
-      <td class="pl-mono" style="font-size:12px">${plEsc(m.fingerprint)}<b style="color:var(--gold)">${plEsc(y)}</b><b style="color:#7fb4ea">${c0?c0.code:'__'}</b>00001<br><span style="color:var(--text-dim)">${plEsc(b.engine_prefix)}${c0?c0.code:'__'}00001</span></td>
-      <td>${m.codes.map(c=>`<div><span class="pl-chip code">كود ${c.code}</span> ${c.status==='مليان'?'<span class="pl-chip can">مليان</span>':`<span class="pl-sub">فاضل ${plN(c.remaining)}${c.legacy>0?` <span title="أرقام مستخدمة فى الكتب القديمة جوه الكود ده — السيستم بيعدّى عليها">(📜 ${plN(c.legacy)} قديم)</span>`:''}</span><div class="pl-bar"><i style="width:${Math.round((99999-c.remaining)/999.99)}%"></i></div>`}</div>`).join('')}
-        ${rem<10000&&m.active?`<div style="color:#ff8a8a;font-size:11px">⚠️ قرّب يخلص</div>`:''}</td>
+      <td class="pl-mono" style="font-size:12px">${plEsc(m.fingerprint)}<b style="color:var(--gold)">${plEsc(y)}</b><b style="color:#7fb4ea">${c0?c0.code:'___'}</b>0000<br><span style="color:var(--text-dim)">${plEsc(b.engine_prefix)}${c0?c0.code:'___'}0000</span></td>
+      <td>${(()=>{ const cs=m.codes, cur=cs.find(c=>c.status==='مفتوح'), full=cs.filter(c=>c.status==='مليان').length;
+          return `<div><span class="pl-chip code">درج ${cur?cur.code:'—'}</span> ${cur?`<span class="pl-sub">فاضل ${plN(cur.remaining)}</span><div class="pl-bar"><i style="width:${Math.round((10000-cur.remaining)/100)}%"></i></div>`:''}</div>
+            <div class="pl-sub">${cs.length} درج${full?` (${full} مليان)`:''} — بيفتح الجاى لوحده</div>`; })()}</td>
       <td>${plN(m.used_qty)}<div class="pl-sub">${m.used_letters} كتاب</div></td>
       <td>${m.active?'<span class="pl-chip pub">شغال</span>':'<span class="pl-chip can">متوقف</span>'}</td>
       <td style="white-space:nowrap">${ed?`<button class="act-btn edit" onclick="plModelEditStart(${m.id})">✏️</button>
-        <button class="act-btn edit" onclick="plCodeOpenAsk(${m.id})">➕ كود</button>
+        <button class="act-btn edit" onclick="plCodeOpenAsk(${m.id})">➕ درج</button>
         <button class="act-btn ${m.active?'delete':'toggle'}" onclick="plModelToggle(${m.id})">${m.active?'⏸️':'▶️'}</button>`:''}</td></tr>`; }).join('')||'<tr><td colspan="8" class="pl-sub" style="text-align:center;padding:16px">مفيش موديلات — ضيف أول موديل تحت</td></tr>'}
     </tbody></table></div>
     ${ed?`<div class="pl-card" style="background:var(--dark3);margin:12px 0 0">
@@ -19330,7 +19332,7 @@ function plRenderBrands(){
         <select id="pl-m-vt" class="pl-inp">${PL_VTYPES.map(v=>`<option ${me&&me.vtype===v?'selected':''}>${v}</option>`).join('')}</select>
         <input id="pl-m-cc" class="pl-inp" style="width:120px" placeholder="السعة (150)" value="${plEsc(me?me.cc:'')}">
         <input id="pl-m-fp" class="pl-inp pl-mono" style="width:170px" maxlength="12" placeholder="البصمة 9 حروف" value="${plEsc(me?me.fingerprint:'')}" oninput="plFpInput(this)">
-        ${me?'':`<input id="pl-m-code" class="pl-inp pl-mono" style="width:80px" maxlength="2" value="${plEsc(PL.boot.free_code||'')}" oninput="plFpPreview()" title="كود الموديل (رقمين)"><span class="pl-sub">← الكود (المقترح ${plEsc(PL.boot.free_code||'')})</span>`}
+        ${me?'':`<input id="pl-m-code" class="pl-inp pl-mono" style="width:80px" maxlength="3" value="${plEsc(PL.boot.free_code||'')}" oninput="plFpPreview()" title="أول درج للموديل (3 أرقام)"><span class="pl-sub">← أول درج (المقترح ${plEsc(PL.boot.free_code||'')})</span>`}
         <input id="pl-m-note" class="pl-inp" style="flex:1;min-width:140px" placeholder="ملاحظة (اختيارى)" value="${plEsc(me&&me.note||'')}">
         <button class="pl-btn" onclick="plModelSave()">💾 ${me?'حفظ التعديل':'أضف الموديل'}</button>
         ${me?`<button class="pl-btn ghost" onclick="PL.modelEdit=null;plRenderBrands()">إلغاء</button>`:''}
@@ -19345,17 +19347,17 @@ function plRenderBrands(){
 }
 function plCodesMap(){
   const codes=PL.boot.codes||[], map={}; codes.forEach(c=>map[c.code]=c);
-  let cells=''; for(let k=10;k<=99;k++){ const c=map[k];
+  let cells=''; for(let k=100;k<=999;k++){ const c=map[k];
     if(!c){ cells+=`<div class="pl-code" title="فاضى">${k}</div>`; continue; }
-    if(c.status==='محروق'){ cells+=`<div class="pl-code burn" title="فيه أرقام من الكتب القديمة — فاضل فيه ${plN(c.remaining)} رقم (بيتاخد آخر حاجة والسيستم بيعدّى على القديم)">${k}</div>`; continue; }
+    if(c.status==='محروق'){ cells+=`<div class="pl-code burn" title="منطقة أمان — ${plEsc(c.note||'')}">${k}</div>`; continue; }
     const m=plModel(c.model_id), b=m&&plBrand(m.brand_id);
-    cells+=`<div class="pl-code ${c.status==='مليان'?'full':'open'}" title="${plEsc((b?b.name:'')+' — '+(m?m.label:''))}${c.status==='مليان'?' (مليان)':' — فاضل '+plN(100000-c.next_n)}">${k}</div>`; }
-  const free=90-codes.length, spare=codes.filter(c=>!c.model_id).length;
-  return `<div class="pl-card"><div class="pl-h">🔢 خريطة الأكواد <span class="pl-sub">— ${free} كود فاضى خالص + ${spare} احتياطى فيهم أرقام قديمة (كل كود = 99,999 رقم)</span></div>
+    cells+=`<div class="pl-code ${c.status==='مليان'?'full':'open'}" title="${plEsc((b?b.name:'')+' — '+(m?m.label:''))}${c.status==='مليان'?' (مليان)':' — فاضل '+plN(c.remaining)}">${k}</div>`; }
+  const free=900-codes.length, spare=codes.filter(c=>!c.model_id).length;
+  return `<div class="pl-card"><div class="pl-h">🔢 خريطة الأدراج <span class="pl-sub">— ${free} درج فاضى (${plN(free*10000)} رقم) — ${spare} درج منطقة أمان حوالين الأرقام القديمة — كل درج = 10,000 رقم</span></div>
     <div class="pl-codes">${cells}</div>
     <div class="pl-row pl-sub" style="margin-top:8px"><span><span class="pl-code open" style="display:inline-block;padding:0 8px">00</span> شغال</span>
       <span><span class="pl-code full" style="display:inline-block;padding:0 8px">00</span> مليان</span>
-      <span><span class="pl-code burn" style="display:inline-block;padding:0 8px">00</span> فيه أرقام قديمة (احتياطى — السيستم بيعدّى عليها)</span>
+      <span><span class="pl-code burn" style="display:inline-block;padding:0 8px">00</span> منطقة أمان (أرقام قديمة + 50 ألف بعدها + بداية كل موديل فى النظام القديم)</span>
       <span><span class="pl-code" style="display:inline-block;padding:0 8px">00</span> فاضى</span></div></div>`;
 }
 async function plBrandAdd(){
@@ -19382,7 +19384,7 @@ async function plModelSave(confirmSame){
   try{
     const r=await plCall('pl_model_save',{p});
     if(r && r.need_confirm){ if(confirm('⚠️ '+r.message+'\n\nتكمّل؟')) return plModelSave(true); return; }
-    plToast(me?'✅ اتعدّل':`✅ الموديل اتضاف بكود ${r.code}`); PL.modelEdit=null; await plLoad(true);
+    plToast(me?'✅ اتعدّل':`✅ الموديل اتضاف — أول درج ${r.code}`); PL.modelEdit=null; await plLoad(true);
   }catch(e){ plToast(plErr(e),false); }
 }
 async function plModelToggle(id){
@@ -19391,8 +19393,8 @@ async function plModelToggle(id){
 }
 async function plCodeOpenAsk(id){
   const m=plModel(id), b=m&&plBrand(m.brand_id); if(!m) return;
-  const c=prompt(`افتح كود إضافى لـ «${b.name} — ${m.label}»\n(بيتستخدم لما الكود الحالى يخلص)\nالكود المقترح:`, PL.boot.free_code||''); if(!c) return;
-  try{ await plCall('pl_code_open',{p_model_id:id,p_code:Number(c)}); plToast('✅ الكود اتفتح'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+  const c=prompt(`افتح درج إضافى لـ «${b.name} — ${m.label}»\n(مش لازم — السيستم بيفتح الدرج الجاى لوحده)\nالدرج المقترح:`, PL.boot.free_code||''); if(!c) return;
+  try{ await plCall('pl_code_open',{p_model_id:id,p_code:Number(c)}); plToast('✅ الدرج اتفتح'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
 }
 
 // ════════════════ 👥 المستلمين ════════════════
