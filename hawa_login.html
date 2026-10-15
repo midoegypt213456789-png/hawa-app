@@ -683,6 +683,9 @@ const N8N_BASE = 'https://n8n.gladiatorverse.net';
 const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
+// ↪️ الصفحة دى للدخول/التسجيل بس — أى عميل داخل يتحوّل لصفحة الحجز الحالية (فيها قواعد الأذونات الجديدة)
+function goBookingApp(delay){ setTimeout(function(){ location.replace('hawa_booking.html' + location.search + location.hash); }, delay||0); }
+if (user && user.id) goBookingApp(0);
 
 // 🔐 Login Gate — الـ Lock Screen هو صفحة الدخول الموحّدة (form + bio)
 if (!user || !user.id) {
@@ -1627,6 +1630,7 @@ async function bioLoginNow(){
     // إعادة تحميل البيانات بدل reload الصفحة (أنظف)
     if (typeof checkTelegramLink === 'function') checkTelegramLink();
     bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
+    goBookingApp(700);
   } catch(e) {
     console.error('bioLoginNow error:', e);
     // 📝 سجّل الفشل فى activity_log عشان admin يقدر يـ diagnose
@@ -2127,6 +2131,7 @@ async function passwordLogin(){
     if (document.getElementById('ucode')) document.getElementById('ucode').textContent = user.company_code || '';
 
     if (typeof logActivity === 'function') logActivity('cl_login','🔓 دخول بالباسوورد');
+    goBookingApp(700);
     if (typeof checkTelegramLink === 'function') checkTelegramLink();
     bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
   } catch(e) {
