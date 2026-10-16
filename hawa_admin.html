@@ -4732,6 +4732,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
     <div style="font-size:clamp(14px,1.6vw,22px);color:#C9A84C;font-weight:800;letter-spacing:1px">🎁 قرعة المسابقة</div>
     <div id="ctDTitle" style="font-size:clamp(26px,4vw,58px);font-weight:900;color:#E8C97A;line-height:1.25;margin-top:.4vh;text-shadow:0 4px 30px rgba(201,168,76,.35)"></div>
     <div id="ctDQ" style="font-size:clamp(14px,1.7vw,24px);color:#B9B2A8;margin-top:1vh;max-width:70vw"></div>
+    <div id="ctDCount" style="display:flex;gap:1.6vw;justify-content:center;flex-wrap:wrap;margin-top:2vh"></div>
     <div id="ctDStage" style="margin-top:4vh;width:min(880px,92vw)"></div>
     <div id="ctDBar" style="display:none;margin-top:3vh;width:min(620px,80vw);height:10px;border-radius:10px;background:rgba(255,255,255,.08);overflow:hidden"><div id="ctDBarIn" style="height:100%;width:0;background:linear-gradient(90deg,#C9A84C,#E8C97A)"></div></div>
     <div id="ctDFoot" style="margin-top:3vh;min-height:40px"></div>
@@ -10025,17 +10026,24 @@ function ctDrawOpen(){
   const k = _ct.d.contest;
   document.getElementById('ctDTitle').textContent = k.title || 'المسابقة';
   document.getElementById('ctDQ').textContent = k.question ? '❓ ' + k.question : '';
+  ctDrawCount(k);
   document.getElementById('ctDBar').style.display = 'none';
   document.getElementById('ctDFoot').innerHTML = '';
   const again = !!k.winner;
   document.getElementById('ctDStage').innerHTML = `
-    <div style="font-size:clamp(20px,2.6vw,36px);font-weight:800;margin-bottom:3vh">🎟️ <span style="color:#E8C97A">${k.n_correct}</span> مشارك جاوب صح${again?` <div style="font-size:clamp(13px,1.3vw,18px);color:#B9B2A8;margin-top:6px">السحب الجاى بيستبعد اللى اتسحبوا قبل كده (${(_ct.d.draws||[]).length})</div>`:''}</div>
+    ${again?`<div style="font-size:clamp(13px,1.3vw,18px);color:#B9B2A8;margin-bottom:2vh">السحب الجاى بيستبعد اللى اتسحبوا قبل كده (${(_ct.d.draws||[]).length})</div>`:''}
     ${again?`<input id="ctDNote" placeholder="سبب السحب تانى (مثلاً: الفايز مردش)" style="display:block;margin:0 auto 2vh;width:min(420px,80vw);background:rgba(255,255,255,.06);border:1px solid rgba(201,168,76,.35);color:#fff;border-radius:10px;padding:9px 12px;font-family:inherit;text-align:center">`:''}
     <button id="ctDGo" onclick="ctDrawGo()" style="font-family:inherit;font-size:clamp(22px,3vw,42px);font-weight:900;padding:2vh 6vw;border-radius:999px;border:none;cursor:pointer;color:#1a1408;background:linear-gradient(135deg,#E8C97A,#C9A84C);box-shadow:0 10px 50px rgba(201,168,76,.45)">🎰 ${again?'سحب تانى':'ابدأ القرعة'}</button>
     <label style="display:flex;width:fit-content;gap:8px;align-items:center;margin:2.4vh auto 0;font-size:clamp(12px,1.2vw,16px);color:#B9B2A8;cursor:pointer;white-space:nowrap"><input type="checkbox" id="ctDAuto" checked style="width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:#C9A84C"> 📩 ابعت للفايز رسالة بالصورة على الخاص أوتوماتيك</label>`;
   ctRainFill([]);
   const el = document.getElementById('ctDraw'); el.style.display = 'block';
   ctFxStart();
+}
+function ctDrawCount(k){
+  const box = document.getElementById('ctDCount'); if(!box || !k) return;
+  const pillS = 'background:rgba(201,168,76,.10);border:1.5px solid rgba(201,168,76,.45);border-radius:999px;padding:.8vh 1.8vw;font-size:clamp(15px,1.9vw,28px);font-weight:800;color:#F0EDE8';
+  box.innerHTML = `<div style="${pillS}">👥 <span style="color:#E8C97A">${Number(k.n_people||0).toLocaleString('ar-EG')}</span> مشارك</div>
+    <div style="${pillS}">✅ <span style="color:#4CAF7D">${Number(k.n_correct||0).toLocaleString('ar-EG')}</span> إجابة صح</div>`;
 }
 function ctRainFill(names){
   const box = document.getElementById('ctRain'); if(!box) return;
@@ -10057,6 +10065,7 @@ async function ctDrawGo(){
   try { res = await rpcSecure('admin_contest_draw', { p_id:k.id, p_note:note }); }
   catch(e){ if(go) go.disabled = false; document.getElementById('ctDFoot').innerHTML = `<div style="color:#E05555;font-size:20px">❌ ${escAttr(e.message)}</div>`; return; }
   _ct.draw = res;
+  ctDrawCount(res.contest);
   const W = res.winner;
   let reel = (res.reel||[]).slice();
   while(reel.length && reel.length < 25) reel = reel.concat(res.reel);
