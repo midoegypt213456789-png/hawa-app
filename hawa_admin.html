@@ -20151,17 +20151,17 @@ function qtSheetHtml(q){
 *{box-sizing:border-box}
 html,body{margin:0;background:#fff;color:#111;font-family:Cairo,Arial,sans-serif}
 body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.page{width:190mm;height:277mm;margin:0 auto;border:2.5px solid #111;outline:1px solid #111;outline-offset:2.5mm;padding:7mm 8mm;overflow:hidden}
+.page{width:190mm;height:275mm;margin:0 auto;border:2.5px solid #111;outline:1px solid #111;outline-offset:2.5mm;padding:5mm 7mm;overflow:hidden}
 .inner{display:flex;flex-direction:column;min-height:100%}
-.hd{display:flex;align-items:center;gap:6mm;border-bottom:1.5px solid #111;padding-bottom:3mm}
+.hd{display:flex;align-items:center;gap:6mm;border-bottom:1.5px solid #111;padding-bottom:2mm}
 .hd .txt{flex:1;text-align:center}
 .hd .co{font-family:Amiri,serif;font-weight:700;font-size:25px;color:#2b2b2b;text-shadow:1px 1px 0 #9a9a9a,2px 2px 0 #c8c8c8}
 .hd .sub{font-family:Amiri,serif;font-weight:700;font-size:24px;color:#2b2b2b;text-shadow:1px 1px 0 #9a9a9a,2px 2px 0 #c8c8c8;margin-top:2px}
-.hd img{height:27mm;width:auto}
-.date{margin-top:5mm;font-size:15px}
-.title{text-align:center;margin:5mm 0 3mm}
+.hd img{height:23mm;width:auto;flex:none;object-fit:contain}
+.date{margin-top:3mm;font-size:15px}
+.title{text-align:center;margin:2mm 0 2mm}
 .title span{font-size:24px;font-weight:800;border-bottom:2px solid #111;padding:0 10mm 1px}
-.to{font-size:20px;font-weight:800;margin-bottom:5mm}
+.to{font-size:20px;font-weight:800;margin-bottom:3mm}
 .to span{border-bottom:2px solid #111;padding-bottom:1px}
 table{width:100%;border-collapse:collapse;font-size:14px}
 tr{page-break-inside:avoid;break-inside:avoid}
@@ -20183,19 +20183,20 @@ tr.tot td:first-child{text-align:left;padding-left:4mm}
 tr.tot .num{font-size:19px}
 tr.big td{background:#f2f2f2}
 .totw{border:1.5px solid #111;border-top:none;padding:2mm 3mm;font-weight:800;font-size:15px;text-align:center}
-.terms{margin-top:5mm;font-size:15.5px;line-height:1.9}
+.terms{margin-top:4mm;font-size:15.5px;line-height:1.8}
 .terms div{margin-bottom:1.2mm}
 .ltr{direction:ltr;unicode-bidi:isolate;letter-spacing:.5px}
 .grow{flex:1}
-.ft{border-top:1.5px solid #111;margin-top:5mm;padding-top:3mm;text-align:center;font-size:15px;line-height:1.8}
-@media screen{body{background:#777;padding:8mm 0}.page{background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.4);height:auto;min-height:277mm;overflow:visible}}
+.ft{border-top:1.5px solid #111;margin-top:4mm;padding-top:2mm;text-align:center;font-size:14.5px;line-height:1.7}
+@media screen{body{background:#777;padding:8mm 0}.page{background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.4)}}
 </style><script>
 function qtFit(){ try{ const pg=document.querySelector('.page'), inn=document.querySelector('.inner'); inn.style.transform=''; inn.style.width=''; inn.style.minHeight='';
   const cs=getComputedStyle(pg), avail=pg.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
   if(pg.scrollHeight>pg.clientHeight+1 || inn.scrollHeight>avail+1){ let z=Math.max(0.5, avail/inn.scrollHeight);
-    for(let k=0;k<4;k++){ inn.style.width=(100/z).toFixed(3)+'%'; const h=inn.scrollHeight; const nz=Math.max(0.5, avail*0.99/h); if(Math.abs(nz-z)<0.003){ z=nz; break; } z=nz; }
+    for(let k=0;k<4;k++){ inn.style.width=(100/z).toFixed(3)+'%'; const h=inn.scrollHeight; const nz=Math.max(0.5, avail*0.97/h); if(Math.abs(nz-z)<0.003){ z=nz; break; } z=nz; }
     inn.style.width=(100/z).toFixed(3)+'%'; inn.style.minHeight=(avail/z).toFixed(0)+'px'; inn.style.transformOrigin='top right'; inn.style.transform='scale('+z.toFixed(4)+')'; } }catch(e){} }
 window.addEventListener('load',()=>{ (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(qtFit); });
+window.addEventListener('beforeprint', qtFit);
 <\/script></head><body class="${(items.reduce((a,it)=>a+String(it.description||'').split('\n').filter(x=>x.trim()).length,0)>14)?'compact':''}"><div class="page"><div class="inner">
   <div class="hd"><div class="txt"><div class="co">${qtEsc(S.company)}</div>${S.company_sub?`<div class="sub">${qtEsc(S.company_sub)}</div>`:''}</div>
     ${S.logo_url?`<img src="${qtEsc(S.logo_url)}" alt="">`:''}</div>
