@@ -2448,6 +2448,131 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .bl-tab-count{display:inline-block;background:rgba(201,168,76,0.18);color:var(--gold);border-radius:20px;
   font-size:11px;padding:1px 8px;margin-right:5px;font-weight:800}
 .pm-tab.sel{background:var(--gold)!important;color:#0A0A0A!important;border-color:var(--gold)!important}
+/* 📖 الكتب الدورية — توليد الشاسيهات والمواتير */
+.pl-card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.pl-h{color:var(--gold);font-weight:800;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pl-sub{color:var(--text-dim);font-size:12px;line-height:1.7}
+.pl-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pl-inp{background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px 11px;font-family:Cairo;width:auto;max-width:100%}
+.pl-combo{width:auto!important;margin:0}
+.pl-inp:focus{outline:none;border-color:var(--gold)}
+.pl-inp.bad{border-color:var(--error)}
+.pl-inp.mono,.pl-mono{font-family:Consolas,'Courier New',monospace;letter-spacing:.5px;direction:ltr;unicode-bidi:isolate}
+.pl-it .pl-mono{text-align:right}
+.pl-btn{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:9px;padding:9px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo;white-space:nowrap}
+.pl-btn:disabled{opacity:.5;cursor:not-allowed}
+.pl-btn.ghost{background:transparent;border:1.5px solid rgba(201,168,76,0.45);color:var(--gold)}
+.pl-btn.red{background:transparent;border:1.5px solid rgba(224,85,85,0.5);color:#e88080}
+.pl-btn.sm{padding:4px 10px;font-size:12px;border-radius:7px}
+.pl-kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:12px}
+.pl-kpi{background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+.pl-kpi .v{font-size:22px;font-weight:800;color:var(--text)}
+.pl-kpi .l{font-size:12px;color:var(--text-dim)}
+.pl-kpi.red .v{color:#ff7b7b}.pl-kpi.yel .v{color:#f0c75e}.pl-kpi.grn .v{color:#6dc49a}.pl-kpi.gold .v{color:var(--gold)}
+.pl-scroll{overflow:auto;max-height:calc(100vh - 330px);border:1px solid var(--border);border-radius:12px}
+.pl-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.pl-tbl th{position:sticky;top:0;z-index:2}
+.pl-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.pl-tbl tr.pl-st-dev td{background:rgba(224,85,85,0.10)}
+.pl-tbl tr.pl-st-dev td:first-child{box-shadow:inset -4px 0 0 #E05555}
+.pl-tbl tr.pl-st-rec td{background:rgba(240,199,94,0.08)}
+.pl-tbl tr.pl-st-rec td:first-child{box-shadow:inset -4px 0 0 #f0c75e}
+.pl-tbl tr.pl-st-pub td{background:rgba(76,175,125,0.08)}
+.pl-tbl tr.pl-st-pub td:first-child{box-shadow:inset -4px 0 0 #4CAF7D}
+.pl-tbl tr.pl-st-can td{opacity:.5;text-decoration:line-through}
+.pl-it{padding:4px 0;border-bottom:1px dashed rgba(255,255,255,0.06);line-height:1.7}
+.pl-it:last-child{border-bottom:none}
+.pl-chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap}
+.pl-chip.new{background:rgba(74,144,217,0.15);color:#7fb4ea}
+.pl-chip.dev{background:rgba(224,85,85,0.18);color:#ff8a8a}
+.pl-chip.rec{background:rgba(240,199,94,0.18);color:#f0c75e}
+.pl-chip.pub{background:rgba(76,175,125,0.18);color:#6dc49a}
+.pl-chip.can{background:rgba(138,133,128,0.18);color:var(--text-dim)}
+.pl-chip.code{background:rgba(201,168,76,0.15);color:var(--gold)}
+.pl-chip.vt{background:rgba(255,255,255,0.06);color:var(--text)}
+.pl-tabs-b{display:flex;gap:4px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:8px;margin-top:10px}
+.pl-tab-b{background:var(--dark3);border:1px solid var(--border);color:var(--text-dim);border-radius:0 0 9px 9px;padding:6px 14px;font-family:Cairo;font-size:13px;font-weight:700;cursor:pointer}
+.pl-tab-b.active{color:#111;background:var(--gold);border-color:var(--gold)}
+.pl-lock{display:flex;align-items:center;gap:8px;background:var(--dark3);border:1px solid rgba(201,168,76,0.35);border-radius:10px;padding:7px 12px;font-size:13px}
+.pl-lock b{color:var(--gold);font-size:15px}
+.pl-res{background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:10px;line-height:1.9;font-size:13px}
+.pl-res.ok{border-color:rgba(76,175,125,0.5)}
+.pl-res.warn{border-color:rgba(224,85,85,0.5)}
+.pl-grid{border-collapse:collapse;font-size:13px}
+.pl-grid td,.pl-grid th{padding:6px 8px;border:1px solid var(--border);text-align:center}
+.pl-grid input{width:96px;text-align:center}
+.pl-codes{display:grid;grid-template-columns:repeat(30,1fr);gap:3px;direction:ltr}
+.pl-codes .pl-code{font-size:10px;padding:3px 0;border-radius:4px}
+.pl-code{border-radius:7px;padding:6px 0;text-align:center;font-weight:800;font-size:13px;border:1px solid var(--border);color:var(--text-dim);background:var(--dark3);cursor:default}
+.pl-code.open{background:rgba(201,168,76,0.18);color:var(--gold);border-color:rgba(201,168,76,0.4)}
+.pl-code.full{background:rgba(74,144,217,0.18);color:#7fb4ea;border-color:rgba(74,144,217,0.4)}
+.pl-code.burn{background:rgba(224,85,85,0.15);color:#ff8a8a;border-color:rgba(224,85,85,0.35)}
+.pl-brands{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.pl-brand{background:var(--dark3);border:1.5px solid var(--border);border-radius:12px;padding:9px 14px;cursor:pointer;min-width:120px}
+.pl-brand.sel{border-color:var(--gold);background:rgba(201,168,76,0.08)}
+.pl-brand.off{opacity:.55}
+.pl-brand .n{font-weight:800;color:var(--text)}
+.pl-brand .s{font-size:11px;color:var(--text-dim)}
+.pl-bar{height:6px;background:var(--dark);border-radius:4px;overflow:hidden;margin-top:3px;min-width:70px}
+.pl-bar i{display:block;height:100%;background:var(--gold)}
+.pl-nums{margin-top:4px;display:flex;flex-direction:column;gap:5px}
+.pl-nrow{display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end}
+.pl-nl{font-size:11px;color:var(--text-dim);min-width:74px;padding-bottom:6px}
+.pl-cp{display:inline-flex;flex-direction:column;align-items:center;gap:1px;background:var(--dark3);border:1px solid rgba(201,168,76,0.3);border-radius:8px;padding:3px 9px 4px;cursor:pointer;font-family:Cairo;color:var(--text);transition:.15s}
+.pl-cp:hover{border-color:var(--gold);background:rgba(201,168,76,0.1)}
+.pl-cp .pl-cp-h{font-size:10px;color:var(--gold);font-weight:700;line-height:1.3}
+.pl-cp .pl-cp-h i{font-style:normal}
+.pl-cp b{font-size:13px;letter-spacing:.6px}
+.pl-cp.done{border-color:var(--success);background:rgba(76,175,125,0.15)}
+.pl-cp.done .pl-cp-h i{display:none}
+.pl-cp.done .pl-cp-h::after{content:' ✅'}
+.pl-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:11px 20px;border-radius:10px;font-weight:800;font-size:14px;font-family:Cairo;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
+.pl-toast.ok{background:#1f3b2c;color:#9be0bb;border:1px solid #4CAF7D}
+.pl-toast.err{background:#3b1f1f;color:#ffb3b3;border:1px solid #E05555}
+@media(max-width:700px){.pl-codes{grid-template-columns:repeat(10,1fr)}.pl-scroll{max-height:none}}
+
+/* 💰 عروض الأسعار */
+.qt-card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.qt-h{color:var(--gold);font-weight:800;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qt-sub{color:var(--text-dim);font-size:12px;line-height:1.7}
+.qt-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.qt-fld{display:flex;flex-direction:column;gap:4px}
+.qt-fld>label{font-size:12px;color:var(--text-dim);font-weight:700}
+.qt-inp{background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px 11px;font-family:Cairo;width:auto;max-width:100%}
+.qt-inp:focus{outline:none;border-color:var(--gold)}
+textarea.qt-inp{line-height:1.8;resize:vertical}
+.qt-btn{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:9px;padding:9px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:Cairo;white-space:nowrap}
+.qt-btn:disabled{opacity:.5;cursor:not-allowed}
+.qt-btn.ghost{background:transparent;border:1.5px solid rgba(201,168,76,0.45);color:var(--gold)}
+.qt-btn.red{background:transparent;border:1.5px solid rgba(224,85,85,0.5);color:#e88080}
+.qt-btn.sm{padding:4px 10px;font-size:12px;border-radius:7px}
+.qt-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.qt-tbl th{position:sticky;top:0;z-index:2}
+.qt-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
+.qt-tbl tr.del td{opacity:.5}
+.qt-scroll{overflow:auto;max-height:calc(100vh - 290px);border:1px solid var(--border);border-radius:12px}
+.qt-chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:800;white-space:nowrap}
+.qt-chip.in{background:rgba(76,175,125,0.18);color:#6dc49a}
+.qt-chip.ex{background:rgba(240,199,94,0.18);color:#f0c75e}
+.qt-chip.del{background:rgba(224,85,85,0.18);color:#ff8a8a}
+.qt-chip.dim{background:rgba(255,255,255,0.06);color:var(--text-dim)}
+.qt-item{background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px}
+.qt-item-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;color:var(--gold);font-weight:800}
+.qt-words{color:#f0c75e;font-size:12px;margin-top:3px}
+.qt-tot{background:var(--dark3);border:1px solid rgba(201,168,76,0.35);border-radius:12px;padding:10px 14px;line-height:2;font-size:14px}
+.qt-tot b{color:var(--gold)}
+.qt-radio{display:inline-flex;align-items:center;gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:9px;padding:7px 12px;cursor:pointer;font-size:13px}
+.qt-radio input{width:auto;margin:0}
+.qt-check{display:inline-flex;align-items:center;gap:8px;background:var(--dark3);border:1.5px solid rgba(201,168,76,0.4);border-radius:10px;padding:9px 14px;cursor:pointer;font-weight:800}
+.qt-check input{width:18px;height:18px;margin:0}
+.qt-frame{width:100%;height:calc(100vh - 150px);border:none;background:#777;border-radius:0 0 12px 12px}
+.qt-modal{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px}
+.qt-modal-box{background:var(--dark2);border:1px solid var(--border);border-radius:14px;width:min(1000px,100%);max-height:100%;display:flex;flex-direction:column}
+.qt-modal-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.qt-prev{width:100%;height:760px;border:1px solid var(--border);border-radius:10px;background:#777}
+.qt-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:11px 20px;border-radius:10px;font-weight:800;font-size:14px;font-family:Cairo;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
+.qt-toast.ok{background:#1f3b2c;color:#9be0bb;border:1px solid #4CAF7D}
+.qt-toast.err{background:#3b1f1f;color:#ffb3b3;border:1px solid #E05555}
 </style>
 </head>
 <body>
@@ -3554,6 +3679,14 @@ tr:hover td{background:rgba(201,168,76,0.03);}
       <div class="bl-tabs">
         <button class="bl-tab active" id="bl-tab-list" onclick="blTab('list')">📄 المنشورات <span class="bl-tab-count" id="bl-tab-count">0</span></button>
         <button class="bl-tab" id="bl-tab-add" onclick="blTab('add')">➕ إضافة منشور جديد</button>
+        <span style="width:1px;background:var(--border);margin:6px 4px"></span>
+        <button class="bl-tab" id="pl-tab-letters" onclick="plTab('letters')">📖 الكتب <span class="bl-tab-count" id="pl-tab-count">·</span></button>
+        <button class="bl-tab" id="pl-tab-reports" onclick="plTab('reports')">📊 التقارير</button>
+        <button class="bl-tab" id="pl-tab-brands" onclick="plTab('brands')">🏭 الشركات</button>
+        <button class="bl-tab" id="pl-tab-recipients" onclick="plTab('recipients')">👥 المستلمين</button>
+        <button class="bl-tab" id="pl-tab-years" onclick="plTab('years')">🔤 أحرف السنة</button>
+        <button class="bl-tab" id="pl-tab-rules" onclick="plTab('rules')">⚙️ قواعد الكتب</button>
+        <button class="bl-tab" id="pl-tab-legacy" onclick="plTab('legacy')">📜 الكتب القديمة</button>
       </div>
 
       <div id="bl-pane-list">
@@ -3603,6 +3736,45 @@ tr:hover td{background:rgba(201,168,76,0.03);}
         <button id="bl-save" onclick="saveBulletin()" style="width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#111;border:none;border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:Cairo">💾 حفظ وفهرسة المنشور</button>
         <div style="color:var(--text-dim);font-size:11px;margin-top:8px">⚡ الحفظ بيرفع الملفات بس فى ثوانى — <b>الفهرسة كلها بتحصل فى الخلفية على السيرفر</b> من غير ما تستنى. الكتاب الدورى الواحد = منشور واحد فيه كذا نوع، كل نوع ليه ملف شاسيهات وملف مواتير. التاجر يكتب أى رقم والبوت يطلعله <b>صفحته بس</b> مع تظليل الرقم بالأصفر 🖍️ + ملف الموافقات</div>
       </div>
+      </div>
+      <!-- 📖 الكتب الدورية — توليد الشاسيهات والمواتير -->
+      <div id="pl-pane-letters" class="pl-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="pl-pane-reports" class="pl-pane" style="display:none"></div>
+      <div id="pl-pane-brands" class="pl-pane" style="display:none"></div>
+      <div id="pl-pane-recipients" class="pl-pane" style="display:none"></div>
+      <div id="pl-pane-years" class="pl-pane" style="display:none"></div>
+      <div id="pl-pane-rules" class="pl-pane" style="display:none"></div>
+      <div id="pl-pane-legacy" class="pl-pane" style="display:none"></div>
+    </div>
+
+    <div class="section" id="sec-quotes">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">💰 <span>عروض الأسعار</span></div>
+          <div class="page-sub">اعمل عرض السعر واحفظه واطبعه بنفس شكل ورقة الشركة — وترجعله فى أى وقت</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="qtLoad(true)">🔄 تحديث</button>
+          <button class="add-btn" id="qt-new-btn" onclick="qtNew()">➕ عرض سعر جديد</button>
+        </div>
+      </div>
+      <div class="bl-tabs">
+        <button class="bl-tab active" id="qt-tab-list" onclick="qtTab('list')">📄 العروض <span class="bl-tab-count" id="qt-count">0</span></button>
+        <button class="bl-tab" id="qt-tab-edit" onclick="qtTab('edit')">➕ عرض جديد</button>
+        <button class="bl-tab" id="qt-tab-types" onclick="qtTab('types')">📝 شرح الأصناف</button>
+        <button class="bl-tab" id="qt-tab-banks" onclick="qtTab('banks')">🏦 الحسابات والبنوك</button>
+        <button class="bl-tab" id="qt-tab-settings" onclick="qtTab('settings')">⚙️ إعدادات العروض</button>
+      </div>
+      <div id="qt-pane-list" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="qt-pane-edit" class="qt-pane" style="display:none"></div>
+      <div id="qt-pane-types" class="qt-pane" style="display:none"></div>
+      <div id="qt-pane-banks" class="qt-pane" style="display:none"></div>
+      <div id="qt-pane-settings" class="qt-pane" style="display:none"></div>
+      <div id="qt-modal" class="qt-modal" style="display:none" onclick="if(event.target===this)qtCloseModal()">
+        <div class="qt-modal-box">
+          <div class="qt-modal-hd"><b id="qt-modal-title">👁️ استعراض</b><div style="flex:1"></div><span id="qt-modal-actions"></span><button class="qt-btn ghost sm" onclick="qtCloseModal()">✖ قفل</button></div>
+          <iframe id="qt-modal-frame" class="qt-frame"></iframe>
+        </div>
       </div>
     </div>
 
@@ -5660,6 +5832,7 @@ function autoRefreshTick(){
     else if(sec==='waitlist' && typeof wlLoad === 'function') wlLoad();
     else if(sec==='parts' && typeof ptLoad === 'function') ptLoad();
     else if(sec==='purchases' && typeof pcLoad === 'function') pcLoad();
+    else if(sec==='quotes' && typeof qtLoad === 'function') qtLoad(true);
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -5812,6 +5985,7 @@ function goTo(sec){
   else if(sec==='waitlist')wlLoad();
   else if(sec==='parts')ptLoad();
   else if(sec==='purchases')pcLoad();
+  else if(sec==='quotes')qtLoad(true);
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -7142,6 +7316,7 @@ let _blEditId = null;
 
 // 📑 تبديل تبويبات صفحة المنشورات
 function blTab(which){
+  if(typeof plHideAll === 'function') plHideAll();
   const paneL = document.getElementById('bl-pane-list');
   const paneA = document.getElementById('bl-pane-add');
   const tabL  = document.getElementById('bl-tab-list');
@@ -17755,6 +17930,7 @@ const NAV_META = {
   'waitlist':         { icon: '⏳',  label: 'قايمة الانتظار' },
   'parts':            { icon: '🔧',  label: 'طلبات قطع الغيار' },
   'purchases':        { icon: '🧾',  label: 'المشتريات والجوابات' },
+  'quotes':           { icon: '💰',  label: 'عروض الأسعار' },
   'consumers':        { icon: '👥',  label: 'العملاء' },
   'fb-comments':      { icon: '💭',  label: 'كومنتات فيسبوك', badge: { id: 'fbcBadge', cls: 'pending-badge' } },
   'contests':         { icon: '🎁',  label: 'مسابقات الكومنتات' },
@@ -17768,7 +17944,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permits', 'shortages', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
-    { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'consumers'] },
+    { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -17787,6 +17963,7 @@ const NAV_PREFERRED_CAT = {
   'waitlist': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'parts':     { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'purchases': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
+  'quotes': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'consumers': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'fb-comments': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
   'contests': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
@@ -19196,6 +19373,1127 @@ else{
   }
 }
 </script>
+<script>
+// ════════════════════════════════════════════════════════════════
+// 📖 الكتب الدورية — توليد الشاسيهات والمواتير (منع التكرار)
+// الشاسيه = بصمة 9 + حرف السنة + كود الموديل (2) + عدّاد (5)
+// الماتور = كود ماتور الشركة (2) + نفس الـ 7 أرقام
+// ════════════════════════════════════════════════════════════════
+const PL_VTYPES = ['موتسيكل','سكوتر','تروسكل','كهرباء','باجي'];
+const PL_TABS = ['letters','reports','brands','recipients','years','rules','legacy'];
+const PL = { boot:null, letters:[], bulletins:[], loaded:false, tab:'letters',
+  brandFilter:'all', statusFilter:'open', q:'', wiz:null, selBrand:null, modelEdit:null,
+  rep:{brand:'',model:'',vtype:'',year:'',rcp:'',status:'',from:'',to:''} };
+
+function plEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function plN(n){ return Number(n||0).toLocaleString('en-US'); }
+// 📋 زرار نسخ فوق كل رقم — علشان يتنسخ ويتحط فى البرنامج الأصلى
+function plCp(v,label){ v=String(v==null?'':v); return `<button type="button" class="pl-cp" data-v="${plEsc(v)}" onclick="plCopy(this)" title="اضغط تنسخ"><span class="pl-cp-h">${plEsc(label)} <i>📋</i></span><b class="pl-mono">${plEsc(v)}</b></button>`; }
+function plNums(i){
+  const s7=x=>String(x).padStart(7,'0');
+  return `<div class="pl-nums">
+    <div class="pl-nrow"><span class="pl-nl">🔢 الشاسيه</span>${plCp(i.chassis_from,'من')}${plCp(i.chassis_to,'إلى')}</div>
+    <div class="pl-nrow"><span class="pl-nl">⚙️ الماتور</span>${plCp(i.engine_from,'من')}${plCp(i.engine_to,'إلى')}</div>
+    <div class="pl-nrow"><span class="pl-nl">🗂️ للبرنامج</span>${plCp(String(i.chassis_from).slice(0,10),'حروف البداية')}${plCp(s7(i.serial_from),'بداية المسلسل')}${plCp(s7(i.serial_to),'نهاية المسلسل')}${plCp(i.qty,'العدد')}</div>
+  </div>`;
+}
+async function plCopy(btn){
+  const v=btn.getAttribute('data-v')||'';
+  let ok=false;
+  try{ await navigator.clipboard.writeText(v); ok=true; }catch(e){
+    try{ const t=document.createElement('textarea'); t.value=v; t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select(); ok=document.execCommand('copy'); t.remove(); }catch(e2){}
+  }
+  if(ok){ btn.classList.add('done'); setTimeout(()=>btn.classList.remove('done'),1400); plToast('📋 اتنسخ: '+v); }
+  else plToast('مقدرتش أنسخ — حدّد الرقم وانسخه بإيدك',false);
+}
+function plToday(){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+function plD(d){ return d ? String(d).slice(0,10).replace(/-/g,'/') : '—'; }
+function plCanEdit(){ try{ return typeof can!=='function' || can('bulletins','edit'); }catch(e){ return true; } }
+function plCanDel(){ try{ return typeof can!=='function' || can('bulletins','del'); }catch(e){ return true; } }
+function plToast(msg, ok){
+  const d=document.createElement('div'); d.className='pl-toast '+(ok===false?'err':'ok'); d.textContent=msg;
+  document.body.appendChild(d); setTimeout(()=>{ try{d.remove();}catch(e){} }, ok===false?5000:2600);
+}
+async function plCall(fn,args){ return rpcSecure(fn, args||{}); }
+function plErr(e){ return String((e&&e.message)||e||'خطأ').replace(/^.*?ERROR:\s*/,''); }
+function plStChip(st){
+  const m={'جديد':['new','🆕 جديد'],'فى التنمية':['dev','🔴 فى التنمية'],'اتستلم':['rec','🟡 اتستلم من التنمية'],'له منشور':['pub','🟢 له منشور'],'ملغى':['can','🚫 ملغى']};
+  const x=m[st]||['new',st]; return `<span class="pl-chip ${x[0]}">${x[1]}</span>`;
+}
+function plRowCls(st){ return {'فى التنمية':'pl-st-dev','اتستلم':'pl-st-rec','له منشور':'pl-st-pub','ملغى':'pl-st-can'}[st]||''; }
+function plYearLetter(y){ const r=(PL.boot&&PL.boot.year_letters||[]).find(x=>x.year===Number(y)); return r?r.letter:'?'; }
+function plBrand(id){ return (PL.boot&&PL.boot.brands||[]).find(b=>b.id===Number(id)); }
+function plModel(id){ return (PL.boot&&PL.boot.models||[]).find(m=>m.id===Number(id)); }
+
+// ── التبويبات
+function plHideAll(){
+  PL_TABS.forEach(t=>{ const p=document.getElementById('pl-pane-'+t); if(p) p.style.display='none';
+    const b=document.getElementById('pl-tab-'+t); if(b) b.classList.remove('active'); });
+}
+function plTab(which){
+  plHideAll();
+  ['bl-pane-list','bl-pane-add'].forEach(id=>{ const e=document.getElementById(id); if(e) e.style.display='none'; });
+  ['bl-tab-list','bl-tab-add'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.remove('active'); });
+  PL.tab = which;
+  const p=document.getElementById('pl-pane-'+which); if(p) p.style.display='block';
+  const b=document.getElementById('pl-tab-'+which); if(b) b.classList.add('active');
+  plLoad(false);
+}
+async function plLoad(force){
+  try{
+    if(force || !PL.loaded){
+      const [boot, letters, bl] = await Promise.all([
+        plCall('pl_bootstrap'),
+        plCall('pl_list'),
+        fetch(`${SB}/rest/v1/bulletins?select=id,title,bulletin_no&is_active=eq.true`,{headers:HDR}).then(r=>r.ok?r.json():[]).catch(()=>[])
+      ]);
+      PL.boot = boot; PL.letters = Array.isArray(letters)?letters:[]; PL.bulletins = Array.isArray(bl)?bl:[];
+      PL.loaded = true;
+      if(PL.selBrand==null && PL.boot.brands.length) PL.selBrand = PL.boot.brands[0].id;
+    }
+    plRender();
+  }catch(e){
+    const p=document.getElementById('pl-pane-'+PL.tab);
+    if(p) p.innerHTML = `<div class="pl-card" style="color:var(--error)">❌ ${plEsc(plErr(e))}</div>`;
+  }
+}
+function plRender(){
+  const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules,legacy:plRenderLegacy}[PL.tab];
+  if(f) f();
+  const c=document.getElementById('pl-tab-count'); if(c) c.textContent = PL.letters.filter(l=>['جديد','فى التنمية','اتستلم'].includes(l.status)).length;
+}
+
+// ════════════════ 📖 الكتب ════════════════
+function plYearWidget(){
+  const s=PL.boot.settings, yl=plYearLetter(s.model_year);
+  if(s.locked){
+    return `<div class="pl-lock">🔒 سنة الموديل <b>${s.model_year}</b> — حرف <b class="pl-mono">${plEsc(yl)}</b>
+      ${plCanEdit()?`<button class="pl-btn ghost sm" onclick="plUnlockYear()">🔓 افتح للتغيير</button>`:''}</div>`;
+  }
+  const opts=(PL.boot.year_letters||[]).map(y=>`<option value="${y.year}" ${y.year===s.model_year?'selected':''}>${y.year} — ${plEsc(y.letter)}</option>`).join('');
+  return `<div class="pl-lock" style="border-color:var(--error)">🔓 سنة الموديل <select id="pl-year-sel" class="pl-inp" style="padding:4px 8px">${opts}</select>
+    <button class="pl-btn sm" onclick="plLockYear()">🔒 احفظ واقفل</button></div>`;
+}
+async function plUnlockYear(){ try{ await plCall('pl_settings_save',{p:{locked:false}}); PL.boot.settings.locked=false; plRender(); }catch(e){ plToast(plErr(e),false); } }
+async function plLockYear(){
+  const sel=document.querySelector('#pl-pane-'+PL.tab+' #pl-year-sel')||document.getElementById('pl-year-sel');
+  const y=Number(sel.value);
+  try{ await plCall('pl_settings_save',{p:{model_year:y,locked:true}}); PL.boot.settings.model_year=y; PL.boot.settings.locked=true;
+    plToast(`✅ سنة الموديل بقت ${y} (${plYearLetter(y)}) واتقفلت`); plRender(); }catch(e){ plToast(plErr(e),false); }
+}
+
+function plFilteredLetters(ignoreStatus){
+  const q=(PL.q||'').trim();
+  return PL.letters.filter(l=>{
+    if(PL.brandFilter!=='all' && !l.items.some(i=>i.brand_id===Number(PL.brandFilter))) return false;
+    if(!ignoreStatus){
+      if(PL.statusFilter==='open' && !['جديد','فى التنمية','اتستلم'].includes(l.status)) return false;
+      if(PL.statusFilter!=='open' && PL.statusFilter!=='all' && l.status!==PL.statusFilter) return false;
+    }
+    if(q){
+      const hay=[l.doc_no,l.recipient_name,l.bulletin_no,l.vtypes,...l.items.map(i=>i.brand_name+' '+i.model_label)].join(' ');
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function plRenderLetters(){
+  const el=document.getElementById('pl-pane-letters'); if(!el) return;
+  const all=plFilteredLetters(true), rows=plFilteredLetters(false);
+  const cnt=st=>all.filter(l=>l.status===st).length;
+  const nums=all.filter(l=>!l.is_cancelled).reduce((a,l)=>a+Number(l.qty||0),0);
+  const brandsUsed=(PL.boot.brands||[]);
+  el.innerHTML = `
+  <div class="pl-card">
+    <div class="pl-row" style="justify-content:space-between">
+      ${plYearWidget()}
+      <div class="pl-row" style="flex:1;min-width:280px;justify-content:center">
+        <input id="pl-search" class="pl-inp pl-mono" style="flex:1;max-width:420px" placeholder="🔍 أى رقم: شاسيه / ماتور / مسلسل / مستند / منشور" onkeydown="if(event.key==='Enter')plSearch()">
+        <button class="pl-btn ghost" onclick="plSearch()">🔍 دوّر</button>
+      </div>
+      ${plCanEdit()?`<button class="pl-btn" onclick="plWizOpen()">➕ كتاب جديد</button>`:''}
+    </div>
+    <div id="pl-search-res"></div>
+  </div>
+  <div id="pl-wiz"></div>
+  <div class="pl-kpis">
+    <div class="pl-kpi gold"><div class="v">${plN(all.length)}</div><div class="l">📖 كتاب</div></div>
+    <div class="pl-kpi"><div class="v">${plN(nums)}</div><div class="l">🔢 رقم اتصرف</div></div>
+    <div class="pl-kpi"><div class="v">${cnt('جديد')}</div><div class="l">🆕 لسه متسلمش للتنمية</div></div>
+    <div class="pl-kpi red"><div class="v">${cnt('فى التنمية')}</div><div class="l">🔴 فى التنمية</div></div>
+    <div class="pl-kpi yel"><div class="v">${cnt('اتستلم')}</div><div class="l">🟡 اتستلم ومستنى منشور</div></div>
+    <div class="pl-kpi grn"><div class="v">${cnt('له منشور')}</div><div class="l">🟢 له منشور</div></div>
+  </div>
+  <div class="pl-card" style="padding:12px">
+    <div class="pl-row" style="margin-bottom:10px">
+      <select class="pl-inp" onchange="PL.statusFilter=this.value;plRenderLetters()">
+        ${[['open','📂 المفتوح (من غير اللى ليه منشور)'],['all','📚 الكل'],['جديد','🆕 جديد'],['فى التنمية','🔴 فى التنمية'],['اتستلم','🟡 اتستلم من التنمية'],['له منشور','🟢 له منشور'],['ملغى','🚫 ملغى']]
+          .map(o=>`<option value="${o[0]}" ${PL.statusFilter===o[0]?'selected':''}>${o[1]}</option>`).join('')}
+      </select>
+      <input class="pl-inp" style="width:220px" placeholder="فلتر سريع: مستند / مستلم / شركة" value="${plEsc(PL.q)}" oninput="PL.q=this.value;plRenderLettersTable()">
+      <button class="pl-btn ghost sm" onclick="plLoad(true)">🔄 تحديث</button>
+      <div style="flex:1"></div>
+      <div class="pl-sub">🔴 فى التنمية &nbsp; 🟡 اتستلم ومستنى منشور &nbsp; 🟢 له منشور (بيستخبى من «المفتوح»)</div>
+    </div>
+    <div id="pl-letters-tbl"></div>
+    <div class="pl-tabs-b">
+      <button class="pl-tab-b ${PL.brandFilter==='all'?'active':''}" onclick="PL.brandFilter='all';plRenderLetters()">الكل</button>
+      ${brandsUsed.map(b=>{ const n=PL.letters.filter(l=>l.items.some(i=>i.brand_id===b.id)).length;
+        return `<button class="pl-tab-b ${String(PL.brandFilter)===String(b.id)?'active':''}" onclick="PL.brandFilter=${b.id};plRenderLetters()">${plEsc(b.name)} <span style="opacity:.7">(${n})</span></button>`; }).join('')}
+    </div>
+  </div>`;
+  plRenderLettersTable();
+  if(PL.wiz) plWizRender();
+}
+function plBulletinLink(no){
+  if(!no) return '';
+  const b=PL.bulletins.find(x=>String(x.bulletin_no||'').trim()===String(no).trim());
+  return b ? `<div style="margin-top:4px"><span class="pl-chip pub" title="${plEsc(b.title)}">📄 مربوط بمنشور «${plEsc(b.title)}»</span></div>`
+           : `<div style="margin-top:4px" class="pl-sub">لسه مترفعش فى «المنشورات»</div>`;
+}
+function plRenderLettersTable(){
+  const el=document.getElementById('pl-letters-tbl'); if(!el) return;
+  const rows=plFilteredLetters(false);
+  if(!PL.letters.length){ el.innerHTML=`<div class="pl-sub" style="text-align:center;padding:30px">مفيش كتب لسه — سجّل الشركات والموديلات من «🏭 الشركات» وبعدين «➕ كتاب جديد»</div>`; return; }
+  if(!rows.length){ el.innerHTML=`<div class="pl-sub" style="text-align:center;padding:24px">مفيش كتب بالفلتر ده</div>`; return; }
+  const ed=plCanEdit(), today=plToday();
+  el.innerHTML = `<div class="pl-scroll"><table class="pl-tbl"><thead><tr>
+    <th>المستند</th><th>التاريخ</th><th>الشركات والأرقام</th><th>العدد</th><th>المستلم</th>
+    <th>التسليم للتنمية</th><th>الاستلام من التنمية</th><th>رقم المنشور</th><th>الحالة</th><th></th></tr></thead><tbody>
+    ${rows.map(l=>{
+      const live=!l.is_cancelled;
+      const items=l.items.map(i=>`<div class="pl-it"><b>${plEsc(i.brand_name)}</b> — ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>
+        ${plNums(i)}</div>`).join('');
+      const dIn = live&&ed ? `<input type="date" class="pl-inp" style="padding:4px 6px;font-size:12px" value="${l.delivered_at||''}" max="${today}" onchange="plUpd(${l.id},{delivered_at:this.value})">
+          ${!l.delivered_at?`<div><button class="pl-btn ghost sm" style="margin-top:4px" onclick="plUpd(${l.id},{delivered_at:'${today}'})">📤 اتسلم النهارده</button></div>`:''}` : plD(l.delivered_at);
+      const rIn = live&&ed ? (l.delivered_at ? `<input type="date" class="pl-inp" style="padding:4px 6px;font-size:12px" value="${l.received_at||''}" max="${today}" onchange="plUpd(${l.id},{received_at:this.value})">
+          ${!l.received_at?`<div><button class="pl-btn ghost sm" style="margin-top:4px" onclick="plUpd(${l.id},{received_at:'${today}'})">✅ تم الاستلام النهارده</button></div>`:''}` : '<span class="pl-sub">بعد التسليم</span>') : plD(l.received_at);
+      const bIn = live&&ed ? (l.received_at ? `<input class="pl-inp" style="width:100px;padding:4px 6px;font-size:12px" value="${plEsc(l.bulletin_no||'')}" placeholder="رقم المنشور" onchange="plUpd(${l.id},{bulletin_no:this.value})">` : '<span class="pl-sub">بعد الاستلام</span>') : plEsc(l.bulletin_no||'—');
+      return `<tr class="${plRowCls(l.status)}">
+        <td><b style="font-size:15px">${l.doc_no}</b><div class="pl-sub">موديل ${l.model_year} (${plEsc(l.year_letter)})</div></td>
+        <td style="white-space:nowrap">${plD(l.letter_date)}</td>
+        <td style="min-width:330px"><div class="pl-sub" style="margin-bottom:2px">${plEsc(l.vtypes)}</div>${items}
+          ${l.notes?`<div class="pl-sub">📝 ${plEsc(l.notes)}</div>`:''}${l.is_cancelled?`<div style="color:var(--error);font-size:12px;text-decoration:none">🚫 ${plEsc(l.cancel_reason||'')}</div>`:''}</td>
+        <td><b>${plN(l.qty)}</b></td>
+        <td>${plEsc(l.recipient_name||'—')}</td>
+        <td>${dIn}</td><td>${rIn}</td><td>${bIn}${plBulletinLink(l.bulletin_no)}</td>
+        <td>${plStChip(l.status)}${l.status==='فى التنمية'&&l.delivered_at?`<div class="pl-sub">من ${Math.round((new Date(today)-new Date(l.delivered_at))/864e5)} يوم</div>`:''}</td>
+        <td style="white-space:nowrap">
+          <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button>
+          ${live&&ed?`<button class="act-btn edit" onclick="plEditNotes(${l.id})">📝</button>`:''}
+          ${l.status==='جديد'&&plCanDel()?`<button class="act-btn delete" onclick="plCancel(${l.id})">🚫 إلغاء</button>`:''}
+        </td></tr>`;
+    }).join('')}</tbody></table></div>`;
+}
+async function plUpd(id, patch){
+  try{
+    const l = await plCall('pl_letter_update',{p_id:id, p:patch});
+    const ix=PL.letters.findIndex(x=>x.id===id); if(ix>=0) PL.letters[ix]=l;
+    plToast('✅ اتحفظ'); plRenderLetters();
+  }catch(e){ plToast(plErr(e),false); plRenderLettersTable(); }
+}
+async function plEditNotes(id){
+  const l=PL.letters.find(x=>x.id===id); const v=prompt('ملاحظات الكتاب '+(l?l.doc_no:''), l&&l.notes||'');
+  if(v===null) return; plUpd(id,{notes:v});
+}
+async function plCancel(id){
+  const l=PL.letters.find(x=>x.id===id); if(!l) return;
+  const why=prompt(`إلغاء كتاب ${l.doc_no}؟\n⚠️ أرقامه مش هترجع تانى (محروقة) عشان ميحصلش تكرار.\nاكتب سبب الإلغاء:`); if(!why) return;
+  try{ await plCall('pl_letter_cancel',{p_id:id,p_reason:why}); plToast('🚫 اتلغى'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+}
+
+// 🔍 البحث
+async function plSearch(){
+  const inp=document.getElementById('pl-search'), out=document.getElementById('pl-search-res'); if(!inp||!out) return;
+  const q=inp.value.trim(); if(!q){ out.innerHTML=''; return; }
+  out.innerHTML='<div class="pl-res">⏳ بدوّر...</div>';
+  try{
+    const res=await plCall('pl_search',{p_q:q});
+    if(!res||!res.length){ out.innerHTML=`<div class="pl-res ok">✅ الرقم <b class="pl-mono">${plEsc(q)}</b> مش موجود فى أى كتاب — لا فى الجديد ولا فى الكتب القديمة.</div>`; return; }
+    out.innerHTML=res.map(r=>{
+      if(r.legacy){ const g=r.legacy;
+        return `<div class="pl-res warn">📜 ${r.kind!=='كتاب'?`<b>${plEsc(r.kind)}</b> <span class="pl-mono">${plEsc(r.number)}</span> ← `:''}
+          موجود فى <b>كتاب قديم</b> — مستند <b>${plEsc(g.doc_no||'—')}</b> (${plEsc(g.source)} — ${plEsc(g.vtype||'')} ${plEsc(g.cc||'')})
+          ${r.position?` — ترتيبه <b>${plN(r.position)}</b>`:''} — من <span class="pl-mono">${g.num_from}</span> لـ <span class="pl-mono">${g.num_to}</span>
+          ${g.approval_no?` — رقم اعتماد <b>${plEsc(g.approval_no)}</b>`:''}<br><span class="pl-sub">${plEsc(g.extra||'')}</span>
+          ${g.issue?`<div style="color:#f0c75e;font-size:12px">⚠️ ${plEsc(g.issue)}</div>`:''}
+          <div class="pl-sub">السيستم الجديد مش هيطلّع الرقم ده تانى أبداً.</div></div>`; }
+      const l=r.letter, sNum=Number(String(r.number||'').slice(-7)); const it=r.kind!=='كتاب'?l.items.find(i=>sNum>=Number(i.serial_from)&&sNum<=Number(i.serial_to)):null; if(it) r.position=sNum-Number(it.serial_from)+1;
+      let st='';
+      if(l.status==='ملغى') st=`🚫 الكتاب ده <b>اتلغى</b> (${plEsc(l.cancel_reason||'')}) — والرقم محروق ومش هيتكرر.`;
+      else if(l.status==='جديد') st='🆕 الكتاب <b>لسه متسلمش للتنمية</b>.';
+      else if(l.status==='فى التنمية') st=`🔴 اتسلم للتنمية يوم <b>${plD(l.delivered_at)}</b> ولسه مرجعش.`;
+      else if(l.status==='اتستلم') st=`🟡 اتستلم من التنمية يوم <b>${plD(l.received_at)}</b> ولسه مطلعلوش منشور.`;
+      else st=`🟢 بمنشور رقم <b>${plEsc(l.bulletin_no)}</b> — اتستلم من التنمية يوم <b>${plD(l.received_at)}</b>.`;
+      return `<div class="pl-res ${l.is_cancelled?'warn':''}">
+        ${r.kind!=='كتاب'?`<b>${plEsc(r.kind)}</b> <span class="pl-mono">${plEsc(r.number)}</span> ← `:''}
+        فى <b>الكتاب رقم ${l.doc_no}</b> (${plD(l.letter_date)}) لـ <b>${plEsc(l.recipient_name||'—')}</b>
+        ${it?` — ${plEsc(it.brand_name)} ${plEsc(it.model_label)} — ترتيبه <b>${plN(r.position)}</b> من ${plN(it.qty)}`:` — ${plN(l.qty)} رقم`}<br>${st}
+        ${r.year_ok===false?`<div style="color:var(--error)">⚠️ حرف السنة فى الرقم مختلف عن حرف الكتاب (${plEsc(l.year_letter)})</div>`:''}</div>`;
+    }).join('');
+  }catch(e){ out.innerHTML=`<div class="pl-res warn">❌ ${plEsc(plErr(e))}</div>`; }
+}
+
+// ⬇️ ملف أرقام الكتاب
+function plExportLetter(id){
+  const l=PL.letters.find(x=>x.id===id); if(!l) return;
+  if(typeof XLSX==='undefined'){ plToast('مكتبة الإكسيل مش محمّلة',false); return; }
+  const aoa=[['م','الشركة','الموديل','رقم الشاسيه','رقم الماتور']]; let k=0;
+  l.items.forEach(i=>{
+    const fp=i.chassis_from.slice(0,10), ep=i.engine_from.slice(0,2);
+    for(let s=Number(i.serial_from); s<=Number(i.serial_to); s++){ const t=String(s).padStart(7,'0'); aoa.push([++k,i.brand_name,i.model_label,fp+t,ep+t]); }
+  });
+  const ws=XLSX.utils.aoa_to_sheet(aoa); ws['!cols']=[{wch:7},{wch:18},{wch:16},{wch:22},{wch:14}];
+  const wb=XLSX.utils.book_new(); wb.Workbook={Views:[{RTL:true}]}; XLSX.utils.book_append_sheet(wb,ws,'كتاب '+l.doc_no);
+  XLSX.writeFile(wb,`كتاب_${l.doc_no}.xlsx`);
+}
+
+// ➕ كتاب جديد
+function plWizOpen(){
+  const s=PL.boot.settings;
+  if(!s.locked){ plToast('اقفل سنة الموديل الأول 🔒',false); return; }
+  if(!(PL.boot.models||[]).some(m=>m.active)){ plToast('سجّل موديل واحد على الأقل من «🏭 الشركات»',false); return; }
+  PL.wiz={ lines:[{brand_id:'',model_id:'',qty:''}], n:1, grid:[[0]], recipient_id:'', notes:'', preview:null, busy:false };
+  plWizRender();
+  setTimeout(()=>{ const w=document.getElementById('pl-wiz'); if(w) w.scrollIntoView({behavior:'smooth',block:'start'}); },50);
+}
+function plWizClose(){ PL.wiz=null; const w=document.getElementById('pl-wiz'); if(w) w.innerHTML=''; }
+function plWizRegrid(){
+  const w=PL.wiz, n=Math.max(1,Math.min(50,Number(w.n)||1)); w.n=n;
+  w.grid=Array.from({length:n},()=>w.lines.map(()=>0));
+  w.lines.forEach((ln,j)=>{ const t=Math.max(0,parseInt(ln.qty)||0), base=Math.floor(t/n), r=t%n;
+    for(let i=0;i<n;i++) w.grid[i][j]=base+(i<r?1:0); });
+  w.preview=null;
+}
+function plWizSet(j,key,val){
+  const w=PL.wiz, ln=w.lines[j]; ln[key]=val;
+  if(key==='brand_id') ln.model_id='';
+  plWizRegrid(); plWizRender();
+}
+function plWizCell(i,j,val){
+  const w=PL.wiz; w.grid[i][j]=Math.max(0,parseInt(val)||0);
+  w.lines[j].qty=String(w.grid.reduce((a,r)=>a+r[j],0)); w.preview=null; plWizRender();
+}
+function plWizCheck(){
+  const w=PL.wiz, errs=[];
+  w.lines.forEach((ln,j)=>{ if(!ln.model_id) errs.push(`سطر ${j+1}: اختار الموديل`); if(!(parseInt(ln.qty)>0)) errs.push(`سطر ${j+1}: اكتب العدد`); });
+  const vts=[...new Set(w.lines.map(ln=>{ const m=plModel(ln.model_id); return m&&m.vtype; }).filter(Boolean))];
+  const combos=PL.boot.settings.combos||[];
+  for(let a=0;a<vts.length;a++) for(let b=a+1;b<vts.length;b++){
+    if(!combos.some(c=>(c[0]===vts[a]&&c[1]===vts[b])||(c[0]===vts[b]&&c[1]===vts[a])))
+      errs.push(`مينفعش «${vts[a]}» مع «${vts[b]}» فى كتاب واحد — اعمل كل نوع فى كتاب لوحده أو اسمح بيها من «⚙️ قواعد الكتب»`);
+  }
+  w.grid.forEach((r,i)=>{ if(!r.some(q=>q>0)) errs.push(`كتاب ${i+1} فاضى`); });
+  return errs;
+}
+function plWizPayload(){
+  const w=PL.wiz;
+  return w.grid.map(r=>{ const m={}; r.forEach((q,j)=>{ if(q>0){ const id=Number(w.lines[j].model_id); m[id]=(m[id]||0)+q; } });
+    return {items:Object.keys(m).map(id=>({model_id:Number(id),qty:m[id]}))}; });
+}
+function plWizRender(){
+  const el=document.getElementById('pl-wiz'), w=PL.wiz; if(!el||!w) return;
+  const brands=(PL.boot.brands||[]).filter(b=>b.active), rcps=(PL.boot.recipients||[]).filter(r=>r.active);
+  const s=PL.boot.settings, errs=plWizCheck();
+  const lineRows=w.lines.map((ln,j)=>{
+    const models=(PL.boot.models||[]).filter(m=>m.active&&String(m.brand_id)===String(ln.brand_id));
+    const m=plModel(ln.model_id); const rem=m?m.codes.filter(c=>c.status==='مفتوح').reduce((a,c)=>a+c.remaining,0):0;
+    return `<div class="pl-row" style="margin-bottom:8px">
+      <select class="pl-inp" onchange="plWizSet(${j},'brand_id',this.value)"><option value="">— الشركة —</option>
+        ${brands.map(b=>`<option value="${b.id}" ${String(ln.brand_id)===String(b.id)?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select>
+      <select class="pl-inp" style="min-width:200px" onchange="plWizSet(${j},'model_id',this.value)" ${ln.brand_id?'':'disabled'}><option value="">— الموديل —</option>
+        ${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(x.label)}</option>`).join('')}</select>
+      <input class="pl-inp" type="number" min="1" style="width:120px" placeholder="العدد" value="${plEsc(ln.qty)}" onchange="plWizSet(${j},'qty',this.value)">
+      ${m?`<span class="pl-chip vt">${plEsc(m.vtype)}</span><span class="pl-sub">الدرج الحالى فاضل فيه ${plN(rem)} — والباقى بيفتح أدراج جديدة لوحده</span>`:''}
+      ${w.lines.length>1?`<button class="act-btn delete" onclick="PL.wiz.lines.splice(${j},1);plWizRegrid();plWizRender()">✖</button>`:''}
+    </div>`; }).join('');
+  const grid = w.n>1 || w.lines.length>1 ? `<div style="overflow:auto;margin:10px 0"><table class="pl-grid"><thead><tr><th>الكتاب</th>
+      ${w.lines.map((ln,j)=>{ const m=plModel(ln.model_id); const b=m&&plBrand(m.brand_id); return `<th>${m?plEsc(b.name+' '+m.label):'سطر '+(j+1)}</th>`; }).join('')}<th>الإجمالى</th></tr></thead><tbody>
+      ${w.grid.map((r,i)=>`<tr><td>كتاب ${i+1} <span class="pl-sub">(مستند ${s.next_doc+i})</span></td>${r.map((q,j)=>`<td><input class="pl-inp" type="number" min="0" value="${q}" onchange="plWizCell(${i},${j},this.value)"></td>`).join('')}<td><b>${plN(r.reduce((a,b)=>a+b,0))}</b></td></tr>`).join('')}
+      </tbody></table></div>` : '';
+  const prev = w.preview ? `<div class="pl-card" style="background:var(--dark3);margin-top:10px"><div class="pl-h">👁️ معاينة — ${w.preview.dry?'لسه متحفظش':'✅ اتعمل'}</div>
+      ${w.preview.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.vtypes)} — ${plN(l.qty)} رقم
+        ${l.items.map(i=>`<div style="margin:4px 0 8px"><b>${plEsc(i.brand_name)}</b> ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>${plNums(i)}</div>`).join('')}</div>`).join('')}</div>` : '';
+  el.innerHTML = `<div class="pl-card" style="border-color:rgba(201,168,76,0.5)">
+    <div class="pl-h">➕ كتاب جديد <span class="pl-sub">— موديل ${s.model_year} (حرف ${plEsc(plYearLetter(s.model_year))}) — المستند الجاى رقم ${s.next_doc}</span>
+      <div style="flex:1"></div><button class="pl-btn ghost sm" onclick="plWizClose()">✖ قفل</button></div>
+    ${lineRows}
+    <button class="pl-btn ghost sm" onclick="PL.wiz.lines.push({brand_id:'',model_id:'',qty:''});plWizRegrid();plWizRender()">➕ شركة/موديل تانى فى نفس الكتاب</button>
+    <div class="pl-row" style="margin-top:12px">
+      <label class="pl-sub">عدد الكتب (يتقسم بالتساوى):</label>
+      <input class="pl-inp" type="number" min="1" max="50" style="width:80px" value="${w.n}" onchange="PL.wiz.n=this.value;plWizRegrid();plWizRender()">
+      <label class="pl-sub" style="margin-right:12px">الكتاب لمين؟</label>
+      <select class="pl-inp" onchange="PL.wiz.recipient_id=this.value"><option value="">— المستلم —</option>
+        ${rcps.map(r=>`<option value="${r.id}" ${String(w.recipient_id)===String(r.id)?'selected':''}>${plEsc(r.name)}</option>`).join('')}</select>
+      <input class="pl-inp" style="flex:1;min-width:160px" placeholder="ملاحظات (اختيارى)" value="${plEsc(w.notes)}" oninput="PL.wiz.notes=this.value">
+    </div>
+    ${grid}
+    ${errs.length?`<div style="color:var(--error);font-size:13px;margin-top:8px;line-height:1.8">${errs.map(e=>'⚠️ '+plEsc(e)).join('<br>')}</div>`:''}
+    <div class="pl-row" style="margin-top:12px">
+      <button class="pl-btn ghost" ${errs.length||w.busy?'disabled':''} onclick="plWizRun(true)">👁️ معاينة الأرقام</button>
+      <button class="pl-btn" ${errs.length||w.busy?'disabled':''} onclick="plWizRun(false)">✅ اعمل ${w.n>1?w.n+' كتب':'الكتاب'}</button>
+      <span class="pl-sub">الأرقام بتتحجز على السيرفر لحظة الحفظ — مستحيل تتكرر حتى لو اتنين بيعملوا كتب فى نفس الوقت</span>
+    </div>
+    ${prev}
+  </div>`;
+}
+async function plWizRun(dry){
+  const w=PL.wiz; if(!w) return;
+  if(!dry && !w.recipient_id){ plToast('اختار الكتاب لمين',false); return; }
+  if(!dry && !confirm(`هيتعمل ${w.n} ${w.n>1?'كتب':'كتاب'} بإجمالى ${plN(w.grid.flat().reduce((a,b)=>a+b,0))} رقم. متأكد؟`)) return;
+  w.busy=true; plWizRender();
+  try{
+    const r=await plCall('pl_create_letters',{p_letters:plWizPayload(), p_recipient_id:w.recipient_id?Number(w.recipient_id):null, p_notes:w.notes||null, p_dry:dry});
+    w.busy=false;
+    if(dry){ w.preview=r; plWizRender(); return; }
+    plToast(`✅ اتعمل ${r.letters.length} ${r.letters.length>1?'كتب':'كتاب'}`);
+    const keep=r; PL.wiz=null; await plLoad(true);
+    const el=document.getElementById('pl-wiz');
+    if(el){ el.innerHTML=`<div class="pl-card" style="border-color:rgba(76,175,125,0.6)"><div class="pl-h">✅ الكتب اتعملت <div style="flex:1"></div><button class="pl-btn ghost sm" onclick="plWizClose()">✖ قفل</button></div>
+      ${keep.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.recipient_name||'')} — ${plN(l.qty)} رقم <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button>
+        ${l.items.map(i=>`<div style="margin:4px 0 8px"><b>${plEsc(i.brand_name)}</b> ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>${plNums(i)}</div>`).join('')}</div>`).join('')}</div>`; }
+    PL.wiz=null;
+  }catch(e){
+    w.busy=false; const msg=plErr(e);
+    if(msg.indexOf('PL_NEED_CODE|')>=0){
+      const p=msg.slice(msg.indexOf('PL_NEED_CODE|')).split('|'); const mid=Number(p[1]), label=p[2], rem=Number(p[3]), free=p[4];
+      if(!free){ plToast('مفيش أدراج فاضية خالص — كلّمنى',false); plWizRender(); return; }
+      if(confirm(`أدراج «${label}» مش مكفّية — محتاج ${plN(rem)} رقم كمان.\n\nأفتحله درج جديد رقم ${free}؟`)){
+        try{ await plCall('pl_code_open',{p_model_id:mid,p_code:Number(free)}); PL.loaded=false; const keepW=PL.wiz; await plLoad(true); PL.wiz=keepW; return plWizRun(dry); }
+        catch(e2){ plToast(plErr(e2),false); }
+      }
+      plWizRender(); return;
+    }
+    plToast(msg,false); plWizRender();
+  }
+}
+
+// ════════════════ 📊 التقارير ════════════════
+function plRenderReports(){
+  const el=document.getElementById('pl-pane-reports'); if(!el) return;
+  const f=PL.rep, brands=PL.boot.brands||[], models=(PL.boot.models||[]).filter(m=>!f.brand||String(m.brand_id)===f.brand);
+  const years=[...new Set(PL.letters.map(l=>l.model_year))].sort();
+  const rcps=PL.boot.recipients||[];
+  const sel=(k,opts,ph)=>`<select class="pl-inp" onchange="PL.rep.${k}=this.value;${k==='brand'?"PL.rep.model='';":''}plRenderReports()"><option value="">${ph}</option>${opts.map(o=>`<option value="${plEsc(o[0])}" ${String(f[k])===String(o[0])?'selected':''}>${plEsc(o[1])}</option>`).join('')}</select>`;
+  const itemOk=i=>(!f.brand||String(i.brand_id)===f.brand)&&(!f.model||String(i.model_id)===f.model)&&(!f.vtype||i.vtype===f.vtype);
+  const ls=PL.letters.filter(l=>(!f.year||String(l.model_year)===f.year)&&(!f.rcp||String(l.recipient_id)===f.rcp)&&(!f.status||l.status===f.status)
+     &&(!f.from||l.letter_date>=f.from)&&(!f.to||l.letter_date<=f.to)&&l.items.some(itemOk));
+  const qtyOf=l=>l.items.filter(itemOk).reduce((a,i)=>a+i.qty,0);
+  const live=ls.filter(l=>!l.is_cancelled), cnt=st=>ls.filter(l=>l.status===st).length;
+  const byModel={}; live.forEach(l=>l.items.filter(itemOk).forEach(i=>{ const k=i.brand_name+'|'+i.model_label;
+    const o=byModel[k]||(byModel[k]={b:i.brand_name,m:i.model_label,letters:new Set(),qty:0,dev:0,pub:0}); o.letters.add(l.id); o.qty+=i.qty;
+    if(l.status==='فى التنمية') o.dev+=i.qty; if(l.status==='له منشور') o.pub+=i.qty; }));
+  const byRcp={}; live.forEach(l=>{ const k=l.recipient_name||'—'; const o=byRcp[k]||(byRcp[k]={n:0,qty:0,dev:0}); o.n++; o.qty+=qtyOf(l); if(l.status==='فى التنمية') o.dev++; });
+  el.innerHTML=`<div class="pl-card"><div class="pl-h">📊 التقارير</div>
+    <div class="pl-row">
+      ${sel('brand',brands.map(b=>[b.id,b.name]),'كل الشركات')}
+      ${sel('model',models.map(m=>[m.id,(plBrand(m.brand_id)||{}).name+' '+m.label]),'كل الموديلات')}
+      ${sel('vtype',PL_VTYPES.map(v=>[v,v]),'كل الأنواع')}
+      ${sel('year',years.map(y=>[y,'موديل '+y]),'كل الموديلات (السنين)')}
+      ${sel('rcp',rcps.map(r=>[r.id,r.name]),'كل المستلمين')}
+      ${sel('status',['جديد','فى التنمية','اتستلم','له منشور','ملغى'].map(s=>[s,s]),'كل الحالات')}
+      <label class="pl-sub">من</label><input type="date" class="pl-inp" value="${f.from}" onchange="PL.rep.from=this.value;plRenderReports()">
+      <label class="pl-sub">إلى</label><input type="date" class="pl-inp" value="${f.to}" onchange="PL.rep.to=this.value;plRenderReports()">
+      <button class="pl-btn ghost sm" onclick="PL.rep={brand:'',model:'',vtype:'',year:'',rcp:'',status:'',from:'',to:''};plRenderReports()">✖ مسح</button>
+      <button class="pl-btn ghost sm" onclick="plExportReport()">⬇️ إكسيل</button>
+    </div></div>
+  <div class="pl-kpis">
+    <div class="pl-kpi gold"><div class="v">${plN(live.length)}</div><div class="l">📖 كتاب (من غير الملغى)</div></div>
+    <div class="pl-kpi"><div class="v">${plN(live.reduce((a,l)=>a+qtyOf(l),0))}</div><div class="l">🔢 رقم</div></div>
+    <div class="pl-kpi"><div class="v">${cnt('جديد')}</div><div class="l">🆕 لسه متسلمش</div></div>
+    <div class="pl-kpi red"><div class="v">${cnt('فى التنمية')}</div><div class="l">🔴 فى التنمية</div></div>
+    <div class="pl-kpi yel"><div class="v">${cnt('اتستلم')}</div><div class="l">🟡 اتستلم — مستنى منشور</div></div>
+    <div class="pl-kpi grn"><div class="v">${cnt('له منشور')}</div><div class="l">🟢 اعتمد (له منشور)</div></div>
+    <div class="pl-kpi"><div class="v">${cnt('ملغى')}</div><div class="l">🚫 ملغى</div></div>
+  </div>
+  <div class="pl-row" style="align-items:flex-start">
+    <div class="pl-card" style="flex:2;min-width:320px"><div class="pl-h">🏭 حسب الشركة والموديل</div>
+      <div class="pl-scroll" style="max-height:360px"><table class="pl-tbl"><thead><tr><th>الشركة</th><th>الموديل</th><th>كتب</th><th>أرقام</th><th>فى التنمية</th><th>له منشور</th></tr></thead><tbody>
+      ${Object.values(byModel).sort((a,b)=>b.qty-a.qty).map(o=>`<tr><td><b>${plEsc(o.b)}</b></td><td>${plEsc(o.m)}</td><td>${o.letters.size}</td><td><b>${plN(o.qty)}</b></td><td>${plN(o.dev)}</td><td>${plN(o.pub)}</td></tr>`).join('')||'<tr><td colspan="6" class="pl-sub">مفيش</td></tr>'}
+      </tbody></table></div></div>
+    <div class="pl-card" style="flex:1;min-width:240px"><div class="pl-h">👥 حسب المستلم</div>
+      <table class="pl-tbl"><thead><tr><th>المستلم</th><th>كتب</th><th>أرقام</th><th>فى التنمية</th></tr></thead><tbody>
+      ${Object.entries(byRcp).sort((a,b)=>b[1].qty-a[1].qty).map(([k,o])=>`<tr><td><b>${plEsc(k)}</b></td><td>${o.n}</td><td>${plN(o.qty)}</td><td>${o.dev}</td></tr>`).join('')||'<tr><td colspan="4" class="pl-sub">مفيش</td></tr>'}
+      </tbody></table></div>
+  </div>
+  <div class="pl-card"><div class="pl-h">📄 الكتب (${ls.length})</div>
+    <div class="pl-scroll" style="max-height:420px"><table class="pl-tbl"><thead><tr><th>المستند</th><th>التاريخ</th><th>الموديل</th><th>المحتوى</th><th>العدد</th><th>المستلم</th><th>للتنمية</th><th>من التنمية</th><th>المنشور</th><th>الحالة</th></tr></thead><tbody>
+    ${ls.map(l=>`<tr class="${plRowCls(l.status)}"><td><b>${l.doc_no}</b></td><td>${plD(l.letter_date)}</td><td>${l.model_year}</td>
+      <td>${l.items.filter(itemOk).map(i=>plEsc(i.brand_name+' '+i.model_label)+' × '+plN(i.qty)).join('<br>')}</td><td><b>${plN(qtyOf(l))}</b></td>
+      <td>${plEsc(l.recipient_name||'—')}</td><td>${plD(l.delivered_at)}</td><td>${plD(l.received_at)}</td><td>${plEsc(l.bulletin_no||'—')}</td><td>${plStChip(l.status)}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  PL._repRows=ls.map(l=>[l.doc_no,plD(l.letter_date),l.model_year,l.items.filter(itemOk).map(i=>i.brand_name+' '+i.model_label+' × '+i.qty).join(' + '),qtyOf(l),l.recipient_name||'',plD(l.delivered_at),plD(l.received_at),l.bulletin_no||'',l.status]);
+}
+function plExportReport(){
+  if(typeof XLSX==='undefined'){ plToast('مكتبة الإكسيل مش محمّلة',false); return; }
+  const aoa=[['المستند','التاريخ','الموديل','المحتوى','العدد','المستلم','التسليم للتنمية','الاستلام من التنمية','المنشور','الحالة'],...(PL._repRows||[])];
+  const ws=XLSX.utils.aoa_to_sheet(aoa); const wb=XLSX.utils.book_new(); wb.Workbook={Views:[{RTL:true}]};
+  XLSX.utils.book_append_sheet(wb,ws,'تقرير الكتب'); XLSX.writeFile(wb,`تقرير_الكتب_${plToday()}.xlsx`);
+}
+
+// ════════════════ 🏭 الشركات والموديلات ════════════════
+function plFpCheck(v){
+  const s=String(v||'').toUpperCase().replace(/\s/g,'');
+  if(!s) return {s, ok:false, msg:''};
+  if(/[IOQ]/.test(s)) return {s, ok:false, msg:'⛔ I و O و Q ممنوعين عالمياً فى الشاسيه — غالباً قصدك 1 أو 0'};
+  if(!/^[A-HJ-NPR-Z0-9]*$/.test(s)) return {s, ok:false, msg:'⛔ حروف إنجليزى وأرقام بس'};
+  if(s.length!==9) return {s, ok:false, msg:`${s.length}/9 حروف`};
+  const other=(PL.boot.models||[]).find(m=>m.fingerprint===s && String(m.brand_id)!==String(PL.selBrand) && (!PL.modelEdit||m.id!==PL.modelEdit.id));
+  if(other) return {s, ok:false, msg:`⛔ البصمة دى بتاعة «${(plBrand(other.brand_id)||{}).name} — ${other.label}»`};
+  const same=(PL.boot.models||[]).find(m=>m.fingerprint===s && String(m.brand_id)===String(PL.selBrand) && (!PL.modelEdit||m.id!==PL.modelEdit.id));
+  return {s, ok:true, msg: same?`⚠️ نفس بصمة «${same.label}» فى نفس الشركة — هتتأكد منك وقت الحفظ`:'✅ 9/9'};
+}
+function plFpInput(inp){
+  const pos=inp.selectionStart; inp.value=inp.value.toUpperCase().replace(/\s/g,''); try{inp.setSelectionRange(pos,pos);}catch(e){}
+  const c=plFpCheck(inp.value), m=document.getElementById('pl-fp-msg');
+  inp.classList.toggle('bad', !!inp.value && !c.ok);
+  if(m){ m.textContent=c.msg; m.style.color=c.ok?(c.msg.startsWith('⚠️')?'#f0c75e':'var(--success)'):'var(--error)'; }
+  plFpPreview();
+}
+function plFpPreview(){
+  const fp=(document.getElementById('pl-m-fp')||{}).value||'', cd=(document.getElementById('pl-m-code')||{}).value||'';
+  const b=plBrand(PL.selBrand), y=plYearLetter(PL.boot.settings.model_year), e=document.getElementById('pl-m-prev');
+  if(e) e.innerHTML = `شكل أول شاسيه: <b class="pl-mono">${plEsc((fp||'_________').padEnd(9,'_'))}${plEsc(y)}${plEsc(String(cd||'___').padStart(3,'_'))}0000</b> &nbsp; أول ماتور: <b class="pl-mono">${plEsc(b?b.engine_prefix:'__')}${plEsc(String(cd||'___'))}0000</b>`;
+}
+function plRenderBrands(){
+  const el=document.getElementById('pl-pane-brands'); if(!el) return;
+  const brands=PL.boot.brands||[], ed=plCanEdit();
+  if(PL.selBrand!=null && !brands.some(b=>b.id===PL.selBrand)) PL.selBrand=brands.length?brands[0].id:null;
+  const b=plBrand(PL.selBrand);
+  const models=(PL.boot.models||[]).filter(m=>b&&m.brand_id===b.id);
+  const y=plYearLetter(PL.boot.settings.model_year), me=PL.modelEdit;
+  el.innerHTML=`<div class="pl-card"><div class="pl-h">🏭 الشركات <span class="pl-sub">— اضغط على الشركة تشوف موديلاتها</span></div>
+    <div class="pl-brands">${brands.map(x=>`<div class="pl-brand ${x.id===PL.selBrand?'sel':''} ${x.active?'':'off'}" onclick="PL.selBrand=${x.id};PL.modelEdit=null;plRenderBrands()">
+        <div class="n">${plEsc(x.name)}</div><div class="s">⚙️ كود الماتور ${plEsc(x.engine_prefix)} — ${(PL.boot.models||[]).filter(m=>m.brand_id===x.id).length} موديل${x.active?'':' — متوقفة'}</div></div>`).join('')||'<div class="pl-sub">مفيش شركات لسه</div>'}</div>
+    ${ed?`<div class="pl-row"><input id="pl-b-name" class="pl-inp" placeholder="اسم الشركة الجديدة (مثلاً: هوجان اتش جى)" style="min-width:240px">
+      <input id="pl-b-ep" class="pl-inp pl-mono" style="width:90px" maxlength="2" value="${plEsc(PL.boot.free_engine_prefix||'')}" title="كود الماتور: رقمين قبل رقم الشاسيه">
+      <span class="pl-sub">← كود الماتور (رقمين) — المقترح ${plEsc(PL.boot.free_engine_prefix||'')}</span>
+      <button class="pl-btn" onclick="plBrandAdd()">➕ أضف الشركة</button></div>`:''}
+  </div>
+  ${b?`<div class="pl-card">
+    <div class="pl-h">🏍️ ${plEsc(b.name)} <span class="pl-chip code">⚙️ ماتور ${plEsc(b.engine_prefix)}</span>${b.active?'':'<span class="pl-chip can">متوقفة</span>'}
+      <div style="flex:1"></div>${ed?`<button class="pl-btn ghost sm" onclick="plBrandEdit()">✏️ تعديل الشركة</button>
+      <button class="pl-btn ${b.active?'red':'ghost'} sm" onclick="plBrandToggle()">${b.active?'⏸️ وقّف الشركة':'▶️ شغّل الشركة'}</button>`:''}</div>
+    <div class="pl-scroll" style="max-height:none"><table class="pl-tbl"><thead><tr><th>النوع</th><th>السعة</th><th>البصمة (9)</th><th>شكل الشاسيه / الماتور</th><th>الأدراج والمتبقى</th><th>اتصرف</th><th>الحالة</th><th></th></tr></thead><tbody>
+    ${models.map(m=>{ const open=m.codes.filter(c=>c.status==='مفتوح'); const rem=open.reduce((a,c)=>a+c.remaining,0); const c0=m.codes[0];
+      return `<tr style="${m.active?'':'opacity:.55'}"><td><span class="pl-chip vt">${plEsc(m.vtype)}</span></td><td><b>${plEsc(m.cc)}</b></td>
+      <td class="pl-mono"><b>${plEsc(m.fingerprint)}</b></td>
+      <td class="pl-mono" style="font-size:12px">${plEsc(m.fingerprint)}<b style="color:var(--gold)">${plEsc(y)}</b><b style="color:#7fb4ea">${c0?c0.code:'___'}</b>0000<br><span style="color:var(--text-dim)">${plEsc(b.engine_prefix)}${c0?c0.code:'___'}0000</span></td>
+      <td>${(()=>{ const cs=m.codes, cur=cs.find(c=>c.status==='مفتوح'), full=cs.filter(c=>c.status==='مليان').length;
+          return `<div><span class="pl-chip code">درج ${cur?cur.code:'—'}</span> ${cur?`<span class="pl-sub">فاضل ${plN(cur.remaining)}</span><div class="pl-bar"><i style="width:${Math.round((10000-cur.remaining)/100)}%"></i></div>`:''}</div>
+            <div class="pl-sub">${cs.length} درج${full?` (${full} مليان)`:''} — بيفتح الجاى لوحده</div>`; })()}</td>
+      <td>${plN(m.used_qty)}<div class="pl-sub">${m.used_letters} كتاب</div></td>
+      <td>${m.active?'<span class="pl-chip pub">شغال</span>':'<span class="pl-chip can">متوقف</span>'}</td>
+      <td style="white-space:nowrap">${ed?`<button class="act-btn edit" onclick="plModelEditStart(${m.id})">✏️</button>
+        <button class="act-btn edit" onclick="plCodeOpenAsk(${m.id})">➕ درج</button>
+        <button class="act-btn ${m.active?'delete':'toggle'}" onclick="plModelToggle(${m.id})">${m.active?'⏸️':'▶️'}</button>`:''}</td></tr>`; }).join('')||'<tr><td colspan="8" class="pl-sub" style="text-align:center;padding:16px">مفيش موديلات — ضيف أول موديل تحت</td></tr>'}
+    </tbody></table></div>
+    ${ed?`<div class="pl-card" style="background:var(--dark3);margin:12px 0 0">
+      <div class="pl-h">${me?'✏️ تعديل موديل':'➕ موديل جديد لـ '+plEsc(b.name)}</div>
+      <div class="pl-row">
+        <select id="pl-m-vt" class="pl-inp">${PL_VTYPES.map(v=>`<option ${me&&me.vtype===v?'selected':''}>${v}</option>`).join('')}</select>
+        <input id="pl-m-cc" class="pl-inp" style="width:120px" placeholder="السعة (150)" value="${plEsc(me?me.cc:'')}">
+        <input id="pl-m-fp" class="pl-inp pl-mono" style="width:170px" maxlength="12" placeholder="البصمة 9 حروف" value="${plEsc(me?me.fingerprint:'')}" oninput="plFpInput(this)">
+        ${me?'':`<input id="pl-m-code" class="pl-inp pl-mono" style="width:80px" maxlength="3" value="${plEsc(PL.boot.free_code||'')}" oninput="plFpPreview()" title="أول درج للموديل (3 أرقام)"><span class="pl-sub">← أول درج (المقترح ${plEsc(PL.boot.free_code||'')})</span>`}
+        <input id="pl-m-note" class="pl-inp" style="flex:1;min-width:140px" placeholder="ملاحظة (اختيارى)" value="${plEsc(me&&me.note||'')}">
+        <button class="pl-btn" onclick="plModelSave()">💾 ${me?'حفظ التعديل':'أضف الموديل'}</button>
+        ${me?`<button class="pl-btn ghost" onclick="PL.modelEdit=null;plRenderBrands()">إلغاء</button>`:''}
+      </div>
+      <div id="pl-fp-msg" class="pl-sub" style="margin-top:6px"></div>
+      <div id="pl-m-prev" class="pl-sub" style="margin-top:4px"></div>
+      ${me&&me.used_qty?`<div style="color:#f0c75e;font-size:12px;margin-top:4px">🔒 الموديل ده طلع بيه كتب — النوع والسعة والبصمة مقفولين (تقدر تعدّل الملاحظة بس)</div>`:''}
+    </div>`:''}
+  </div>`:''}
+  ${plCodesMap()}`;
+  const fp=document.getElementById('pl-m-fp'); if(fp&&fp.value) plFpInput(fp); else plFpPreview();
+}
+function plCodesMap(){
+  const codes=PL.boot.codes||[], map={}; codes.forEach(c=>map[c.code]=c);
+  let cells=''; for(let k=100;k<=999;k++){ const c=map[k];
+    if(!c){ cells+=`<div class="pl-code" title="فاضى">${k}</div>`; continue; }
+    if(c.status==='محروق'){ cells+=`<div class="pl-code burn" title="منطقة أمان — ${plEsc(c.note||'')}">${k}</div>`; continue; }
+    const m=plModel(c.model_id), b=m&&plBrand(m.brand_id);
+    cells+=`<div class="pl-code ${c.status==='مليان'?'full':'open'}" title="${plEsc((b?b.name:'')+' — '+(m?m.label:''))}${c.status==='مليان'?' (مليان)':' — فاضل '+plN(c.remaining)}">${k}</div>`; }
+  const free=900-codes.length, spare=codes.filter(c=>!c.model_id).length;
+  return `<div class="pl-card"><div class="pl-h">🔢 خريطة الأدراج <span class="pl-sub">— ${free} درج فاضى (${plN(free*10000)} رقم) — ${spare} درج منطقة أمان حوالين الأرقام القديمة — كل درج = 10,000 رقم</span></div>
+    <div class="pl-codes">${cells}</div>
+    <div class="pl-row pl-sub" style="margin-top:8px"><span><span class="pl-code open" style="display:inline-block;padding:0 8px">00</span> شغال</span>
+      <span><span class="pl-code full" style="display:inline-block;padding:0 8px">00</span> مليان</span>
+      <span><span class="pl-code burn" style="display:inline-block;padding:0 8px">00</span> منطقة أمان (أرقام قديمة + 50 ألف بعدها + بداية كل موديل فى النظام القديم)</span>
+      <span><span class="pl-code" style="display:inline-block;padding:0 8px">00</span> فاضى</span></div></div>`;
+}
+async function plBrandAdd(){
+  const n=document.getElementById('pl-b-name').value.trim(), ep=document.getElementById('pl-b-ep').value.trim();
+  try{ const id=await plCall('pl_brand_save',{p_id:null,p_name:n,p_engine_prefix:ep,p_active:true,p_sort:0}); PL.selBrand=Number(id); plToast('✅ الشركة اتضافت'); await plLoad(true); }
+  catch(e){ plToast(plErr(e),false); }
+}
+async function plBrandEdit(){
+  const b=plBrand(PL.selBrand); if(!b) return;
+  const n=prompt('اسم الشركة', b.name); if(n===null) return;
+  const ep=prompt('كود الماتور (رقمين)'+(b.used?' — ⚠️ الشركة عليها كتب فمش هينفع يتغير':''), b.engine_prefix); if(ep===null) return;
+  try{ await plCall('pl_brand_save',{p_id:b.id,p_name:n,p_engine_prefix:ep,p_active:b.active,p_sort:b.sort}); plToast('✅ اتحفظ'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+}
+async function plBrandToggle(){
+  const b=plBrand(PL.selBrand); if(!b) return;
+  try{ await plCall('pl_brand_save',{p_id:b.id,p_name:b.name,p_engine_prefix:b.engine_prefix,p_active:!b.active,p_sort:b.sort}); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+}
+function plModelEditStart(id){ PL.modelEdit=plModel(id); plRenderBrands(); const f=document.getElementById('pl-m-cc'); if(f) f.scrollIntoView({behavior:'smooth',block:'center'}); }
+async function plModelSave(confirmSame){
+  const me=PL.modelEdit;
+  const p={ id: me?me.id:null, brand_id: PL.selBrand, vtype: document.getElementById('pl-m-vt').value, cc: document.getElementById('pl-m-cc').value,
+    fingerprint: document.getElementById('pl-m-fp').value, note: document.getElementById('pl-m-note').value, active: me?me.active:true, confirm: !!confirmSame };
+  const ce=document.getElementById('pl-m-code'); if(ce) p.code=ce.value;
+  try{
+    const r=await plCall('pl_model_save',{p});
+    if(r && r.need_confirm){ if(confirm('⚠️ '+r.message+'\n\nتكمّل؟')) return plModelSave(true); return; }
+    plToast(me?'✅ اتعدّل':`✅ الموديل اتضاف — أول درج ${r.code}`); PL.modelEdit=null; await plLoad(true);
+  }catch(e){ plToast(plErr(e),false); }
+}
+async function plModelToggle(id){
+  const m=plModel(id); if(!m) return;
+  try{ await plCall('pl_model_save',{p:{id:m.id,brand_id:m.brand_id,vtype:m.vtype,cc:m.cc,fingerprint:m.fingerprint,note:m.note,active:!m.active,confirm:true}}); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+}
+async function plCodeOpenAsk(id){
+  const m=plModel(id), b=m&&plBrand(m.brand_id); if(!m) return;
+  const c=prompt(`افتح درج إضافى لـ «${b.name} — ${m.label}»\n(مش لازم — السيستم بيفتح الدرج الجاى لوحده)\nالدرج المقترح:`, PL.boot.free_code||''); if(!c) return;
+  try{ await plCall('pl_code_open',{p_model_id:id,p_code:Number(c)}); plToast('✅ الدرج اتفتح'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+}
+
+// ════════════════ 👥 المستلمين ════════════════
+function plRenderRecipients(){
+  const el=document.getElementById('pl-pane-recipients'); if(!el) return;
+  const ed=plCanEdit(), rs=PL.boot.recipients||[];
+  el.innerHTML=`<div class="pl-card" style="max-width:720px"><div class="pl-h">👥 أسماء المستلمين <span class="pl-sub">— بيظهروا فى «الكتاب لمين؟» وفى التقارير</span></div>
+    ${ed?`<div class="pl-row" style="margin-bottom:12px"><input id="pl-r-name" class="pl-inp" placeholder="اسم مستلم جديد" onkeydown="if(event.key==='Enter')plRcpAdd()"><button class="pl-btn" onclick="plRcpAdd()">➕ أضف</button></div>`:''}
+    <table class="pl-tbl"><thead><tr><th>الاسم</th><th>الكتب</th><th>الحالة</th><th></th></tr></thead><tbody>
+    ${rs.map(r=>`<tr style="${r.active?'':'opacity:.55'}"><td>${ed?`<input class="pl-inp" value="${plEsc(r.name)}" onchange="plRcpSave(${r.id},this.value,${r.active})">`:plEsc(r.name)}</td>
+      <td>${r.used}</td><td>${r.active?'<span class="pl-chip pub">شغال</span>':'<span class="pl-chip can">متوقف</span>'}</td>
+      <td>${ed?`<button class="act-btn ${r.active?'delete':'toggle'}" onclick="plRcpSave(${r.id},${JSON.stringify(r.name).replace(/"/g,'&quot;')},${!r.active})">${r.active?'⏸️ وقّف':'▶️ شغّل'}</button>`:''}</td></tr>`).join('')}
+    </tbody></table></div>`;
+}
+async function plRcpAdd(){
+  const n=document.getElementById('pl-r-name').value.trim(); if(!n) return;
+  try{ await plCall('pl_recipient_save',{p_id:null,p_name:n,p_active:true}); plToast('✅ اتضاف'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+}
+async function plRcpSave(id,name,active){
+  try{ await plCall('pl_recipient_save',{p_id:id,p_name:name,p_active:active}); plToast('✅ اتحفظ'); await plLoad(true); }catch(e){ plToast(plErr(e),false); await plLoad(true); }
+}
+
+// ════════════════ 🔤 أحرف السنة ════════════════
+function plRenderYears(){
+  const el=document.getElementById('pl-pane-years'); if(!el) return;
+  const ed=plCanEdit(), cur=PL.boot.settings.model_year, used=new Set(PL.letters.map(l=>l.model_year));
+  el.innerHTML=`<div class="pl-card" style="max-width:720px"><div class="pl-h">🔤 أحرف سنة الموديل <span class="pl-sub">— الجدول العالمى (الحرف رقم 10 فى الشاسيه)</span></div>
+    <div style="margin-bottom:12px">${plYearWidget()}</div>
+    <div class="pl-sub" style="margin-bottom:8px">السنة اللى اتعمل بيها كتب حرفها بيتقفل. الحروف I و O و Q و U و Z والصفر مش بتستخدم عالمياً.</div>
+    <div class="pl-scroll" style="max-height:520px"><table class="pl-tbl"><thead><tr><th>السنة</th><th>الحرف</th><th></th></tr></thead><tbody>
+    ${(PL.boot.year_letters||[]).map(y=>`<tr style="${y.year===cur?'background:rgba(201,168,76,0.1)':''}"><td><b>${y.year}</b></td>
+      <td>${ed&&!used.has(y.year)?`<input class="pl-inp pl-mono" style="width:60px;text-align:center" maxlength="1" value="${plEsc(y.letter)}" onchange="plYearSave(${y.year},this.value)">`:`<b class="pl-mono" style="font-size:16px">${plEsc(y.letter)}</b>`}</td>
+      <td>${y.year===cur?'<span class="pl-chip code">⭐ السنة الحالية</span>':''}${used.has(y.year)?' <span class="pl-chip can">🔒 عليها كتب</span>':''}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${ed?`<div class="pl-row" style="margin-top:10px"><input id="pl-y-year" class="pl-inp" type="number" style="width:110px" placeholder="سنة"><input id="pl-y-letter" class="pl-inp pl-mono" style="width:70px" maxlength="1" placeholder="حرف">
+      <button class="pl-btn ghost" onclick="plYearSave(Number(document.getElementById('pl-y-year').value),document.getElementById('pl-y-letter').value)">➕ أضف سنة</button></div>`:''}
+  </div>`;
+}
+async function plYearSave(y,l){
+  try{ await plCall('pl_year_letter_save',{p_year:y,p_letter:l}); plToast('✅ اتحفظ'); await plLoad(true); }catch(e){ plToast(plErr(e),false); await plLoad(true); }
+}
+
+// ════════════════ 📜 الكتب القديمة (أرشيف للبحث والرفض بس) ════════════════
+async function plRenderLegacy(){
+  const el=document.getElementById('pl-pane-legacy'); if(!el) return;
+  if(!PL.legacy){ el.innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
+    try{ PL.legacy=await plCall('pl_legacy_list'); }catch(e){ el.innerHTML=`<div class="pl-card" style="color:var(--error)">❌ ${plEsc(plErr(e))}</div>`; return; } }
+  const q=(PL.legQ||'').trim(), onlyIss=!!PL.legIss;
+  const rows=PL.legacy.filter(g=>(!onlyIss||g.issue)&&(!q||[g.source,g.doc_no,g.vtype,g.cc,g.extra,g.approval_no].join(' ').includes(q)));
+  const iss=PL.legacy.filter(g=>g.issue).length, tot=PL.legacy.reduce((a,g)=>a+Number(g.qty||0),0);
+  el.innerHTML=`<div class="pl-card"><div class="pl-h">📜 الكتب القديمة <span class="pl-sub">— شيت «الكتاب الدورى 2027» + كتابين 1686/1687 من البرنامج القديم. للبحث والمنع بس: أى رقم جديد يقع جوه أى مدى هنا بيترفض أوتوماتيك.</span></div>
+    <div class="pl-kpis"><div class="pl-kpi gold"><div class="v">${PL.legacy.length}</div><div class="l">📄 سطر قديم</div></div>
+      <div class="pl-kpi"><div class="v">${plN(tot)}</div><div class="l">🔢 رقم محجوز</div></div>
+      <div class="pl-kpi red"><div class="v">${iss}</div><div class="l">⚠️ فيه مشكلة (تداخل / عدد غلط)</div></div></div>
+    <div class="pl-row" style="margin-bottom:10px"><input class="pl-inp" style="width:260px" placeholder="فلتر: شيت / مستند / مستلم / سعة" value="${plEsc(PL.legQ||'')}" oninput="PL.legQ=this.value;PL.legFocus=1;plRenderLegacy()">
+      <label class="pl-row" style="gap:6px;cursor:pointer"><input type="checkbox" class="pl-combo" ${onlyIss?'checked':''} onchange="PL.legIss=this.checked;plRenderLegacy()"> المشاكل بس</label></div>
+    <div class="pl-scroll"><table class="pl-tbl"><thead><tr><th>الشيت</th><th>المستند</th><th>كود الكتاب</th><th>النوع</th><th>السعة</th><th>من</th><th>إلى</th><th>العدد</th><th>الاعتماد</th><th>البيانات</th><th>ملاحظة</th></tr></thead><tbody>
+    ${rows.map(g=>`<tr class="${g.issue?'pl-st-dev':''}"><td>${plEsc(g.source)}</td><td><b>${plEsc(g.doc_no||'')}</b></td><td>${plEsc(g.book_code||'')}</td>
+      <td>${plEsc(g.vtype||'')}${g.kind==='ماتور'?' <span class="pl-chip code">ماتور</span>':''}</td><td>${plEsc(g.cc||'')}</td>
+      <td class="pl-mono">${g.num_from}</td><td class="pl-mono">${g.num_to}</td><td>${plN(g.qty)}</td><td>${plEsc(g.approval_no||'')}</td>
+      <td class="pl-sub" style="min-width:180px">${plEsc(g.extra||'')}</td><td style="color:#f0c75e;font-size:12px;min-width:200px">${plEsc(g.issue||'')}</td></tr>`).join('')}
+    </tbody></table></div></div>`;
+  const inp=el.querySelector('input.pl-inp'); if(inp&&PL.legFocus){ PL.legFocus=0; inp.focus(); inp.setSelectionRange(q.length,q.length); }
+}
+
+// ════════════════ ⚙️ قواعد الكتب ════════════════
+function plRenderRules(){
+  const el=document.getElementById('pl-pane-rules'); if(!el) return;
+  const s=PL.boot.settings, ed=plCanEdit(), combos=s.combos||[];
+  const has=(a,b)=>combos.some(c=>(c[0]===a&&c[1]===b)||(c[0]===b&&c[1]===a));
+  let pairs=''; for(let i=0;i<PL_VTYPES.length;i++) for(let j=i+1;j<PL_VTYPES.length;j++){
+    const a=PL_VTYPES[i], b=PL_VTYPES[j];
+    pairs+=`<label class="pl-row" style="gap:6px;background:var(--dark3);border:1px solid var(--border);border-radius:9px;padding:7px 12px;cursor:pointer">
+      <input type="checkbox" class="pl-combo" data-a="${a}" data-b="${b}" ${has(a,b)?'checked':''} ${ed?'':'disabled'}> ${a} + ${b}</label>`; }
+  el.innerHTML=`<div class="pl-card" style="max-width:820px"><div class="pl-h">⚙️ قواعد الكتب</div>
+    <div class="pl-h" style="font-size:14px">🧩 الأنواع اللى ينفع تتجمع فى كتاب واحد</div>
+    <div class="pl-sub" style="margin-bottom:8px">الأصل: كل نوع (موتسيكل / سكوتر / تروسكل / كهرباء / باجي) كتاب لوحده. علّم بس على اللى عاوز تسمح بتجميعه. شركات كتير من نفس النوع فى كتاب واحد مسموح دايماً.</div>
+    <div class="pl-row" style="margin-bottom:16px">${pairs}</div>
+    <div class="pl-h" style="font-size:14px">⏰ تنبيه الكتب اللى فى التنمية</div>
+    <div class="pl-row" style="margin-bottom:6px"><span class="pl-sub">لو الكتاب فضل فى التنمية أكتر من</span>
+      <input id="pl-s-days" class="pl-inp" type="number" min="1" style="width:80px" value="${s.alert_days}" ${ed?'':'disabled'}><span class="pl-sub">يوم — يجيلك تنبيه كل يوم الساعة 9 الصبح على تليجرام لحد ما تسجّل استلامه.</span></div>
+    <div class="pl-row" style="margin-bottom:16px"><span class="pl-sub">رقم تليجرام اللى يوصله التنبيه:</span>
+      <input id="pl-s-tg" class="pl-inp pl-mono" style="width:240px" value="${plEsc(s.alert_tg)}" ${ed?'':'disabled'}><span class="pl-sub">(لو أكتر من واحد افصل بفاصلة)</span></div>
+    <div class="pl-h" style="font-size:14px">🔢 رقم المستند</div>
+    <div class="pl-row" style="margin-bottom:16px"><span class="pl-sub">أول رقم مستند:</span>
+      <input id="pl-s-doc" class="pl-inp" type="number" min="1" style="width:120px" value="${s.doc_start}" ${ed?'':'disabled'}>
+      <span class="pl-sub">المستند الجاى هيبقى <b>${s.next_doc}</b> (أوتوماتيك — دايماً بعد آخر رقم)</span></div>
+    ${ed?`<button class="pl-btn" onclick="plRulesSave()">💾 حفظ القواعد</button>`:''}
+  </div>`;
+}
+async function plRulesSave(){
+  const combos=[...document.querySelectorAll('.pl-combo')].filter(c=>c.checked).map(c=>[c.dataset.a,c.dataset.b]);
+  try{ await plCall('pl_settings_save',{p:{combos, alert_days:Number(document.getElementById('pl-s-days').value), alert_tg:document.getElementById('pl-s-tg').value, doc_start:Number(document.getElementById('pl-s-doc').value)}});
+    plToast('✅ القواعد اتحفظت'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+}
+</script>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// 💰 عروض الأسعار — إنشاء / حفظ / طباعة / أرشيف
+// صلاحيات شاشة «quotes»: view دخول — edit إضافة وتعديل — del حذف — print طباعة
+// ════════════════════════════════════════════════════════════════
+const QT = { boot:null, list:[], loaded:false, tab:'list', q:'', showDel:false, draft:null };
+const QT_TABS = ['list','edit','types','banks','settings'];
+
+function qtEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function qtMoney(n){ const v=Number(n||0); return v.toLocaleString('en-US',{minimumFractionDigits:(v%1?2:0),maximumFractionDigits:2}); }
+function qtToday(){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+function qtDateAr(d){ if(!d) return ''; const [y,m,dd]=String(d).slice(0,10).split('-'); return `${Number(dd)} / ${Number(m)} / ${y}`; }
+function qtCan(a){ try{ return typeof can!=='function' || can('quotes',a); }catch(e){ return true; } }
+function qtErr(e){ return String((e&&e.message)||e||'خطأ').replace(/^.*?ERROR:\s*/,''); }
+function qtToast(msg, ok){ const d=document.createElement('div'); d.className='qt-toast '+(ok===false?'err':'ok'); d.textContent=msg; document.body.appendChild(d); setTimeout(()=>{try{d.remove();}catch(e){}}, ok===false?5000:2600); }
+async function qtCall(fn,args){ return rpcSecure(fn, args||{}); }
+
+// ── 🔤 التفقيط (الرقم بالحروف)
+function qtWords(num){
+  const ones=['','واحد','اثنان','ثلاثة','أربعة','خمسة','ستة','سبعة','ثمانية','تسعة','عشرة','أحد عشر','اثنا عشر','ثلاثة عشر','أربعة عشر','خمسة عشر','ستة عشر','سبعة عشر','ثمانية عشر','تسعة عشر'];
+  const tens=['','','عشرون','ثلاثون','أربعون','خمسون','ستون','سبعون','ثمانون','تسعون'];
+  const hund=['','مائة','مائتان','ثلاثمائة','أربعمائة','خمسمائة','ستمائة','سبعمائة','ثمانمائة','تسعمائة'];
+  const u1000=n=>{ const h=Math.floor(n/100), r=n%100, p=[]; if(h) p.push(hund[h]);
+    if(r){ if(r<20) p.push(ones[r]); else { const o=r%10, t=Math.floor(r/10); p.push(o?`${ones[o]} و${tens[t]}`:tens[t]); } }
+    return p.join(' و'); };
+  const scale=(n,one,two,few,many)=>{ if(n===1) return one; if(n===2) return two; if(n>=3&&n<=10) return `${u1000(n)} ${few}`; return `${u1000(n)} ${many}`; };
+  let v=Math.floor(Math.abs(Number(num)||0));
+  if(v===0) return 'صفر';
+  const parts=[]; const b=Math.floor(v/1e9); v%=1e9; const m=Math.floor(v/1e6); v%=1e6; const k=Math.floor(v/1000); const r=v%1000;
+  if(b) parts.push(scale(b,'مليار','ملياران','مليارات','مليار'));
+  if(m) parts.push(scale(m,'مليون','مليونان','ملايين','مليون'));
+  if(k) parts.push(scale(k,'ألف','ألفان','آلاف','ألف'));
+  if(r) parts.push(u1000(r));
+  return parts.join(' و');
+}
+function qtWordsEGP(n){ const a=Math.abs(Number(n)||0), le=Math.floor(a), pt=Math.round((a-le)*100);
+  return `${qtWords(le)} جنيهاً مصرياً${pt?` و${qtWords(pt)} قرشاً`:''} فقط لا غير`; }
+
+// ── التبويبات
+function qtTab(which){
+  QT.tab=which;
+  QT_TABS.forEach(t=>{ const p=document.getElementById('qt-pane-'+t); if(p) p.style.display=(t===which?'block':'none');
+    const b=document.getElementById('qt-tab-'+t); if(b) b.classList.toggle('active', t===which); });
+  if(which==='edit' && !QT.draft) QT.draft=qtBlankDraft();
+  qtRender();
+}
+async function qtLoad(force){
+  const nb=document.getElementById('qt-new-btn'); if(nb) nb.style.display=qtCan('edit')?'':'none';
+  const te=document.getElementById('qt-tab-edit'); if(te) te.style.display=qtCan('edit')?'':'none';
+  try{
+    if(force || !QT.loaded){
+      const [boot,list]=await Promise.all([qtCall('q_bootstrap'), qtCall('q_list')]);
+      QT.boot=boot; QT.list=Array.isArray(list)?list:[]; QT.loaded=true;
+    }
+    qtRender();
+  }catch(e){
+    const p=document.getElementById('qt-pane-'+QT.tab); if(p) p.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${qtEsc(qtErr(e))}</div>`;
+  }
+}
+function qtRender(){
+  if(!QT.boot) return;
+  const c=document.getElementById('qt-count'); if(c) c.textContent=QT.list.filter(x=>!x.is_deleted).length;
+  ({list:qtRenderList,edit:qtRenderEdit,types:qtRenderTypes,banks:qtRenderBanks,settings:qtRenderSettings}[QT.tab]||(()=>{}))();
+}
+
+// ════════════════ 🖨️ ورقة العرض (نفس شكل ورقة الشركة) ════════════════
+function qtSheetHtml(q){
+  const S=QT.boot.settings, rate=Number(q.tax_rate!=null?q.tax_rate:S.tax_rate);
+  const items=q.items||[], single=items.length===1;
+  const rows=items.map((it,i)=>{
+    const lines=String(it.description||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    const desc=lines.map((l,j)=>j===0?`<div class="d0">${qtEsc(l)}</div>`:`<div>- ${qtEsc(l)}</div>`).join('');
+    return `<tr><td class="c-m">${single?'*':i+1}</td><td class="c-d">${desc}</td>
+      <td class="c-p"><div class="num">${qtMoney(it.unit_price)}</div><div class="wrd">${qtEsc(qtWordsEGP(it.unit_price))}</div></td>
+      <td class="c-q">${it.qty}</td>
+      <td class="c-t"><div class="num">${qtMoney(it.line_total)}</div>${(it.qty>1)?`<div class="wrd">${qtEsc(qtWordsEGP(it.line_total))}</div>`:''}</td></tr>`;
+  }).join('');
+  const totRows = q.tax_inclusive
+    ? `<tr class="tot"><td colspan="4">الإجمالى (شامل ضريبة القيمة المضافة <span class="ltr">${rate}%</span>)</td><td><div class="num">${qtMoney(q.total)}</div></td></tr>`
+    : `<tr class="tot"><td colspan="4">الإجمالى قبل الضريبة</td><td><div class="num">${qtMoney(q.subtotal)}</div></td></tr>
+       <tr class="tot"><td colspan="4">ضريبة القيمة المضافة <span class="ltr">${rate}%</span></td><td><div class="num">${qtMoney(q.tax_amount)}</div></td></tr>
+       <tr class="tot big"><td colspan="4">الإجمالى بعد الضريبة</td><td><div class="num">${qtMoney(q.total)}</div></td></tr>`;
+  const terms=[];
+  terms.push(q.tax_inclusive?`السعر شامل ضريبة القيمة المضافة <span class="ltr">${rate}%</span>.`:`السعر غير شامل ضريبة القيمة المضافة <span class="ltr">${rate}%</span>.`);
+  if(q.goods) terms.push(qtEsc(q.goods)+'.');
+  if(q.validity) terms.push(qtEsc(q.validity)+'.');
+  const bk=q.bank;
+  if(q.payment_mode!=='cash' && bk) terms.push(`الدفع / لحساب ${qtEsc(bk.holder)}<br>رقم الحساب / <b class="ltr">${qtEsc(bk.account_no)}</b><br>${qtEsc(bk.bank)}${bk.branch?' — '+qtEsc(bk.branch):''}`);
+  if(q.payment_mode!=='bank') terms.push(`الدفع نقداً أو بشيك مقبول الدفع باسم ${qtEsc(S.legal_name||S.company)}.`);
+  String(q.extra_terms||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>terms.push(qtEsc(x)));
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>عرض أسعار — ${qtEsc(q.customer)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Cairo:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+@page{size:A4;margin:10mm}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:#111;font-family:Cairo,Arial,sans-serif}
+body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:190mm;height:277mm;margin:0 auto;border:2.5px solid #111;outline:1px solid #111;outline-offset:2.5mm;padding:7mm 8mm;overflow:hidden}
+.inner{display:flex;flex-direction:column;min-height:100%}
+.hd{display:flex;align-items:center;gap:6mm;border-bottom:1.5px solid #111;padding-bottom:3mm}
+.hd .txt{flex:1;text-align:center}
+.hd .co{font-family:Amiri,serif;font-weight:700;font-size:25px;color:#2b2b2b;text-shadow:1px 1px 0 #9a9a9a,2px 2px 0 #c8c8c8}
+.hd .sub{font-family:Amiri,serif;font-weight:700;font-size:24px;color:#2b2b2b;text-shadow:1px 1px 0 #9a9a9a,2px 2px 0 #c8c8c8;margin-top:2px}
+.hd img{height:27mm;width:auto}
+.date{margin-top:5mm;font-size:15px}
+.title{text-align:center;margin:5mm 0 3mm}
+.title span{font-size:24px;font-weight:800;border-bottom:2px solid #111;padding:0 10mm 1px}
+.to{font-size:20px;font-weight:800;margin-bottom:5mm}
+.to span{border-bottom:2px solid #111;padding-bottom:1px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+tr{page-break-inside:avoid;break-inside:avoid}
+body.compact .c-d{line-height:1.5;font-size:12.5px}
+body.compact .num{font-size:20px}
+body.compact .wrd{font-size:12.5px}
+th,td{border:1.5px solid #111;padding:2.5mm 2mm;vertical-align:top}
+th{font-size:16px;font-weight:800;text-align:center;vertical-align:middle;background:#f2f2f2}
+.c-m{width:6%;text-align:center;font-size:18px}
+.c-d{width:36%;line-height:1.75}
+.c-d .d0{font-weight:800;font-size:15px}
+.c-p{width:22%;text-align:center}
+.c-q{width:10%;text-align:center;font-size:18px;font-weight:700}
+.c-t{width:26%;text-align:center}
+.num{font-size:24px;font-weight:800;letter-spacing:.5px;direction:ltr;unicode-bidi:isolate}
+.wrd{font-size:14.5px;font-weight:700;line-height:1.6;margin-top:1.5mm}
+tr.tot td{font-weight:800;font-size:15px;vertical-align:middle}
+tr.tot td:first-child{text-align:left;padding-left:4mm}
+tr.tot .num{font-size:19px}
+tr.big td{background:#f2f2f2}
+.totw{border:1.5px solid #111;border-top:none;padding:2mm 3mm;font-weight:800;font-size:15px;text-align:center}
+.terms{margin-top:5mm;font-size:15.5px;line-height:1.9}
+.terms div{margin-bottom:1.2mm}
+.ltr{direction:ltr;unicode-bidi:isolate;letter-spacing:.5px}
+.grow{flex:1}
+.ft{border-top:1.5px solid #111;margin-top:5mm;padding-top:3mm;text-align:center;font-size:15px;line-height:1.8}
+@media screen{body{background:#777;padding:8mm 0}.page{background:#fff;box-shadow:0 4px 24px rgba(0,0,0,.4);height:auto;min-height:277mm;overflow:visible}}
+</style><script>
+function qtFit(){ try{ const pg=document.querySelector('.page'), inn=document.querySelector('.inner'); inn.style.transform=''; inn.style.width=''; inn.style.minHeight='';
+  const cs=getComputedStyle(pg), avail=pg.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  if(pg.scrollHeight>pg.clientHeight+1 || inn.scrollHeight>avail+1){ let z=Math.max(0.5, avail/inn.scrollHeight);
+    for(let k=0;k<4;k++){ inn.style.width=(100/z).toFixed(3)+'%'; const h=inn.scrollHeight; const nz=Math.max(0.5, avail*0.99/h); if(Math.abs(nz-z)<0.003){ z=nz; break; } z=nz; }
+    inn.style.width=(100/z).toFixed(3)+'%'; inn.style.minHeight=(avail/z).toFixed(0)+'px'; inn.style.transformOrigin='top right'; inn.style.transform='scale('+z.toFixed(4)+')'; } }catch(e){} }
+window.addEventListener('load',()=>{ (document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(qtFit); });
+<\/script></head><body class="${(items.reduce((a,it)=>a+String(it.description||'').split('\n').filter(x=>x.trim()).length,0)>14)?'compact':''}"><div class="page"><div class="inner">
+  <div class="hd"><div class="txt"><div class="co">${qtEsc(S.company)}</div>${S.company_sub?`<div class="sub">${qtEsc(S.company_sub)}</div>`:''}</div>
+    ${S.logo_url?`<img src="${qtEsc(S.logo_url)}" alt="">`:''}</div>
+  <div class="date">تحرير &nbsp; ${qtDateAr(q.quote_date)}</div>
+  <div class="title"><span>عـــــرض أسعـــار</span></div>
+  <div class="to"><span>السادة / ${qtEsc(q.customer)}</span></div>
+  <table><thead><tr><th>م</th><th>الصنف</th><th>السعر<br>للوحدة</th><th>الكمية</th><th>الإجمالى</th></tr></thead>
+  <tbody>${rows}${(items.length>1||items.some(x=>x.qty>1)||!q.tax_inclusive)?totRows:''}</tbody></table>
+  ${(items.length>1||items.some(x=>x.qty>1)||!q.tax_inclusive)?`<div class="totw">فقط ${qtEsc(qtWordsEGP(q.total))}</div>`:''}
+  <div class="terms">${terms.map(t=>`<div>- ${t}</div>`).join('')}</div>
+  <div class="grow"></div>
+  <div class="ft">${S.footer1?`<div>${qtEsc(S.footer1)}</div>`:''}${S.footer2?`<div>${qtEsc(S.footer2)}</div>`:''}</div>
+</div></div></body></html>`;
+}
+function qtPrintHtml(html){
+  const f=document.createElement('iframe'); f.style.cssText='position:fixed;right:-9999px;bottom:0;width:1px;height:1px;border:0';
+  document.body.appendChild(f);
+  const d=f.contentWindow.document; d.open(); d.write(html); d.close();
+  const go=()=>{ try{ if(f.contentWindow.qtFit) f.contentWindow.qtFit(); f.contentWindow.focus(); f.contentWindow.print(); }catch(e){} setTimeout(()=>{ try{f.remove();}catch(e){} }, 60000); };
+  const imgs=[...d.images]; let left=imgs.length;
+  const ready=()=>{ (d.fonts&&d.fonts.ready?d.fonts.ready:Promise.resolve()).then(()=>setTimeout(go,350)); };
+  if(!left) setTimeout(ready,400); else imgs.forEach(im=>{ const done=()=>{ if(--left===0) ready(); }; if(im.complete) done(); else { im.onload=done; im.onerror=done; } });
+}
+async function qtPrint(id){
+  if(!qtCan('print')){ qtToast('معندكش صلاحية طباعة',false); return; }
+  try{ const q=await qtCall('q_mark_printed',{p_id:id}); const ix=QT.list.findIndex(x=>x.id===id); if(ix>=0) QT.list[ix]=q; qtPrintHtml(qtSheetHtml(q)); if(QT.tab==='list') qtRenderList(); }
+  catch(e){ qtToast(qtErr(e),false); }
+}
+function qtView(id){
+  const q=QT.list.find(x=>x.id===id); if(!q) return;
+  document.getElementById('qt-modal-title').textContent=`👁️ عرض سعر — ${q.customer}`;
+  document.getElementById('qt-modal-actions').innerHTML=(q.is_deleted?'':`${qtCan('print')?`<button class="qt-btn sm" onclick="qtPrint(${q.id})">🖨️ طباعة</button>`:''}
+    ${qtCan('edit')?`<button class="qt-btn ghost sm" onclick="qtCloseModal();qtEdit(${q.id})">✏️ تعديل</button>`:''}`);
+  document.getElementById('qt-modal').style.display='flex';
+  document.getElementById('qt-modal-frame').srcdoc=qtSheetHtml(q);
+}
+function qtCloseModal(){ document.getElementById('qt-modal').style.display='none'; document.getElementById('qt-modal-frame').srcdoc=''; }
+
+// ════════════════ 📄 العروض ════════════════
+function qtItemsLabel(q){ return (q.items||[]).map(i=>`${qtEsc(i.item_name)}${i.qty>1?` × ${i.qty}`:''}`).join('<br>'); }
+function qtRenderList(){
+  const el=document.getElementById('qt-pane-list'); if(!el) return;
+  const s=(QT.q||'').trim();
+  const rows=QT.list.filter(q=>(QT.showDel?q.is_deleted:!q.is_deleted) &&
+    (!s || [q.customer, q.quote_no, qtDateAr(q.quote_date), q.quote_date, ...(q.items||[]).map(i=>i.item_name)].join(' ').includes(s)));
+  const nDel=QT.list.filter(q=>q.is_deleted).length;
+  el.innerHTML=`<div class="qt-card" style="padding:12px">
+    <div class="qt-row" style="margin-bottom:10px">
+      <input class="qt-inp" style="width:280px" placeholder="🔍 العميل / الصنف / التاريخ / رقم العرض" value="${qtEsc(QT.q)}" oninput="QT.q=this.value;QT._f=1;qtRenderList()">
+      <label class="qt-radio"><input type="checkbox" ${QT.showDel?'checked':''} onchange="QT.showDel=this.checked;qtRenderList()"> 🗑️ الأرشيف (المحذوف) — ${nDel}</label>
+      <div style="flex:1"></div><span class="qt-sub">رقم العرض للحفظ والبحث بس — مش بيتطبع على الورقة</span>
+    </div>
+    ${!rows.length?`<div class="qt-sub" style="text-align:center;padding:30px">${QT.list.length?'مفيش عروض بالفلتر ده':'مفيش عروض لسه — اضغط «➕ عرض سعر جديد»'}</div>`:
+    `<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>التاريخ</th><th>السادة</th><th>الأصناف</th><th>الإجمالى</th><th>الضريبة</th><th>عمله</th><th>طُبع</th><th></th></tr></thead><tbody>
+    ${rows.map(q=>`<tr class="${q.is_deleted?'del':''}">
+      <td><b>${q.quote_no}</b></td><td style="white-space:nowrap">${qtDateAr(q.quote_date)}</td>
+      <td><b>${qtEsc(q.customer)}</b>${q.notes?`<div class="qt-sub">📝 ${qtEsc(q.notes)}</div>`:''}</td>
+      <td>${qtItemsLabel(q)}</td><td style="white-space:nowrap"><b>${qtMoney(q.total)}</b></td>
+      <td>${q.tax_inclusive?'<span class="qt-chip in">شامل</span>':'<span class="qt-chip ex">غير شامل</span>'}</td>
+      <td class="qt-sub">${qtEsc((q.created_by||{}).name||'')}${q.updated_by&&q.updated_at&&q.updated_at!==q.created_at&&(q.updated_by.name!==(q.created_by||{}).name)?`<br>عدّله: ${qtEsc(q.updated_by.name)}`:''}</td>
+      <td>${q.print_count?`<span class="qt-chip dim">${q.print_count} مرة</span>`:'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="act-btn edit" onclick="qtView(${q.id})">👁️ استعراض</button>
+        ${q.is_deleted
+          ? `<span class="qt-chip del" title="${qtEsc(q.delete_reason||'')}">متحذوف${q.deleted_by?' — '+qtEsc(q.deleted_by.name):''}</span> ${qtCan('del')?`<button class="act-btn toggle" onclick="qtArchive(${q.id},false)">↩️ رجّعه</button>`:''}`
+          : `${qtCan('edit')?`<button class="act-btn edit" onclick="qtEdit(${q.id})">✏️ تعديل</button>`:''}
+             ${qtCan('edit')?`<button class="act-btn edit" onclick="qtCopyFrom(${q.id})" title="عرض جديد بنفس البيانات">📑 نسخة</button>`:''}
+             ${qtCan('print')?`<button class="act-btn edit" onclick="qtPrint(${q.id})">🖨️ طباعة</button>`:''}
+             ${qtCan('del')?`<button class="act-btn delete" onclick="qtArchive(${q.id},true)">🗑️ حذف</button>`:''}`}
+      </td></tr>`).join('')}</tbody></table></div>`}
+  </div>`;
+  if(QT._f){ QT._f=0; const i=el.querySelector('input.qt-inp'); if(i){ i.focus(); i.setSelectionRange(i.value.length,i.value.length); } }
+}
+async function qtArchive(id, on){
+  const q=QT.list.find(x=>x.id===id); if(!q) return;
+  let reason=null;
+  if(on){ reason=prompt(`حذف عرض «${q.customer}»؟\nهيروح الأرشيف ورقمه مش هيتكرر — وتقدر ترجّعه.\nالسبب (اختيارى):`,''); if(reason===null) return; }
+  try{ const r=await qtCall('q_archive',{p_id:id,p_archive:on,p_reason:reason}); const ix=QT.list.findIndex(x=>x.id===id); if(ix>=0) QT.list[ix]=r; qtToast(on?'🗑️ اتحذف (فى الأرشيف)':'↩️ رجع'); qtRender(); }
+  catch(e){ qtToast(qtErr(e),false); }
+}
+
+// ════════════════ ➕ / ✏️ عرض ════════════════
+function qtBlankItem(){ const t=(QT.boot.types||[]).find(x=>x.active); return {type_id:t?t.id:'', item_name:'', description:'', unit_price:'', qty:1, _auto:true}; }
+function qtBlankDraft(){
+  const S=QT.boot.settings, b=(QT.boot.banks||[]).find(x=>x.active);
+  return { id:null, quote_date:qtToday(), customer:'', tax_inclusive:true, validity:S.validity||'', goods:S.goods||'',
+    payment_mode:b?'bank':'cash', bank_id:b?b.id:'', extra_terms:'', notes:'', items:[qtBlankItem()] };
+}
+function qtNew(){ if(!qtCan('edit')) return; QT.draft=qtBlankDraft(); qtTab('edit'); }
+function qtFromQuote(q, keepId){
+  return { id:keepId?q.id:null, quote_date:keepId?String(q.quote_date).slice(0,10):qtToday(), customer:q.customer, tax_inclusive:q.tax_inclusive,
+    validity:q.validity||'', goods:q.goods||'', payment_mode:q.payment_mode, bank_id:q.bank_id||'', extra_terms:q.extra_terms||'', notes:keepId?(q.notes||''):'',
+    items:(q.items||[]).map(i=>({type_id:i.type_id||'', item_name:i.item_name, description:i.description, unit_price:i.unit_price, qty:i.qty, _auto:false})) };
+}
+function qtEdit(id){ const q=QT.list.find(x=>x.id===id); if(!q) return; QT.draft=qtFromQuote(q,true); qtTab('edit'); }
+function qtCopyFrom(id){ const q=QT.list.find(x=>x.id===id); if(!q) return; QT.draft=qtFromQuote(q,false); qtTab('edit'); qtToast('📑 نسخة جديدة — غيّر اللى محتاجه واحفظ'); }
+function qtTpl(typeId, name){
+  const t=(QT.boot.types||[]).find(x=>String(x.id)===String(typeId)); if(!t) return '';
+  return String(t.template).split('{الاسم}').join(String(name||'').trim()||'……');
+}
+function qtCalc(d){
+  const rate=Number(QT.boot.settings.tax_rate||0);
+  const lines=d.items.map(i=>Math.round((Number(i.unit_price)||0)*(parseInt(i.qty)||0)*100)/100);
+  const sub=lines.reduce((a,b)=>a+b,0);
+  const tax=d.tax_inclusive?Math.round((sub-sub/(1+rate/100))*100)/100:Math.round(sub*rate)/100;
+  return {rate, lines, sub, tax, total:d.tax_inclusive?sub:sub+tax};
+}
+function qtSet(key,val){ QT.draft[key]=val; if(key==='payment_mode'||key==='tax_inclusive') qtRenderEdit(); else qtRefreshTotals(); }
+function qtItemSet(i,key,val){
+  const it=QT.draft.items[i]; it[key]=val;
+  if(key==='description'){ it._auto=false; return; }
+  if((key==='type_id'||key==='item_name') && it._auto){ it.description=qtTpl(it.type_id,it.item_name); const ta=document.getElementById('qt-desc-'+i); if(ta) ta.value=it.description; }
+  if(key==='type_id'){ qtRenderEdit(); return; }
+  qtRefreshTotals(i);
+}
+function qtItemResetDesc(i){ const it=QT.draft.items[i]; it._auto=true; it.description=qtTpl(it.type_id,it.item_name); qtRenderEdit(); }
+function qtRefreshTotals(i){
+  const d=QT.draft, c=qtCalc(d);
+  d.items.forEach((it,j)=>{ const w=document.getElementById('qt-w-'+j); if(w) w.textContent=(Number(it.unit_price)>0)?qtWordsEGP(Number(it.unit_price)):'';
+    const lt=document.getElementById('qt-lt-'+j); if(lt) lt.textContent=qtMoney(c.lines[j]); });
+  const t=document.getElementById('qt-totals'); if(t) t.innerHTML=qtTotalsHtml(d,c);
+}
+function qtTotalsHtml(d,c){
+  return d.tax_inclusive
+    ? `الإجمالى: <b>${qtMoney(c.total)}</b> ج — شامل ضريبة ${c.rate}% (منها ${qtMoney(c.tax)} ضريبة)<div class="qt-words">${c.total>0?qtEsc(qtWordsEGP(c.total)):''}</div>`
+    : `قبل الضريبة: <b>${qtMoney(c.sub)}</b> — ضريبة ${c.rate}%: <b>${qtMoney(c.tax)}</b> — بعد الضريبة: <b>${qtMoney(c.total)}</b> ج<div class="qt-words">${c.total>0?qtEsc(qtWordsEGP(c.total)):''}</div>`;
+}
+function qtRenderEdit(){
+  const el=document.getElementById('qt-pane-edit'); if(!el) return;
+  if(!qtCan('edit')){ el.innerHTML='<div class="qt-card qt-sub">معندكش صلاحية تعمل أو تعدّل عروض أسعار.</div>'; return; }
+  const d=QT.draft||(QT.draft=qtBlankDraft()), S=QT.boot.settings, c=qtCalc(d);
+  const types=(QT.boot.types||[]).filter(t=>t.active||d.items.some(i=>String(i.type_id)===String(t.id)));
+  const banks=(QT.boot.banks||[]).filter(b=>b.active||String(b.id)===String(d.bank_id));
+  const custs=[...new Set(QT.list.map(q=>q.customer))].slice(0,300);
+  const tb=document.getElementById('qt-tab-edit'); if(tb) tb.textContent=d.id?'✏️ تعديل عرض':'➕ عرض جديد';
+  el.innerHTML=`<div class="qt-card">
+    <div class="qt-h">${d.id?`✏️ تعديل عرض رقم ${QT.list.find(x=>x.id===d.id)?.quote_no||''}`:'➕ عرض سعر جديد'}</div>
+    <div class="qt-row" style="align-items:flex-end">
+      <div class="qt-fld" style="flex:2;min-width:240px"><label>السادة /</label><input class="qt-inp" list="qt-custs" value="${qtEsc(d.customer)}" placeholder="اسم الشركة أو العميل" oninput="qtSet('customer',this.value)"><datalist id="qt-custs">${custs.map(x=>`<option value="${qtEsc(x)}">`).join('')}</datalist></div>
+      <div class="qt-fld"><label>تاريخ التحرير</label><input class="qt-inp" type="date" value="${qtEsc(d.quote_date)}" onchange="qtSet('quote_date',this.value)"></div>
+    </div>
+  </div>
+  <div class="qt-card"><div class="qt-h">🏍️ الأصناف</div>
+    ${d.items.map((it,i)=>`<div class="qt-item">
+      <div class="qt-item-hd">صنف ${i+1}<div style="flex:1"></div>${d.items.length>1?`<button class="qt-btn red sm" onclick="QT.draft.items.splice(${i},1);qtRenderEdit()">✖ شيل الصنف</button>`:''}</div>
+      <div class="qt-row" style="align-items:flex-end;margin-bottom:8px">
+        <div class="qt-fld"><label>النوع (شرح الصنف)</label><select class="qt-inp" onchange="qtItemSet(${i},'type_id',this.value)"><option value="">— من غير قالب —</option>
+          ${types.map(t=>`<option value="${t.id}" ${String(it.type_id)===String(t.id)?'selected':''}>${qtEsc(t.name)}</option>`).join('')}</select></div>
+        <div class="qt-fld" style="flex:2;min-width:220px"><label>اسم الصنف</label><input class="qt-inp" value="${qtEsc(it.item_name)}" placeholder="مثلاً: هوجان 4 — أو: حوا – سكانيا – 200CC" oninput="qtItemSet(${i},'item_name',this.value)"></div>
+        <div class="qt-fld"><label>السعر للوحدة (ج)</label><input class="qt-inp" type="number" min="0" step="0.01" style="width:150px" value="${qtEsc(it.unit_price)}" oninput="qtItemSet(${i},'unit_price',this.value)"></div>
+        <div class="qt-fld"><label>الكمية</label><input class="qt-inp" type="number" min="1" style="width:90px" value="${qtEsc(it.qty)}" oninput="qtItemSet(${i},'qty',this.value)"></div>
+        <div class="qt-fld"><label>الإجمالى</label><div class="qt-inp" style="min-width:120px;background:transparent" id="qt-lt-${i}">${qtMoney(c.lines[i])}</div></div>
+      </div>
+      <div class="qt-words" id="qt-w-${i}">${Number(it.unit_price)>0?qtEsc(qtWordsEGP(Number(it.unit_price))):''}</div>
+      <div class="qt-fld" style="margin-top:8px"><label>الشرح اللى بيتطبع (أول سطر عنوان، وكل سطر بعده بيتطبع بشَرطة) ${it.type_id?`— <a href="javascript:void(0)" style="color:var(--gold)" onclick="qtItemResetDesc(${i})">↺ رجّعه من القالب</a>`:''}</label>
+        <textarea class="qt-inp" id="qt-desc-${i}" rows="7" oninput="qtItemSet(${i},'description',this.value)">${qtEsc(it.description)}</textarea></div>
+    </div>`).join('')}
+    <button class="qt-btn ghost" onclick="QT.draft.items.push(qtBlankItem());qtRenderEdit()">➕ صنف تانى فى نفس العرض</button>
+  </div>
+  <div class="qt-card"><div class="qt-h">📋 الشروط</div>
+    <div class="qt-row" style="margin-bottom:12px">
+      <label class="qt-check"><input type="checkbox" ${d.tax_inclusive?'checked':''} onchange="qtSet('tax_inclusive',this.checked)"> السعر شامل ضريبة القيمة المضافة ${c.rate}%</label>
+      <span class="qt-sub">${d.tax_inclusive?'هيتكتب: «السعر شامل ضريبة القيمة المضافة»':'هيتكتب: «السعر غير شامل…» وتتحسب الضريبة والإجمالى بعدها'}</span>
+    </div>
+    <div class="qt-row" style="margin-bottom:12px">
+      <div class="qt-fld" style="flex:1;min-width:220px"><label>البضاعة</label><input class="qt-inp" value="${qtEsc(d.goods)}" oninput="qtSet('goods',this.value)"></div>
+      <div class="qt-fld" style="flex:1;min-width:220px"><label>مدة سريان العرض</label><input class="qt-inp" value="${qtEsc(d.validity)}" oninput="qtSet('validity',this.value)"></div>
+    </div>
+    <div class="qt-fld" style="margin-bottom:12px"><label>طريقة الدفع</label>
+      <div class="qt-row">
+        ${[['bank','🏦 تحويل لحساب'],['cash','💵 نقداً أو بشيك'],['both','الاتنين']].map(o=>`<label class="qt-radio"><input type="radio" name="qt-pm" ${d.payment_mode===o[0]?'checked':''} onchange="qtSet('payment_mode','${o[0]}')"> ${o[1]}</label>`).join('')}
+        ${d.payment_mode!=='cash'?`<select class="qt-inp" style="min-width:300px" onchange="qtSet('bank_id',this.value)"><option value="">— اختار الحساب —</option>
+          ${banks.map(b=>`<option value="${b.id}" ${String(d.bank_id)===String(b.id)?'selected':''}>${qtEsc(b.bank)}${b.branch?' — '+qtEsc(b.branch):''} — ${qtEsc(b.account_no)}</option>`).join('')}</select>`:''}
+      </div></div>
+    <div class="qt-row">
+      <div class="qt-fld" style="flex:1;min-width:240px"><label>شروط إضافية (بتتطبع — كل سطر شرط)</label><textarea class="qt-inp" rows="2" oninput="qtSet('extra_terms',this.value)">${qtEsc(d.extra_terms)}</textarea></div>
+      <div class="qt-fld" style="flex:1;min-width:240px"><label>ملاحظات داخلية (مش بتتطبع)</label><textarea class="qt-inp" rows="2" oninput="qtSet('notes',this.value)">${qtEsc(d.notes)}</textarea></div>
+    </div>
+  </div>
+  <div class="qt-card" style="border-color:rgba(201,168,76,0.5)">
+    <div class="qt-tot" id="qt-totals">${qtTotalsHtml(d,c)}</div>
+    <div class="qt-row" style="margin-top:12px">
+      <button class="qt-btn" onclick="qtSave(false)">💾 حفظ</button>
+      ${qtCan('print')?`<button class="qt-btn" onclick="qtSave(true)">💾 حفظ وطباعة</button>`:''}
+      <button class="qt-btn ghost" onclick="qtPreview()">👁️ معاينة الورقة</button>
+      ${d.id?`<button class="qt-btn ghost" onclick="QT.draft=null;qtTab('list')">إلغاء التعديل</button>`:''}
+      <span class="qt-sub">رقم العرض بيتعمل لوحده ومش بيتطبع</span>
+    </div>
+    <div id="qt-prev-box" style="display:none;margin-top:12px"><iframe id="qt-prev" class="qt-prev"></iframe></div>
+  </div>`;
+}
+function qtDraftAsQuote(){
+  const d=QT.draft, c=qtCalc(d), S=QT.boot.settings, b=(QT.boot.banks||[]).find(x=>String(x.id)===String(d.bank_id));
+  return { quote_date:d.quote_date, customer:d.customer||'……', tax_inclusive:d.tax_inclusive, tax_rate:c.rate, validity:d.validity, goods:d.goods,
+    payment_mode:d.payment_mode, bank:b?{holder:b.holder,account_no:b.account_no,bank:b.bank,branch:b.branch}:null, extra_terms:d.extra_terms,
+    items:d.items.map((i,j)=>({item_name:i.item_name, description:i.description, unit_price:Number(i.unit_price)||0, qty:parseInt(i.qty)||0, line_total:c.lines[j]})),
+    subtotal:c.sub, tax_amount:c.tax, total:c.total };
+}
+function qtPreview(){
+  const box=document.getElementById('qt-prev-box'), f=document.getElementById('qt-prev'); if(!box||!f) return;
+  box.style.display='block'; f.srcdoc=qtSheetHtml(qtDraftAsQuote()); box.scrollIntoView({behavior:'smooth',block:'start'});
+}
+async function qtSave(andPrint){
+  const d=QT.draft; if(!d) return;
+  const p={ id:d.id, quote_date:d.quote_date, customer:d.customer, tax_inclusive:d.tax_inclusive, validity:d.validity, goods:d.goods,
+    payment_mode:d.payment_mode, bank_id:d.payment_mode==='cash'?null:(d.bank_id||null), extra_terms:d.extra_terms, notes:d.notes,
+    items:d.items.map(i=>({type_id:i.type_id||null, item_name:i.item_name, description:i.description, unit_price:i.unit_price, qty:i.qty})) };
+  try{
+    const q=await qtCall('q_save',{p});
+    const ix=QT.list.findIndex(x=>x.id===q.id); if(ix>=0) QT.list[ix]=q; else QT.list.unshift(q);
+    QT.list.sort((a,b)=>b.quote_no-a.quote_no);
+    qtToast(d.id?'✅ العرض اتعدّل':`✅ العرض اتحفظ (رقم ${q.quote_no})`);
+    QT.draft=null; qtTab('list');
+    if(andPrint) qtPrint(q.id);
+  }catch(e){ qtToast(qtErr(e),false); }
+}
+
+// ════════════════ 📝 شرح الأصناف ════════════════
+function qtRenderTypes(){
+  const el=document.getElementById('qt-pane-types'); if(!el) return;
+  const ed=qtCan('edit'), ts=QT.boot.types||[];
+  el.innerHTML=`<div class="qt-card"><div class="qt-h">📝 شرح الأصناف <span class="qt-sub">— القالب الثابت لكل نوع. اكتب <b style="color:var(--gold)">{الاسم}</b> مكان اسم الصنف، وده الحاجة الوحيدة اللى بتتغير. أول سطر بيتطبع عنوان، والباقى كل سطر بشَرطة.</span></div>
+    ${ts.map(t=>`<div class="qt-item" style="${t.active?'':'opacity:.6'}">
+      <div class="qt-row" style="margin-bottom:8px"><input class="qt-inp" id="qt-tn-${t.id}" value="${qtEsc(t.name)}" style="width:200px" ${ed?'':'disabled'}>
+        ${t.active?'<span class="qt-chip in">شغال</span>':'<span class="qt-chip dim">متوقف</span>'}<div style="flex:1"></div>
+        ${ed?`<button class="qt-btn sm" onclick="qtTypeSave(${t.id})">💾 حفظ</button><button class="qt-btn ${t.active?'red':'ghost'} sm" onclick="qtTypeSave(${t.id},${!t.active})">${t.active?'⏸️ وقّف':'▶️ شغّل'}</button>`:''}</div>
+      <textarea class="qt-inp" id="qt-tt-${t.id}" rows="8" style="width:100%" ${ed?'':'disabled'}>${qtEsc(t.template)}</textarea></div>`).join('')}
+    ${ed?`<div class="qt-item"><div class="qt-h" style="font-size:14px">➕ نوع جديد</div>
+      <input class="qt-inp" id="qt-tn-new" placeholder="اسم النوع (مثلاً: موتوسيكل مرفوع)" style="width:260px;margin-bottom:8px">
+      <textarea class="qt-inp" id="qt-tt-new" rows="6" style="width:100%" placeholder="موتوسيكل {الاسم}&#10;منشأ صينى كامل&#10;..."></textarea>
+      <button class="qt-btn" style="margin-top:8px" onclick="qtTypeSave(null)">➕ أضف</button></div>`:''}
+  </div>`;
+}
+async function qtTypeSave(id, active){
+  const k=id==null?'new':id, t=(QT.boot.types||[]).find(x=>x.id===id);
+  try{ await qtCall('q_type_save',{p_id:id, p_name:document.getElementById('qt-tn-'+k).value, p_template:document.getElementById('qt-tt-'+k).value,
+      p_active: active!=null?active:(t?t.active:true), p_sort: t?t.sort:null});
+    qtToast('✅ اتحفظ'); await qtLoad(true); }catch(e){ qtToast(qtErr(e),false); }
+}
+
+// ════════════════ 🏦 الحسابات والبنوك ════════════════
+function qtRenderBanks(){
+  const el=document.getElementById('qt-pane-banks'); if(!el) return;
+  const ed=qtCan('edit'), bs=QT.boot.banks||[];
+  const row=(b,k)=>`<tr style="${b&&!b.active?'opacity:.6':''}">
+    <td><input class="qt-inp" id="qt-bh-${k}" style="width:280px" value="${qtEsc(b?b.holder:(QT.boot.settings.legal_name||''))}" ${ed?'':'disabled'}></td>
+    <td><input class="qt-inp" id="qt-ba-${k}" style="width:190px;direction:ltr" value="${qtEsc(b?b.account_no:'')}" ${ed?'':'disabled'}></td>
+    <td><input class="qt-inp" id="qt-bb-${k}" style="width:150px" value="${qtEsc(b?b.bank:'')}" placeholder="بنك القاهرة" ${ed?'':'disabled'}></td>
+    <td><input class="qt-inp" id="qt-br-${k}" style="width:150px" value="${qtEsc(b?(b.branch||''):'')}" placeholder="فرع السبتية" ${ed?'':'disabled'}></td>
+    <td>${b?(b.active?'<span class="qt-chip in">شغال</span>':'<span class="qt-chip dim">متوقف</span>'):''}</td>
+    <td style="white-space:nowrap">${ed?(b?`<button class="qt-btn sm" onclick="qtBankSave(${b.id})">💾</button> <button class="qt-btn ${b.active?'red':'ghost'} sm" onclick="qtBankSave(${b.id},${!b.active})">${b.active?'⏸️':'▶️'}</button>`:`<button class="qt-btn sm" onclick="qtBankSave(null)">➕ أضف</button>`):''}</td></tr>`;
+  el.innerHTML=`<div class="qt-card"><div class="qt-h">🏦 الحسابات والبنوك <span class="qt-sub">— بتختار منهم فى العرض، وبيتطبعوا فى سطر «الدفع / لحساب…»</span></div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>اسم صاحب الحساب</th><th>رقم الحساب</th><th>البنك</th><th>الفرع</th><th></th><th></th></tr></thead>
+    <tbody>${bs.map(b=>row(b,b.id)).join('')}${ed?row(null,'new'):''}</tbody></table></div>
+    <div class="qt-sub" style="margin-top:8px">العروض القديمة بتحتفظ ببيانات الحساب وقت ما اتعملت — لو عدّلت حساب هنا العرض القديم مش بيتغير.</div></div>`;
+}
+async function qtBankSave(id, active){
+  const k=id==null?'new':id, b=(QT.boot.banks||[]).find(x=>x.id===id), v=s=>document.getElementById(s+k).value;
+  try{ await qtCall('q_bank_save',{p_id:id,p_holder:v('qt-bh-'),p_account_no:v('qt-ba-'),p_bank:v('qt-bb-'),p_branch:v('qt-br-'),p_active:active!=null?active:(b?b.active:true),p_sort:b?b.sort:null});
+    qtToast('✅ اتحفظ'); await qtLoad(true); }catch(e){ qtToast(qtErr(e),false); }
+}
+
+// ════════════════ ⚙️ إعدادات العروض ════════════════
+function qtRenderSettings(){
+  const el=document.getElementById('qt-pane-settings'); if(!el) return;
+  const ed=qtCan('edit'), S=QT.boot.settings;
+  const f=(k,l,w)=>`<div class="qt-fld" style="flex:1;min-width:${w||220}px"><label>${l}</label><input class="qt-inp" id="qt-s-${k}" value="${qtEsc(S[k]||'')}" ${ed?'':'disabled'}></div>`;
+  el.innerHTML=`<div class="qt-card" style="max-width:900px"><div class="qt-h">⚙️ إعدادات العروض</div>
+    <div class="qt-row" style="margin-bottom:12px">${f('tax_rate','نسبة ضريبة القيمة المضافة %',140)}${f('goods','البضاعة (افتراضى)')}${f('validity','مدة سريان العرض (افتراضى)')}</div>
+    <div class="qt-h" style="font-size:14px">🧾 بيانات الورقة</div>
+    <div class="qt-row" style="margin-bottom:12px">${f('company','اسم الشركة (فوق)')}${f('company_sub','السطر التانى (حوا إخوان)')}</div>
+    <div class="qt-row" style="margin-bottom:12px">${f('legal_name','الاسم القانونى (فى سطر «بشيك باسم…» وصاحب الحساب)',320)}</div>
+    <div class="qt-row" style="margin-bottom:12px">${f('footer1','العنوان — السطر الأول',320)}${f('footer2','العنوان — السطر التانى',320)}</div>
+    <div class="qt-h" style="font-size:14px">🖼️ اللوجو</div>
+    <div class="qt-row" style="align-items:center;margin-bottom:12px">
+      <div style="background:#fff;border-radius:10px;padding:8px;width:150px;height:120px;display:flex;align-items:center;justify-content:center">${S.logo_url?`<img src="${qtEsc(S.logo_url)}" style="max-width:100%;max-height:100%">`:'<span style="color:#999">مفيش</span>'}</div>
+      ${ed?`<div class="qt-fld"><label>ارفع لوجو أحسن (PNG / SVG / JPG)</label><input type="file" id="qt-logo-file" accept="image/png,image/svg+xml,image/jpeg,image/webp" class="qt-inp"></div>
+      <button class="qt-btn ghost" onclick="qtLogoUpload()">⬆️ ارفع</button>`:''}
+      <span class="qt-sub">اللوجو الحالى اترسم من صورة الورقة — لو عندك ملف أصلى ارفعه هنا.</span>
+    </div>
+    ${ed?`<button class="qt-btn" onclick="qtSettingsSave()">💾 حفظ الإعدادات</button>`:''}
+  </div>`;
+}
+async function qtSettingsSave(extra){
+  const p={}; ['tax_rate','goods','validity','company','company_sub','legal_name','footer1','footer2'].forEach(k=>{ const e=document.getElementById('qt-s-'+k); if(e) p[k]=e.value; });
+  Object.assign(p, extra||{});
+  try{ QT.boot.settings=await qtCall('q_settings_save',{p}); qtToast('✅ الإعدادات اتحفظت'); qtRender(); }catch(e){ qtToast(qtErr(e),false); }
+}
+async function qtLogoUpload(){
+  const inp=document.getElementById('qt-logo-file'); const f=inp&&inp.files&&inp.files[0]; if(!f){ qtToast('اختار ملف اللوجو الأول',false); return; }
+  const ext=(f.name.split('.').pop()||'png').toLowerCase().replace(/[^a-z]/g,'')||'png';
+  const path=`branding/quotes/logo-${Date.now()}.${ext}`;
+  const r=await sbUploadX(path, f, f.type||'image/png');
+  if(!r.ok){ qtToast('الرفع فشل: '+(await r.text()).slice(0,120),false); return; }
+  await qtSettingsSave({logo_url:`${SB}/storage/v1/object/public/${path}`});
+}
+</script>
+
 
 <!-- 🆕 DIRTY MODAL (تعديلات غير محفوظة) -->
 <div class="dirty-modal-overlay" id="dirtyModalOverlay" onclick="if(event.target===this)cancelDirtyClose()">
