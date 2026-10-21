@@ -3852,9 +3852,10 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erPuLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="erp-pu-tab-po" onclick="erPuTab('po')">📑 الطلبيات <span class="bl-tab-count" id="erp-pu-c-po">0</span></button><button class="bl-tab" id="erp-pu-tab-ship" onclick="erPuTab('ship')">🚢 الشحنات وفواتير الشراء <span class="bl-tab-count" id="erp-pu-c-ship">0</span></button><button class="bl-tab" id="erp-pu-tab-rec" onclick="erPuTab('rec')">📥 الاستلامات</button><button class="bl-tab" id="erp-pu-tab-pret" onclick="erPuTab('pret')">↩️ مرتجع مشتريات</button><button class="bl-tab" id="erp-pu-tab-pay" onclick="erPuTab('pay')">💸 مدفوعات الموردين</button><button class="bl-tab" id="erp-pu-tab-stmt" onclick="erPuTab('stmt')">📒 كشف حساب مورد</button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erp-pu-tab-po" onclick="erPuTab('po')">📑 الطلبيات <span class="bl-tab-count" id="erp-pu-c-po">0</span></button><button class="bl-tab" id="erp-pu-tab-ship" onclick="erPuTab('ship')">🚢 الشحنات وفواتير الشراء <span class="bl-tab-count" id="erp-pu-c-ship">0</span></button><button class="bl-tab" id="erp-pu-tab-cost" onclick="erPuTab('cost')">💰 التكاليف <span class="bl-tab-count" id="erp-pu-c-cost">0</span></button><button class="bl-tab" id="erp-pu-tab-rec" onclick="erPuTab('rec')">📥 الاستلامات</button><button class="bl-tab" id="erp-pu-tab-pret" onclick="erPuTab('pret')">↩️ مرتجع مشتريات</button><button class="bl-tab" id="erp-pu-tab-pay" onclick="erPuTab('pay')">💸 مدفوعات الموردين</button><button class="bl-tab" id="erp-pu-tab-stmt" onclick="erPuTab('stmt')">📒 كشف حساب مورد</button></div>
       <div id="erp-pu-pane-po" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-ship" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erp-pu-pane-cost" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-rec" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-pret" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-pay" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -5389,6 +5390,27 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
     <div style="display:flex;gap:10px"><div class="fg" style="flex:1"><label>💰 رصيد افتتاحى مدين (عليه)</label><div class="iw"><span class="ic">➖</span><input type="number" min="0" step="0.01" id="ce-od" placeholder="0"></div></div>
       <div class="fg" style="flex:1"><label>💰 رصيد افتتاحى دائن (ليه)</label><div class="iw"><span class="ic">➕</span><input type="number" min="0" step="0.01" id="ce-oc" placeholder="0"></div></div></div>
     <div id="ce-bal-hint" style="font-size:12px;color:var(--text-dim);margin:-4px 0 10px"></div>
+    <style>#ce-acc input[type=checkbox]{width:18px!important;height:18px!important;min-width:18px;flex:none!important;margin:0!important;padding:0!important}#ce-acc label{white-space:nowrap;justify-content:flex-start}</style>
+    <div id="ce-acc" style="display:none;border:1px solid rgba(201,168,76,.35);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-weight:800;color:var(--gold);margin-bottom:8px">🏭 حساب التاجر (السيستم الجديد)</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div class="fg" style="flex:1;min-width:160px"><label>💲 فئة السعر</label><select id="ce-tier2"></select></div>
+        <div class="fg" style="flex:1;min-width:160px"><label>🧾 سعر الضريبة فى الجوابات</label><select id="ce-taxmode"><option value="">زى البرنامج</option><option value="invoice">من الفاتورة</option><option value="model">من النموذج (الشحنة)</option></select></div>
+        <div class="fg" style="flex:1;min-width:160px"><label>💳 حد الائتمان (فاضى = مفتوح)</label><div class="iw"><span class="ic">💳</span><input type="number" min="0" id="ce-climit" placeholder="مفتوح"></div></div>
+      </div>
+      <label style="display:flex;gap:8px;align-items:center;margin:4px 0 8px;font-weight:700"><input type="checkbox" id="ce-dist" onchange="clAccDistToggle()"> 🤝 موزع بالعمولة</label>
+      <div id="ce-dist-box" style="display:none;gap:10px;flex-wrap:wrap">
+        <div class="fg" style="flex:1;min-width:150px"><label>رقم التسجيل الضريبى *</label><div class="iw"><span class="ic">🧾</span><input type="text" id="ce-taxreg" dir="ltr"></div></div>
+        <div class="fg" style="flex:1;min-width:150px"><label>السجل التجارى</label><div class="iw"><span class="ic">📄</span><input type="text" id="ce-cr" dir="ltr"></div></div>
+        <div class="fg" style="flex:1;min-width:150px"><label>المأمورية</label><div class="iw"><span class="ic">🏛️</span><input type="text" id="ce-taxoffice"></div></div>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 8px;font-weight:700">
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ce-lock-d"> 🚫 قفل تعامل</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ce-lock-l"> 🚚 قفل تحميل</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="ce-lock-j"> ✉️ قفل جوابات</label>
+      </div>
+      <div class="fg"><label>سبب القفل</label><div class="iw"><span class="ic">📝</span><input type="text" id="ce-lockreason"></div></div>
+    </div>
     <div class="modal-btns">
       <button class="modal-save" onclick="saveClientEdit()">💾 حفظ التعديلات</button>
       <button class="modal-cancel" onclick="closeModal('clientEditModal')">إلغاء</button>
@@ -12358,6 +12380,30 @@ async function clSaveOpening(id, odId, ocId){ const od=clNum(document.getElement
 function clOpeningHint(id){ const el=document.getElementById('ce-bal-hint'); if(!el) return; const b=CL_BAL[id]; const v=b?Number(b.bal||0):0;
   el.innerHTML = v ? `الرصيد الختامى دلوقتى: <b style="color:${v>0?'#f0c75e':'#6dc49a'}">${clMoney(Math.abs(v))} ${v>0?'عليه':'له'}</b>` : 'الرصيد الختامى دلوقتى: <b>0</b>'; }
 
+// 🏭 حساب التاجر جوه تعديل العميل (نفس «حسابات التجار» فى السيستم الجديد)
+let CL_ACC = null, CL_ACC_ID = null;
+function clAccDistToggle(){ const b=document.getElementById('ce-dist-box'); if(b) b.style.display=document.getElementById('ce-dist').checked?'flex':'none'; }
+async function clAccFill(id){ const box=document.getElementById('ce-acc'); if(!box) return; CL_ACC=null; CL_ACC_ID=id;
+  if(typeof erCan!=='function' || !erCan('erp-traders','view')){ box.style.display='none'; return; }
+  try{ const [B, L]=await Promise.all([erBoot(false), rpcSecure('erp_trader_list',{})]); if(CL_ACC_ID!==id) return;
+    const t=(L||[]).find(x=>x.id===id); const a=(t&&t.acc)||{}; CL_ACC=a;
+    const tiers=(B.tiers||[]).filter(x=>x.is_active||String(x.id)===String(a.price_tier_id));
+    document.getElementById('ce-tier2').innerHTML=`<option value="">الافتراضية</option>`+tiers.map(x=>`<option value="${x.id}" ${String(x.id)===String(a.price_tier_id)?'selected':''}>${x.name}</option>`).join('');
+    document.getElementById('ce-taxmode').value=a.tax_mode||''; document.getElementById('ce-climit').value=a.credit_limit==null?'':Number(a.credit_limit);
+    document.getElementById('ce-dist').checked=!!a.is_commission_dist; document.getElementById('ce-taxreg').value=a.tax_reg_no||''; document.getElementById('ce-cr').value=a.commercial_reg||''; document.getElementById('ce-taxoffice').value=a.tax_office||'';
+    document.getElementById('ce-lock-d').checked=!!a.lock_dealing; document.getElementById('ce-lock-l').checked=!!a.lock_loading; document.getElementById('ce-lock-j').checked=!!a.lock_letters; document.getElementById('ce-lockreason').value=a.lock_reason||'';
+    clAccDistToggle(); const ro=!erCan('erp-traders','edit'); box.querySelectorAll('input,select').forEach(e=>e.disabled=ro); box.style.display='block';
+  }catch(e){ box.style.display='none'; CL_ACC=null; } }
+// بيحفظ الحساب كله (ومعاه الرصيد الافتتاحى) — ولو مفيش صلاحية «حسابات التجار» بيحفظ الافتتاحى بس
+async function clAccSave(id){ const od=clNum(document.getElementById('ce-od').value), oc=clNum(document.getElementById('ce-oc').value);
+  if(CL_ACC_ID!==id || CL_ACC===null || !erCan('erp-traders','edit')) return clSaveOpening(id,'ce-od','ce-oc');
+  const v=k=>document.getElementById(k).value.trim(), c=k=>document.getElementById(k).checked;
+  const p={ client_id:id, price_tier_id:v('ce-tier2')||null, tax_mode:v('ce-taxmode')||null, credit_limit:v('ce-climit')===''?null:clNum(v('ce-climit')),
+    is_commission_dist:c('ce-dist'), tax_reg_no:v('ce-taxreg'), commercial_reg:v('ce-cr'), tax_office:v('ce-taxoffice'),
+    lock_dealing:c('ce-lock-d'), lock_loading:c('ce-lock-l'), lock_letters:c('ce-lock-j'), lock_reason:v('ce-lockreason'), notes:CL_ACC.notes||null,
+    opening_balance:od>0?od:oc, opening_side:oc>0?'credit':'debit' };
+  await rpcSecure('erp_trader_save',{p}); }
+
 function openClientEdit(id){
   const c=allClients.find(x=>x.id===id);
   if(!c)return;
@@ -12375,7 +12421,7 @@ function openClientEdit(id){
   document.getElementById('ce-address').value=c.address||'';
   document.getElementById('ce-username').value=c.username||'';
   document.getElementById('ce-password').value='';
-  { const b=CL_BAL[id]||{}; document.getElementById('ce-od').value=Number(b.od||0)||''; document.getElementById('ce-oc').value=Number(b.oc||0)||''; clOpeningHint(id); }
+  { const b=CL_BAL[id]||{}; document.getElementById('ce-od').value=Number(b.od||0)||''; document.getElementById('ce-oc').value=Number(b.oc||0)||''; clOpeningHint(id); clAccFill(id); }
   document.getElementById('clientEditModal').classList.add('show');
 }
 
@@ -12394,13 +12440,14 @@ async function saveClientEdit(){
   if(!name||!phone||!username){alert('أدخل الاسم والتليفون واليوزر');return;}
   if(!religion){alert('من فضلك اختار الديانة');return;}
   if(!/^01[0-9]{9}$/.test(phone)){alert('رقم الهاتف غير صحيح — 11 رقم يبدأ بـ 01');return;}
-  { const od=clNum(document.getElementById('ce-od').value), oc=clNum(document.getElementById('ce-oc').value); if(isNaN(od)||isNaN(oc)||od<0||oc<0){alert('الرصيد الافتتاحى لازم رقم موجب');return;} if(od>0&&oc>0){alert('اكتب الرصيد الافتتاحى مدين أو دائن — مش الاتنين');return;} }
+  { const od=clNum(document.getElementById('ce-od').value), oc=clNum(document.getElementById('ce-oc').value); if(isNaN(od)||isNaN(oc)||od<0||oc<0){alert('الرصيد الافتتاحى لازم رقم موجب');return;} if(od>0&&oc>0){alert('اكتب الرصيد الافتتاحى مدين أو دائن — مش الاتنين');return;}
+    const ab=document.getElementById('ce-acc'); if(ab&&ab.style.display!=='none'&&document.getElementById('ce-dist').checked&&!document.getElementById('ce-taxreg').value.trim()){alert('الموزع بالعمولة لازم يتكتب رقم التسجيل الضريبى بتاعه');return;} }
   const body={name,company_code:code,phone,governorate:gov,city,address,username,client_type:clientType,tier_id:tierVal?parseInt(tierVal):null,religion};
   if(password)body.password=password;
   try{
     const res=await fetch(`${SB}/rest/v1/clients?id=eq.${editClientId}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
-    if(res.ok){ let balErr=''; try{ await clSaveOpening(editClientId,'ce-od','ce-oc'); }catch(e){ balErr=String((e&&e.message)||e).replace(/^.*?ERROR:\s*/,''); }
-      closeModal('clientEditModal');await loadClients();alert(balErr?'✅ اتحفظت البيانات — بس ❌ الرصيد الافتتاحى متحفظش: '+balErr:'✅ تم حفظ التعديلات');}
+    if(res.ok){ let balErr=''; try{ await clAccSave(editClientId); }catch(e){ balErr=String((e&&e.message)||e).replace(/^.*?ERROR:\s*/,''); }
+      closeModal('clientEditModal');await loadClients();alert(balErr?'✅ اتحفظت بيانات العميل — بس ❌ حساب التاجر / الرصيد الافتتاحى متحفظش: '+balErr:'✅ تم حفظ التعديلات');}
     else{const err=await res.json();alert(err.code==='23505'?'❌ اليوزر أو الكود مكرر':'❌ خطأ في الحفظ');}
   }catch(e){alert('❌ خطأ في الاتصال');}
 }
@@ -21281,10 +21328,25 @@ async function erPuLoad(force){
   try{ await erBoot(force); if(force||!ER.pu) ER.pu=await rpcSecure('erp_purch_list',{}); erPuTab(ER.tab.pu); }catch(e){ erPaneErr('erp-pu-pane-po',e); }
 }
 async function erPuReload(){ ER.pu=await rpcSecure('erp_purch_list',{}); erPuTab(ER.tab.pu); }
-function erPuTab(t){ ER.tab.pu=t; erTabs('erp-pu',['po','ship','rec','pret','pay','stmt'],t);
+function erPuTab(t){ ER.tab.pu=t; erTabs('erp-pu',['po','ship','cost','rec','pret','pay','stmt'],t);
+  { const ct=document.getElementById('erp-pu-tab-cost'); if(ct) ct.style.display=(ER.boot&&ER.boot.can_cost)?'':'none'; if(t==='cost'&&!(ER.boot&&ER.boot.can_cost)){ t='ship'; ER.tab.pu=t; erTabs('erp-pu',['po','ship','cost','rec','pret','pay','stmt'],t); } }
   const c=(id,n)=>{ const e=document.getElementById(id); if(e) e.textContent=n; };
   if(ER.pu){ c('erp-pu-c-po',ER.pu.pos.filter(x=>x.status==='مفتوحة').length); c('erp-pu-c-ship',ER.pu.ships.filter(x=>['فى الطريق','مستلمة جزئياً'].includes(x.status)).length); }
-  ({po:erRenderPos,ship:erRenderShips,rec:erRenderRecs,pret:erRenderPrets,pay:erRenderPays,stmt:erRenderStmt}[t])(); }
+  if(ER.pu){ c('erp-pu-c-cost',ER.pu.ships.filter(x=>x.status!=='ملغية'&&x.cost_status!=='معتمدة').length); }
+  ({po:erRenderPos,ship:erRenderShips,cost:erRenderCosts,rec:erRenderRecs,pret:erRenderPrets,pay:erRenderPays,stmt:erRenderStmt}[t])(); }
+// ════════ 💰 شاشة التكاليف: كل الشحنات وحالة تكاليفها (FOB/CIF + جمارك + ضرايب + هامش) — صلاحية erp-cost
+function erRenderCosts(){ const el=document.getElementById('erp-pu-pane-cost'); if(!el||!ER.pu) return; const f=ER.cf2=ER.cf2||{st:'open',q:''}; const q=f.q.trim().toLowerCase();
+  const rows=ER.pu.ships.filter(s=>s.status!=='ملغية'&&(f.st==='all'||(f.st==='open'?s.cost_status!=='معتمدة':s.cost_status==='معتمدة'))&&(!q||`${s.ship_no} ${s.ref_no||''} ${erSupName(s.supplier_id)}`.toLowerCase().includes(q)));
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" style="width:240px" placeholder="🔍 رقم الشحنة / المورد" value="${erEsc(f.q)}" oninput="ER.cf2.q=this.value;erRenderCosts()">
+    <select class="qt-inp" onchange="ER.cf2.st=this.value;erRenderCosts()">${[['open','لسه متعتمدتش'],['done','المعتمدة'],['all','الكل']].map(o=>`<option value="${o[0]}" ${f.st===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
+    <div class="qt-sub" style="flex:1">💰 التكاليف بتتحسب على كل شحنة: قيمة البضاعة + المصاريف (شحن/جمارك/ضرايب...) موزعة بالقيمة أو بالعدد + هامش الربح = السعر الأول. الاعتماد بيحدّث تكلفة الصنف.</div></div>
+  ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الشحنة</th><th>المورد</th><th>التاريخ</th><th>قيمة البضاعة</th><th>بالجنيه</th><th>المصاريف</th><th>التكلفة الكلية</th><th>الهامش</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${rows.map(s=>{ const r=s.cost_result||{}; return `<tr data-erid="${s.id}"><td><b style="color:var(--gold)">${s.ship_no}</b>${erTestChip(s)}${s.ref_no?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(s.ref_no)}</div>`:''}</td>
+      <td>${erEsc(erSupName(s.supplier_id))}<div class="qt-sub">${erEsc(s.incoterm||'')}</div></td><td>${erEsc(s.ship_date)}</td><td>${erM(s.total,s.currency_id)}</td>
+      <td>${r.value_egp!=null?erMoney(r.value_egp,2):erMoney(Number(s.total)*Number(s.rate||1),2)}</td><td>${r.costs_egp!=null?erMoney(r.costs_egp,2):`<span class="qt-sub">${(s.costs||[]).length?(s.costs.length+' بند'):'—'}</span>`}</td>
+      <td><b>${r.total_egp!=null?erMoney(r.total_egp,2):'—'}</b></td><td>${s.margin_value!=null&&s.margin_value!==''?(s.margin_type==='amount'?erMoney(s.margin_value,2)+' ج':erMoney(s.margin_value)+'%'):'—'}</td>
+      <td>${erStChip(s.cost_status||'مسودة')}</td><td><button class="qt-btn sm" onclick="erCostOpen(${s.id})">💰 ${s.cost_status==='معتمدة'?'عرض':'التكاليف'}</button></td></tr>`; }).join('')}
+  </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">💰 مفيش شحنات هنا</div>`}`; }
 
 // ════════ ↩️ مرتجع المشتريات (للمورد من المستلم — بينزّل الدفترى والفعلى وبيتخصم من حساب المورد)
 function erRenderPrets(){ const el=document.getElementById('erp-pu-pane-pret'); if(!el||!ER.pu) return; const canE=erCan('erp-purchases','edit'), canD=erCan('erp-purchases','del');
@@ -22623,6 +22685,7 @@ const ER_TB = {
     po:{ pane:'erp-pu-pane-po', nw:()=>erPoOpen(), open:/^erPoOpen\(/, del:/^erPoStatus\(\d+,'ملغية'\)/, print:/^erPoPrint\(/ },
     ship:{ pane:'erp-pu-pane-ship', nw:()=>erShipOpen(), open:/^erShipOpen\(\d/, del:/^erShipCancel\(/ },
     rec:{ pane:'erp-pu-pane-rec', nwMsg:'الاستلام بيتعمل من الشحنة — اختار الشحنة ودوس 📥', nwTab:()=>erPuTab('ship'), del:/^erRecCancel\(/ },
+    cost:{ pane:'erp-pu-pane-cost', nwMsg:'التكاليف بتتعمل على شحنة — اختار الشحنة ودوس «فتح»', open:/^erCostOpen\(/ },
     pret:{ pane:'erp-pu-pane-pret', nw:()=>erPretNew(), del:/^erPretCancel\(/, print:/^erPretPrint\(/ },
     pay:{ pane:'erp-pu-pane-pay', nw:()=>erPayOpen(), del:/^erPayCancel\(/ },
     stmt:{ none:true } } },
