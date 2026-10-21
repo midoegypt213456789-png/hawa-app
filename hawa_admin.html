@@ -21320,14 +21320,16 @@ function erPoForm(){
   if(sup && o.__sup!==undefined && String(o.__sup)!==String(o.supplier_id) && !hasShip0) o.currency_id=sup.currency_id;
   if(!o.currency_id && sup) o.currency_id=sup.currency_id; o.__sup=o.supplier_id; if(!o.currency_id) o.currency_id=(B.currencies.find(c=>c.is_base)||{}).id;
   const hasShip=Object.keys(o.shipped||{}).some(k=>Number(o.shipped[k])>0);
-  const rows=o.items.map((l,i)=>{ const sq=Number((o.shipped||{})[l.line_no]||0); const it=erById(B.items,l.item_id);
-    return `<tr><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erPoLine(${i},'item',this.value)" ${sq>0?'disabled':''}>${it?`<div class="qt-sub">${ER_KIND[it.kind]}${it.stock_mode==='components'?' 🧩 مفكك':''}</div>`:(l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':'')}</td>
-      <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erPoLine(${i},'qty',this.value)">${sq?`<div class="qt-sub">اتشحن ${erQ(sq)}</div>`:''}</td>
-      <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erPoLine(${i},'price',this.value)"></td>
-      <td><input class="qt-inp" type="number" step="0.01" min="0" max="100" style="width:70px" value="${erEsc(l.disc_pct)}" oninput="erPoLine(${i},'disc_pct',this.value)"></td>
-      <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" oninput="erPoLine(${i},'disc_amt',this.value)"></td>
-      <td><b id="er-pol-${i}">—</b></td><td>${sq>0?'':`<button class="qt-btn red sm" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('');
-  setTimeout(erPoTotals,0);
+  if(!ER.ro){ const last=o.items[o.items.length-1]; if(!last || last.item_id || last.__txt) o.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''}); }
+  const G=(i,c)=>`data-g="${i},${c}" onkeydown="erGridKey(event,${i},${c},4)"`;
+  const rows=o.items.map((l,i)=>{ const sq=Number((o.shipped||{})[l.line_no]||0); const it=erById(B.items,l.item_id); const blank=!l.item_id&&!l.__txt;
+    return `<tr><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erPoLine(${i},'item',this.value)" ${G(i,0)} ${sq>0?'disabled':''}>${it?`<div class="qt-sub">${ER_KIND[it.kind]}${it.stock_mode==='components'?' 🧩 مفكك':''}</div>`:(l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':'')}</td>
+      <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erPoLine(${i},'qty',this.value)" ${G(i,1)}>${sq?`<div class="qt-sub">اتشحن ${erQ(sq)}</div>`:''}</td>
+      <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erPoLine(${i},'price',this.value)" ${G(i,2)}></td>
+      <td><input class="qt-inp" type="number" step="0.01" min="0" max="100" style="width:70px" value="${erEsc(l.disc_pct)}" oninput="erPoLine(${i},'disc_pct',this.value)" ${G(i,3)}></td>
+      <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" oninput="erPoLine(${i},'disc_amt',this.value)" ${G(i,4)}></td>
+      <td><b id="er-pol-${i}">—</b></td><td>${sq>0||blank?'':`<button class="qt-btn red sm" tabindex="-1" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('');
+  setTimeout(()=>{ erPoTotals(); erInvFocus(); },0);
   return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${erItemDl()}
   <div class="qt-card"><div class="qt-row">
     ${erFld('المورد *', erSel('supplier_id',o.supplier_id,[['','— اختار —']].concat(B.suppliers.filter(s=>s.is_active||String(s.id)===String(o.supplier_id)).map(s=>[s.id,`${s.code} — ${s.name}`])),true, hasShip?'disabled':''),2)}
@@ -21337,9 +21339,8 @@ function erPoForm(){
     ${erFld('العملة', erSel('currency_id',o.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(o.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),true, hasShip?'disabled':''),1)}
     ${erFld('شرط التسليم', erSel('incoterm',o.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
   </div></div>
-  <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— الأسعار بالسعر المتفق عليه مع المورد</span></div>
+  <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— الأسعار بالسعر المتفق عليه مع المورد • ⏎ Enter ينقلك للخانة اللى بعدها، وآخر السطر يفتح سطر جديد</span></div>
     <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-    <button class="qt-btn ghost sm" style="margin-top:8px" onclick="ER.edit.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''});ER.edit.__render()">➕ صنف</button>
     <div class="qt-row" style="margin-top:12px">${erFld('خصم على الطلبية كلها %', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100px" value="${erEsc(o.discount_pct)}" oninput="ER.edit.discount_pct=this.value;erPoTotals()">`)}
       ${erFld('خصم قيمة على الطلبية', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:130px" value="${erEsc(o.discount_amount)}" oninput="ER.edit.discount_amount=this.value;erPoTotals()">`)}
       <div style="flex:1"></div><div class="qt-tot" id="er-po-tot"></div></div>
@@ -21405,19 +21406,22 @@ function erShipForm(){
   const B=ER.boot, s=ER.edit, po=s.po_id?erById(ER.pu.pos,s.po_id):null;
   if(!po){ const sup=erById(B.suppliers,s.supplier_id); if(sup && s.__sup!==s.supplier_id && !s.id){ s.currency_id=sup.currency_id; } s.__sup=s.supplier_id; if(!s.currency_id) s.currency_id=(B.currencies.find(c=>c.is_base)||{}).id; }
   const cu=erCur(s.currency_id); if(s.__cur!==undefined && String(s.__cur)!==String(s.currency_id)) s.rate=cu.is_base?1:(cu.rate||''); s.__cur=s.currency_id;
-  let tot=0;
+  let tot=0, gk=0;
+  if(!po && !ER.ro){ const last=s.items[s.items.length-1]; if(!last || last.item_id || last.__txt) s.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''}); }
+  const G=(i,c)=>`data-g="${i},${c}" onkeydown="erGridKey(event,${i},${c},4)"`;
   const rows = po ? po.items.map(pl=>{ let l=s.items.find(x=>Number(x.po_line)===Number(pl.line_no));
       const rem=Number(pl.qty)-Number((po.shipped||{})[pl.line_no]||0)+(l?Number(l.__orig||0):0);
       if(!l){ if(rem<=0) return ''; l={po_line:pl.line_no,item_id:pl.item_id,qty:'',price:pl.net_unit,__orig:0}; s.items.push(l); }
       const lt=(erNum(l.qty)||0)*Number(pl.net_unit); tot+=lt;
-      return `<tr><td>${erEsc(erItemLbl(pl.item_id))}</td><td>${erQ(pl.qty)}</td><td>${erQ(rem)}</td><td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erShipQty(${pl.line_no},this.value)"></td><td>${erMoney(pl.net_unit,4)}</td><td><b id="er-shl-${pl.line_no}">${erMoney(lt,2)}</b></td></tr>`; }).join('')
-    : s.items.map((l,i)=>{ const it=erById(B.items,l.item_id); const q=erNum(l.qty)||0, p=erNum(l.price)||0; const lt=q*p - q*p*(erNum(l.disc_pct)||0)/100 - (erNum(l.disc_amt)||0); tot+=lt;
-      return `<tr><td style="min-width:240px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erShipLine(${i},'item',this.value)">${!it&&l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
-        <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" onchange="erShipLine(${i},'qty',this.value)"></td>
-        <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" onchange="erShipLine(${i},'price',this.value)"></td>
-        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:70px" value="${erEsc(l.disc_pct)}" onchange="erShipLine(${i},'disc_pct',this.value)"></td>
-        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" onchange="erShipLine(${i},'disc_amt',this.value)"></td>
-        <td><b>${erMoney(lt,2)}</b></td><td><button class="qt-btn red sm" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button></td></tr>`; }).join('');
+      return `<tr><td>${erEsc(erItemLbl(pl.item_id))}</td><td>${erQ(pl.qty)}</td><td>${erQ(rem)}</td><td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erShipQty(${pl.line_no},this.value)" data-g="${gk},0" onkeydown="erGridKey(event,${gk++},0,0,true)"></td><td>${erMoney(pl.net_unit,4)}</td><td><b id="er-shl-${pl.line_no}">${erMoney(lt,2)}</b></td></tr>`; }).join('')
+    : s.items.map((l,i)=>{ const it=erById(B.items,l.item_id); const blank=!l.item_id&&!l.__txt; const q=erNum(l.qty)||0, p=erNum(l.price)||0; const lt=q*p - q*p*(erNum(l.disc_pct)||0)/100 - (erNum(l.disc_amt)||0); tot+=lt;
+      return `<tr><td style="min-width:240px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erShipLine(${i},'item',this.value)" ${G(i,0)}>${!it&&l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
+        <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" onchange="erShipLine(${i},'qty',this.value)" ${G(i,1)}></td>
+        <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" onchange="erShipLine(${i},'price',this.value)" ${G(i,2)}></td>
+        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:70px" value="${erEsc(l.disc_pct)}" onchange="erShipLine(${i},'disc_pct',this.value)" ${G(i,3)}></td>
+        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" onchange="erShipLine(${i},'disc_amt',this.value)" ${G(i,4)}></td>
+        <td><b>${erMoney(lt,2)}</b></td><td>${blank?'':`<button class="qt-btn red sm" tabindex="-1" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('');
+  setTimeout(erInvFocus,0);
   return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${po?'':erItemDl()}
   <div class="qt-card"><div class="qt-row">
     ${po?erFld('المورد', `<div class="qt-inp" style="opacity:.8">${erEsc(erSupName(s.supplier_id))} — طلبية ${po.po_no}</div>`,2)
@@ -21433,7 +21437,7 @@ function erShipForm(){
   </div></div>
   <div class="qt-card"><div class="qt-h">📦 الأصناف ${po?'<span class="qt-sub">— اكتب الكمية اللى اتشحنت من كل سطر (فاضى أو صفر = مش فى الشحنة دى)</span>':''}</div>
     <div style="overflow:auto"><table class="qt-tbl"><thead><tr>${po?'<th>الصنف</th><th>فى الطلبية</th><th>الباقى</th><th>الكمية المشحونة</th><th>السعر الصافى</th><th>الإجمالى</th>':'<th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th>'}</tr></thead><tbody>${rows}</tbody></table></div>
-    ${po?'':`<button class="qt-btn ghost sm" style="margin-top:8px" onclick="ER.edit.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''});ER.edit.__render()">➕ صنف</button>`}
+    <div class="qt-sub" style="margin-top:6px">⏎ Enter ينقلك للخانة اللى بعدها${po?'':'، وآخر السطر يفتح سطر جديد'}</div>
     <div class="qt-tot" style="margin-top:10px" id="er-ship-tot">قيمة الشحنة: <b>${erMoney(tot,2)} ${erEsc(cu.code||'')}</b>${cu.is_base?'':` ≈ <b>${erMoney(tot*(erNum(s.rate)||0),2)} ج.م</b>`}</div>
   </div>
   <div class="qt-card">${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(s.notes)}</textarea>`)}</div></fieldset>`;
@@ -21710,9 +21714,11 @@ function erInvOpen(id){
   erModal(id?`🧾 فاتورة مبيعات <span style="color:var(--gold)">${v.inv_no}</span>${v.status!=='سارية'?' '+erStChip(v.status):''}${v.__full?' <span class="qt-chip dim">🔒 اتسلمت بالكامل</span>':''}`:'➕ فاتورة مبيعات جديدة', erInvForm(), (v.__full?`<span class="qt-sub">🔒 الفاتورة اتسلمت بالكامل — المستند مقفول</span>`:erFoot('erInvSave()',ER.ro))+taxBtn);
 }
 // ⌨️ جريد الأصناف: Enter = الخانة اللى بعدها، وآخر خانة = السطر اللى تحته (وبيتفتح سطر جديد أوتوماتيك)
-function erInvKey(ev,i,c){ if(ev.key!=='Enter' || ev.shiftKey) return; ev.preventDefault(); const v=ER.edit; if(!v) return;
-  let r=i, cc=c+1; if(cc>5){ r=i+1; cc=0; }
-  if(r>=v.items.length) v.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',warehouse_id:'',__txt:''});
+function erInvKey(ev,i,c){ return erGridKey(ev,i,c,5); }
+function erGridKey(ev,i,c,maxC,noAdd){ if(ev.key!=='Enter' || ev.shiftKey) return; ev.preventDefault(); const v=ER.edit; if(!v) return;
+  let r=i, cc=c+1; if(cc>maxC){ r=i+1; cc=0; }
+  if(noAdd){ if(!document.querySelector(`#er-m-body [data-g="${r},${cc}"]`)){ try{ ev.target.blur(); }catch(e){} return; } }
+  else if(r>=v.items.length) v.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',warehouse_id:'',__txt:''});
   v.__focus=[r,cc]; const t=ev.target; try{ t.blur(); }catch(e){}
   setTimeout(()=>{ if(!document.querySelector(`#er-m-body [data-g="${r},${cc}"]`)) v.__render(); erInvFocus(); },0); }
 function erInvFocus(){ const v=ER.edit; if(!v||!v.__focus) return; const [r,c]=v.__focus; const el=document.querySelector(`#er-m-body [data-g="${r},${c}"]`); if(!el) return;
