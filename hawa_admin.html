@@ -3827,6 +3827,32 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       
       <div id="ert-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
+    <div class="section" id="sec-erp-purchases">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🛒 <span>المشتريات</span></div>
+          <div class="page-sub">السيستم الجديد — طلبية الشراء ← الشحنات ← التكاليف ← الاستلام ← مدفوعات الموردين</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erPuLoad(true)">🔄 تحديث</button>
+      </div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erp-pu-tab-po" onclick="erPuTab('po')">📑 الطلبيات <span class="bl-tab-count" id="erp-pu-c-po">0</span></button><button class="bl-tab" id="erp-pu-tab-ship" onclick="erPuTab('ship')">🚢 الشحنات وفواتير الشراء <span class="bl-tab-count" id="erp-pu-c-ship">0</span></button><button class="bl-tab" id="erp-pu-tab-rec" onclick="erPuTab('rec')">📥 الاستلامات</button><button class="bl-tab" id="erp-pu-tab-pay" onclick="erPuTab('pay')">💸 مدفوعات الموردين</button><button class="bl-tab" id="erp-pu-tab-stmt" onclick="erPuTab('stmt')">📒 كشف حساب مورد</button></div>
+      <div id="erp-pu-pane-po" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erp-pu-pane-ship" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erp-pu-pane-rec" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erp-pu-pane-pay" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erp-pu-pane-stmt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
+    <div class="section" id="sec-erp-stock">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">📊 <span>أرصدة المخازن</span></div>
+          <div class="page-sub">السيستم الجديد — الرصيد الدفترى والفعلى لكل صنف فى كل مخزن + كارت الصنف</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erStockLoad(true)">🔄 تحديث</button>
+      </div>
+      
+      <div id="erst-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
     <div class="section" id="sec-erp-setup">
       <div class="page-hd">
         <div class="page-hd-titles">
@@ -5902,6 +5928,8 @@ function autoRefreshTick(){
     else if(sec==='erp-suppliers' && typeof erSuppliersLoad === 'function') erSuppliersLoad(true);
     else if(sec==='erp-traders' && typeof erTradersLoad === 'function') erTradersLoad(true);
     else if(sec==='erp-setup' && typeof erSetupLoad === 'function') erSetupLoad(true);
+    else if(sec==='erp-purchases' && typeof erPuLoad === 'function') erPuLoad(true);
+    else if(sec==='erp-stock' && typeof erStockLoad === 'function') erStockLoad(true);
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -6059,6 +6087,8 @@ function goTo(sec){
   else if(sec==='erp-suppliers')erSuppliersLoad(true);
   else if(sec==='erp-traders')erTradersLoad(true);
   else if(sec==='erp-setup')erSetupLoad(true);
+  else if(sec==='erp-purchases')erPuLoad(true);
+  else if(sec==='erp-stock')erStockLoad(true);
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -18013,6 +18043,8 @@ const NAV_META = {
   'erp-items':        { icon: '📦',  label: 'الأصناف (السيستم الجديد)' },
   'erp-suppliers':    { icon: '🏭',  label: 'الموردين (السيستم الجديد)' },
   'erp-traders':      { icon: '🚚',  label: 'حسابات التجار (السيستم الجديد)' },
+  'erp-purchases':    { icon: '🛒',  label: 'المشتريات (السيستم الجديد)' },
+  'erp-stock':        { icon: '📊',  label: 'أرصدة المخازن (السيستم الجديد)' },
   'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' }
 };
 
@@ -18024,7 +18056,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
-    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-items', 'erp-suppliers', 'erp-traders', 'erp-setup'] },
+    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -18051,6 +18083,8 @@ const NAV_PREFERRED_CAT = {
   'erp-items': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-suppliers': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-traders': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-purchases': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-stock': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
 };
 
@@ -20610,7 +20644,8 @@ function erModal(title, body, foot){
   document.getElementById('er-m-title').innerHTML=title; document.getElementById('er-m-body').innerHTML=body; document.getElementById('er-m-foot').innerHTML=foot||'';
   m.style.display='flex';
 }
-function erModalBody(body){ const b=document.getElementById('er-m-body'); if(b){ const st=b.scrollTop; b.innerHTML=body; b.scrollTop=st; } }
+let __erRendering=false;
+function erModalBody(body){ if(__erRendering){ setTimeout(()=>erModalBody(body),0); return; } const b=document.getElementById('er-m-body'); if(!b) return; __erRendering=true; try{ const st=b.scrollTop; b.innerHTML=body; b.scrollTop=st; } finally{ __erRendering=false; } }
 function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; ER.edit=null; }
 function erFoot(saveFn, ro){ return ro ? `<span class="qt-sub">👁️ عرض بس — معندكش صلاحية تعديل</span>` : `<button class="qt-btn" id="er-save-btn" onclick="${saveFn}">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`; }
 async function erRun(btnId, fn){ const b=document.getElementById(btnId); if(b){ if(b.disabled) return; b.disabled=true; } try{ await fn(); }catch(e){ erToast('❌ '+erErr(e), false); } finally{ if(b) b.disabled=false; } }
@@ -20632,7 +20667,7 @@ function erModelLbl(m){ return m?`${m.brand} ${m.cc||''} — ${m.vtype} — ${m.
 
 // ════════════════ 📦 الأصناف ════════════════
 async function erItemsLoad(force){
-  try{ await erBoot(force); erItemsTab(ER.tab.items); }catch(e){ erPaneErr('eri-pane-items',e); }
+  try{ await erBoot(force); try{ ER.stock=await rpcSecure('erp_stock_list',{}); }catch(e){} erItemsTab(ER.tab.items); }catch(e){ erPaneErr('eri-pane-items',e); }
 }
 function erItemsTab(t){ ER.tab.items=t; erTabs('eri',['items','cats'],t); (t==='cats'?erRenderCats:erRenderItems)(); }
 function erItemFilterSet(k,v){ ER.f[k]=v; ER.more=0; erRenderItems(); }
@@ -20705,6 +20740,14 @@ function erCompSet(idx, k, v){
 }
 function erCompAdd(){ ER.edit.components.push({item_id:null,qty:1,role:''}); ER.edit.__render(); }
 function erCompDel(i){ ER.edit.components.splice(i,1); ER.edit.__render(); }
+function erItemStockHtml(it){
+  if(!it.id) return '<div class="qt-sub">الرصيد بيظهر بعد ما تحفظ الصنف ويدخله شحنات.</div>';
+  if(!ER.stock || typeof erStockMap!=='function') return '<div class="qt-sub">—</div>';
+  const m=erStockMap();
+  if(it.stock_mode==='components'){ const k=erKitAvail(it,m,null); return `<div class="qt-sub">🧩 مفكك — المتاح = أقل رصيد فى مكوناته</div><div class="qt-row" style="gap:12px;margin-top:6px"><div class="er-stat"><div class="qt-sub">دفترى</div><b>${erMoney(k.book)}</b></div><div class="er-stat"><div class="qt-sub">فعلى</div><b>${erMoney(k.actual)}</b></div></div>`; }
+  const per=m[it.id]||{}; const ks=Object.keys(per); if(!ks.length) return '<div class="qt-sub">مفيش رصيد لسه</div>';
+  return `<div class="qt-row" style="gap:12px">${ks.map(w=>`<div class="er-stat"><div class="qt-sub">${erEsc((erById(ER.boot.warehouses,w)||{}).name||'')}</div><b>${erMoney(per[w].book)}</b><div class="qt-sub">دفترى — فعلى ${erMoney(per[w].actual)}</div></div>`).join('')}</div>`;
+}
 function erItemForm(){
   const B=ER.boot, it=ER.edit, fin=it.kind==='finished', comp=fin&&it.stock_mode==='components';
   const catVt=erCatVtype(it.category_id);
@@ -20772,7 +20815,7 @@ function erItemForm(){
       <div style="flex:1"></div>
     </div>`:''}
   </div>
-  <div class="qt-card"><div class="qt-h">📊 الرصيد</div><div class="qt-sub">الرصيد الدفترى والفعلى فى كل مخزن هيظهر هنا بعد ما نبنى المشتريات والاستلام (المرحلة التانية).</div></div>
+  <div class="qt-card"><div class="qt-h">📊 الرصيد ${it.id&&typeof erCardOpen==='function'&&it.stock_mode!=='components'?`<button class="qt-btn ghost sm" onclick="erCardOpen(${it.id})">📜 كارت الصنف</button>`:''}</div>${erItemStockHtml(it)}</div>
   <div class="qt-card"><div class="qt-row">
     ${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(it.notes)}</textarea>`,3)}
     <div>${erChk('is_active',it.is_active,'✅ الصنف شغال')}</div>
@@ -20915,12 +20958,13 @@ function erTraderOpen(id){
   const B=ER.boot, t=erById(ER.traders,id), a=t.acc||{};
   const e={ client_id:id, price_tier_id:a.price_tier_id||'', is_commission_dist:!!a.is_commission_dist, tax_reg_no:a.tax_reg_no||'', commercial_reg:a.commercial_reg||'', tax_office:a.tax_office||'',
     opening_balance:a.opening_balance||0, opening_side:a.opening_side||'debit', credit_limit:a.credit_limit!=null?a.credit_limit:'', lock_dealing:!!a.lock_dealing, lock_loading:!!a.lock_loading, lock_letters:!!a.lock_letters,
-    lock_reason:a.lock_reason||'', notes:a.notes||'' };
+    lock_reason:a.lock_reason||'', notes:a.notes||'', tax_mode:a.tax_mode||'' };
   ER.edit=e; ER.ro=!erCan('erp-traders','edit');
   const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs">
   <div class="qt-card"><div class="qt-h">🏷️ التسعير</div><div class="qt-row">
     ${erFld('فئة السعر', erSel('price_tier_id',e.price_tier_id,[['',`— الافتراضية (${(B.tiers.find(x=>x.is_default)||{}).name||''}) —`]].concat(B.tiers.filter(x=>x.is_active||String(x.id)===String(e.price_tier_id)).map(x=>[x.id,x.name]))),1)}
     ${erFld('حد الائتمان (أقصى مديونية)', erInp('credit_limit',e.credit_limit,{type:'number',ph:'فاضى = مفيش حد'}),1)}
+    ${erFld('سعر الضريبة فى الجوابات', erSel('tax_mode',e.tax_mode,[['',`— زى البرنامج (${(B.settings&&B.settings.tax_mode)==='model'?'من النموذج / الشحنة':'من الفاتورة'}) —`],['invoice','من الفاتورة'],['model','من النموذج (الشحنة)']]),1)}
   </div></div>
   <div class="qt-card"><div class="qt-h">🤝 موزع بالعمولة</div>
     <div>${erChk('is_commission_dist',e.is_commission_dist,'التاجر ده موزع بالعمولة (يقدر يعمل جوابات من غير فواتير، بفاتورة مجمعة)',true)}</div>
@@ -20939,7 +20983,7 @@ function erTraderOpen(id){
   erModal(`🚚 حساب التاجر <span style="color:var(--gold)">${erEsc(t.code||'')}</span> — ${erEsc(t.name)}`, form(), erFoot('erTraderSave()',ER.ro));
 }
 async function erTraderSave(){ await erRun('er-save-btn', async ()=>{ const e=ER.edit; const p={...e}; delete p.__render;
-  p.opening_balance=erNum(e.opening_balance)||0; p.credit_limit=erNum(e.credit_limit); if(p.price_tier_id==='') p.price_tier_id=null;
+  p.opening_balance=erNum(e.opening_balance)||0; p.credit_limit=erNum(e.credit_limit); if(p.price_tier_id==='') p.price_tier_id=null; if(p.tax_mode==='') p.tax_mode=null;
   const r=await rpcSecure('erp_trader_save',{p}); const t=erById(ER.traders,e.client_id); if(t) t.acc=r; erClose(); erRenderTraders(); erToast('✅ اتحفظ حساب التاجر'); }); }
 
 // ════════════════ 🧩 تعريفات السيستم ════════════════
@@ -21017,10 +21061,11 @@ function erTreOpen(id){ const B=ER.boot; const t=id?{...erById(B.treasuries,id)}
   t.__render=()=>erModalBody(form()); erModal(id?'✏️ تعديل خزينة / حساب':'➕ خزينة / حساب جديد', form(), erFoot('erTreSave()',ER.ro)); }
 async function erTreSave(){ await erRun('er-save-btn', async ()=>{ const p={...ER.edit}; delete p.__render; p.opening_balance=erNum(p.opening_balance)||0; if(p.currency_id==='') p.currency_id=null; await rpcSecure('erp_treasury_save',{p}); await erBoot(true); erClose(); erRenderTre(); erToast('✅ اتحفظت'); }); }
 
+async function erSettingsSave(){ await erRun('erx-set-save', async ()=>{ const r=await rpcSecure('erp_settings_save',{p:{tax_mode:document.getElementById('erx-taxmode').value}}); ER.boot.settings=r; erToast('✅ اتحفظت الإعدادات'); }); }
 function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane-status'); if(!el) return;
   const fin=B.items.filter(i=>i.kind==='finished'&&i.is_active).length;
   const phases=[['✅','المرحلة 1 — الأساسيات','الأصناف (كاملة ومفككة) والفئات والمخازن والعملات وفئات الأسعار والموردين والخزائن وحسابات التجار والصلاحيات'],
-    ['⏳','المرحلة 2 — المشتريات','طلبية الشراء ← الشحنات ← تكاليف الشحنة (FOB/CIF + جمارك + ضرايب + هامش) ← استلام المخزن ← مدفوعات الموردين'],
+    ['✅','المرحلة 2 — المشتريات','طلبية الشراء ← الشحنات ← تكاليف الشحنة (FOB/CIF + جمارك + ضرايب + هامش) ← استلام المخزن ← مدفوعات الموردين'],
     ['⏳','المرحلة 3 — المبيعات','فاتورة المبيعات (سعر التاجر أوتوماتيك + المخزن البديل) ← مستند التسليم مربوط بالحجز ← سندات القبض والشيكات والتنبيهات'],
     ['⏳','المرحلة 4 — تسجيل المواتير والشاسيهات','بالباركود + التحقق من الكتب الدورية والبصمة + الشاسيه بيطلع من الماتور + تنبيه الأرقام الغريبة'],
     ['⏳','المرحلة 5 — الجوابات والفاتورة الضريبية','من الفاتورة أو من النموذج (الشحنة) + الموزع بالعمولة + المنشور'],
@@ -21028,12 +21073,410 @@ function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane
   el.innerHTML = `<div class="qt-card" style="border-color:${B.active?'rgba(76,175,125,.5)':'rgba(224,85,85,.45)'}"><div class="qt-h" style="font-size:17px">${B.active?'🟢 السيستم الجديد متفعّل':'🔴 السيستم الجديد مش متفعّل — وضع التجربة'}</div>
     <div class="qt-sub">كل اللى بيتسجل فى شاشات السيستم الجديد مالوش أى تأثير على الحجز والأذونات والبوت لحد التفعيل. زرار التفعيل هيتفتح بعد ما نخلص كل المراحل ونعدّى اختبار الـ 500 فاتورة.</div>
     <div style="margin-top:12px"><button class="qt-btn" disabled title="هيتفتح بعد اختبار الـ 500 فاتورة">🚀 فعّل السيستم</button></div></div>
+  <div class="qt-card"><div class="qt-h">⚙️ إعدادات السيستم</div><div class="qt-row">
+    ${erFld('سعر الضريبة فى الجوابات (للبرنامج كله)', `<select class="qt-inp" id="erx-taxmode" ${erCan('erp-setup','edit')?'':'disabled'}><option value="invoice" ${(B.settings||{}).tax_mode!=='model'?'selected':''}>من الفاتورة — كل جواب بيتخصم من كمية الصنف فى فاتورته</option><option value="model" ${(B.settings||{}).tax_mode==='model'?'selected':''}>من النموذج — سعر وكمية الشحنة</option></select>`,2)}
+    ${erCan('erp-setup','edit')?`<div><button class="qt-btn" id="erx-set-save" onclick="erSettingsSave()">💾 حفظ</button></div>`:''}
+  </div><div class="qt-sub" style="margin-top:6px">تقدر تعمل استثناء لتاجر معين من شاشة «حسابات التجار».</div></div>
   <div class="qt-card"><div class="qt-h">📋 خطة البنا</div>${phases.map(p=>`<div class="er-phase"><span style="font-size:18px">${p[0]}</span><div><b>${p[1]}</b><div class="qt-sub">${p[2]}</div></div></div>`).join('')}</div>
   <div class="qt-card"><div class="qt-h">📊 اللى اتسجل لحد دلوقتى</div><div class="qt-row" style="gap:18px">
     ${[['🗂️ فئات',B.categories.length],['📦 أصناف',B.items.length],['🏍️ منتج تام',fin],['🏬 مخازن',B.warehouses.length],['🏭 موردين',B.suppliers.length],['🏦 خزائن',B.treasuries.length],['💱 عملات',B.currencies.length]].map(x=>`<div class="er-stat"><div class="qt-sub">${x[0]}</div><b>${x[1]}</b></div>`).join('')}
   </div></div>`;
 }
 </script>
+<script>
+// ════════════════════════════════════════════════════════════════
+// 🛒 السيستم الجديد — المرحلة 2: المشتريات (طلبيات ← شحنات ← تكاليف ← استلام ← مدفوعات) + أرصدة المخازن وكارت الصنف
+// الشاشات: erp-purchases / erp-stock — التكاليف وهامش الربح محتاجين erp-cost
+// ════════════════════════════════════════════════════════════════
+ER.pu = null; ER.stock = null; ER.tab.pu = 'po'; ER.pf = { q:'', sup:'', st:'open' }; ER.stf = { q:'', wh:'', kind:'', nz:'1' };
+const ER_INCO = { FOB:'FOB — الشحن والتأمين علينا', CIF:'CIF — الشحن والتأمين على المورد', CFR:'CFR — الشحن على المورد', EXW:'EXW — من مخزن المورد', 'محلى':'محلى' };
+const ER_COST_KINDS = ['شحن بحرى','تأمين','جمارك','ضرايب ورسوم','تخليص جمركى','أرضيات','نقل داخلى','عمولة بنك','أخرى'];
+const ER_DOC = { ship:'🚢 شحنة', rec:'📥 استلام', ship_short:'⚠️ عجز شحنة' };
+function erCur(id){ return erById(ER.boot.currencies,id)||{}; }
+function erSupName(id){ const s=erById(ER.boot.suppliers,id); return s?s.name:'—'; }
+function erWhName(id){ const w=erById(ER.boot.warehouses,id); return w?w.name:'—'; }
+function erItemLbl(id){ const i=erById(ER.boot.items,id); return i?`${i.code} — ${i.name_ar}`:'—'; }
+function erItemDl(){ return `<datalist id="er-item-dl">${ER.boot.items.filter(i=>i.is_active).map(i=>`<option value="${erEsc(i.code+' — '+i.name_ar)}"></option>`).join('')}</datalist>`; }
+function erItemFromTxt(v){ const code=String(v||'').split(' — ')[0].trim(); return ER.boot.items.find(i=>i.code===code); }
+function erM(v,cur){ const c=cur?erCur(cur):null; return `${erMoney(v,2)}${c&&c.code?` <span class="qt-sub">${erEsc(c.code)}</span>`:''}`; }
+function erQ(v){ return erMoney(Number(v||0)); }
+function erStChip(s){ const m={'مفتوحة':'in','مقفولة':'dim','ملغية':'del','فى الطريق':'ex','مستلمة جزئياً':'ex','مستلمة':'in','مقفولة بعجز':'del','سارى':'in','ملغى':'del','مسودة':'ex','معتمدة':'in'}; return `<span class="qt-chip ${m[s]||'dim'}">${erEsc(s)}</span>`; }
+function erTestChip(x){ return x&&x.is_test?' <span class="qt-chip dim" title="اتعمل فى وضع التجربة">🧪</span>':''; }
+function erAsk(msg){ const r=prompt(msg); if(r==null) return null; if(!r.trim()){ erToast('❌ لازم تكتب السبب',false); return null; } return r.trim(); }
+
+async function erPuLoad(force){
+  try{ await erBoot(force); if(force||!ER.pu) ER.pu=await rpcSecure('erp_purch_list',{}); erPuTab(ER.tab.pu); }catch(e){ erPaneErr('erp-pu-pane-po',e); }
+}
+async function erPuReload(){ ER.pu=await rpcSecure('erp_purch_list',{}); erPuTab(ER.tab.pu); }
+function erPuTab(t){ ER.tab.pu=t; erTabs('erp-pu',['po','ship','rec','pay','stmt'],t);
+  const c=(id,n)=>{ const e=document.getElementById(id); if(e) e.textContent=n; };
+  if(ER.pu){ c('erp-pu-c-po',ER.pu.pos.filter(x=>x.status==='مفتوحة').length); c('erp-pu-c-ship',ER.pu.ships.filter(x=>['فى الطريق','مستلمة جزئياً'].includes(x.status)).length); }
+  ({po:erRenderPos,ship:erRenderShips,rec:erRenderRecs,pay:erRenderPays,stmt:erRenderStmt}[t])(); }
+
+// ════════ 📑 الطلبيات
+function erPoRem(o,l){ return Number(l.qty) - Number((o.shipped||{})[l.line_no]||0); }
+function erRenderPos(){
+  const el=document.getElementById('erp-pu-pane-po'); if(!el||!ER.pu) return; const B=ER.boot, f=ER.pf, q=f.q.trim().toLowerCase();
+  const canE=erCan('erp-purchases','edit'), canD=erCan('erp-purchases','del');
+  const rows=ER.pu.pos.filter(o=>(!f.sup||String(o.supplier_id)===String(f.sup))&&(f.st==='all'||(f.st==='open'?o.status==='مفتوحة':o.status!=='مفتوحة'))
+    &&(!q||`${o.po_no} ${o.supplier_ref||''} ${erSupName(o.supplier_id)}`.toLowerCase().includes(q)));
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px">
+    <input class="qt-inp" style="width:220px" placeholder="🔍 رقم / رقم الأورد / المورد" value="${erEsc(f.q)}" oninput="ER.pf.q=this.value;erRenderPos()">
+    <select class="qt-inp" onchange="ER.pf.sup=this.value;erRenderPos()"><option value="">كل الموردين</option>${B.suppliers.map(s=>`<option value="${s.id}" ${String(f.sup)===String(s.id)?'selected':''}>${erEsc(s.name)}</option>`).join('')}</select>
+    <select class="qt-inp" onchange="ER.pf.st=this.value;erRenderPos()"><option value="open" ${f.st==='open'?'selected':''}>المفتوحة</option><option value="closed" ${f.st==='closed'?'selected':''}>المقفولة والملغية</option><option value="all" ${f.st==='all'?'selected':''}>الكل</option></select>
+    <div style="flex:1"></div>${canE?`<button class="qt-btn" onclick="erPoOpen(null)">➕ طلبية شراء</button>`:''}</div>
+  ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>المورد</th><th>التاريخ</th><th>قيمة الطلبية</th><th>اتشحن</th><th>اتدفع</th><th>الالتزام الباقى</th><th>المستحق فعلاً</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${rows.map(o=>{ const oq=o.items.reduce((s,l)=>s+Number(l.qty),0), sq=Object.values(o.shipped||{}).reduce((s,v)=>s+Number(v),0); const due=Number(o.shipped_value)-Number(o.paid), comm=Number(o.total)-Number(o.paid);
+    return `<tr class="${o.status==='ملغية'?'del':''}"><td><b style="color:var(--gold)">${o.po_no}</b>${erTestChip(o)}${o.supplier_ref?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(o.supplier_ref)}</div>`:''}</td>
+      <td><b>${erEsc(erSupName(o.supplier_id))}</b><div class="qt-sub">${erEsc(o.incoterm)}</div></td><td>${erEsc(o.order_date)}</td>
+      <td>${erM(o.total,o.currency_id)}</td><td>${erM(o.shipped_value,o.currency_id)}<div class="qt-sub">${erQ(sq)} من ${erQ(oq)} وحدة</div></td>
+      <td>${erM(o.paid,o.currency_id)}</td><td><b>${erM(comm,o.currency_id)}</b></td><td><b style="color:${due>0?'#f0c75e':'#6dc49a'}">${erM(due,o.currency_id)}</b></td><td>${erStChip(o.status)}</td>
+      <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="erPoOpen(${o.id})">${canE&&o.status==='مفتوحة'?'✏️':'👁️'}</button>
+        ${canE&&o.status==='مفتوحة'?`<button class="qt-btn ghost sm" onclick="erShipOpen(null,${o.id})">🚢 شحنة</button>`:''}
+        ${canE&&o.status!=='ملغية'?`<button class="qt-btn ghost sm" onclick="erPayOpen(${o.supplier_id},${o.id})">💸</button>`:''}
+        ${canE&&o.status!=='ملغية'?`<button class="qt-btn ghost sm" onclick="erPoStatus(${o.id},'${o.status==='مفتوحة'?'مقفولة':'مفتوحة'}')">${o.status==='مفتوحة'?'🔒 اقفل':'🔓 افتح'}</button>`:''}
+        ${canD&&o.status!=='ملغية'&&!sq?`<button class="qt-btn red sm" onclick="erPoStatus(${o.id},'ملغية')">✖</button>`:''}</td></tr>`; }).join('')}
+  </tbody></table></div>
+  <div class="qt-sub" style="margin-top:8px">💡 <b>الالتزام الباقى</b> = قيمة الطلبية − اللى اتدفع &nbsp;•&nbsp; <b>المستحق فعلاً</b> = قيمة اللى اتشحن − اللى اتدفع</div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📑 مفيش طلبيات${f.st==='open'?' مفتوحة':''}</div>`}`;
+}
+async function erPoStatus(id, st){
+  if(st==='ملغية' && !confirm('إلغاء الطلبية؟')) return;
+  try{ await rpcSecure('erp_po_status',{p_id:id,p_status:st}); await erPuReload(); erToast('✅ اتغيرت حالة الطلبية'); }catch(e){ erToast('❌ '+erErr(e),false); }
+}
+function erPoOpen(id){
+  const B=ER.boot; let o;
+  if(id){ o=JSON.parse(JSON.stringify(erById(ER.pu.pos,id))); }
+  else o={ id:null, supplier_id:'', supplier_ref:'', currency_id:'', order_date:new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo'}).format(new Date()), incoterm:'FOB', items:[], discount_pct:0, discount_amount:0, notes:'', shipped:{}, status:'مفتوحة' };
+  o.items=(o.items||[]).map(l=>({...l, __txt:erItemLbl(l.item_id)})); if(!o.items.length) o.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''});
+  ['supplier_ref','notes'].forEach(k=>{ if(o[k]==null) o[k]=''; });
+  ER.edit=o; ER.ro=!(erCan('erp-purchases','edit') && o.status==='مفتوحة');
+  o.__render=()=>erModalBody(erPoForm());
+  erModal(id?`📑 طلبية شراء <span style="color:var(--gold)">${o.po_no}</span> ${erStChip(o.status)}`:'➕ طلبية شراء جديدة', erPoForm(), erFoot('erPoSave()',ER.ro));
+}
+function erPoCalc(o){ let sub=0; o.items.forEach(l=>{ const q=erNum(l.qty)||0, p=erNum(l.price)||0, dp=erNum(l.disc_pct)||0, da=erNum(l.disc_amt)||0; l.__tot=Math.round((q*p - q*p*dp/100 - da)*100)/100; sub+=l.__tot; });
+  const tot=Math.round((sub - sub*(erNum(o.discount_pct)||0)/100 - (erNum(o.discount_amount)||0))*100)/100; return {sub,tot}; }
+function erPoLine(i,k,v){ const l=ER.edit.items[i]; if(!l) return; if(k==='item'){ const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; if(it && !l.price && it.purchase_price!=null && String(it.purchase_currency_id)===String(ER.edit.currency_id)) l.price=it.purchase_price; ER.edit.__render(); return; } l[k]=v; erPoTotals(); }
+function erPoTotals(){ const o=ER.edit, t=erPoCalc(o), cu=erCur(o.currency_id); o.items.forEach((l,i)=>{ const e=document.getElementById('er-pol-'+i); if(e) e.textContent=erMoney(l.__tot,2); });
+  const e=document.getElementById('er-po-tot'); if(e) e.innerHTML=`الإجمالى قبل خصم الطلبية: <b>${erMoney(t.sub,2)}</b> &nbsp;•&nbsp; <span style="font-size:16px">الإجمالى: <b>${erMoney(t.tot,2)} ${erEsc(cu.code||'')}</b></span>`; }
+function erPoForm(){
+  const B=ER.boot, o=ER.edit, sup=erById(B.suppliers,o.supplier_id);
+  const hasShip0=Object.keys(o.shipped||{}).some(k=>Number(o.shipped[k])>0);
+  if(sup && o.__sup!==undefined && String(o.__sup)!==String(o.supplier_id) && !hasShip0) o.currency_id=sup.currency_id;
+  if(!o.currency_id && sup) o.currency_id=sup.currency_id; o.__sup=o.supplier_id; if(!o.currency_id) o.currency_id=(B.currencies.find(c=>c.is_base)||{}).id;
+  const hasShip=Object.keys(o.shipped||{}).some(k=>Number(o.shipped[k])>0);
+  const rows=o.items.map((l,i)=>{ const sq=Number((o.shipped||{})[l.line_no]||0); const it=erById(B.items,l.item_id);
+    return `<tr><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erPoLine(${i},'item',this.value)" ${sq>0?'disabled':''}>${it?`<div class="qt-sub">${ER_KIND[it.kind]}${it.stock_mode==='components'?' 🧩 مفكك':''}</div>`:(l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':'')}</td>
+      <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erPoLine(${i},'qty',this.value)">${sq?`<div class="qt-sub">اتشحن ${erQ(sq)}</div>`:''}</td>
+      <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erPoLine(${i},'price',this.value)"></td>
+      <td><input class="qt-inp" type="number" step="0.01" min="0" max="100" style="width:70px" value="${erEsc(l.disc_pct)}" oninput="erPoLine(${i},'disc_pct',this.value)"></td>
+      <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" oninput="erPoLine(${i},'disc_amt',this.value)"></td>
+      <td><b id="er-pol-${i}">—</b></td><td>${sq>0?'':`<button class="qt-btn red sm" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('');
+  setTimeout(erPoTotals,0);
+  return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${erItemDl()}
+  <div class="qt-card"><div class="qt-row">
+    ${erFld('المورد *', erSel('supplier_id',o.supplier_id,[['','— اختار —']].concat(B.suppliers.filter(s=>s.is_active||String(s.id)===String(o.supplier_id)).map(s=>[s.id,`${s.code} — ${s.name}`])),true, hasShip?'disabled':''),2)}
+    ${erFld('رقم الأورد عند المورد', erInp('supplier_ref',o.supplier_ref,{dir:'ltr',ph:'مثلاً: ZS-2027-01'}),1)}
+    ${erFld('تاريخ الطلبية', erInp('order_date',o.order_date,{type:'date'}),1)}
+  </div><div class="qt-row" style="margin-top:10px">
+    ${erFld('العملة', erSel('currency_id',o.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(o.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),true, hasShip?'disabled':''),1)}
+    ${erFld('شرط التسليم', erSel('incoterm',o.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
+  </div></div>
+  <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— الأسعار بالسعر المتفق عليه مع المورد</span></div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <button class="qt-btn ghost sm" style="margin-top:8px" onclick="ER.edit.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''});ER.edit.__render()">➕ صنف</button>
+    <div class="qt-row" style="margin-top:12px">${erFld('خصم على الطلبية كلها %', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100px" value="${erEsc(o.discount_pct)}" oninput="ER.edit.discount_pct=this.value;erPoTotals()">`)}
+      ${erFld('خصم قيمة على الطلبية', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:130px" value="${erEsc(o.discount_amount)}" oninput="ER.edit.discount_amount=this.value;erPoTotals()">`)}
+      <div style="flex:1"></div><div class="qt-tot" id="er-po-tot"></div></div>
+  </div>
+  <div class="qt-card">${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(o.notes)}</textarea>`)}${o.by?`<div class="qt-sub" style="margin-top:6px">آخر تعديل: ${erEsc(o.by)} — ${erDate(o.updated_at)}</div>`:''}</div></fieldset>`;
+}
+async function erPoSave(){ await erRun('er-save-btn', async ()=>{ const o=ER.edit;
+  const bad=o.items.find(l=>l.__txt && !l.item_id); if(bad) throw new Error(`الصنف «${bad.__txt}» مش موجود — اختاره من القايمة`);
+  const p={ id:o.id, supplier_id:o.supplier_id||null, supplier_ref:o.supplier_ref, currency_id:o.currency_id||null, order_date:o.order_date, incoterm:o.incoterm, notes:o.notes,
+    discount_pct:erNum(o.discount_pct)||0, discount_amount:erNum(o.discount_amount)||0,
+    items:o.items.filter(l=>l.item_id).map(l=>({line_no:l.line_no||null,item_id:l.item_id,qty:erNum(l.qty),price:erNum(l.price)||0,disc_pct:erNum(l.disc_pct)||0,disc_amt:erNum(l.disc_amt)||0})) };
+  await rpcSecure('erp_po_save',{p}); erClose(); await erPuReload(); erToast('✅ اتحفظت الطلبية'); }); }
+
+// ════════ 🚢 الشحنات / فواتير الشراء
+function erRenderShips(){
+  const el=document.getElementById('erp-pu-pane-ship'); if(!el||!ER.pu) return; const B=ER.boot, f=ER.pf, q=f.q.trim().toLowerCase();
+  const canE=erCan('erp-purchases','edit'), canD=erCan('erp-purchases','del'), canC=!!B.can_cost;
+  const act=['فى الطريق','مستلمة جزئياً'];
+  const rows=ER.pu.ships.filter(s=>(!f.sup||String(s.supplier_id)===String(f.sup))&&(f.st==='all'||(f.st==='open'?act.includes(s.status):!act.includes(s.status)))
+    &&(!q||`${s.ship_no} ${s.ref_no||''} ${s.container||''} ${erSupName(s.supplier_id)}`.toLowerCase().includes(q)));
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px">
+    <input class="qt-inp" style="width:220px" placeholder="🔍 رقم / فاتورة / بوليصة / كونتينر" value="${erEsc(f.q)}" oninput="ER.pf.q=this.value;erRenderShips()">
+    <select class="qt-inp" onchange="ER.pf.sup=this.value;erRenderShips()"><option value="">كل الموردين</option>${B.suppliers.map(s=>`<option value="${s.id}" ${String(f.sup)===String(s.id)?'selected':''}>${erEsc(s.name)}</option>`).join('')}</select>
+    <select class="qt-inp" onchange="ER.pf.st=this.value;erRenderShips()"><option value="open" ${f.st==='open'?'selected':''}>اللى لسه متستلمتش كلها</option><option value="closed" ${f.st==='closed'?'selected':''}>المستلمة والمقفولة</option><option value="all" ${f.st==='all'?'selected':''}>الكل</option></select>
+    <div style="flex:1"></div>${canE?`<button class="qt-btn ghost" onclick="erShipOpen(null,null)">🧾 فاتورة شراء مباشرة (من غير طلبية)</button>`:''}</div>
+  ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>الطلبية</th><th>المورد</th><th>التاريخ / الوصول</th><th>رايحة لمخزن</th><th>القيمة</th><th>اتستلم</th><th>التكاليف</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${rows.map(s=>{ const tq=s.items.reduce((a,l)=>a+Number(l.qty),0), rq=Object.values(s.received||{}).reduce((a,v)=>a+Number(v),0); const po=erById(ER.pu.pos,s.po_id);
+    const noRec=!rq;
+    return `<tr class="${s.status==='ملغية'?'del':''}"><td><b style="color:var(--gold)">${s.ship_no}</b>${erTestChip(s)}${s.ref_no?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(s.ref_no)}</div>`:''}</td>
+      <td>${po?`<b>${po.po_no}</b>${po.supplier_ref?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(po.supplier_ref)}</div>`:''}`:'<span class="qt-sub">مباشرة</span>'}</td>
+      <td>${erEsc(erSupName(s.supplier_id))}<div class="qt-sub">${erEsc(s.incoterm)}</div></td><td>${erEsc(s.ship_date)}${s.eta?`<div class="qt-sub">⏱ ${erEsc(s.eta)}</div>`:''}</td><td>${erEsc(erWhName(s.warehouse_id))}</td>
+      <td>${erM(s.total,s.currency_id)}${erCur(s.currency_id).is_base?'':`<div class="qt-sub">× ${erMoney(s.rate)}</div>`}</td><td>${erQ(rq)} / ${erQ(tq)}</td>
+      <td>${canC?erStChip(s.cost_status):'—'}</td><td>${erStChip(s.status)}</td>
+      <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="erShipOpen(${s.id})">${canE&&s.status==='فى الطريق'&&noRec&&s.cost_status!=='معتمدة'?'✏️':'👁️'}</button>
+        ${canC&&s.status!=='ملغية'?`<button class="qt-btn ghost sm" onclick="erCostOpen(${s.id})">💰 التكاليف</button>`:''}
+        ${canE&&act.includes(s.status)?`<button class="qt-btn sm" onclick="erRecOpen(${s.id})">📥 استلام</button> <button class="qt-btn ghost sm" title="قفل الباقى كعجز" onclick="erShipShort(${s.id})">⚠️</button>`:''}
+        ${canD&&s.status==='فى الطريق'&&noRec?`<button class="qt-btn red sm" onclick="erShipCancel(${s.id})">✖</button>`:''}</td></tr>`; }).join('')}
+  </tbody></table></div>
+  <div class="qt-sub" style="margin-top:8px">💡 الشحنة بتزوّد <b>الرصيد الدفترى</b> فى المخزن اللى رايحاله (تقدر تبيع منها وهى فى الطريق)، والاستلام بيزوّد <b>الرصيد الفعلى</b>. الأصناف المفككة بتتفك لمكوناتها أوتوماتيك.</div>`
+  :`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🚢 مفيش شحنات — اعمل شحنة من تاب الطلبيات (زرار 🚢) أو فاتورة شراء مباشرة</div>`}`;
+}
+async function erShipCancel(id){ const r=erAsk('سبب إلغاء الشحنة؟ (الرصيد الدفترى هيرجع)'); if(!r) return;
+  try{ await rpcSecure('erp_ship_cancel',{p_id:id,p_reason:r}); await erPuReload(); erToast('✅ اتلغت الشحنة'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erShipShort(id){ const r=erAsk('الباقى اللى متستلمش هيتقفل كعجز ويتشال من الرصيد الدفترى.\nاكتب سبب العجز:'); if(!r) return;
+  try{ await rpcSecure('erp_ship_close_short',{p_id:id,p_reason:r}); await erPuReload(); erToast('✅ الشحنة اتقفلت بعجز'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+function erShipOpen(id, poId){
+  const B=ER.boot; let s; const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo'}).format(new Date());
+  if(id){ s=JSON.parse(JSON.stringify(erById(ER.pu.ships,id))); s.items=s.items.map(l=>({...l,__txt:erItemLbl(l.item_id),__orig:Number(l.qty)})); }
+  else { s={ id:null, po_id:poId||null, supplier_id:'', currency_id:'', rate:'', incoterm:'', ship_date:today, eta:'', ref_no:'', container:'', warehouse_id:'', notes:'', items:[], status:'فى الطريق', received:{} };
+    if(poId){ const po=erById(ER.pu.pos,poId); s.supplier_id=po.supplier_id; s.currency_id=po.currency_id; s.incoterm=po.incoterm;
+      s.items=po.items.filter(l=>erPoRem(po,l)>0).map(l=>({po_line:l.line_no,item_id:l.item_id,qty:erPoRem(po,l),price:l.net_unit}));
+      const it0=po.items.map(l=>erById(B.items,l.item_id)).find(x=>x&&x.default_warehouse_id); if(it0) s.warehouse_id=it0.default_warehouse_id; }
+    else { s.incoterm='محلى'; s.items=[{item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''}]; } }
+  ['eta','ref_no','container','notes'].forEach(k=>{ if(s[k]==null) s[k]=''; });
+  const cu=erCur(s.currency_id); if(!s.rate) s.rate=cu.is_base?1:(cu.rate||'');
+  const rq=Object.values(s.received||{}).reduce((a,v)=>a+Number(v),0);
+  ER.edit=s; ER.ro=!(erCan('erp-purchases','edit') && s.status==='فى الطريق' && !rq && s.cost_status!=='معتمدة');
+  s.__render=()=>erModalBody(erShipForm());
+  erModal(id?`🚢 شحنة <span style="color:var(--gold)">${s.ship_no}</span> ${erStChip(s.status)}`:(poId?`🚢 شحنة جديدة من الطلبية ${erById(ER.pu.pos,poId).po_no}`:'🧾 فاتورة شراء مباشرة'), erShipForm(), erFoot('erShipSave()',ER.ro));
+}
+function erShipForm(){
+  const B=ER.boot, s=ER.edit, po=s.po_id?erById(ER.pu.pos,s.po_id):null;
+  if(!po){ const sup=erById(B.suppliers,s.supplier_id); if(sup && s.__sup!==s.supplier_id && !s.id){ s.currency_id=sup.currency_id; } s.__sup=s.supplier_id; if(!s.currency_id) s.currency_id=(B.currencies.find(c=>c.is_base)||{}).id; }
+  const cu=erCur(s.currency_id); if(s.__cur!==undefined && String(s.__cur)!==String(s.currency_id)) s.rate=cu.is_base?1:(cu.rate||''); s.__cur=s.currency_id;
+  let tot=0;
+  const rows = po ? po.items.map(pl=>{ let l=s.items.find(x=>Number(x.po_line)===Number(pl.line_no));
+      const rem=Number(pl.qty)-Number((po.shipped||{})[pl.line_no]||0)+(l?Number(l.__orig||0):0);
+      if(!l){ if(rem<=0) return ''; l={po_line:pl.line_no,item_id:pl.item_id,qty:'',price:pl.net_unit,__orig:0}; s.items.push(l); }
+      const lt=(erNum(l.qty)||0)*Number(pl.net_unit); tot+=lt;
+      return `<tr><td>${erEsc(erItemLbl(pl.item_id))}</td><td>${erQ(pl.qty)}</td><td>${erQ(rem)}</td><td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erShipQty(${pl.line_no},this.value)"></td><td>${erMoney(pl.net_unit,4)}</td><td><b id="er-shl-${pl.line_no}">${erMoney(lt,2)}</b></td></tr>`; }).join('')
+    : s.items.map((l,i)=>{ const it=erById(B.items,l.item_id); const q=erNum(l.qty)||0, p=erNum(l.price)||0; const lt=q*p - q*p*(erNum(l.disc_pct)||0)/100 - (erNum(l.disc_amt)||0); tot+=lt;
+      return `<tr><td style="min-width:240px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erShipLine(${i},'item',this.value)">${!it&&l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
+        <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" onchange="erShipLine(${i},'qty',this.value)"></td>
+        <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" onchange="erShipLine(${i},'price',this.value)"></td>
+        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:70px" value="${erEsc(l.disc_pct)}" onchange="erShipLine(${i},'disc_pct',this.value)"></td>
+        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" onchange="erShipLine(${i},'disc_amt',this.value)"></td>
+        <td><b>${erMoney(lt,2)}</b></td><td><button class="qt-btn red sm" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button></td></tr>`; }).join('');
+  return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${po?'':erItemDl()}
+  <div class="qt-card"><div class="qt-row">
+    ${po?erFld('المورد', `<div class="qt-inp" style="opacity:.8">${erEsc(erSupName(s.supplier_id))} — طلبية ${po.po_no}</div>`,2)
+        :erFld('المورد *', erSel('supplier_id',s.supplier_id,[['','— اختار —']].concat(B.suppliers.filter(x=>x.is_active||String(x.id)===String(s.supplier_id)).map(x=>[x.id,`${x.code} — ${x.name}`])),true),2)}
+    ${erFld('رقم فاتورة المورد / البوليصة', erInp('ref_no',s.ref_no,{dir:'ltr'}),1)}${erFld('الكونتينر', erInp('container',s.container,{dir:'ltr'}),1)}
+  </div><div class="qt-row" style="margin-top:10px">
+    ${erFld('تاريخ الشحن / الفاتورة', erInp('ship_date',s.ship_date,{type:'date'}),1)}${erFld('الوصول المتوقع', erInp('eta',s.eta,{type:'date'}),1)}
+    ${erFld('رايحة لمخزن *', erSel('warehouse_id',s.warehouse_id,[['','— اختار —']].concat(B.warehouses.filter(w=>w.is_active||String(w.id)===String(s.warehouse_id)).map(w=>[w.id,`${w.code} — ${w.name}`]))),2)}
+  </div><div class="qt-row" style="margin-top:10px">
+    ${po?erFld('العملة', `<div class="qt-inp" style="opacity:.8">${erEsc(cu.code||'')} — ${erEsc(cu.name||'')}</div>`,1):erFld('العملة', erSel('currency_id',s.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(s.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),true),1)}
+    ${cu.is_base?'':erFld(`سعر الصرف (1 ${erEsc(cu.code||'')} = ? ج.م) *`, erInp('rate',s.rate,{type:'number',step:'0.0001'}),1)}
+    ${erFld('شرط التسليم', erSel('incoterm',s.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
+  </div></div>
+  <div class="qt-card"><div class="qt-h">📦 الأصناف ${po?'<span class="qt-sub">— اكتب الكمية اللى اتشحنت من كل سطر (فاضى أو صفر = مش فى الشحنة دى)</span>':''}</div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr>${po?'<th>الصنف</th><th>فى الطلبية</th><th>الباقى</th><th>الكمية المشحونة</th><th>السعر الصافى</th><th>الإجمالى</th>':'<th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th>'}</tr></thead><tbody>${rows}</tbody></table></div>
+    ${po?'':`<button class="qt-btn ghost sm" style="margin-top:8px" onclick="ER.edit.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''});ER.edit.__render()">➕ صنف</button>`}
+    <div class="qt-tot" style="margin-top:10px" id="er-ship-tot">قيمة الشحنة: <b>${erMoney(tot,2)} ${erEsc(cu.code||'')}</b>${cu.is_base?'':` ≈ <b>${erMoney(tot*(erNum(s.rate)||0),2)} ج.م</b>`}</div>
+  </div>
+  <div class="qt-card">${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(s.notes)}</textarea>`)}</div></fieldset>`;
+}
+function erShipQty(pln, v){ const s=ER.edit, po=erById(ER.pu.pos,s.po_id); let l=s.items.find(x=>Number(x.po_line)===Number(pln)); if(l) l.qty=v;
+  const pl=po.items.find(x=>x.line_no===pln); const e=document.getElementById('er-shl-'+pln); if(e) e.textContent=erMoney((erNum(v)||0)*Number(pl.net_unit),2);
+  let tot=0; po.items.forEach(x=>{ const y=s.items.find(z=>Number(z.po_line)===Number(x.line_no)); tot+=(erNum(y&&y.qty)||0)*Number(x.net_unit); }); const cu=erCur(s.currency_id);
+  const t=document.getElementById('er-ship-tot'); if(t) t.innerHTML=`قيمة الشحنة: <b>${erMoney(tot,2)} ${erEsc(cu.code||'')}</b>${cu.is_base?'':` ≈ <b>${erMoney(tot*(erNum(s.rate)||0),2)} ج.م</b>`}`; }
+function erShipLine(i,k,v){ const l=ER.edit.items[i]; if(!l) return; if(k==='item'){ const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; if(it && !l.price && it.purchase_price!=null && String(it.purchase_currency_id)===String(ER.edit.currency_id)) l.price=it.purchase_price; } else l[k]=v; ER.edit.__render(); }
+async function erShipSave(){ await erRun('er-save-btn', async ()=>{ const s=ER.edit;
+  const bad=s.items.find(l=>l.__txt && !l.item_id && !s.po_id); if(bad) throw new Error(`الصنف «${bad.__txt}» مش موجود — اختاره من القايمة`);
+  const p={ id:s.id, po_id:s.po_id, supplier_id:s.supplier_id||null, currency_id:s.currency_id||null, rate:erNum(s.rate), incoterm:s.incoterm, ship_date:s.ship_date, eta:s.eta||null,
+    ref_no:s.ref_no, container:s.container, warehouse_id:s.warehouse_id||null, notes:s.notes,
+    items: s.po_id ? s.items.filter(l=>erNum(l.qty)).map(l=>({po_line:l.po_line,qty:erNum(l.qty)})) : s.items.filter(l=>l.item_id).map(l=>({item_id:l.item_id,qty:erNum(l.qty),price:erNum(l.price)||0,disc_pct:erNum(l.disc_pct)||0,disc_amt:erNum(l.disc_amt)||0})) };
+  await rpcSecure('erp_ship_save',{p}); erClose(); ER.stock=null; await erPuReload(); erToast('✅ اتحفظت الشحنة — الرصيد الدفترى اتحدّث'); }); }
+
+// ════════ 💰 تكاليف الشحنة
+function erCostOpen(id){
+  const B=ER.boot, s=JSON.parse(JSON.stringify(erById(ER.pu.ships,id)));
+  s.costs=(s.costs||[]).map(c=>({...c})); if(!s.costs.length) s.costs.push({kind:'',amount:'',currency_id:s.currency_id,rate:'',alloc:'value',note:''});
+  ER.edit=s; ER.ro=!B.can_cost_edit;
+  s.__render=()=>erModalBody(erCostForm());
+  erModal(`💰 تكاليف الشحنة <span style="color:var(--gold)">${s.ship_no}</span> ${erStChip(s.cost_status)}`, erCostForm(),
+    ER.ro?'<span class="qt-sub">👁️ عرض بس</span>':`<button class="qt-btn ghost" id="er-cost-save" onclick="erCostSave(false)">💾 حفظ واحسب</button><label class="qt-check" style="font-weight:700"><input type="checkbox" id="er-cost-upd" checked> حدّث «${erEsc((B.tiers.filter(t=>t.is_active).sort((a,b)=>a.sort_order-b.sort_order)[0]||{}).name||'السعر الأول')}» للأصناف</label><button class="qt-btn" id="er-cost-appr" onclick="erCostSave(true)">✅ اعتماد التكاليف</button>`);
+}
+function erCostForm(){
+  const B=ER.boot, s=ER.edit, cu=erCur(s.currency_id), r=s.cost_result;
+  const kinds=`<datalist id="er-cost-kinds">${ER_COST_KINDS.map(k=>`<option value="${erEsc(k)}"></option>`).join('')}</datalist>`;
+  const rows=s.costs.map((c,i)=>{ const cc=erCur(c.currency_id); return `<tr>
+    <td><input class="qt-inp" list="er-cost-kinds" style="width:150px" value="${erEsc(c.kind)}" oninput="ER.edit.costs[${i}].kind=this.value"></td>
+    <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:120px" value="${erEsc(c.amount)}" oninput="ER.edit.costs[${i}].amount=this.value"></td>
+    <td><select class="qt-inp" onchange="ER.edit.costs[${i}].currency_id=this.value;ER.edit.costs[${i}].rate='';ER.edit.__render()">${B.currencies.filter(x=>x.is_active||String(x.id)===String(c.currency_id)).map(x=>`<option value="${x.id}" ${String(x.id)===String(c.currency_id)?'selected':''}>${erEsc(x.code)}</option>`).join('')}</select></td>
+    <td>${cc.is_base?'<span class="qt-sub">1</span>':`<input class="qt-inp" type="number" step="0.0001" style="width:90px" placeholder="${erEsc(cc.rate||'')}" value="${erEsc(c.rate)}" oninput="ER.edit.costs[${i}].rate=this.value">`}</td>
+    <td><select class="qt-inp" onchange="ER.edit.costs[${i}].alloc=this.value"><option value="value" ${c.alloc!=='qty'?'selected':''}>بالقيمة</option><option value="qty" ${c.alloc==='qty'?'selected':''}>بالعدد</option></select></td>
+    <td><input class="qt-inp" style="width:140px" value="${erEsc(c.note||'')}" oninput="ER.edit.costs[${i}].note=this.value"></td>
+    <td><button class="qt-btn red sm" onclick="ER.edit.costs.splice(${i},1);ER.edit.__render()">✖</button></td></tr>`; }).join('');
+  return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${kinds}
+  <div class="qt-card"><div class="qt-row">
+    ${erFld('قيمة البضاعة', `<div class="qt-inp" style="opacity:.85">${erMoney(s.total,2)} ${erEsc(cu.code||'')}</div>`,1)}
+    ${cu.is_base?'':erFld(`سعر الصرف الفعلى (1 ${erEsc(cu.code)} = ? ج.م)`, erInp('rate',s.rate,{type:'number',step:'0.0001'}),1)}
+    ${erFld('شرط التسليم', erSel('incoterm',s.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
+  </div><div class="qt-sub" style="margin-top:6px">${s.incoterm==='FOB'||s.incoterm==='EXW'?'🚢 FOB: ضيف الشحن البحرى والتأمين كتكاليف.':(s.incoterm==='CIF'?'📦 CIF: الشحن والتأمين داخلين فى سعر المورد — ضيف الجمارك والضرايب والتخليص بس.':'')}</div></div>
+  <div class="qt-card"><div class="qt-h">🧾 التكاليف <span class="qt-sub">— «بالقيمة» = كل صنف ياخد نصيبه حسب قيمته، «بالعدد» = بالتساوى على كل وحدة</span></div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>النوع</th><th>المبلغ</th><th>العملة</th><th>سعر الصرف</th><th>التوزيع</th><th>ملاحظة</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <button class="qt-btn ghost sm" style="margin-top:8px" onclick="ER.edit.costs.push({kind:'',amount:'',currency_id:(ER.boot.currencies.find(c=>c.is_base)||{}).id,rate:'',alloc:'value',note:''});ER.edit.__render()">➕ تكلفة</button>
+  </div>
+  <div class="qt-card"><div class="qt-h">📈 هامش الربح (للسعر الأول)</div><div class="qt-row">
+    <label class="qt-radio ${s.margin_type!=='amount'?'er-on':''}"><input type="radio" name="er-mt" ${s.margin_type!=='amount'?'checked':''} onchange="erSet('margin_type','pct',true)"> نسبة %</label>
+    <label class="qt-radio ${s.margin_type==='amount'?'er-on':''}"><input type="radio" name="er-mt" ${s.margin_type==='amount'?'checked':''} onchange="erSet('margin_type','amount',true)"> مبلغ ثابت على الوحدة (ج.م)</label>
+    ${erFld(s.margin_type==='amount'?'المبلغ':'النسبة %', erInp('margin_value',s.margin_value,{type:'number',step:'0.01'}),1)}<div style="flex:1"></div>
+  </div><div class="qt-sub" style="margin-top:6px">السعر التانى والتالت بتكتبهم بإيدك من شاشة الصنف.</div></div>
+  ${r&&r.lines?`<div class="qt-card"><div class="qt-h">🧮 النتيجة ${erStChip(s.cost_status)}${s.cost_status==='معتمدة'&&s.approved_by?` <span class="qt-sub">اعتمدها ${erEsc(s.approved_by)} — ${erDate(s.cost_approved_at)}</span>`:''}</div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>قيمة البضاعة ج.م</th><th>نصيبه من التكاليف</th><th>تكلفة الوحدة ج.م</th><th>السعر الأول المقترح</th></tr></thead><tbody>
+    ${r.lines.map(l=>`<tr><td>${erEsc(erItemLbl(l.item_id))}</td><td>${erQ(l.qty)}</td><td>${erMoney(l.unit_fc,4)} ${erEsc(cu.code||'')}</td><td>${erMoney(l.value_egp,2)}</td><td>${erMoney(l.alloc_egp,2)}</td><td><b>${erMoney(l.unit_cost_egp,2)}</b></td><td><b style="color:var(--gold)">${erMoney(l.price1,2)}</b></td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="qt-tot" style="margin-top:10px">البضاعة: <b>${erMoney(r.value_egp,2)}</b> ج.م &nbsp;+&nbsp; التكاليف: <b>${erMoney(r.costs_egp,2)}</b> ج.م &nbsp;=&nbsp; <span style="font-size:16px">التكلفة الكلية: <b>${erMoney(r.total_egp,2)} ج.م</b></span></div></div>`
+  :'<div class="qt-card qt-sub">دوس «💾 حفظ واحسب» علشان تشوف تكلفة كل صنف والسعر المقترح.</div>'}
+  </fieldset>`;
+}
+async function erCostSave(approve){ await erRun(approve?'er-cost-appr':'er-cost-save', async ()=>{ const s=ER.edit;
+  const p={ costs:s.costs.map(c=>({kind:c.kind,amount:erNum(c.amount),currency_id:c.currency_id,rate:erNum(c.rate),alloc:c.alloc,note:c.note})), margin_type:s.margin_type, margin_value:erNum(s.margin_value)||0, incoterm:s.incoterm, rate:erNum(s.rate) };
+  if(approve && !confirm('اعتماد التكاليف هيحدّث تكلفة الأصناف'+(document.getElementById('er-cost-upd').checked?' والسعر الأول بتاعها':'')+'. موافق؟')) return;
+  s.cost_result=await rpcSecure('erp_ship_costs_save',{p_id:s.id,p}); s.cost_status='مسودة';
+  if(approve){ const upd=document.getElementById('er-cost-upd').checked; s.cost_result=await rpcSecure('erp_ship_costs_approve',{p_id:s.id,p_update_prices:upd}); s.cost_status='معتمدة'; await erBoot(true); }
+  await erPuReload(); const fresh=erById(ER.pu.ships,s.id); if(fresh){ s.cost_status=fresh.cost_status; s.approved_by=fresh.approved_by; s.cost_approved_at=fresh.cost_approved_at; }
+  ER.edit=s; s.__render(); erToast(approve?'✅ التكاليف اتعتمدت':'✅ اتحفظت واتحسبت'); }); }
+
+// ════════ 📥 الاستلام
+function erRecOpen(shipId){
+  const s=erById(ER.pu.ships,shipId); const today=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo'}).format(new Date());
+  const r={ shipment_id:shipId, rec_date:today, notes:'', items:s.items.map(l=>{ const rem=Number(l.qty)-Number((s.received||{})[l.line_no]||0); return {ship_line:l.line_no,item_id:l.item_id,shipped:l.qty,rem,qty:rem>0?rem:''}; }).filter(x=>x.rem>0) };
+  ER.edit=r; ER.ro=false;
+  const form=()=>`<div class="qt-card"><div class="qt-row">${erFld('الشحنة', `<div class="qt-inp" style="opacity:.85">${s.ship_no} — ${erEsc(erSupName(s.supplier_id))}${s.ref_no?' — '+erEsc(s.ref_no):''}</div>`,2)}
+      ${erFld('المخزن', `<div class="qt-inp" style="opacity:.85">${erEsc(erWhName(s.warehouse_id))}</div>`,1)}${erFld('تاريخ الاستلام', erInp('rec_date',r.rec_date,{type:'date'}),1)}</div></div>
+    <div class="qt-card"><div class="qt-h">📦 الكميات اللى وصلت فعلاً المخزن</div><table class="qt-tbl"><thead><tr><th>الصنف</th><th>فى الشحنة</th><th>الباقى</th><th>المستلم دلوقتى</th></tr></thead><tbody>
+    ${r.items.map((l,i)=>{ const it=erById(ER.boot.items,l.item_id); return `<tr><td>${erEsc(erItemLbl(l.item_id))}${it&&it.stock_mode==='components'?`<div class="qt-sub">🧩 هيدخل كمكونات: ${(it.components||[]).map(c=>erEsc((erById(ER.boot.items,c.item_id)||{}).name_ar||'')).join('، ')}</div>`:''}</td><td>${erQ(l.shipped)}</td><td>${erQ(l.rem)}</td>
+      <td><input class="qt-inp" type="number" min="0" max="${l.rem}" style="width:100px" value="${erEsc(l.qty)}" oninput="ER.edit.items[${i}].qty=this.value"></td></tr>`; }).join('')}</tbody></table></div>
+    <div class="qt-card">${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)"></textarea>`)}
+    <div class="qt-sub" style="margin-top:6px">لو فيه حاجة مش هتيجى خالص، اقفل الباقى من زرار ⚠️ (عجز) فى قايمة الشحنات.</div></div>`;
+  r.__render=()=>erModalBody(form());
+  erModal(`📥 استلام مشتريات — شحنة <span style="color:var(--gold)">${s.ship_no}</span>`, form(), `<button class="qt-btn" id="er-save-btn" onclick="erRecSave()">📥 تأكيد الاستلام</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
+}
+async function erRecSave(){ await erRun('er-save-btn', async ()=>{ const r=ER.edit;
+  await rpcSecure('erp_rec_save',{p:{shipment_id:r.shipment_id,rec_date:r.rec_date,notes:r.notes,items:r.items.map(l=>({ship_line:l.ship_line,qty:erNum(l.qty)}))}});
+  erClose(); ER.stock=null; await erPuReload(); erToast('✅ اتسجل الاستلام — الرصيد الفعلى اتحدّث'); }); }
+function erRenderRecs(){
+  const el=document.getElementById('erp-pu-pane-rec'); if(!el||!ER.pu) return; const canD=erCan('erp-purchases','del');
+  el.innerHTML = erBanner() + (ER.pu.recs.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم الاستلام</th><th>الشحنة</th><th>المورد</th><th>التاريخ</th><th>المخزن</th><th>الأصناف</th><th>بواسطة</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${ER.pu.recs.map(r=>{ const s=erById(ER.pu.ships,r.shipment_id)||{}; return `<tr class="${r.status==='ملغى'?'del':''}"><td><b style="color:var(--gold)">${r.rec_no}</b>${erTestChip(r)}</td><td>${s.ship_no||'—'}</td><td>${erEsc(erSupName(s.supplier_id))}</td><td>${erEsc(r.rec_date)}</td><td>${erEsc(erWhName(s.warehouse_id))}</td>
+    <td>${r.items.map(l=>`<div>${erEsc(erItemLbl(l.item_id))} × <b>${erQ(l.qty)}</b></div>`).join('')}</td><td class="qt-sub">${erEsc(r.by||'—')}<div>${erDate(r.created_at)}</div></td>
+    <td>${erStChip(r.status)}${r.cancel_reason?`<div class="qt-sub">${erEsc(r.cancel_reason)}</div>`:''}</td>
+    <td>${canD&&r.status==='سارى'&&s.status!=='مقفولة بعجز'?`<button class="qt-btn red sm" onclick="erRecCancel(${r.id})">✖ إلغاء</button>`:''}</td></tr>`; }).join('')}
+  </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📥 مفيش استلامات لسه — الاستلام بيتعمل من تاب الشحنات (زرار 📥)</div>`);
+}
+async function erRecCancel(id){ const r=erAsk('سبب إلغاء الاستلام؟ (الرصيد الفعلى هيتشال)'); if(!r) return;
+  try{ await rpcSecure('erp_rec_cancel',{p_id:id,p_reason:r}); ER.stock=null; await erPuReload(); erToast('✅ اتلغى الاستلام'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+
+// ════════ 💸 مدفوعات الموردين
+function erRenderPays(){
+  const el=document.getElementById('erp-pu-pane-pay'); if(!el||!ER.pu) return; const canE=erCan('erp-purchases','edit'), canD=erCan('erp-purchases','del'), B=ER.boot;
+  const M={cash:'💵 نقدى',bank:'🏦 تحويل',check:'📝 شيك'};
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><div style="flex:1"></div>${canE?`<button class="qt-btn" onclick="erPayOpen(null,null)">➕ دفعة لمورد</button>`:''}</div>` +
+  (ER.pu.pays.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>المورد</th><th>الطلبية</th><th>التاريخ</th><th>المبلغ</th><th>بالجنيه</th><th>من</th><th>الطريقة</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${ER.pu.pays.map(y=>{ const po=erById(ER.pu.pos,y.po_id), tr=erById(B.treasuries,y.treasury_id); return `<tr class="${y.status==='ملغى'?'del':''}"><td><b style="color:var(--gold)">${y.pay_no}</b>${erTestChip(y)}</td><td>${erEsc(erSupName(y.supplier_id))}</td><td>${po?po.po_no:'<span class="qt-sub">عامة</span>'}</td><td>${erEsc(y.pay_date)}</td>
+    <td><b>${erM(y.amount,y.currency_id)}</b>${erCur(y.currency_id).is_base?'':`<div class="qt-sub">× ${erMoney(y.rate)}</div>`}</td><td>${erMoney(y.amount_egp,2)}</td><td>${tr?erEsc(tr.name):'—'}</td>
+    <td>${M[y.method]||''}${y.method==='check'?`<div class="qt-sub">${erEsc(y.check_no||'')} — ${erEsc(y.check_due||'')}</div>`:''}</td><td>${erStChip(y.status)}${y.cancel_reason?`<div class="qt-sub">${erEsc(y.cancel_reason)}</div>`:''}</td>
+    <td>${canD&&y.status==='سارى'?`<button class="qt-btn red sm" onclick="erPayCancel(${y.id})">✖</button>`:''}</td></tr>`; }).join('')}
+  </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">💸 مفيش مدفوعات لسه</div>`);
+}
+function erPayOpen(supId, poId){
+  const B=ER.boot, today=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo'}).format(new Date());
+  const y={ supplier_id:supId||'', po_id:poId||'', currency_id:'', amount:'', rate:'', treasury_id:(B.treasuries.find(t=>t.is_active)||{}).id||'', method:'cash', check_no:'', check_bank:'', check_due:'', pay_date:today, notes:'' };
+  ER.edit=y; ER.ro=false;
+  const form=()=>{ const sup=erById(B.suppliers,y.supplier_id), po=erById(ER.pu.pos,y.po_id);
+    if(po) y.currency_id=po.currency_id; else if(sup && y.__sup!==y.supplier_id) y.currency_id=sup.currency_id; y.__sup=y.supplier_id; if(!y.currency_id) y.currency_id=(B.currencies.find(c=>c.is_base)||{}).id;
+    const cu=erCur(y.currency_id); if(String(y.__cur)!==String(y.currency_id)){ y.rate=cu.is_base?1:(cu.rate||''); y.__cur=y.currency_id; }
+    const pos=ER.pu.pos.filter(o=>String(o.supplier_id)===String(y.supplier_id)&&o.status!=='ملغية');
+    return `<div class="qt-card"><div class="qt-row">
+      ${erFld('المورد *', erSel('supplier_id',y.supplier_id,[['','— اختار —']].concat(B.suppliers.filter(s=>s.is_active||String(s.id)===String(y.supplier_id)).map(s=>[s.id,`${s.code} — ${s.name}`])),true),2)}
+      ${erFld('من طلبية', erSel('po_id',y.po_id,[['','— دفعة عامة (مش على طلبية معينة) —']].concat(pos.map(o=>[o.id,`${o.po_no}${o.supplier_ref?' ('+o.supplier_ref+')':''} — مستحق ${erMoney(Number(o.shipped_value)-Number(o.paid),2)} / التزام ${erMoney(Number(o.total)-Number(o.paid),2)}`])),true),2)}
+    </div><div class="qt-row" style="margin-top:10px">
+      ${erFld('المبلغ *', erInp('amount',y.amount,{type:'number',step:'0.01'}),1)}
+      ${erFld('العملة', po?`<div class="qt-inp" style="opacity:.85">${erEsc(cu.code)}</div>`:erSel('currency_id',y.currency_id,B.currencies.filter(c=>c.is_active).map(c=>[c.id,`${c.code} — ${c.name}`]),true),1)}
+      ${cu.is_base?'':erFld(`سعر الصرف (1 ${erEsc(cu.code)} = ? ج.م)`, erInp('rate',y.rate,{type:'number',step:'0.0001'}),1)}
+      ${erFld('التاريخ', erInp('pay_date',y.pay_date,{type:'date'}),1)}
+    </div><div class="qt-row" style="margin-top:10px">
+      ${erFld('من خزينة / حساب *', erSel('treasury_id',y.treasury_id,[['','— اختار —']].concat(B.treasuries.filter(t=>t.is_active).map(t=>[t.id,`${t.kind==='bank'?'🏦':'💵'} ${t.name}`]))),2)}
+      ${erFld('الطريقة', erSel('method',y.method,[['cash','💵 نقدى'],['bank','🏦 تحويل بنكى'],['check','📝 شيك']],true),1)}
+    </div>${y.method==='check'?`<div class="qt-row" style="margin-top:10px">${erFld('رقم الشيك *', erInp('check_no',y.check_no,{dir:'ltr'}),1)}${erFld('البنك', erInp('check_bank',y.check_bank),1)}${erFld('تاريخ الاستحقاق *', erInp('check_due',y.check_due,{type:'date'}),1)}</div>`:''}
+    <div style="margin-top:10px">${erFld('ملاحظات', erInp('notes',y.notes))}</div></div>`; };
+  y.__render=()=>erModalBody(form());
+  erModal('💸 دفعة لمورد', form(), `<button class="qt-btn" id="er-save-btn" onclick="erPaySave()">💾 حفظ الدفعة</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
+}
+async function erPaySave(){ await erRun('er-save-btn', async ()=>{ const y=ER.edit; const p={...y}; delete p.__render; p.amount=erNum(y.amount); p.rate=erNum(y.rate); ['po_id','treasury_id','supplier_id','check_due'].forEach(k=>{ if(p[k]==='') p[k]=null; });
+  delete p.__cur; delete p.__sup; await rpcSecure('erp_spay_save',{p}); erClose(); await erPuReload(); erToast('✅ اتسجلت الدفعة'); }); }
+async function erPayCancel(id){ const r=erAsk('سبب إلغاء الدفعة؟'); if(!r) return; try{ await rpcSecure('erp_spay_cancel',{p_id:id,p_reason:r}); await erPuReload(); erToast('✅ اتلغت الدفعة'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+
+// ════════ 📒 كشف حساب مورد
+async function erRenderStmt(){
+  const el=document.getElementById('erp-pu-pane-stmt'); if(!el) return; const B=ER.boot; const sid=ER.stmtSup||'';
+  el.innerHTML = `<div class="qt-row" style="margin-bottom:12px"><select class="qt-inp" style="min-width:280px" onchange="ER.stmtSup=this.value;erRenderStmt()"><option value="">— اختار المورد —</option>${B.suppliers.map(s=>`<option value="${s.id}" ${String(sid)===String(s.id)?'selected':''}>${erEsc(s.code+' — '+s.name)}</option>`).join('')}</select></div><div id="er-stmt-body">${sid?'<div class="loading-txt">⏳</div>':''}</div>`;
+  if(!sid) return;
+  try{ const d=await rpcSecure('erp_sup_statement',{p_supplier:Number(sid)}); const bal={};
+    const lines=d.lines.map(l=>{ bal[l.cur]=(bal[l.cur]||0)+Number(l.credit)-Number(l.debit); return {...l,bal:bal[l.cur]}; });
+    const K={opening:'📌 رصيد افتتاحى',ship:'🚢 شحنة / فاتورة',pay:'💸 دفعة'};
+    const pos=ER.pu.pos.filter(o=>String(o.supplier_id)===String(sid)&&o.status!=='ملغية');
+    document.getElementById('er-stmt-body').innerHTML = `
+    <div class="qt-row" style="gap:14px;margin-bottom:12px">${Object.keys(bal).map(c=>`<div class="er-stat"><div class="qt-sub">الرصيد (${erEsc(erCur(c).code)})</div><b style="color:${bal[c]>0?'#f0c75e':'#6dc49a'}">${erMoney(Math.abs(bal[c]),2)}</b><div class="qt-sub">${bal[c]>0?'علينا له':(bal[c]<0?'لينا عنده':'متصفّى')}</div></div>`).join('')||'<div class="qt-sub">مفيش حركات</div>'}</div>
+    ${pos.length?`<div class="qt-card"><div class="qt-h">📑 الطلبيات</div><table class="qt-tbl"><thead><tr><th>الطلبية</th><th>القيمة</th><th>اتشحن</th><th>اتدفع</th><th>الالتزام الباقى</th><th>المستحق فعلاً</th><th>الحالة</th></tr></thead><tbody>
+      ${pos.map(o=>`<tr><td><b>${o.po_no}</b> ${erEsc(o.supplier_ref||'')}</td><td>${erM(o.total,o.currency_id)}</td><td>${erM(o.shipped_value,o.currency_id)}</td><td>${erM(o.paid,o.currency_id)}</td><td><b>${erM(Number(o.total)-Number(o.paid),o.currency_id)}</b></td><td><b>${erM(Number(o.shipped_value)-Number(o.paid),o.currency_id)}</b></td><td>${erStChip(o.status)}</td></tr>`).join('')}</tbody></table></div>`:''}
+    <div class="qt-card"><div class="qt-h">📒 كشف الحساب</div>${lines.length?`<div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>التاريخ</th><th>البيان</th><th>رقم</th><th>الطلبية</th><th>له (علينا)</th><th>عليه (دفعنا)</th><th>الرصيد</th><th>ملاحظة</th></tr></thead><tbody>
+      ${lines.map(l=>{ const po=erById(ER.pu.pos,l.po_id); return `<tr><td>${erEsc(l.date||'—')}</td><td>${K[l.kind]||l.kind}${l.test?' 🧪':''}</td><td>${erEsc(l.no)}</td><td>${po?po.po_no:'—'}</td><td>${Number(l.credit)?erM(l.credit,l.cur):''}</td><td>${Number(l.debit)?erM(l.debit,l.cur):''}</td><td><b>${erM(l.bal,l.cur)}</b></td><td class="qt-sub">${erEsc(l.note||'')}</td></tr>`; }).join('')}
+      </tbody></table></div>`:'<div class="qt-sub">مفيش حركات</div>'}</div>`;
+  }catch(e){ document.getElementById('er-stmt-body').innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`; }
+}
+
+// ════════════════ 📊 أرصدة المخازن + كارت الصنف ════════════════
+async function erStockLoad(force){
+  try{ await erBoot(force); if(force||!ER.stock) ER.stock=await rpcSecure('erp_stock_list',{}); erRenderStock(); }catch(e){ erPaneErr('erst-pane',e); }
+}
+function erStockMap(){ const m={}; (ER.stock||[]).forEach(r=>{ (m[r.item_id]=m[r.item_id]||{})[r.wh]={book:Number(r.book),actual:Number(r.actual)}; }); return m; }
+function erKitAvail(it, m, wh){ let best=null; (it.components||[]).forEach(c=>{ let b=0,a=0; const row=m[c.item_id]||{}; Object.keys(row).forEach(w=>{ if(!wh||String(w)===String(wh)){ b+=row[w].book; a+=row[w].actual; } });
+  const kb=Math.floor(b/Number(c.qty)), ka=Math.floor(a/Number(c.qty)); best=best?{book:Math.min(best.book,kb),actual:Math.min(best.actual,ka)}:{book:kb,actual:ka}; }); return best||{book:0,actual:0}; }
+function erRenderStock(){
+  const el=document.getElementById('erst-pane'); if(!el||!ER.boot||!ER.stock) return; const B=ER.boot, f=ER.stf, q=f.q.trim().toLowerCase(), m=erStockMap();
+  const rows=[];
+  B.items.forEach(it=>{ if(f.kind && it.kind!==f.kind) return; if(q && !`${it.code} ${it.name_ar}`.toLowerCase().includes(q)) return;
+    if(it.stock_mode==='components'){ const k=erKitAvail(it,m,f.wh); if(f.nz==='1' && !k.book && !k.actual) return; rows.push({it,wh:f.wh||null,book:k.book,actual:k.actual,kit:true}); return; }
+    const per=m[it.id]||{}; const whs=Object.keys(per).filter(w=>!f.wh||String(w)===String(f.wh));
+    if(!whs.length){ if(f.nz!=='1') rows.push({it,wh:f.wh||null,book:0,actual:0}); return; }
+    whs.forEach(w=>rows.push({it,wh:w,book:per[w].book,actual:per[w].actual})); });
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px">
+    <input class="qt-inp" style="width:220px" placeholder="🔍 كود / اسم" value="${erEsc(f.q)}" oninput="ER.stf.q=this.value;erRenderStock()">
+    <select class="qt-inp" onchange="ER.stf.wh=this.value;erRenderStock()"><option value="">كل المخازن</option>${B.warehouses.map(w=>`<option value="${w.id}" ${String(f.wh)===String(w.id)?'selected':''}>${erEsc(w.name)}</option>`).join('')}</select>
+    <select class="qt-inp" onchange="ER.stf.kind=this.value;erRenderStock()"><option value="">كل التصنيفات</option>${Object.keys(ER_KIND).map(k=>`<option value="${k}" ${f.kind===k?'selected':''}>${ER_KIND[k]}</option>`).join('')}</select>
+    <select class="qt-inp" onchange="ER.stf.nz=this.value;erRenderStock()"><option value="1" ${f.nz==='1'?'selected':''}>اللى ليها رصيد بس</option><option value="0" ${f.nz==='0'?'selected':''}>كل الأصناف</option></select>
+    <div style="flex:1"></div><button class="qt-btn ghost sm" onclick="erStockLoad(true)">🔄</button></div>
+  ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>الصنف</th><th>المخزن</th><th>الدفترى (المتاح للبيع)</th><th>الفعلى (فى المخزن)</th><th>فى الطريق</th><th>متباع ولسه متسلمش</th><th></th></tr></thead><tbody>
+  ${rows.map(r=>{ const tr=Math.max(0,r.book-r.actual), sd=Math.max(0,r.actual-r.book); const low=r.it.reorder_level!=null && r.book<Number(r.it.reorder_level);
+    return `<tr><td><b style="color:var(--gold)">${erEsc(r.it.code)}</b></td><td><b>${erEsc(r.it.name_ar)}</b>${r.kit?`<div class="qt-sub">🧩 مفكك — المتاح محسوب من أقل مكوّن</div>`:''}${low?' <span class="qt-chip del">⬇️ تحت حد الطلب</span>':''}</td>
+      <td>${r.wh?erEsc(erWhName(r.wh)):'<span class="qt-sub">كل المخازن</span>'}</td><td><b style="font-size:15px">${erQ(r.book)}</b></td><td><b style="font-size:15px">${erQ(r.actual)}</b></td>
+      <td>${tr?`<span class="qt-chip ex">${erQ(tr)}</span>`:'—'}</td><td>${sd?`<span class="qt-chip in">${erQ(sd)}</span>`:'—'}</td>
+      <td><button class="qt-btn ghost sm" onclick="erCardOpen(${r.kit?r.it.components.find(c=>c.role==='engine')?.item_id||r.it.components[0].item_id:r.it.id})">📜 كارت الصنف</button></td></tr>`; }).join('')}
+  </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📊 مفيش أرصدة لسه — الرصيد بيدخل من الشحنات والاستلام</div>`}`;
+}
+async function erCardOpen(itemId){
+  const it=erById(ER.boot.items,itemId);
+  erModal(`📜 كارت الصنف — <span style="color:var(--gold)">${erEsc(it?it.code+' — '+it.name_ar:'')}</span>`, '<div class="loading-txt">⏳</div>', '');
+  try{ const mv=await rpcSecure('erp_item_card',{p_item:itemId}); const bal={};
+    const rows=mv.map(x=>{ const k=x.wh; bal[k]=bal[k]||{b:0,a:0}; bal[k].b+=Number(x.book); bal[k].a+=Number(x.actual); return {...x,bb:bal[k].b,ba:bal[k].a}; });
+    erModalBody(rows.length?`<div class="qt-row" style="gap:12px;margin-bottom:12px">${Object.keys(bal).map(w=>`<div class="er-stat"><div class="qt-sub">${erEsc(erWhName(w))}</div><b>${erQ(bal[w].b)}</b><div class="qt-sub">دفترى — فعلى ${erQ(bal[w].a)}</div></div>`).join('')}</div>
+      <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>التاريخ</th><th>الحركة</th><th>رقم</th><th>المخزن</th><th>دفترى ±</th><th>فعلى ±</th><th>رصيد دفترى</th><th>رصيد فعلى</th><th>البيان</th><th>بواسطة</th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><td>${erEsc(x.date)}<div class="qt-sub">${erDate(x.at)}</div></td><td>${ER_DOC[x.type]||erEsc(x.type)}${x.test?' 🧪':''}</td><td>${erEsc(x.no||'')}</td><td>${erEsc(erWhName(x.wh))}</td>
+        <td style="color:${Number(x.book)<0?'#ff8a8a':'#6dc49a'}">${Number(x.book)?(Number(x.book)>0?'+':'')+erQ(x.book):''}</td><td style="color:${Number(x.actual)<0?'#ff8a8a':'#6dc49a'}">${Number(x.actual)?(Number(x.actual)>0?'+':'')+erQ(x.actual):''}</td>
+        <td><b>${erQ(x.bb)}</b></td><td><b>${erQ(x.ba)}</b></td><td class="qt-sub">${erEsc(x.note||'')}${x.parent?`<div>🧩 من ${erEsc(erItemLbl(x.parent))}</div>`:''}</td><td class="qt-sub">${erEsc(x.by||'')}</td></tr>`).join('')}
+      </tbody></table></div>`:'<div class="qt-sub">مفيش حركات على الصنف ده لسه</div>');
+  }catch(e){ erModalBody(`<div style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`); }
+}
+</script>
+
 
 
 
