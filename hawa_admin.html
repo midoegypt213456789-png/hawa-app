@@ -3852,10 +3852,11 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erPuLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="erp-pu-tab-po" onclick="erPuTab('po')">📑 الطلبيات <span class="bl-tab-count" id="erp-pu-c-po">0</span></button><button class="bl-tab" id="erp-pu-tab-ship" onclick="erPuTab('ship')">🚢 الشحنات وفواتير الشراء <span class="bl-tab-count" id="erp-pu-c-ship">0</span></button><button class="bl-tab" id="erp-pu-tab-rec" onclick="erPuTab('rec')">📥 الاستلامات</button><button class="bl-tab" id="erp-pu-tab-pay" onclick="erPuTab('pay')">💸 مدفوعات الموردين</button><button class="bl-tab" id="erp-pu-tab-stmt" onclick="erPuTab('stmt')">📒 كشف حساب مورد</button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erp-pu-tab-po" onclick="erPuTab('po')">📑 الطلبيات <span class="bl-tab-count" id="erp-pu-c-po">0</span></button><button class="bl-tab" id="erp-pu-tab-ship" onclick="erPuTab('ship')">🚢 الشحنات وفواتير الشراء <span class="bl-tab-count" id="erp-pu-c-ship">0</span></button><button class="bl-tab" id="erp-pu-tab-rec" onclick="erPuTab('rec')">📥 الاستلامات</button><button class="bl-tab" id="erp-pu-tab-pret" onclick="erPuTab('pret')">↩️ مرتجع مشتريات</button><button class="bl-tab" id="erp-pu-tab-pay" onclick="erPuTab('pay')">💸 مدفوعات الموردين</button><button class="bl-tab" id="erp-pu-tab-stmt" onclick="erPuTab('stmt')">📒 كشف حساب مورد</button></div>
       <div id="erp-pu-pane-po" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-ship" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-rec" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erp-pu-pane-pret" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-pay" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erp-pu-pane-stmt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
@@ -3935,8 +3936,9 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erStockLoad(true)">🔄 تحديث</button>
       </div>
-      
+      <div class="bl-tabs"><button class="bl-tab active" id="erst-tab-main" onclick="erStockTab('main')">📦 الأرصدة</button><button class="bl-tab" id="erst-tab-tr" onclick="erStockTab('tr')">🔁 التحويل بين المخازن</button></div>
       <div id="erst-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erst-pane-tr" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
     <div class="section" id="sec-erp-setup">
       <div class="page-hd">
@@ -21265,10 +21267,41 @@ async function erPuLoad(force){
   try{ await erBoot(force); if(force||!ER.pu) ER.pu=await rpcSecure('erp_purch_list',{}); erPuTab(ER.tab.pu); }catch(e){ erPaneErr('erp-pu-pane-po',e); }
 }
 async function erPuReload(){ ER.pu=await rpcSecure('erp_purch_list',{}); erPuTab(ER.tab.pu); }
-function erPuTab(t){ ER.tab.pu=t; erTabs('erp-pu',['po','ship','rec','pay','stmt'],t);
+function erPuTab(t){ ER.tab.pu=t; erTabs('erp-pu',['po','ship','rec','pret','pay','stmt'],t);
   const c=(id,n)=>{ const e=document.getElementById(id); if(e) e.textContent=n; };
   if(ER.pu){ c('erp-pu-c-po',ER.pu.pos.filter(x=>x.status==='مفتوحة').length); c('erp-pu-c-ship',ER.pu.ships.filter(x=>['فى الطريق','مستلمة جزئياً'].includes(x.status)).length); }
-  ({po:erRenderPos,ship:erRenderShips,rec:erRenderRecs,pay:erRenderPays,stmt:erRenderStmt}[t])(); }
+  ({po:erRenderPos,ship:erRenderShips,rec:erRenderRecs,pret:erRenderPrets,pay:erRenderPays,stmt:erRenderStmt}[t])(); }
+
+// ════════ ↩️ مرتجع المشتريات (للمورد من المستلم — بينزّل الدفترى والفعلى وبيتخصم من حساب المورد)
+function erRenderPrets(){ const el=document.getElementById('erp-pu-pane-pret'); if(!el||!ER.pu) return; const canE=erCan('erp-purchases','edit'), canD=erCan('erp-purchases','del');
+  const rows=ER.pu.prets||[];
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><div class="qt-sub" style="flex:1">↩️ المرتجع بيطلع من الكمية اللى اتستلمت فعلاً، وبيتخصم من حساب المورد بعملة الشحنة.</div>${canE?`<button class="qt-btn" onclick="erPretNew()">↩️ مرتجع جديد</button>`:''}</div>
+  ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>الشحنة</th><th>المورد</th><th>التاريخ</th><th>الأصناف</th><th>القيمة</th><th>السبب</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${rows.map(r=>{ const sh=erById(ER.pu.ships,r.shipment_id)||{}; return `<tr class="${r.status==='ملغى'?'del':''}" data-erid="${r.id}"><td><b style="color:var(--gold)">${r.ret_no}</b>${erTestChip(r)}</td><td>${sh.ship_no||'—'}</td><td>${erEsc(erSupName(r.supplier_id))}</td>
+      <td>${erEsc(r.ret_date)}<div class="qt-sub">${erEsc(r.by||'')}</div></td><td>${(r.items||[]).map(x=>`<div>${erEsc(erItemLbl(x.item_id))} × <b>${erQ(x.qty)}</b> <span class="qt-sub">(${erEsc(erWhName(x.warehouse_id))})</span></div>`).join('')}</td>
+      <td><b>${erM(r.total,r.currency_id)}</b></td><td class="qt-sub">${erEsc(r.reason||'')}</td><td>${erStChip(r.status)}${r.cancel_reason?`<div class="qt-sub">${erEsc(r.cancel_reason)}</div>`:''}</td>
+      <td>${canD&&r.status==='سارى'?`<button class="qt-btn red sm" onclick="erPretCancel(${r.id})">✖ إلغاء</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">↩️ مفيش مرتجعات مشتريات</div>`}`; }
+function erPretNew(){ const n=prompt('رقم الشحنة (فاتورة الشراء) اللى هترجّع منها:'); if(!n) return; const sh=ER.pu.ships.find(x=>Number(x.ship_no)===Number(erNum(n)));
+  if(!sh){ erToast('❌ مفيش شحنة رقم '+n,false); return; } erPretOpen(sh.id); }
+function erPretOpen(shipId){ const sh=erById(ER.pu.ships,shipId); if(!sh) return; const rec=sh.received||{}, rt=sh.returned||{};
+  const r={ shipment_id:sh.id, ret_date:erToday(), reason:'', notes:'', lines:sh.items.map(l=>({ship_line:l.line_no,item_id:l.item_id,unit:Number(l.total)/Math.max(1,Number(l.qty)),can:Number(rec[l.line_no]||0)-Number(rt[l.line_no]||0),qty:'',wh:sh.warehouse_id})).filter(l=>l.can>0) };
+  if(!r.lines.length){ erToast('مفيش كميات مستلمة ترجع من الشحنة دى',false); return; }
+  ER.edit=r; ER.ro=false; const whs=ER.boot.warehouses.filter(w=>w.is_active);
+  const form=()=>{ const tot=r.lines.reduce((a,l)=>a+l.unit*(erNum(l.qty)||0),0); return `<div class="qt-card"><div class="qt-row" style="gap:18px"><div><div class="qt-sub">الشحنة</div><b style="font-size:20px;color:var(--gold)">${sh.ship_no}</b></div><div><div class="qt-sub">المورد</div><b>${erEsc(erSupName(sh.supplier_id))}</b></div><div style="flex:1"></div>${erFld('التاريخ', erInp('ret_date',r.ret_date,{type:'date'}),1)}</div></div>
+    <div class="qt-card"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>ينفع يرجع</th><th>السعر</th><th>الكمية المرتجعة</th><th>طالعة من مخزن</th></tr></thead><tbody>
+      ${r.lines.map((l,i)=>`<tr><td>${erEsc(erItemLbl(l.item_id))}</td><td>${erQ(l.can)}</td><td>${erM(l.unit,sh.currency_id)}</td><td><input class="qt-inp" type="number" min="0" max="${l.can}" style="width:90px" value="${erEsc(l.qty)}" oninput="ER.edit.lines[${i}].qty=this.value;ER.edit.__tot()"></td>
+        <td><select class="qt-inp" onchange="ER.edit.lines[${i}].wh=this.value">${whs.map(w=>`<option value="${w.id}" ${String(w.id)===String(l.wh)?'selected':''}>${erEsc(w.name)} — فعلى ${erQ(erAvailAct(l.item_id,w.id))}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>
+      <div class="qt-tot" style="margin-top:10px" id="er-pr-tot">القيمة: <b>${erM(tot,sh.currency_id)}</b></div></div>
+    <div class="qt-card"><div class="qt-row">${erFld('سبب المرتجع *', erInp('reason',r.reason),2)}${erFld('ملاحظات', erInp('notes',r.notes),3)}</div></div>`; };
+  r.__tot=()=>{ const e=document.getElementById('er-pr-tot'); if(e) e.innerHTML=`القيمة: <b>${erM(r.lines.reduce((a,l)=>a+l.unit*(erNum(l.qty)||0),0),sh.currency_id)}</b>`; };
+  r.__render=()=>erModalBody(form());
+  erModal(`↩️ مرتجع مشتريات — شحنة <span style="color:var(--gold)">${sh.ship_no}</span>`, form(), `<button class="qt-btn" id="er-save-btn" onclick="erPretSave()">↩️ تأكيد المرتجع</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
+  if(!ER.stock) rpcSecure('erp_stock_list',{}).then(x=>{ ER.stock=x; if(ER.edit===r) r.__render(); }).catch(()=>{}); }
+async function erPretSave(){ await erRun('er-save-btn', async ()=>{ const r=ER.edit; const items=r.lines.filter(l=>erNum(l.qty)).map(l=>({ship_line:l.ship_line,qty:erNum(l.qty),warehouse_id:Number(l.wh)||null}));
+  if(!items.length) throw new Error('اكتب الكميات المرتجعة');
+  await rpcSecure('erp_pret_save',{p:{shipment_id:r.shipment_id,ret_date:r.ret_date,reason:r.reason,notes:r.notes,items}}); erClose(); ER.stock=null; ER.tab.pu='pret'; await erPuReload(); erToast('✅ اتسجل مرتجع المشتريات'); }); }
+async function erPretCancel(id){ const r=erAsk('سبب إلغاء مرتجع المشتريات؟ (البضاعة هترجع للمخزن)'); if(!r) return;
+  try{ await rpcSecure('erp_pret_cancel',{p_id:id,p_reason:r}); ER.stock=null; await erPuReload(); erToast('✅ اتلغى المرتجع'); }catch(e){ erToast('❌ '+erErr(e),false); } }
 
 // ════════ 📑 الطلبيات
 function erPoRem(o,l){ return Number(l.qty) - Number((o.shipped||{})[l.line_no]||0); }
@@ -21378,6 +21411,7 @@ function erRenderShips(){
       <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="erShipOpen(${s.id})">${canE&&s.status==='فى الطريق'&&noRec&&s.cost_status!=='معتمدة'?'✏️':'👁️'}</button>
         ${canC&&s.status!=='ملغية'?`<button class="qt-btn ghost sm" onclick="erCostOpen(${s.id})">💰 التكاليف</button>`:''}
         ${canE&&act.includes(s.status)?`<button class="qt-btn sm" onclick="erRecOpen(${s.id})">📥 استلام</button> <button class="qt-btn ghost sm" title="قفل الباقى كعجز" onclick="erShipShort(${s.id})">⚠️</button>`:''}
+        ${canE&&s.status!=='ملغية'&&rq>Object.values(s.returned||{}).reduce((a,v)=>a+Number(v),0)?`<button class="qt-btn ghost sm" title="مرتجع للمورد" onclick="erPretOpen(${s.id})">↩️</button>`:''}
         ${s.status!=='ملغية'&&erCan('erp-letters','edit')&&typeof erTmFromShipId==='function'?`<button class="qt-btn ghost sm" title="نماذج ضريبة من الشحنة دى (للجوابات)" onclick="erTmFromShipId(${s.id})">🗂️</button>`:''}
         ${canD&&s.status==='فى الطريق'&&noRec?`<button class="qt-btn red sm" onclick="erShipCancel(${s.id})">✖</button>`:''}</td></tr>`; }).join('')}
   </tbody></table></div>
@@ -21583,7 +21617,7 @@ async function erRenderStmt(){
   if(!sid) return;
   try{ const d=await rpcSecure('erp_sup_statement',{p_supplier:Number(sid)}); const bal={};
     const lines=d.lines.map(l=>{ bal[l.cur]=(bal[l.cur]||0)+Number(l.credit)-Number(l.debit); return {...l,bal:bal[l.cur]}; });
-    const K={opening:'📌 رصيد افتتاحى',ship:'🚢 شحنة / فاتورة',pay:'💸 دفعة'};
+    const K={opening:'📌 رصيد افتتاحى',ship:'🚢 شحنة / فاتورة',pay:'💸 دفعة',pret:'↩️ مرتجع مشتريات'};
     const pos=ER.pu.pos.filter(o=>String(o.supplier_id)===String(sid)&&o.status!=='ملغية');
     document.getElementById('er-stmt-body').innerHTML = `
     <div class="qt-row" style="gap:14px;margin-bottom:12px">${Object.keys(bal).map(c=>`<div class="er-stat"><div class="qt-sub">الرصيد (${erEsc(erCur(c).code)})</div><b style="color:${bal[c]>0?'#f0c75e':'#6dc49a'}">${erMoney(Math.abs(bal[c]),2)}</b><div class="qt-sub">${bal[c]>0?'علينا له':(bal[c]<0?'لينا عنده':'متصفّى')}</div></div>`).join('')||'<div class="qt-sub">مفيش حركات</div>'}</div>
@@ -21597,8 +21631,43 @@ async function erRenderStmt(){
 
 // ════════════════ 📊 أرصدة المخازن + كارت الصنف ════════════════
 async function erStockLoad(force){
-  try{ await erBoot(force); if(force||!ER.stock) ER.stock=await rpcSecure('erp_stock_list',{}); erRenderStock(); }catch(e){ erPaneErr('erst-pane',e); }
+  try{ await erBoot(force); if(force||!ER.stock) ER.stock=await rpcSecure('erp_stock_list',{}); if(force) ER.trs=null; erStockTab(ER.tab.st||'main'); }catch(e){ erPaneErr('erst-pane',e); }
 }
+function erStockTab(t){ ER.tab.st=t; const a=document.getElementById('erst-pane'), b=document.getElementById('erst-pane-tr'); if(a) a.style.display=t==='main'?'block':'none'; if(b) b.style.display=t==='tr'?'block':'none';
+  ['main','tr'].forEach(k=>{ const x=document.getElementById('erst-tab-'+k); if(x) x.classList.toggle('active',k===t); }); if(typeof erTbSync==='function') setTimeout(()=>erTbSync(),0);
+  if(t==='tr') erRenderTrs(); else erRenderStock(); }
+// ════════ 🔁 التحويل بين المخازن (بيطلع من مخزن ويدخل التانى فى نفس اللحظة — دفترى وفعلى)
+async function erRenderTrs(){ const el=document.getElementById('erst-pane-tr'); if(!el) return;
+  if(!ER.trs){ el.innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>'; try{ ER.trs=await rpcSecure('erp_tr_list',{}); }catch(e){ erPaneErr('erst-pane-tr',e); return; } }
+  const canE=erCan('erp-stock','edit'), canD=erCan('erp-stock','del');
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><div style="flex:1"></div>${canE?`<button class="qt-btn" onclick="erTrOpen()">🔁 تحويل جديد</button>`:''}</div>
+  ${ER.trs.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>التاريخ</th><th>من مخزن</th><th>إلى مخزن</th><th>الأصناف</th><th>ملاحظات</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${ER.trs.map(t=>`<tr class="${t.status==='ملغى'?'del':''}" data-erid="${t.id}"><td><b style="color:var(--gold)">${t.tr_no}</b>${erTestChip(t)}</td><td>${erEsc(t.tr_date)}<div class="qt-sub">${erEsc(t.by||'')}</div></td>
+      <td>${erEsc(erWhName(t.from_wh))}</td><td>${erEsc(erWhName(t.to_wh))}</td><td>${(t.items||[]).map(x=>`<div>${erEsc(erItemLbl(x.item_id))} × <b>${erQ(x.qty)}</b></div>`).join('')}</td>
+      <td class="qt-sub">${erEsc(t.notes||'')}</td><td>${erStChip(t.status)}${t.cancel_reason?`<div class="qt-sub">${erEsc(t.cancel_reason)}</div>`:''}</td>
+      <td>${canD&&t.status==='سارى'?`<button class="qt-btn red sm" onclick="erTrCancel(${t.id})">✖ إلغاء</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🔁 مفيش تحويلات</div>`}`; }
+function erTrOpen(){ if(!erCan('erp-stock','edit')){ erToast('معندكش صلاحية تعديل',false); return; } const whs=ER.boot.warehouses.filter(w=>w.is_active);
+  const t={ from_wh:(whs[0]||{}).id||'', to_wh:(whs[1]||{}).id||'', tr_date:erToday(), notes:'', items:[] }; ER.edit=t; ER.ro=false;
+  const form=()=>{ const last=t.items[t.items.length-1]; if(!last||last.item_id||last.__txt) t.items.push({item_id:null,qty:'',__txt:''});
+    const G=(i,c)=>`data-g="${i},${c}" onkeydown="erGridKey(event,${i},${c},1)"`;
+    setTimeout(erInvFocus,0);
+    return `${erItemDl()}<div class="qt-card"><div class="qt-row">${erFld('من مخزن *', erSel('from_wh',t.from_wh,whs.map(w=>[w.id,w.name]),true),2)}${erFld('إلى مخزن *', erSel('to_wh',t.to_wh,whs.map(w=>[w.id,w.name]),true),2)}${erFld('التاريخ', erInp('tr_date',t.tr_date,{type:'date'}),1)}</div></div>
+    <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— ⏎ Enter ينقلك للخانة اللى بعدها، وآخر السطر يفتح سطر جديد</span></div><table class="qt-tbl"><thead><tr><th>الصنف</th><th>الكمية</th><th>فعلى فى «من»</th><th>فعلى فى «إلى»</th><th></th></tr></thead><tbody>
+      ${t.items.map((l,i)=>{ const blank=!l.item_id&&!l.__txt; const av=l.item_id?erAvailAct(l.item_id,t.from_wh):null;
+        return `<tr><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erTrLine(${i},this.value)" ${G(i,0)}>${l.__txt&&!l.item_id?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
+          <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="ER.edit.items[${i}].qty=this.value" ${G(i,1)}></td>
+          <td>${av!=null?`<b style="color:${av<(erNum(l.qty)||0)?'var(--error)':''}">${erQ(av)}</b>`:''}</td><td>${l.item_id?erQ(erAvailAct(l.item_id,t.to_wh)):''}</td>
+          <td>${blank?'':`<button class="qt-btn red sm" tabindex="-1" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('')}</tbody></table></div>
+    <div class="qt-card">${erFld('ملاحظات', erInp('notes',t.notes))}</div>`; };
+  t.__render=()=>erModalBody(form());
+  erModal('🔁 تحويل بين المخازن', form(), `<button class="qt-btn" id="er-save-btn" onclick="erTrSave()">🔁 تأكيد التحويل</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
+  if(!ER.stock) rpcSecure('erp_stock_list',{}).then(x=>{ ER.stock=x; if(ER.edit===t) t.__render(); }).catch(()=>{}); }
+function erTrLine(i,v){ if(typeof __erRendering!=='undefined' && __erRendering) return; const l=ER.edit.items[i]; if(!l) return; const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; ER.edit.__render(); }
+async function erTrSave(){ await erRun('er-save-btn', async ()=>{ const t=ER.edit; const bad=t.items.find(l=>l.__txt&&!l.item_id); if(bad) throw new Error(`الصنف «${bad.__txt}» مش موجود`);
+  await rpcSecure('erp_tr_save',{p:{from_wh:t.from_wh,to_wh:t.to_wh,tr_date:t.tr_date,notes:t.notes,items:t.items.filter(l=>l.item_id).map(l=>({item_id:l.item_id,qty:erNum(l.qty)}))}});
+  erClose(); ER.trs=null; ER.stock=await rpcSecure('erp_stock_list',{}); erStockTab('tr'); erToast('✅ اتعمل التحويل — الأرصدة اتحدّثت'); }); }
+async function erTrCancel(id){ const r=erAsk('سبب إلغاء التحويل؟ (البضاعة هترجع للمخزن الأولانى)'); if(!r) return;
+  try{ await rpcSecure('erp_tr_cancel',{p_id:id,p_reason:r}); ER.trs=null; ER.stock=await rpcSecure('erp_stock_list',{}); erStockTab('tr'); erToast('✅ اتلغى التحويل'); }catch(e){ erToast('❌ '+erErr(e),false); } }
 function erStockMap(){ const m={}; (ER.stock||[]).forEach(r=>{ (m[r.item_id]=m[r.item_id]||{})[r.wh]={book:Number(r.book),actual:Number(r.actual)}; }); return m; }
 function erKitAvail(it, m, wh){ let best=null; (it.components||[]).forEach(c=>{ let b=0,a=0; const row=m[c.item_id]||{}; Object.keys(row).forEach(w=>{ if(!wh||String(w)===String(wh)){ b+=row[w].book; a+=row[w].actual; } });
   const kb=Math.floor(b/Number(c.qty)), ka=Math.floor(a/Number(c.qty)); best=best?{book:Math.min(best.book,kb),actual:Math.min(best.actual,ka)}:{book:kb,actual:ka}; }); return best||{book:0,actual:0}; }
@@ -22436,9 +22505,11 @@ const ER_TB = {
     po:{ pane:'erp-pu-pane-po', nw:()=>erPoOpen(), open:/^erPoOpen\(/, del:/^erPoStatus\(\d+,'ملغية'\)/ },
     ship:{ pane:'erp-pu-pane-ship', nw:()=>erShipOpen(), open:/^erShipOpen\(\d/, del:/^erShipCancel\(/ },
     rec:{ pane:'erp-pu-pane-rec', nwMsg:'الاستلام بيتعمل من الشحنة — اختار الشحنة ودوس 📥', nwTab:()=>erPuTab('ship'), del:/^erRecCancel\(/ },
+    pret:{ pane:'erp-pu-pane-pret', nw:()=>erPretNew(), del:/^erPretCancel\(/ },
     pay:{ pane:'erp-pu-pane-pay', nw:()=>erPayOpen(), del:/^erPayCancel\(/ },
     stmt:{ none:true } } },
-  'erp-stock': { t:{ main:{ pane:'erst-pane', nwMsg:'الرصيد بيتغير من الشحنات والاستلام والفواتير والتسليم بس', open:/^erCardOpen\(/ } } },
+  'erp-stock': { tab:()=>ER.tab.st||'main', t:{ main:{ pane:'erst-pane', nwTab:()=>{ erStockTab('tr'); erTrOpen(); }, open:/^erCardOpen\(/ },
+    tr:{ pane:'erst-pane-tr', nw:()=>erTrOpen(), del:/^erTrCancel\(/ } } },
   'erp-sales': { tab:()=>ER.tab.sl, t:{
     inv:{ pane:'ers3-pane-inv', nw:()=>erInvOpen(), open:/^erInvOpen\(/, del:/^erInvCancel\(/ },
     ret:{ pane:'ers3-pane-ret', nw:()=>erSretNew(), open:/^erInvOpen\(/, del:/^erSretCancel\(/ },
