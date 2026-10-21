@@ -2531,6 +2531,20 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .pl-toast.err{background:#3b1f1f;color:#ffb3b3;border:1px solid #E05555}
 @media(max-width:700px){.pl-codes{grid-template-columns:repeat(10,1fr)}.pl-scroll{max-height:none}}
 
+/* 🏭 السيستم الجديد (ERP) */
+.er-banner{background:rgba(240,199,94,.08);border:1px solid rgba(240,199,94,.35);color:#e9d9a8;border-radius:10px;padding:9px 14px;margin-bottom:12px;font-size:13px;line-height:1.7}
+.er-mbox{width:min(1080px,100%);max-height:94vh}
+.er-mbody{overflow:auto;padding:14px;flex:1}
+.er-mfoot{display:flex;gap:8px;align-items:center;padding:10px 14px;border-top:1px solid var(--border);flex-wrap:wrap}
+.er-mfoot:empty{display:none}
+.er-fs{border:0;padding:0;margin:0;min-width:0}
+.er-fs .qt-card{background:var(--dark3)}
+.qt-radio.er-on{border-color:var(--gold);background:rgba(201,168,76,.12)}
+.er-phase{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px dashed var(--border)}
+.er-phase:last-child{border-bottom:none}
+.er-stat{background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:8px 14px;min-width:90px;text-align:center}
+.er-stat b{font-size:20px;color:var(--gold)}
+
 /* 💰 عروض الأسعار */
 .qt-card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
 .qt-h{color:var(--gold);font-weight:800;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -3776,6 +3790,57 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
           <iframe id="qt-modal-frame" class="qt-frame"></iframe>
         </div>
       </div>
+    </div>
+
+    <div class="section" id="sec-erp-items">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">📦 <span>الأصناف</span></div>
+          <div class="page-sub">السيستم الجديد — الأصناف الكاملة والمفككة ومكوناتها وأسعارها</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erItemsLoad(true)">🔄 تحديث</button>
+      </div>
+      <div class="bl-tabs"><button class="bl-tab active" id="eri-tab-items" onclick="erItemsTab('items')">📦 الأصناف <span class="bl-tab-count" id="eri-count">0</span></button><button class="bl-tab" id="eri-tab-cats" onclick="erItemsTab('cats')">🗂️ فئات الأصناف</button></div>
+      <div id="eri-pane-items" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="eri-pane-cats" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
+    <div class="section" id="sec-erp-suppliers">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🏭 <span>الموردين</span></div>
+          <div class="page-sub">السيستم الجديد — الموردين وفئاتهم وعملة التعامل</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erSuppliersLoad(true)">🔄 تحديث</button>
+      </div>
+      <div class="bl-tabs"><button class="bl-tab active" id="ers-tab-list" onclick="erSupTab('list')">🏭 الموردين <span class="bl-tab-count" id="ers-count">0</span></button><button class="bl-tab" id="ers-tab-cats" onclick="erSupTab('cats')">🗂️ فئات الموردين</button></div>
+      <div id="ers-pane-list" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="ers-pane-cats" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
+    <div class="section" id="sec-erp-traders">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🚚 <span>حسابات التجار</span></div>
+          <div class="page-sub">السيستم الجديد — فئة السعر، الموزع بالعمولة، الرصيد الافتتاحى، والأقفال</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erTradersLoad(true)">🔄 تحديث</button>
+      </div>
+      
+      <div id="ert-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
+    <div class="section" id="sec-erp-setup">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🧩 <span>تعريفات السيستم</span></div>
+          <div class="page-sub">السيستم الجديد — المخازن والعملات وفئات الأسعار والخزائن وحالة التفعيل</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erSetupLoad(true)">🔄 تحديث</button>
+      </div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erx-tab-wh" onclick="erSetupTab('wh')">🏬 المخازن</button><button class="bl-tab" id="erx-tab-cur" onclick="erSetupTab('cur')">💱 العملات</button><button class="bl-tab" id="erx-tab-tier" onclick="erSetupTab('tier')">🏷️ فئات الأسعار</button><button class="bl-tab" id="erx-tab-tre" onclick="erSetupTab('tre')">🏦 الخزائن والبنوك</button><button class="bl-tab" id="erx-tab-status" onclick="erSetupTab('status')">🚦 حالة السيستم</button></div>
+      <div id="erx-pane-wh" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erx-pane-cur" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erx-pane-tier" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erx-pane-tre" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erx-pane-status" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
 
     <div class="section" id="sec-feedback">
@@ -5833,6 +5898,10 @@ function autoRefreshTick(){
     else if(sec==='parts' && typeof ptLoad === 'function') ptLoad();
     else if(sec==='purchases' && typeof pcLoad === 'function') pcLoad();
     else if(sec==='quotes' && typeof qtLoad === 'function') qtLoad(true);
+    else if(sec==='erp-items' && typeof erItemsLoad === 'function') erItemsLoad(true);
+    else if(sec==='erp-suppliers' && typeof erSuppliersLoad === 'function') erSuppliersLoad(true);
+    else if(sec==='erp-traders' && typeof erTradersLoad === 'function') erTradersLoad(true);
+    else if(sec==='erp-setup' && typeof erSetupLoad === 'function') erSetupLoad(true);
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -5986,6 +6055,10 @@ function goTo(sec){
   else if(sec==='parts')ptLoad();
   else if(sec==='purchases')pcLoad();
   else if(sec==='quotes')qtLoad(true);
+  else if(sec==='erp-items')erItemsLoad(true);
+  else if(sec==='erp-suppliers')erSuppliersLoad(true);
+  else if(sec==='erp-traders')erTradersLoad(true);
+  else if(sec==='erp-setup')erSetupLoad(true);
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -10373,7 +10446,8 @@ setInterval(()=>{ if(typeof currentSection!=='undefined' && currentSection==='co
 const EXTRA_PERMS = {
   'shortage-chassis':  { icon: '🔩', label: 'تسليم الشاسيهات (شاشة المخازن)' },
   'shortage-motor':    { icon: '⚙️', label: 'تسليم المواتير (شاشة المخازن)' },
-  'warehouse-checkin': { icon: '✅', label: 'حضور الحجوزات (مع التسليم)' }
+  'warehouse-checkin': { icon: '✅', label: 'حضور الحجوزات (مع التسليم)' },
+  'erp-cost':          { icon: '💲', label: 'تكلفة وسعر شراء الأصناف (السيستم الجديد) — دخول = يشوف، تعديل = يعدّل' }
 };
 const PERM_ACTIONS = [
   { key:'view',  label:'👁️ دخول'  },
@@ -17934,7 +18008,12 @@ const NAV_META = {
   'consumers':        { icon: '👥',  label: 'العملاء' },
   'fb-comments':      { icon: '💭',  label: 'كومنتات فيسبوك', badge: { id: 'fbcBadge', cls: 'pending-badge' } },
   'contests':         { icon: '🎁',  label: 'مسابقات الكومنتات' },
-  'inbox':            { icon: '📨',  label: 'الرسايل (واتساب + ماسنجر)', badge: { id: 'inboxBadge', cls: 'pending-badge' } }
+  'inbox':            { icon: '📨',  label: 'الرسايل (واتساب + ماسنجر)', badge: { id: 'inboxBadge', cls: 'pending-badge' } },
+
+  'erp-items':        { icon: '📦',  label: 'الأصناف (السيستم الجديد)' },
+  'erp-suppliers':    { icon: '🏭',  label: 'الموردين (السيستم الجديد)' },
+  'erp-traders':      { icon: '🚚',  label: 'حسابات التجار (السيستم الجديد)' },
+  'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' }
 };
 
 // ── Default sidebar layout
@@ -17945,6 +18024,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
+    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-items', 'erp-suppliers', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -17967,7 +18047,11 @@ const NAV_PREFERRED_CAT = {
   'consumers': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'fb-comments': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
   'contests': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
-  'inbox': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 }
+  'inbox': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
+  'erp-items': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-suppliers': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-traders': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
@@ -20494,6 +20578,463 @@ async function qtLogoUpload(){
   await qtSettingsSave({logo_url:`${SB}/storage/v1/object/public/${path}`});
 }
 </script>
+<script>
+// ════════════════════════════════════════════════════════════════
+// 🏭 السيستم الجديد (ERP) — المرحلة 1: الأصناف والفئات والمخازن والعملات والموردين والخزائن وحسابات التجار
+// الشاشات: erp-items / erp-suppliers / erp-traders / erp-setup — والتكلفة صلاحية منفصلة erp-cost
+// السيستم مقفول (erp_active=0) لحد زرار «فعّل السيستم» بعد اختبار الـ 500 فاتورة
+// ════════════════════════════════════════════════════════════════
+const ER = { boot:null, traders:null, tab:{ items:'items', suppliers:'list', setup:'wh' }, f:{ q:'', kind:'', cat:'', act:'1', flag:'' }, sf:{ q:'', cat:'', act:'1' }, tf:{ q:'', flag:'' }, edit:null, ro:false, more:0 };
+const ER_KIND = { finished:'🏍️ منتج تام', spare:'🔧 قطع غيار', component:'⚙️ مكوّن إنتاج' };
+const ER_REG = { engine_chassis:'🔢 ماتور + شاسيه', engine:'⚙️ ماتور بس', none:'— مفيش تسجيل' };
+
+function erEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function erMoney(n,dec){ if(n===null||n===undefined||n==='') return '—'; const v=Number(n); return v.toLocaleString('en-US',{minimumFractionDigits:(dec!=null?dec:(v%1?2:0)),maximumFractionDigits:dec!=null?dec:4}); }
+function erCan(scr,a){ try{ return typeof can!=='function' || can(scr,a); }catch(e){ return true; } }
+function erErr(e){ return String((e&&e.message)||e||'خطأ').replace(/^.*?ERROR:\s*/,''); }
+function erToast(msg, ok){ const d=document.createElement('div'); d.className='qt-toast '+(ok===false?'err':'ok'); d.textContent=msg; document.body.appendChild(d); setTimeout(()=>{try{d.remove();}catch(e){}}, ok===false?5500:2600); }
+function erDate(d){ if(!d) return '—'; try{ return new Date(d).toLocaleString('ar-EG',{timeZone:'Africa/Cairo',day:'numeric',month:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return String(d).slice(0,16); } }
+function erById(arr,id){ return (arr||[]).find(x=>String(x.id)===String(id)); }
+function erNum(v){ v=String(v==null?'':v).trim().replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/,/g,''); return v===''?null:Number(v); }
+async function erBoot(force){ if(force||!ER.boot){ ER.boot=await rpcSecure('erp_bootstrap',{}); } return ER.boot; }
+function erPaneErr(id,e){ const p=document.getElementById(id); if(p) p.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`; }
+function erTabs(prefix, tabs, which){ tabs.forEach(t=>{ const p=document.getElementById(prefix+'-pane-'+t); if(p) p.style.display=(t===which?'block':'none'); const b=document.getElementById(prefix+'-tab-'+t); if(b) b.classList.toggle('active',t===which); }); }
+function erBanner(){ const B=ER.boot; if(!B) return ''; return B.active ? '' : `<div class="er-banner">🧪 <b>السيستم الجديد لسه مش متفعل</b> — أى حاجة بتتسجل هنا مش بتأثر على الحجز ولا الأذونات ولا الشغل الحالى.</div>`; }
+
+// ── 🪟 مودال عام
+function erModal(title, body, foot){
+  let m=document.getElementById('er-modal');
+  if(!m){ m=document.createElement('div'); m.id='er-modal'; m.className='qt-modal'; m.style.display='none';
+    m.innerHTML=`<div class="qt-modal-box er-mbox"><div class="qt-modal-hd"><b id="er-m-title"></b><div style="flex:1"></div><button class="qt-btn ghost sm" onclick="erClose()">✖ قفل</button></div><div class="er-mbody" id="er-m-body"></div><div class="er-mfoot" id="er-m-foot"></div></div>`;
+    m.addEventListener('mousedown',ev=>{ if(ev.target===m) erClose(); }); document.body.appendChild(m); }
+  document.getElementById('er-m-title').innerHTML=title; document.getElementById('er-m-body').innerHTML=body; document.getElementById('er-m-foot').innerHTML=foot||'';
+  m.style.display='flex';
+}
+function erModalBody(body){ const b=document.getElementById('er-m-body'); if(b){ const st=b.scrollTop; b.innerHTML=body; b.scrollTop=st; } }
+function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; ER.edit=null; }
+function erFoot(saveFn, ro){ return ro ? `<span class="qt-sub">👁️ عرض بس — معندكش صلاحية تعديل</span>` : `<button class="qt-btn" id="er-save-btn" onclick="${saveFn}">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`; }
+async function erRun(btnId, fn){ const b=document.getElementById(btnId); if(b){ if(b.disabled) return; b.disabled=true; } try{ await fn(); }catch(e){ erToast('❌ '+erErr(e), false); } finally{ if(b) b.disabled=false; } }
+function erFld(label, html, w){ return `<div class="qt-fld" style="${w?`flex:${w}`:''}"><label>${label}</label>${html}</div>`; }
+function erInp(k, v, opt){ opt=opt||{}; return `<input class="qt-inp" ${opt.type?`type="${opt.type}"`:''} ${opt.step?`step="${opt.step}"`:''} ${opt.ph?`placeholder="${erEsc(opt.ph)}"`:''} ${opt.dir?`dir="${opt.dir}"`:''} ${opt.list?`list="${opt.list}"`:''} value="${erEsc(v==null?'':v)}" oninput="erSet('${k}',this.value)" style="width:100%${opt.style?';'+opt.style:''}">`; }
+function erSel(k, v, opts, rerender, extra){ return `<select class="qt-inp" style="width:100%" onchange="erSet('${k}',this.value,${rerender?'true':'false'})" ${extra||''}>${opts.map(o=>`<option value="${erEsc(o[0])}" ${String(o[0])===String(v==null?'':v)?'selected':''}>${erEsc(o[1])}</option>`).join('')}</select>`; }
+function erChk(k, v, label, rerender){ return `<label class="qt-check" style="font-weight:700"><input type="checkbox" ${v?'checked':''} onchange="erSet('${k}',this.checked,${rerender?'true':'false'})"> ${label}</label>`; }
+function erSet(k, v, rerender){ if(!ER.edit) return; ER.edit[k]=v; if(rerender && ER.edit.__render) ER.edit.__render(); }
+
+// ── 🗂️ شجرة الفئات
+function erCatKids(pid){ return (ER.boot.categories||[]).filter(c=>String(c.parent_id||'')===String(pid||'')).sort((a,b)=>(a.sort_order-b.sort_order)||(a.id-b.id)); }
+function erCatPath(id){ const out=[]; let c=erById(ER.boot.categories,id), g=0; while(c && g<30){ out.unshift(c.name); c=erById(ER.boot.categories,c.parent_id); g++; } return out.join(' › '); }
+function erCatDesc(id){ const s=new Set([Number(id)]); let added=true; while(added){ added=false; (ER.boot.categories||[]).forEach(c=>{ if(c.parent_id && s.has(Number(c.parent_id)) && !s.has(c.id)){ s.add(c.id); added=true; } }); } return s; }
+function erCatOpts(exclude, blank){ const out=[['', blank||'— اختار الفئة —']]; const ex=exclude?erCatDesc(exclude):new Set();
+  const walk=(pid,d)=>erCatKids(pid).forEach(c=>{ if(ex.has(c.id)) return; out.push([c.id, `${'　'.repeat(d)}${d?'└ ':''}${c.name}${c.is_active?'':' (موقوفة)'}`]); walk(c.id,d+1); }); walk(null,0); return out; }
+function erCatVtype(id){ let c=erById(ER.boot.categories,id), g=0; while(c && g<30){ if(c.vehicle_type_id) return c.vehicle_type_id; c=erById(ER.boot.categories,c.parent_id); g++; } return null; }
+function erVt(id){ const v=erById(ER.boot.vtypes,id); return v?`${v.icon||''} ${v.name}`:'—'; }
+function erModelLbl(m){ return m?`${m.brand} ${m.cc||''} — ${m.vtype} — ${m.fingerprint}`:''; }
+
+// ════════════════ 📦 الأصناف ════════════════
+async function erItemsLoad(force){
+  try{ await erBoot(force); erItemsTab(ER.tab.items); }catch(e){ erPaneErr('eri-pane-items',e); }
+}
+function erItemsTab(t){ ER.tab.items=t; erTabs('eri',['items','cats'],t); (t==='cats'?erRenderCats:erRenderItems)(); }
+function erItemFilterSet(k,v){ ER.f[k]=v; ER.more=0; erRenderItems(); }
+function erRenderItems(){
+  const B=ER.boot, el=document.getElementById('eri-pane-items'); if(!B||!el) return;
+  const cnt=document.getElementById('eri-count'); if(cnt) cnt.textContent=B.items.length;
+  const f=ER.f, q=f.q.trim().toLowerCase(), catSet=f.cat?erCatDesc(f.cat):null;
+  const used={}; B.items.forEach(i=>(i.components||[]).forEach(c=>{ used[c.item_id]=(used[c.item_id]||0)+1; }));
+  let rows=B.items.filter(i=>{
+    if(f.act==='1' && !i.is_active) return false; if(f.act==='0' && i.is_active) return false;
+    if(f.kind && i.kind!==f.kind) return false;
+    if(catSet && !catSet.has(Number(i.category_id))) return false;
+    if(f.flag==='nomodel' && !(i.kind==='finished' && i.reg_mode!=='none' && !i.pl_model_id)) return false;
+    if(f.flag==='noprice' && Object.keys(i.prices||{}).length) return false;
+    if(f.flag==='nowh' && i.default_warehouse_id) return false;
+    if(q && !(`${i.code} ${i.name_ar} ${i.name_en||''} ${i.barcode||''}`.toLowerCase().includes(q))) return false;
+    return true; });
+  const total=rows.length, lim=300+ER.more; rows=rows.slice(0,lim);
+  const tier=(B.tiers.find(t=>t.is_default)||B.tiers[0]||{});
+  const canE=erCan('erp-items','edit');
+  const nomodel=B.items.filter(i=>i.is_active&&i.kind==='finished'&&i.reg_mode!=='none'&&!i.pl_model_id).length;
+  el.innerHTML = erBanner() + `
+  <div class="qt-row" style="margin-bottom:12px">
+    <input class="qt-inp" style="width:240px" placeholder="🔍 كود / اسم / باركود" value="${erEsc(f.q)}" oninput="erItemFilterSet('q',this.value)">
+    <select class="qt-inp" onchange="erItemFilterSet('kind',this.value)"><option value="">كل التصنيفات</option>${Object.keys(ER_KIND).map(k=>`<option value="${k}" ${f.kind===k?'selected':''}>${ER_KIND[k]}</option>`).join('')}</select>
+    <select class="qt-inp" style="max-width:240px" onchange="erItemFilterSet('cat',this.value)">${erCatOpts(null,'كل الفئات').map(o=>`<option value="${o[0]}" ${String(f.cat)===String(o[0])?'selected':''}>${erEsc(o[1])}</option>`).join('')}</select>
+    <select class="qt-inp" onchange="erItemFilterSet('act',this.value)"><option value="1" ${f.act==='1'?'selected':''}>الشغالين</option><option value="0" ${f.act==='0'?'selected':''}>الموقوفين</option><option value="all" ${f.act==='all'?'selected':''}>الكل</option></select>
+    <select class="qt-inp" onchange="erItemFilterSet('flag',this.value)"><option value="">بدون تنبيه</option><option value="nomodel" ${f.flag==='nomodel'?'selected':''}>⚠️ مش مربوط بموديل الكتب</option><option value="noprice" ${f.flag==='noprice'?'selected':''}>⚠️ من غير أسعار</option><option value="nowh" ${f.flag==='nowh'?'selected':''}>⚠️ من غير مخزن افتراضى</option></select>
+    <div style="flex:1"></div>
+    ${nomodel?`<span class="qt-chip ex" style="cursor:pointer" onclick="erItemFilterSet('flag','nomodel')">⚠️ ${nomodel} منتج مش مربوط بموديل</span>`:''}
+    <span class="qt-sub">${total} صنف</span>
+    ${canE?`<button class="qt-btn" onclick="erItemOpen(null)">➕ صنف جديد</button>`:''}
+  </div>
+  ${!B.items.length?`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📦 مفيش أصناف لسه.<br>ابدأ بـ <b>🗂️ فئات الأصناف</b> (موتوسيكل / تروسيكل / كهرباء...)، وبعدين ضيف المكونات (ماتور، شاسيه، طقم صاج...)، وفى الآخر المنتج التام.</div>`:`
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>الصنف</th><th>الفئة</th><th>التصنيف</th><th>المخزون</th><th>التسجيل</th><th>${erEsc(tier.name||'السعر')}</th><th>المخزن الافتراضى</th><th></th></tr></thead><tbody>
+  ${rows.map(i=>{ const m=erById(B.pl_models,i.pl_model_id), w=erById(B.warehouses,i.default_warehouse_id);
+    return `<tr class="${i.is_active?'':'del'}">
+      <td><b style="color:var(--gold)">${erEsc(i.code)}</b></td>
+      <td><b>${erEsc(i.name_ar)}</b>${i.name_en?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(i.name_en)}</div>`:''}</td>
+      <td class="qt-sub">${erEsc(erCatPath(i.category_id))}</td>
+      <td><span class="qt-chip ${i.kind==='finished'?'in':'dim'}">${ER_KIND[i.kind]}</span>${used[i.id]?`<div class="qt-sub">داخل فى ${used[i.id]} منتج</div>`:''}</td>
+      <td>${i.kind==='finished'?(i.stock_mode==='components'?`🧩 مفكك (${(i.components||[]).length} مكوّن)`:'📦 كامل'):'—'}</td>
+      <td>${i.kind==='finished'?`${ER_REG[i.reg_mode]}${i.reg_mode!=='none'?(m?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(m.fingerprint)}</div>`:`<div><span class="qt-chip ex">⚠️ مش مربوط بموديل</span></div>`):''}`:'—'}</td>
+      <td>${(i.prices||{})[tier.id]!=null?erMoney(i.prices[tier.id]):'<span class="qt-sub">—</span>'}</td>
+      <td class="qt-sub">${w?erEsc(w.name):'—'}</td>
+      <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="erItemOpen(${i.id})">${canE?'✏️ تعديل':'👁️ عرض'}</button></td></tr>`; }).join('')}
+  </tbody></table></div>
+  ${total>lim?`<div style="text-align:center;margin-top:10px"><button class="qt-btn ghost sm" onclick="ER.more+=300;erRenderItems()">عرض أكتر (${total-lim} فاضلين)</button></div>`:''}`}`;
+}
+
+function erBlankItem(){ const B=ER.boot; return { id:null, code:'', name_ar:'', name_en:'', category_id:ER.f.cat||'', kind:'finished', stock_mode:'own', reg_mode:'engine_chassis', pl_model_id:'', vehicle_type_id:'',
+  components:[], prices:{}, purchase_price:'', purchase_currency_id:(B.currencies.find(c=>c.is_base)||{}).id||'', default_warehouse_id:'', unit:'وحدة', units_per_carton:'', reorder_level:'', barcode:'', notes:'', is_active:true }; }
+function erItemOpen(id, copyFrom){
+  const B=ER.boot; let it;
+  if(copyFrom){ it=JSON.parse(JSON.stringify(erById(B.items,copyFrom))); it.id=null; it.code=''; it.barcode=''; it.name_ar=it.name_ar+' (نسخة)'; it.updated_by=null; }
+  else it = id ? JSON.parse(JSON.stringify(erById(B.items,id))) : erBlankItem();
+  ['pl_model_id','vehicle_type_id','default_warehouse_id','category_id','purchase_currency_id'].forEach(k=>{ if(it[k]==null) it[k]=''; });
+  ['purchase_price','units_per_carton','reorder_level','name_en','barcode','notes'].forEach(k=>{ if(it[k]==null) it[k]=''; });
+  it.components=(it.components||[]).map(c=>({...c}));
+  ER.edit=it; ER.ro=!erCan('erp-items','edit'); it.__render=()=>erModalBody(erItemForm());
+  erModal(it.id?`📦 الصنف <span style="color:var(--gold)">${erEsc(it.code)}</span>`:(copyFrom?'📑 صنف جديد (نسخة)':'➕ صنف جديد'), erItemForm(), erFoot('erItemSave()', ER.ro) + (!ER.ro&&it.id?`<button class="qt-btn ghost" onclick="erItemOpen(null,${it.id})">📑 نسخة جديدة منه</button>`:''));
+}
+function erCompDl(){ const B=ER.boot; return `<datalist id="er-comp-dl">${B.items.filter(i=>i.kind!=='finished'&&i.is_active&&String(i.id)!==String(ER.edit.id)).map(i=>`<option value="${erEsc(i.code+' — '+i.name_ar)}"></option>`).join('')}</datalist>`; }
+function erCompSet(idx, k, v){
+  const c=ER.edit.components[idx]; if(!c) return;
+  if(k==='item'){ const code=String(v).split(' — ')[0].trim(); const it=ER.boot.items.find(i=>i.code===code && i.kind!=='finished');
+    c.item_id=it?it.id:null; c.__txt=v; const lb=document.getElementById('er-comp-ok-'+idx); if(lb) lb.innerHTML=it?'✅':(v?'<span style="color:var(--error)">❌ مش موجود</span>':''); return; }
+  if(k==='qty') c.qty=v;
+  if(k==='role'){ ER.edit.components.forEach((x,j)=>{ if(j!==idx && v && x.role===v) x.role=''; }); c.role=v; ER.edit.__render(); }
+}
+function erCompAdd(){ ER.edit.components.push({item_id:null,qty:1,role:''}); ER.edit.__render(); }
+function erCompDel(i){ ER.edit.components.splice(i,1); ER.edit.__render(); }
+function erItemForm(){
+  const B=ER.boot, it=ER.edit, fin=it.kind==='finished', comp=fin&&it.stock_mode==='components';
+  const catVt=erCatVtype(it.category_id);
+  const usedIn=it.id?B.items.filter(x=>(x.components||[]).some(c=>String(c.item_id)===String(it.id))):[];
+  const radio=(k,val,label,sub)=>`<label class="qt-radio ${String(it[k])===val?'er-on':''}"><input type="radio" name="er-${k}" ${String(it[k])===val?'checked':''} onchange="erSet('${k}','${val}',true)"> <span><b>${label}</b>${sub?`<div class="qt-sub">${sub}</div>`:''}</span></label>`;
+  const compRows=(it.components||[]).map((c,i)=>{ const ci=erById(B.items,c.item_id); const txt=c.__txt!=null?c.__txt:(ci?ci.code+' — '+ci.name_ar:'');
+    return `<tr><td style="width:46%"><div style="display:flex;gap:6px;align-items:center"><input class="qt-inp" list="er-comp-dl" style="width:100%" placeholder="اكتب كود أو اسم المكوّن" value="${erEsc(txt)}" onchange="erCompSet(${i},'item',this.value)"><span id="er-comp-ok-${i}">${ci?'✅':''}</span></div></td>
+      <td style="width:90px"><input class="qt-inp" type="number" step="0.001" min="0" style="width:80px" value="${erEsc(c.qty)}" oninput="erCompSet(${i},'qty',this.value)"></td>
+      <td><select class="qt-inp" onchange="erCompSet(${i},'role',this.value)"><option value="" ${!c.role?'selected':''}>— مكوّن عادى</option>${it.reg_mode!=='none'?`<option value="engine" ${c.role==='engine'?'selected':''}>⚙️ ده الماتور (عليه رقم الماتور)</option>`:''}${it.reg_mode==='engine_chassis'?`<option value="chassis" ${c.role==='chassis'?'selected':''}>🔩 ده الشاسيه (عليه رقم الشاسيه)</option>`:''}</select></td>
+      <td><button class="qt-btn red sm" onclick="erCompDel(${i})">✖</button></td></tr>`; }).join('');
+  const tiers=B.tiers.filter(t=>t.is_active||(it.prices||{})[t.id]!=null);
+  return `<fieldset ${ER.ro?'disabled':''} class="er-fs">
+  <div class="qt-card"><div class="qt-h">🧾 البيانات الأساسية</div>
+    <div class="qt-row">
+      ${erFld('الكود', erInp('code',it.code,{ph:'أوتوماتيك لو سبته فاضى',dir:'ltr'}),1)}
+      ${erFld('اسم الصنف (عربى) *', erInp('name_ar',it.name_ar,{ph:'مثلاً: جنط هوجان 4 جامبو اتش جى 200 سى سى برو بصمة'}),3)}
+      ${erFld('الاسم (إنجليزى)', erInp('name_en',it.name_en,{dir:'ltr'}),2)}
+    </div>
+    <div class="qt-row" style="margin-top:10px">
+      ${erFld('الفئة *', erSel('category_id',it.category_id,erCatOpts(),true),2)}
+      ${erFld('الوحدة', erInp('unit',it.unit),1)}
+      ${erFld('الوحدات فى الكرتونة', erInp('units_per_carton',it.units_per_carton,{type:'number'}),1)}
+      ${erFld('الباركود', erInp('barcode',it.barcode,{dir:'ltr'}),1)}
+      ${erFld('حد الطلب', erInp('reorder_level',it.reorder_level,{type:'number',ph:'ينبّه لما الرصيد يقل عنه'}),1)}
+    </div>
+    <div class="qt-h" style="margin-top:14px;font-size:13px">تصنيف الصنف</div>
+    <div class="qt-row">
+      ${radio('kind','finished','🏍️ منتج تام','بيتباع ويتحمّل ويطلعله جواب')}
+      ${radio('kind','component','⚙️ مكوّن إنتاج','بيدخل فى تركيب منتج تام')}
+      ${radio('kind','spare','🔧 قطع غيار','بيتباع لوحده')}
+    </div>
+    ${usedIn.length?`<div class="qt-sub" style="margin-top:8px">🔗 داخل كمكوّن فى: ${usedIn.slice(0,8).map(x=>`<b>${erEsc(x.code)}</b> ${erEsc(x.name_ar)}`).join('، ')}${usedIn.length>8?` و${usedIn.length-8} تانيين`:''}</div>`:''}
+  </div>
+  ${fin?`<div class="qt-card"><div class="qt-h">🏍️ بيانات المنتج التام</div>
+    <div class="qt-row">
+      ${radio('stock_mode','own','📦 كامل','ليه رصيد لوحده فى المخزن')}
+      ${radio('stock_mode','components','🧩 مفكك','رصيده = أقل رصيد فى مكوناته، والبيع بينزّل كل مكوّن')}
+    </div>
+    <div class="qt-row" style="margin-top:10px">
+      ${radio('reg_mode','engine_chassis','🔢 ماتور + شاسيه','')}
+      ${radio('reg_mode','engine','⚙️ ماتور بس','')}
+      ${radio('reg_mode','none','— مفيش تسجيل','')}
+    </div>
+    <div class="qt-row" style="margin-top:10px">
+      ${erFld('نوع العربية (للحجز والتحميل)', erSel('vehicle_type_id',it.vehicle_type_id,[['',catVt?`من الفئة: ${erVt(catVt)}`:'— اختار —']].concat(B.vtypes.filter(v=>v.active).map(v=>[v.id,`${v.icon||''} ${v.name}`]))),1)}
+      ${it.reg_mode!=='none'?erFld('موديل الكتب الدورية (البصمة)', erSel('pl_model_id',it.pl_model_id,[['','⚠️ — مش مربوط لسه —']].concat(B.pl_models.filter(m=>m.active||String(m.id)===String(it.pl_model_id)).map(m=>[m.id,erModelLbl(m)])))+`<div class="qt-sub">الأرقام اللى هتتسجل على الصنف ده لازم تكون من كتب الموديل ده بالظبط</div>`,2):''}
+    </div>
+  </div>`:''}
+  ${comp?`<div class="qt-card"><div class="qt-h">🧩 مكونات المنتج <span class="qt-sub">— حدد أنهى مكوّن عليه رقم الماتور وأنهى عليه رقم الشاسيه</span></div>
+    ${erCompDl()}
+    <table class="qt-tbl"><thead><tr><th>المكوّن</th><th>الكمية</th><th>الدور</th><th></th></tr></thead><tbody>${compRows||`<tr><td colspan="4" class="qt-sub" style="text-align:center">مفيش مكونات — دوس «➕ مكوّن»</td></tr>`}</tbody></table>
+    <button class="qt-btn ghost sm" style="margin-top:8px" onclick="erCompAdd()">➕ مكوّن</button>
+  </div>`:''}
+  <div class="qt-card"><div class="qt-h">🏬 المخزن والأسعار</div>
+    <div class="qt-row">
+      ${erFld('المخزن الافتراضى (اللى بيتصرف منه)', erSel('default_warehouse_id',it.default_warehouse_id,[['','— مفيش —']].concat(B.warehouses.filter(w=>w.is_active||String(w.id)===String(it.default_warehouse_id)).map(w=>[w.id,`${w.code} — ${w.name}`])))+`<div class="qt-sub">لو الكمية خلصت فيه، البيع بياخد الباقى من المخزن اللى فيه أكبر رصيد</div>`,2)}
+    </div>
+    <div class="qt-row" style="margin-top:10px">
+      ${tiers.map(t=>erFld(`${erEsc(t.name)}${t.is_default?' ⭐':''}`, `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100%" value="${erEsc((it.prices||{})[t.id]!=null?it.prices[t.id]:'')}" oninput="ER.edit.prices[${t.id}]=this.value">`,1)).join('')}
+    </div>
+    <div class="qt-sub" style="margin-top:6px">💡 السعر الأول هيتحسب أوتوماتيك من تكاليف الشحنة + هامش الربح لما نبنى المشتريات — دلوقتى اكتبه بإيدك.</div>
+    ${B.can_cost?`<div class="qt-row" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">
+      ${erFld('💲 سعر الشراء', `<input class="qt-inp" type="number" step="0.0001" min="0" style="width:100%" value="${erEsc(it.purchase_price)}" oninput="erSet('purchase_price',this.value)" ${B.can_cost_edit?'':'disabled'}>`,1)}
+      ${erFld('العملة', erSel('purchase_currency_id',it.purchase_currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(it.purchase_currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),false,B.can_cost_edit?'':'disabled'),1)}
+      <div style="flex:1"></div>
+    </div>`:''}
+  </div>
+  <div class="qt-card"><div class="qt-h">📊 الرصيد</div><div class="qt-sub">الرصيد الدفترى والفعلى فى كل مخزن هيظهر هنا بعد ما نبنى المشتريات والاستلام (المرحلة التانية).</div></div>
+  <div class="qt-card"><div class="qt-row">
+    ${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(it.notes)}</textarea>`,3)}
+    <div>${erChk('is_active',it.is_active,'✅ الصنف شغال')}</div>
+  </div>${it.updated_by?`<div class="qt-sub" style="margin-top:6px">آخر تعديل: ${erEsc(it.updated_by)} — ${erDate(it.updated_at)}</div>`:''}</div>
+  </fieldset>`;
+}
+async function erItemSave(){
+  await erRun('er-save-btn', async ()=>{
+    const it=ER.edit; const bad=(it.components||[]).find(c=>c.__txt && !c.item_id); if(bad) throw new Error(`المكوّن «${bad.__txt}» مش موجود — اختاره من القايمة`);
+    const prices={}; Object.keys(it.prices||{}).forEach(k=>{ const v=erNum(it.prices[k]); if(v!=null && !isNaN(v)) prices[k]=v; });
+    const p={ id:it.id, code:it.code, name_ar:it.name_ar, name_en:it.name_en, category_id:it.category_id||null, kind:it.kind, stock_mode:it.stock_mode, reg_mode:it.kind==='finished'?it.reg_mode:'none',
+      pl_model_id:(it.kind==='finished'&&it.reg_mode!=='none'&&it.pl_model_id)?it.pl_model_id:null, vehicle_type_id:it.vehicle_type_id||null,
+      components:(it.kind==='finished'&&it.stock_mode==='components')?(it.components||[]).filter(c=>c.item_id).map(c=>({item_id:c.item_id,qty:erNum(c.qty),role:c.role||null})):[],
+      prices, purchase_price:erNum(it.purchase_price), purchase_currency_id:it.purchase_currency_id||null, default_warehouse_id:it.default_warehouse_id||null,
+      unit:it.unit, units_per_carton:erNum(it.units_per_carton), reorder_level:erNum(it.reorder_level), barcode:it.barcode, notes:it.notes, is_active:!!it.is_active };
+    const r=await rpcSecure('erp_item_save',{p});
+    const B=ER.boot, ix=B.items.findIndex(x=>x.id===r.id); if(ix>=0) B.items[ix]=r; else B.items.push(r);
+    B.items.sort((a,b)=>String(a.code).localeCompare(String(b.code),'en',{numeric:true}));
+    erClose(); erRenderItems(); erToast(`✅ اتحفظ الصنف ${r.code}`);
+  });
+}
+
+// ── 🗂️ فئات الأصناف
+function erRenderCats(){
+  const B=ER.boot, el=document.getElementById('eri-pane-cats'); if(!B||!el) return;
+  const canE=erCan('erp-items','edit');
+  const cnt={}; B.items.forEach(i=>{ cnt[i.category_id]=(cnt[i.category_id]||0)+1; });
+  const walk=(pid,d)=>erCatKids(pid).map(c=>{ const kids=erCatKids(c.id).length; const vt=c.vehicle_type_id?erVt(c.vehicle_type_id):(erCatVtype(c.id)?`<span class="qt-sub">${erVt(erCatVtype(c.id))} (من اللى فوقها)</span>`:'—');
+    return `<tr class="${c.is_active?'':'del'}"><td><div style="padding-right:${d*26}px">${d?'└ ':''}<b>${erEsc(c.name)}</b>${kids?` <span class="qt-sub">(${kids} فرعية)</span>`:''}</div></td><td>${vt}</td><td>${cnt[c.id]||0}</td>
+      <td style="white-space:nowrap">${canE?`<button class="qt-btn ghost sm" onclick="erCatOpen(null,${c.id})">➕ فرعية</button> <button class="qt-btn ghost sm" onclick="erCatOpen(${c.id})">✏️</button>`:''} <button class="qt-btn ghost sm" onclick="ER.f.cat='${c.id}';erItemsTab('items')">📦 أصنافها</button></td></tr>` + walk(c.id,d+1); }).join('');
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><div class="qt-sub">الفئات شجرة: فئة رئيسية (موتوسيكل / تروسيكل / كهرباء) وتحتها فرعيات زى ما تحب. نوع العربية بيتحدد على الفئة والأصناف اللى تحتها بتورثه.</div><div style="flex:1"></div>${canE?`<button class="qt-btn" onclick="erCatOpen(null,null)">➕ فئة رئيسية</button>`:''}</div>
+  ${B.categories.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الفئة</th><th>نوع العربية</th><th>عدد الأصناف</th><th></th></tr></thead><tbody>${walk(null,0)}</tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🗂️ مفيش فئات لسه — ابدأ بـ «➕ فئة رئيسية»</div>`}`;
+}
+function erCatOpen(id, parent){
+  const B=ER.boot; const c = id ? {...erById(B.categories,id)} : { id:null, name:'', parent_id:parent||'', vehicle_type_id:'', is_active:true, sort_order:null };
+  if(c.parent_id==null) c.parent_id=''; if(c.vehicle_type_id==null) c.vehicle_type_id='';
+  ER.edit=c; ER.ro=!erCan('erp-items','edit');
+  c.__render=()=>erModalBody(form());
+  const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs"><div class="qt-row">
+    ${erFld('اسم الفئة *', erInp('name',c.name,{ph:'مثلاً: موتوسيكل / هوجان / طقم صاج'}),2)}
+    ${erFld('تحت فئة', erSel('parent_id',c.parent_id,erCatOpts(c.id,'— فئة رئيسية —')),2)}
+    ${erFld('نوع العربية', erSel('vehicle_type_id',c.vehicle_type_id,[['','— زى اللى فوقها / مفيش —']].concat(B.vtypes.map(v=>[v.id,`${v.icon||''} ${v.name}`]))),1)}
+  </div><div style="margin-top:10px">${erChk('is_active',c.is_active,'✅ الفئة شغالة')}</div></fieldset>`;
+  erModal(id?'✏️ تعديل فئة':'➕ فئة جديدة', form(), erFoot('erCatSave()',ER.ro));
+}
+async function erCatSave(){ await erRun('er-save-btn', async ()=>{ const c=ER.edit;
+  await rpcSecure('erp_cat_save',{p:{id:c.id,name:c.name,parent_id:c.parent_id||null,vehicle_type_id:c.vehicle_type_id||null,is_active:!!c.is_active,sort_order:c.sort_order}});
+  await erBoot(true); erClose(); erRenderCats(); erToast('✅ اتحفظت الفئة'); }); }
+
+// ════════════════ 🏭 الموردين ════════════════
+async function erSuppliersLoad(force){ try{ await erBoot(force); erSupTab(ER.tab.suppliers); }catch(e){ erPaneErr('ers-pane-list',e); } }
+function erSupTab(t){ ER.tab.suppliers=t; erTabs('ers',['list','cats'],t); (t==='cats'?erRenderSupCats:erRenderSuppliers)(); }
+function erRenderSuppliers(){
+  const B=ER.boot, el=document.getElementById('ers-pane-list'); if(!B||!el) return;
+  const c=document.getElementById('ers-count'); if(c) c.textContent=B.suppliers.length;
+  const f=ER.sf, q=f.q.trim().toLowerCase(), canE=erCan('erp-suppliers','edit');
+  const rows=B.suppliers.filter(s=>(f.act==='all'||(f.act==='1')===!!s.is_active)&&(!f.cat||String(s.category_id)===String(f.cat))&&(!q||`${s.code} ${s.name} ${s.phone||''} ${s.country||''}`.toLowerCase().includes(q)));
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px">
+    <input class="qt-inp" style="width:220px" placeholder="🔍 كود / اسم / تليفون" value="${erEsc(f.q)}" oninput="ER.sf.q=this.value;erRenderSuppliers()">
+    <select class="qt-inp" onchange="ER.sf.cat=this.value;erRenderSuppliers()"><option value="">كل الفئات</option>${B.supplier_categories.map(x=>`<option value="${x.id}" ${String(f.cat)===String(x.id)?'selected':''}>${erEsc(x.name)}</option>`).join('')}</select>
+    <select class="qt-inp" onchange="ER.sf.act=this.value;erRenderSuppliers()"><option value="1" ${f.act==='1'?'selected':''}>الشغالين</option><option value="0" ${f.act==='0'?'selected':''}>الموقوفين</option><option value="all" ${f.act==='all'?'selected':''}>الكل</option></select>
+    <div style="flex:1"></div><span class="qt-sub">${rows.length} مورد</span>${canE?`<button class="qt-btn" onclick="erSupOpen(null)">➕ مورد جديد</button>`:''}</div>
+  ${B.suppliers.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>المورد</th><th>الفئة</th><th>البلد</th><th>العملة</th><th>التليفون</th><th>الرصيد الافتتاحى</th><th></th></tr></thead><tbody>
+  ${rows.map(s=>{ const cu=erById(B.currencies,s.currency_id), ct=erById(B.supplier_categories,s.category_id);
+    return `<tr class="${s.is_active?'':'del'}"><td><b style="color:var(--gold)">${erEsc(s.code)}</b></td><td><b>${erEsc(s.name)}</b>${s.contact_person?`<div class="qt-sub">👤 ${erEsc(s.contact_person)}</div>`:''}</td>
+      <td>${ct?erEsc(ct.name):'—'}</td><td>${erEsc(s.country||'—')}</td><td>${cu?erEsc(cu.code):'—'}</td><td dir="ltr" style="text-align:right">${erEsc(s.phone||'—')}</td>
+      <td>${Number(s.opening_balance)?`${erMoney(s.opening_balance)} <span class="qt-chip ${s.opening_side==='credit'?'ex':'in'}">${s.opening_side==='credit'?'علينا له':'لينا عنده'}</span>`:'—'}</td>
+      <td><button class="qt-btn ghost sm" onclick="erSupOpen(${s.id})">${canE?'✏️ تعديل':'👁️ عرض'}</button></td></tr>`; }).join('')}
+  </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🏭 مفيش موردين لسه</div>`}`;
+}
+function erSupOpen(id){
+  const B=ER.boot; const s = id ? {...erById(B.suppliers,id)} : { id:null, code:'', name:'', category_id:'', country:'', currency_id:(B.currencies.find(c=>c.is_base)||{}).id||'', contact_person:'', phone:'', email:'', address:'', tax_no:'', opening_balance:0, opening_side:'credit', notes:'', is_active:true };
+  Object.keys(s).forEach(k=>{ if(s[k]==null && k!=='id') s[k]=''; });
+  ER.edit=s; ER.ro=!erCan('erp-suppliers','edit');
+  const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs"><div class="qt-row">
+    ${erFld('الكود', erInp('code',s.code,{ph:'أوتوماتيك',dir:'ltr'}),1)}${erFld('اسم المورد *', erInp('name',s.name),3)}
+    ${erFld('الفئة', erSel('category_id',s.category_id,[['','— مفيش —']].concat(B.supplier_categories.filter(x=>x.is_active||String(x.id)===String(s.category_id)).map(x=>[x.id,x.name]))),2)}
+  </div><div class="qt-row" style="margin-top:10px">
+    ${erFld('البلد', erInp('country',s.country,{ph:'مصر / الصين...'}),1)}
+    ${erFld('عملة التعامل', erSel('currency_id',s.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(s.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`])),1)}
+    ${erFld('المسئول', erInp('contact_person',s.contact_person),1)}${erFld('التليفون', erInp('phone',s.phone,{dir:'ltr'}),1)}${erFld('الإيميل', erInp('email',s.email,{dir:'ltr'}),1)}
+  </div><div class="qt-row" style="margin-top:10px">
+    ${erFld('العنوان', erInp('address',s.address),3)}${erFld('رقم التسجيل الضريبى', erInp('tax_no',s.tax_no,{dir:'ltr'}),1)}
+  </div><div class="qt-row" style="margin-top:10px">
+    ${erFld('الرصيد الافتتاحى (بعملة المورد)', erInp('opening_balance',s.opening_balance,{type:'number',step:'0.01'}),1)}
+    ${erFld('اتجاهه', erSel('opening_side',s.opening_side,[['credit','علينا له (مديونية علينا)'],['debit','لينا عنده (دافعين مقدّم)']]),1)}
+    <div style="flex:1"></div>
+  </div><div class="qt-row" style="margin-top:10px">${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(s.notes)}</textarea>`,3)}<div>${erChk('is_active',s.is_active,'✅ شغال')}</div></div></fieldset>`;
+  s.__render=()=>erModalBody(form());
+  erModal(id?`🏭 المورد <span style="color:var(--gold)">${erEsc(s.code)}</span>`:'➕ مورد جديد', form(), erFoot('erSupSave()',ER.ro));
+}
+async function erSupSave(){ await erRun('er-save-btn', async ()=>{ const s=ER.edit; const p={...s}; delete p.__render; p.opening_balance=erNum(s.opening_balance)||0; ['category_id','currency_id'].forEach(k=>{ if(p[k]==='') p[k]=null; });
+  await rpcSecure('erp_supplier_save',{p}); await erBoot(true); erClose(); erRenderSuppliers(); erToast('✅ اتحفظ المورد'); }); }
+function erRenderSupCats(){
+  const B=ER.boot, el=document.getElementById('ers-pane-cats'); if(!B||!el) return; const canE=erCan('erp-suppliers','edit');
+  const cnt={}; B.suppliers.forEach(s=>{ cnt[s.category_id]=(cnt[s.category_id]||0)+1; });
+  el.innerHTML = `<div class="qt-row" style="margin-bottom:12px">${canE?`<input class="qt-inp" id="ers-newcat" placeholder="اسم فئة جديدة (مثلاً: موردين الصين / محلى)" style="width:300px"><button class="qt-btn" id="ers-addcat" onclick="erSupCatAdd()">➕ إضافة</button>`:''}</div>
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الفئة</th><th>عدد الموردين</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${B.supplier_categories.map(x=>`<tr class="${x.is_active?'':'del'}"><td><b>${erEsc(x.name)}</b></td><td>${cnt[x.id]||0}</td><td>${x.is_active?'<span class="qt-chip in">شغالة</span>':'<span class="qt-chip dim">موقوفة</span>'}</td>
+    <td>${canE?`<button class="qt-btn ghost sm" onclick="erSupCatEdit(${x.id})">✏️ تعديل الاسم</button> <button class="qt-btn ghost sm" onclick="erSupCatToggle(${x.id})">${x.is_active?'⏸️ إيقاف':'▶️ تشغيل'}</button>`:''}</td></tr>`).join('')||'<tr><td colspan="4" class="qt-sub" style="text-align:center">مفيش فئات</td></tr>'}
+  </tbody></table></div>`;
+}
+async function erSupCatAdd(){ await erRun('ers-addcat', async ()=>{ const n=document.getElementById('ers-newcat').value; await rpcSecure('erp_supcat_save',{p:{name:n}}); await erBoot(true); erRenderSupCats(); erToast('✅ اتضافت الفئة'); }); }
+async function erSupCatEdit(id){ const x=erById(ER.boot.supplier_categories,id); const n=prompt('الاسم الجديد للفئة:', x.name); if(n==null) return;
+  try{ await rpcSecure('erp_supcat_save',{p:{id,name:n,is_active:x.is_active}}); await erBoot(true); erRenderSupCats(); erToast('✅ اتعدلت'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erSupCatToggle(id){ const x=erById(ER.boot.supplier_categories,id);
+  try{ await rpcSecure('erp_supcat_save',{p:{id,name:x.name,is_active:!x.is_active}}); await erBoot(true); erRenderSupCats(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+
+// ════════════════ 🚚 حسابات التجار ════════════════
+async function erTradersLoad(force){
+  try{ await erBoot(force); if(force||!ER.traders) ER.traders=await rpcSecure('erp_trader_list',{}); erRenderTraders(); }catch(e){ erPaneErr('ert-pane',e); }
+}
+function erRenderTraders(){
+  const B=ER.boot, el=document.getElementById('ert-pane'); if(!B||!el||!ER.traders) return;
+  const f=ER.tf, q=f.q.trim().toLowerCase(), canE=erCan('erp-traders','edit'), defT=B.tiers.find(t=>t.is_default)||{};
+  const rows=ER.traders.filter(t=>{ const a=t.acc||{};
+    if(f.flag==='dist' && !a.is_commission_dist) return false;
+    if(f.flag==='locked' && !(a.lock_dealing||a.lock_loading||a.lock_letters)) return false;
+    if(f.flag==='open' && !Number(a.opening_balance)) return false;
+    if(f.flag==='new' && t.acc) return false;
+    if(q && !(`${t.code||''} ${t.name||''} ${t.phone||''} ${t.gov||''}`.toLowerCase().includes(q))) return false; return true; });
+  const lim=rows.slice(0,400);
+  el.innerHTML = erBanner() + `<div class="er-banner" style="background:rgba(74,144,217,.1);border-color:rgba(74,144,217,.4)">ℹ️ دى نفس قايمة التجار اللى فى الحجز — بنضيفلها بيانات الحسابات بس. الأقفال (التعامل / التحميل / الجوابات) هتبدأ تشتغل على البوت والحجز <b>بعد تفعيل السيستم</b>.</div>
+  <div class="qt-row" style="margin-bottom:12px">
+    <input class="qt-inp" style="width:240px" placeholder="🔍 كود / اسم / تليفون / محافظة" value="${erEsc(f.q)}" oninput="ER.tf.q=this.value;erRenderTraders()">
+    <select class="qt-inp" onchange="ER.tf.flag=this.value;erRenderTraders()"><option value="">كل التجار</option><option value="dist" ${f.flag==='dist'?'selected':''}>🤝 الموزعين بالعمولة</option><option value="locked" ${f.flag==='locked'?'selected':''}>🔒 عليهم قفل</option><option value="open" ${f.flag==='open'?'selected':''}>💰 ليهم رصيد افتتاحى</option><option value="new" ${f.flag==='new'?'selected':''}>⚪ لسه متعملهمش حساب</option></select>
+    <div style="flex:1"></div><span class="qt-sub">${rows.length} تاجر${rows.length>400?' (أول 400 — دوّر بالاسم)':''}</span><button class="qt-btn ghost sm" onclick="erTradersLoad(true)">🔄</button></div>
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>التاجر</th><th>المحافظة</th><th>فئة السعر</th><th>موزع بالعمولة</th><th>الرصيد الافتتاحى</th><th>حد الائتمان</th><th>الأقفال</th><th></th></tr></thead><tbody>
+  ${lim.map(t=>{ const a=t.acc||{}, tr=erById(B.tiers,a.price_tier_id);
+    const locks=[a.lock_dealing?'<span class="qt-chip del">🚫 التعامل</span>':'',a.lock_loading?'<span class="qt-chip del">🚚 التحميل</span>':'',a.lock_letters?'<span class="qt-chip del">✉️ الجوابات</span>':''].join(' ');
+    return `<tr><td><b style="color:var(--gold)">${erEsc(t.code||'—')}</b></td><td><b>${erEsc(t.name)}</b>${t.status==='pending'?' <span class="qt-chip ex">تحت الانتظار</span>':''}<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(t.phone||'')}</div></td>
+      <td class="qt-sub">${erEsc(t.gov||'—')}</td><td>${tr?erEsc(tr.name):`<span class="qt-sub">${erEsc(defT.name||'—')} (افتراضى)</span>`}</td>
+      <td>${a.is_commission_dist?'<span class="qt-chip in">🤝 موزع</span>':'—'}</td>
+      <td>${Number(a.opening_balance)?`${erMoney(a.opening_balance)} <span class="qt-chip ${a.opening_side==='debit'?'ex':'in'}">${a.opening_side==='debit'?'عليه':'ليه'}</span>`:'—'}</td>
+      <td>${a.credit_limit!=null?erMoney(a.credit_limit):'—'}</td><td>${locks||'—'}</td>
+      <td><button class="qt-btn ghost sm" onclick="erTraderOpen(${t.id})">${canE?'✏️ الحساب':'👁️ عرض'}</button></td></tr>`; }).join('')}
+  </tbody></table></div>`;
+}
+function erTraderOpen(id){
+  const B=ER.boot, t=erById(ER.traders,id), a=t.acc||{};
+  const e={ client_id:id, price_tier_id:a.price_tier_id||'', is_commission_dist:!!a.is_commission_dist, tax_reg_no:a.tax_reg_no||'', commercial_reg:a.commercial_reg||'', tax_office:a.tax_office||'',
+    opening_balance:a.opening_balance||0, opening_side:a.opening_side||'debit', credit_limit:a.credit_limit!=null?a.credit_limit:'', lock_dealing:!!a.lock_dealing, lock_loading:!!a.lock_loading, lock_letters:!!a.lock_letters,
+    lock_reason:a.lock_reason||'', notes:a.notes||'' };
+  ER.edit=e; ER.ro=!erCan('erp-traders','edit');
+  const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs">
+  <div class="qt-card"><div class="qt-h">🏷️ التسعير</div><div class="qt-row">
+    ${erFld('فئة السعر', erSel('price_tier_id',e.price_tier_id,[['',`— الافتراضية (${(B.tiers.find(x=>x.is_default)||{}).name||''}) —`]].concat(B.tiers.filter(x=>x.is_active||String(x.id)===String(e.price_tier_id)).map(x=>[x.id,x.name]))),1)}
+    ${erFld('حد الائتمان (أقصى مديونية)', erInp('credit_limit',e.credit_limit,{type:'number',ph:'فاضى = مفيش حد'}),1)}
+  </div></div>
+  <div class="qt-card"><div class="qt-h">🤝 موزع بالعمولة</div>
+    <div>${erChk('is_commission_dist',e.is_commission_dist,'التاجر ده موزع بالعمولة (يقدر يعمل جوابات من غير فواتير، بفاتورة مجمعة)',true)}</div>
+    ${e.is_commission_dist?`<div class="qt-row" style="margin-top:10px">${erFld('رقم التسجيل الضريبى *', erInp('tax_reg_no',e.tax_reg_no,{dir:'ltr'}),1)}${erFld('السجل التجارى', erInp('commercial_reg',e.commercial_reg,{dir:'ltr'}),1)}${erFld('مأمورية الضرايب', erInp('tax_office',e.tax_office),1)}</div>`:''}
+  </div>
+  <div class="qt-card"><div class="qt-h">💰 الرصيد الافتتاحى</div><div class="qt-row">
+    ${erFld('المبلغ (جنيه)', erInp('opening_balance',e.opening_balance,{type:'number',step:'0.01'}),1)}
+    ${erFld('اتجاهه', erSel('opening_side',e.opening_side,[['debit','عليه (مديون لينا)'],['credit','ليه (دافع مقدّم)']]),1)}<div style="flex:1"></div>
+  </div></div>
+  <div class="qt-card"><div class="qt-h">🔒 الأقفال</div><div class="qt-row">
+    ${erChk('lock_dealing',e.lock_dealing,'🚫 قفل التعامل (مفيش فواتير جديدة)')}${erChk('lock_loading',e.lock_loading,'🚚 قفل التحميل (مفيش حجز تحميل)')}${erChk('lock_letters',e.lock_letters,'✉️ قفل الجوابات')}
+  </div><div style="margin-top:10px">${erFld('سبب القفل', erInp('lock_reason',e.lock_reason,{ph:'هيظهر للموظف (ولاحقاً للتاجر) لما يتمنع'}))}</div></div>
+  <div class="qt-card">${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(e.notes)}</textarea>`)}
+  ${a.updated_by?`<div class="qt-sub" style="margin-top:6px">آخر تعديل: ${erEsc(a.updated_by)} — ${erDate(a.updated_at)}</div>`:''}</div></fieldset>`;
+  e.__render=()=>erModalBody(form());
+  erModal(`🚚 حساب التاجر <span style="color:var(--gold)">${erEsc(t.code||'')}</span> — ${erEsc(t.name)}`, form(), erFoot('erTraderSave()',ER.ro));
+}
+async function erTraderSave(){ await erRun('er-save-btn', async ()=>{ const e=ER.edit; const p={...e}; delete p.__render;
+  p.opening_balance=erNum(e.opening_balance)||0; p.credit_limit=erNum(e.credit_limit); if(p.price_tier_id==='') p.price_tier_id=null;
+  const r=await rpcSecure('erp_trader_save',{p}); const t=erById(ER.traders,e.client_id); if(t) t.acc=r; erClose(); erRenderTraders(); erToast('✅ اتحفظ حساب التاجر'); }); }
+
+// ════════════════ 🧩 تعريفات السيستم ════════════════
+const ERS_TABS=['wh','cur','tier','tre','status'];
+async function erSetupLoad(force){ try{ await erBoot(force); erSetupTab(ER.tab.setup); }catch(e){ erPaneErr('erx-pane-wh',e); } }
+function erSetupTab(t){ ER.tab.setup=t; erTabs('erx',ERS_TABS,t); ({wh:erRenderWh,cur:erRenderCur,tier:erRenderTier,tre:erRenderTre,status:erRenderStatus}[t])(); }
+function erSimpleTable(id, head, rows, addBtn, empty){ const el=document.getElementById(id); if(!el) return;
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><div style="flex:1"></div>${addBtn||''}</div>` + (rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">${empty}</div>`); }
+function erRenderWh(){ const B=ER.boot, canE=erCan('erp-setup','edit');
+  const cnt={}; B.items.forEach(i=>{ if(i.default_warehouse_id) cnt[i.default_warehouse_id]=(cnt[i.default_warehouse_id]||0)+1; });
+  erSimpleTable('erx-pane-wh',['الكود','المخزن','موقع التحميل','أمين المخزن','التليفون','أصناف افتراضية','الحالة',''],
+    B.warehouses.map(w=>{ const s=erById(B.sites,w.site_id); return `<tr class="${w.is_active?'':'del'}"><td><b style="color:var(--gold)">${erEsc(w.code)}</b></td><td><b>${erEsc(w.name)}</b>${w.address?`<div class="qt-sub">${erEsc(w.address)}</div>`:''}</td><td>${s?'📍 '+erEsc(s.name):'—'}</td><td>${erEsc(w.keeper||'—')}</td><td dir="ltr" style="text-align:right">${erEsc(w.phone||'—')}</td><td>${cnt[w.id]||0}</td><td>${w.is_active?'<span class="qt-chip in">شغال</span>':'<span class="qt-chip dim">موقوف</span>'}</td><td><button class="qt-btn ghost sm" onclick="erWhOpen(${w.id})">${canE?'✏️':'👁️'}</button></td></tr>`; }),
+    canE?`<button class="qt-btn" onclick="erWhOpen(null)">➕ مخزن جديد</button>`:'', '🏬 مفيش مخازن لسه — ضيف المخازن (ماكرو، مصنع السادات، مخزن الكهرباء...) واربط كل واحد بموقع التحميل بتاعه');
+}
+function erWhOpen(id){ const B=ER.boot; const w=id?{...erById(B.warehouses,id)}:{id:null,code:'',name:'',site_id:'',address:'',keeper:'',phone:'',notes:'',is_active:true,sort_order:null};
+  Object.keys(w).forEach(k=>{ if(w[k]==null && k!=='sort_order' && k!=='id') w[k]=''; }); ER.edit=w; ER.ro=!erCan('erp-setup','edit');
+  const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs"><div class="qt-row">${erFld('الكود', erInp('code',w.code,{ph:'أوتوماتيك',dir:'ltr'}),1)}${erFld('اسم المخزن *', erInp('name',w.name),3)}
+    ${erFld('موقع التحميل (الحجز)', erSel('site_id',w.site_id,[['','— مفيش —']].concat(B.sites.map(s=>[s.id,s.name]))),2)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('أمين المخزن', erInp('keeper',w.keeper),1)}${erFld('التليفون', erInp('phone',w.phone,{dir:'ltr'}),1)}${erFld('العنوان', erInp('address',w.address),2)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('ملاحظات', erInp('notes',w.notes),3)}<div>${erChk('is_active',w.is_active,'✅ شغال')}</div></div>
+    <div class="qt-sub" style="margin-top:8px">📍 موقع التحميل = المكان اللى التاجر بيحجز يحمّل منه (السادات / قليوب / الصحراوى). كذا مخزن ممكن يبقوا فى نفس الموقع.</div></fieldset>`;
+  w.__render=()=>erModalBody(form()); erModal(id?'✏️ تعديل مخزن':'➕ مخزن جديد', form(), erFoot('erWhSave()',ER.ro)); }
+async function erWhSave(){ await erRun('er-save-btn', async ()=>{ const p={...ER.edit}; delete p.__render; if(p.site_id==='') p.site_id=null; await rpcSecure('erp_wh_save',{p}); await erBoot(true); erClose(); erRenderWh(); erToast('✅ اتحفظ المخزن'); }); }
+
+function erRenderCur(){ const B=ER.boot, canE=erCan('erp-setup','edit');
+  erSimpleTable('erx-pane-cur',['الكود','العملة','الرمز','سعر الصرف','آخر تحديث','الحالة',''],
+    B.currencies.map(c=>`<tr class="${c.is_active?'':'del'}"><td><b style="color:var(--gold)" dir="ltr">${erEsc(c.code)}</b></td><td><b>${erEsc(c.name)}</b>${c.is_base?' <span class="qt-chip in">⭐ الأساسية</span>':''}</td><td>${erEsc(c.symbol||'')}</td>
+      <td>${c.is_base?'1':(c.rate?`<b>1 ${erEsc(c.code)} = ${erMoney(c.rate)} ج.م</b>`:'<span class="qt-chip ex">⚠️ مش متحدد</span>')}</td><td class="qt-sub">${erDate(c.updated_at)}</td>
+      <td>${c.is_active?'<span class="qt-chip in">شغالة</span>':'<span class="qt-chip dim">موقوفة</span>'}</td>
+      <td style="white-space:nowrap">${canE?`<button class="qt-btn ghost sm" onclick="erCurOpen(${c.id})">✏️</button>`:''} ${c.is_base?'':`<button class="qt-btn ghost sm" onclick="erCurHist(${c.id})">📈 السجل</button>`}</td></tr>`),
+    canE?`<button class="qt-btn" onclick="erCurOpen(null)">➕ عملة</button>`:'', '');
+}
+function erCurOpen(id){ const B=ER.boot; const c=id?{...erById(B.currencies,id)}:{id:null,code:'',name:'',symbol:'',rate:'',is_active:true,is_base:false}; if(c.rate==null) c.rate='';
+  ER.edit=c; ER.ro=!erCan('erp-setup','edit');
+  const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs"><div class="qt-row">${erFld('الكود (3 حروف) *', erInp('code',c.code,{dir:'ltr',ph:'USD'}),1)}${erFld('الاسم *', erInp('name',c.name),2)}${erFld('الرمز', erInp('symbol',c.symbol),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${c.is_base?'<div class="qt-sub">⭐ دى العملة الأساسية — سعرها دايماً 1</div>':erFld(`سعر الصرف: 1 ${erEsc(c.code||'...')} = كام جنيه؟`, erInp('rate',c.rate,{type:'number',step:'0.0001'}),1)}<div style="flex:1"></div>${c.is_base?'':`<div>${erChk('is_active',c.is_active,'✅ شغالة')}</div>`}</div>
+    <div class="qt-sub" style="margin-top:8px">كل تغيير فى السعر بيتسجل فى السجل. الفواتير والدفعات هتشيل السعر وقت ما اتعملت — تغيير السعر هنا مش بيغيّر القديم.</div></fieldset>`;
+  c.__render=()=>erModalBody(form()); erModal(id?'💱 تعديل عملة':'➕ عملة جديدة', form(), erFoot('erCurSave()',ER.ro)); }
+async function erCurSave(){ await erRun('er-save-btn', async ()=>{ const c=ER.edit; await rpcSecure('erp_cur_save',{p:{id:c.id,code:c.code,name:c.name,symbol:c.symbol,rate:erNum(c.rate),is_active:!!c.is_active}}); await erBoot(true); erClose(); erRenderCur(); erToast('✅ اتحفظت العملة'); }); }
+async function erCurHist(id){ const c=erById(ER.boot.currencies,id);
+  try{ const h=await rpcSecure('erp_cur_rates',{p_currency:id}); erModal(`📈 سجل سعر ${erEsc(c.name)}`, h.length?`<table class="qt-tbl"><thead><tr><th>السعر</th><th>التاريخ</th><th>بواسطة</th></tr></thead><tbody>${h.map(r=>`<tr><td><b>${erMoney(r.rate)}</b> ج.م</td><td>${erDate(r.at)}</td><td>${erEsc(r.by||'—')}</td></tr>`).join('')}</tbody></table>`:'<div class="qt-sub">مفيش سجل لسه</div>', '');
+  }catch(e){ erToast('❌ '+erErr(e),false); } }
+
+function erRenderTier(){ const B=ER.boot, canE=erCan('erp-setup','edit');
+  const tcount={}; (ER.traders||[]).forEach(t=>{ const k=(t.acc&&t.acc.price_tier_id)||'def'; tcount[k]=(tcount[k]||0)+1; });
+  erSimpleTable('erx-pane-tier',['الترتيب','فئة السعر','','الحالة',''],
+    B.tiers.map(t=>`<tr class="${t.is_active?'':'del'}"><td>${t.sort_order}</td><td><b>${erEsc(t.name)}</b></td><td>${t.is_default?'<span class="qt-chip in">⭐ الافتراضية (أى تاجر مش متحددله فئة)</span>':''}</td>
+      <td>${t.is_active?'<span class="qt-chip in">شغالة</span>':'<span class="qt-chip dim">موقوفة</span>'}</td><td>${canE?`<button class="qt-btn ghost sm" onclick="erTierOpen(${t.id})">✏️</button>`:''}</td></tr>`),
+    canE?`<button class="qt-btn" onclick="erTierOpen(null)">➕ فئة سعر</button>`:'', '');
+  const el=document.getElementById('erx-pane-tier'); if(el) el.insertAdjacentHTML('beforeend','<div class="qt-sub" style="margin-top:10px">💡 كل صنف ليه سعر لكل فئة، وكل تاجر بياخد فئة من شاشة «حسابات التجار». الفاتورة هتجيب سعر التاجر أوتوماتيك.</div>');
+}
+function erTierOpen(id){ const B=ER.boot; const t=id?{...erById(B.tiers,id)}:{id:null,name:'',is_default:false,is_active:true,sort_order:null};
+  ER.edit=t; ER.ro=!erCan('erp-setup','edit');
+  const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs"><div class="qt-row">${erFld('اسم الفئة *', erInp('name',t.name,{ph:'مثلاً: جملة / قطاعى / موزعين'}),2)}${erFld('الترتيب', erInp('sort_order',t.sort_order,{type:'number'}),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${erChk('is_default',t.is_default,'⭐ الفئة الافتراضية')}${erChk('is_active',t.is_active,'✅ شغالة')}</div></fieldset>`;
+  t.__render=()=>erModalBody(form()); erModal(id?'🏷️ تعديل فئة سعر':'➕ فئة سعر جديدة', form(), erFoot('erTierSave()',ER.ro)); }
+async function erTierSave(){ await erRun('er-save-btn', async ()=>{ const t=ER.edit; await rpcSecure('erp_tier_save',{p:{id:t.id,name:t.name,is_default:!!t.is_default,is_active:!!t.is_active,sort_order:erNum(t.sort_order)}}); await erBoot(true); erClose(); erRenderTier(); erToast('✅ اتحفظت الفئة'); }); }
+
+function erRenderTre(){ const B=ER.boot, canE=erCan('erp-setup','edit');
+  erSimpleTable('erx-pane-tre',['الكود','الاسم','النوع','البنك / الحساب','العملة','الرصيد الافتتاحى','الحالة',''],
+    B.treasuries.map(t=>{ const c=erById(B.currencies,t.currency_id); return `<tr class="${t.is_active?'':'del'}"><td><b style="color:var(--gold)">${erEsc(t.code)}</b></td><td><b>${erEsc(t.name)}</b></td><td>${t.kind==='bank'?'🏦 بنك':'💵 خزينة'}</td>
+      <td>${t.kind==='bank'?`${erEsc(t.bank_name||'')} ${t.branch?'— '+erEsc(t.branch):''}<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(t.account_no||'')}</div>`:'—'}</td><td>${c?erEsc(c.code):'—'}</td><td>${erMoney(t.opening_balance)}</td>
+      <td>${t.is_active?'<span class="qt-chip in">شغالة</span>':'<span class="qt-chip dim">موقوفة</span>'}</td><td><button class="qt-btn ghost sm" onclick="erTreOpen(${t.id})">${canE?'✏️':'👁️'}</button></td></tr>`; }),
+    canE?`<button class="qt-btn" onclick="erTreOpen(null)">➕ خزينة / حساب بنكى</button>`:'', '🏦 مفيش خزائن لسه — ضيف الخزائن (خزينة قليوب، خزينة السادات...) والحسابات البنكية');
+}
+function erTreOpen(id){ const B=ER.boot; const t=id?{...erById(B.treasuries,id)}:{id:null,code:'',name:'',kind:'cash',bank_name:'',branch:'',account_no:'',iban:'',currency_id:(B.currencies.find(c=>c.is_base)||{}).id||'',opening_balance:0,notes:'',is_active:true};
+  Object.keys(t).forEach(k=>{ if(t[k]==null && k!=='sort_order' && k!=='id') t[k]=''; }); ER.edit=t; ER.ro=!erCan('erp-setup','edit');
+  const form=()=>`<fieldset ${ER.ro?'disabled':''} class="er-fs"><div class="qt-row">
+    <label class="qt-radio ${t.kind==='cash'?'er-on':''}"><input type="radio" name="er-tk" ${t.kind==='cash'?'checked':''} onchange="erSet('kind','cash',true)"> 💵 خزينة نقدية</label>
+    <label class="qt-radio ${t.kind==='bank'?'er-on':''}"><input type="radio" name="er-tk" ${t.kind==='bank'?'checked':''} onchange="erSet('kind','bank',true)"> 🏦 حساب بنكى</label></div>
+    <div class="qt-row" style="margin-top:10px">${erFld('الكود', erInp('code',t.code,{ph:'أوتوماتيك',dir:'ltr'}),1)}${erFld('الاسم *', erInp('name',t.name,{ph:t.kind==='bank'?'مثلاً: بنك القاهرة - جارى':'مثلاً: خزينة قليوب'}),3)}
+      ${erFld('العملة', erSel('currency_id',t.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(t.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`])),1)}</div>
+    ${t.kind==='bank'?`<div class="qt-row" style="margin-top:10px">${erFld('البنك *', erInp('bank_name',t.bank_name),1)}${erFld('الفرع', erInp('branch',t.branch),1)}${erFld('رقم الحساب', erInp('account_no',t.account_no,{dir:'ltr'}),1)}${erFld('IBAN', erInp('iban',t.iban,{dir:'ltr'}),1)}</div>`:''}
+    <div class="qt-row" style="margin-top:10px">${erFld('الرصيد الافتتاحى', erInp('opening_balance',t.opening_balance,{type:'number',step:'0.01'}),1)}${erFld('ملاحظات', erInp('notes',t.notes),2)}<div>${erChk('is_active',t.is_active,'✅ شغالة')}</div></div></fieldset>`;
+  t.__render=()=>erModalBody(form()); erModal(id?'✏️ تعديل خزينة / حساب':'➕ خزينة / حساب جديد', form(), erFoot('erTreSave()',ER.ro)); }
+async function erTreSave(){ await erRun('er-save-btn', async ()=>{ const p={...ER.edit}; delete p.__render; p.opening_balance=erNum(p.opening_balance)||0; if(p.currency_id==='') p.currency_id=null; await rpcSecure('erp_treasury_save',{p}); await erBoot(true); erClose(); erRenderTre(); erToast('✅ اتحفظت'); }); }
+
+function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane-status'); if(!el) return;
+  const fin=B.items.filter(i=>i.kind==='finished'&&i.is_active).length;
+  const phases=[['✅','المرحلة 1 — الأساسيات','الأصناف (كاملة ومفككة) والفئات والمخازن والعملات وفئات الأسعار والموردين والخزائن وحسابات التجار والصلاحيات'],
+    ['⏳','المرحلة 2 — المشتريات','طلبية الشراء ← الشحنات ← تكاليف الشحنة (FOB/CIF + جمارك + ضرايب + هامش) ← استلام المخزن ← مدفوعات الموردين'],
+    ['⏳','المرحلة 3 — المبيعات','فاتورة المبيعات (سعر التاجر أوتوماتيك + المخزن البديل) ← مستند التسليم مربوط بالحجز ← سندات القبض والشيكات والتنبيهات'],
+    ['⏳','المرحلة 4 — تسجيل المواتير والشاسيهات','بالباركود + التحقق من الكتب الدورية والبصمة + الشاسيه بيطلع من الماتور + تنبيه الأرقام الغريبة'],
+    ['⏳','المرحلة 5 — الجوابات والفاتورة الضريبية','من الفاتورة أو من النموذج (الشحنة) + الموزع بالعمولة + المنشور'],
+    ['⏳','المرحلة 6 — التقارير والاختبار','كارت الصنف والتقارير ← اختبار 500 فاتورة كاملة ← زرار «فعّل السيستم»']];
+  el.innerHTML = `<div class="qt-card" style="border-color:${B.active?'rgba(76,175,125,.5)':'rgba(224,85,85,.45)'}"><div class="qt-h" style="font-size:17px">${B.active?'🟢 السيستم الجديد متفعّل':'🔴 السيستم الجديد مش متفعّل — وضع التجربة'}</div>
+    <div class="qt-sub">كل اللى بيتسجل فى شاشات السيستم الجديد مالوش أى تأثير على الحجز والأذونات والبوت لحد التفعيل. زرار التفعيل هيتفتح بعد ما نخلص كل المراحل ونعدّى اختبار الـ 500 فاتورة.</div>
+    <div style="margin-top:12px"><button class="qt-btn" disabled title="هيتفتح بعد اختبار الـ 500 فاتورة">🚀 فعّل السيستم</button></div></div>
+  <div class="qt-card"><div class="qt-h">📋 خطة البنا</div>${phases.map(p=>`<div class="er-phase"><span style="font-size:18px">${p[0]}</span><div><b>${p[1]}</b><div class="qt-sub">${p[2]}</div></div></div>`).join('')}</div>
+  <div class="qt-card"><div class="qt-h">📊 اللى اتسجل لحد دلوقتى</div><div class="qt-row" style="gap:18px">
+    ${[['🗂️ فئات',B.categories.length],['📦 أصناف',B.items.length],['🏍️ منتج تام',fin],['🏬 مخازن',B.warehouses.length],['🏭 موردين',B.suppliers.length],['🏦 خزائن',B.treasuries.length],['💱 عملات',B.currencies.length]].map(x=>`<div class="er-stat"><div class="qt-sub">${x[0]}</div><b>${x[1]}</b></div>`).join('')}
+  </div></div>`;
+}
+</script>
+
 
 
 <!-- 🆕 DIRTY MODAL (تعديلات غير محفوظة) -->
