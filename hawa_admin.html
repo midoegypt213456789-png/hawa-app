@@ -2544,6 +2544,10 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .er-phase:last-child{border-bottom:none}
 .er-stat{background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:8px 14px;min-width:90px;text-align:center}
 .er-stat b{font-size:20px;color:var(--gold)}
+.er-scan{font-size:22px!important;padding:12px 14px!important;min-width:260px;letter-spacing:1px;flex:1}
+.er-scanres{margin-top:12px;padding:12px 16px;border-radius:12px;font-size:17px;white-space:pre-line;line-height:1.7}
+.er-scanres.ok{background:rgba(76,175,125,.14);border:1.5px solid #4CAF7D;color:#c9f3dc}
+.er-scanres.bad{background:rgba(224,85,85,.14);border:1.5px solid #E05555;color:#ffc9c9}
 
 /* 💰 عروض الأسعار */
 .qt-card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
@@ -3879,6 +3883,20 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="erc-pane-chk" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erc-pane-stmt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erc-pane-tre" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
+    <div class="section" id="sec-erp-regs">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🔢 <span>تسجيل المواتير والشاسيهات</span></div>
+          <div class="page-sub">السيستم الجديد — على رقم مستند التسليم، بالباركود، ومتحقق من الكتب الدورية والبصمة</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erRegsLoad(true)">🔄 تحديث</button>
+      </div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erg-tab-reg" onclick="erRegTab('reg')">🔢 تسجيل</button><button class="bl-tab" id="erg-tab-pend" onclick="erRegTab('pend')">📋 مستنية تسجيل</button><button class="bl-tab" id="erg-tab-find" onclick="erRegTab('find')">🔎 بحث برقم</button><button class="bl-tab" id="erg-tab-alerts" onclick="erRegTab('alerts')">🚨 المحاولات المرفوضة</button></div>
+      <div id="erg-pane-reg" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erg-pane-pend" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erg-pane-find" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erg-pane-alerts" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
     <div class="section" id="sec-erp-stock">
       <div class="page-hd">
@@ -5971,6 +5989,7 @@ function autoRefreshTick(){
     else if(sec==='erp-sales' && typeof erSalesLoad === 'function') erSalesLoad(true);
     else if(sec==='erp-delivery' && typeof erDelLoad === 'function') erDelLoad(true);
     else if(sec==='erp-cash' && typeof erCashLoad === 'function') erCashLoad(true);
+    else if(sec==='erp-regs' && typeof erRegsLoad === 'function') erRegsLoad(true);
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -6133,6 +6152,7 @@ function goTo(sec){
   else if(sec==='erp-sales')erSalesLoad(true);
   else if(sec==='erp-delivery')erDelLoad(true);
   else if(sec==='erp-cash')erCashLoad(true);
+  else if(sec==='erp-regs')erRegsLoad(true);
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -18092,6 +18112,7 @@ const NAV_META = {
   'erp-sales':        { icon: '🧾',  label: 'المبيعات (السيستم الجديد)' },
   'erp-delivery':     { icon: '🚚',  label: 'التسليم (السيستم الجديد)' },
   'erp-cash':         { icon: '💵',  label: 'الخزينة والتحصيل (السيستم الجديد)' },
+  'erp-regs':         { icon: '🔢',  label: 'تسجيل المواتير والشاسيهات (السيستم الجديد)' },
   'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' }
 };
 
@@ -18103,7 +18124,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
-    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-cash', 'erp-traders', 'erp-setup'] },
+    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-cash', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -18135,6 +18156,7 @@ const NAV_PREFERRED_CAT = {
   'erp-sales': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-delivery': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-cash': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-regs': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
 };
 
@@ -21111,13 +21133,13 @@ function erTreOpen(id){ const B=ER.boot; const t=id?{...erById(B.treasuries,id)}
   t.__render=()=>erModalBody(form()); erModal(id?'✏️ تعديل خزينة / حساب':'➕ خزينة / حساب جديد', form(), erFoot('erTreSave()',ER.ro)); }
 async function erTreSave(){ await erRun('er-save-btn', async ()=>{ const p={...ER.edit}; delete p.__render; p.opening_balance=erNum(p.opening_balance)||0; if(p.currency_id==='') p.currency_id=null; await rpcSecure('erp_treasury_save',{p}); await erBoot(true); erClose(); erRenderTre(); erToast('✅ اتحفظت'); }); }
 
-async function erSettingsSave(){ await erRun('erx-set-save', async ()=>{ const r=await rpcSecure('erp_settings_save',{p:{tax_mode:document.getElementById('erx-taxmode').value,alert_days:document.getElementById('erx-adays').value,alert_tg:document.getElementById('erx-atg').value,company_name:document.getElementById('erx-co').value}}); ER.boot.settings=r; erToast('✅ اتحفظت الإعدادات'); }); }
+async function erSettingsSave(){ await erRun('erx-set-save', async ()=>{ const r=await rpcSecure('erp_settings_save',{p:{tax_mode:document.getElementById('erx-taxmode').value,alert_days:document.getElementById('erx-adays').value,alert_tg:document.getElementById('erx-atg').value,company_name:document.getElementById('erx-co').value,allow_legacy:document.getElementById('erx-legacy').checked}}); ER.boot.settings=r; erToast('✅ اتحفظت الإعدادات'); }); }
 function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane-status'); if(!el) return;
   const fin=B.items.filter(i=>i.kind==='finished'&&i.is_active).length;
   const phases=[['✅','المرحلة 1 — الأساسيات','الأصناف (كاملة ومفككة) والفئات والمخازن والعملات وفئات الأسعار والموردين والخزائن وحسابات التجار والصلاحيات'],
     ['✅','المرحلة 2 — المشتريات','طلبية الشراء ← الشحنات ← تكاليف الشحنة (FOB/CIF + جمارك + ضرايب + هامش) ← استلام المخزن ← مدفوعات الموردين'],
     ['✅','المرحلة 3 — المبيعات','فاتورة المبيعات (سعر التاجر أوتوماتيك + المخزن البديل) ← مستند التسليم مربوط بالحجز ← سندات القبض والشيكات والتنبيهات'],
-    ['⏳','المرحلة 4 — تسجيل المواتير والشاسيهات','بالباركود + التحقق من الكتب الدورية والبصمة + الشاسيه بيطلع من الماتور + تنبيه الأرقام الغريبة'],
+    ['✅','المرحلة 4 — تسجيل المواتير والشاسيهات','بالباركود + التحقق من الكتب الدورية والبصمة + الشاسيه بيطلع من الماتور + تنبيه الأرقام الغريبة'],
     ['⏳','المرحلة 5 — الجوابات والفاتورة الضريبية','من الفاتورة أو من النموذج (الشحنة) + الموزع بالعمولة + المنشور'],
     ['⏳','المرحلة 6 — التقارير والاختبار','كارت الصنف والتقارير ← اختبار 500 فاتورة كاملة ← زرار «فعّل السيستم»']];
   el.innerHTML = `<div class="qt-card" style="border-color:${B.active?'rgba(76,175,125,.5)':'rgba(224,85,85,.45)'}"><div class="qt-h" style="font-size:17px">${B.active?'🟢 السيستم الجديد متفعّل':'🔴 السيستم الجديد مش متفعّل — وضع التجربة'}</div>
@@ -21131,7 +21153,8 @@ function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane
     ${erFld('تنبيه الدفعات والشيكات قبل الميعاد بكام يوم', `<input class="qt-inp" type="number" min="0" max="30" id="erx-adays" style="width:110px" value="${erEsc((B.settings||{}).alert_days||2)}" ${erCan('erp-setup','edit')?'':'disabled'}>`,1)}
     ${erFld('تليجرام الأدمن للتنبيهات (أرقام مفصولة بفاصلة)', `<input class="qt-inp" id="erx-atg" dir="ltr" style="width:100%" value="${erEsc((B.settings||{}).alert_tg||'')}" ${erCan('erp-setup','edit')?'':'disabled'}>`,2)}
     ${erFld('اسم الشركة فى رسايل التجار', `<input class="qt-inp" id="erx-co" style="width:100%" value="${erEsc((B.settings||{}).company_name||'')}" ${erCan('erp-setup','edit')?'':'disabled'}>`,1)}
-  </div><div class="qt-sub" style="margin-top:6px">🧪 فى وضع التجربة التنبيهات بتوصل للأدمن بس (مكتوب عليها «تجربة») — مش بتوصل للتجار.</div></div>
+  </div><div style="margin-top:10px"><label class="qt-check" style="font-weight:700"><input type="checkbox" id="erx-legacy" ${(B.settings||{}).allow_legacy!==false?'checked':''} ${erCan('erp-setup','edit')?'':'disabled'}> 📜 قبول أرقام أرشيف الكتب القديمة (2027) فى تسجيل المواتير</label></div>
+  <div class="qt-sub" style="margin-top:6px">🧪 فى وضع التجربة التنبيهات بتوصل للأدمن بس (مكتوب عليها «تجربة») — مش بتوصل للتجار.</div></div>
   <div class="qt-card"><div class="qt-h">📋 خطة البنا</div>${phases.map(p=>`<div class="er-phase"><span style="font-size:18px">${p[0]}</span><div><b>${p[1]}</b><div class="qt-sub">${p[2]}</div></div></div>`).join('')}</div>
   <div class="qt-card"><div class="qt-h">📊 اللى اتسجل لحد دلوقتى</div><div class="qt-row" style="gap:18px">
     ${[['🗂️ فئات',B.categories.length],['📦 أصناف',B.items.length],['🏍️ منتج تام',fin],['🏬 مخازن',B.warehouses.length],['🏭 موردين',B.suppliers.length],['🏦 خزائن',B.treasuries.length],['💱 عملات',B.currencies.length]].map(x=>`<div class="er-stat"><div class="qt-sub">${x[0]}</div><b>${x[1]}</b></div>`).join('')}
@@ -21718,7 +21741,8 @@ async function erDelOpen(invId){
 }
 async function erDelSave(){ await erRun('er-save-btn', async ()=>{ const d=ER.edit;
   const id=await rpcSecure('erp_del_save',{p:{invoice_id:d.invoice_id,del_date:d.del_date,booking_id:d.booking_id||null,receiver:d.receiver,vehicle_no:d.vehicle_no,notes:d.notes,items:d.items.map(x=>({inv_line:x.inv_line,qty:erNum(x.qty)}))}});
-  erClose(); await erSlReload(); const dd=erById(ER.sl.dels,id); erToast(`✅ مستند التسليم رقم ${dd?dd.del_no:''} — الرصيد الفعلى اتحدّث`); }); }
+  erClose(); await erSlReload(); const dd=erById(ER.sl.dels,id); erToast(`✅ مستند التسليم رقم ${dd?dd.del_no:''} — الرصيد الفعلى اتحدّث`); ER.tab.dl='list'; erDelTab('list'); }); }
+function erGoRegs(no){ try{ if(typeof goTo==='function') goTo('erp-regs'); }catch(e){} setTimeout(()=>erRegOpenDel(no),150); }
 function erRenderDels(){
   const el=document.getElementById('erd-pane-list'); if(!el||!ER.sl) return; const canD=erCan('erp-delivery','del'), q=ER.df.q.trim().toLowerCase();
   const rows=ER.sl.dels.filter(d=>{ const c=erCl(d.client_id), v=erById(ER.sl.invs,d.invoice_id)||{}; return !q||`${d.del_no} ${v.inv_no||''} ${c.code||''} ${c.name||''}`.toLowerCase().includes(q); });
@@ -21729,7 +21753,7 @@ function erRenderDels(){
       <td>${erEsc(d.del_date)}<div class="qt-sub">${erEsc(d.by||'')}</div></td><td>${d.items.map(x=>`<div>${erEsc(erItemLbl(x.item_id))} × <b>${erQ(x.qty)}</b></div>`).join('')}</td>
       <td>${regs?`<b>${erQ(regs)}</b>`:'—'}</td><td>${erEsc(d.vehicle_no||'')}<div class="qt-sub">${erEsc(d.receiver||'')}${d.booking_id?' — حجز #'+d.booking_id:''}</div></td>
       <td>${erStChip(d.status)}${d.cancel_reason?`<div class="qt-sub">${erEsc(d.cancel_reason)}</div>`:''}</td>
-      <td>${canD&&d.status==='سارى'?`<button class="qt-btn red sm" onclick="erDelCancel(${d.id})">✖ إلغاء</button>`:''}</td></tr>`; }).join('')}
+      <td style="white-space:nowrap">${regs&&d.status==='سارى'&&erCan('erp-regs','view')?`<button class="qt-btn ghost sm" onclick="erGoRegs(${d.del_no})">🔢 المواتير</button> `:''}${canD&&d.status==='سارى'?`<button class="qt-btn red sm" onclick="erDelCancel(${d.id})">✖ إلغاء</button>`:''}</td></tr>`; }).join('')}
   </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🚚 مفيش مستندات تسليم</div>`}`;
 }
 async function erDelCancel(id){ const r=erAsk('سبب إلغاء مستند التسليم؟ (البضاعة هترجع للرصيد الفعلى)'); if(!r) return;
@@ -21874,6 +21898,121 @@ async function erRenderTreBal(){
   }catch(e){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`; }
 }
 </script>
+<script>
+// ════════════════════════════════════════════════════════════════
+// 🔢 السيستم الجديد — المرحلة 4: تسجيل المواتير والشاسيهات على رقم التسليم
+// شاشة erp-regs — التحقق بيحصل فى السيرفر (erp_vin_resolve) ضد الكتب الدورية + البصمة + الزوج + التكرار
+// ════════════════════════════════════════════════════════════════
+ER.rg = { del:null, line:null, mode:'engine', last:null, busy:false, q:'' }; ER.tab.rg = 'reg';
+function erLetterTxt(L){ if(!L) return ''; if(L.legacy) return `📜 أرشيف 2027 — كتاب ${erEsc(L.doc_no||'')}${L.approval_no?' — موافقة '+erEsc(L.approval_no):''}`;
+  return `📄 كتاب ${erEsc(L.doc_no)} — ${erEsc(L.status||'')}${L.cancelled?' ❌ ملغى':''} — ${L.bulletin_no?`📰 منشور <b>${erEsc(L.bulletin_no)}</b>`:'<span style="color:#f0c75e">لسه مفيش منشور</span>'}`; }
+function erBeep(ok){ try{ const C=window.AudioContext||window.webkitAudioContext; if(!C) return; ER.__ac=ER.__ac||new C(); const o=ER.__ac.createOscillator(), g=ER.__ac.createGain();
+  o.frequency.value=ok?1250:220; o.type=ok?'sine':'square'; g.gain.value=0.08; o.connect(g); g.connect(ER.__ac.destination); o.start(); o.stop(ER.__ac.currentTime+(ok?0.09:0.35)); }catch(e){} }
+async function erRegsLoad(force){ try{ await erBoot(force); erRegTab(ER.tab.rg); }catch(e){ erPaneErr('erg-pane-reg',e); } }
+function erRegTab(t){ ER.tab.rg=t; erTabs('erg',['reg','pend','find','alerts'],t); ({reg:erRenderReg,pend:erRenderRegPend,find:erRenderRegFind,alerts:erRenderRegAlerts}[t])(); }
+async function erRegOpenDel(no){ no=String(no||'').trim(); if(!no) return; try{ ER.rg.del=await rpcSecure('erp_reg_delivery',{p_del_no:Number(no)}); ER.rg.last=null; ER.rg.line=null; erRegPickLine(); erRegTab('reg'); }
+  catch(e){ ER.rg.del=null; erToast('❌ '+erErr(e),false); erRenderReg(); } }
+function erRegPickLine(){ const D=ER.rg.del; if(!D) return; const ls=D.lines.filter(l=>l.reg_mode&&l.reg_mode!=='none');
+  if(!ls.find(l=>l.inv_line===ER.rg.line && Number(l.done)<Number(l.qty))){ const nx=ls.find(l=>Number(l.done)<Number(l.qty)); ER.rg.line=nx?nx.inv_line:(ls[0]||{}).inv_line; } }
+function erRenderReg(){
+  const el=document.getElementById('erg-pane-reg'); if(!el) return; const D=ER.rg.del, canE=erCan('erp-regs','edit'), canD=erCan('erp-regs','del');
+  let body='';
+  if(D){ const d=D.delivery, ls=D.lines.filter(l=>l.reg_mode&&l.reg_mode!=='none'), need=ls.reduce((a,l)=>a+Number(l.qty),0), done=ls.reduce((a,l)=>a+Number(l.done),0);
+    const cur=ls.find(l=>l.inv_line===ER.rg.line); const full=cur&&Number(cur.done)>=Number(cur.qty); const L=ER.rg.last;
+    body = `<div class="qt-card"><div class="qt-row" style="gap:18px">
+        <div><div class="qt-sub">مستند التسليم</div><b style="font-size:26px;color:var(--gold)">${d.del_no}</b>${erTestChip(d)}${d.status!=='سارى'?' '+erStChip(d.status):''}</div>
+        <div><div class="qt-sub">التاجر</div><b>${erEsc(D.client.name)}</b> <span class="qt-sub">(${erEsc(D.client.code||'')})</span></div>
+        <div><div class="qt-sub">الفاتورة</div><b>${D.inv_no}</b></div><div><div class="qt-sub">التاريخ</div><b>${erEsc(d.del_date)}</b></div>
+        <div style="flex:1"></div><div class="er-stat"><div class="qt-sub">اتسجل</div><b style="color:${done>=need?'#6dc49a':'var(--gold)'}">${done} / ${need}</b></div></div>
+      <div style="margin-top:12px">${ls.map(l=>{ const pc=Math.min(100,Math.round(Number(l.done)*100/Math.max(1,Number(l.qty))));
+        return `<label class="qt-radio ${l.inv_line===ER.rg.line?'er-on':''}" style="display:flex;margin-bottom:6px;width:100%;box-sizing:border-box"><input type="radio" name="er-rgl" ${l.inv_line===ER.rg.line?'checked':''} onchange="ER.rg.line=${l.inv_line};erRenderReg()">
+          <span style="flex:1"><b>${erEsc(l.name)}</b> <span class="qt-sub">${erEsc(l.model||'⚠️ مش مربوط بموديل')} — ${ER_REG[l.reg_mode]||''}</span>
+          <div style="height:6px;background:var(--dark);border-radius:4px;margin-top:5px;overflow:hidden"><div style="height:100%;width:${pc}%;background:${pc>=100?'#4CAF7D':'var(--gold)'}"></div></div></span>
+          <b style="margin-right:12px">${l.done} / ${erQ(l.qty)}</b></label>`; }).join('')||'<div class="qt-sub">المستند ده مفيهوش أصناف ليها تسجيل مواتير</div>'}</div></div>
+    ${canE&&d.status==='سارى'&&cur?`<div class="qt-card"><div class="qt-row">
+        <label class="qt-radio ${ER.rg.mode==='engine'?'er-on':''}"><input type="radio" name="er-rgm" ${ER.rg.mode==='engine'?'checked':''} onchange="ER.rg.mode='engine';erRenderReg()"> ⚙️ سكان الماتور <span class="qt-sub">(الشاسيه بيطلع لوحده)</span></label>
+        <label class="qt-radio ${ER.rg.mode==='chassis'?'er-on':''}"><input type="radio" name="er-rgm" ${ER.rg.mode==='chassis'?'checked':''} onchange="ER.rg.mode='chassis';erRenderReg()"> 🔩 سكان الشاسيه</label>
+        <label class="qt-radio ${ER.rg.mode==='both'?'er-on':''}"><input type="radio" name="er-rgm" ${ER.rg.mode==='both'?'checked':''} onchange="ER.rg.mode='both';erRenderReg()"> الاتنين <span class="qt-sub">(للأرشيف القديم / للتأكيد)</span></label>
+        <label class="qt-radio ${ER.rg.mode==='bulk'?'er-on':''}"><input type="radio" name="er-rgm" ${ER.rg.mode==='bulk'?'checked':''} onchange="ER.rg.mode='bulk';erRenderReg()"> 📋 لصق مجموعة</label></div>
+      ${full?`<div class="er-banner" style="margin-top:10px">✅ «${erEsc(cur.name)}» اتسجل كله — اختار صنف تانى</div>`:
+        ER.rg.mode==='bulk'?`<div style="margin-top:10px"><textarea class="qt-inp" id="er-rg-bulk" rows="6" dir="ltr" style="width:100%" placeholder="كل سطر: رقم ماتور — أو ماتور وشاسيه مفصولين بمسافة"></textarea>
+            <button class="qt-btn" id="er-rg-bulk-btn" style="margin-top:8px" onclick="erRegBulk()">🔢 سجّل الكل</button> <span class="qt-sub" id="er-rg-bulk-st"></span></div>`
+        :`<div class="qt-row" style="margin-top:12px">
+          ${ER.rg.mode!=='chassis'?`<input class="qt-inp er-scan" id="er-rg-eng" dir="ltr" inputmode="numeric" autocomplete="off" placeholder="⚙️ رقم الماتور" onkeydown="if(event.key==='Enter'){event.preventDefault();${ER.rg.mode==='both'?"document.getElementById('er-rg-ch').focus()":'erRegSubmit()'}}">`:''}
+          ${ER.rg.mode!=='engine'?`<input class="qt-inp er-scan" id="er-rg-ch" dir="ltr" autocomplete="off" placeholder="🔩 رقم الشاسيه (17)" onkeydown="if(event.key==='Enter'){event.preventDefault();erRegSubmit()}">`:''}
+          <button class="qt-btn" id="er-rg-btn" onclick="erRegSubmit()">✔ سجّل</button></div>`}
+      ${L?`<div class="er-scanres ${L.ok?'ok':'bad'}">${L.ok?`✅ <b dir="ltr">${erEsc(L.engine)}</b>${L.chassis?` &nbsp;🔩 <b dir="ltr">${erEsc(L.chassis)}</b>`:''}<div style="font-size:13px;margin-top:4px">${erLetterTxt(L.letter)}</div>`
+          :`❌ ${erEsc(L.error)}${L.letter?`<div style="font-size:13px;margin-top:4px">${erLetterTxt(L.letter)}</div>`:''}${['notours','wrong_model','mismatch','dup'].includes(L.kind)?'<div style="font-size:12px;margin-top:4px">🚨 اتبعت تنبيه للأدمن</div>':''}`}</div>`:''}
+    </div>`:''}
+    <div class="qt-card"><div class="qt-h">📋 الأرقام المتسجلة على المستند</div>${D.regs.length?`<div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>#</th><th>الماتور</th><th>الشاسيه</th><th>الصنف</th><th>الكتاب الدورى / المنشور</th><th>بواسطة</th><th></th></tr></thead><tbody>
+      ${D.regs.map((r,i)=>`<tr class="${r.status==='ملغى'?'del':''}"><td>${D.regs.length-i}</td><td dir="ltr" style="text-align:right"><b>${erEsc(r.engine)}</b></td><td dir="ltr" style="text-align:right">${erEsc(r.chassis||'—')}</td>
+        <td class="qt-sub">${erEsc((D.lines.find(l=>l.inv_line===r.del_line)||{}).name||'')}</td><td style="font-size:12px">${erLetterTxt(r.letter)}${r.source==='legacy'?' <span class="qt-chip ex">أرشيف</span>':''}</td>
+        <td class="qt-sub">${erEsc(r.by||'')}<div>${erDate(r.at)}</div></td><td>${r.status==='ملغى'?`<span class="qt-sub">${erEsc(r.cancel_reason||'')}</span>`:(canD?`<button class="qt-btn red sm" onclick="erRegRemove(${r.id})">✖</button>`:'')}</td></tr>`).join('')}
+      </tbody></table></div>`:'<div class="qt-sub">لسه مفيش أرقام</div>'}</div>`;
+  }
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" id="er-rg-delno" inputmode="numeric" style="width:200px;font-size:18px" placeholder="رقم التسليم" value="${D?D.delivery.del_no:''}" onkeydown="if(event.key==='Enter')erRegOpenDel(this.value)">
+    <button class="qt-btn" onclick="erRegOpenDel(document.getElementById('er-rg-delno').value)">🔍 افتح</button>${D?`<button class="qt-btn ghost sm" onclick="erRegOpenDel(${D.delivery.del_no})">🔄</button>`:''}</div>` + (body||`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🔢 اكتب رقم مستند التسليم — أو اختاره من تاب «مستنية تسجيل»</div>`);
+  const f=document.getElementById(ER.rg.mode==='chassis'?'er-rg-ch':'er-rg-eng'); if(f) setTimeout(()=>{ try{ f.focus(); }catch(e){} },30);
+}
+async function erRegSubmit(){
+  if(ER.rg.busy) return; const D=ER.rg.del; if(!D) return;
+  const e=(document.getElementById('er-rg-eng')||{}).value||'', c=(document.getElementById('er-rg-ch')||{}).value||'';
+  if(!e.trim() && !c.trim()) return;
+  ER.rg.busy=true; const b=document.getElementById('er-rg-btn'); if(b) b.disabled=true;
+  try{ const r=await rpcSecure('erp_reg_add',{p:{delivery_id:D.delivery.id,del_line:ER.rg.line,engine:e.trim()||null,chassis:c.trim()||null}}); ER.rg.last=r; erBeep(!!r.ok);
+    if(r.ok){ ER.rg.del=await rpcSecure('erp_reg_delivery',{p_del_no:D.delivery.del_no}); erRegPickLine(); } }
+  catch(err){ ER.rg.last={ok:false,error:erErr(err)}; erBeep(false); }
+  finally{ ER.rg.busy=false; erRenderReg(); }
+}
+async function erRegBulk(){
+  const D=ER.rg.del; const t=(document.getElementById('er-rg-bulk')||{}).value||''; const rows=t.split(/\n+/).map(x=>x.trim()).filter(Boolean); if(!rows.length) return;
+  const st=document.getElementById('er-rg-bulk-st'), b=document.getElementById('er-rg-bulk-btn'); if(b) b.disabled=true; let ok=0; const bad=[];
+  for(let i=0;i<rows.length;i++){ const parts=rows[i].split(/[\s,;\t]+/).filter(Boolean); let e=null, c=null;
+    parts.forEach(p=>{ const q=p.replace(/[^A-Za-z0-9]/g,''); if(/^[0-9]+$/.test(q) && q.length<=12) e=q; else if(q.length===17) c=q; });
+    if(st) st.textContent=`⏳ ${i+1} / ${rows.length}`;
+    try{ const r=await rpcSecure('erp_reg_add',{p:{delivery_id:D.delivery.id,del_line:ER.rg.line,engine:e,chassis:c}}); if(r.ok) ok++; else bad.push(`${rows[i]} ← ${r.error}`); }
+    catch(err){ bad.push(`${rows[i]} ← ${erErr(err)}`); }
+    if(bad.length && /اتسجل كله/.test(bad[bad.length-1])) break; }
+  ER.rg.del=await rpcSecure('erp_reg_delivery',{p_del_no:D.delivery.del_no}); erRegPickLine(); erBeep(!bad.length);
+  ER.rg.last = bad.length?{ok:false,error:`اتسجل ${ok} — واترفض ${bad.length}:\n`+bad.slice(0,15).join('\n')}:{ok:true,engine:`اتسجل ${ok} رقم`,chassis:null,letter:null};
+  erRenderReg(); }
+async function erRegRemove(id){ const r=erAsk('سبب شيل الرقم ده من المستند؟'); if(!r) return;
+  try{ await rpcSecure('erp_reg_remove',{p_id:id,p_reason:r}); ER.rg.del=await rpcSecure('erp_reg_delivery',{p_del_no:ER.rg.del.delivery.del_no}); erRegPickLine(); erRenderReg(); erToast('✅ الرقم اتشال'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erRenderRegPend(){
+  const el=document.getElementById('erg-pane-pend'); if(!el) return; el.innerHTML='<div class="loading-txt">⏳</div>';
+  try{ const rows=await rpcSecure('erp_reg_pending',{});
+    el.innerHTML = erBanner() + (rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم التسليم</th><th>التاريخ</th><th>التاجر</th><th>الفاتورة</th><th>اتسجل</th><th></th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><td><b style="color:var(--gold);font-size:15px">${x.del_no}</b>${x.test?' 🧪':''}</td><td>${erEsc(x.del_date)}</td><td><b>${erEsc(x.client)}</b> <span class="qt-sub">${erEsc(x.code||'')}</span></td><td>${x.inv_no}</td>
+        <td><b>${x.done}</b> / ${erQ(x.need)}</td><td><button class="qt-btn sm" onclick="erRegOpenDel(${x.del_no})">🔢 سجّل</button></td></tr>`).join('')}</tbody></table></div>`
+      :'<div class="qt-card qt-sub" style="text-align:center;padding:30px">✅ كل مستندات التسليم أرقامها متسجلة</div>');
+  }catch(e){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`; }
+}
+function erRenderRegFind(){
+  const el=document.getElementById('erg-pane-find'); if(!el) return;
+  el.innerHTML = `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" id="er-rg-q" dir="ltr" style="width:320px;font-size:17px" placeholder="رقم ماتور أو شاسيه (أو جزء منه)" value="${erEsc(ER.rg.q)}" onkeydown="if(event.key==='Enter')erRegFind()">
+    <button class="qt-btn" onclick="erRegFind()">🔎 دوّر</button></div><div id="er-rg-find-res"></div>`;
+}
+async function erRegFind(){ const q=document.getElementById('er-rg-q').value.trim(); ER.rg.q=q; const box=document.getElementById('er-rg-find-res'); if(!q) return; box.innerHTML='<div class="loading-txt">⏳</div>';
+  try{ const r=await rpcSecure('erp_reg_lookup',{p_q:q});
+    box.innerHTML = (r.letter?`<div class="qt-card"><div class="qt-h">📄 من أرقامنا</div><div>⚙️ <b dir="ltr">${erEsc(r.letter.engine)}</b> &nbsp; 🔩 <b dir="ltr">${erEsc(r.letter.chassis)}</b> — ${erEsc(r.letter.model)}</div><div style="margin-top:6px">${erLetterTxt(r.letter.letter)}</div></div>`
+        :(q.length>=9?'<div class="qt-card" style="color:#ff8a8a">❌ الرقم ده مش موجود فى الكتب الدورية الجديدة</div>':''))
+      + (r.regs.length?`<div class="qt-card"><div class="qt-h">🔢 متسجل على</div><div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الماتور</th><th>الشاسيه</th><th>التاجر</th><th>الفاتورة</th><th>التسليم</th><th>الصنف</th><th>الكتاب</th><th>الحالة</th></tr></thead><tbody>
+        ${r.regs.map(x=>`<tr class="${x.status==='ملغى'?'del':''}"><td dir="ltr" style="text-align:right"><b>${erEsc(x.engine)}</b></td><td dir="ltr" style="text-align:right">${erEsc(x.chassis||'—')}</td><td><b>${erEsc(x.client)}</b> <span class="qt-sub">${erEsc(x.code||'')}</span></td>
+          <td>${x.inv_no}</td><td><a href="#" onclick="erRegOpenDel(${x.del_no});return false">${x.del_no}</a></td><td class="qt-sub">${erEsc(x.item)}</td><td style="font-size:12px">${erLetterTxt(x.letter)}</td><td>${erStChip(x.status)}</td></tr>`).join('')}</tbody></table></div></div>`
+        :`<div class="qt-card qt-sub">${r.letter?'الرقم ده لسه متسجلش على أى تاجر':'مفيش تسجيلات بالرقم ده'}</div>`);
+  }catch(e){ box.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`; } }
+async function erRenderRegAlerts(){
+  const el=document.getElementById('erg-pane-alerts'); if(!el) return; el.innerHTML='<div class="loading-txt">⏳</div>';
+  const K={notours:'❌ مش من أرقامنا',wrong_model:'🔀 موديل تانى',mismatch:'⛓️ مش زوج',dup:'♻️ متسجل قبل كده'};
+  try{ const rows=await rpcSecure('erp_vin_alerts_list',{});
+    el.innerHTML = rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الوقت</th><th>النوع</th><th>التاجر</th><th>التسليم</th><th>الماتور</th><th>الشاسيه</th><th>السبب</th><th>بواسطة</th></tr></thead><tbody>
+      ${rows.map(x=>`<tr><td class="qt-sub">${erDate(x.at)}${x.test?' 🧪':''}</td><td><span class="qt-chip del">${K[x.kind]||erEsc(x.kind)}</span></td><td><b>${erEsc(x.client||'')}</b> <span class="qt-sub">${erEsc(x.code||'')}</span></td><td>${x.del_no||'—'}</td>
+        <td dir="ltr" style="text-align:right">${erEsc(x.engine||'')}</td><td dir="ltr" style="text-align:right">${erEsc(x.chassis||'')}</td><td style="font-size:12px">${erEsc(x.reason)}</td><td class="qt-sub">${erEsc(x.by||'')}</td></tr>`).join('')}</tbody></table></div>`
+      :'<div class="qt-card qt-sub" style="text-align:center;padding:30px">✅ مفيش محاولات مرفوضة</div>';
+  }catch(e){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`; }
+}
+</script>
+
 
 
 
