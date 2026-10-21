@@ -21813,7 +21813,7 @@ function erAvail(itemId, wh){ const it=erById(ER.boot.items,itemId); if(!it||!ER
   if(it.stock_mode==='components') return erKitAvail(it,m,wh).book; return ((m[it.id]||{})[wh]||{}).book||0; }
 function erAvailAct(itemId, wh){ const it=erById(ER.boot.items,itemId); if(!it||!ER.stock) return 0; const m=erStockMap();
   if(it.stock_mode==='components') return erKitAvail(it,m,wh).actual; return ((m[it.id]||{})[wh]||{}).actual||0; }
-function erInvRem(v){ return Math.round((Number(v.total)-Number(v.paid||0))*100)/100; }
+function erInvRem(v){ return Math.max(0, Math.round((Number(v.total)-Number(v.paid||0))*100)/100); }
 function erInvQty(v){ const t=v.items.reduce((a,l)=>a+Number(l.qty),0), d=Object.values(v.delivered||{}).reduce((a,x)=>a+Number(x),0); return {t,d}; }
 function erNextInst(v){ let cum=0; const paid=Number(v.paid||0); for(const i of (v.installments||[])){ cum+=Number(i.amount); const rem=Math.min(Number(i.amount),cum-paid); if(rem>0) return {...i,rem}; } return null; }
 async function erSlLoad(force){ await erBoot(force); if(force||!ER.sl) ER.sl=await rpcSecure('erp_sales_list',{}); try{ if(force||!ER.stock) ER.stock=await rpcSecure('erp_stock_list',{}); }catch(e){} }
