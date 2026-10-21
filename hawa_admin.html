@@ -21687,7 +21687,7 @@ function erRenderInvs(){
       <td style="white-space:nowrap">${v.status==='ملغية'?erStChip('ملغية'):`<button class="qt-btn ghost sm" onclick="erInvOpen(${v.id})">${canE?'✏️':'👁️'}</button>
         ${canDl&&qq.d<qq.t&&!v.hold_delivery?`<button class="qt-btn ghost sm" onclick="erDelOpen(${v.id})">🚚 تسليم</button>`:''}
         ${canC&&rem>0?`<button class="qt-btn ghost sm" onclick="erRcptOpen(${v.client_id},${v.id})">💵 قبض</button>`:''}
-        ${canE?`<button class="qt-btn ghost sm" title="${v.hold_delivery?'فك إيقاف التسليم':'إيقاف التسليم'}" onclick="erInvHold(${v.id})">${v.hold_delivery?'🔓':'🔒'}</button>`:''}
+        ${canE&&qq.d<qq.t?`<button class="qt-btn ghost sm" title="${v.hold_delivery?'فك إيقاف التسليم':'إيقاف التسليم'}" onclick="erInvHold(${v.id})">${v.hold_delivery?'🔓':'🔒'}</button>`:''}
         ${canD&&!qq.d&&!Number(v.paid)?`<button class="qt-btn red sm" onclick="erInvCancel(${v.id})">✖</button>`:''}`}</td></tr>`; }).join('')}
   </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🧾 مفيش فواتير هنا</div>`}`;
 }
@@ -21703,10 +21703,56 @@ function erInvOpen(id){
   ['due_date','notes','hold_reason'].forEach(k=>{ if(v[k]==null) v[k]=''; });
   v.__cltxt=v.client_id?erClLbl(erCl(v.client_id)):''; v.__own={}; if(v.id) v.items.forEach(l=>{ const k=l.item_id+'|'+l.warehouse_id; v.__own[k]=(v.__own[k]||0)+Number(l.qty); });
   v.__locked = !!(v.id && Object.values(v.delivered||{}).some(x=>Number(x)>0));
-  ER.edit=v; ER.ro=!(erCan('erp-sales','edit') && v.status==='سارية');
+  v.__full = !!(v.id && v.items.length && v.items.every(l=>Number((v.delivered||{})[l.line_no]||0)>=Number(l.qty)));
+  ER.edit=v; ER.ro=!(erCan('erp-sales','edit') && v.status==='سارية') || v.__full;
   v.__render=()=>erModalBody(erInvForm());
-  erModal(id?`🧾 فاتورة مبيعات <span style="color:var(--gold)">${v.inv_no}</span>${v.status!=='سارية'?' '+erStChip(v.status):''}`:'➕ فاتورة مبيعات جديدة', erInvForm(), erFoot('erInvSave()',ER.ro));
+  const taxBtn = v.id && v.status==='سارية' && erCan('erp-letters','view') ? `<div style="flex:1"></div><button class="qt-btn ghost" onclick="erInvTaxOpen(${v.id})">🧾 الفاتورة الضريبية</button>` : '';
+  erModal(id?`🧾 فاتورة مبيعات <span style="color:var(--gold)">${v.inv_no}</span>${v.status!=='سارية'?' '+erStChip(v.status):''}${v.__full?' <span class="qt-chip dim">🔒 اتسلمت بالكامل</span>':''}`:'➕ فاتورة مبيعات جديدة', erInvForm(), (v.__full?`<span class="qt-sub">🔒 الفاتورة اتسلمت بالكامل — المستند مقفول</span>`:erFoot('erInvSave()',ER.ro))+taxBtn);
 }
+// ⌨️ جريد الأصناف: Enter = الخانة اللى بعدها، وآخر خانة = السطر اللى تحته (وبيتفتح سطر جديد أوتوماتيك)
+function erInvKey(ev,i,c){ if(ev.key!=='Enter' || ev.shiftKey) return; ev.preventDefault(); const v=ER.edit; if(!v) return;
+  let r=i, cc=c+1; if(cc>5){ r=i+1; cc=0; }
+  if(r>=v.items.length) v.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',warehouse_id:'',__txt:''});
+  v.__focus=[r,cc]; const t=ev.target; try{ t.blur(); }catch(e){}
+  setTimeout(()=>{ if(!document.querySelector(`#er-m-body [data-g="${r},${cc}"]`)) v.__render(); erInvFocus(); },0); }
+function erInvFocus(){ const v=ER.edit; if(!v||!v.__focus) return; const [r,c]=v.__focus; const el=document.querySelector(`#er-m-body [data-g="${r},${c}"]`); if(!el) return;
+  v.__focus=null; try{ el.focus(); if(el.select) el.select(); el.scrollIntoView({block:'nearest'}); }catch(e){} }
+// 🧾 الفاتورة الضريبية من جوه فاتورة المبيعات
+async function erInvTaxOpen(invId){ let R; try{ R=await rpcSecure('erp_inv_tax_info',{p_inv:invId}); }catch(e){ erToast('❌ '+erErr(e),false); return; }
+  ER.edit={ __inv:invId, __R:R, sel:{}, model:((R.models||[]).find(m=>Number(m.used)<Number(m.qty_cap))||{}).id||'' }; ER.ro=false; erInvTaxRender(); }
+function erInvTaxRender(){ const E=ER.edit, R=E.__R, canE=erCan('erp-letters','edit'), canP=erCan('erp-letters','print'); const pend=R.letters.filter(l=>!l.tinv);
+  const pv=u=>{ const x=Number(u||0), t=Math.round(x*Number(R.rate||0))/100; return erMoney(x+t,2); };
+  const models=(R.models||[]);
+  const body=`<div class="qt-card"><div class="qt-row" style="gap:18px"><div><div class="qt-sub">فاتورة المبيعات</div><b style="font-size:22px;color:var(--gold)">${R.inv_no}</b></div>
+      <div><div class="qt-sub">التاجر</div><b>${erEsc(R.client)}</b> <span class="qt-sub">(${erEsc(R.code||'')})</span> ${R.dist?'<span class="qt-chip in">🤝 موزع بالعمولة</span>':''} ${R.lock_letters?'<span class="qt-chip del">🔒 قفل جوابات</span>':''}</div>
+      <div><div class="qt-sub">السعر من</div><b>${R.mode==='model'?'🗂️ النموذج (الشحنة)':'🧾 الفاتورة'}</b></div><div style="flex:1"></div>
+      <div class="er-stat"><div class="qt-sub">مواتير متسجلة</div><b>${R.regs} / ${erQ(R.need)}</b></div><div class="er-stat"><div class="qt-sub">جوابات</div><b>${R.letters.length}</b></div><div class="er-stat"><div class="qt-sub">فواتير ضريبية</div><b>${R.letters.filter(l=>l.tinv).length}</b></div></div></div>
+    ${R.consolidated?`<div class="qt-card" style="border-color:rgba(76,175,125,.45)"><div class="qt-row"><div class="qt-h" style="margin:0">🧾 فاتورة ضريبية مجمعة رقم <span style="color:var(--gold)">${R.consolidated.no}</span> — ${erMoney(R.consolidated.total,2)} ج.م</div><div style="flex:1"></div>
+        ${canP?`<button class="qt-btn sm" onclick="erTinvPrint(${R.consolidated.id})">🖨️ طباعة</button>`:''}</div><div class="qt-sub">كل جوابات الفاتورة دى متغطية بالمجمعة.</div></div>`
+      :(R.dist?`<div class="qt-card"><div class="qt-row"><div class="qt-h" style="margin:0">🤝 فاتورة ضريبية مجمعة على الفاتورة كلها</div><div style="flex:1"></div>
+        ${canE&&!R.letters.some(l=>l.tinv)?`<button class="qt-btn" id="er-itx-cons" onclick="erInvTaxCons()">🧾 اعمل فاتورة مجمعة (${erMoney(Number(R.total)*(1+Number(R.rate)/100),2)} ج.م)</button>`:'<span class="qt-sub">فيه فواتير فردية — الغيها الأول علشان تعمل مجمعة</span>'}</div></div>`:'')}
+    ${R.no_letter?`<div class="er-banner">✉️ فيه <b>${R.no_letter}</b> ماتور متسجل من غير جواب — اعمل الجواب الأول من شاشة «الجوابات» (الفاتورة الضريبية الفردية بتطلع على الجواب).</div>`:''}
+    ${R.regs<Number(R.need)?`<div class="er-banner">🔢 لسه <b>${erQ(Number(R.need)-R.regs)}</b> ماتور متسجلوش على مستندات التسليم.</div>`:''}
+    ${!R.consolidated?`<div class="qt-card"><div class="qt-h">✉️ الجوابات وفواتيرها الضريبية</div>
+      ${R.letters.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th></th><th>الجواب</th><th>الماتور / الشاسيه</th><th>المشترى</th><th>الإجمالى بالضريبة</th><th>الفاتورة الضريبية</th></tr></thead><tbody>
+        ${R.letters.map(l=>`<tr><td>${!l.tinv&&canE?`<input type="checkbox" ${E.sel[l.id]?'checked':''} onchange="ER.edit.sel[${l.id}]=this.checked">`:''}</td><td><b style="color:var(--gold)">${l.jawab_no}</b></td>
+          <td dir="ltr" style="text-align:right"><b>${erEsc(l.engine)}</b><div class="qt-sub">${erEsc(l.chassis||'')}</div></td><td>${erEsc(l.buyer)}</td>
+          <td>${R.mode==='model'?'<span class="qt-sub">حسب النموذج</span>':pv(l.unit)}</td>
+          <td>${l.tinv?`<b>${l.tinv.no}</b> <span class="qt-sub">${erMoney(l.tinv.total,2)}</span> ${canP?`<button class="qt-btn ghost sm" onclick="erTinvPrint(${l.tinv.id})">🖨️</button>`:''}`:'<span class="qt-chip ex">لسه</span>'}</td></tr>`).join('')}</tbody></table></div>
+        ${pend.length&&canE?`<div class="qt-row" style="margin-top:10px">${R.mode==='model'?erFld('النموذج', `<select class="qt-inp" style="width:100%" onchange="ER.edit.model=this.value">${models.map(m=>{ const left=Number(m.qty_cap)-Number(m.used); return `<option value="${m.id}" ${String(m.id)===String(E.model)?'selected':''} ${left<=0?'disabled':''}>${erEsc(m.name)} — ${erMoney(m.price,2)} — فاضل ${left}</option>`; }).join('')}</select>`,2):''}
+          <button class="qt-btn ghost sm" onclick="${pend.map(l=>`ER.edit.sel[${l.id}]=true`).join(';')};erInvTaxRender()">☑️ اختار الكل</button>
+          <button class="qt-btn" id="er-itx-go" onclick="erInvTaxIssue()">🧾 اعمل الفواتير الضريبية للمختار</button></div>`:''}`
+      :`<div class="qt-sub">مفيش جوابات على الفاتورة دى لسه${R.dist?' — الموزع ينفع ياخد مجمعة أو جوابات من غير فواتير':''}.</div>`}</div>`:''}`;
+  erModal(`🧾 الفاتورة الضريبية — فاتورة مبيعات <span style="color:var(--gold)">${R.inv_no}</span>`, body, `<button class="qt-btn ghost" onclick="erInvOpen(${E.__inv})">⬅️ رجوع للفاتورة</button>${erCan('erp-letters','view')?`<button class="qt-btn ghost" onclick="erClose();goTo('erp-letters')">✉️ شاشة الجوابات</button>`:''}`);
+}
+async function erInvTaxIssue(){ await erRun('er-itx-go', async ()=>{ const E=ER.edit, R=E.__R; const ids=R.letters.filter(l=>!l.tinv&&E.sel[l.id]).map(l=>l.id);
+  if(!ids.length) throw new Error('اختار الجوابات الأول'); if(R.mode==='model'&&!E.model) throw new Error('اختار النموذج');
+  let ok=0; const errs=[]; for(const id of ids){ try{ await rpcSecure('erp_tinv_issue',{p:{letter_id:id, tax_model_id:R.mode==='model'?E.model:null}}); ok++; }catch(e){ errs.push(`جواب ${(R.letters.find(l=>l.id===id)||{}).jawab_no}: ${erErr(e)}`); } }
+  if(ER.lt) ER.lt.data=null; E.__R=await rpcSecure('erp_inv_tax_info',{p_inv:E.__inv}); E.sel={}; erInvTaxRender();
+  erToast(errs.length?`✅ ${ok} فاتورة — ❌ ${errs.length} اترفضت: ${errs.join(' | ')}`:`✅ اتعملت ${ok} فاتورة ضريبية`, !errs.length); }); }
+async function erInvTaxCons(){ await erRun('er-itx-cons', async ()=>{ const E=ER.edit; if(!confirm('فاتورة ضريبية مجمعة على الفاتورة كلها؟')) return;
+  const id=await rpcSecure('erp_tinv_consolidated',{p:{sales_invoice_id:E.__inv}}); if(ER.lt) ER.lt.data=null; E.__R=await rpcSecure('erp_inv_tax_info',{p_inv:E.__inv}); erInvTaxRender(); erToast('✅ اتعملت الفاتورة المجمعة');
+  if(confirm('تطبعها دلوقتى؟')) erTinvPrint(id); }); }
 function erInvAvail(l, ex){ const v=ER.edit; let a=erAvail(l.item_id, l.warehouse_id) + (v.__own[l.item_id+'|'+l.warehouse_id]||0);
   v.items.forEach(o=>{ if(o!==l && o!==ex && String(o.item_id)===String(l.item_id) && String(o.warehouse_id)===String(l.warehouse_id)) a-= (erNum(o.qty)||0); }); return a; }
 function erBestWh(itemId, exclude){ let best=null, bv=0; ER.boot.warehouses.filter(w=>w.is_active).forEach(w=>{ if(String(w.id)===String(exclude)) return; const a=erAvail(itemId,w.id); if(a>bv){ bv=a; best=w.id; } }); return best?{id:best,avail:bv}:null; }
@@ -21729,23 +21775,25 @@ function erInvTotals(){ const v=ER.edit, t=erInvCalc(v); v.items.forEach((l,i)=>
 function erInvForm(){
   const B=ER.boot, v=ER.edit, cl=erCl(v.client_id), lk=v.__locked;
   const whs=B.warehouses.filter(w=>w.is_active);
-  const rows=v.items.map((l,i)=>{ const it=erById(B.items,l.item_id); const av=it&&l.warehouse_id&&ER.stock?erInvAvail(l):null; const dq=Number((v.delivered||{})[l.line_no]||0);
-    return `<tr><td style="min-width:250px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erInvLine(${i},'item',this.value)" ${lk?'disabled':''}>
+  if(!lk && !ER.ro){ const last=v.items[v.items.length-1]; if(!last || last.item_id || last.__txt) v.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',warehouse_id:'',__txt:''}); }
+  const G=(i,c)=>`data-g="${i},${c}" onkeydown="erInvKey(event,${i},${c})"`;
+  const rows=v.items.map((l,i)=>{ const blank=!l.item_id&&!l.__txt; const it=erById(B.items,l.item_id); const av=it&&l.warehouse_id&&ER.stock?erInvAvail(l):null; const dq=Number((v.delivered||{})[l.line_no]||0);
+    return `<tr><td style="min-width:250px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erInvLine(${i},'item',this.value)" ${G(i,0)} ${lk?'disabled':''}>
         ${it?`<div class="qt-sub">${it.stock_mode==='components'?'🧩 مفكك':''} ${it.reg_mode!=='none'?ER_REG[it.reg_mode]:''}</div>`:(l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':'')}</td>
-      <td><select class="qt-inp" onchange="erInvLine(${i},'warehouse_id',this.value)" ${lk?'disabled':''}><option value="">— المخزن —</option>${whs.map(w=>`<option value="${w.id}" ${String(w.id)===String(l.warehouse_id)?'selected':''}>${erEsc(w.name)}</option>`).join('')}</select>
+      <td><select class="qt-inp" onchange="erInvLine(${i},'warehouse_id',this.value)" ${G(i,1)} ${lk?'disabled':''}><option value="">— المخزن —</option>${whs.map(w=>`<option value="${w.id}" ${String(w.id)===String(l.warehouse_id)?'selected':''}>${erEsc(w.name)}</option>`).join('')}</select>
         ${av!=null?`<div class="qt-sub" style="color:${av<(erNum(l.qty)||0)?'var(--error)':''}">متاح: ${erQ(av)}</div>`:''}</td>
-      <td><input class="qt-inp" type="number" min="0" style="width:80px" value="${erEsc(l.qty)}" onchange="erInvLine(${i},'qty',this.value)" ${lk?'disabled':''}>${dq?`<div class="qt-sub">اتسلم ${erQ(dq)}</div>`:''}</td>
-      <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erInvLine(${i},'price',this.value)" ${lk?'disabled':''}></td>
-      <td><input class="qt-inp" type="number" step="0.01" min="0" max="100" style="width:65px" value="${erEsc(l.disc_pct)}" oninput="erInvLine(${i},'disc_pct',this.value)" ${lk?'disabled':''}></td>
-      <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" oninput="erInvLine(${i},'disc_amt',this.value)" ${lk?'disabled':''}></td>
-      <td><b id="er-invl-${i}">—</b></td><td>${lk?'':`<button class="qt-btn red sm" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('');
+      <td><input class="qt-inp" type="number" min="0" style="width:80px" value="${erEsc(l.qty)}" onchange="erInvLine(${i},'qty',this.value)" ${G(i,2)} ${lk?'disabled':''}>${dq?`<div class="qt-sub">اتسلم ${erQ(dq)}</div>`:''}</td>
+      <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erInvLine(${i},'price',this.value)" ${G(i,3)} ${lk?'disabled':''}></td>
+      <td><input class="qt-inp" type="number" step="0.01" min="0" max="100" style="width:65px" value="${erEsc(l.disc_pct)}" oninput="erInvLine(${i},'disc_pct',this.value)" ${G(i,4)} ${lk?'disabled':''}></td>
+      <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" oninput="erInvLine(${i},'disc_amt',this.value)" ${G(i,5)} ${lk?'disabled':''}></td>
+      <td><b id="er-invl-${i}">—</b></td><td>${lk||blank?'':`<button class="qt-btn red sm" tabindex="-1" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('');
   const inst=(v.installments||[]).map((x,i)=>`<tr><td><input class="qt-inp" type="date" value="${erEsc(x.due_date||'')}" oninput="ER.edit.installments[${i}].due_date=this.value"></td>
       <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:130px" value="${erEsc(x.amount)}" oninput="ER.edit.installments[${i}].amount=this.value;erInvTotals()"></td>
       <td><input class="qt-inp" style="width:220px" value="${erEsc(x.note||'')}" oninput="ER.edit.installments[${i}].note=this.value"></td>
       <td><button class="qt-btn red sm" onclick="ER.edit.installments.splice(${i},1);ER.edit.__render()">✖</button></td></tr>`).join('');
-  setTimeout(erInvTotals,0);
+  setTimeout(()=>{ erInvTotals(); erInvFocus(); },0);
   return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${erItemDl()}${erClDl()}
-  ${lk?`<div class="er-banner">🔒 الفاتورة اتسلم منها — الأصناف مقفولة. تقدر تعدّل الدفعات وإيقاف التسليم والملاحظات بس.</div>`:''}
+  ${v.__full?`<div class="er-banner">🔒 <b>الفاتورة اتسلمت بالكامل — المستند مقفول ومينفعش فيه أى تعديل.</b> أى تصحيح بيبقى بمرتجع.</div>`:(lk?`<div class="er-banner">🔒 الفاتورة اتسلم منها — الأصناف مقفولة. تقدر تعدّل الدفعات وإيقاف التسليم والملاحظات بس لحد ما تتسلم بالكامل.</div>`:'')}
   <div class="qt-card"><div class="qt-row">
     ${erFld('التاجر *', `<input class="qt-inp" list="er-cl-dl" style="width:100%" value="${erEsc(v.__cltxt)}" placeholder="كود أو اسم التاجر" onchange="erInvClient(this.value)" ${v.id?'disabled':''}>`,3)}
     ${erFld('التاريخ', erInp('inv_date',v.inv_date,{type:'date'}),1)}
@@ -21755,9 +21803,8 @@ function erInvForm(){
     <span class="qt-sub">فئة السعر: <b>${erEsc((erById(B.tiers,cl.tier||erDefTier())||{}).name||'—')}</b></span>
     <span class="qt-sub">رصيده دلوقتى: <b style="color:${Number(cl.balance)>0?'#f0c75e':'#6dc49a'}">${erMoney(Math.abs(cl.balance),2)} ${Number(cl.balance)>0?'عليه':(Number(cl.balance)<0?'ليه':'')}</b></span>
     ${cl.credit_limit!=null?`<span class="qt-sub">حد الائتمان: <b>${erMoney(cl.credit_limit,2)}</b></span>`:''} ${erClChip(cl)}</div>`:''}</div>
-  <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— السعر بييجى من فئة سعر التاجر، ولو المخزن مش كفاية البند بيتقسم أوتوماتيك</span></div>
+  <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— السعر بييجى من فئة سعر التاجر، ولو المخزن مش كفاية البند بيتقسم أوتوماتيك • ⏎ Enter ينقلك للخانة اللى بعدها، وآخر السطر يفتح سطر جديد</span></div>
     <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>المخزن</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-    ${lk?'':`<button class="qt-btn ghost sm" style="margin-top:8px" onclick="ER.edit.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',warehouse_id:'',__txt:''});ER.edit.__render()">➕ صنف</button>`}
     <div class="qt-row" style="margin-top:12px">${erFld('خصم على الفاتورة %', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100px" value="${erEsc(v.discount_pct)}" oninput="ER.edit.discount_pct=this.value;erInvTotals()" ${lk?'disabled':''}>`)}
       ${erFld('خصم قيمة', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:130px" value="${erEsc(v.discount_amount)}" oninput="ER.edit.discount_amount=this.value;erInvTotals()" ${lk?'disabled':''}>`)}
       <div style="flex:1"></div><div class="qt-tot" id="er-inv-tot"></div></div></div>
