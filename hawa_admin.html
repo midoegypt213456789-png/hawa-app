@@ -21753,7 +21753,7 @@ function erDelTab(t){ ER.tab.dl=t; erTabs('erd',['ready','list'],t); const c=doc
 function erRenderReady(){
   const el=document.getElementById('erd-pane-ready'); if(!el||!ER.sl) return; const q=ER.df.q.trim().toLowerCase(), canE=erCan('erp-delivery','edit');
   const rows=ER.sl.invs.filter(v=>{ const qq=erInvQty(v); if(v.status!=='سارية'||qq.d>=qq.t) return false; const c=erCl(v.client_id); return !q||`${v.inv_no} ${c.code||''} ${c.name||''}`.toLowerCase().includes(q); });
-  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" style="width:260px" placeholder="🔍 رقم الفاتورة / كود / اسم التاجر" value="${erEsc(ER.df.q)}" oninput="ER.df.q=this.value;erRenderReady()"></div>
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" style="width:260px" placeholder="🔍 رقم الفاتورة / كود / اسم التاجر" value="${erEsc(ER.df.q)}" oninput="ER.df.q=this.value;erRenderReady()">${canE?`<div style="flex:1"></div><button class="qt-btn" onclick="erDelNew()">➕ مستند تسليم جديد</button>`:''}</div>
   ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الفاتورة</th><th>التاجر</th><th>التاريخ</th><th>الأصناف الباقية</th><th></th></tr></thead><tbody>
   ${rows.map(v=>{ const c=erCl(v.client_id); const blocked=v.hold_delivery||c.lock_loading;
     return `<tr><td><b style="color:var(--gold);font-size:15px">${v.inv_no}</b>${erTestChip(v)}</td><td><b>${erEsc(c.name||'')}</b><div class="qt-sub">${erEsc(c.code||'')}</div>${erClChip(c)}</td><td>${erEsc(v.inv_date)}</td>
@@ -21761,6 +21761,20 @@ function erRenderReady(){
       <td>${v.hold_delivery?`<span class="qt-chip del">🔒 موقوف${v.hold_reason?': '+erEsc(v.hold_reason):''}</span>`:(c.lock_loading?`<span class="qt-chip del">🚚 قفل تحميل</span>`:(canE?`<button class="qt-btn sm" onclick="erDelOpen(${v.id})">🚚 مستند تسليم</button>`:''))}</td></tr>`; }).join('')}
   </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🚚 مفيش فواتير مستنية تسليم</div>`}`;
 }
+// ➕ مستند تسليم جديد: تكتب رقم الفاتورة (أو تختارها) وهو يفتح المستند بالكميات الباقية
+function erDelNew(){ if(!erCan('erp-delivery','edit')){ erToast('معندكش صلاحية تعديل',false); return; } if(!ER.sl){ erToast('⏳ لسه بيحمّل',false); return; }
+  const ready=ER.sl.invs.filter(v=>{ const q=erInvQty(v); return v.status==='سارية'&&q.d<q.t; });
+  ER.edit={}; erModal('🚚 مستند تسليم جديد', `<div class="qt-card"><div class="qt-row">${erFld('رقم الفاتورة', `<input class="qt-inp" id="er-dn-inv" list="er-dn-dl" inputmode="numeric" style="width:100%;font-size:20px" placeholder="اكتب رقم الفاتورة واضغط Enter" onkeydown="if(event.key==='Enter'){event.preventDefault();erDelNewGo();}">`,2)}
+      <div><button class="qt-btn" id="er-dn-go" onclick="erDelNewGo()">فتح ⬅️</button></div></div>
+    <datalist id="er-dn-dl">${ready.map(v=>{ const c=erCl(v.client_id); return `<option value="${v.inv_no}">${erEsc((c.code||'')+' — '+(c.name||''))}</option>`; }).join('')}</datalist>
+    <div class="qt-sub" style="margin-top:8px">فيه ${ready.length} فاتورة مستنية تسليم — اكتب الرقم أو اختاره من القايمة.</div><div id="er-dn-msg" style="margin-top:8px;color:var(--error);font-weight:700"></div></div>`, `<button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
+  setTimeout(()=>{ const i=document.getElementById('er-dn-inv'); if(i) i.focus(); },50); }
+function erDelNewGo(){ const i=document.getElementById('er-dn-inv'), m=document.getElementById('er-dn-msg'); const no=erNum(i&&i.value); const say=t=>{ if(m) m.textContent='❌ '+t; erBeep&&erBeep(false); };
+  if(!no){ say('اكتب رقم الفاتورة'); return; } const v=ER.sl.invs.find(x=>Number(x.inv_no)===Number(no)); if(!v){ say(`مفيش فاتورة مبيعات رقم ${no}`); return; }
+  const c=erCl(v.client_id), q=erInvQty(v);
+  if(v.status!=='سارية'){ say(`الفاتورة ${no} ملغية`); return; } if(q.d>=q.t){ say(`الفاتورة ${no} اتسلمت كلها`); return; }
+  if(v.hold_delivery){ say(`الفاتورة ${no} عليها إيقاف تسليم${v.hold_reason?': '+v.hold_reason:''}`); return; } if(c.lock_loading){ say(`التاجر ${c.name||''} عليه قفل تحميل`); return; }
+  erClose(); erDelOpen(v.id); }
 async function erDelOpen(invId){
   const v=erById(ER.sl.invs,invId), c=erCl(v.client_id);
   const d={ invoice_id:invId, del_date:erToday(), booking_id:'', receiver:'', vehicle_no:'', notes:'', bookings:null,
@@ -21786,7 +21800,7 @@ function erGoRegs(no){ try{ if(typeof goTo==='function') goTo('erp-regs'); }catc
 function erRenderDels(){
   const el=document.getElementById('erd-pane-list'); if(!el||!ER.sl) return; const canD=erCan('erp-delivery','del'), q=ER.df.q.trim().toLowerCase();
   const rows=ER.sl.dels.filter(d=>{ const c=erCl(d.client_id), v=erById(ER.sl.invs,d.invoice_id)||{}; return !q||`${d.del_no} ${v.inv_no||''} ${c.code||''} ${c.name||''}`.toLowerCase().includes(q); });
-  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" style="width:260px" placeholder="🔍 رقم التسليم / الفاتورة / التاجر" value="${erEsc(ER.df.q)}" oninput="ER.df.q=this.value;erRenderDels()"></div>
+  el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" style="width:260px" placeholder="🔍 رقم التسليم / الفاتورة / التاجر" value="${erEsc(ER.df.q)}" oninput="ER.df.q=this.value;erRenderDels()">${erCan('erp-delivery','edit')?`<div style="flex:1"></div><button class="qt-btn" onclick="erDelNew()">➕ مستند تسليم جديد</button>`:''}</div>
   ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم التسليم</th><th>الفاتورة</th><th>التاجر</th><th>التاريخ</th><th>الأصناف</th><th>مواتير للتسجيل</th><th>العربية / المستلم</th><th>الحالة</th><th></th></tr></thead><tbody>
   ${rows.map(d=>{ const c=erCl(d.client_id), v=erById(ER.sl.invs,d.invoice_id)||{}; const regs=d.items.reduce((a,x)=>a+(x.reg_mode&&x.reg_mode!=='none'?Number(x.qty):0),0);
     return `<tr class="${d.status==='ملغى'?'del':''}"><td><b style="color:var(--gold);font-size:15px">${d.del_no}</b>${erTestChip(d)}</td><td>${v.inv_no||'—'}</td><td>${erEsc(c.name||'')}<div class="qt-sub">${erEsc(c.code||'')}</div></td>
@@ -22280,8 +22294,8 @@ const ER_TB = {
     inv:{ pane:'ers3-pane-inv', nw:()=>erInvOpen(), open:/^erInvOpen\(/, del:/^erInvCancel\(/ },
     stmt:{ none:true } } },
   'erp-delivery': { tab:()=>ER.tab.dl, t:{
-    ready:{ pane:'erd-pane-ready', nwMsg:'اختار الفاتورة ودوس «فتح» علشان تعمل مستند تسليم', open:/^erDelOpen\(/ },
-    list:{ pane:'erd-pane-list', nwTab:()=>erDelTab('ready'), del:/^erDelCancel\(/ } } },
+    ready:{ pane:'erd-pane-ready', nw:()=>erDelNew(), open:/^erDelOpen\(/ },
+    list:{ pane:'erd-pane-list', nw:()=>erDelNew(), del:/^erDelCancel\(/ } } },
   'erp-cash': { tab:()=>ER.tab.cash, t:{
     rcpt:{ pane:'erc-pane-rcpt', nw:()=>erRcptOpen(), del:/^erRcptCancel\(/ },
     chk:{ pane:'erc-pane-chk', nw:()=>erChkOpen(), open:/^erChkCollect\(\d+,'مُحصَّل'\)/, del:/^erChkSet\(\d+,'ملغى'\)/ },
