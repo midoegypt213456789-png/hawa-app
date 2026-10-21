@@ -21269,6 +21269,19 @@ function erTreOpen(id){ const B=ER.boot; const t=id?{...erById(B.treasuries,id)}
 async function erTreSave(){ await erRun('er-save-btn', async ()=>{ const p={...ER.edit}; delete p.__render; p.opening_balance=erNum(p.opening_balance)||0; if(p.currency_id==='') p.currency_id=null; await rpcSecure('erp_treasury_save',{p}); await erBoot(true); erClose(); erRenderTre(); erToast('✅ اتحفظت'); }); }
 
 async function erSettingsSave(){ await erRun('erx-set-save', async ()=>{ const r=await rpcSecure('erp_settings_save',{p:{tax_mode:document.getElementById('erx-taxmode').value,alert_days:document.getElementById('erx-adays').value,alert_tg:document.getElementById('erx-atg').value,company_name:document.getElementById('erx-co').value,allow_legacy:document.getElementById('erx-legacy').checked,tax_rate:document.getElementById('erx-trate').value,co_legal:document.getElementById('erx-colegal').value,co_tax_no:document.getElementById('erx-cotax').value,co_cr:document.getElementById('erx-cocr').value,co_address:document.getElementById('erx-coaddr').value}}); ER.boot.settings=r; erToast('✅ اتحفظت الإعدادات'); }); }
+// 🚀 تفعيل السيستم: مستندات التجربة بتتقفل (ملغية) وأرقامها بالسالب 🧪 — من غير أى مسح — والأرصدة والترقيم بيبدأوا من الصفر
+async function erActivateOpen(){ let P; try{ P=await rpcSecure('erp_activation_preview',{}); }catch(e){ erToast('❌ '+erErr(e),false); return; }
+  if(P.active){ erToast('السيستم متفعّل قبل كده'); return; }
+  const L={invoices:'فواتير مبيعات',deliveries:'مستندات تسليم',regs:'مواتير متسجلة',letters:'جوابات',tax_invoices:'فواتير ضريبية',receipts:'سندات قبض',checks:'شيكات',sales_returns:'مرتجعات مبيعات',pos:'طلبيات شراء',shipments:'شحنات',stock_receipts:'استلامات',supplier_payments:'مدفوعات موردين',purchase_returns:'مرتجعات مشتريات',transfers:'تحويلات'};
+  const rows=Object.keys(L).map(k=>`<tr><td>${L[k]}</td><td><b>${erQ(P.counts[k]||0)}</b></td></tr>`).join('');
+  ER.edit={}; erModal('🚀 تفعيل السيستم الجديد', `<div class="qt-card" style="border-color:rgba(224,85,85,.45)"><div class="qt-h">⚠️ اقرا قبل ما تفعّل</div>
+    <div style="line-height:2">• كل مستندات التجربة اللى تحت دى هتتقفل <b>«ملغية»</b> وأرقامها هتبقى بالسالب 🧪 — <b>مفيش أى حاجة هتتمسح</b>.<br>• أرصدة المخازن هتبدأ من الصفر، ورصيد التجار من الرصيد الافتتاحى بس.<br>• الترقيم (فواتير، تسليم، سندات، جوابات...) هيبدأ من 1.<br>• التنبيهات (الدفعات والشيكات) هتوصل للتجار نفسهم.<br>• الأصناف والمخازن والموردين وحسابات التجار والإعدادات زى ما هى.<br>• <b>التفعيل مرة واحدة ومفيش رجوع منه.</b></div></div>
+    <div class="qt-card"><div class="qt-h">🧪 بيانات التجربة اللى هتتقفل</div><table class="qt-tbl"><tbody>${rows}</tbody></table></div>
+    <div class="qt-card">${erFld('اكتب كلمة «تفعيل» علشان تأكد', '<input class="qt-inp" id="er-act-confirm" style="width:100%;font-size:18px" placeholder="تفعيل">')}</div>`,
+    `<button class="qt-btn red" id="er-act-btn" onclick="erActivateGo()">🚀 فعّل دلوقتى</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+async function erActivateGo(){ await erRun('er-act-btn', async ()=>{ const c=document.getElementById('er-act-confirm').value.trim(); if(c!=='تفعيل') throw new Error('اكتب كلمة «تفعيل» بالظبط');
+  await rpcSecure('erp_activate',{p_confirm:c}); erClose(); ER.sl=null; ER.pu=null; ER.stock=null; if(ER.lt) ER.lt.data=null; await erBoot(true); erRenderStatus(); erToast('🚀 السيستم الجديد اتفعّل'); }); }
+
 function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane-status'); if(!el) return;
   const fin=B.items.filter(i=>i.kind==='finished'&&i.is_active).length;
   const phases=[['✅','المرحلة 1 — الأساسيات','الأصناف (كاملة ومفككة) والفئات والمخازن والعملات وفئات الأسعار والموردين والخزائن وحسابات التجار والصلاحيات'],
@@ -21279,7 +21292,7 @@ function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane
     ['⏳','المرحلة 6 — المرتجعات والتحويل والطباعة والتقارير ← الاختبار','✅ المرتجعات + التحويل + الطباعة + التقارير ← ⏳ اختبار 500 فاتورة كاملة ← زرار «فعّل السيستم»']];
   el.innerHTML = `<div class="qt-card" style="border-color:${B.active?'rgba(76,175,125,.5)':'rgba(224,85,85,.45)'}"><div class="qt-h" style="font-size:17px">${B.active?'🟢 السيستم الجديد متفعّل':'🔴 السيستم الجديد مش متفعّل — وضع التجربة'}</div>
     <div class="qt-sub">كل اللى بيتسجل فى شاشات السيستم الجديد مالوش أى تأثير على الحجز والأذونات والبوت لحد التفعيل. زرار التفعيل هيتفتح بعد ما نخلص كل المراحل ونعدّى اختبار الـ 500 فاتورة.</div>
-    <div style="margin-top:12px"><button class="qt-btn" disabled title="هيتفتح بعد اختبار الـ 500 فاتورة">🚀 فعّل السيستم</button></div></div>
+    <div style="margin-top:12px">${B.active?`<span class="qt-chip in">🚀 متفعّل${(B.settings||{}).activated_at?' من '+erEsc(B.settings.activated_at):''}</span>`:((typeof EMP_MODE!=='undefined'&&EMP_MODE)?'<span class="qt-sub">التفعيل للأدمن الرئيسى بس</span>':`<button class="qt-btn" onclick="erActivateOpen()">🚀 فعّل السيستم</button>`)}</div></div>
   <div class="qt-card"><div class="qt-h">⚙️ إعدادات السيستم</div><div class="qt-row">
     ${erFld('سعر الضريبة فى الجوابات (للبرنامج كله)', `<select class="qt-inp" id="erx-taxmode" ${erCan('erp-setup','edit')?'':'disabled'}><option value="invoice" ${(B.settings||{}).tax_mode!=='model'?'selected':''}>من الفاتورة — كل جواب بيتخصم من كمية الصنف فى فاتورته</option><option value="model" ${(B.settings||{}).tax_mode==='model'?'selected':''}>من النموذج — سعر وكمية الشحنة</option></select>`,2)}
     ${erCan('erp-setup','edit')?`<div><button class="qt-btn" id="erx-set-save" onclick="erSettingsSave()">💾 حفظ</button></div>`:''}
