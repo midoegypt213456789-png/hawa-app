@@ -4365,6 +4365,38 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
       </div>
 
+      <!-- 📱 أيقونة تطبيق التجار -->
+      <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">📱 أيقونة تطبيق التجار <span style="font-size:11px;color:#8A8580;font-weight:600">(اللى بتظهر على موبايل التاجر)</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+          <div style="text-align:center">
+            <div style="font-size:12px;color:#8A8580;margin-bottom:6px">الحالية</div>
+            <img id="appIcoCur" alt="" style="width:96px;height:96px;border-radius:22px;border:1px solid #2A2A2A;background:#0A0A0A;object-fit:cover">
+          </div>
+          <div id="appIcoEdit" style="display:none;text-align:center">
+            <div style="font-size:12px;color:#8A8580;margin-bottom:6px">الجديدة (أندرويد / آيفون)</div>
+            <div style="display:flex;gap:10px;justify-content:center">
+              <canvas id="appIcoCv" width="512" height="512" style="width:96px;height:96px;border-radius:50%;border:1px solid #2A2A2A"></canvas>
+              <canvas id="appIcoCv2" width="512" height="512" style="width:96px;height:96px;border-radius:22px;border:1px solid #2A2A2A"></canvas>
+            </div>
+          </div>
+          <div style="flex:1;min-width:240px">
+            <label class="add-btn" style="display:inline-flex;cursor:pointer;margin-bottom:10px">🖼️ اختار صورة<input type="file" id="appIcoFile" accept="image/*" style="display:none" onchange="appIcoPick(this)"></label>
+            <div id="appIcoCtl" style="display:none">
+              <label style="display:block;font-size:12.5px;color:#D8D3CE;margin:6px 0 2px">🔍 تكبير</label><input type="range" id="appIcoZ" min="100" max="300" value="100" oninput="appIcoDraw()" style="width:100%">
+              <label style="display:block;font-size:12.5px;color:#D8D3CE;margin:6px 0 2px">↔️ يمين / شمال</label><input type="range" id="appIcoX" min="-50" max="50" value="0" oninput="appIcoDraw()" style="width:100%">
+              <label style="display:block;font-size:12.5px;color:#D8D3CE;margin:6px 0 2px">↕️ فوق / تحت</label><input type="range" id="appIcoY" min="-50" max="50" value="0" oninput="appIcoDraw()" style="width:100%">
+              <button class="add-btn" id="appIcoSave" style="margin-top:12px" onclick="appIcoSave()">💾 حفظ الأيقونة</button>
+            </div>
+            <div id="appIcoMsg" style="font-size:13px;margin-top:8px;min-height:18px"></div>
+          </div>
+        </div>
+        <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--gold);line-height:1.8;margin-top:14px">
+          💡 خلّى الموتوسيكل فى النص — أندرويد بيقص الأيقونة دايرة. اللى هيسطّب التطبيق من دلوقتى هياخد الجديدة على طول.<br>
+          اللى مسطّبه قبل كده: أندرويد بيحدّثها لوحده خلال كام يوم، والآيفون لازم يشيل التطبيق ويضيفه تانى.
+        </div>
+      </div>
+
       <!-- Default Admin Page -->
       <div class="tbl-wrap" style="padding:24px;margin-bottom:18px;background:linear-gradient(180deg,#131313 0%,#0E0E0E 100%);border:1px solid #2A2620">
         <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid rgba(201,168,76,0.15);display:flex;align-items:center;gap:8px">🏠 الصفحة الافتراضية عند فتح الأدمن</div>
@@ -11501,8 +11533,49 @@ async function saveNewClient(){
 }
 
 // =================== SETTINGS (GENERAL) ===================
-async function loadSettings(){
+// ═══ 📱 أيقونة تطبيق التجار (branding/app/trader-icon-*.png) ═══
+const APP_ICO_URL = n => `${SB}/storage/v1/object/public/branding/app/trader-icon-${n}.png`;
+let _appIcoImg = null;
+function appIcoShowCur(){ const i=document.getElementById('appIcoCur'); if(i) i.src = APP_ICO_URL(512) + '?t=' + Date.now(); }
+function appIcoPick(inp){
+  const f = inp.files && inp.files[0]; const msg = document.getElementById('appIcoMsg'); if(!f) return;
+  if(!/^image\//.test(f.type)){ msg.style.color='var(--error)'; msg.textContent='❌ اختار صورة'; return; }
+  const url = URL.createObjectURL(f); const im = new Image();
+  im.onload = () => { _appIcoImg = im; ['appIcoZ','appIcoX','appIcoY'].forEach((id,k)=>document.getElementById(id).value = k? 0 : 100);
+    document.getElementById('appIcoEdit').style.display=''; document.getElementById('appIcoCtl').style.display=''; msg.textContent=''; appIcoDraw(); };
+  im.onerror = () => { msg.style.color='var(--error)'; msg.textContent='❌ الصورة دى مش بتفتح — جرّب صورة تانية (JPG/PNG)'; };
+  im.src = url;
+}
+function appIcoRender(size){
+  const c = document.createElement('canvas'); c.width = c.height = size; const g = c.getContext('2d');
+  g.fillStyle = '#0A0A0A'; g.fillRect(0,0,size,size);
+  const im = _appIcoImg; if(!im) return c;
+  const z = (+document.getElementById('appIcoZ').value||100)/100, ox = (+document.getElementById('appIcoX').value||0)/100, oy = (+document.getElementById('appIcoY').value||0)/100;
+  const s = Math.max(size/im.naturalWidth, size/im.naturalHeight) * z;   // 100% = يغطى المربع كله
+  const w = im.naturalWidth*s, h = im.naturalHeight*s;
+  const x = (size-w)/2 - ox*w, y = (size-h)/2 - oy*h;
+  g.imageSmoothingQuality = 'high'; g.drawImage(im, x, y, w, h);
+  return c;
+}
+function appIcoDraw(){ const src = appIcoRender(512); ['appIcoCv','appIcoCv2'].forEach(id=>{ const cv=document.getElementById(id); if(cv) cv.getContext('2d').drawImage(src,0,0); }); }
+async function appIcoSave(){
+  const msg = document.getElementById('appIcoMsg'), btn = document.getElementById('appIcoSave');
+  if(!_appIcoImg){ msg.textContent='اختار صورة الأول'; return; }
+  if(typeof can==='function' && !can('settings','edit')){ msg.style.color='var(--error)'; msg.textContent='❌ معندكش صلاحية تعديل الإعدادات'; return; }
+  btn.disabled = true; btn.textContent = '⏳ بنرفع...'; msg.textContent='';
   try{
+    const fd = new FormData(); fd.append('token', SESSION_TOKEN || '');
+    for(const n of [512,192,180]){ const b = await new Promise(res => appIcoRender(n).toBlob(res, 'image/png')); fd.append('icon'+n, b, `icon${n}.png`); }
+    const r = await fetch(`${SB}/functions/v1/app-icon`, { method:'POST', headers:{ apikey:HDR.apikey, Authorization:HDR.Authorization }, body: fd });
+    const j = await r.json().catch(()=>({}));
+    if(!r.ok || !j.ok) throw new Error(j.error || ('HTTP '+r.status));
+    msg.style.color='var(--success)'; msg.textContent='✅ اتحفظت — التاجر اللى هيسطّب من دلوقتى هياخدها';
+    appIcoShowCur();
+  }catch(e){ msg.style.color='var(--error)'; msg.textContent='❌ ' + e.message; }
+  btn.disabled = false; btn.textContent = '💾 حفظ الأيقونة';
+}
+async function loadSettings(){
+  try{ try{ appIcoShowCur(); }catch(e){}
     const r = await fetch(`${SB}/rest/v1/app_settings?select=key,value`,{headers:HDR});
     const data = await r.json();
     const map = {};
