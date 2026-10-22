@@ -3652,7 +3652,12 @@ async function permitFlowNew(lk, permit) {
 
   if (lk.status === 'not_yours') { fail('❌ الإذن ده متسجل لتاجر تانى'); return; }
   if (lk.status === 'void')      { fail('❌ الإذن ده ملغى — راجع الإدارة'); return; }
+  if (lk.status === 'hold')      { fail('⛔ الإذن ده موقوف تسليمه دلوقتى — كلم الحسابات'); return; }
   if (lk.status === 'legacy')    { fail('⛔ تم تحميل الإذن ده بالكامل قبل تشغيل النظام الجديد<br><span style="font-size:11px;font-weight:400">لو عندك ملاحظة كلم الإدارة من «تواصل معانا»</span>'); return; }
+  if (lk.status === 'not_found' && lk.scan_closed) {
+    fail(`❌ رقم الإذن ${permit} مش موجود<br><span style="font-size:11px;font-weight:400">اتأكد من رقم الفاتورة/الإذن اللى معاك — لو الرقم صح كلم الحسابات</span>`);
+    return;
+  }
   if (lk.status === 'not_found') {
     msgEl.textContent = '📷 الإذن ده مش متسجل — صوّره عشان نسجّله';
     msgEl.style.color = 'var(--gold)';
