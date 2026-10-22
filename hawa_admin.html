@@ -22445,7 +22445,7 @@ async function erRegBulk(){
   const D=ER.rg.del; const t=(document.getElementById('er-rg-bulk')||{}).value||''; const rows=t.split(/\n+/).map(x=>x.trim()).filter(Boolean); if(!rows.length) return;
   const st=document.getElementById('er-rg-bulk-st'), b=document.getElementById('er-rg-bulk-btn'); if(b) b.disabled=true; let ok=0; const bad=[];
   for(let i=0;i<rows.length;i++){ const parts=erDigits(rows[i]).split(/[\s,;\t]+/).filter(Boolean); let e=null, c=null;
-    parts.forEach(p=>{ const q=p.replace(/[^A-Za-z0-9]/g,''); if(/^[0-9]+$/.test(q) && q.length<=12) e=q; else if(q.length===17) c=q; });
+    parts.forEach(p=>{ const q=p.replace(/[^A-Za-z0-9]/g,''); if(/^[0-9]+$/.test(q) && q.length<=12) e=q; else if(q.length===17) c=q; else if(!e && !c) e=q; });
     if(st) st.textContent=`⏳ ${i+1} / ${rows.length}`;
     try{ const r=await rpcSecure('erp_reg_add',{p:{delivery_id:D.delivery.id,del_line:ER.rg.line,engine:e,chassis:c}}); if(r.ok) ok++; else bad.push(`${rows[i]} ← ${r.error}`); }
     catch(err){ bad.push(`${rows[i]} ← ${erErr(err)}`); }
@@ -22810,7 +22810,10 @@ function erTbPrint(){ const cfg=erTbCfg(); if(!cfg) return; if(!erCan(cfg.sec,'p
 function erTbNav(dir){ const cfg=erTbCfg(); if(!cfg) return; const rows=erTbRows(cfg); if(!rows.length) return; const cur=erTbSelRow(cfg); let i=cur?rows.indexOf(cur):-1;
   i = dir==='first'?0:dir==='last'?rows.length-1:dir==='next'?Math.min(rows.length-1,i+1):Math.max(0,i<0?0:i-1);
   erTbSelect(rows[i],cfg); const m=document.getElementById('er-modal'); if(ER.__tbOpen && m && m.style.display!=='none'){ erClose(); erTbOpen(); } }
-function erTbApplyFilter(cfg,q){ q=String(q||'').trim().toLowerCase(); erTbAllRows(cfg).forEach(r=>r.classList.toggle('er-tb-hide', !!q && !r.innerText.toLowerCase().includes(q))); }
+function erTbApplyFilter(cfg,q){ q=String(q||'').trim().toLowerCase();
+  try{ const p=cfg&&cfg.pane&&document.getElementById(cfg.pane); const si=p&&p.querySelector('input.qt-inp[placeholder^="🔍"]');
+    if(si && si.value!==q && (q || si.value)){ si.value=q; si.dispatchEvent(new Event('input',{bubbles:true})); si.dispatchEvent(new Event('change',{bubbles:true})); } }catch(e){}
+  erTbAllRows(cfg).forEach(r=>r.classList.toggle('er-tb-hide', !!q && !r.textContent.toLowerCase().includes(q))); }
 function erTbFilter(v){ const cfg=erTbCfg(); if(!cfg) return; ER.tbq[cfg.sec+':'+cfg.key]=v; erTbSync(cfg.sec); }
 function erTbFindGo(){ const cfg=erTbCfg(); if(!cfg) return; const q=String(ER.tbq[cfg.sec+':'+cfg.key]||'').trim(); const rows=erTbRows(cfg);
   const exact=rows.find(r=>r.cells[0]&&r.cells[0].innerText.trim().split(/\s+/)[0]===q); const r=exact||rows[0];
