@@ -20823,7 +20823,7 @@ async function qtLogoUpload(){
 // ════════════════════════════════════════════════════════════════
 // 🏭 السيستم الجديد (ERP) — المرحلة 1: الأصناف والفئات والمخازن والعملات والموردين والخزائن وحسابات التجار
 // الشاشات: erp-items / erp-suppliers / erp-traders / erp-setup — والتكلفة صلاحية منفصلة erp-cost
-// السيستم مقفول (erp_active=0) لحد زرار «فعّل السيستم» بعد اختبار الـ 500 فاتورة
+// السيستم مقفول (erp_active=0) لحد علامة «شغّل السيستم» بعد اختبار الـ 500 فاتورة
 // ════════════════════════════════════════════════════════════════
 const ER = { boot:null, traders:null, tab:{ items:'items', suppliers:'list', setup:'wh' }, f:{ q:'', kind:'', cat:'', act:'1', flag:'' }, sf:{ q:'', cat:'', act:'1' }, tf:{ q:'', flag:'' }, edit:null, ro:false, more:0 };
 const ER_KIND = { finished:'🏍️ منتج تام', spare:'🔧 قطع غيار', component:'⚙️ مكوّن إنتاج' };
@@ -21277,10 +21277,10 @@ async function erActivateOpen(){ let P; try{ P=await rpcSecure('erp_activation_p
   ER.edit={}; erModal('🚀 تفعيل السيستم الجديد', `<div class="qt-card" style="border-color:rgba(224,85,85,.45)"><div class="qt-h">⚠️ اقرا قبل ما تفعّل</div>
     <div style="line-height:2">• كل مستندات التجربة اللى تحت دى هتتقفل <b>«ملغية»</b> وأرقامها هتبقى بالسالب 🧪 — <b>مفيش أى حاجة هتتمسح</b>.<br>• أرصدة المخازن هتبدأ من الصفر، ورصيد التجار من الرصيد الافتتاحى بس.<br>• الترقيم (فواتير، تسليم، سندات، جوابات...) هيبدأ من 1.<br>• التنبيهات (الدفعات والشيكات) هتوصل للتجار نفسهم.<br>• الأصناف والمخازن والموردين وحسابات التجار والإعدادات زى ما هى.<br>• <b>التفعيل مرة واحدة ومفيش رجوع منه.</b></div></div>
     <div class="qt-card"><div class="qt-h">🧪 بيانات التجربة اللى هتتقفل</div><table class="qt-tbl"><tbody>${rows}</tbody></table></div>
-    <div class="qt-card">${erFld('اكتب كلمة «تفعيل» علشان تأكد', '<input class="qt-inp" id="er-act-confirm" style="width:100%;font-size:18px" placeholder="تفعيل">')}</div>`,
-    `<button class="qt-btn red" id="er-act-btn" onclick="erActivateGo()">🚀 فعّل دلوقتى</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
-async function erActivateGo(){ await erRun('er-act-btn', async ()=>{ const c=document.getElementById('er-act-confirm').value.trim(); if(c!=='تفعيل') throw new Error('اكتب كلمة «تفعيل» بالظبط');
-  await rpcSecure('erp_activate',{p_confirm:c}); erClose(); ER.sl=null; ER.pu=null; ER.stock=null; if(ER.lt) ER.lt.data=null; await erBoot(true); erRenderStatus(); erToast('🚀 السيستم الجديد اتفعّل'); }); }
+    <div class="qt-card"><label style="display:flex;align-items:center;gap:10px;font-size:18px;cursor:pointer"><input type="checkbox" id="er-act-confirm" style="width:22px;height:22px" onchange="document.getElementById('er-act-btn').disabled=!this.checked"> <b>✅ شغّل</b> — قريت اللى فوق وعاوز أشغّل السيستم الجديد</label></div>`,
+    `<button class="qt-btn red" id="er-act-btn" disabled onclick="erActivateGo()">🚀 فعّل دلوقتى</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+async function erActivateGo(){ await erRun('er-act-btn', async ()=>{ if(!document.getElementById('er-act-confirm').checked) throw new Error('علّم على «✅ شغّل» الأول');
+  await rpcSecure('erp_activate',{p_confirm:'تفعيل'}); erClose(); ER.sl=null; ER.pu=null; ER.stock=null; if(ER.lt) ER.lt.data=null; await erBoot(true); erRenderStatus(); erToast('🚀 السيستم الجديد اتفعّل'); }); }
 
 function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane-status'); if(!el) return;
   const fin=B.items.filter(i=>i.kind==='finished'&&i.is_active).length;
@@ -21289,10 +21289,10 @@ function erRenderStatus(){ const B=ER.boot, el=document.getElementById('erx-pane
     ['✅','المرحلة 3 — المبيعات','فاتورة المبيعات (سعر التاجر أوتوماتيك + المخزن البديل) ← مستند التسليم مربوط بالحجز ← سندات القبض والشيكات والتنبيهات'],
     ['✅','المرحلة 4 — تسجيل المواتير والشاسيهات','بالباركود + التحقق من الكتب الدورية والبصمة + الشاسيه بيطلع من الماتور + تنبيه الأرقام الغريبة'],
     ['✅','المرحلة 5 — الجوابات والفاتورة الضريبية','من الفاتورة أو من النموذج (الشحنة) + الموزع بالعمولة + المنشور + شريط الأوامر الموحد'],
-    ['⏳','المرحلة 6 — المرتجعات والتحويل والطباعة والتقارير ← الاختبار','✅ المرتجعات + التحويل + الطباعة + التقارير ← ⏳ اختبار 500 فاتورة كاملة ← زرار «فعّل السيستم»']];
+    ['✅','المرحلة 6 — المرتجعات والتحويل والطباعة والتقارير ← الاختبار','✅ المرتجعات + التحويل + الطباعة + التقارير ← ✅ اختبار 500 فاتورة كاملة + إصلاحات المراجعة ← علامة «شغّل السيستم»']];
   el.innerHTML = `<div class="qt-card" style="border-color:${B.active?'rgba(76,175,125,.5)':'rgba(224,85,85,.45)'}"><div class="qt-h" style="font-size:17px">${B.active?'🟢 السيستم الجديد متفعّل':'🔴 السيستم الجديد مش متفعّل — وضع التجربة'}</div>
-    <div class="qt-sub">كل اللى بيتسجل فى شاشات السيستم الجديد مالوش أى تأثير على الحجز والأذونات والبوت لحد التفعيل. زرار التفعيل هيتفتح بعد ما نخلص كل المراحل ونعدّى اختبار الـ 500 فاتورة.</div>
-    <div style="margin-top:12px">${B.active?`<span class="qt-chip in">🚀 متفعّل${(B.settings||{}).activated_at?' من '+erEsc(B.settings.activated_at):''}</span>`:((typeof EMP_MODE!=='undefined'&&EMP_MODE)?'<span class="qt-sub">التفعيل للأدمن الرئيسى بس</span>':`<button class="qt-btn" onclick="erActivateOpen()">🚀 فعّل السيستم</button>`)}</div></div>
+    <div class="qt-sub">كل اللى بيتسجل فى شاشات السيستم الجديد مالوش أى تأثير على الحجز والأذونات والبوت لحد التفعيل. علشان تشغّله علّم على «🚀 شغّل السيستم» (للأدمن الرئيسى بس).</div>
+    <div style="margin-top:12px">${B.active?`<label style="display:inline-flex;align-items:center;gap:10px;font-size:17px"><input type="checkbox" checked disabled style="width:20px;height:20px"> <span class="qt-chip in">🚀 شغّال${(B.settings||{}).activated_at?' من '+erEsc(B.settings.activated_at):''}</span></label>`:((typeof EMP_MODE!=='undefined'&&EMP_MODE)?'<span class="qt-sub">التفعيل للأدمن الرئيسى بس</span>':`<label style="display:inline-flex;align-items:center;gap:10px;font-size:17px;cursor:pointer" class="qt-btn ghost"><input type="checkbox" id="erx-run-chk" style="width:20px;height:20px" onchange="if(this.checked){this.checked=false;erActivateOpen();}"> 🚀 شغّل السيستم</label>`)}</div></div>
   <div class="qt-card"><div class="qt-h">⚙️ إعدادات السيستم</div><div class="qt-row">
     ${erFld('سعر الضريبة فى الجوابات (للبرنامج كله)', `<select class="qt-inp" id="erx-taxmode" ${erCan('erp-setup','edit')?'':'disabled'}><option value="invoice" ${(B.settings||{}).tax_mode!=='model'?'selected':''}>من الفاتورة — كل جواب بيتخصم من كمية الصنف فى فاتورته</option><option value="model" ${(B.settings||{}).tax_mode==='model'?'selected':''}>من النموذج — سعر وكمية الشحنة</option></select>`,2)}
     ${erCan('erp-setup','edit')?`<div><button class="qt-btn" id="erx-set-save" onclick="erSettingsSave()">💾 حفظ</button></div>`:''}
