@@ -683,6 +683,11 @@ const N8N_BASE = 'https://n8n.gladiatorverse.net';
 const N8N = `${N8N_BASE}/webhook/booking-confirm`;
 
 const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
+// 🔐 خطة C: كتابة التاجر بتتم عبر RPC بتوكن جلسة (session_token) — الجلسة القديمة (من غير توكن) بتكمل بالطريقة القديمة لحد ما يعمل دخول تانى
+async function clRpc(fn, args){ const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:user.session_token||null, ...(args||{})})});
+  const t=await r.text(); let j=null; try{ j=t?JSON.parse(t):null; }catch(e){} if(!r.ok) throw new Error((j&&(j.message||j.error))||('HTTP '+r.status)); return j; }
+function clErr(m, dflt){ m=String(m||''); const hit=m.match(/(?:PERMIT|CAPACITY|DUPLICATE)_[A-Z_]+:\s*(.+)$/); if(hit) return '⛔ '+hit[1].trim(); if(m==='session'){ try{ delete user.session_token; localStorage.setItem('hawa_user', JSON.stringify(user)); }catch(e){} return '⛔ الجلسة انتهت — سجّل الدخول تانى'; } if(/[\u0600-\u06FF]/.test(m)) return '⛔ '+m.replace(/^[A-Z_]+:\s*/,'').trim(); return dflt||('⛔ '+m); }
+function clHasTok(){ return !!(user && user.session_token); }
 // ↪️ الصفحة دى للدخول/التسجيل بس — أى عميل داخل يتحوّل لصفحة الحجز الحالية (فيها قواعد الأذونات الجديدة)
 function goBookingApp(delay){ setTimeout(function(){ location.replace('hawa_booking.html' + location.search + location.hash); }, delay||0); }
 if (user && user.id) goBookingApp(0);
@@ -1097,7 +1102,7 @@ async function enrollViaTelegram(){
           }
 
           try {
-            const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
+            const r = clHasTok() ? await clRpc('client_bio_add', { p: { credential_id: credentialId, public_key: 'telegram_bio', device_label: deviceLabel, user_agent: (navigator.userAgent || '').substring(0, 500) } }).then(j=>({ ok: !!(j&&j.ok), json: async()=>[j.row] })) : await fetch(`${SB}/rest/v1/client_biometrics`, {
               method: 'POST',
               headers: { ...HDR, 'Prefer': 'return=representation' },
               body: JSON.stringify({
@@ -1184,7 +1189,7 @@ async function enrollViaWebAuthn(){
     else if (enrollCtx.isIOS) deviceLabel += ' (Safari)';
     else if (enrollCtx.isAndroid) deviceLabel += ' (Chrome)';
 
-    const r = await fetch(`${SB}/rest/v1/client_biometrics`, {
+    const r = clHasTok() ? await clRpc('client_bio_add', { p: { credential_id: credentialId, public_key: publicKey, device_label: deviceLabel, user_agent: navigator.userAgent.substring(0, 500) } }).then(j=>({ ok: !!(j&&j.ok), json: async()=>[j.row] })) : await fetch(`${SB}/rest/v1/client_biometrics`, {
       method: 'POST',
       headers: { ...HDR, 'Prefer': 'return=representation' },
       body: JSON.stringify({
@@ -1375,8 +1380,7 @@ async function loadBiometrics(){
   const list = document.getElementById('bioList');
   list.innerHTML = '<div style="color:#888;text-align:center;padding:20px">⏳ جاري التحميل...</div>';
   try {
-    const r = await fetch(`${SB}/rest/v1/client_biometrics?client_id=eq.${user.id}&order=created_at.desc&select=*`, { headers: HDR });
-    const data = await r.json();
+    const data = clHasTok() ? (await clRpc('client_bio_list', {})||[]).slice().reverse() : await (await fetch(`${SB}/rest/v1/client_biometrics?client_id=eq.${user.id}&order=created_at.desc&select=*`, { headers: HDR })).json();
     if (!Array.isArray(data) || !data.length){
       list.innerHTML = '<div style="text-align:center;padding:30px 20px;background:rgba(255,255,255,0.02);border:1px dashed #2a2a2a;border-radius:10px;color:#888;margin-bottom:8px"><div style="font-size:36px;margin-bottom:8px">🔐</div><div style="font-size:12px">مفيش بصمات مسجلة لسه</div></div>';
       return;
@@ -1402,7 +1406,7 @@ async function loadBiometrics(){
 async function removeBiometric(id, credentialId){
   if (!confirm('متأكد إنك تشيل البصمة دى؟\nهتحتاج تكتب الباسوورد من تانى لو شيلتها وعاوز تدخل تانى من الجهاز ده.')) return;
   try {
-    const r = await fetch(`${SB}/rest/v1/client_biometrics?id=eq.${id}`, { method: 'DELETE', headers: { ...HDR, 'Prefer': 'return=minimal' } });
+    const r = clHasTok() ? { ok: !!((await clRpc('client_bio_remove', { p_id: id }))||{}).ok } : await fetch(`${SB}/rest/v1/client_biometrics?id=eq.${id}`, { method: 'DELETE', headers: { ...HDR, 'Prefer': 'return=minimal' } });
     if (!r.ok) throw new Error('فشل المسح');
     // لو ده الجهاز الحالى، امسح من localStorage كمان
     const stored = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; }})();
@@ -1553,11 +1557,8 @@ async function bioLoginNow(){
     // ═══════════════════════════════════════════════════════════
     // Verify with DB — credId الناتج من أى Strategy
     // ═══════════════════════════════════════════════════════════
-    const verifyR = await fetch(
-      `${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}&select=client_id,device_label,clients(*)`,
-      { headers: HDR }
-    );
-    const verifyData = await verifyR.json();
+    const verifyRpc = await clRpc('client_bio_login', { p_credential_id: credId });
+    const verifyData = verifyRpc && verifyRpc.client ? [{ client_id: verifyRpc.client.id, device_label: verifyRpc.device_label, clients: Object.assign(verifyRpc.client, { session_token: verifyRpc.session_token }) }] : [];
     if (!Array.isArray(verifyData) || !verifyData.length) {
       // البصمة شغّالة على الجهاز لكن مش موجودة فى DB
       // ممكن العميل مسحها من admin أو من جهاز تانى
@@ -1586,7 +1587,8 @@ async function bioLoginNow(){
       tier_id: client.tier_id,
       approval_status: client.approval_status,
       is_blocked: client.is_blocked,
-      is_active: client.is_active
+      is_active: client.is_active,
+      session_token: client.session_token || user.session_token || null
     });
     localStorage.setItem('hawa_user', JSON.stringify(user));
 
@@ -1608,7 +1610,8 @@ async function bioLoginNow(){
     }
 
     // Update last_used_at فى DB (silent)
-    fetch(`${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}`, {
+    if(clHasTok()) clRpc('client_bio_touch', { p_credential_id: credId }).catch(()=>{});
+    else fetch(`${SB}/rest/v1/client_biometrics?credential_id=eq.${encodeURIComponent(credId)}`, {
       method: 'PATCH',
       headers: { ...HDR, 'Prefer': 'return=minimal' },
       body: JSON.stringify({ last_used_at: new Date().toISOString() })
@@ -2121,7 +2124,8 @@ async function passwordLogin(){
       district: client.district, address: client.address,
       client_type: client.client_type, telegram_id: client.telegram_id,
       tier_id: client.tier_id, approval_status: client.approval_status,
-      is_blocked: client.is_blocked, is_active: client.is_active
+      is_blocked: client.is_blocked, is_active: client.is_active,
+      session_token: client.session_token || user.session_token || null
     });
     localStorage.setItem('hawa_user', JSON.stringify(user));
 
@@ -3206,7 +3210,7 @@ async function confirm_booking() {
 
     if (editMode) {
       // PATCH
-      const res = await fetch(`${SB}/rest/v1/bookings?id=eq.${editMode.id}`, {
+      const res = clHasTok() ? await clRpc('client_booking_edit', { p_id: editMode.id, p: { warehouse: bk.warehouse, vehicle_type: bk.vehicle, count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, permit_number: bk.permit || null } }).then(j=>({ ok: !!(j&&j.ok), __err: j&&j.error })) : await fetch(`${SB}/rest/v1/bookings?id=eq.${editMode.id}`, {
         method: 'PATCH',
         headers: { ...HDR, 'Prefer': 'return=minimal' },
         body: JSON.stringify({
@@ -3256,11 +3260,11 @@ async function confirm_booking() {
           `${snap.warehouse} | ${snap.vehicle_type} | ${snap.count} عربية<br>${snap.time_slot}`,
           'edit'
         );
-      } else { showErr('حدث خطأ في التعديل، حاول مرة أخرى'); }
+      } else { showErr(res.__err ? clErr(res.__err, 'حدث خطأ في التعديل، حاول مرة أخرى') : 'حدث خطأ في التعديل، حاول مرة أخرى'); }
 
     } else {
       // POST
-      const res = await fetch(`${SB}/rest/v1/bookings`, {
+      const res = clHasTok() ? await clRpc('client_book', { p: { warehouse: bk.warehouse, vehicle_type: bk.vehicle, count: bk.count, loading_date: bk.dateStr, time_slot: bk.slot, phone: user.phone || null, governorate: user.governorate || null, permit_number: bk.permit || null } }).then(j=>({ ok: !!(j&&j.ok), __err: j&&j.error, json: async()=>[j.booking] })) : await fetch(`${SB}/rest/v1/bookings`, {
         method: 'POST',
         headers: { ...HDR, 'Prefer': 'return=representation' },
         body: JSON.stringify({
@@ -3276,7 +3280,7 @@ async function confirm_booking() {
         const booking = result[0];
         const displayId = booking.seq_number || booking.id;
         // 💤 لو العميل كان غير نشط — رجّعه نشط (fire-and-forget)
-        fetch(`${SB}/rest/v1/clients?id=eq.${user.id}`, {
+        if(!clHasTok()) fetch(`${SB}/rest/v1/clients?id=eq.${user.id}`, {
           method: 'PATCH',
           headers: { ...HDR, 'Prefer':'return=minimal' },
           body: JSON.stringify({ is_active: true })
@@ -3294,7 +3298,7 @@ async function confirm_booking() {
           `${bk.warehouse} | ${bk.vehicle} | ${bk.count} عربية<br>${bk.slot}`,
           'new'
         );
-      } else { showErr('حدث خطأ في الحجز، حاول مرة أخرى'); }
+      } else { showErr(res.__err ? clErr(res.__err, 'حدث خطأ في الحجز، حاول مرة أخرى') : 'حدث خطأ في الحجز، حاول مرة أخرى'); }
     }
 
   } catch(e) { showErr('خطأ في الاتصال بالسيرفر'); }
@@ -3569,7 +3573,7 @@ async function doCancelBooking(id) {
   try {
     // اجلب الـ booking details قبل الإلغاء عشان نـ log
     const cached = myBookingsCache && myBookingsCache[id];
-    const res = await fetch(`${SB}/rest/v1/bookings?id=eq.${id}`, {
+    const res = clHasTok() ? await clRpc('client_cancel_booking', { p_id: id }).then(j=>({ ok: !!(j&&j.ok), __err: j&&j.error })) : await fetch(`${SB}/rest/v1/bookings?id=eq.${id}`, {
       method: 'PATCH',
       headers: { ...HDR, 'Prefer': 'return=minimal' },
       body: JSON.stringify({ status: 'ملغي' })
