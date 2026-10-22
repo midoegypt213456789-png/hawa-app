@@ -2,7 +2,14 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HAWA Admin">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/hawa-192.png">
 <title>HAWA CO - لوحة التحكم</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -1412,11 +1419,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
   width:6px;height:6px;border-radius:50%;background:var(--gold);
 }
 
-@media(max-width:768px){
-  :root{--sidebar:0px;}
-  .sidebar{display:none;}
-  .main-area{margin-right:0;}
-}
+/* (قديم) إخفاء القائمة على الموبايل — اتبدل بالدرج الجانبى فى طبقة الموبايل تحت */
 
 /* ═══════════════════════════════════════════════════════════
    REFINED COMPONENTS — luxe-dark + gold accent
@@ -2604,6 +2607,59 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
 .qt-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:11px 20px;border-radius:10px;font-weight:800;font-size:14px;font-family:Cairo;box-shadow:0 8px 30px rgba(0,0,0,.5);max-width:90vw}
 .qt-toast.ok{background:#1f3b2c;color:#9be0bb;border:1px solid #4CAF7D}
 .qt-toast.err{background:#3b1f1f;color:#ffb3b3;border:1px solid #E05555}
+
+/* ═══════════════════════════════════════════════════════════
+   📱 طبقة الموبايل والتابلت (≤ 900px) — درج جانبى + شريط علوى + جداول بتتزحلق + نوافذ ملء الشاشة
+   ═══════════════════════════════════════════════════════════ */
+#mobTop{display:none}
+#mobBackdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:48;backdrop-filter:blur(2px)}
+@media (max-width:900px){
+  :root{--sidebar:0px;}
+  html,body{overscroll-behavior-y:none}
+  #mobTop{display:flex;position:fixed;top:0;right:0;left:0;height:52px;z-index:60;background:rgba(17,17,17,.96);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);align-items:center;gap:8px;padding:0 10px;padding-top:env(safe-area-inset-top)}
+  #mobTop .mt-btn{width:40px;height:40px;border-radius:10px;border:1px solid rgba(201,168,76,.3);background:rgba(201,168,76,.08);color:var(--gold);font-size:20px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;position:relative}
+  #mobTop .mt-title{flex:1;min-width:0;font-weight:900;font-size:15px;color:var(--gold-light);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #mobTop .mt-cnt{position:absolute;top:-5px;left:-5px;background:var(--error);color:#fff;font-size:10px;font-weight:900;min-width:17px;height:17px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px}
+  #mobTop .mt-cnt.on{display:inline-flex}
+  .sidebar{display:flex;width:min(300px,86vw)!important;transform:translateX(100%);transition:transform .25s ease;box-shadow:-10px 0 30px rgba(0,0,0,.5);z-index:70;top:0;height:100vh;height:100dvh}
+  .sidebar.collapsed{width:min(300px,86vw)!important}
+  .sidebar.collapsed .sb-admin,.sidebar.collapsed .nav-item span,.sidebar.collapsed .nav-label{display:revert}
+  body.mob-nav-open .sidebar{transform:translateX(0)}
+  body.mob-nav-open #mobBackdrop{display:block}
+  .sidebar-toggle{display:none!important}
+  .nav-item{padding:13px 16px;font-size:14.5px;min-height:46px}
+  .main-area{margin-right:0!important;padding:62px 10px 80px 10px;padding-top:calc(62px + env(safe-area-inset-top));height:100vh;height:100dvh}
+  .page-title{font-size:18px}
+  .page-header{flex-wrap:wrap;gap:8px}
+  .refresh-timer-badge{display:none!important}
+  .notif-panel{top:56px}
+  /* جداول: تتزحلق أفقياً جوه الكارت بدل ما تتقطع */
+  .section .qt-card,.section .card,.section .table-wrap,.section .qt-scroll,.section .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  .section table{min-width:max-content}
+  .section table th,.section table td{white-space:nowrap;padding:8px 8px}
+  /* نوافذ: ملء الشاشة */
+  .qt-modal{padding:0;align-items:stretch}
+  .qt-modal-box,.er-mbox{width:100%!important;max-width:100%!important;max-height:100%!important;height:100%;border-radius:0;border:0}
+  .er-mbody,.qt-modal-bd{padding:10px}
+  .modal{max-width:100%;border-radius:14px;padding:16px}
+  /* خانات ولمس */
+  input,select,textarea,.qt-inp{font-size:16px!important;min-height:42px}
+  input[type=checkbox],input[type=radio]{min-height:auto;width:20px;height:20px}
+  button,.qt-btn{min-height:40px}
+  .qt-row{gap:8px}
+  .qt-row > *{min-width:0}
+  /* شريط الأوامر الموحد */
+  .er-tb{top:52px;position:sticky;flex-wrap:wrap}
+  .er-tb .qt-btn{padding:6px 9px;font-size:12.5px}
+  .tab-bar{top:0}
+  /* كروت الإحصائيات اتنين فى الصف */
+  .stats,.stat-grid,.stats-grid{grid-template-columns:1fr 1fr!important}
+}
+@media (max-width:480px){
+  .stats,.stat-grid,.stats-grid{grid-template-columns:1fr 1fr!important}
+  .section table th,.section table td{font-size:12.5px}
+}
+/* تابلت (901–1180px): القائمة الجانبية مضغوطة (أيقونات) تلقائياً — بتتفتح بزرارها */
 </style>
 </head>
 <body>
@@ -18996,6 +19052,29 @@ function toggleSidebar(){
   // Add data-label to nav items for tooltip when collapsed
   if (isCollapsing) populateNavTooltips();
 }
+
+
+// 📱 طبقة الموبايل: شريط علوى + درج القائمة + ضغط القائمة تلقائياً على التابلت
+function mobIsPhone(){ return window.matchMedia('(max-width:900px)').matches; }
+function mobNavToggle(force){ const open = (force===undefined) ? !document.body.classList.contains('mob-nav-open') : !!force; if(open && mobIsPhone()){ const sb=document.querySelector('.sidebar'); if(sb&&sb.classList.contains('collapsed')){ sb.classList.remove('collapsed'); } } document.body.classList.toggle('mob-nav-open', open); }
+function mobSetTitle(){ try{ const t=document.getElementById('mobTitle'); if(!t) return; const a=document.querySelector('.section.active'); const h=a&&(a.querySelector('.page-title')||a.querySelector('h1,h2')); t.textContent = h ? h.textContent.trim().replace(/\s+/g,' ') : 'HAWA CO'; }catch(e){} }
+function mobInit(){
+  if(document.getElementById('mobTop')) return;
+  const bar=document.createElement('div'); bar.id='mobTop';
+  bar.innerHTML = '<button class="mt-btn" onclick="mobNavToggle()" title="القائمة">☰</button><div class="mt-title" id="mobTitle">HAWA CO</div>'+
+    '<button class="mt-btn" onclick="event.stopPropagation();toggleNotifPanel()" title="التنبيهات">🔔<span class="mt-cnt" id="mobNotifCnt">0</span></button>';
+  document.body.appendChild(bar);
+  const bd=document.createElement('div'); bd.id='mobBackdrop'; bd.onclick=()=>mobNavToggle(false); document.body.appendChild(bd);
+  // قفل الدرج بعد اختيار شاشة
+  const sb=document.querySelector('.sidebar'); if(sb) sb.addEventListener('click', ev=>{ if(mobIsPhone() && ev.target.closest('.nav-item') && !ev.target.closest('.sb-cat-header')) setTimeout(()=>mobNavToggle(false),120); });
+  // عداد التنبيهات يتزامن مع الجرس الأصلى
+  const nc=document.getElementById('notifCount'); if(nc){ const sync=()=>{ const m=document.getElementById('mobNotifCnt'); if(!m) return; const n=parseInt(nc.textContent||'0')||0; m.textContent=n; m.classList.toggle('on', n>0); }; new MutationObserver(sync).observe(nc,{childList:true,characterData:true,subtree:true}); sync(); }
+  // العنوان يتحدث مع تغيير الشاشة
+  new MutationObserver(mobSetTitle).observe(document.body,{attributes:true,subtree:true,attributeFilter:['class']}); mobSetTitle();
+  // تابلت: ضغط القائمة تلقائياً لو المستخدم ما اختارش
+  try{ const w=window.innerWidth; if(w>900 && w<=1180 && !localStorage.getItem(SIDEBAR_STORAGE_KEY) && sb && !sb.classList.contains('collapsed')) toggleSidebar(); }catch(e){}
+}
+document.addEventListener('DOMContentLoaded', mobInit); if(document.readyState!=='loading') setTimeout(mobInit,0);
 
 function populateNavTooltips(){
   document.querySelectorAll('.nav-item').forEach(n => {
