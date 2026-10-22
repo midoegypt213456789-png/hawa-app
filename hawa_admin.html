@@ -11780,7 +11780,7 @@ function updateWarehouseSlotsPreview(whId){
 async function saveWarehouseHours(){
   // اجمع القيم لكل مخزن + تاريخ التطبيق وقرّر current ولا pending
   const today = new Date().toISOString().slice(0,10);
-  const plans = [];
+  const plans = []; const unchanged = [];
 
   for(const w of _warehouseHoursCache){
     const ws = parseInt(document.getElementById('wh-ws-'+w.id)?.value);
@@ -11818,7 +11818,7 @@ async function saveWarehouseHours(){
 
     if(isFuture){
       // → save فى pending
-      if(pendingSame) continue; // مفيش تغيير
+      if(pendingSame){ unchanged.push(`▫️ ${w.name}: ${ws}:00–${we}:00 (قفل ${co}:00) — زى ما هى (مجدول من ${fromVal})`); continue; } // مفيش تغيير
       plans.push({
         id: w.id, name: w.name,
         body: {
@@ -11832,7 +11832,7 @@ async function saveWarehouseHours(){
     } else {
       // → save current + مسح pending لو موجود
       const hadPending = w.pending_effective_from && w.pending_working_hour_start != null;
-      if(currentSame && !hadPending) continue; // مفيش تغيير على الإطلاق
+      if(currentSame && !hadPending){ unchanged.push(`▫️ ${w.name}: ${ws}:00–${we}:00 (قفل ${co}:00) — زى ما هى`); continue; } // مفيش تغيير على الإطلاق
       plans.push({
         id: w.id, name: w.name,
         body: {
@@ -11861,8 +11861,10 @@ async function saveWarehouseHours(){
     });
     if(!r.ok) throw new Error(`❌ فشل حفظ ${p.name}`);
     summary.push(p.summary);
+    // حدّث الكاش علشان الحفظ التالى ما يعيدش نفس المخزن
+    const cw=_warehouseHoursCache.find(x=>x.id===p.id); if(cw) Object.assign(cw, p.body);
   }
-  return summary;
+  return summary.concat(unchanged);
 }
 
 async function saveSettings(){
