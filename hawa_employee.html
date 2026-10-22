@@ -274,6 +274,10 @@ const SB  = 'https://oqsowwtjutpjdypjpcum.supabase.co';
 const KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9xc293d3RqdXRwamR5cGpwY3VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MzI5ODAsImV4cCI6MjA5MTAwODk4MH0.Dp-WXuV-fHBsv35xiO7LnkTDevxKE5CC2iEVGNmwnqQ';
 const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
 let SESSION_TOKEN = null;  // 🔑 توكن الجلسة الآمن (المرحلة ٢)
+
+// 🔐 خطة C: كل نداء لـ Supabase REST بيحمل توكن الجلسة فى header (x-hawa-token) — الكتابة على جداول الأدمن بقت محمية بيه فى الداتا بيز
+(function(){ const _f=window.fetch; window.fetch=function(u,o){ try{ const url=typeof u==='string'?u:((u&&u.url)||''); const tk=(typeof SESSION_TOKEN!=='undefined')?SESSION_TOKEN:null;
+  if(tk && url.indexOf(SB+'/rest/v1/')===0){ o=Object.assign({},o||{}); const h=new Headers(o.headers||{}); if(!h.has('x-hawa-token')) h.set('x-hawa-token',tk); o.headers=h; } }catch(e){} return _f.call(this,u,o); }; })();
 async function rpcLoginTry(secureFn, oldFn, u, p){
   try{
     const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_username:u,p_password:p})});
