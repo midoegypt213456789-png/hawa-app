@@ -696,7 +696,7 @@ async function clRpc(fn, args){ const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{m
 function clErr(m, dflt){ m=String(m||''); const hit=m.match(/(?:PERMIT|CAPACITY|DUPLICATE)_[A-Z_]+:\s*(.+)$/); if(hit) return '⛔ '+hit[1].trim(); if(m==='session'){ try{ delete user.session_token; localStorage.setItem('hawa_user', JSON.stringify(user)); }catch(e){} return '⛔ الجلسة انتهت — سجّل الدخول تانى'; } if(/[\u0600-\u06FF]/.test(m)) return '⛔ '+m.replace(/^[A-Z_]+:\s*/,'').trim(); return dflt||('⛔ '+m); }
 function clHasTok(){ return !!(user && user.session_token); }
 // ↪️ الصفحة دى للدخول/التسجيل بس — أى عميل داخل يتحوّل لصفحة الحجز الحالية (فيها قواعد الأذونات الجديدة)
-function goBookingApp(delay){ setTimeout(function(){ location.replace('hawa_booking.html' + location.search + location.hash); }, delay||0); }
+function goBookingApp(delay){ try { sessionStorage.setItem('hw_unlocked_at', String(Date.now())); } catch(e){} setTimeout(function(){ location.replace('hawa_booking.html' + location.search + location.hash); }, delay||0); }
 if (user && user.id) goBookingApp(0);
 
 // 🔐 Login Gate — الـ Lock Screen هو صفحة الدخول الموحّدة (form + bio)

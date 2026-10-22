@@ -419,6 +419,19 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="HAWA">
 <link rel="apple-touch-icon" href="icons/hawa-180.png">
+<!-- 🔒 قفل التطبيق بالبصمة/الوش زى تطبيقات البنوك — بيخفى المحتوى من أول لحظة لحد ما يتفتح -->
+<style>html.hw-locked body > *:not(#hwAppLock){visibility:hidden!important}</style>
+<script>
+(function(){ try {
+  var u = JSON.parse(localStorage.getItem('hawa_user') || '{}'), b = JSON.parse(localStorage.getItem('hawa_biometric') || 'null');
+  if (!u.id || !b || !b.credentialId || String(b.clientId) !== String(u.id)) return;
+  var tw = window.Telegram && window.Telegram.WebApp, inTg = !!(tw && tw.initData);
+  if ((b.provider || 'webauthn') === 'telegram' ? !inTg : (inTg || !window.PublicKeyCredential)) return;
+  var t = +(sessionStorage.getItem('hw_unlocked_at') || 0);
+  if (t && Date.now() - t < 60000) return;   // لسه داخل حالاً (باسورد أو بصمة) — مانقفلش تانى
+  document.documentElement.classList.add('hw-locked'); window.__hwLockPending = true;
+} catch (e) {} })();
+</script>
 </head>
 <body>
 <div class="container">
@@ -5619,6 +5632,82 @@ chBadge();
     <button type="button" onclick="closePermitCamera(); document.getElementById('permitFileAny').click()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:10px 14px;font-size:13px;font-family:inherit">🖼️ المعرض</button>
   </div>
 </div>
+<!-- 🔒 شاشة قفل التطبيق (بصمة الصباع / الوش) -->
+<div id="hwAppLock" style="display:none;position:fixed;inset:0;z-index:2147482000;background:#0A0A0A;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;font-family:Cairo,Tahoma,sans-serif;color:#F0EDE8;text-align:center" dir="rtl">
+  <img src="icons/hawa-192.png" alt="HAWA" style="width:84px;height:84px;border-radius:22px;box-shadow:0 8px 30px rgba(201,168,76,.25)">
+  <div style="font-size:15px;color:#8A8580;margin-top:6px">أهلاً</div>
+  <div id="hwLockName" style="font-size:21px;font-weight:800;color:#E8C97A;margin-top:-10px"></div>
+  <button id="hwLockBtn" type="button" style="margin-top:22px;width:96px;height:96px;border-radius:50%;border:2px solid #C9A84C;background:rgba(201,168,76,.12);color:#E8C97A;font-size:44px;display:flex;align-items:center;justify-content:center;cursor:pointer">🔓</button>
+  <div id="hwLockHint" style="font-size:14px;font-weight:700">افتح بالبصمة أو الوش</div>
+  <div id="hwLockMsg" style="min-height:22px;font-size:13px;color:#E05555;max-width:320px"></div>
+  <button id="hwLockPwd" type="button" style="margin-top:18px;background:none;border:0;color:#8A8580;font-family:inherit;font-size:13.5px;text-decoration:underline;cursor:pointer">ادخل بكلمة السر بدل كده</button>
+</div>
+<script>
+(function(){
+  var LOCK_AFTER = 60 * 1000;   // يتقفل لو التطبيق اتساب فى الخلفية أكتر من دقيقة
+  var el = document.getElementById('hwAppLock'); if (!el) return;
+  var btn = document.getElementById('hwLockBtn'), msgEl = document.getElementById('hwLockMsg');
+  var busy = false, hiddenAt = 0;
+  function stored(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch (e) { return null; } }
+  function eligible(){
+    var b = stored();
+    if (typeof user === 'undefined' || !user || !user.id || !b || !b.credentialId || String(b.clientId) !== String(user.id)) return null;
+    var tw = window.Telegram && window.Telegram.WebApp, inTg = !!(tw && tw.initData);
+    if ((b.provider || 'webauthn') === 'telegram') return (inTg && typeof bioIsInTelegram === 'function' && bioIsInTelegram()) ? b : null;
+    return (!inTg && window.PublicKeyCredential) ? b : null;
+  }
+  function msg(t){ msgEl.textContent = t || ''; }
+  function open(){ document.documentElement.classList.remove('hw-locked'); el.style.display = 'none'; try { sessionStorage.setItem('hw_unlocked_at', String(Date.now())); } catch (e) {} }
+  function lock(auto){
+    if (!eligible()) { open(); return; }
+    document.getElementById('hwLockName').textContent = (user && user.name) || '';
+    document.documentElement.classList.add('hw-locked'); el.style.display = 'flex'; msg('');
+    if (auto) setTimeout(function(){ unlock(true); }, 300);
+  }
+  function localCheck(b){
+    if ((b.provider || 'webauthn') === 'telegram') {
+      return new Promise(function(res, rej){
+        try { tg.BiometricManager.init(function(){ tg.BiometricManager.authenticate({ reason: 'افتح HAWA' }, function(ok, token){
+          if (!ok) return rej(new Error('cancelled'));
+          try { var p = JSON.parse(token || '{}'); res(p.credentialId || b.credentialId); } catch (e) { res(b.credentialId); }
+        }); }); } catch (e) { rej(e); }
+      });
+    }
+    return navigator.credentials.get({ publicKey: {
+      challenge: crypto.getRandomValues(new Uint8Array(32)),
+      allowCredentials: [{ id: bioBase64ToBuf(b.credentialId), type: 'public-key', transports: ['internal'] }],
+      userVerification: 'required', timeout: 60000 } }).then(function(c){ if (!c) throw new Error('cancelled'); return bioBufToBase64(c.rawId); });
+  }
+  async function unlock(auto){
+    if (busy) return; var b = eligible(); if (!b) { open(); return; }
+    busy = true; btn.textContent = '⏳'; msg(''); var t0 = Date.now();
+    try {
+      var credId = await localCheck(b);
+      var r = null, netErr = false;
+      try { r = await clRpc('client_bio_login', { p_credential_id: credId }); } catch (e) { netErr = true; }
+      if (!netErr) {
+        if (!r || !r.client) throw new Error('gone');
+        if (r.client.is_blocked) throw new Error('blocked');
+        if (r.session_token) { user.session_token = r.session_token; try { localStorage.setItem('hawa_user', JSON.stringify(user)); } catch (e) {} }
+      }
+      open();
+      if (typeof logActivity === 'function') logActivity('cl_unlock_bio', '🔓 فتح التطبيق بالبصمة / الوش', {});
+    } catch (e) {
+      var quiet = auto && e && e.name === 'NotAllowedError' && (Date.now() - t0) < 900;   // المتصفح محتاج لمسة الأول
+      if (e && e.message === 'blocked') msg('⛔ الحساب موقوف — كلّم الإدارة');
+      else if (e && e.message === 'gone') msg('⚠️ البصمة دى اتشالت من حسابك — ادخل بكلمة السر');
+      else if (!quiet) msg('ماتمّش التأكيد — دوس على 🔓 وجرّب تانى');
+    } finally { busy = false; btn.textContent = '🔓'; }
+  }
+  btn.onclick = function(){ unlock(false); };
+  document.getElementById('hwLockPwd').onclick = function(){ if (typeof doLogout === 'function') doLogout(); else { localStorage.removeItem('hawa_user'); location.reload(); } };
+  document.addEventListener('visibilitychange', function(){
+    if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > LOCK_AFTER && el.style.display !== 'flex') lock(true);
+  });
+  if (window.__hwLockPending) lock(true);
+})();
+</script>
 <!-- 📲 تثبيت تطبيق HAWA على الموبايل (أندرويد + آيفون) -->
 <div id="hwInstall" style="display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:2147483000;align-items:center;gap:8px;background:#C9A84C;color:#111;border-radius:999px;padding:9px 10px 9px 16px;box-shadow:0 6px 24px rgba(0,0,0,.5);font-family:Cairo,Tahoma,sans-serif;font-weight:800;font-size:14px;white-space:nowrap">
   <span id="hwInstallGo" style="cursor:pointer">📲 ثبّت تطبيق HAWA على موبايلك</span>
