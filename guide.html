@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل تطبيق HAWA — التثبيت والحجز</title>
+<meta name="description" content="إزاى تثبّت تطبيق HAWA على موبايلك وتحجز دور التحميل من مخازن السادات وقليوب">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="manifest" href="app.webmanifest">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="HAWA">
+<link rel="apple-touch-icon" href="icons/hawa-180.png">
+<style>
+:root{--gold:#C9A84C;--gold-light:#E8C97A;--dark:#0A0A0A;--dark2:#111111;--dark3:#1A1A1A;--text:#F0EDE8;--text-dim:#8A8580;--border:#2A2A2A;--error:#E05555;--success:#4CAF7D;--blue:#4A90D9}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--dark);color:var(--text);font-family:'Cairo',Tahoma,sans-serif;font-size:15.5px;line-height:1.85}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 90px}
+header{text-align:center;padding:28px 0 18px}
+header img{width:72px;height:72px;border-radius:18px}
+h1{font-size:24px;margin:10px 0 4px;color:var(--gold-light);font-weight:800}
+.sub{color:var(--text-dim);font-size:14px;margin:0}
+.toc{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:16px 0 4px}
+.toc a{color:var(--text);text-decoration:none;background:var(--dark3);border:1px solid var(--border);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700}
+section{background:var(--dark2);border:1px solid var(--border);border-radius:18px;padding:18px 16px;margin:14px 0}
+h2{font-size:19px;margin:0 0 10px;color:var(--gold-light);font-weight:800;display:flex;align-items:center;gap:8px}
+h2 .no{display:inline-flex;width:30px;height:30px;border-radius:50%;background:var(--gold);color:#111;align-items:center;justify-content:center;font-size:15px;flex:none}
+h3{font-size:16px;margin:14px 0 6px;font-weight:800}
+p{margin:6px 0}
+ol,ul{margin:6px 0;padding-inline-start:22px}
+li{margin:5px 0}
+b{color:var(--text)}
+.btn-name{display:inline-block;background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:0 7px;font-weight:700;white-space:nowrap}
+.tip{background:rgba(201,168,76,.10);border:1px solid rgba(201,168,76,.45);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14.5px}
+.warn{background:rgba(224,85,85,.10);border:1px solid rgba(224,85,85,.45);border-radius:12px;padding:10px 12px;margin:10px 0;font-size:14.5px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.card{background:var(--dark3);border:1px solid var(--border);border-radius:14px;padding:12px}
+.card h3{margin-top:0}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps>li{counter-increment:s;position:relative;padding-inline-start:40px;margin:12px 0}
+.steps>li::before{content:counter(s);position:absolute;inset-inline-start:0;top:2px;width:28px;height:28px;border-radius:50%;background:var(--gold);color:#111;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.link{color:var(--gold-light);font-weight:800;direction:ltr;unicode-bidi:embed}
+.cta{display:block;text-align:center;background:var(--gold);color:#111;text-decoration:none;border-radius:14px;padding:13px;font-weight:800;font-size:16px;margin:12px 0 0}
+footer{text-align:center;color:var(--text-dim);font-size:13px;margin-top:22px}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+@media print{
+  :root{--dark:#fff;--dark2:#fff;--dark3:#f7f4ee;--text:#1a1a1a;--text-dim:#666;--border:#e2dccd;--gold-light:#9a7a22}
+  body{font-size:12.5px;line-height:1.7}
+  .wrap{max-width:none;padding:0}
+  section{break-inside:avoid;margin:10px 0;padding:12px 14px}
+  .cta,.toc,#hwInstall,#hwInstallModal{display:none!important}
+  header{padding:6px 0 4px}
+  @page{size:A4;margin:12mm}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <img src="icons/hawa-192.png" alt="HAWA">
+  <h1>دليل تطبيق HAWA</h1>
+  <p class="sub">حجز دور تحميل العربيات من مخازن السادات وقليوب — من موبايلك</p>
+  <nav class="toc">
+    <a href="#install">📲 التثبيت</a><a href="#login">🔐 الدخول</a><a href="#book">➕ الحجز</a><a href="#my">📋 حجوزاتى</a><a href="#more">🧭 باقى الأقسام</a><a href="#rules">⚠️ مهم</a>
+  </nav>
+</header>
+
+<section id="install">
+  <h2><span class="no">1</span>ثبّت التطبيق على موبايلك (دقيقة واحدة)</h2>
+  <p>التطبيق بيتسطّب من اللينك على طول — <b>مش محتاج متجر ولا مساحة كبيرة</b>، وأى تحديث بيوصلك لوحده.</p>
+  <p>اللينك: <span class="link">hawa.gladiatorverse.net</span></p>
+  <div class="grid">
+    <div class="card">
+      <h3>🤖 أندرويد</h3>
+      <ol>
+        <li>افتح اللينك فى <b>Google Chrome</b>.</li>
+        <li>هيظهر تحت زرار دهبى <span class="btn-name">📲 ثبّت تطبيق HAWA على موبايلك</span> — دوس عليه.</li>
+        <li>دوس <span class="btn-name">تثبيت</span>.</li>
+      </ol>
+      <p style="font-size:13.5px;color:var(--text-dim)">لو الزرار مظهرش: افتح قايمة Chrome <b>⋮</b> اللى فوق ← <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.</p>
+    </div>
+    <div class="card">
+      <h3>🍎 آيفون</h3>
+      <ol>
+        <li>افتح اللينك فى <b>Safari</b> (مش Chrome).</li>
+        <li>دوس زرار المشاركة <b>⬆️</b> (لو مش ظاهر دوس <b>⋯</b> الأول وبعدين «مشاركة»).</li>
+        <li>اختار <b>«إضافة إلى الشاشة الرئيسية»</b> ➕ وبعدين <b>«إضافة»</b>.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="tip">📱 <b>فاتح من تليجرام؟</b> التثبيت مش بيتعمل من جوه تليجرام — دوس الزرار الدهبى وبعدين <b>«افتح فى Chrome»</b> (أو Safari على الآيفون) وكمّل من هناك.</div>
+  <p>✅ بعد كده هتلاقى أيقونة <b>HAWA</b> على الشاشة — افتح منها على طول زى أى تطبيق.</p>
+  <a class="cta" href="hawa_booking.html?install=1">📲 افتح التطبيق وثبّته دلوقتى</a>
+</section>
+
+<section id="login">
+  <h2><span class="no">2</span>الدخول</h2>
+  <ul>
+    <li><b>عندك حساب؟</b> اكتب <b>اسم المستخدم</b> و<b>كلمة المرور</b> اللى معاك من الإدارة ← <span class="btn-name">تسجيل الدخول</span>.</li>
+    <li><b>نسيت البيانات؟</b> دوس <span class="btn-name">هل نسيت كلمة المرور؟</span> ← اكتب <b>كود العميل</b> و<b>رقم الموبايل</b> المسجّل ← <span class="btn-name">📨 أرسلهم على Telegram</span> وهتلاقيهم عندك على تليجرام.</li>
+    <li><b>عميل جديد؟</b> دوس <span class="btn-name">🆕 عميل جديد</span> واملا بياناتك — الإدارة بتعتمد الحساب خلال ساعات.</li>
+    <li><b>البصمة 👆:</b> بعد أول دخول هيسألك <span class="btn-name">✨ فعّل البصمة</span> — فعّلها وبعد كده هتدخل بصباعك من غير باسورد.</li>
+  </ul>
+  <div class="tip">🔔 <b>فعّل إشعارات تليجرام:</b> لو ظهرلك زرار <span class="btn-name">🔔 تفعيل الإشعارات</span> دوس عليه ← هيفتح بوت HAWA ← دوس <b>Start</b>. كده تفاصيل كل حجز و<b>الـ QR</b> بتاعه بتوصلك على تليجرام.</div>
+</section>
+
+<section id="book">
+  <h2><span class="no">3</span>إزاى تعمل حجز</h2>
+  <ol class="steps">
+    <li>دوس <span class="btn-name">➕ حجز جديد</span> واختار <b>المخزن</b>: السادات أو قليوب.</li>
+    <li>اكتب <b>رقم الإذن</b>.
+      <ul>
+        <li><b>أول مرة تكتب الإذن ده؟</b> هيطلب منك تصوّره: دوس <span class="btn-name">📷 صوّر الإذن</span> — ولو الإذن أكتر من صفحة صوّر كل الصفحات (<span class="btn-name">➕ صوّر صفحة تانية</span>) — وبعدين <span class="btn-name">✅ خلاص — اقرأ الإذن</span>. التصوير مرة واحدة بس، وبعد كده الإذن بيتقبل بالرقم على طول.</li>
+        <li>هيظهر لك <b>الباقى على الإذن</b> لكل نوع فى المخزن ده.</li>
+        <li><b>الإذن اتعدل</b> (زوّدت أو نقّصت أصناف)؟ علّم على <b>«الإذن ده اتعدل؟»</b> وصوّره من جديد علشان الرصيد يتحدّث.</li>
+      </ul>
+    </li>
+    <li>اكتب <b>الكمية اللى عايز تحمّلها</b> لكل نوع — التطبيق بيحسبلك عدد العربيات لوحده.</li>
+    <li>دوس <span class="btn-name">🔍 اقترح لى أقرب ميعاد</span> واختار اللى يريحك:
+      <ul>
+        <li><b>⚡ أبكر</b> — الكمية مقسّمة على أكتر من ساعة.</li>
+        <li><b>📦 مع بعض</b> — كله فى ساعة واحدة.</li>
+      </ul>
+    </li>
+    <li>أكّد الحجز ← هتظهر <b>«تم الحجز بنجاح»</b> برقم الحجز، ويوصلك على تليجرام <b>QR</b> وتفاصيل الحجز.</li>
+  </ol>
+  <div class="tip">💡 لو الكمية أكبر من الباقى على الإذن، أو أكبر من الحد المسموح فى الحجز الواحد، التطبيق هيقولك وتقدر تقلّلها.</div>
+</section>
+
+<section id="my">
+  <h2><span class="no">4</span>حجوزاتى</h2>
+  <ul>
+    <li>من <span class="btn-name">📋 حجوزاتي</span> تشوف كل حجوزاتك: الرقم والمخزن والنوع واليوم والموعد والحالة.</li>
+    <li><span class="btn-name">✏️ تعديل</span> لو عايز تغيّر الميعاد أو العدد.</li>
+    <li><span class="btn-name">❌ إلغاء</span> لو مش هتقدر تيجى — <b>ألغى بدرى</b> علشان الدور يروح لحد تانى ومايتحسبش عليك غياب.</li>
+  </ul>
+</section>
+
+<section id="more">
+  <h2><span class="no">5</span>باقى الأقسام</h2>
+  <ul>
+    <li><span class="btn-name">📩 رسائلى</span> — رسائل الإدارة وإشعارات حجوزاتك.</li>
+    <li><span class="btn-name">💬 تواصل معانا</span> — شات مع الإدارة من جوه التطبيق.</li>
+    <li><span class="btn-name">📦 نواقصى</span> — لو حمّلت وكان ناقص شاسيه أو ماتور: مستند النواقص وميعاد تسليمها.</li>
+    <li><span class="btn-name">📖 الكتاب الدورى</span> و<span class="btn-name">🏍️ الموديلات</span> — الأخبار والموديلات المتاحة.</li>
+    <li><span class="btn-name">🤖 المساعد الذكى</span> — اسأله أى سؤال عن الحجز والموديلات.</li>
+  </ul>
+</section>
+
+<section id="rules">
+  <h2><span class="no">6</span>مهم تعرفه</h2>
+  <ul>
+    <li>⏰ <b>احضر قبل ميعادك بـ 15 دقيقة.</b> التأخير أكتر من نص ساعة بيأجّل تحميلك لآخر اليوم.</li>
+    <li>🚫 <b>الغياب من غير إلغاء</b> بيتحسب عليك، وتكراره بيوقف الحجز على حسابك.</li>
+    <li>🧾 الإذن مربوط بحسابك — مينفعش يتحجز بيه من حساب تاجر تانى.</li>
+    <li>🔐 متدّيش اسم المستخدم وكلمة المرور لحد — والأسهل والأأمن تدخل بالبصمة.</li>
+  </ul>
+  <div class="warn">❓ <b>أى مشكلة؟</b> كلّمنا من <span class="btn-name">💬 تواصل معانا</span> جوه التطبيق، أو ابعت على بوت HAWA فى تليجرام.</div>
+</section>
+
+<footer>HAWA CO © 2026 — نظام حجز دور التحميل</footer>
+</div>
+<!-- 📲 تثبيت تطبيق HAWA على الموبايل (أندرويد + آيفون) -->
+<div id="hwInstall" style="display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:2147483000;align-items:center;gap:8px;background:#C9A84C;color:#111;border-radius:999px;padding:9px 10px 9px 16px;box-shadow:0 6px 24px rgba(0,0,0,.5);font-family:Cairo,Tahoma,sans-serif;font-weight:800;font-size:14px;white-space:nowrap">
+  <span id="hwInstallGo" style="cursor:pointer">📲 ثبّت تطبيق HAWA على موبايلك</span>
+  <span id="hwInstallX" title="مش دلوقتى" style="cursor:pointer;background:rgba(0,0,0,.15);border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px">✕</span>
+</div>
+<div id="hwInstallModal" style="display:none;position:fixed;inset:0;z-index:2147483001;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center;font-family:Cairo,Tahoma,sans-serif" dir="rtl">
+  <div style="background:#111;border:1px solid #2A2A2A;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 18px 26px;color:#F0EDE8">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <img src="icons/hawa-192.png" alt="" style="width:46px;height:46px;border-radius:12px">
+      <div><div style="font-weight:800;font-size:16px;color:#E8C97A">تطبيق HAWA</div><div style="font-size:12px;color:#8A8580">أيقونة على الشاشة — تفتح على الحجز على طول</div></div>
+    </div>
+    <div id="hwInstallSteps" style="font-size:14px;line-height:2"></div>
+    <button id="hwInstallClose" style="margin-top:14px;width:100%;padding:12px;border-radius:12px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0EDE8;font-family:inherit;font-weight:700;font-size:14px">تمام</button>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY = 'hawa_pwa_dismiss', DAYS = 3;
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  var tgw = window.Telegram && window.Telegram.WebApp;
+  var inTelegram = !!(tgw && tgw.initData);
+  var forced = /[?&]install=1\b/.test(location.search);
+  var deferred = null;
+  var pill = document.getElementById('hwInstall'), modal = document.getElementById('hwInstallModal'), steps = document.getElementById('hwInstallSteps');
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
+  if (standalone || !pill) return;
+
+  function dismissed(){ try { var t = +localStorage.getItem(KEY) || 0; return !forced && (Date.now() - t) < DAYS * 864e5; } catch(e){ return false; } }
+  function show(){ if (!dismissed()) pill.style.display = 'flex'; }
+  function hide(){ pill.style.display = 'none'; }
+  function openModal(html){ steps.innerHTML = html; modal.style.display = 'flex'; }
+  function closeModal(){ modal.style.display = 'none'; }
+  var n = function(i){ return '<b style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:#C9A84C;color:#111;align-items:center;justify-content:center;font-size:12px;margin-left:6px">' + i + '</b>'; };
+
+  function guide(){
+    if (inTelegram) {
+      var url = location.origin + location.pathname.replace(/[^/]*$/, '') + 'hawa_booking.html?install=1';
+      openModal(n(1) + 'التثبيت بيتعمل من المتصفح مش من جوه تليجرام<br>' +
+        '<button id="hwOpenExt" style="margin:8px 0;width:100%;padding:12px;border-radius:12px;border:0;background:#C9A84C;color:#111;font-family:inherit;font-weight:800;font-size:14px">🌐 افتح فى ' + (isIOS ? 'Safari' : 'Chrome') + '</button><br>' +
+        n(2) + 'هناك هيظهر لك زرار «ثبّت التطبيق»');
+      var b = document.getElementById('hwOpenExt');
+      if (b) b.onclick = function(){ try { tgw.openLink(url); } catch(e){ location.href = url; } };
+      return;
+    }
+    if (isIOS) {
+      var safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|FBAN|FBAV|Instagram|Line\//i.test(ua);
+      if (!safari) { openModal(n(1) + 'انسخ اللينك وافتحه فى <b>Safari</b> (على الآيفون التثبيت من Safari بس)<br>' + n(2) + 'وبعدين اتبع الخطوات اللى هتظهر'); return; }
+      openModal(n(1) + 'دوس على زرار المشاركة <b style="font-size:17px">⬆️</b> (لو مش ظاهر دوس على <b>⋯</b> الأول وبعدين «مشاركة»)<br>' +
+        n(2) + 'انزل واختار <b>«إضافة إلى الشاشة الرئيسية»</b> ➕<br>' +
+        n(3) + 'دوس <b>«إضافة»</b> فوق<br>' +
+        '<span style="color:#8A8580;font-size:12px">✅ هتلاقى أيقونة HAWA على الشاشة — افتح منها على طول</span>');
+      return;
+    }
+    openModal(n(1) + 'افتح قايمة المتصفح <b style="font-size:17px">⋮</b> فوق على الشمال<br>' +
+      n(2) + 'اختار <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b><br>' +
+      n(3) + 'دوس <b>«تثبيت»</b><br>' +
+      '<span style="color:#8A8580;font-size:12px">لو مش لاقيها: افتح الصفحة فى Google Chrome</span>');
+  }
+
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; show(); });
+  window.addEventListener('appinstalled', function(){ hide(); deferred = null; try { localStorage.setItem(KEY, String(Date.now() + 3650 * 864e5)); } catch(e){} });
+
+  document.getElementById('hwInstallGo').onclick = function(){
+    if (deferred) { deferred.prompt(); deferred.userChoice.then(function(c){ if (c && c.outcome === 'accepted') hide(); deferred = null; }); return; }
+    guide();
+  };
+  document.getElementById('hwInstallX').onclick = function(){ hide(); try { localStorage.setItem(KEY, String(Date.now())); } catch(e){} };
+  document.getElementById('hwInstallClose').onclick = closeModal;
+  modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+
+  // آيفون / تليجرام / متصفحات مابتبعتش beforeinstallprompt → نظهر الزرار بالشرح
+  if (isIOS || inTelegram) { setTimeout(show, 1500); }
+  else if (isAndroid) { setTimeout(function(){ if (!deferred) show(); }, 5000); }
+  if (forced) setTimeout(function(){ if (!deferred) guide(); }, 1200);
+})();
+</script>
+</body>
+</html>
