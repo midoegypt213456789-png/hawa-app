@@ -412,6 +412,13 @@
 #viewModels .chip{background:var(--gold-dim);border:1px solid rgba(201,168,76,.3);color:var(--gold-lite);font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
 </style>
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+<link rel="manifest" href="app.webmanifest">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HAWA">
+<link rel="apple-touch-icon" href="icons/hawa-180.png">
 </head>
 <body>
 <div class="container">
@@ -5612,5 +5619,87 @@ chBadge();
     <button type="button" onclick="closePermitCamera(); document.getElementById('permitFileAny').click()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:10px 14px;font-size:13px;font-family:inherit">🖼️ المعرض</button>
   </div>
 </div>
+<!-- 📲 تثبيت تطبيق HAWA على الموبايل (أندرويد + آيفون) -->
+<div id="hwInstall" style="display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:2147483000;align-items:center;gap:8px;background:#C9A84C;color:#111;border-radius:999px;padding:9px 10px 9px 16px;box-shadow:0 6px 24px rgba(0,0,0,.5);font-family:Cairo,Tahoma,sans-serif;font-weight:800;font-size:14px;white-space:nowrap">
+  <span id="hwInstallGo" style="cursor:pointer">📲 ثبّت تطبيق HAWA على موبايلك</span>
+  <span id="hwInstallX" title="مش دلوقتى" style="cursor:pointer;background:rgba(0,0,0,.15);border-radius:50%;width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;font-size:13px">✕</span>
+</div>
+<div id="hwInstallModal" style="display:none;position:fixed;inset:0;z-index:2147483001;background:rgba(0,0,0,.75);align-items:flex-end;justify-content:center;font-family:Cairo,Tahoma,sans-serif" dir="rtl">
+  <div style="background:#111;border:1px solid #2A2A2A;border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 18px 26px;color:#F0EDE8">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <img src="icons/hawa-192.png" alt="" style="width:46px;height:46px;border-radius:12px">
+      <div><div style="font-weight:800;font-size:16px;color:#E8C97A">تطبيق HAWA</div><div style="font-size:12px;color:#8A8580">أيقونة على الشاشة — تفتح على الحجز على طول</div></div>
+    </div>
+    <div id="hwInstallSteps" style="font-size:14px;line-height:2"></div>
+    <button id="hwInstallClose" style="margin-top:14px;width:100%;padding:12px;border-radius:12px;border:1px solid #2A2A2A;background:#1A1A1A;color:#F0EDE8;font-family:inherit;font-weight:700;font-size:14px">تمام</button>
+  </div>
+</div>
+<script>
+(function(){
+  var KEY = 'hawa_pwa_dismiss', DAYS = 3;
+  var ua = navigator.userAgent || '';
+  var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/i.test(ua);
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  var tgw = window.Telegram && window.Telegram.WebApp;
+  var inTelegram = !!(tgw && tgw.initData);
+  var forced = /[?&]install=1\b/.test(location.search);
+  var deferred = null;
+  var pill = document.getElementById('hwInstall'), modal = document.getElementById('hwInstallModal'), steps = document.getElementById('hwInstallSteps');
+
+  if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
+  if (standalone || !pill) return;
+
+  function dismissed(){ try { var t = +localStorage.getItem(KEY) || 0; return !forced && (Date.now() - t) < DAYS * 864e5; } catch(e){ return false; } }
+  function show(){ if (!dismissed()) pill.style.display = 'flex'; }
+  function hide(){ pill.style.display = 'none'; }
+  function openModal(html){ steps.innerHTML = html; modal.style.display = 'flex'; }
+  function closeModal(){ modal.style.display = 'none'; }
+  var n = function(i){ return '<b style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:#C9A84C;color:#111;align-items:center;justify-content:center;font-size:12px;margin-left:6px">' + i + '</b>'; };
+
+  function guide(){
+    if (inTelegram) {
+      var url = location.origin + location.pathname.replace(/[^/]*$/, '') + 'hawa_booking.html?install=1';
+      openModal(n(1) + 'التثبيت بيتعمل من المتصفح مش من جوه تليجرام<br>' +
+        '<button id="hwOpenExt" style="margin:8px 0;width:100%;padding:12px;border-radius:12px;border:0;background:#C9A84C;color:#111;font-family:inherit;font-weight:800;font-size:14px">🌐 افتح فى ' + (isIOS ? 'Safari' : 'Chrome') + '</button><br>' +
+        n(2) + 'هناك هيظهر لك زرار «ثبّت التطبيق»');
+      var b = document.getElementById('hwOpenExt');
+      if (b) b.onclick = function(){ try { tgw.openLink(url); } catch(e){ location.href = url; } };
+      return;
+    }
+    if (isIOS) {
+      var safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|FBAN|FBAV|Instagram|Line\//i.test(ua);
+      if (!safari) { openModal(n(1) + 'انسخ اللينك وافتحه فى <b>Safari</b> (على الآيفون التثبيت من Safari بس)<br>' + n(2) + 'وبعدين اتبع الخطوات اللى هتظهر'); return; }
+      openModal(n(1) + 'دوس على زرار المشاركة <b style="font-size:17px">⬆️</b> (لو مش ظاهر دوس على <b>⋯</b> الأول وبعدين «مشاركة»)<br>' +
+        n(2) + 'انزل واختار <b>«إضافة إلى الشاشة الرئيسية»</b> ➕<br>' +
+        n(3) + 'دوس <b>«إضافة»</b> فوق<br>' +
+        '<span style="color:#8A8580;font-size:12px">✅ هتلاقى أيقونة HAWA على الشاشة — افتح منها على طول</span>');
+      return;
+    }
+    openModal(n(1) + 'افتح قايمة المتصفح <b style="font-size:17px">⋮</b> فوق على الشمال<br>' +
+      n(2) + 'اختار <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b><br>' +
+      n(3) + 'دوس <b>«تثبيت»</b><br>' +
+      '<span style="color:#8A8580;font-size:12px">لو مش لاقيها: افتح الصفحة فى Google Chrome</span>');
+  }
+
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferred = e; show(); });
+  window.addEventListener('appinstalled', function(){ hide(); deferred = null; try { localStorage.setItem(KEY, String(Date.now() + 3650 * 864e5)); } catch(e){} });
+
+  document.getElementById('hwInstallGo').onclick = function(){
+    if (deferred) { deferred.prompt(); deferred.userChoice.then(function(c){ if (c && c.outcome === 'accepted') hide(); deferred = null; }); return; }
+    guide();
+  };
+  document.getElementById('hwInstallX').onclick = function(){ hide(); try { localStorage.setItem(KEY, String(Date.now())); } catch(e){} };
+  document.getElementById('hwInstallClose').onclick = closeModal;
+  modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
+
+  // آيفون / تليجرام / متصفحات مابتبعتش beforeinstallprompt → نظهر الزرار بالشرح
+  if (isIOS || inTelegram) { setTimeout(show, 1500); }
+  else if (isAndroid) { setTimeout(function(){ if (!deferred) show(); }, 5000); }
+  if (forced) setTimeout(function(){ if (!deferred) guide(); }, 1200);
+})();
+</script>
 </body>
 </html>
