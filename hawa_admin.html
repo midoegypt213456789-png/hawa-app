@@ -2562,6 +2562,7 @@ body:has(#er-modal[style*="flex"]) #refreshTimerBadge{display:none!important}
 .erx-title{font-size:19px;font-weight:900;color:var(--gold-light)}.erx-fbar{margin-top:10px;align-items:flex-end;gap:8px}.erx-range{padding-bottom:10px}
 .erx-fchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.erx-f{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:var(--dark);border:1px solid var(--border);border-radius:10px;padding:4px 8px}.erx-fin{width:140px;padding:4px 6px;font-size:12px}
 .erx-form{display:flex;flex-direction:column;gap:12px}.erx-fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 16px}.erx-fgrid>.erx-ff{min-width:0}
+.erx-docs{display:flex;flex-direction:column;gap:10px}.erx-doc{background:#121212;border:1px solid #2A2A2A;border-top:3px solid #C9A84C;border-radius:10px;padding:10px 12px}.erx-dh,.erx-dl{width:100%;border-collapse:collapse}.erx-dh th{color:#8A8580;font-size:11px;font-weight:600;padding:2px 6px;text-align:center}.erx-dh td{text-align:center;padding:4px 6px;font-size:14px}.erx-dl{margin-top:6px}.erx-dl th{color:#E8C97A;font-size:12px;border-bottom:1px solid #2A2A2A;padding:4px 6px;text-align:center}.erx-dl td{text-align:center;padding:5px 6px;border-bottom:1px dashed #222}.erx-dl td.n{font-weight:700}.erx-dn{margin-top:6px;color:#8A8580;font-size:12px}.erx-dsum{padding:8px 12px;background:#1E1A10;border-radius:8px;color:#E8C97A}
 .erx-gh td{background:rgba(201,168,76,.10);color:#E8C97A;font-size:13px}.erx-gh1 td{background:rgba(201,168,76,.05);color:#F0EDE8}.erx-gs td{font-weight:700;border-top:1px solid #4A4540;background:#151515}.erx-gs0 td{color:#E8C97A;background:#1E1A10}
 .erx-pk{position:fixed;z-index:100000;display:none;overflow:auto;background:#161616;border:1px solid #C9A84C;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.6);direction:rtl}.erx-pko{padding:8px 12px;cursor:pointer;font-size:13px;color:#F0EDE8;border-bottom:1px solid #222}.erx-pko:hover,.erx-pko.on{background:rgba(201,168,76,.18)}.erx-pko.all{color:#E8C97A;font-weight:700;position:sticky;top:0;background:#1E1A10}
 .erx-ff{display:flex;align-items:flex-start;gap:10px}.erx-ff>label{min-width:90px;padding-top:9px;color:#E05555;font-weight:700;font-size:13px}.erx-ffv{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.erx-ffv .qt-inp{flex:1;min-width:120px;width:100%}
@@ -22473,6 +22474,8 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   S('stock','تحويلات المخازن','trf',['date','item','cat','vtype'],[['بالتحويل',['doc','route'],['qty','items']],['بالصنف',['item'],['qty','cnt']],['بالاتجاه',['route'],['qty','cnt']],['بالشهر',['month'],['qty','cnt']]]);
   S('stock','تسليمات مخزنية','dlv',['date',...CL,...IT,...WH],[['بالمستند',['doc','client'],['qty','delay']],['بالتاجر',['client'],['qty','docs','delay']],['بالصنف',['item'],['qty','docs']],['باليوم',['day'],['qty','docs']],['بالمخزن',['wh'],['qty','docs']]],
     {r:[['الكل',{}],['اتأخرت أكتر من أسبوع',{hv:[['maxdelay','>',7]]}]]});
+  S('stock','تقرير الأصناف المحمّلة من فواتير المبيعات','sales',['date','client','site','wh','item','cat','kind'],[['بالفاتورة',['doc','day','client','item','site','wh','invnote'],['qty','dqty','undq'],{order:'i_doc',dir:'asc'}]],
+    {blk:true, r:[['غير محمّلة فقط',{hv:[['undq','>',0]],blk:'und'}],['محمّلة وغير محمّلة',{blk:'all'}],['محمّلة فقط',{hv:[['dqty','>',0]],blk:'del'}]], note:'زى «تقرير الأصناف المحملة» فى البرنامج القديم — كل فاتورة لوحدها بأصنافها'});
   S('stock','الأصناف المسلّمة والغير مسلّمة','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','dqty','undq','dpct']],['بالتاجر',['client'],['qty','dqty','undq','dpct']],['بالفاتورة',['doc','client'],['qty','dqty','undq']],['بالمخزن (المسلّم والغير مسلّم بناءً على المخازن)',['wh'],['qty','dqty','undq']],['الصنف × المخزن',['item','wh'],['undq'],{view:'pivot'}]],
     {r:[['المسلّم والغير مسلّم',{}],['الغير مسلّم بس',{hv:[['undq','>',0]]}],['المسلّم بالكامل بس',{hv:[['undq','<=',0]]}]]});
   // 🛒 المشتريات
@@ -22628,7 +22631,10 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
     ${(s.cmp&&S.date)||s.top?`<div class="erx-fgrid">${s.cmp&&S.date?`<div class="erx-ff"><label>مقارنة</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).cmp=this.value"><option value="">من غير</option><option value="prev" ${st.cmp==='prev'?'selected':''}>بالفترة اللى قبلها</option><option value="yoy" ${st.cmp==='yoy'?'selected':''}>بنفس الفترة السنة اللى فاتت</option></select></div></div>`:''}
       ${s.top?`<div class="erx-ff"><label>العدد</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).limit=this.value">${[['','الكل'],['10','10'],['20','20'],['50','50'],['100','100']].map(o=>`<option value="${o[0]}" ${String(st.limit)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>`:''}</div>`:''}
     ${s.note?`<div class="qt-sub" style="margin-top:8px">💡 ${erEsc(s.note)}</div>`:''}</div>`; }
-function erxHierForm(s,st,S){ const cand=ERX_HIER.filter(k=>S.dims[k]); const H=st.hier||[], N=['①','②','③'];
+function erxHierForm(s,st,S){ if(s.blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
+      <label class="qt-radio ${st.pp?'er-on':''}"><input type="checkbox" ${st.pp?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).pp=this.checked;ER.edit.__render()"> 📄 إذن (فاتورة) واحد فى الصفحة</label>
+      <label class="qt-radio ${st.nonote?'er-on':''}"><input type="checkbox" ${st.nonote?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).nonote=this.checked;ER.edit.__render()"> بدون ملاحظات</label></div></div>`;
+  const cand=ERX_HIER.filter(k=>S.dims[k]); const H=st.hier||[], N=['①','②','③'];
   const pr=ERX_PRICE[s.src]&&S.meas.__price&&!s.smart;
   return `${cand.length>1?`<div class="erx-ff"><label>رتّب / جمّع حسب</label><div class="erx-ffv erx-rad">${cand.map(k=>{ const i=H.indexOf(k); return `<label class="qt-radio ${i>=0?'er-on':''}" title="علّم بالترتيب — الأول هو الأكبر"><input type="checkbox" ${i>=0?'checked':''} onchange="erxHierTog('${k}')"> ${i>=0?`<b style="color:var(--gold)">${N[i]}</b> `:''}${erEsc(S.dims[k][0])}</label>`; }).join('')}
       ${H.length?`<b class="qt-sub" style="cursor:pointer" onclick="erxSt(erxScr(ER.rx.sid)).hier=[];ER.edit.__render()">✖ شيل الترتيب</b>`:''}
@@ -22665,9 +22671,10 @@ function erxSFDel(k,v){ const st=erxSt(erxScr(ER.rx.sid)); st.fx[k]=(st.fx[k]||[
 function erxScrGo(print){ const s=erxScr(ER.rx.sid); if(!s) return; const st=erxSt(s); const g=s.g[st.g]||s.g[0], go=g[3]||{}, ro=s.r?(s.r[st.r]||s.r[0])[1]:{};
   ER.rx.R={ t:s.t+(s.g.length>1?' — '+g[0]:'')+(s.r&&st.r?' ('+s.r[st.r][0]+')':''), src:s.src, dims:g[1], meas:g[2], view:go.view||s.view||'table', smart:go.smart||s.smart||null,
     hv:(s.hv||[]).concat(go.hv||[],ro.hv||[]), df:Object.assign({},s.df||{},ro.df||{}), order:ro.order||go.order||null, dir:ro.dir||go.dir||null, limit:st.limit||null, cost:s.cost||go.cost };
-  const SS=ER.rx.meta.srcs[s.src], H=(st.hier||[]).filter(k=>SS.dims[k]);
+  const SS=ER.rx.meta.srcs[s.src], H=s.blk?[]:(st.hier||[]).filter(k=>SS.dims[k]);
+  if(s.blk){ ER.rx.R.view='docblk'; ER.rx.R.blk={ mode:ro.blk||'all', pp:!!st.pp, nonote:!!st.nonote }; ER.rx.R.t=s.t+(s.r&&st.r?' ('+s.r[st.r][0]+')':''); }
   if(H.length){ ER.rx.R.dims=H.slice(); ER.rx.R.hier=H.length>1; ER.rx.R.order=null; ER.rx.R.dir=null; ER.rx.R.view='table'; ER.rx.R.t=s.t+' — حسب '+H.map(k=>SS.dims[k][0]).join(' ← '); }
-  if(st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
+  if(!s.blk && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
   ER.rx.nr = s.docRange&&(st.nfrom||st.nto)?[st.nfrom||'',st.nto||'']:null;
   ER.rx.per=s.noDate?(s.perDef||'month'):st.per; ER.rx.f={from:st.from,to:st.to}; ER.rx.fx=JSON.parse(JSON.stringify(st.fx)); ER.rx.cmp=st.cmp||''; ER.rx.limit=st.limit||''; ER.rx.q='';
   ER.rx.dd=null; ER.rx.crumbs=[]; ER.rx.sort=null; ER.rx.view=ER.rx.R.view; ER.rx.data=null; ER.rx.__print=!!print;
@@ -22710,11 +22717,13 @@ function erxRenderOut(){ const el=document.getElementById('erx-out'); if(!el) re
     const last=new Date(Date.UTC(Number(t.slice(0,4)),Number(t.slice(5,7)),0)).getUTCDate(), left=last-Number(t.slice(8,10)); const elapsed=Number(t.slice(8,10)); const avg=tot/elapsed;
     extra=`<div class="erx-abc"><div class="erx-kpi"><div class="qt-sub">المتوسط اليومى</div><b>${erMoney(avg,0)}</b></div><div class="erx-kpi"><div class="qt-sub">فاضل فى الشهر</div><b>${left} يوم</b></div>
       <div class="erx-kpi abc-A"><div class="qt-sub">المتوقع آخر الشهر</div><b>${erMoney(tot+avg*left,0)}</b></div><div class="qt-sub" style="flex:1">🔮 على أساس متوسط ${elapsed} يوم (${days} يوم فيهم بيع)</div></div>`; }
-  const views=[['table','📋 جدول'],['chart','📊 رسم']].concat(dims.length===2?[['pivot','🔀 جدول محورى']]:[]);
+  const views=R.blk?[['docblk','📄 بالفاتورة'],['table','📋 جدول']]:[['table','📋 جدول'],['chart','📊 رسم']].concat(dims.length===2?[['pivot','🔀 جدول محورى']]:[]);
+  if(!R.blk&&ER.rx.view==='docblk') ER.rx.view='table';
   if(ER.rx.view==='pivot'&&dims.length!==2) ER.rx.view='table';
   const vbar=`<div class="qt-row erx-vbar">${views.map(v=>`<button class="qt-btn ${ER.rx.view===v[0]?'':'ghost'} sm" onclick="ER.rx.view='${v[0]}';erxRenderOut()">${v[1]}</button>`).join('')}<div style="flex:1"></div><span class="qt-sub">${rows.length} سطر${ER.rx.busy?' — ⏳':''}</span></div>`;
   let body='';
   if(!rows.length) body='<div class="qt-card qt-sub" style="text-align:center;padding:30px">📭 مفيش بيانات بالفلاتر دى — جرّب فترة أوسع</div>';
+  else if(ER.rx.view==='docblk') body=erxDocBlk(rows,D,false);
   else if(ER.rx.view==='chart') body=erxChart(rows,dims,meas,S,D,cmpMap);
   else if(ER.rx.view==='pivot') body=erxPivot(rows,dims,meas,S);
   else body=erxTable(rows,dims,meas,S,D,cmpMap,tot0);
@@ -22723,6 +22732,33 @@ const ERX_PRICE = { sales:['qty','net'], purch:['qty','egp'], sret:['qty','value
 const ERX_HIER = ['client','supplier','party','gov','city','ctype','region','item','cat','vtype','kind','wh','site','treasury','user','side','ptype','doc','day','month','year'];
 function erxPriceInit(){ Object.keys(ERX_PRICE).forEach(k=>{ const S=ER.rx.meta&&ER.rx.meta.srcs[k]; if(S&&S.meas&&S.meas[ERX_PRICE[k][0]]&&S.meas[ERX_PRICE[k][1]]) S.meas.__price=['السعر (متوسط)','m','']; }); }
 function erxPriceFix(R,rows,tot){ if(!R.price) return; const [q,v]=R.price, f=o=>{ if(!o) return; const qq=Number(o['m_'+q])||0; o.m___price=qq?(Number(o['m_'+v])||0)/qq:null; }; (rows||[]).forEach(f); f(tot); }
+// 📄 عرض «بالفاتورة» زى تقرير الأصناف المحملة فى البرنامج القديم
+function erxSplit(t){ t=String(t??''); const i=t.indexOf(' — '); return i<0?['',t]:[t.slice(0,i),t.slice(i+3)]; }
+function erxDocGroups(rows){ const G=[], by={}; rows.forEach(r=>{ const k=String(r.i_doc??r.d_doc); let g=by[k]; if(!g){ g=by[k]={no:r.d_doc, id:r.i_doc, date:r.d_day, client:erxSplit(r.d_client), note:r.d_invnote||'', lines:[]}; G.push(g); } g.lines.push(r); });
+  G.sort((a,b)=>String(a.date).localeCompare(String(b.date))||Number(a.no)-Number(b.no)); return G; }
+function erxDocCols(B){ return [['كود الصنف',r=>erxSplit(r.d_item)[0]],['اسم الصنف',r=>erxSplit(r.d_item)[1]],['الفرع',r=>r.d_site],['المخزن',r=>r.d_wh],['الكمية',r=>erQ(r.m_qty),1]]
+  .concat(B.mode!=='und'?[['المحمّل',r=>erQ(r.m_dqty),1]]:[]).concat(B.mode!=='del'?[['الغير محمّل',r=>erQ(r.m_undq),1]]:[]); }
+function erxFiltSum(){ const fx=ER.rx.fx||{}, out=[]; ERX_F.forEach(x=>{ const v=fx[x[0]]; if(!v||!v.length) return; const o=erxFOpts(x[2]); out.push([x[1], v.map(id=>{ const z=o.find(q=>String(q[0])===String(id)); return z?z[1]:id; }).join('، ')]); }); return out; }
+function erxDocBlk(rows,D,forPrint){ const B=D.R.blk||{mode:'all'}, G=erxDocGroups(rows), C=erxDocCols(B);
+  const tq=rows.reduce((a,r)=>a+(Number(r.m_qty)||0),0), td=rows.reduce((a,r)=>a+(Number(r.m_dqty)||0),0), tu=rows.reduce((a,r)=>a+(Number(r.m_undq)||0),0);
+  const blk=G.map(g=>`<div class="erx-doc${forPrint&&B.pp?' pb':''}"><table class="erx-dh"><tr><th>تاريخ الفاتورة</th><th>رقم الفاتورة</th><th>كود العميل</th><th>اسم العميل</th></tr>
+      <tr><td>${erEsc(g.date||'')}</td><td>${forPrint?`<b>${erEsc(g.no)}</b>`:`<b style="color:var(--gold);cursor:pointer" title="افتح الفاتورة" onclick="erxOpenDoc('sales',${Number(g.id)||0})">${erEsc(g.no)}</b>`}</td><td>${erEsc(g.client[0])}</td><td><b>${erEsc(g.client[1])}</b></td></tr></table>
+    <table class="erx-dl"><thead><tr>${C.map(c=>`<th>${c[0]}</th>`).join('')}</tr></thead><tbody>${g.lines.map(r=>`<tr>${C.map(c=>`<td${c[2]?' class="n"':''}>${erEsc(c[1](r)??'')}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    ${!B.nonote&&g.note?`<div class="erx-dn">📝 ${erEsc(g.note)}</div>`:''}</div>`).join('');
+  const sum=`<div class="erx-dsum">عدد الفواتير: <b>${G.length}</b> · الكمية: <b>${erQ(tq)}</b>${B.mode!=='und'?` · المحمّل: <b>${erQ(td)}</b>`:''}${B.mode!=='del'?` · الغير محمّل: <b>${erQ(tu)}</b>`:''}</div>`;
+  return `<div class="erx-docs">${forPrint?'':sum}${blk}${sum}</div>`; }
+function erxDocBlkPrint(){ const D=ER.rx.data, co=erCoInfo(), w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
+  const fs=[['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||erToday()]].concat(erxFiltSum());
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(D.R.t)}</title><style>
+    @page{size:A4;margin:12mm} body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:12px}
+    .co{font-size:18px;font-weight:700;color:#1d4e89;border-bottom:2px solid #1d4e89;padding-bottom:4px} h1{text-align:center;font-size:18px;color:#1d4e89;border:1px solid #999;background:#eee;padding:6px;margin:10px 60px}
+    .fl{background:#eef1f8;border-radius:8px;padding:8px 14px;display:grid;grid-template-columns:1fr 1fr;gap:4px 30px;margin-bottom:10px}.fl b{color:#a00}
+    .erx-doc{border-top:3px solid #000;padding:6px 0 10px;break-inside:avoid}.erx-doc.pb{break-after:page}
+    table{width:100%;border-collapse:collapse}.erx-dh th{background:#eee;border:1px solid #bbb;padding:3px;font-size:11px}.erx-dh td{text-align:center;padding:4px;font-weight:700}
+    .erx-dl th{border-bottom:1px solid #999;padding:3px;font-size:11px}.erx-dl td{text-align:center;padding:3px}.erx-dn{margin-top:4px;color:#333}
+    .erx-dsum{border-top:3px double #000;margin-top:8px;padding-top:6px;font-size:13px}</style></head><body>
+    <div class="co">${erEsc(co.name||'')}</div><h1>${erEsc(D.R.t)}</h1><div class="fl">${fs.map(x=>`<div>${erEsc(x[0])}: <b>${erEsc(x[1])}</b></div>`).join('')}</div>
+    ${erxDocBlk(ER.rx.__rows||D.rows, D, true)}<script>setTimeout(()=>{window.print();},300)<\/script></body></html>`); w.document.close(); }
 function erxM0(meas){ return meas.includes('actual')?'actual':(meas.find(m=>m!=='opening')||meas[0]); }
 function erxTable(rows,dims,meas,S,D,cmpMap,tot0){ if(D.R.hier && dims.length>1 && !ER.rx.sort) return erxTableH(rows,dims,meas,S,D); return erxTableF(rows,dims,meas,S,D,cmpMap,tot0); }
 function erxTableH(rows,dims,meas,S,D){ const M=m=>S.meas[m]||[m,'n',''], R=D.R, add=m=>m!=='__price'&&['m','n','c'].includes(M(m)[1]);
@@ -22815,6 +22851,7 @@ function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; const R=D.R, S=ER.rx
   const hd=R.dims.map(d=>S.dims[d][0]).concat(meas.map(m=>S.meas[m][0])); const lines=[hd.map(esc).join(',')].concat(rows.map(r=>R.dims.map(d=>r['d_'+d]).concat(meas.map(m=>r['m_'+m])).map(esc).join(',')));
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`${(R.t||'report').replace(/[\\/:*?"<>|]/g,'')}_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 function erRepPrint(){ const D=ER.rx.data; if(!D||!D.R){ erToast('اعرض التقرير الأول',false); return; } if(!erCan('erp-reports','print')){ erToast('معندكش صلاحية طباعة',false); return; }
+  if(D.R.blk && ER.rx.view==='docblk') return erxDocBlkPrint();
   erTbPrintPick({sec:'erp-reports', key:'rx-'+(ER.rx.sid||''), pane:'erx-out', title:D.R.t, sub:(D.from||D.to?`الفترة من ${D.from||'البداية'} إلى ${D.to||''}`:'كل الفترة')+(D.cmp?` — مقارنة بـ ${D.cmp.range[0]} → ${D.cmp.range[1]}`:'')}); }
 
 // ── 🛠️ اعمل تقريرك بنفسك
