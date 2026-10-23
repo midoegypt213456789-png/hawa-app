@@ -2581,6 +2581,33 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
 .qt-btn.red{background:transparent;border:1.5px solid rgba(224,85,85,0.5);color:#e88080}
 .qt-btn.sm{padding:4px 10px;font-size:12px;border-radius:7px}
 .qt-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.eri-edbox{background:linear-gradient(180deg,#131313,#0E0E0E);border:1px solid #2A2620;border-radius:14px;padding:0 12px 12px;max-height:52vh;overflow:auto}
+.eri-edbox .qt-card{margin-bottom:10px}
+.eri-edhd{position:sticky;top:0;z-index:3;background:#121212;padding:6px 4px 10px;margin-bottom:6px;border-bottom:1px solid rgba(201,168,76,.15)}
+.eri-imgbox{width:130px;flex:none;margin-left:14px;text-align:center}
+.eri-imgbox img{width:130px;height:130px;object-fit:contain;border-radius:12px;background:#fff;border:1px solid var(--border);cursor:zoom-in}
+.eri-imgbox>span{display:flex;width:130px;height:130px;border-radius:12px;border:1px dashed var(--border);align-items:center;justify-content:center;color:var(--text-dim);font-size:26px;line-height:1.3}
+.eri-imgbox>span small{font-size:11px}
+.qt-scroll.eri-grid{max-height:62vh;overflow:auto;border:1px solid var(--border);border-radius:12px;outline:none}
+.eri-grid:focus{border-color:rgba(201,168,76,.55)}
+.eri-tbl thead th{position:sticky;top:0;z-index:2;background:#1A1A1A}
+.eri-th{cursor:pointer;white-space:nowrap;user-select:none}
+.eri-tbl tbody tr{cursor:pointer}
+.eri-tbl tbody tr:hover{background:rgba(201,168,76,.06)}
+.eri-tbl tbody tr.eri-sel{background:rgba(201,168,76,.16)!important;outline:1px solid rgba(201,168,76,.5)}
+.eri-th-img{width:38px;height:38px;object-fit:contain;border-radius:8px;background:#fff;display:block}
+.eri-noimg{color:var(--text-dim)}
+.er-party{margin-top:10px;background:rgba(74,144,217,.06);border:1px solid rgba(74,144,217,.28);border-radius:12px;padding:10px 12px}
+.er-party-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.er-pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.er-pst{background:#151515;border:1px solid var(--border);border-radius:10px;padding:6px 10px}
+.er-pst b{font-size:14px}
+.er-pst.warn{border-color:rgba(240,199,94,.45)}
+.er-pst.bad{border-color:rgba(224,85,85,.55)}
+.er-pund{margin-top:8px;color:#fff;background:rgba(224,85,85,.18);border:1px solid rgba(224,85,85,.5);border-radius:8px;padding:6px 10px;font-size:13px}
+.er-cscope{position:relative}.er-cscope summary{cursor:pointer;white-space:nowrap;color:var(--gold);font-size:12.5px}.er-cscope-box{margin-top:6px;background:#161616;border:1px solid var(--border);border-radius:10px;padding:6px 8px;min-width:200px;max-height:200px;overflow:auto}.er-cs-lb{display:flex;gap:6px;align-items:center;margin:3px 0;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.er-prec{margin-top:8px}.er-prec summary{cursor:pointer;color:var(--gold);font-size:13px;font-weight:700}
+@media(max-width:700px){.eri-basic{flex-wrap:wrap!important}.eri-basic>div:last-child{flex:1 1 100%!important}.eri-basic .qt-row{flex-wrap:wrap}.eri-basic .qt-fld{min-width:140px}.eri-imgbox{width:auto;margin:0 auto 8px;display:flex;gap:10px;align-items:center}.eri-imgbox img,.eri-imgbox>span{width:92px;height:92px}.qt-scroll.eri-grid{max-height:70vh}}
 .qt-tbl th{position:sticky;top:0;z-index:2}
 .qt-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top}
 .qt-tbl tr.del td{opacity:.5}
@@ -21014,7 +21041,7 @@ function erModal(title, body, foot){
 }
 let __erRendering=false;
 function erModalBody(body){ if(__erRendering){ setTimeout(()=>erModalBody(body),0); return; } const b=document.getElementById('er-m-body'); if(!b) return; __erRendering=true; try{ const st=b.scrollTop; b.innerHTML=body; b.scrollTop=st; } finally{ __erRendering=false; } }
-function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; ER.edit=null; }
+function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; ER.edit=null; if(ER.iedit && document.getElementById('eri-ed')) ER.edit=ER.iedit; }
 function erFoot(saveFn, ro){ return ro ? `<span class="qt-sub">👁️ عرض بس — معندكش صلاحية تعديل</span>` : `<button class="qt-btn" id="er-save-btn" onclick="${saveFn}">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`; }
 async function erRun(btnId, fn){ const b=document.getElementById(btnId); if(b){ if(b.disabled) return; b.disabled=true; } try{ await fn(); }catch(e){ erToast('❌ '+erErr(e), false); } finally{ if(b) b.disabled=false; } }
 function erFld(label, html, w){ return `<div class="qt-fld" style="${w?`flex:${w}`:''}"><label>${label}</label>${html}</div>`; }
@@ -21038,66 +21065,117 @@ async function erItemsLoad(force){
   try{ await erBoot(force); try{ ER.stock=await rpcSecure('erp_stock_list',{}); }catch(e){} erItemsTab(ER.tab.items); }catch(e){ erPaneErr('eri-pane-items',e); }
 }
 function erItemsTab(t){ ER.tab.items=t; erTabs('eri',['items','cats'],t); (t==='cats'?erRenderCats:erRenderItems)(); }
-function erItemFilterSet(k,v){ ER.f[k]=v; ER.more=0; erRenderItems(); }
-function erRenderItems(){
-  const B=ER.boot, el=document.getElementById('eri-pane-items'); if(!B||!el) return;
-  const cnt=document.getElementById('eri-count'); if(cnt) cnt.textContent=B.items.length;
-  const f=ER.f, q=f.q.trim().toLowerCase(), catSet=f.cat?erCatDesc(f.cat):null;
-  const used={}; B.items.forEach(i=>(i.components||[]).forEach(c=>{ used[c.item_id]=(used[c.item_id]||0)+1; }));
-  let rows=B.items.filter(i=>{
+function erBlankItem(){ const B=ER.boot; return { id:null, code:'', name_ar:'', name_en:'', category_id:ER.f.cat||'', kind:'finished', stock_mode:'own', reg_mode:'engine_chassis', pl_model_id:'', vehicle_type_id:'',
+  components:[], prices:{}, purchase_price:'', purchase_currency_id:(B.currencies.find(c=>c.is_base)||{}).id||'', default_warehouse_id:'', unit:'وحدة', units_per_carton:'', reorder_level:'', barcode:'', notes:'', is_active:true }; }
+function erItemFilterSet(k,v){ ER.f[k]=v; ER.more=0; if(k==='q') erItemsGrid(); else erRenderItems(); }
+// ── 📦 الأصناف زى MMS: فورم الصنف فوق + جريد بكل الأصناف تحت (صورة + كميات + كل الأسعار)
+function erItemQty(i){ if(!ER.stock || typeof erStockMap!=='function') return null; const m=erStockMap();
+  if(i.kind==='finished' && i.stock_mode==='components') return erKitAvail(i,m,null);
+  let b=0,a=0; Object.values(m[i.id]||{}).forEach(x=>{ b+=x.book; a+=x.actual; }); return {book:b,actual:a}; }
+function erItemsTiers(){ const B=ER.boot; return (B.tiers||[]).filter(t=>t.is_active).slice().sort((a,b)=>(a.sort_order||0)-(b.sort_order||0)||a.id-b.id); }
+function erItemsRows(){
+  const B=ER.boot, f=ER.f, q=f.q.trim().toLowerCase(), catSet=f.cat?erCatDesc(f.cat):null;
+  const rows=B.items.filter(i=>{
     if(f.act==='1' && !i.is_active) return false; if(f.act==='0' && i.is_active) return false;
     if(f.kind && i.kind!==f.kind) return false;
     if(catSet && !catSet.has(Number(i.category_id))) return false;
     if(f.flag==='nomodel' && !(i.kind==='finished' && i.reg_mode!=='none' && !i.pl_model_id)) return false;
     if(f.flag==='noprice' && Object.keys(i.prices||{}).length) return false;
     if(f.flag==='nowh' && i.default_warehouse_id) return false;
+    if(f.flag==='noimg' && i.image_url) return false;
     if(q && !(`${i.code} ${i.name_ar} ${i.name_en||''} ${i.barcode||''}`.toLowerCase().includes(q))) return false;
     return true; });
-  const total=rows.length, lim=300+ER.more; rows=rows.slice(0,lim);
-  const tier=(B.tiers.find(t=>t.is_default)||B.tiers[0]||{});
-  const canE=erCan('erp-items','edit');
+  const s=ER.isort||{k:'code',d:1}, num=v=>v==null||v===''?-Infinity:Number(v);
+  const key={ code:i=>i.code, name:i=>i.name_ar, en:i=>i.name_en||'', cat:i=>erCatPath(i.category_id), kind:i=>i.kind,
+    book:i=>num((erItemQty(i)||{}).book), act:i=>num((erItemQty(i)||{}).actual), cost:i=>num(i.last_cost_egp) }[s.k] || (i=>num((i.prices||{})[String(s.k).slice(2)]));
+  rows.sort((a,b)=>{ const x=key(a), y=key(b); return (typeof x==='number'&&typeof y==='number' ? x-y : String(x).localeCompare(String(y),'ar',{numeric:true})) * s.d; });
+  return rows;
+}
+function erItemSort(k){ const s=ER.isort=ER.isort||{k:'code',d:1}; if(s.k===k) s.d=-s.d; else { s.k=k; s.d=1; } erItemsGrid(); }
+function erRenderItems(){
+  const B=ER.boot, el=document.getElementById('eri-pane-items'); if(!B||!el) return;
+  const cnt=document.getElementById('eri-count'); if(cnt) cnt.textContent=B.items.length;
+  const f=ER.f, canE=erCan('erp-items','edit');
   const nomodel=B.items.filter(i=>i.is_active&&i.kind==='finished'&&i.reg_mode!=='none'&&!i.pl_model_id).length;
-  el.innerHTML = erBanner() + `
-  <div class="qt-row" style="margin-bottom:12px">
+  el.innerHTML = erBanner() + `<div id="eri-ed"></div>
+  <div class="qt-row" style="margin:12px 0">
     <input class="qt-inp" style="width:240px" placeholder="🔍 كود / اسم / باركود" value="${erEsc(f.q)}" oninput="erItemFilterSet('q',this.value)">
     <select class="qt-inp" onchange="erItemFilterSet('kind',this.value)"><option value="">كل التصنيفات</option>${Object.keys(ER_KIND).map(k=>`<option value="${k}" ${f.kind===k?'selected':''}>${ER_KIND[k]}</option>`).join('')}</select>
     <select class="qt-inp" style="max-width:240px" onchange="erItemFilterSet('cat',this.value)">${erCatOpts(null,'كل الفئات').map(o=>`<option value="${o[0]}" ${String(f.cat)===String(o[0])?'selected':''}>${erEsc(o[1])}</option>`).join('')}</select>
     <select class="qt-inp" onchange="erItemFilterSet('act',this.value)"><option value="1" ${f.act==='1'?'selected':''}>الشغالين</option><option value="0" ${f.act==='0'?'selected':''}>الموقوفين</option><option value="all" ${f.act==='all'?'selected':''}>الكل</option></select>
-    <select class="qt-inp" onchange="erItemFilterSet('flag',this.value)"><option value="">بدون تنبيه</option><option value="nomodel" ${f.flag==='nomodel'?'selected':''}>⚠️ مش مربوط بموديل الكتب</option><option value="noprice" ${f.flag==='noprice'?'selected':''}>⚠️ من غير أسعار</option><option value="nowh" ${f.flag==='nowh'?'selected':''}>⚠️ من غير مخزن افتراضى</option></select>
+    <select class="qt-inp" onchange="erItemFilterSet('flag',this.value)"><option value="">بدون تنبيه</option><option value="nomodel" ${f.flag==='nomodel'?'selected':''}>⚠️ مش مربوط بموديل الكتب</option><option value="noprice" ${f.flag==='noprice'?'selected':''}>⚠️ من غير أسعار</option><option value="nowh" ${f.flag==='nowh'?'selected':''}>⚠️ من غير مخزن افتراضى</option><option value="noimg" ${f.flag==='noimg'?'selected':''}>🖼️ من غير صورة</option></select>
     <div style="flex:1"></div>
     ${nomodel?`<span class="qt-chip ex" style="cursor:pointer" onclick="erItemFilterSet('flag','nomodel')">⚠️ ${nomodel} منتج مش مربوط بموديل</span>`:''}
-    <span class="qt-sub">${total} صنف</span>
+    <span class="qt-sub" id="eri-total"></span>
     ${canE?`<button class="qt-btn" onclick="erItemOpen(null)">➕ صنف جديد</button>`:''}
   </div>
-  ${!B.items.length?`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📦 مفيش أصناف لسه.<br>ابدأ بـ <b>🗂️ فئات الأصناف</b> (موتوسيكل / تروسيكل / كهرباء...)، وبعدين ضيف المكونات (ماتور، شاسيه، طقم صاج...)، وفى الآخر المنتج التام.</div>`:`
-  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>الصنف</th><th>الفئة</th><th>التصنيف</th><th>المخزون</th><th>التسجيل</th><th>${erEsc(tier.name||'السعر')}</th><th>المخزن الافتراضى</th><th></th></tr></thead><tbody>
-  ${rows.map(i=>{ const m=erById(B.pl_models,i.pl_model_id), w=erById(B.warehouses,i.default_warehouse_id);
-    return `<tr class="${i.is_active?'':'del'}">
-      <td><b style="color:var(--gold)">${erEsc(i.code)}</b></td>
-      <td><b>${erEsc(i.name_ar)}</b>${i.name_en?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(i.name_en)}</div>`:''}</td>
-      <td class="qt-sub">${erEsc(erCatPath(i.category_id))}</td>
-      <td><span class="qt-chip ${i.kind==='finished'?'in':'dim'}">${ER_KIND[i.kind]}</span>${used[i.id]?`<div class="qt-sub">داخل فى ${used[i.id]} منتج</div>`:''}</td>
-      <td>${i.kind==='finished'?(i.stock_mode==='components'?`🧩 مفكك (${(i.components||[]).length} مكوّن)`:'📦 كامل'):'—'}</td>
-      <td>${i.kind==='finished'?`${ER_REG[i.reg_mode]}${i.reg_mode!=='none'?(m?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(m.fingerprint)}</div>`:`<div><span class="qt-chip ex">⚠️ مش مربوط بموديل</span></div>`):''}`:'—'}</td>
-      <td>${(i.prices||{})[tier.id]!=null?erMoney(i.prices[tier.id]):'<span class="qt-sub">—</span>'}</td>
-      <td class="qt-sub">${w?erEsc(w.name):'—'}</td>
-      <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="erItemOpen(${i.id})">${canE?'✏️ تعديل':'👁️ عرض'}</button></td></tr>`; }).join('')}
-  </tbody></table></div>
-  ${total>lim?`<div style="text-align:center;margin-top:10px"><button class="qt-btn ghost sm" onclick="ER.more+=300;erRenderItems()">عرض أكتر (${total-lim} فاضلين)</button></div>`:''}`}`;
+  <div id="eri-grid"></div>`;
+  erItemEd(); erItemsGrid();
 }
-
-function erBlankItem(){ const B=ER.boot; return { id:null, code:'', name_ar:'', name_en:'', category_id:ER.f.cat||'', kind:'finished', stock_mode:'own', reg_mode:'engine_chassis', pl_model_id:'', vehicle_type_id:'',
-  components:[], prices:{}, purchase_price:'', purchase_currency_id:(B.currencies.find(c=>c.is_base)||{}).id||'', default_warehouse_id:'', unit:'وحدة', units_per_carton:'', reorder_level:'', barcode:'', notes:'', is_active:true }; }
+function erItemsGrid(){
+  const B=ER.boot, el=document.getElementById('eri-grid'); if(!B||!el) return;
+  if(!B.items.length){ el.innerHTML=`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📦 مفيش أصناف لسه.<br>ابدأ بـ <b>🗂️ فئات الأصناف</b> (موتوسيكل / تروسيكل / كهرباء...)، وبعدين ضيف المكونات (ماتور، شاسيه، طقم صاج...)، وفى الآخر المنتج التام.</div>`; return; }
+  const all=erItemsRows(), lim=300+ER.more, rows=all.slice(0,lim), tiers=erItemsTiers(), s=ER.isort||{k:'code',d:1}, cost=!!B.can_cost;
+  const tt=document.getElementById('eri-total'); if(tt) tt.textContent=all.length+' صنف';
+  const sel=ER.iedit&&ER.iedit.id, th=(k,l)=>`<th class="eri-th" onclick="erItemSort('${k}')">${l}${s.k===k?(s.d>0?' ▲':' ▼'):''}</th>`;
+  ER.__irows=rows.map(i=>i.id);
+  el.innerHTML = `<div class="qt-scroll eri-grid" tabindex="0" onkeydown="erItemsKey(event)"><table class="qt-tbl eri-tbl"><thead><tr><th style="width:46px">🖼️</th>${th('code','الكود')}${th('name','الوصف ع')}${th('en','الوصف E')}${th('cat','الفئة')}${th('kind','التصنيف')}${th('book','دفترى')}${th('act','فعلى')}${tiers.map(t=>th('p_'+t.id,erEsc(t.name)+(t.is_default?' ⭐':''))).join('')}${cost?th('cost','التكلفة'):''}<th>المخزن الافتراضى</th><th></th></tr></thead><tbody>
+  ${rows.map(i=>{ const w=erById(B.warehouses,i.default_warehouse_id), qy=erItemQty(i);
+    return `<tr data-iid="${i.id}" data-erid="${i.id}" class="${i.is_active?'':'del'} ${String(sel)===String(i.id)?'eri-sel':''}" onclick="erItemOpen(${i.id})">
+      <td>${i.image_url?`<img class="eri-th-img" loading="lazy" src="${erEsc(i.image_url)}" alt="">`:'<span class="eri-noimg">—</span>'}</td>
+      <td><b style="color:var(--gold)">${erEsc(i.code)}</b></td><td><b>${erEsc(i.name_ar)}</b></td>
+      <td class="qt-sub" dir="ltr" style="text-align:right">${erEsc(i.name_en||'')}</td><td class="qt-sub">${erEsc(erCatPath(i.category_id))}</td>
+      <td><span class="qt-chip ${i.kind==='finished'?'in':'dim'}">${ER_KIND[i.kind]}${i.kind==='finished'&&i.stock_mode==='components'?' 🧩':''}</span></td>
+      <td>${qy?erQ(qy.book):'—'}</td><td>${qy?`<b>${erQ(qy.actual)}</b>`:'—'}</td>
+      ${tiers.map(t=>`<td>${(i.prices||{})[t.id]!=null?erMoney(i.prices[t.id]):'<span class="qt-sub">—</span>'}</td>`).join('')}
+      ${cost?`<td class="qt-sub">${i.last_cost_egp!=null?erMoney(i.last_cost_egp,2):'—'}</td>`:''}
+      <td class="qt-sub">${w?erEsc(w.name):'—'}</td><td><button class="qt-btn ghost sm" tabindex="-1" onclick="erItemOpen(${i.id})">✏️</button></td></tr>`; }).join('')}
+  </tbody></table></div>
+  ${all.length>lim?`<div style="text-align:center;margin-top:10px"><button class="qt-btn ghost sm" onclick="ER.more+=300;erItemsGrid()">عرض أكتر (${all.length-lim} فاضلين)</button></div>`:''}
+  <div class="qt-sub" style="margin-top:6px">💡 دوس على أى صف يظهر فوق — والأسهم ↑ ↓ بتنقلك بين الأصناف. دوس على عنوان العمود علشان ترتّب.</div>`;
+}
+function erItemsKey(ev){ if(ev.key!=='ArrowDown'&&ev.key!=='ArrowUp') return; ev.preventDefault(); const ids=ER.__irows||[]; if(!ids.length) return;
+  let ix=ids.findIndex(x=>ER.iedit&&String(x)===String(ER.iedit.id)); ix = ix<0 ? 0 : Math.max(0, Math.min(ids.length-1, ix+(ev.key==='ArrowDown'?1:-1)));
+  erItemOpen(ids[ix]); const r=document.querySelector(`#eri-grid tr[data-iid="${ids[ix]}"]`); if(r) r.scrollIntoView({block:'nearest'}); const g=document.querySelector('#eri-grid .eri-grid'); if(g) g.focus({preventScroll:true}); }
+function erItemEd(){
+  const el=document.getElementById('eri-ed'); if(!el) return; const it=ER.iedit;
+  if(!it){ el.innerHTML=`<div class="qt-card qt-sub" style="text-align:center;padding:16px">👇 اختار صنف من الجريد علشان يظهر هنا بصورته وبياناته${erCan('erp-items','edit')?' — أو دوس <b>➕ صنف جديد</b>':''}</div>`; return; }
+  ER.edit=it; ER.ro=!erCan('erp-items','edit');
+  if(__erRendering){ setTimeout(erItemEd,0); return; } __erRendering=true;
+  try{ el.innerHTML=`<div class="eri-edbox"><div class="qt-row eri-edhd">
+      <b style="font-size:15px">${it.id?`📦 الصنف <span style="color:var(--gold)">${erEsc(it.code)}</span> — ${erEsc(it.name_ar)}`:(it.__copy?'📑 صنف جديد (نسخة)':'➕ صنف جديد')}</b><div style="flex:1"></div>
+      ${ER.ro?'<span class="qt-sub">👁️ عرض بس</span>':`<button class="qt-btn" id="er-save-btn" onclick="erItemSave()">💾 حفظ</button>${it.id?`<button class="qt-btn ghost" onclick="erItemOpen(null,${it.id})">📑 نسخة جديدة منه</button>`:''}`}
+      <button class="qt-btn ghost" onclick="ER.iedit=null;ER.edit=null;erItemEd();erItemsGrid()">✖ قفل</button></div>${erItemForm()}</div>`; }
+  finally{ __erRendering=false; }
+}
 function erItemOpen(id, copyFrom){
   const B=ER.boot; let it;
-  if(copyFrom){ it=JSON.parse(JSON.stringify(erById(B.items,copyFrom))); it.id=null; it.code=''; it.barcode=''; it.name_ar=it.name_ar+' (نسخة)'; it.updated_by=null; }
+  if(copyFrom){ it=JSON.parse(JSON.stringify(erById(B.items,copyFrom))); it.id=null; it.code=''; it.barcode=''; it.name_ar=it.name_ar+' (نسخة)'; it.updated_by=null; it.__copy=true; }
   else it = id ? JSON.parse(JSON.stringify(erById(B.items,id))) : erBlankItem();
   ['pl_model_id','vehicle_type_id','default_warehouse_id','category_id','purchase_currency_id'].forEach(k=>{ if(it[k]==null) it[k]=''; });
-  ['purchase_price','units_per_carton','reorder_level','name_en','barcode','notes'].forEach(k=>{ if(it[k]==null) it[k]=''; });
+  ['purchase_price','units_per_carton','reorder_level','name_en','barcode','notes','image_url'].forEach(k=>{ if(it[k]==null) it[k]=''; });
   it.components=(it.components||[]).map(c=>({...c}));
-  ER.edit=it; ER.ro=!erCan('erp-items','edit'); it.__render=()=>erModalBody(erItemForm());
-  erModal(it.id?`📦 الصنف <span style="color:var(--gold)">${erEsc(it.code)}</span>`:(copyFrom?'📑 صنف جديد (نسخة)':'➕ صنف جديد'), erItemForm(), erFoot('erItemSave()', ER.ro) + (!ER.ro&&it.id?`<button class="qt-btn ghost" onclick="erItemOpen(null,${it.id})">📑 نسخة جديدة منه</button>`:''));
+  ER.iedit=it; it.__render=()=>erItemEd();
+  if(!document.getElementById('eri-ed')){ erRenderItems(); } else { erItemEd(); document.querySelectorAll('#eri-grid tr.eri-sel').forEach(r=>r.classList.remove('eri-sel')); const r=id&&document.querySelector(`#eri-grid tr[data-iid="${id}"]`); if(r) r.classList.add('eri-sel'); }
+  const ed=document.getElementById('eri-ed'); if(ed && !id){ ed.scrollIntoView({block:'start',behavior:'smooth'}); }
 }
+// 🖼️ صورة الصنف — بتتصغّر لـ 900px وتترفع على catalog/items
+async function erItemImg(inp){
+  const f=inp.files&&inp.files[0]; const st=document.getElementById('eri-img-st'); if(!f) return;
+  if(!/^image\//.test(f.type)){ erToast('❌ اختار صورة',false); return; }
+  try{
+    if(st) st.textContent='⏳ بنجهّز الصورة...';
+    const im=await new Promise((res,rej)=>{ const x=new Image(); x.onload=()=>res(x); x.onerror=()=>rej(new Error('الصورة دى مش بتفتح')); x.src=URL.createObjectURL(f); });
+    const k=Math.min(1, 900/Math.max(im.naturalWidth,im.naturalHeight)); const c=document.createElement('canvas'); c.width=Math.round(im.naturalWidth*k); c.height=Math.round(im.naturalHeight*k);
+    const g=c.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,c.width,c.height); g.drawImage(im,0,0,c.width,c.height);
+    const blob=await new Promise(r=>c.toBlob(r,'image/jpeg',0.86));
+    const path=`items/${Date.now()}_${Math.random().toString(36).slice(2,8)}.jpg`;
+    const r=await sbUploadX(`catalog/${path}`, blob, 'image/jpeg', p=>{ if(st) st.textContent=`⏳ بنرفع ${p}%`; });
+    if(!r.ok) throw new Error('الرفع فشل ('+r.status+')');
+    if(ER.iedit){ ER.iedit.image_url=`${SB}/storage/v1/object/public/catalog/${path}`; ER.edit=ER.iedit; erItemEd(); erToast('🖼️ الصورة جاهزة — دوس 💾 حفظ'); }
+  }catch(e){ if(st) st.textContent=''; erToast('❌ '+(e.message||e),false); }
+}
+
 function erCompDl(){ const B=ER.boot; return `<datalist id="er-comp-dl">${B.items.filter(i=>i.kind!=='finished'&&i.is_active&&String(i.id)!==String(ER.edit.id)).map(i=>`<option value="${erEsc(i.code+' — '+i.name_ar)}"></option>`).join('')}</datalist>`; }
 function erCompSet(idx, k, v){ if(typeof __erRendering!=='undefined' && __erRendering) return;
   const c=ER.edit.components[idx]; if(!c) return;
@@ -21129,6 +21207,11 @@ function erItemForm(){
   const tiers=B.tiers.filter(t=>t.is_active||(it.prices||{})[t.id]!=null);
   return `<fieldset ${ER.ro?'disabled':''} class="er-fs">
   <div class="qt-card"><div class="qt-h">🧾 البيانات الأساسية</div>
+    <div class="qt-row eri-basic" style="align-items:flex-start;flex-wrap:nowrap">
+      <div class="eri-imgbox">${it.image_url?`<img src="${erEsc(it.image_url)}" alt="" onclick="window.open(this.src,'_blank')">`:'<span>🖼️<br><small>مفيش صورة</small></span>'}
+        <div style="display:flex;gap:4px;justify-content:center;margin-top:6px"><label class="qt-btn ghost sm" style="cursor:pointer">📷 ${it.image_url?'غيّر':'صورة'}<input type="file" accept="image/*" style="display:none" onchange="erItemImg(this)"></label>${it.image_url?`<button class="qt-btn red sm" onclick="erSet('image_url','',true)" title="شيل الصورة">✖</button>`:''}</div>
+        <div class="qt-sub" id="eri-img-st" style="text-align:center"></div></div>
+      <div style="flex:1;min-width:0">
     <div class="qt-row">
       ${erFld('الكود', erInp('code',it.code,{ph:'أوتوماتيك لو سبته فاضى',dir:'ltr'}),1)}
       ${erFld('اسم الصنف (عربى) *', erInp('name_ar',it.name_ar,{ph:'مثلاً: جنط هوجان 4 جامبو اتش جى 200 سى سى برو بصمة'}),3)}
@@ -21140,6 +21223,8 @@ function erItemForm(){
       ${erFld('الوحدات فى الكرتونة', erInp('units_per_carton',it.units_per_carton,{type:'number'}),1)}
       ${erFld('الباركود', erInp('barcode',it.barcode,{dir:'ltr'}),1)}
       ${erFld('حد الطلب', erInp('reorder_level',it.reorder_level,{type:'number',ph:'ينبّه لما الرصيد يقل عنه'}),1)}
+    </div>
+      </div>
     </div>
     <div class="qt-h" style="margin-top:14px;font-size:13px">تصنيف الصنف</div>
     <div class="qt-row">
@@ -21176,7 +21261,7 @@ function erItemForm(){
     <div class="qt-row" style="margin-top:10px">
       ${tiers.map(t=>erFld(`${erEsc(t.name)}${t.is_default?' ⭐':''}`, `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100%" value="${erEsc((it.prices||{})[t.id]!=null?it.prices[t.id]:'')}" oninput="ER.edit.prices[${t.id}]=this.value">`,1)).join('')}
     </div>
-    <div class="qt-sub" style="margin-top:6px">💡 السعر الأول هيتحسب أوتوماتيك من تكاليف الشحنة + هامش الربح لما نبنى المشتريات — دلوقتى اكتبه بإيدك.</div>
+    <div class="qt-sub" style="margin-top:6px">💡 الأسعار بتتكتب بإيدك هنا — اعتماد تكاليف الشحنة مش بيغيّرها إلا لو علّمت «حدّث السعر الأول» وقت الاعتماد.</div>
     ${B.can_cost?`<div class="qt-row" style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)">
       ${erFld('💲 سعر الشراء', `<input class="qt-inp" type="number" step="0.0001" min="0" style="width:100%" value="${erEsc(it.purchase_price)}" oninput="erSet('purchase_price',this.value)" ${B.can_cost_edit?'':'disabled'}>`,1)}
       ${erFld('العملة', erSel('purchase_currency_id',it.purchase_currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(it.purchase_currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),false,B.can_cost_edit?'':'disabled'),1)}
@@ -21198,11 +21283,12 @@ async function erItemSave(){
       pl_model_id:(it.kind==='finished'&&it.reg_mode!=='none'&&it.pl_model_id)?it.pl_model_id:null, vehicle_type_id:it.vehicle_type_id||null,
       components:(it.kind==='finished'&&it.stock_mode==='components')?(it.components||[]).filter(c=>c.item_id).map(c=>({item_id:c.item_id,qty:erNum(c.qty),role:c.role||null})):[],
       prices, purchase_price:erNum(it.purchase_price), purchase_currency_id:it.purchase_currency_id||null, default_warehouse_id:it.default_warehouse_id||null,
-      unit:it.unit, units_per_carton:erNum(it.units_per_carton), reorder_level:erNum(it.reorder_level), barcode:it.barcode, notes:it.notes, is_active:!!it.is_active };
+      unit:it.unit, units_per_carton:erNum(it.units_per_carton), reorder_level:erNum(it.reorder_level), barcode:it.barcode, notes:it.notes, is_active:!!it.is_active, image_url:it.image_url||null };
     const r=await rpcSecure('erp_item_save',{p});
     const B=ER.boot, ix=B.items.findIndex(x=>x.id===r.id); if(ix>=0) B.items[ix]=r; else B.items.push(r);
     B.items.sort((a,b)=>String(a.code).localeCompare(String(b.code),'en',{numeric:true}));
-    erClose(); erRenderItems(); erToast(`✅ اتحفظ الصنف ${r.code}`);
+    if(document.getElementById('eri-ed')){ erItemOpen(r.id); erItemsGrid(); const row=document.querySelector(`#eri-grid tr[data-iid="${r.id}"]`); if(row) row.scrollIntoView({block:'nearest'}); } else { erClose(); erRenderItems(); }
+    erToast(`✅ اتحفظ الصنف ${r.code}`);
   });
 }
 
@@ -21513,7 +21599,7 @@ function erRenderCosts(){ const el=document.getElementById('erp-pu-pane-cost'); 
   const rows=ER.pu.ships.filter(s=>s.status!=='ملغية'&&(f.st==='all'||(f.st==='open'?s.cost_status!=='معتمدة':s.cost_status==='معتمدة'))&&(!q||`${s.ship_no} ${s.ref_no||''} ${erSupName(s.supplier_id)}`.toLowerCase().includes(q)));
   el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" style="width:240px" placeholder="🔍 رقم الشحنة / المورد" value="${erEsc(f.q)}" oninput="ER.cf2.q=this.value;erRenderCosts()">
     <select class="qt-inp" onchange="ER.cf2.st=this.value;erRenderCosts()">${[['open','لسه متعتمدتش'],['done','المعتمدة'],['all','الكل']].map(o=>`<option value="${o[0]}" ${f.st===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
-    <div class="qt-sub" style="flex:1">💰 التكاليف بتتحسب على كل شحنة: قيمة البضاعة + المصاريف (شحن/جمارك/ضرايب...) موزعة بالقيمة أو بالعدد + هامش الربح = السعر الأول. الاعتماد بيحدّث تكلفة الصنف.</div></div>
+    <div class="qt-sub" style="flex:1">💰 التكاليف بتتحسب على كل شحنة: قيمة البضاعة + البنود (شحن/جمارك/مخاطر/دهان...) = تكلفة الصنف. الاعتماد بيحدّث تكلفة الصنف — والسعر بيفضل زى ما انت كاتبه إلا لو علّمت.</div><button class="qt-btn ghost" onclick="erCostItemsOpen()">📋 بنود التكاليف</button></div>
   ${rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الشحنة</th><th>المورد</th><th>التاريخ</th><th>قيمة البضاعة</th><th>بالجنيه</th><th>المصاريف</th><th>التكلفة الكلية</th><th>الهامش</th><th>الحالة</th><th></th></tr></thead><tbody>
   ${rows.map(s=>{ const r=s.cost_result||{}; return `<tr data-erid="${s.id}"><td><b style="color:var(--gold)">${s.ship_no}</b>${erTestChip(s)}${s.ref_no?`<div class="qt-sub" dir="ltr" style="text-align:right">${erEsc(s.ref_no)}</div>`:''}</td>
       <td>${erEsc(erSupName(s.supplier_id))}<div class="qt-sub">${erEsc(s.incoterm||'')}</div></td><td>${erEsc(s.ship_date)}</td><td>${erM(s.total,s.currency_id)}</td>
@@ -21622,7 +21708,7 @@ function erPoForm(){
   </div><div class="qt-row" style="margin-top:10px">
     ${erFld('العملة', erSel('currency_id',o.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(o.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),true, hasShip?'disabled':''),1)}
     ${erFld('شرط التسليم', erSel('incoterm',o.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
-  </div></div>
+  </div>${o.supplier_id?erPartyBox('supplier',o.supplier_id):''}</div>
   <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— الأسعار بالسعر المتفق عليه مع المورد • ⏎ Enter ينقلك للخانة اللى بعدها، وآخر السطر يفتح سطر جديد</span></div>
     <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="qt-row" style="margin-top:12px">${erFld('خصم على الطلبية كلها %', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100px" value="${erEsc(o.discount_pct)}" oninput="ER.edit.discount_pct=this.value;erPoTotals()">`)}
@@ -21697,8 +21783,8 @@ function erShipForm(){
   const rows = po ? po.items.map(pl=>{ let l=s.items.find(x=>Number(x.po_line)===Number(pl.line_no));
       const rem=Number(pl.qty)-Number((po.shipped||{})[pl.line_no]||0)+(l?Number(l.__orig||0):0);
       if(!l){ if(rem<=0) return ''; l={po_line:pl.line_no,item_id:pl.item_id,qty:'',price:pl.net_unit,__orig:0}; s.items.push(l); }
-      const lt=(erNum(l.qty)||0)*Number(pl.net_unit); tot+=lt;
-      return `<tr><td>${erEsc(erItemLbl(pl.item_id))}</td><td>${erQ(pl.qty)}</td><td>${erQ(rem)}</td><td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erShipQty(${pl.line_no},this.value)" data-g="${gk},0" onkeydown="erGridKey(event,${gk++},0,0,true)"></td><td>${erMoney(pl.net_unit,4)}</td><td><b id="er-shl-${pl.line_no}">${erMoney(lt,2)}</b></td></tr>`; }).join('')
+      if(l.price==null||l.price==='') l.price=pl.net_unit; const lt=(erNum(l.qty)||0)*(erNum(l.price)||0); tot+=lt;
+      return `<tr><td>${erEsc(erItemLbl(pl.item_id))}</td><td>${erQ(pl.qty)}</td><td>${erQ(rem)}</td><td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erShipQty(${pl.line_no},this.value)" data-g="${gk},0" onkeydown="erGridKey(event,${gk++},0,0,true)"></td><td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erShipPoPrice(${pl.line_no},this.value)" title="سعر الطلبية ${erMoney(pl.net_unit,4)} — تقدر تغيّره">${Number(erNum(l.price))!==Number(pl.net_unit)?`<div class="qt-sub">الطلبية: ${erMoney(pl.net_unit,4)}</div>`:''}</td><td><b id="er-shl-${pl.line_no}">${erMoney(lt,2)}</b></td></tr>`; }).join('')
     : s.items.map((l,i)=>{ const it=erById(B.items,l.item_id); const blank=!l.item_id&&!l.__txt; const q=erNum(l.qty)||0, p=erNum(l.price)||0; const lt=q*p - q*p*(erNum(l.disc_pct)||0)/100 - (erNum(l.disc_amt)||0); tot+=lt;
       return `<tr><td style="min-width:240px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erShipLine(${i},'item',this.value)" ${G(i,0)}>${!it&&l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
         <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" onchange="erShipLine(${i},'qty',this.value)" ${G(i,1)}></td>
@@ -21719,45 +21805,81 @@ function erShipForm(){
     ${po?erFld('العملة', `<div class="qt-inp" style="opacity:.8">${erEsc(cu.code||'')} — ${erEsc(cu.name||'')}</div>`,1):erFld('العملة', erSel('currency_id',s.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(s.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),true),1)}
     ${cu.is_base?'':erFld(`سعر الصرف (1 ${erEsc(cu.code||'')} = ? ج.م) *`, erInp('rate',s.rate,{type:'number',step:'0.0001'}),1)}
     ${erFld('شرط التسليم', erSel('incoterm',s.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
-  </div></div>
+  </div>${s.supplier_id?erPartyBox('supplier',s.supplier_id):''}</div>
   <div class="qt-card"><div class="qt-h">📦 الأصناف ${po?'<span class="qt-sub">— اكتب الكمية اللى اتشحنت من كل سطر (فاضى أو صفر = مش فى الشحنة دى)</span>':''}</div>
-    <div style="overflow:auto"><table class="qt-tbl"><thead><tr>${po?'<th>الصنف</th><th>فى الطلبية</th><th>الباقى</th><th>الكمية المشحونة</th><th>السعر الصافى</th><th>الإجمالى</th>':'<th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th>'}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr>${po?'<th>الصنف</th><th>فى الطلبية</th><th>الباقى</th><th>الكمية المشحونة</th><th>السعر (بتكتبه بإيدك)</th><th>الإجمالى</th>':'<th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th>'}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="qt-sub" style="margin-top:6px">⏎ Enter ينقلك للخانة اللى بعدها${po?'':'، وآخر السطر يفتح سطر جديد'}</div>
     <div class="qt-tot" style="margin-top:10px" id="er-ship-tot">قيمة الشحنة: <b>${erMoney(tot,2)} ${erEsc(cu.code||'')}</b>${cu.is_base?'':` ≈ <b>${erMoney(tot*(erNum(s.rate)||0),2)} ج.م</b>`}</div>
   </div>
   <div class="qt-card">${erFld('ملاحظات', `<textarea class="qt-inp" rows="2" style="width:100%" oninput="erSet('notes',this.value)">${erEsc(s.notes)}</textarea>`)}</div></fieldset>`;
 }
+function erShipPoPrice(pln, v){ const l=ER.edit.items.find(x=>Number(x.po_line)===Number(pln)); if(l){ l.price=v; erShipQty(pln, l.qty); } }
 function erShipQty(pln, v){ const s=ER.edit, po=erById(ER.pu.pos,s.po_id); let l=s.items.find(x=>Number(x.po_line)===Number(pln)); if(l) l.qty=v;
-  const pl=po.items.find(x=>x.line_no===pln); const e=document.getElementById('er-shl-'+pln); if(e) e.textContent=erMoney((erNum(v)||0)*Number(pl.net_unit),2);
-  let tot=0; po.items.forEach(x=>{ const y=s.items.find(z=>Number(z.po_line)===Number(x.line_no)); tot+=(erNum(y&&y.qty)||0)*Number(x.net_unit); }); const cu=erCur(s.currency_id);
+  const pl=po.items.find(x=>x.line_no===pln); const pr=l&&l.price!==''&&l.price!=null?(erNum(l.price)||0):Number(pl.net_unit); const e=document.getElementById('er-shl-'+pln); if(e) e.textContent=erMoney((erNum(v)||0)*pr,2);
+  let tot=0; po.items.forEach(x=>{ const y=s.items.find(z=>Number(z.po_line)===Number(x.line_no)); const yp=y&&y.price!==''&&y.price!=null?(erNum(y.price)||0):Number(x.net_unit); tot+=(erNum(y&&y.qty)||0)*yp; }); const cu=erCur(s.currency_id);
   const t=document.getElementById('er-ship-tot'); if(t) t.innerHTML=`قيمة الشحنة: <b>${erMoney(tot,2)} ${erEsc(cu.code||'')}</b>${cu.is_base?'':` ≈ <b>${erMoney(tot*(erNum(s.rate)||0),2)} ج.م</b>`}`; }
 function erShipLine(i,k,v){ if(typeof __erRendering!=='undefined' && __erRendering) return; const l=ER.edit.items[i]; if(!l) return; if(k==='item'){ const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; if(it && !l.price && it.purchase_price!=null && String(it.purchase_currency_id)===String(ER.edit.currency_id)) l.price=it.purchase_price; } else l[k]=v; ER.edit.__render(); }
 async function erShipSave(){ await erRun('er-save-btn', async ()=>{ const s=ER.edit;
   const bad=s.items.find(l=>l.__txt && !l.item_id && !s.po_id); if(bad) throw new Error(`الصنف «${bad.__txt}» مش موجود — اختاره من القايمة`);
   const p={ id:s.id, po_id:s.po_id, supplier_id:s.supplier_id||null, currency_id:s.currency_id||null, rate:erNum(s.rate), incoterm:s.incoterm, ship_date:s.ship_date, eta:s.eta||null,
     ref_no:s.ref_no, container:s.container, warehouse_id:s.warehouse_id||null, notes:s.notes,
-    items: s.po_id ? s.items.filter(l=>erNum(l.qty)).map(l=>({po_line:l.po_line,qty:erNum(l.qty)})) : s.items.filter(l=>l.item_id).map(l=>({item_id:l.item_id,qty:erNum(l.qty),price:erNum(l.price)||0,disc_pct:erNum(l.disc_pct)||0,disc_amt:erNum(l.disc_amt)||0})) };
+    items: s.po_id ? s.items.filter(l=>erNum(l.qty)).map(l=>({po_line:l.po_line,qty:erNum(l.qty),price:erNum(l.price)})) : s.items.filter(l=>l.item_id).map(l=>({item_id:l.item_id,qty:erNum(l.qty),price:erNum(l.price)||0,disc_pct:erNum(l.disc_pct)||0,disc_amt:erNum(l.disc_amt)||0})) };
   await rpcSecure('erp_ship_save',{p}); erClose(); ER.stock=null; await erPuReload(); erToast('✅ اتحفظت الشحنة — الرصيد الدفترى اتحدّث'); }); }
 
 // ════════ 💰 تكاليف الشحنة
-function erCostOpen(id){
+// ═══ 📋 بنود التكاليف (مخاطر / دهان / شحن ...) + 3 طرق حساب ═══
+const ER_COST_M = { fixed:'💰 مبلغ على الشحنة', per_unit:'📦 مبلغ على كل وحدة', pct:'📊 نسبة % من القيمة' };
+async function erCostItemsGet(force){ if(ER.__citems && !force) return ER.__citems; try{ ER.__citems=await rpcSecure('erp_cost_items_list',{}); }catch(e){ ER.__citems=ER.__citems||[]; } return ER.__citems; }
+async function erCostItemsOpen(){
+  const rows=JSON.parse(JSON.stringify(await erCostItemsGet(true)));
+  const st={ rows, __render:null }; ER.edit=st; ER.ro=!(ER.boot&&ER.boot.can_cost_edit);
+  st.__render=()=>erModalBody(erCostItemsForm());
+  erModal('📋 بنود التكاليف', erCostItemsForm(), ER.ro?'<span class="qt-sub">👁️ عرض بس</span>':`<button class="qt-btn ghost" onclick="ER.edit.rows.push({id:null,name:'',method:'fixed',default_amount:'',alloc:'value',is_active:true,__new:true});ER.edit.__render()">➕ بند جديد</button><button class="qt-btn ghost" onclick="erClose()">قفل</button>`);
+}
+function erCostItemsForm(){ const st=ER.edit;
+  return `<div class="qt-sub" style="margin-bottom:10px">البند بيتعرّف مرة واحدة ويتختار فى تكاليف أى شحنة. «مبلغ على الشحنة» بيتوزع على الأصناف بالقيمة أو بالعدد، «مبلغ على كل وحدة» زى الدهان (50 ج للموتوسيكل)، «نسبة %» زى المخاطر (2% من قيمة البضاعة).</div>
+  <fieldset ${ER.ro?'disabled':''} class="er-fs"><div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>البند</th><th>طريقة الحساب</th><th>القيمة الافتراضية</th><th>التوزيع</th><th>شغال</th><th></th></tr></thead><tbody>
+  ${st.rows.map((r,i)=>`<tr class="${r.is_active?'':'del'}"><td><input class="qt-inp" style="width:170px" value="${erEsc(r.name||'')}" oninput="ER.edit.rows[${i}].name=this.value"></td>
+    <td><select class="qt-inp" onchange="ER.edit.rows[${i}].method=this.value;ER.edit.__render()">${Object.keys(ER_COST_M).map(k=>`<option value="${k}" ${r.method===k?'selected':''}>${ER_COST_M[k]}</option>`).join('')}</select></td>
+    <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:110px" placeholder="${r.method==='pct'?'%':'ج.م'}" value="${erEsc(r.default_amount==null?'':r.default_amount)}" oninput="ER.edit.rows[${i}].default_amount=this.value"></td>
+    <td>${r.method==='fixed'?`<select class="qt-inp" onchange="ER.edit.rows[${i}].alloc=this.value"><option value="value" ${r.alloc!=='qty'?'selected':''}>بالقيمة</option><option value="qty" ${r.alloc==='qty'?'selected':''}>بالعدد</option></select>`:'<span class="qt-sub">—</span>'}</td>
+    <td><input type="checkbox" ${r.is_active?'checked':''} onchange="ER.edit.rows[${i}].is_active=this.checked"></td>
+    <td><button class="qt-btn sm" id="er-ci-${i}" onclick="erCostItemSave(${i})">💾</button></td></tr>`).join('')}
+  </tbody></table></div></fieldset>`; }
+async function erCostItemSave(i){ await erRun('er-ci-'+i, async ()=>{ const r=ER.edit.rows[i];
+  const res=await rpcSecure('erp_cost_item_save',{p:{id:r.id,name:r.name,method:r.method,default_amount:erNum(r.default_amount),alloc:r.alloc,is_active:!!r.is_active,sort_order:r.sort_order}});
+  ER.edit.rows[i]=res; await erCostItemsGet(true); ER.edit.__render(); erToast('✅ اتحفظ البند «'+res.name+'»'); }); }
+function erCostKind(i, v){ const c=ER.edit.costs[i]; if(!c) return; c.kind=v; const ci=(ER.__citems||[]).find(x=>x.name===v);
+  if(ci){ c.cost_item_id=ci.id; c.method=ci.method; if(ci.method==='fixed') c.alloc=ci.alloc; if((c.amount===''||c.amount==null) && ci.default_amount!=null) c.amount=ci.default_amount; if(ci.method==='pct'){ c.currency_id=(ER.boot.currencies.find(x=>x.is_base)||{}).id; c.rate=''; } ER.edit.__render(); }
+  else c.cost_item_id=null; }
+function erCostScope(i, itemId, on){ const c=ER.edit.costs[i]; if(!c) return; let ids=(c.item_ids||[]).map(Number); itemId=Number(itemId);
+  ids = on ? Array.from(new Set(ids.concat([itemId]))) : ids.filter(x=>x!==itemId); c.item_ids=ids; const lb=document.getElementById('er-cscope-'+i); if(lb) lb.textContent=ids.length?`${ids.length} صنف`:'كل الأصناف'; }
+function erCostScopeHtml(i, c){ const s=ER.edit, ids=(c.item_ids||[]).map(Number), uniq=[...new Set((s.items||[]).map(l=>Number(l.item_id)))];
+  return `<details class="er-cscope"><summary id="er-cscope-${i}">${ids.length?`${ids.length} صنف`:'كل الأصناف'}</summary><div class="er-cscope-box">
+    <div class="qt-sub" style="margin-bottom:4px">سيبهم كلهم من غير علامة = على كل أصناف الشحنة</div>
+    ${uniq.map(id=>`<label class="er-cs-lb"><input type="checkbox" ${ids.includes(id)?'checked':''} onchange="erCostScope(${i},${id},this.checked)"> ${erEsc(erItemLbl(id))}</label>`).join('')}</div></details>`; }
+async function erCostOpen(id){
+  await erCostItemsGet();
   const B=ER.boot, s=JSON.parse(JSON.stringify(erById(ER.pu.ships,id)));
-  s.costs=(s.costs||[]).map(c=>({...c})); if(!s.costs.length) s.costs.push({kind:'',amount:'',currency_id:s.currency_id,rate:'',alloc:'value',note:''});
+  s.costs=(s.costs||[]).map(c=>({...c, method:c.method||'fixed', item_ids:(c.item_ids||[]).map(Number)})); if(!s.costs.length) s.costs.push({kind:'',method:'fixed',amount:'',currency_id:s.currency_id,rate:'',alloc:'value',item_ids:[],note:''});
   ER.edit=s; ER.ro=!B.can_cost_edit;
   s.__render=()=>erModalBody(erCostForm());
   erModal(`💰 تكاليف الشحنة <span style="color:var(--gold)">${s.ship_no}</span> ${erStChip(s.cost_status)}`, erCostForm(),
-    ER.ro?'<span class="qt-sub">👁️ عرض بس</span>':`<button class="qt-btn ghost" id="er-cost-save" onclick="erCostSave(false)">💾 حفظ واحسب</button><label class="qt-check" style="font-weight:700"><input type="checkbox" id="er-cost-upd" checked> حدّث «${erEsc((B.tiers.filter(t=>t.is_active).sort((a,b)=>a.sort_order-b.sort_order)[0]||{}).name||'السعر الأول')}» للأصناف</label><button class="qt-btn" id="er-cost-appr" onclick="erCostSave(true)">✅ اعتماد التكاليف</button>`);
+    ER.ro?'<span class="qt-sub">👁️ عرض بس</span>':`<button class="qt-btn ghost" id="er-cost-save" onclick="erCostSave(false)">💾 حفظ واحسب</button><label class="qt-check" style="font-weight:700"><input type="checkbox" id="er-cost-upd"> حدّث «${erEsc((B.tiers.filter(t=>t.is_active).sort((a,b)=>a.sort_order-b.sort_order)[0]||{}).name||'السعر الأول')}» للأصناف</label><button class="qt-btn" id="er-cost-appr" onclick="erCostSave(true)">✅ اعتماد التكاليف</button>`);
 }
 function erCostForm(){
   const B=ER.boot, s=ER.edit, cu=erCur(s.currency_id), r=s.cost_result;
-  const kinds=`<datalist id="er-cost-kinds">${ER_COST_KINDS.map(k=>`<option value="${erEsc(k)}"></option>`).join('')}</datalist>`;
-  const rows=s.costs.map((c,i)=>{ const cc=erCur(c.currency_id); return `<tr>
-    <td><input class="qt-inp" list="er-cost-kinds" style="width:150px" value="${erEsc(c.kind)}" oninput="ER.edit.costs[${i}].kind=this.value"></td>
-    <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:120px" value="${erEsc(c.amount)}" oninput="ER.edit.costs[${i}].amount=this.value"></td>
-    <td><select class="qt-inp" onchange="ER.edit.costs[${i}].currency_id=this.value;ER.edit.costs[${i}].rate='';ER.edit.__render()">${B.currencies.filter(x=>x.is_active||String(x.id)===String(c.currency_id)).map(x=>`<option value="${x.id}" ${String(x.id)===String(c.currency_id)?'selected':''}>${erEsc(x.code)}</option>`).join('')}</select></td>
-    <td>${cc.is_base?'<span class="qt-sub">1</span>':`<input class="qt-inp" type="number" step="0.0001" style="width:90px" placeholder="${erEsc(cc.rate||'')}" value="${erEsc(c.rate)}" oninput="ER.edit.costs[${i}].rate=this.value">`}</td>
-    <td><select class="qt-inp" onchange="ER.edit.costs[${i}].alloc=this.value"><option value="value" ${c.alloc!=='qty'?'selected':''}>بالقيمة</option><option value="qty" ${c.alloc==='qty'?'selected':''}>بالعدد</option></select></td>
-    <td><input class="qt-inp" style="width:140px" value="${erEsc(c.note||'')}" oninput="ER.edit.costs[${i}].note=this.value"></td>
+  const names=[...new Set((ER.__citems||[]).filter(x=>x.is_active).map(x=>x.name).concat(ER_COST_KINDS))];
+  const kinds=`<datalist id="er-cost-kinds">${names.map(k=>`<option value="${erEsc(k)}"></option>`).join('')}</datalist>`;
+  const rows=s.costs.map((c,i)=>{ const cc=erCur(c.currency_id), m=c.method||'fixed'; return `<tr>
+    <td><input class="qt-inp" list="er-cost-kinds" style="width:150px" value="${erEsc(c.kind)}" onchange="erCostKind(${i},this.value)" oninput="ER.edit.costs[${i}].kind=this.value"></td>
+    <td><select class="qt-inp" onchange="ER.edit.costs[${i}].method=this.value;ER.edit.__render()">${Object.keys(ER_COST_M).map(k=>`<option value="${k}" ${m===k?'selected':''}>${ER_COST_M[k]}</option>`).join('')}</select></td>
+    <td><input class="qt-inp" type="number" step="0.01" min="0" ${m==='pct'?'max="100"':''} style="width:110px" placeholder="${m==='pct'?'%':(m==='per_unit'?'على الوحدة':'المبلغ')}" value="${erEsc(c.amount)}" oninput="ER.edit.costs[${i}].amount=this.value"></td>
+    <td>${m==='pct'?'<span class="qt-sub">%</span>':`<select class="qt-inp" onchange="ER.edit.costs[${i}].currency_id=this.value;ER.edit.costs[${i}].rate='';ER.edit.__render()">${B.currencies.filter(x=>x.is_active||String(x.id)===String(c.currency_id)).map(x=>`<option value="${x.id}" ${String(x.id)===String(c.currency_id)?'selected':''}>${erEsc(x.code)}</option>`).join('')}</select>`}</td>
+    <td>${m==='pct'||cc.is_base?'<span class="qt-sub">1</span>':`<input class="qt-inp" type="number" step="0.0001" style="width:90px" placeholder="${erEsc(cc.rate||'')}" value="${erEsc(c.rate)}" oninput="ER.edit.costs[${i}].rate=this.value">`}</td>
+    <td>${m==='fixed'?`<select class="qt-inp" onchange="ER.edit.costs[${i}].alloc=this.value"><option value="value" ${c.alloc!=='qty'?'selected':''}>بالقيمة</option><option value="qty" ${c.alloc==='qty'?'selected':''}>بالعدد</option></select>`:'<span class="qt-sub">—</span>'}</td>
+    <td>${erCostScopeHtml(i,c)}</td>
+    <td><input class="qt-inp" style="width:130px" value="${erEsc(c.note||'')}" oninput="ER.edit.costs[${i}].note=this.value"></td>
     <td><button class="qt-btn red sm" onclick="ER.edit.costs.splice(${i},1);ER.edit.__render()">✖</button></td></tr>`; }).join('');
   return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${kinds}
   <div class="qt-card"><div class="qt-row">
@@ -21765,25 +21887,26 @@ function erCostForm(){
     ${cu.is_base?'':erFld(`سعر الصرف الفعلى (1 ${erEsc(cu.code)} = ? ج.م)`, erInp('rate',s.rate,{type:'number',step:'0.0001'}),1)}
     ${erFld('شرط التسليم', erSel('incoterm',s.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
   </div><div class="qt-sub" style="margin-top:6px">${s.incoterm==='FOB'||s.incoterm==='EXW'?'🚢 FOB: ضيف الشحن البحرى والتأمين كتكاليف.':(s.incoterm==='CIF'?'📦 CIF: الشحن والتأمين داخلين فى سعر المورد — ضيف الجمارك والضرايب والتخليص بس.':'')}</div></div>
-  <div class="qt-card"><div class="qt-h">🧾 التكاليف <span class="qt-sub">— «بالقيمة» = كل صنف ياخد نصيبه حسب قيمته، «بالعدد» = بالتساوى على كل وحدة</span></div>
-    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>النوع</th><th>المبلغ</th><th>العملة</th><th>سعر الصرف</th><th>التوزيع</th><th>ملاحظة</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
-    <button class="qt-btn ghost sm" style="margin-top:8px" onclick="ER.edit.costs.push({kind:'',amount:'',currency_id:(ER.boot.currencies.find(c=>c.is_base)||{}).id,rate:'',alloc:'value',note:''});ER.edit.__render()">➕ تكلفة</button>
+  <div class="qt-card"><div class="qt-h">🧾 التكاليف <span class="qt-sub">— «مبلغ على الشحنة» بيتوزع بالقيمة أو بالعدد • «مبلغ على كل وحدة» زى الدهان • «نسبة %» من قيمة البضاعة زى المخاطر • «على» تخصّص البند لأصناف معينة</span></div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>البند</th><th>طريقة الحساب</th><th>المبلغ / النسبة</th><th>العملة</th><th>سعر الصرف</th><th>التوزيع</th><th>على</th><th>ملاحظة</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="qt-row" style="margin-top:8px"><button class="qt-btn ghost sm" onclick="ER.edit.costs.push({kind:'',method:'fixed',amount:'',currency_id:(ER.boot.currencies.find(c=>c.is_base)||{}).id,rate:'',alloc:'value',item_ids:[],note:''});ER.edit.__render()">➕ تكلفة</button><span class="qt-sub">البنود الجاهزة بتتعرّف من «📋 بنود التكاليف» فى شاشة التكاليف — وتقدر تكتب أى بند جديد هنا على طول</span></div>
   </div>
   <div class="qt-card"><div class="qt-h">📈 هامش الربح (للسعر الأول)</div><div class="qt-row">
     <label class="qt-radio ${s.margin_type!=='amount'?'er-on':''}"><input type="radio" name="er-mt" ${s.margin_type!=='amount'?'checked':''} onchange="erSet('margin_type','pct',true)"> نسبة %</label>
     <label class="qt-radio ${s.margin_type==='amount'?'er-on':''}"><input type="radio" name="er-mt" ${s.margin_type==='amount'?'checked':''} onchange="erSet('margin_type','amount',true)"> مبلغ ثابت على الوحدة (ج.م)</label>
     ${erFld(s.margin_type==='amount'?'المبلغ':'النسبة %', erInp('margin_value',s.margin_value,{type:'number',step:'0.01'}),1)}<div style="flex:1"></div>
-  </div><div class="qt-sub" style="margin-top:6px">السعر التانى والتالت بتكتبهم بإيدك من شاشة الصنف.</div></div>
+  </div><div class="qt-sub" style="margin-top:6px">💡 الأسعار بتتكتب بإيدك من شاشة الصنف. السعر المقترح هنا للمعلومة بس — مش هيتحط على الصنف إلا لو علّمت «حدّث السعر الأول» وقت الاعتماد.</div></div>
   ${r&&r.lines?`<div class="qt-card"><div class="qt-h">🧮 النتيجة ${erStChip(s.cost_status)}${s.cost_status==='معتمدة'&&s.approved_by?` <span class="qt-sub">اعتمدها ${erEsc(s.approved_by)} — ${erDate(s.cost_approved_at)}</span>`:''}</div>
     <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>الكمية</th><th>سعر الوحدة</th><th>قيمة البضاعة ج.م</th><th>نصيبه من التكاليف</th><th>تكلفة الوحدة ج.م</th><th>السعر الأول المقترح</th></tr></thead><tbody>
     ${r.lines.map(l=>`<tr><td>${erEsc(erItemLbl(l.item_id))}</td><td>${erQ(l.qty)}</td><td>${erMoney(l.unit_fc,4)} ${erEsc(cu.code||'')}</td><td>${erMoney(l.value_egp,2)}</td><td>${erMoney(l.alloc_egp,2)}</td><td><b>${erMoney(l.unit_cost_egp,2)}</b></td><td><b style="color:var(--gold)">${erMoney(l.price1,2)}</b></td></tr>`).join('')}
     </tbody></table></div>
+    ${(r.costs_detail||[]).length?`<div class="qt-row" style="gap:8px;margin-top:10px">${r.costs_detail.map(d=>`<span class="qt-chip dim">${erEsc(d.kind)} (${(ER_COST_M[d.method]||'').replace(/^\S+ /,'')}): <b>${erMoney(d.egp,2)}</b></span>`).join('')}</div>`:''}
     <div class="qt-tot" style="margin-top:10px">البضاعة: <b>${erMoney(r.value_egp,2)}</b> ج.م &nbsp;+&nbsp; التكاليف: <b>${erMoney(r.costs_egp,2)}</b> ج.م &nbsp;=&nbsp; <span style="font-size:16px">التكلفة الكلية: <b>${erMoney(r.total_egp,2)} ج.م</b></span></div></div>`
   :'<div class="qt-card qt-sub">دوس «💾 حفظ واحسب» علشان تشوف تكلفة كل صنف والسعر المقترح.</div>'}
   </fieldset>`;
 }
 async function erCostSave(approve){ await erRun(approve?'er-cost-appr':'er-cost-save', async ()=>{ const s=ER.edit;
-  const p={ costs:s.costs.map(c=>({kind:c.kind,amount:erNum(c.amount),currency_id:c.currency_id,rate:erNum(c.rate),alloc:c.alloc,note:c.note})), margin_type:s.margin_type, margin_value:erNum(s.margin_value)||0, incoterm:s.incoterm, rate:erNum(s.rate) };
+  const p={ costs:s.costs.map(c=>({kind:c.kind,method:c.method||'fixed',amount:erNum(c.amount),currency_id:c.currency_id,rate:erNum(c.rate),alloc:c.alloc,item_ids:(c.item_ids||[]).map(Number),cost_item_id:c.cost_item_id||null,note:c.note})), margin_type:s.margin_type, margin_value:erNum(s.margin_value)||0, incoterm:s.incoterm, rate:erNum(s.rate) };
   if(approve && !confirm('اعتماد التكاليف هيحدّث تكلفة الأصناف'+(document.getElementById('er-cost-upd').checked?' والسعر الأول بتاعها':'')+'. موافق؟')) return;
   s.cost_result=await rpcSecure('erp_ship_costs_save',{p_id:s.id,p}); s.cost_status='مسودة';
   if(approve){ const upd=document.getElementById('er-cost-upd').checked; s.cost_result=await rpcSecure('erp_ship_costs_approve',{p_id:s.id,p_update_prices:upd}); s.cost_status='معتمدة'; await erBoot(true); }
@@ -22105,6 +22228,50 @@ function erInvTotals(){ const v=ER.edit, t=erInvCalc(v); v.items.forEach((l,i)=>
   const isum=(v.installments||[]).reduce((a,x)=>a+(erNum(x.amount)||0),0);
   const e=document.getElementById('er-inv-tot'); if(e) e.innerHTML=`الأصناف: <b>${erMoney(t.sub,2)}</b> &nbsp;•&nbsp; <span style="font-size:17px">الإجمالى: <b>${erMoney(t.tot,2)} ج</b></span><div class="qt-sub">${erEsc(typeof qtWordsEGP==='function'?qtWordsEGP(t.tot):'')}</div>`;
   const e2=document.getElementById('er-inst-sum'); if(e2) e2.innerHTML=isum?`مجموع الدفعات: <b style="color:${isum>t.tot?'var(--error)':'var(--gold)'}">${erMoney(isum,2)}</b> من ${erMoney(t.tot,2)}`:''; }
+// ═══ 💳 حساب التاجر / المورد جوه الفواتير (زى «معلومات العميل» فى MMS) ═══
+ER.__party = ER.__party || {};
+function erPartyBox(kind, id){ if(!id) return ''; return `<div class="er-party" data-pk="${kind}" data-pid="${id}">${erPartyHtml(kind,id)}</div>`; }
+function erPartyHtml(kind, id){
+  const k=kind+':'+id, c=ER.__party[k];
+  if(!c || (Date.now()-c.t > 60000 && !c.loading)){ erPartyLoad(kind,id); }
+  if(!c || !c.d) return c&&c.err?`<div class="qt-sub">💳 ${erEsc(c.err)}</div>`:'<div class="qt-sub">💳 ⏳ بنجيب الحساب...</div>';
+  const d=c.d, M=(v)=>erMoney(Math.abs(Number(v)||0),2);
+  const stat=(l,v,cls)=>`<div class="er-pst ${cls||''}"><div class="qt-sub">${l}</div><b>${v}</b></div>`;
+  if(kind==='client'){
+    const b=Number(d.balance)||0, side=b>0.004?'<span class="qt-chip ex">مدين</span>':(b<-0.004?'<span class="qt-chip in">دائن</span>':'<span class="qt-chip dim">صفر</span>');
+    const lk=d.locks||{}, chips=[`<span class="qt-chip dim">${erEsc(d.type)}</span>`, d.tier?`<span class="qt-chip dim">💲 ${erEsc(d.tier)}</span>`:'', lk.dealing?'<span class="qt-chip del">🚫 قفل تعامل</span>':'', lk.loading?'<span class="qt-chip del">🚚 قفل تحميل</span>':'', lk.letters?'<span class="qt-chip del">✉️ قفل جوابات</span>':'', d.test?'<span class="qt-chip dim">🧪 فيه حركات تجربة</span>':''].join(' ');
+    const K={inv:'🧾 فاتورة',rcpt:'💵 قبض',sret:'↩️ مرتجع'};
+    return `<div class="er-party-hd">💳 <b>حساب التاجر</b> — ${erEsc(d.name)} <span class="qt-sub">(${erEsc(d.code||'')})</span> ${chips}<div style="flex:1"></div><button class="qt-btn ghost sm" onclick="delete ER.__party['client:${id}'];erPartyRefresh()" title="تحديث">🔄</button></div>
+    <div class="er-pgrid">
+      ${stat('الرصيد', `${M(b)} ${side}`, b>0.004?'warn':'')}
+      ${stat('حدود التعامل', d.credit_limit!=null?M(d.credit_limit):'<span style="color:var(--error)">لا يوجد</span>')}
+      ${stat('المتاح', d.available!=null?`<span style="color:${Number(d.available)<0?'var(--error)':'var(--success)'}">${Number(d.available)<0?'-':''}${M(d.available)}</span>`:'<span style="color:var(--error)">لا يوجد</span>')}
+      ${stat('المتأخر', Number(d.overdue)>0?`<span style="color:var(--error)">${M(d.overdue)}</span>`:'0', Number(d.overdue)>0?'bad':'')}
+      ${stat('فواتير مفتوحة', d.unpaid_invs||0)}
+      ${stat('شيكات تحت التحصيل', (d.checks&&d.checks.n)?`${d.checks.n} — ${M(d.checks.amount)}`:'0')}
+      ${stat('آخر دفعة', d.last_rcpt?`${M(d.last_rcpt.amount)} <span class="qt-sub">${erEsc(d.last_rcpt.date)}</span>`:'—')}
+    </div>
+    ${(d.undelivered||[]).length?`<div class="er-pund">📦 فواتير فيها أصناف مش متسلّمة: ${d.undelivered.map(x=>`<b>${x.inv_no}</b> (${erQ(x.qty)})`).join(' ، ')}</div>`:''}
+    ${lk.reason?`<div class="qt-sub" style="margin-top:4px">🔒 ${erEsc(lk.reason)}</div>`:''}${d.notes?`<div class="qt-sub" style="margin-top:4px">📝 ${erEsc(d.notes)}</div>`:''}
+    ${(d.recent||[]).length?`<details class="er-prec"><summary>🧾 آخر الحركات</summary><table class="qt-tbl"><thead><tr><th>التاريخ</th><th>الحركة</th><th>رقم</th><th>مدين</th><th>دائن</th></tr></thead><tbody>${d.recent.map(r=>`<tr><td>${erEsc(r.date||'')}</td><td>${K[r.kind]||r.kind}</td><td>${r.no}</td><td>${Number(r.debit)?M(r.debit):''}</td><td>${Number(r.credit)?M(r.credit):''}</td></tr>`).join('')}</tbody></table></details>`:''}`;
+  }
+  const bl=(d.balances||[]);
+  return `<div class="er-party-hd">💳 <b>حساب المورد</b> — ${erEsc(d.name)} <span class="qt-sub">(${erEsc(d.code||'')})</span>${d.country?` <span class="qt-chip dim">${erEsc(d.country)}</span>`:''}${d.test?' <span class="qt-chip dim">🧪 فيه حركات تجربة</span>':''}<div style="flex:1"></div><button class="qt-btn ghost sm" onclick="delete ER.__party['supplier:${id}'];erPartyRefresh()" title="تحديث">🔄</button></div>
+  <div class="er-pgrid">
+    ${bl.length?bl.map(x=>stat(`الرصيد (${erEsc(x.code||'')})`, `${M(x.balance)} ${Number(x.balance)>0.004?'<span class="qt-chip ex">علينا له</span>':(Number(x.balance)<-0.004?'<span class="qt-chip in">لينا عنده</span>':'')}`, Number(x.balance)>0.004?'warn':'')).join(''):stat('الرصيد','0')}
+    ${stat('شحنات لسه متستلمتش', (d.open_ships&&d.open_ships.n)?`${d.open_ships.n} — ${M(d.open_ships.value)}`:'0')}
+    ${stat('طلبيات مفتوحة', d.open_pos||0)}
+    ${stat('آخر دفعة', d.last_pay?`${M(d.last_pay.amount)} ${erEsc(d.last_pay.cur||'')} <span class="qt-sub">${erEsc(d.last_pay.date)}</span>`:'—')}
+  </div>${d.notes?`<div class="qt-sub" style="margin-top:4px">📝 ${erEsc(d.notes)}</div>`:''}`;
+}
+async function erPartyLoad(kind, id){
+  const k=kind+':'+id, c=ER.__party[k]=ER.__party[k]||{t:0}; if(c.loading) return; c.loading=true;
+  try{ c.d=await rpcSecure('erp_party_info',{p_kind:kind,p_id:Number(id)}); c.err=null; }
+  catch(e){ c.err=/صلاحية/.test(erErr(e))?'الحساب مش ظاهر — معندكش صلاحية الخزينة / المبيعات':('الحساب مش متاح: '+erErr(e)); }
+  finally{ c.loading=false; c.t=Date.now(); }
+  erPartyRefresh();
+}
+function erPartyRefresh(){ document.querySelectorAll('.er-party').forEach(el=>{ const k=el.dataset.pk, id=el.dataset.pid; el.innerHTML=erPartyHtml(k,id); }); }
 function erInvForm(){
   const B=ER.boot, v=ER.edit, cl=erCl(v.client_id), lk=v.__locked;
   const whs=B.warehouses.filter(w=>w.is_active);
@@ -22132,10 +22299,7 @@ function erInvForm(){
     ${erFld('التاريخ', erInp('inv_date',v.inv_date,{type:'date',dis:lk}),1)}
     ${erFld('نوع الحركة', erSel('pay_type',v.pay_type,[['credit','🗓️ آجل'],['cash','💵 نقدى']],false,lk?'disabled':''),1)}
     ${erFld('تاريخ الاستحقاق', erInp('due_date',v.due_date,{type:'date'}),1)}
-  </div>${cl.id?`<div class="qt-row" style="margin-top:8px;gap:14px">
-    <span class="qt-sub">فئة السعر: <b>${erEsc((erById(B.tiers,cl.tier||erDefTier())||{}).name||'—')}</b></span>
-    <span class="qt-sub">رصيده دلوقتى: <b style="color:${Number(cl.balance)>0?'#f0c75e':'#6dc49a'}">${erMoney(Math.abs(cl.balance),2)} ${Number(cl.balance)>0?'عليه':(Number(cl.balance)<0?'ليه':'')}</b></span>
-    ${cl.credit_limit!=null?`<span class="qt-sub">حد الائتمان: <b>${erMoney(cl.credit_limit,2)}</b></span>`:''} ${erClChip(cl)}</div>`:''}</div>
+  </div>${cl.id?erPartyBox('client',cl.id):''}</div>
   <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— السعر بييجى من فئة سعر التاجر، ولو المخزن مش كفاية البند بيتقسم أوتوماتيك • ⏎ Enter ينقلك للخانة اللى بعدها، وآخر السطر يفتح سطر جديد</span></div>
     <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>المخزن</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="qt-row" style="margin-top:12px">${erFld('خصم على الفاتورة %', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100px" value="${erEsc(v.discount_pct)}" oninput="ER.edit.discount_pct=this.value;erInvTotals()" ${lk?'disabled':''}>`)}
