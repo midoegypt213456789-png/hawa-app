@@ -2551,6 +2551,27 @@ body:has(#er-modal[style*="flex"]) #refreshTimerBadge{display:none!important}
 #er-qhint tr.on td{color:var(--gold);font-weight:900}#er-qhint tr.pick{cursor:pointer}#er-qhint tr.pick:hover td{background:rgba(201,168,76,.1)}
 .er-stmt .er-stmt-prior td{background:rgba(201,168,76,.06);font-weight:700}.er-stmt .er-stmt-it td{font-size:12px;color:var(--text-dim);border-top:0;padding-top:2px;padding-bottom:2px}.er-stmt .er-stmt-tot td{background:rgba(201,168,76,.1);font-weight:900}
 .er-mstat{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:7px 14px;border-top:1px solid var(--border);background:rgba(201,168,76,.07);font-size:12.5px}.er-mstat:empty{display:none}.er-mstat b{color:var(--gold)}.er-mstat b.bad{color:var(--error)}.er-mstat-sep{color:var(--text-dim)}
+.erx-wrap{display:grid;grid-template-columns:300px minmax(0,1fr);gap:14px;align-items:start}
+.erx-side{background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:10px;position:sticky;top:8px;max-height:calc(100vh - 40px);overflow:auto}
+.erx-libhd{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.erx-cat{border-top:1px solid var(--border);padding:4px 0}.erx-cat>summary{cursor:pointer;font-weight:700;padding:7px 4px;color:var(--gold-light);list-style:none}.erx-cat>summary::-webkit-details-marker{display:none}
+.erx-cat>summary::before{content:'◂ ';color:var(--text-dim)}.erx-cat[open]>summary::before{content:'▾ '}
+.erx-sub{font-size:11.5px;color:var(--text-dim);padding:6px 6px 2px;font-weight:700}
+.erx-it{padding:5px 8px;border-radius:7px;cursor:pointer;font-size:12.8px;line-height:1.5;display:flex;gap:6px;align-items:flex-start}.erx-it:hover{background:rgba(201,168,76,.08)}.erx-it.on{background:rgba(201,168,76,.18);color:var(--gold-light);font-weight:700}
+.erx-star{color:#555;cursor:pointer;font-size:13px}.erx-star.on{color:var(--gold)}.erx-star.big{font-size:20px;vertical-align:middle}.erx-del{color:var(--error);cursor:pointer;margin-inline-start:auto}
+.erx-title{font-size:19px;font-weight:900;color:var(--gold-light)}.erx-fbar{margin-top:10px;align-items:flex-end;gap:8px}.erx-range{padding-bottom:10px}
+.erx-fchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.erx-f{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:var(--dark);border:1px solid var(--border);border-radius:10px;padding:4px 8px}.erx-fin{width:140px;padding:4px 6px;font-size:12px}
+.erx-fdet{margin-top:10px}.erx-fdet>summary{cursor:pointer;color:var(--gold-light);font-weight:700}
+.erx-crumbs{margin-top:8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.erx-kpis{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}.erx-kpi{background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;min-width:150px;flex:1}.erx-kpi b{font-size:18px;color:var(--gold-light)}
+.erx-dl{font-size:12px}.erx-dl.up{color:var(--success)}.erx-dl.dn{color:var(--error)}
+.erx-abc{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:10px}.erx-kpi.abc-A{border-color:rgba(76,175,125,.6)}.erx-kpi.abc-B{border-color:rgba(201,168,76,.6)}.erx-kpi.abc-C{border-color:rgba(224,85,85,.5)}
+.erx-abcb{display:inline-block;width:24px;text-align:center;border-radius:6px;font-weight:900}.erx-abcb.abc-A{background:rgba(76,175,125,.25);color:#7ee0ad}.erx-abcb.abc-B{background:rgba(201,168,76,.25);color:var(--gold-light)}.erx-abcb.abc-C{background:rgba(224,85,85,.22);color:#ff9a9a}
+.erx-vbar{gap:8px;margin-bottom:8px;align-items:center}.erx-th{cursor:pointer;white-space:nowrap}.erx-tbl{max-height:68vh}
+.erx-cellbar{position:relative;min-width:110px}.erx-cellbar span{position:absolute;inset-inline-start:0;top:2px;bottom:2px;background:rgba(201,168,76,.18);border-radius:3px}.erx-cellbar span.neg{background:rgba(224,85,85,.25)}.erx-cellbar b{position:relative}
+.erx-tot td{background:rgba(201,168,76,.1);font-weight:900}.erx-pv td,.erx-pv th{text-align:center;white-space:nowrap}.erx-chart svg{color:var(--text)}
+.erx-bgrid{display:flex;flex-wrap:wrap;gap:6px}.erx-bopt{border:1px solid var(--border);border-radius:8px;padding:5px 9px}.erx-bopt.on{border-color:var(--gold);background:rgba(201,168,76,.1)}.erx-bn{background:var(--gold);color:#000;border-radius:50%;padding:0 6px;margin-inline-end:4px}
+@media (max-width:900px){.erx-wrap{grid-template-columns:1fr}.erx-side{position:static;max-height:50vh}}
 .er-lstk{font-size:11.5px;color:var(--text-dim);margin-top:3px;white-space:nowrap}.er-lstk b{color:var(--text)}.er-lstk .bad{color:var(--error)}
 .er-fs{border:0;padding:0;margin:0;min-width:0}
 .er-fs .qt-card{background:var(--dark3)}
@@ -4012,8 +4033,8 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
     <div class="section" id="sec-erp-reports">
       <div class="page-hd">
         <div class="page-hd-titles">
-          <div class="page-title">📈 <span>تقارير السيستم الجديد</span></div>
-          <div class="page-sub">المبيعات بالتاجر/الصنف/اليوم، أرصدة التجار والمتأخرات، المشتريات بالمورد، وقيمة المخزون</div>
+          <div class="page-title">📈 <span>مركز التقارير</span></div>
+          <div class="page-sub">+400 تقرير: مخازن، مشتريات، مبيعات، مديونية، خزائن، مواتير وجوابات وضرائب، إدارية — وتحليلات ذكية (ABC، نمو، مقارنات، توقعات) واعمل تقريرك بنفسك</div>
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erReportsLoad(true)">🔄 تحديث</button>
       </div>
@@ -22416,34 +22437,353 @@ async function erInvSave(){ await erRun('er-save-btn', async ()=>{ const v=ER.ed
   erClose(); await erSlReload(); const nv=erById(ER.sl.invs,v.__newid||v.id); erToast(`✅ اتحفظت الفاتورة ${nv?nv.inv_no:''}`); }); }
 
 // ════════════════ 📈 التقارير ════════════════
-const ER_REPS = {
-  sales_by_client:{ t:'🧾 المبيعات بالتاجر', dates:true, cols:[['code','الكود'],['name','التاجر'],['invs','عدد الفواتير','n'],['qty','الكمية','n'],['total','المبيعات','m'],['returns','المرتجعات','m'],['net','الصافى','m'],['balance','رصيده دلوقتى','m']] },
-  sales_by_item:{ t:'📦 المبيعات بالصنف', dates:true, cols:[['code','الكود'],['name','الصنف'],['qty','الكمية','n'],['ret_qty','المرتجع','n'],['value','القيمة','m'],['clients','عدد التجار','n']] },
-  sales_by_day:{ t:'📅 المبيعات والتحصيل باليوم', dates:true, cols:[['date','اليوم'],['invs','الفواتير','n'],['total','المبيعات','m'],['returns','المرتجعات','m'],['collected','التحصيل','m']] },
-  client_balances:{ t:'💰 أرصدة التجار والمتأخرات', dates:false, cols:[['code','الكود'],['name','التاجر'],['gov','المحافظة'],['balance','الرصيد (عليه +)','m'],['overdue','دفعات متأخرة','m'],['unpaid_invs','فواتير مش مسددة','n'],['credit_limit','حد الائتمان','m'],['last_inv','آخر فاتورة'],['last_rcpt','آخر سداد']] },
-  purch_by_supplier:{ t:'🏭 المشتريات بالمورد', dates:true, cols:[['code','الكود'],['name','المورد'],['cur','العملة'],['ships','الشحنات','n'],['value','القيمة','m','nosum'],['value_egp','بالجنيه','m'],['returns','المرتجعات','m','nosum'],['paid','المدفوع','m','nosum']] },
-  stock_value:{ t:'🏬 المخزون وقيمته', dates:false, cols:[['code','الكود'],['name','الصنف'],['book','الدفترى','n'],['actual','الفعلى','n'],['cost','تكلفة الوحدة','m'],['value','قيمة الفعلى','m']] } };
-ER.rp = { kind:'sales_by_client', from:'', to:'', data:null, q:'' };
-async function erReportsLoad(force){ try{ await erBoot(force); if(!ER.rp.from){ const t=erToday(); ER.rp.to=t; ER.rp.from=t.slice(0,8)+'01'; } erRenderReports(); if(force||!ER.rp.data) await erRepRun(); }catch(e){ erPaneErr('errp-pane',e); } }
-async function erRepRun(){ const el=document.getElementById('errp-pane'); try{ ER.rp.data=await rpcSecure('erp_report',{p_kind:ER.rp.kind,p:{from:ER.rp.from,to:ER.rp.to}}); }catch(e){ ER.rp.data=null; erToast('❌ '+erErr(e),false); } erRenderReports(); }
-function erRenderReports(){ const el=document.getElementById('errp-pane'); if(!el) return; const R=ER_REPS[ER.rp.kind], D=ER.rp.data&&ER.rp.data.kind===ER.rp.kind?ER.rp.data:null; const q=ER.rp.q.trim().toLowerCase();
-  const rows=D?D.rows.filter(r=>!q||R.cols.map(c=>r[c[0]]).join(' ').toLowerCase().includes(q)):[];
-  const fmt=(c,v)=>v==null||v===''?'—':(c[2]==='m'?erMoney(v,2):(c[2]==='n'?erQ(v):erEsc(v)));
-  const sums=R.cols.map(c=>c[2]==='m'||c[2]==='n'?rows.reduce((a,r)=>a+Number(r[c[0]]||0),0):null);
-  el.innerHTML = erBanner() + `<div class="qt-card"><div class="qt-row">
-      ${erFld('التقرير', `<select class="qt-inp" style="width:100%" onchange="ER.rp.kind=this.value;ER.rp.data=null;erRenderReports();erRepRun()">${Object.keys(ER_REPS).map(k=>`<option value="${k}" ${k===ER.rp.kind?'selected':''}>${ER_REPS[k].t}</option>`).join('')}</select>`,2)}
-      ${R.dates?erFld('من', `<input class="qt-inp" type="date" value="${erEsc(ER.rp.from)}" onchange="ER.rp.from=this.value">`,1)+erFld('إلى', `<input class="qt-inp" type="date" value="${erEsc(ER.rp.to)}" onchange="ER.rp.to=this.value">`,1):''}
-      <div><button class="qt-btn" onclick="erRepRun()">▶️ اعرض</button> <button class="qt-btn ghost" onclick="erRepCsv()" ${rows.length?'':'disabled'}>⬇️ Excel (CSV)</button> <button class="qt-btn ghost" onclick="erTbPrint()" ${rows.length?'':'disabled'}>🖨️ طباعة</button></div></div>
-    <div class="qt-row" style="margin-top:10px"><input class="qt-inp" style="width:260px" placeholder="🔍 فلترة النتايج" value="${erEsc(ER.rp.q)}" oninput="ER.rp.q=this.value;erRenderReports()"><span class="qt-sub">${D?`${rows.length} سطر${R.dates?` — من ${erEsc(D.from)} إلى ${erEsc(D.to)}`:''}`:'⏳'}</span>
-      ${ER.rp.kind==='stock_value'&&D&&!D.cost?'<span class="qt-chip ex">التكلفة مخفية — محتاج صلاحية «تكلفة الأصناف»</span>':''}</div></div>
-  ${D?(rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr>${R.cols.map(c=>`<th>${c[1]}</th>`).join('')}</tr></thead><tbody>
-    ${rows.map(r=>`<tr>${R.cols.map((c,i)=>`<td${i===0?' style="color:var(--gold);font-weight:700"':''}>${fmt(c,r[c[0]])}</td>`).join('')}</tr>`).join('')}
-    <tr class="er-tb-skip" style="background:rgba(201,168,76,.08);font-weight:900">${R.cols.map((c,i)=>`<td>${i===0?'الإجمالى':(sums[i]!=null&&c[3]!=='nosum'&&c[0]!=='credit_limit'&&c[0]!=='cost'?fmt(c,sums[i]):'')}</td>`).join('')}</tr></tbody></table></div>`
-    :`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📈 مفيش بيانات فى الفترة دى</div>`):''}`; }
-function erRepCsv(){ const R=ER_REPS[ER.rp.kind], D=ER.rp.data; if(!D) return; const q=ER.rp.q.trim().toLowerCase(); const rows=D.rows.filter(r=>!q||R.cols.map(c=>r[c[0]]).join(' ').toLowerCase().includes(q));
+// ═══════════════════════════════════════════════════════════════════
+// 📈 مركز التقارير الذكى — محرك واحد (erp_rep_query) + مكتبة +400 تقرير
+// مكتبة بالأقسام زى البرنامج القديم، فلاتر ومن/إلى، مقارنة بالفترة اللى فاتت، رسم، جدول محورى،
+// تحليل ABC، دبل كليك للتفاصيل (Drill-down)، اعمل تقريرك بنفسك، وطباعة / Excel
+// ═══════════════════════════════════════════════════════════════════
+const ERX_CATS = [
+  ['fav','⭐ المفضلة وتقاريرى'], ['smart','🧠 تحليلات ذكية'], ['sales','🧾 تقارير المبيعات والتجار'], ['debt','💳 المديونية والتحصيل'],
+  ['stock','📦 تقارير المخازن'], ['purch','🛒 تقارير المشتريات والموردين'], ['money','💰 تقارير مالية وخزائن'], ['regs','🔢 المواتير والجوابات والضرائب'], ['admin','👤 تقارير إدارية'] ];
+const ERX_IDK = { client:'client_id', item:'item_id', cat:'cat_id', wh:'wh_id', supplier:'supplier_id', treasury:'treasury_id', from:'from_wh_id', to:'to_wh_id' };
+const ERX_DRILL = { client:'item', item:'client', cat:'item', vtype:'item', kind:'item', wh:'item', site:'wh', gov:'city', city:'client', ctype:'client', region:'gov', tier:'client', pay:'client',
+  year:'month', quarter:'month', month:'day', week:'day', day:'doc', wday:'day', dom:'day', supplier:'item', country:'supplier', currency:'supplier', treasury:'day', method:'day',
+  agebk:'client', hold:'client', incoterm:'supplier', status:'doc', cstatus:'doc', doctype:'item', reorder:'item', idlebk:'item', source:'client', hasl:'client', user:'day',
+  bgov:'traffic', traffic:'client', deal:'client', color:'item', myear:'item', bkind:'client', hast:'client', tkind:'client', psrc:'client', route:'item', from:'item', to:'item',
+  dir:'party', party:'day', bank:'client', due:'client', utype:'user', action:'user', area:'action', hour:'user', booked:'client', delaybk:'client', reason:'item', kindc:'supplier' };
+const ERX_TIME = ['day','week','month','quarter','year','wday','dom','hour'];
+ER.rx = ER.rx || { meta:null, cur:null, f:{}, per:'year', cmp:'', view:'table', opt:{share:true,cum:false,rank:true,bar:true}, q:'', lib:'', open:{}, data:null, crumbs:[], sort:null, limit:'', busy:false };
+
+// ── 📚 بناء المكتبة
+function erxLib(){ if(ER.__erxLib) return ER.__erxLib; const L=[]; const add=(cat,sub,t,src,dims,meas,o)=>L.push(Object.assign({id:'r'+(L.length+1),cat,sub,t,src,dims,meas},o||{}));
+  // المبيعات — بُعد واحد × مجموعات قياس
+  const SD=[['client','بالتاجر'],['item','بالصنف'],['cat','بالفئة'],['vtype','بنوع العربية'],['kind','بالتصنيف (تام / قطع غيار)'],['wh','بالمخزن'],['site','بالموقع (السادات / قليوب)'],['gov','بالمحافظة'],['city','بالمدينة / المركز'],
+    ['ctype','بنوع العميل'],['region','بالقطاع'],['tier','بفئة السعر'],['pay','بنوع الحركة (نقدى / آجل)'],['day','باليوم'],['week','بالأسبوع'],['month','بالشهر'],['quarter','بالربع'],['year','بالسنة'],['wday','بيوم الأسبوع'],['dom','بيوم الشهر'],['doc','بالفاتورة']];
+  const SS=[['المبيعات','المبيعات',['net','qty','invs','avginv']],['الكميات والتسليم','الكميات والمسلّم',['qty','dqty','undq','dpct']],['الربحية','الربح والهامش',['net','cost','profit','margin'],{cost:1}],
+    ['الخصومات','الخصومات',['gross','disc','net']],['الأسعار','متوسطات الأسعار',['avgp','minp','maxp','qty']]];
+  SS.forEach(s=>SD.forEach(d=>{ if(d[0]==='doc' && s[0]==='الأسعار') return; add('sales',s[0],`${s[1]} ${d[1]}`,'sales',[d[0]],s[2],s[3]); }));
+  const SX=[['client','item'],['client','vtype'],['client','month'],['client','wh'],['item','month'],['item','wh'],['item','gov'],['item','client'],['vtype','month'],['vtype','gov'],['vtype','site'],['cat','month'],
+    ['gov','month'],['gov','vtype'],['gov','city'],['wh','month'],['ctype','vtype'],['pay','month'],['tier','month'],['site','month'],['quarter','vtype'],['wday','vtype'],['region','month'],['kind','month']];
+  const DL=Object.fromEntries(SD); const nm=k=>(DL[k]||'').replace(/^ب(ال)?/,'').replace(/^ال/,'');
+  SX.forEach(x=>{ add('sales','تقارير مزدوجة (جدول محورى)',`المبيعات: ${nm(x[0])} × ${nm(x[1])}`,'sales',x,['net','qty'],{view:'pivot'});
+    add('sales','تقارير مزدوجة (جدول محورى)',`الكميات: ${nm(x[0])} × ${nm(x[1])}`,'sales',x,['qty','net'],{view:'pivot'}); });
+  // المديونية
+  const ID=[['client','بالتاجر'],['gov','بالمحافظة'],['city','بالمدينة'],['ctype','بنوع العميل'],['region','بالقطاع'],['pay','بنوع الحركة'],['tier','بفئة السعر'],['hold','بحالة التسليم'],['month','بالشهر'],['week','بالأسبوع'],['day','باليوم'],['agebk','بعمر الفاتورة'],['doc','بالفاتورة']];
+  ID.forEach(d=>{ add('debt','المديونية والتحصيل',`المديونية والمسدد ${d[1]}`,'sinv',[d[0]],['total','paid','rem','cpct']); add('debt','أعمار الديون',`أعمار الديون ${d[1]}`,'sinv',[d[0]],['rem','r30','r60','r90','r90p','oldest'],{hv:[['rem','>',0.009]]}); });
+  [['client','بالتاجر'],['treasury','بالخزينة'],['method','بطريقة الدفع'],['day','باليوم'],['week','بالأسبوع'],['month','بالشهر'],['gov','بالمحافظة'],['wday','بيوم الأسبوع'],['doc','بالسند']].forEach(d=>add('debt','سندات القبض',`المقبوضات ${d[1]}`,'rcpt',[d[0]],['amount','cnt','avg']));
+  [['client','بالتاجر'],['bank','بالبنك'],['status','بحالة الشيك'],['due','بشهر الاستحقاق'],['month','بشهر الاستلام']].forEach(d=>add('debt','الشيكات',`الشيكات ${d[1]}`,'chk',[d[0]],['amount','cnt','pend']));
+  [['client','بالتاجر'],['item','بالصنف'],['vtype','بنوع العربية'],['wh','بالمخزن'],['month','بالشهر'],['reason','بالسبب']].forEach(d=>add('sales','المرتجعات',`مرتجعات المبيعات ${d[1]}`,'sret',[d[0]],['value','qty','cnt']));
+  [['client','بالتاجر'],['item','بالصنف'],['vtype','بنوع العربية'],['cat','بالفئة'],['wh','بالمخزن'],['site','بالموقع'],['day','باليوم'],['month','بالشهر'],['booked','بحجز ولا من غير'],['delaybk','بمدة التسليم'],['gov','بالمحافظة'],['doc','بمستند التسليم']].forEach(d=>add('sales','التسليمات (تسلميات مخزنية)',`التسليمات ${d[1]}`,'dlv',[d[0]],['qty','docs','delay']));
+  // المخازن
+  const STD=[['item','بالصنف'],['cat','بالفئة'],['vtype','بنوع العربية'],['kind','بالتصنيف'],['wh','بالمخزن'],['site','بالموقع'],['reorder','بحد الطلب'],['idlebk','بالركود']];
+  STD.forEach(d=>{ add('stock','الأرصدة',`أرصدة الأصناف ${d[1]}`,'stock',[d[0]],['book','actual','reserved']); add('stock','قيمة المخزون',`قيمة المخزون ${d[1]}`,'stock',[d[0]],['actual','value','svalue','potential'],{cost:1});
+    add('stock','سرعة الصرف والتغطية',`سرعة الصرف والتغطية ${d[1]}`,'stock',[d[0]],['actual','out30','out90','cover','idle']); });
+  add('stock','الأرصدة','كميات وأماكن الأصناف (صنف × مخزن)','stock',['item','wh'],['actual','book'],{view:'pivot'});
+  add('stock','الأرصدة','قيمة المخزون: الفئة × المخزن','stock',['cat','wh'],['value','actual'],{view:'pivot',cost:1});
+  [['item','بالصنف'],['cat','بالفئة'],['vtype','بنوع العربية'],['wh','بالمخزن'],['doctype','بنوع الحركة'],['day','باليوم'],['month','بالشهر'],['doc','بالمستند']].forEach(d=>add('stock','حركة المخزون',`الحركة المخزنية ${d[1]}`,'moves',[d[0]],['bin','bout','ain','aout','anet']));
+  add('stock','حركة المخزون','يومية صنف (الصنف × اليوم)','moves',['item','day'],['ain','aout','anet','bin','bout']);
+  add('stock','حركة المخزون','الحركة: الصنف × المخزن','moves',['item','wh'],['anet','ain','aout'],{view:'pivot'});
+  add('stock','حركة المخزون','الحركة: المخزن × نوع الحركة','moves',['wh','doctype'],['anet','cnt'],{view:'pivot'});
+  [['route','بالاتجاه'],['from','بالمخزن المحوّل منه'],['to','بالمخزن المحوّل له'],['item','بالصنف'],['month','بالشهر'],['doc','بالتحويل']].forEach(d=>add('stock','تحويلات المخازن',`تحويلات المخازن ${d[1]}`,'trf',[d[0]],['qty','cnt','items']));
+  // المشتريات
+  const PD=[['supplier','بالمورد'],['country','بالبلد'],['currency','بالعملة'],['item','بالصنف'],['cat','بالفئة'],['vtype','بنوع العربية'],['kind','بالتصنيف'],['wh','بالمخزن'],['site','بالموقع'],['month','بالشهر'],['quarter','بالربع'],['year','بالسنة'],['incoterm','بشرط التسليم'],['status','بحالة الشحنة'],['cstatus','بحالة التكاليف'],['doc','بالشحنة']];
+  PD.forEach(d=>{ add('purch','المشتريات',`المشتريات ${d[1]}`,'purch',[d[0]],['egp','fc','qty','ships']); add('purch','الاستلام',`المستلم والباقى ${d[1]}`,'purch',[d[0]],['qty','rqty','pqty']);
+    add('purch','التكلفة الكاملة (Landed Cost)',`التكلفة الكاملة ${d[1]}`,'purch',[d[0]],['egp','landed','extra','xpct','unit'],{cost:1}); });
+  [['supplier','item'],['supplier','month'],['item','month'],['vtype','month'],['country','vtype']].forEach(x=>add('purch','تقارير مزدوجة (جدول محورى)',`المشتريات: ${x.map(k=>({supplier:'المورد',item:'الصنف',month:'الشهر',vtype:'نوع العربية',country:'البلد'})[k]).join(' × ')}`,'purch',x,['egp','qty'],{view:'pivot'}));
+  [['kind','ببند التكلفة'],['method','بطريقة الحساب'],['supplier','بالمورد'],['country','بالبلد'],['month','بالشهر'],['doc','بالشحنة']].forEach(d=>add('purch','بنود التكاليف',`بنود تكاليف الشحنات ${d[1]}`,'scost',[d[0]],['egp','ships','avg'],{cost:1}));
+  add('purch','بنود التكاليف','بنود التكاليف: البند × الشحنة','scost',['kind','doc'],['egp'],{view:'pivot',cost:1});
+  [['supplier','بالمورد'],['treasury','بالخزينة'],['method','بطريقة الدفع'],['currency','بالعملة'],['month','بالشهر'],['day','باليوم'],['doc','بالدفعة']].forEach(d=>add('purch','مدفوعات الموردين',`مدفوعات الموردين ${d[1]}`,'spay',[d[0]],['egp','fc','cnt']));
+  // مالية
+  [['treasury','بالخزينة'],['dir','بالاتجاه (داخل / طالع)'],['method','بطريقة الدفع'],['day','باليوم (يومية خزينة)'],['month','بالشهر'],['party','بالطرف']].forEach(d=>add('money','حركة الخزائن',`حركة الخزائن ${d[1]}`,'tre',[d[0]],['in','out','net','cnt']));
+  add('money','حركة الخزائن','الخزائن: الخزينة × الشهر','tre',['treasury','month'],['net','in','out'],{view:'pivot'});
+  [['client','بالتاجر'],['tkind','بالنوع'],['psrc','بمصدر السعر'],['month','بالشهر'],['day','باليوم'],['doc','بالفاتورة']].forEach(d=>add('money','الضرائب (مصلحة الضرائب)',`الفواتير الضريبية ${d[1]}`,'tinv',[d[0]],['sub','tax','total','cnt']));
+  // المواتير والجوابات
+  [['client','بالتاجر'],['item','بالصنف'],['vtype','بنوع العربية'],['source','بالمصدر (كتاب / أرشيف)'],['hasl','بحالة الجواب'],['user','بمين سجّل'],['day','باليوم'],['month','بالشهر'],['gov','بالمحافظة']].forEach(d=>add('regs','تسجيل المواتير',`المواتير المتسجلة ${d[1]}`,'regs',[d[0]],['cnt','nolet','clients']));
+  [['client','بالتاجر'],['item','بالصنف'],['doc','بمستند التسليم'],['agebk','بالمدة'],['month','بالشهر']].forEach(d=>add('regs','مواتير مستنية تسجيل',`أرقام مواتير مش متسجلة ${d[1]}`,'regq',[d[0]],['qty','done','pend','pct'],{hv:[['pend','>',0]]}));
+  [['client','بالتاجر'],['item','بالصنف'],['vtype','بنوع العربية'],['bgov','بمحافظة المشترى'],['traffic','بوحدة المرور'],['deal','بنوع الصفقة'],['color','باللون'],['myear','بسنة الموديل'],['bkind','بنوع المشترى'],['hast','بالفاتورة الضريبية'],['month','بالشهر'],['day','باليوم']].forEach(d=>add('regs','الجوابات',`الجوابات ${d[1]}`,'letters',[d[0]],['cnt','notinv','inst','ipct']));
+  // إدارية
+  [['user','بالمستخدم'],['action','بالعملية'],['area','بالجزء'],['utype','بنوع المستخدم'],['day','باليوم'],['month','بالشهر'],['hour','بالساعة']].forEach(d=>add('admin','أنشطة المستخدمين',`أنشطة المستخدمين ${d[1]}`,'act',[d[0]],['cnt','users','days']));
+  add('admin','أنشطة المستخدمين','أنشطة المستخدمين: المستخدم × العملية','act',['user','action'],['cnt'],{view:'pivot'});
+  add('admin','أنشطة المستخدمين','أنشطة المستخدمين: المستخدم × اليوم','act',['user','day'],['cnt'],{view:'pivot'});
+  // 🧠 الذكية
+  const SM=(t,src,dims,meas,o)=>add('smart',o&&o.sub||'تحليلات',t,src,dims,meas,o);
+  SM('🅰️ تحليل ABC للأصناف (بالقيمة)','sales',['item'],['net','qty'],{smart:'abc',sub:'ABC وباريتو',note:'A = الأصناف اللى بتعمل 80% من المبيعات، B = الـ 15% اللى بعدها، C = الباقى'});
+  SM('🅰️ تحليل ABC للتجار (بالقيمة)','sales',['client'],['net','invs'],{smart:'abc',sub:'ABC وباريتو'});
+  SM('🅰️ تحليل ABC للأصناف (بالربح)','sales',['item'],['profit','net','margin'],{smart:'abc',sub:'ABC وباريتو',cost:1});
+  SM('🅰️ تحليل ABC للمخزون (بالقيمة)','stock',['item'],['value','actual'],{smart:'abc',sub:'ABC وباريتو',cost:1});
+  SM('📈 نمو المبيعات شهر بشهر','sales',['month'],['net','qty','invs'],{smart:'growth',sub:'النمو والمقارنات',view:'chart'});
+  SM('📈 نمو المبيعات أسبوع بأسبوع','sales',['week'],['net','qty'],{smart:'growth',sub:'النمو والمقارنات',view:'chart'});
+  SM('⚖️ التجار: الفترة دى ضد اللى قبلها','sales',['client'],['net','qty'],{cmp:'prev',sub:'النمو والمقارنات'});
+  SM('⚖️ الأصناف: الفترة دى ضد اللى قبلها','sales',['item'],['net','qty'],{cmp:'prev',sub:'النمو والمقارنات'});
+  SM('⚖️ أنواع العربيات: ضد نفس الفترة السنة اللى فاتت','sales',['vtype'],['net','qty'],{cmp:'yoy',sub:'النمو والمقارنات'});
+  SM('⚖️ المحافظات: الفترة دى ضد اللى قبلها','sales',['gov'],['net','qty'],{cmp:'prev',sub:'النمو والمقارنات'});
+  SM('🔮 توقع مبيعات آخر الشهر','sales',['day'],['net','qty'],{smart:'forecast',sub:'توقعات',per:'month',view:'chart'});
+  SM('😴 تجار بطّلوا يشتروا (أكتر من 30 يوم)','sales',['client'],['since','last','net','invs'],{hv:[['since','>',30]],order:'m_since',per:'all',sub:'التجار'});
+  SM('🆕 تجار جداد (أول شراء فى الفترة)','sales',['client'],['first','net','invs'],{smart:'newc',per:'month',sub:'التجار'});
+  SM('🔁 معدل دوران التجار (كل كام يوم بيشتروا)','sales',['client'],['gap','invs','net','last'],{order:'m_gap',dir:'asc',hv:[['invs','>',1]],sub:'التجار'});
+  SM('🏆 أكبر 10 تجار','sales',['client'],['net','qty','invs'],{limit:10,view:'chart',sub:'الأكبر والأقل'});
+  SM('🏆 أكبر 10 أصناف','sales',['item'],['net','qty'],{limit:10,view:'chart',sub:'الأكبر والأقل'});
+  SM('🐢 أقل 10 أصناف مبيعاً','sales',['item'],['qty','net'],{limit:10,dir:'asc',order:'m_qty',sub:'الأكبر والأقل'});
+  SM('🏆 أكبر 10 محافظات','sales',['gov'],['net','qty','clients'],{limit:10,view:'chart',sub:'الأكبر والأقل'});
+  SM('🚨 أصناف اتباعت بخسارة','sales',['doc','item'],['net','cost','profit','margin'],{hv:[['profit','<',0]],order:'m_profit',dir:'asc',cost:1,sub:'تنبيهات'});
+  SM('🏷️ فواتير عليها خصومات','sales',['doc','client'],['gross','disc','net'],{hv:[['disc','>',0]],order:'m_disc',sub:'تنبيهات'});
+  SM('📊 تفاوت أسعار البيع للصنف','sales',['item'],['minp','maxp','avgp','qty'],{smart:'spread',sub:'تنبيهات'});
+  SM('📅 أحسن يوم فى الأسبوع','sales',['wday'],['net','invs','qty'],{view:'chart',sub:'المواسم'});
+  SM('🌙 موسمية المبيعات (كل الشهور)','sales',['month'],['net','qty'],{per:'all',view:'chart',sub:'المواسم'});
+  SM('🗺️ تركيز المبيعات فى المحافظات','sales',['gov'],['net','clients'],{smart:'abc',sub:'ABC وباريتو'});
+  SM('😴 الأصناف الراكدة (أكتر من 60 يوم من غير صرف)','stock',['item','wh'],['actual','idle','value'],{hv:[['idle','>=',60]],order:'m_idle',sub:'المخزون'});
+  SM('⚠️ أصناف تحت حد الطلب','stock',['item'],['book','reorder','short','out30'],{hv:[['short','>',0]],order:'m_short',sub:'المخزون'});
+  SM('⏳ أصناف هتخلص قريب (أقل من 15 يوم)','stock',['item'],['actual','out30','cover'],{hv:[['cover','<',15],['out30','>',0]],order:'m_cover',dir:'asc',sub:'المخزون'});
+  SM('🔒 بضاعة اتباعت ولسه فى المخزن','stock',['item','wh'],['actual','book','reserved'],{hv:[['reserved','>',0]],order:'m_reserved',sub:'المخزون'});
+  SM('💎 الربح المتوقع من المخزون','stock',['item'],['actual','value','svalue','potential'],{order:'m_potential',cost:1,sub:'المخزون'});
+  SM('💳 أكبر 20 مديونية','sinv',['client'],['rem','total','paid','oldest'],{limit:20,hv:[['rem','>',0.009]],per:'all',view:'chart',sub:'المديونية'});
+  SM('⏰ أقدم الفواتير المفتوحة','sinv',['doc','client'],['rem','oldest','total'],{hv:[['rem','>',0.009]],order:'m_oldest',per:'all',sub:'المديونية'});
+  SM('📉 كفاءة التحصيل بالشهر','sinv',['month'],['total','paid','cpct'],{view:'chart',sub:'المديونية'});
+  SM('🐌 تسليمات اتأخرت أكتر من أسبوع','dlv',['doc','client'],['qty','maxdelay'],{hv:[['maxdelay','>',7]],order:'m_maxdelay',sub:'تنبيهات'});
+  SM('🔢 مستندات مستنية تسجيل مواتير أكتر من أسبوع','regq',['doc','client'],['pend','oldest'],{hv:[['pend','>',0],['oldest','>',7]],order:'m_oldest',per:'all',sub:'تنبيهات'});
+  SM('✉️ تجار عندهم جوابات من غير فاتورة ضريبية','letters',['client'],['notinv','cnt'],{hv:[['notinv','>',0]],order:'m_notinv',per:'all',sub:'تنبيهات'});
+  SM('🚢 مصاريف الاستيراد كنسبة من كل شحنة','purch',['doc','supplier'],['egp','extra','xpct'],{order:'m_xpct',cost:1,sub:'المشتريات'});
+  SM('💸 أغلى بنود التكاليف','scost',['kind'],['egp','ships','avg'],{smart:'abc',cost:1,sub:'المشتريات'});
+  SM('🏭 الموردين بنسبة المصاريف','purch',['supplier'],['egp','extra','xpct'],{order:'m_xpct',cost:1,sub:'المشتريات'});
+  SM('🗓️ التقسيط والكاش بالمحافظة','letters',['bgov'],['cnt','inst','ipct'],{order:'m_cnt',sub:'الجوابات'});
+  SM('🕐 نشاط المستخدمين بالساعة','act',['hour'],['cnt','users'],{view:'chart',sub:'إدارية'});
+  SM('👷 مين أكتر واحد شغال','act',['user'],['cnt','days'],{view:'chart',limit:20,sub:'إدارية'});
+  SM('🏦 الصافى اليومى للخزائن (تراكمى)','tre',['day'],['in','out','net'],{smart:'running',view:'chart',sub:'المالية'});
+  SM('💰 مجمل الربح بالشهر','sales',['month'],['net','cost','profit','margin'],{view:'chart',cost:1,sub:'المالية'});
+  ER.__erxLib=L; return L; }
+function erxMine(){ try{ return JSON.parse(localStorage.getItem('erx_mine')||'[]'); }catch(e){ return []; } }
+function erxFavs(){ try{ return JSON.parse(localStorage.getItem('erx_favs')||'[]'); }catch(e){ return []; } }
+function erxSaveLS(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+function erxAll(){ return erxLib().concat(erxMine()); }
+function erxById(id){ return erxAll().find(r=>r.id===id); }
+
+// ── 📅 الفترات
+function erxDate(d){ return new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo'}).format(d); }
+function erxAdd(s,n){ const d=new Date(s+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+n); return d.toISOString().slice(0,10); }
+function erxPer(k){ const t=erToday(), y=t.slice(0,4), m=t.slice(0,7), d=new Date(t+'T12:00:00Z');
+  const mStart=m+'-01', q=Math.floor((Number(t.slice(5,7))-1)/3), qs=`${y}-${String(q*3+1).padStart(2,'0')}-01`;
+  const prevM=new Date(Date.UTC(Number(y),Number(t.slice(5,7))-2,1)), prevMe=new Date(Date.UTC(Number(y),Number(t.slice(5,7))-1,0));
+  const wd=(d.getUTCDay()+1)%7; // السبت = 0
+  switch(k){ case 'today': return [t,t]; case 'yday': return [erxAdd(t,-1),erxAdd(t,-1)]; case 'week': return [erxAdd(t,-wd),t]; case 'month': return [mStart,t];
+    case 'pmonth': return [prevM.toISOString().slice(0,10), prevMe.toISOString().slice(0,10)]; case 'quarter': return [qs,t]; case 'year': return [y+'-01-01',t];
+    case 'd30': return [erxAdd(t,-29),t]; case 'd90': return [erxAdd(t,-89),t]; case 'all': return ['','']; default: return [ER.rx.f.from||'', ER.rx.f.to||'']; } }
+const ERX_PERS=[['today','النهارده'],['yday','امبارح'],['week','الأسبوع ده'],['month','الشهر ده'],['pmonth','الشهر اللى فات'],['quarter','الربع ده'],['year','السنة دى'],['d30','آخر 30 يوم'],['d90','آخر 90 يوم'],['all','كل الفترة'],['custom','مخصص']];
+function erxCmpRange(from,to,mode){ if(!from||!to||!mode) return null; if(mode==='yoy') return [String(Number(from.slice(0,4))-1)+from.slice(4), String(Number(to.slice(0,4))-1)+to.slice(4)];
+  const days=Math.round((new Date(to)-new Date(from))/864e5)+1; return [erxAdd(from,-days), erxAdd(from,-1)]; }
+
+// ── 🔢 تنسيق
+function erxFmt(fmt,v){ if(v==null||v==='') return '—'; const n=Number(v);
+  if(fmt==='m') return erMoney(n,2); if(fmt==='n') return erQ(n); if(fmt==='c') return erQ(Math.round(n)); if(fmt==='p') return (Math.round(n*10)/10).toLocaleString('en-US')+'%';
+  if(fmt==='d') return (Math.round(n*10)/10).toLocaleString('en-US')+' يوم'; if(fmt==='t') return erEsc(String(v).slice(0,10)); return erEsc(v); }
+
+// ── 🚀 التحميل
+async function erReportsLoad(force){ try{ await erBoot(force); if(!ER.rx.meta || force) ER.rx.meta=await rpcSecure('erp_rep_meta',{});
+    if(!ER.sl) rpcSecure('erp_sales_list',{}).then(s=>{ if(!ER.sl){ ER.sl=s; erxRenderHead(); } }).catch(()=>{});
+    if(!ER.rx.cur){ let last=null; try{ last=localStorage.getItem('erx_last'); }catch(e){} ER.rx.cur=(last&&erxById(last))?last:erxLib().find(r=>r.smart==='abc').id; erxPick(ER.rx.cur,true); }
+    erxRender(); if(force||!ER.rx.data) await erxRun(); }catch(e){ erPaneErr('errp-pane',e); } }
+function erxPick(id, silent){ const R=erxById(id); if(!R) return; ER.rx.cur=id; try{ localStorage.setItem('erx_last', id); }catch(e){}
+  ER.rx.crumbs=[]; ER.rx.dd=null; ER.rx.sort=null; ER.rx.view=R.view||'table'; ER.rx.cmp=R.cmp||''; ER.rx.limit=R.limit?String(R.limit):'';
+  if(R.per) ER.rx.per=R.per; else if(!ER.rx.per) ER.rx.per='year';
+  ER.rx.data=null; if(!silent){ erxRender(); erxRun(); } }
+function erxCurDef(){ const R=erxById(ER.rx.cur); if(!R) return null; const dd=ER.rx.dd; return dd?Object.assign({},R,dd):R; }
+
+function erxBuild(R, from, to){ const f=Object.assign({}, ER.rx.fx||{}); const p={ src:R.src, dims:R.dims, meas:R.meas, f, df:Object.assign({}, R.df||{}, (ER.rx.dd&&ER.rx.dd.df)||{}), hv:R.hv||[], limit:ER.rx.limit||R.limit||5000 };
+  if(R.order) p.order=R.order; if(R.dir) p.dir=R.dir; if(ER.rx.dd&&ER.rx.dd.f) Object.assign(f, ER.rx.dd.f);
+  if(R.smart==='newc'){ f.from=''; f.to=''; } else { f.from=from; f.to=to; } if(ER.rx.q) f.q=ER.rx.q; return p; }
+async function erxRun(){ const R=erxCurDef(); if(!R) return; const S=ER.rx.meta.srcs[R.src]; if(!S){ erToast('مصدر التقرير مش متاح',false); return; }
+  const [from,to]=ER.rx.per==='custom'?[ER.rx.f.from||'',ER.rx.f.to||'']:erxPer(ER.rx.per); ER.rx.f.from=from; ER.rx.f.to=to;
+  const seq=(ER.__erxSeq=(ER.__erxSeq||0)+1); ER.rx.busy=true; erxRenderOut();
+  try{ const p=erxBuild(R,from,to), pt=Object.assign({},p,{dims:[],limit:1}); delete pt.order;
+    const calls=[rpcSecure('erp_rep_query',{p}), rpcSecure('erp_rep_query',{p:pt})];
+    const cr=S.date?erxCmpRange(from,to,ER.rx.cmp):null;
+    if(cr){ const pc=erxBuild(R,cr[0],cr[1]); pc.limit=20000; calls.push(rpcSecure('erp_rep_query',{p:pc})); const pct=Object.assign({},pc,{dims:[],limit:1}); delete pct.order; calls.push(rpcSecure('erp_rep_query',{p:pct})); }
+    const res=await Promise.all(calls); if(seq!==ER.__erxSeq) return;
+    let rows=res[0].rows||[]; if(R.smart==='newc') rows=rows.filter(r=>!from||String(r.m_first||'')>=from);
+    ER.rx.data={ R, rows, tot:(res[1].rows||[])[0]||{}, cmp:cr?{range:cr, rows:res[2].rows||[], tot:(res[3].rows||[])[0]||{}}:null, from, to, cost:res[0].cost };
+  }catch(e){ if(seq===ER.__erxSeq){ ER.rx.data={err:erErr(e)}; } }
+  finally{ if(seq===ER.__erxSeq){ ER.rx.busy=false; erxRenderOut(); } } }
+
+// ── 🖼️ الواجهة
+function erxRender(){ const el=document.getElementById('errp-pane'); if(!el||!ER.rx.meta) return;
+  el.innerHTML = erBanner() + `<div class="erx-wrap"><aside class="erx-side" id="erx-side"></aside><section class="erx-main"><div id="erx-head"></div><div id="erx-out"></div></section></div>`;
+  erxRenderLib(); erxRenderHead(); erxRenderOut(); }
+function erxRenderLib(){ const el=document.getElementById('erx-side'); if(!el) return; const all=erxAll(), favs=erxFavs(), cost=!!ER.rx.meta.cost, q=ER.rx.lib.trim().toLowerCase();
+  const ok=r=>(!r.cost||cost) && ER.rx.meta.srcs[r.src];
+  const list=all.filter(ok); const vis=list.filter(r=>!q||(r.t+' '+(r.sub||'')+' '+(ER.rx.meta.srcs[r.src].label||'')).toLowerCase().includes(q));
+  const groups=ERX_CATS.map(c=>{ const rs=c[0]==='fav'?vis.filter(r=>favs.includes(r.id)||r.mine):vis.filter(r=>r.cat===c[0]&&!r.mine); return {c,rs}; }).filter(g=>g.rs.length||g.c[0]==='fav');
+  el.innerHTML=`<div class="erx-libhd"><b>📚 مكتبة التقارير</b> <span class="qt-chip dim">${list.length} تقرير</span></div>
+    <input class="qt-inp" style="width:100%;margin:8px 0" placeholder="🔍 ابحث عن تقرير (مثلاً: مديونية، راكد، ABC...)" value="${erEsc(ER.rx.lib)}" oninput="ER.rx.lib=this.value;erxRenderLib()">
+    <button class="qt-btn ghost sm" style="width:100%;margin-bottom:8px" onclick="erxBuilder()">🛠️ اعمل تقريرك بنفسك</button>
+    ${groups.map(g=>{ const open=q||ER.rx.open[g.c[0]]||g.rs.some(r=>r.id===ER.rx.cur); const subs={}; g.rs.forEach(r=>{ (subs[r.sub||'']=subs[r.sub||'']||[]).push(r); });
+      return `<details class="erx-cat" ${open?'open':''} ontoggle="ER.rx.open['${g.c[0]}']=this.open"><summary>${g.c[1]} <span class="qt-sub">(${g.rs.length})</span></summary>
+        ${g.rs.length?Object.keys(subs).map(s=>`${s?`<div class="erx-sub">${erEsc(s)}</div>`:''}${subs[s].map(r=>`<div class="erx-it ${r.id===ER.rx.cur?'on':''}" onclick="erxPick('${r.id}')" title="${erEsc(ER.rx.meta.srcs[r.src].label)}">
+          <span class="erx-star ${favs.includes(r.id)?'on':''}" onclick="event.stopPropagation();erxFav('${r.id}')" title="مفضلة">★</span>${erEsc(r.t)}${r.mine?` <span class="erx-del" onclick="event.stopPropagation();erxMineDel('${r.id}')" title="امسح">✖</span>`:''}</div>`).join('')}`).join('')
+          :'<div class="qt-sub" style="padding:6px">علّم ★ على أى تقرير يظهر هنا — أو اعمل تقريرك بنفسك</div>'}</details>`; }).join('')}`; }
+function erxFav(id){ const f=erxFavs(); const i=f.indexOf(id); if(i>=0) f.splice(i,1); else f.push(id); erxSaveLS('erx_favs',f); erxRenderLib(); }
+function erxMineDel(id){ if(!confirm('تمسح التقرير ده من تقاريرك؟')) return; erxSaveLS('erx_mine', erxMine().filter(r=>r.id!==id)); if(ER.rx.cur===id){ ER.rx.cur=erxLib()[0].id; } erxRender(); erxRun(); }
+
+// فلاتر حسب المصدر
+const ERX_F = [ ['client_id','التاجر','client'], ['item_id','الصنف','item'], ['cat_id','الفئة','cat'], ['wh_id','المخزن','wh'], ['supplier_id','المورد','sup'], ['treasury_id','الخزينة','tre'],
+  ['gov','المحافظة','gov'], ['vtype','نوع العربية','vt'], ['item_kind','التصنيف','kind'], ['pay_type','نوع الحركة','pay'], ['site','الموقع','site'] ];
+function erxFOpts(t){ const B=ER.boot; switch(t){
+  case 'client': return ((ER.sl&&ER.sl.clients)||[]).map(c=>[c.id,(c.code||'')+' — '+c.name]);
+  case 'item': return B.items.map(i=>[i.id,i.code+' — '+i.name_ar]); case 'cat': return (B.categories||[]).map(c=>[c.id,c.name]); case 'wh': return B.warehouses.map(w=>[w.id,w.name]);
+  case 'sup': return B.suppliers.map(s=>[s.id,s.code+' — '+s.name]); case 'tre': return (B.treasuries||[]).map(t=>[t.id,t.name]);
+  case 'gov': return [...new Set(((ER.sl&&ER.sl.clients)||[]).map(c=>c.gov).filter(Boolean))].map(g=>[g,g]);
+  case 'vt': return (B.vtypes||[]).map(v=>[v.name,v.name]); case 'kind': return [['منتج تام','منتج تام'],['قطع غيار','قطع غيار'],['مكوّن','مكوّن']];
+  case 'pay': return [['نقدى','نقدى'],['آجل','آجل']]; case 'site': return (B.sites||[]).map(s=>[s.name,s.name]); } return []; }
+function erxRenderHead(){ const el=document.getElementById('erx-head'); if(!el) return; const R=erxCurDef(); if(!R){ el.innerHTML=''; return; } const S=ER.rx.meta.srcs[R.src];
+  const fx=ER.rx.fx=ER.rx.fx||{}; const favs=erxFavs();
+  const chips=ERX_F.filter(x=>S.cols.includes(x[0])).map(x=>{ const vals=fx[x[0]]||[]; const opts=erxFOpts(x[2]); const lbl=v=>{ const o=opts.find(o=>String(o[0])===String(v)); return o?o[1]:v; };
+    const big=opts.length>40;
+    return `<div class="erx-f"><span class="qt-sub">${x[1]}</span>${vals.map(v=>`<span class="qt-chip in">${erEsc(lbl(v))} <b style="cursor:pointer" onclick="erxFDel('${x[0]}','${erEsc(String(v))}')">✖</b></span>`).join('')}
+      ${big?`<input class="qt-inp erx-fin" list="erx-dl-${x[2]}" placeholder="+ ضيف" onchange="erxFAdd('${x[0]}','${x[2]}',this.value);this.value=''"><datalist id="erx-dl-${x[2]}">${opts.map(o=>`<option value="${erEsc(o[1])}">`).join('')}</datalist>`
+        :`<select class="qt-inp erx-fin" onchange="if(this.value){erxFAdd('${x[0]}','${x[2]}',this.value,1)}"><option value="">${vals.length?'+':'الكل'}</option>${opts.filter(o=>!vals.map(String).includes(String(o[0]))).map(o=>`<option value="${erEsc(String(o[0]))}">${erEsc(o[1])}</option>`).join('')}</select>`}</div>`; }).join('');
+  const crumbs=ER.rx.crumbs.length?`<div class="erx-crumbs">🔎 ${ER.rx.crumbs.map((c,i)=>`<span class="qt-chip dim" style="cursor:pointer" onclick="erxBack(${i})">${erEsc(c.t)}</span>`).join(' › ')} › <b>${erEsc(R.__crumb||'')}</b>
+      <button class="qt-btn ghost sm" onclick="erxBack(0)">↩️ رجوع للتقرير الأصلى</button></div>`:'';
+  el.innerHTML=`<div class="qt-card erx-headcard"><div class="qt-row" style="align-items:flex-start;gap:10px">
+      <div style="flex:1;min-width:240px"><div class="erx-title">${erEsc(R.t)} <span class="erx-star big ${favs.includes(ER.rx.cur)?'on':''}" onclick="erxFav('${ER.rx.cur}');erxRenderHead()" title="ضيف للمفضلة">★</span></div>
+        <div class="qt-sub">${erEsc(S.label)} — مجمّع ${R.dims.length?R.dims.map(d=>erEsc((S.dims[d]||[d])[0])).join(' × '):'إجمالى'}${R.note?` • ${erEsc(R.note)}`:''}</div></div>
+      <div class="qt-row" style="gap:6px"><button class="qt-btn" onclick="erxRun()">▶️ اعرض</button><button class="qt-btn ghost" onclick="erxCsv()">⬇️ Excel</button><button class="qt-btn ghost" onclick="erRepPrint()">🖨️ طباعة</button><button class="qt-btn ghost" onclick="erxBuilder(true)" title="عدّل التقرير ده واحفظه باسمك">🛠️ تعديل</button></div></div>
+    ${crumbs}
+    <div class="qt-row erx-fbar">${S.date?`${erFld('الفترة', `<select class="qt-inp" onchange="ER.rx.per=this.value;erxRenderHead();if(this.value!=='custom')erxRun()">${ERX_PERS.map(p=>`<option value="${p[0]}" ${ER.rx.per===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>`,1)}
+      ${ER.rx.per==='custom'?erFld('من', `<input class="qt-inp" type="date" value="${erEsc(ER.rx.f.from||'')}" onchange="ER.rx.f.from=this.value">`,1)+erFld('إلى', `<input class="qt-inp" type="date" value="${erEsc(ER.rx.f.to||'')}" onchange="ER.rx.f.to=this.value">`,1)
+        :`<div class="qt-sub erx-range" id="erx-range"></div>`}
+      ${erFld('مقارنة', `<select class="qt-inp" onchange="ER.rx.cmp=this.value;erxRun()"><option value="">من غير مقارنة</option><option value="prev" ${ER.rx.cmp==='prev'?'selected':''}>بالفترة اللى قبلها</option><option value="yoy" ${ER.rx.cmp==='yoy'?'selected':''}>بنفس الفترة السنة اللى فاتت</option></select>`,1)}`:'<span class="qt-chip dim">📸 الرصيد دلوقتى (مالوش فترة)</span>'}
+      ${erFld('العدد', `<select class="qt-inp" onchange="ER.rx.limit=this.value;erxRun()">${[['','الكل'],['10','أكبر 10'],['20','أكبر 20'],['50','أكبر 50'],['100','أكبر 100']].map(o=>`<option value="${o[0]}" ${String(ER.rx.limit)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>`,1)}
+      ${S.q?erFld('بحث', `<input class="qt-inp" placeholder="🔍 اسم / كود" value="${erEsc(ER.rx.q)}" onchange="ER.rx.q=this.value;erxRun()">`,1):''}</div>
+    ${chips?`<details class="erx-fdet" ${Object.keys(fx).some(k=>(fx[k]||[]).length)||ER.rx.fopen?'open':''} ontoggle="ER.rx.fopen=this.open"><summary>🎛️ فلاتر إضافية ${(n=>n?`<span class="qt-chip in">${n} فلتر شغال</span> <span class="qt-chip dim" style="cursor:pointer" onclick="event.preventDefault();ER.rx.fx={};erxRenderHead();erxRun()">✖ امسح الفلاتر</span>`:'<span class="qt-sub">(التاجر، الصنف، الفئة، المخزن، المحافظة...)</span>')(Object.values(fx).reduce((a,v)=>a+(v||[]).length,0))}</summary><div class="erx-fchips">${chips}</div></details>`:''}</div>`; }
+function erxFAdd(k,t,v,isId){ const fx=ER.rx.fx=ER.rx.fx||{}; let val=v; if(!isId){ const o=erxFOpts(t).find(o=>o[1]===v); if(!o){ erToast('مش موجود فى القايمة',false); return; } val=o[0]; }
+  if(k.endsWith('_id')) val=Number(val); fx[k]=(fx[k]||[]).filter(x=>String(x)!==String(val)).concat([val]); erxRenderHead(); erxRun(); }
+function erxFDel(k,v){ const fx=ER.rx.fx||{}; fx[k]=(fx[k]||[]).filter(x=>String(x)!==String(v)); if(!fx[k].length) delete fx[k]; erxRenderHead(); erxRun(); }
+
+// ── 📊 النتيجة
+function erxKey(r,dims){ return dims.map(d=>String(r['d_'+d]??'')).join('¦'); }
+function erxRenderOut(){ const el=document.getElementById('erx-out'); if(!el) return; const D=ER.rx.data, rg=document.getElementById('erx-range');
+  if(rg && D && D.R) rg.innerHTML = D.from||D.to?`📅 من <b>${erEsc(D.from||'البداية')}</b> إلى <b>${erEsc(D.to||'')}</b>${D.cmp?` — مقارنة بـ ${erEsc(D.cmp.range[0])} → ${erEsc(D.cmp.range[1])}`:''}`:'📅 كل الفترة';
+  if(ER.rx.busy && !D){ el.innerHTML='<div class="qt-card loading-txt">⏳ بنحسب التقرير...</div>'; return; }
+  if(!D){ el.innerHTML=''; return; } if(D.err){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(D.err)}</div>`; return; }
+  const R=D.R, S=ER.rx.meta.srcs[R.src], meas=R.meas.filter(m=>S.meas[m]), dims=R.dims, M=m=>S.meas[m]||[m,'n',''];
+  let rows=D.rows.slice(); const cmpMap={}; if(D.cmp) D.cmp.rows.forEach(r=>{ cmpMap[erxKey(r,dims)]=r; });
+  const m0=meas[0], tot0=Number(D.tot['m_'+m0])||rows.reduce((a,r)=>a+(Number(r['m_'+m0])||0),0);
+  // معالجة ذكية
+  let cum=0; rows.forEach((r,i)=>{ const v=Number(r['m_'+m0])||0; r.__share=tot0?100*v/tot0:0; cum+=v; r.__cum=tot0?100*cum/tot0:0; r.__rank=i+1; });
+  if(R.smart==='abc'){ rows.sort((a,b)=>(Number(b['m_'+m0])||0)-(Number(a['m_'+m0])||0)); let c=0; rows.forEach((r,i)=>{ c+=Number(r['m_'+m0])||0; r.__cum=tot0?100*c/tot0:0; r.__rank=i+1; r.__abc=r.__cum<=80.0001||i===0?'A':(r.__cum<=95.0001?'B':'C'); }); }
+  if(R.smart==='growth'){ rows.forEach((r,i)=>{ const p=i?Number(rows[i-1]['m_'+m0])||0:null; const v=Number(r['m_'+m0])||0; r.__g=p==null?null:v-p; r.__gp=p?100*(v-p)/Math.abs(p):null; }); }
+  if(R.smart==='spread'){ rows.forEach(r=>{ const a=Number(r.m_avgp)||0; r.__sp=a?100*((Number(r.m_maxp)||0)-(Number(r.m_minp)||0))/a:0; }); rows.sort((a,b)=>b.__sp-a.__sp); }
+  if(R.smart==='running'){ let c2=0; rows.forEach(r=>{ c2+=Number(r.m_net)||0; r.__run=c2; }); }
+  if(ER.rx.sort){ const [k,dir]=ER.rx.sort; rows.sort((a,b)=>{ const x=a[k], y=b[k]; const nx=Number(x), ny=Number(y); const c=(!isNaN(nx)&&!isNaN(ny)&&x!==null&&y!==null)?nx-ny:String(x??'').localeCompare(String(y??''),'ar',{numeric:true}); return c*dir; }); }
+  ER.rx.__rows=rows;
+  // كروت الإجمالى
+  const cards=meas.map(m=>{ const v=D.tot['m_'+m]; const pv=D.cmp?D.cmp.tot['m_'+m]:null; const dl=pv!=null&&Number(pv)?100*(Number(v)-Number(pv))/Math.abs(Number(pv)):null;
+    return `<div class="erx-kpi"><div class="qt-sub">${erEsc(M(m)[0])}</div><b>${erxFmt(M(m)[1],v)}</b>${D.cmp?`<div class="erx-dl ${dl==null?'':(dl>=0?'up':'dn')}">${dl==null?'—':(dl>=0?'▲ ':'▼ ')+Math.abs(Math.round(dl*10)/10)+'%'} <span class="qt-sub">قبلها ${erxFmt(M(m)[1],pv)}</span></div>`:''}</div>`; }).join('');
+  let extra='';
+  if(R.smart==='abc'){ const g={A:[0,0],B:[0,0],C:[0,0]}; rows.forEach(r=>{ g[r.__abc][0]++; g[r.__abc][1]+=Number(r['m_'+m0])||0; });
+    extra=`<div class="erx-abc">${['A','B','C'].map(k=>`<div class="erx-kpi abc-${k}"><div class="qt-sub">فئة ${k}</div><b>${g[k][0]} سطر</b><div class="qt-sub">${tot0?Math.round(1000*g[k][1]/tot0)/10:0}% من ${erEsc(M(m0)[0])}</div></div>`).join('')}
+      <div class="qt-sub" style="flex:1;min-width:220px">💡 ${rows.length?`أكبر ${g.A[0]} من ${rows.length} (${Math.round(100*g.A[0]/rows.length)}%) عاملين ${tot0?Math.round(1000*g.A[1]/tot0)/10:0}% من الإجمالى — ركّز عليهم.`:''}</div></div>`; }
+  if(R.smart==='forecast' && rows.length){ const tot=rows.reduce((a,r)=>a+(Number(r['m_'+m0])||0),0), days=Math.max(1,new Set(rows.map(r=>r.d_day)).size); const t=erToday();
+    const last=new Date(Date.UTC(Number(t.slice(0,4)),Number(t.slice(5,7)),0)).getUTCDate(), left=last-Number(t.slice(8,10)); const elapsed=Number(t.slice(8,10)); const avg=tot/elapsed;
+    extra=`<div class="erx-abc"><div class="erx-kpi"><div class="qt-sub">المتوسط اليومى</div><b>${erMoney(avg,0)}</b></div><div class="erx-kpi"><div class="qt-sub">فاضل فى الشهر</div><b>${left} يوم</b></div>
+      <div class="erx-kpi abc-A"><div class="qt-sub">المتوقع آخر الشهر</div><b>${erMoney(tot+avg*left,0)}</b></div><div class="qt-sub" style="flex:1">🔮 على أساس متوسط ${elapsed} يوم (${days} يوم فيهم بيع)</div></div>`; }
+  const views=[['table','📋 جدول'],['chart','📊 رسم']].concat(dims.length===2?[['pivot','🔀 جدول محورى']]:[]);
+  if(ER.rx.view==='pivot'&&dims.length!==2) ER.rx.view='table';
+  const vbar=`<div class="qt-row erx-vbar">${views.map(v=>`<button class="qt-btn ${ER.rx.view===v[0]?'':'ghost'} sm" onclick="ER.rx.view='${v[0]}';erxRenderOut()">${v[1]}</button>`).join('')}
+    <span class="er-tb-sep"></span>${[['share','نسبة من الإجمالى'],['cum','تراكمى'],['rank','ترتيب'],['bar','شريط']].map(o=>`<label class="qt-check" style="font-size:12.5px"><input type="checkbox" ${ER.rx.opt[o[0]]?'checked':''} onchange="ER.rx.opt['${o[0]}']=this.checked;erxRenderOut()"> ${o[1]}</label>`).join('')}
+    <div style="flex:1"></div><span class="qt-sub">${rows.length} سطر${ER.rx.busy?' — ⏳':''}${D.rows.length>=5000?' (أول 5000)':''}</span></div>`;
+  let body='';
+  if(!rows.length) body='<div class="qt-card qt-sub" style="text-align:center;padding:30px">📭 مفيش بيانات بالفلاتر دى — جرّب فترة أوسع</div>';
+  else if(ER.rx.view==='chart') body=erxChart(rows,dims,meas,S,D,cmpMap);
+  else if(ER.rx.view==='pivot') body=erxPivot(rows,dims,meas,S);
+  else body=erxTable(rows,dims,meas,S,D,cmpMap,tot0);
+  el.innerHTML=`<div class="erx-kpis">${cards}</div>${extra}${vbar}${body}${dims.length&&ERX_DRILL[dims[dims.length-1]]?`<div class="qt-sub" style="margin-top:6px">💡 دبل كليك على أى سطر يفتح تفاصيله${dims.includes('doc')?' (أو المستند نفسه)':''}</div>`:''}`; }
+function erxTable(rows,dims,meas,S,D,cmpMap,tot0){ const M=m=>S.meas[m]||[m,'n',''], o=ER.rx.opt, R=D.R, m0=meas[0], max0=Math.max(...rows.map(r=>Math.abs(Number(r['m_'+m0])||0)),1), srt=ER.rx.sort;
+  const th=(k,l)=>`<th class="erx-th" onclick="erxSort('${k}')">${l}${srt&&srt[0]===k?(srt[1]>0?' ▲':' ▼'):''}</th>`;
+  const cm=D.cmp?meas.slice(0,2):[];
+  const head=`<tr>${o.rank?'<th>#</th>':''}${dims.map(d=>th('d_'+d,erEsc((S.dims[d]||[d])[0]))).join('')}${meas.map(m=>th('m_'+m,erEsc(M(m)[0]))).join('')}
+    ${cm.map(m=>`<th>${erEsc(M(m)[0])} قبلها</th><th>الفرق %</th>`).join('')}${o.share?th('__share','% من الإجمالى'):''}${o.cum?'<th>تراكمى %</th>':''}${R.smart==='abc'?'<th>ABC</th>':''}${R.smart==='growth'?'<th>عن اللى قبله</th><th>%</th>':''}${R.smart==='spread'?'<th>التفاوت %</th>':''}${R.smart==='running'?'<th>الصافى التراكمى</th>':''}</tr>`;
+  const body=rows.map((r,i)=>{ const c=cmpMap[erxKey(r,dims)]||null; const v0=Number(r['m_'+m0])||0;
+    return `<tr class="er-tb-skip" ondblclick="erxDrill(${i})" style="cursor:pointer">${o.rank?`<td class="qt-sub">${r.__rank}</td>`:''}${dims.map((d,j)=>`<td${j===0?' style="font-weight:700"':''}>${erEsc(r['d_'+d]??'—')}</td>`).join('')}
+      ${meas.map((m,j)=>`<td>${j===0&&o.bar?`<div class="erx-cellbar"><span style="width:${Math.round(100*Math.abs(v0)/max0)}%" class="${v0<0?'neg':''}"></span><b>${erxFmt(M(m)[1],r['m_'+m])}</b></div>`:erxFmt(M(m)[1],r['m_'+m])}</td>`).join('')}
+      ${cm.map(m=>{ const pv=c?Number(c['m_'+m])||0:null, v=Number(r['m_'+m])||0; const dl=pv?100*(v-pv)/Math.abs(pv):null; return `<td class="qt-sub">${pv==null?'—':erxFmt(M(m)[1],pv)}</td><td class="erx-dl ${dl==null?'':(dl>=0?'up':'dn')}">${dl==null?(c?'—':'🆕'):(dl>=0?'▲':'▼')+Math.abs(Math.round(dl))+'%'}</td>`; }).join('')}
+      ${o.share?`<td>${(Math.round(r.__share*10)/10)}%</td>`:''}${o.cum?`<td class="qt-sub">${Math.round(r.__cum*10)/10}%</td>`:''}
+      ${R.smart==='abc'?`<td><span class="erx-abcb abc-${r.__abc}">${r.__abc}</span></td>`:''}${R.smart==='growth'?`<td class="erx-dl ${r.__g==null?'':(r.__g>=0?'up':'dn')}">${r.__g==null?'—':erxFmt(M(m0)[1],r.__g)}</td><td class="erx-dl ${r.__gp==null?'':(r.__gp>=0?'up':'dn')}">${r.__gp==null?'—':(r.__gp>=0?'▲':'▼')+Math.abs(Math.round(r.__gp))+'%'}</td>`:''}
+      ${R.smart==='spread'?`<td><b style="color:${r.__sp>10?'var(--error)':''}">${Math.round(r.__sp*10)/10}%</b></td>`:''}${R.smart==='running'?`<td><b>${erMoney(r.__run,2)}</b></td>`:''}</tr>`; }).join('');
+  const foot=`<tr class="er-tb-skip erx-tot">${o.rank?'<td></td>':''}<td colspan="${Math.max(dims.length,1)}">الإجمالى</td>${meas.map(m=>`<td>${erxFmt(M(m)[1],D.tot['m_'+m])}</td>`).join('')}${cm.map(m=>{ const pv=D.cmp.tot['m_'+m]; const v=D.tot['m_'+m]; const dl=Number(pv)?100*(Number(v)-Number(pv))/Math.abs(Number(pv)):null; return `<td>${erxFmt(M(m)[1],pv)}</td><td class="erx-dl ${dl==null?'':(dl>=0?'up':'dn')}">${dl==null?'—':(dl>=0?'▲':'▼')+Math.abs(Math.round(dl))+'%'}</td>`; }).join('')}${o.share?'<td>100%</td>':''}${o.cum?'<td></td>':''}${R.smart==='abc'?'<td></td>':''}${R.smart==='growth'?'<td></td><td></td>':''}${R.smart==='spread'?'<td></td>':''}${R.smart==='running'?'<td></td>':''}</tr>`;
+  return `<div class="qt-scroll erx-tbl"><table class="qt-tbl"><thead>${head}</thead><tbody>${body}${foot}</tbody></table></div>`; }
+function erxSort(k){ const s=ER.rx.sort; ER.rx.sort = s&&s[0]===k ? [k,-s[1]] : [k,-1]; erxRenderOut(); }
+function erxPivot(rows,dims,meas,S){ const m=meas[0], M=S.meas[m], rk=[], ck=[], cell={}, rt={}, ct={}; let gt=0;
+  rows.forEach(r=>{ const a=r['d_'+dims[0]]??'—', b=r['d_'+dims[1]]??'—', v=Number(r['m_'+m])||0; if(!rk.includes(a)) rk.push(a); if(!ck.includes(b)) ck.push(b);
+    cell[a+'¦'+b]=(cell[a+'¦'+b]||0)+v; rt[a]=(rt[a]||0)+v; ct[b]=(ct[b]||0)+v; gt+=v; });
+  if(ERX_TIME.includes(dims[1])||dims[1].endsWith('bk')) ck.sort((x,y)=>String(x).localeCompare(String(y),'ar',{numeric:true})); else ck.sort((x,y)=>ct[y]-ct[x]);
+  const cols=ck.slice(0,60); const mx=Math.max(...Object.values(cell).map(Math.abs),1);
+  return `<div class="qt-sub" style="margin-bottom:6px">🔀 الصفوف: <b>${erEsc(S.dims[dims[0]][0])}</b> — الأعمدة: <b>${erEsc(S.dims[dims[1]][0])}</b> — القيمة: <b>${erEsc(M[0])}</b>${ck.length>60?` (أول 60 عمود من ${ck.length})`:''}</div>
+  <div class="qt-scroll erx-tbl"><table class="qt-tbl erx-pv"><thead><tr><th>${erEsc(S.dims[dims[0]][0])}</th>${cols.map(c=>`<th>${erEsc(c)}</th>`).join('')}<th>الإجمالى</th></tr></thead><tbody>
+  ${rk.map(a=>`<tr class="er-tb-skip"><td style="font-weight:700">${erEsc(a)}</td>${cols.map(b=>{ const v=cell[a+'¦'+b]; return `<td style="${v?`background:rgba(201,168,76,${(0.08+0.5*Math.abs(v)/mx).toFixed(2)})`:''}">${v?erxFmt(M[1],v):''}</td>`; }).join('')}<td><b>${erxFmt(M[1],rt[a])}</b></td></tr>`).join('')}
+  <tr class="er-tb-skip erx-tot"><td>الإجمالى</td>${cols.map(b=>`<td>${erxFmt(M[1],ct[b])}</td>`).join('')}<td>${erxFmt(M[1],gt)}</td></tr></tbody></table></div>`; }
+function erxChart(rows,dims,meas,S,D,cmpMap){ const m=meas[0], M=S.meas[m], time=ERX_TIME.includes(dims[0])||dims[0]==='agebk'||dims[0]==='idlebk';
+  let rs=rows.slice(); if(!time) rs=rs.sort((a,b)=>(Number(b['m_'+m])||0)-(Number(a['m_'+m])||0)).slice(0,25);
+  const lbl=r=>dims.map(d=>r['d_'+d]??'—').join(' / '), vals=rs.map(r=>Number(r['m_'+m])||0), cv=rs.map(r=>{ const c=cmpMap[erxKey(r,dims)]; return c?Number(c['m_'+m])||0:null; });
+  const mx=Math.max(...vals.map(Math.abs),...cv.filter(x=>x!=null).map(Math.abs),1);
+  if(!time){ const H=26, W=760, LW=230; return `<div class="qt-card erx-chart"><div class="qt-sub" style="margin-bottom:6px">📊 ${erEsc(M[0])}${rows.length>25?' — أكبر 25':''}${D.cmp?' — <span style="color:#8a8580">▮ الفترة اللى قبلها</span>':''}</div>
+    <svg viewBox="0 0 ${W} ${rs.length*H+10}" width="100%" style="direction:ltr">${rs.map((r,i)=>{ const w=Math.max(2,(W-LW-110)*Math.abs(vals[i])/mx), y=i*H+4; const c=cv[i];
+      return `<text x="${W-4}" y="${y+16}" text-anchor="end" font-size="12" fill="currentColor">${erEsc(String(lbl(r)).slice(0,34))}</text>
+        ${c!=null?`<rect x="${W-LW-((W-LW-110)*Math.abs(c)/mx)}" y="${y+14}" width="${(W-LW-110)*Math.abs(c)/mx}" height="5" fill="#8a8580" rx="2"/>`:''}
+        <rect x="${W-LW-w}" y="${y+2}" width="${w}" height="${c!=null?11:16}" rx="3" fill="${vals[i]<0?'#E05555':'#C9A84C'}"/>
+        <text x="${W-LW-w-6}" y="${y+14}" text-anchor="end" font-size="11" fill="currentColor">${erEsc(erxFmt(M[1],vals[i]).replace(/<[^>]+>/g,''))}</text>`; }).join('')}</svg></div>`; }
+  const W=820, H=260, P=40, n=rs.length, bw=Math.max(3,(W-P*2)/Math.max(n,1)*0.7); const x=i=>P+(W-P*2)*(n<=1?0.5:i/(n-1)); const y=v=>H-P-(H-P*1.6)*Math.abs(v)/mx;
+  const pts=vals.map((v,i)=>`${x(i)},${y(v)}`).join(' '), cpts=cv.every(c=>c!=null)?cv.map((v,i)=>`${x(i)},${y(v)}`).join(' '):'';
+  return `<div class="qt-card erx-chart"><div class="qt-sub" style="margin-bottom:6px">📈 ${erEsc(M[0])}${D.cmp?' — <span style="color:#8a8580">— الفترة اللى قبلها</span>':''}</div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="direction:ltr"><line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#2A2A2A"/>
+    ${vals.map((v,i)=>`<rect x="${x(i)-bw/2}" y="${y(v)}" width="${bw}" height="${H-P-y(v)}" fill="rgba(201,168,76,.28)" rx="2"><title>${erEsc(lbl(rs[i]))}: ${erEsc(erxFmt(M[1],v).replace(/<[^>]+>/g,''))}</title></rect>`).join('')}
+    ${cpts?`<polyline points="${cpts}" fill="none" stroke="#8a8580" stroke-width="2" stroke-dasharray="5 4"/>`:''}<polyline points="${pts}" fill="none" stroke="#E8C97A" stroke-width="2.5"/>
+    ${vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="#E8C97A"/>`).join('')}
+    ${rs.map((r,i)=> (n<=16||i%Math.ceil(n/16)===0)?`<text x="${x(i)}" y="${H-P+16}" text-anchor="middle" font-size="10.5" fill="currentColor">${erEsc(String(lbl(r)).replace('أسبوع ','').slice(-10))}</text>`:'').join('')}
+    <text x="${P}" y="${P-14}" font-size="11" fill="#8A8580">أعلى: ${erEsc(erxFmt(M[1],mx).replace(/<[^>]+>/g,''))}</text></svg></div>`; }
+
+// ── 🔎 دبل كليك: التفاصيل
+function erxDrill(i){ const r=(ER.rx.__rows||[])[i], D=ER.rx.data; if(!r||!D) return; const R=D.R, dims=R.dims; if(!dims.length) return;
+  const d=dims[dims.length-1]; const id=r['i_'+d];
+  if(d==='doc' && id){ return erxOpenDoc(R.src, id); }
+  const next=ERX_DRILL[d]; const S=ER.rx.meta.srcs[R.src]; if(!next||!S.dims[next]){ erToast('مفيش تفاصيل أكتر للسطر ده',false); return; }
+  const dd=Object.assign({f:{},df:{}}, ER.rx.dd?JSON.parse(JSON.stringify(ER.rx.dd)):{});
+  dims.forEach(k=>{ const idk=ERX_IDK[k]; const iv=r['i_'+k]; if(idk && S.cols.includes(idk) && iv!=null) dd.f[idk]=[iv]; else dd.df[k]=[String(iv!=null?iv:r['d_'+k])]; });
+  const label=dims.map(k=>r['d_'+k]).join(' / ');
+  ER.rx.crumbs.push({t:(ER.rx.dd&&ER.rx.dd.__crumb)||erxById(ER.rx.cur).t, dd:ER.rx.dd?JSON.parse(JSON.stringify(ER.rx.dd)):null});
+  dd.dims=[next]; dd.view='table'; dd.smart=null; dd.hv=[]; dd.order=null; dd.dir=null; dd.limit=null; dd.__crumb=`${label} ← ${S.dims[next][0]}`; dd.t=`${erxById(ER.rx.cur).t} — ${label}`;
+  ER.rx.dd=dd; ER.rx.sort=null; ER.rx.view='table'; erxRenderHead(); erxRun(); }
+function erxBack(i){ const c=ER.rx.crumbs[i]; if(!c) return; ER.rx.crumbs=ER.rx.crumbs.slice(0,i); ER.rx.dd=c.dd; ER.rx.sort=null; erxRenderHead(); erxRun(); }
+async function erxOpenDoc(src, id){ try{
+  if(src==='sales'||src==='sinv'){ if(!ER.sl) await erSlLoad(); return erInvOpen(id); }
+  if(src==='purch'||src==='scost'){ if(!ER.pu) ER.pu=await rpcSecure('erp_purch_list',{}); return erShipOpen(id); }
+  if(src==='rcpt'){ if(!ER.sl) await erSlLoad(); return erRcptPrint(id); }
+  if(src==='dlv'){ if(!ER.sl) await erSlLoad(); return erDelPrint(id); }
+  if(src==='tinv'){ return erTinvPrint(id); }
+  if(src==='regq'){ goTo('erp-regs'); const d=(ER.rx.__rows||[]).find(r=>r.i_doc===id); setTimeout(()=>erRegOpenDel(d?d.d_doc:''),400); return; }
+  if(src==='letters'){ erToast('افتح الجواب من شاشة الجوابات برقم الماتور'); return; }
+  erToast('المستند ده مالوش شاشة فتح من هنا',false); }catch(e){ erToast('❌ '+erErr(e),false); } }
+
+// ── ⬇️ Excel / 🖨️ طباعة
+function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; const R=D.R, S=ER.rx.meta.srcs[R.src], rows=ER.rx.__rows||D.rows, meas=R.meas.filter(m=>S.meas[m]);
   const esc=v=>{ v=v==null?'':String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
-  const csv='\ufeff'+[R.cols.map(c=>esc(c[1])).join(',')].concat(rows.map(r=>R.cols.map(c=>esc(r[c[0]])).join(','))).join('\r\n');
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=`${ER.rp.kind}_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
+  const hd=R.dims.map(d=>S.dims[d][0]).concat(meas.map(m=>S.meas[m][0])); const lines=[hd.map(esc).join(',')].concat(rows.map(r=>R.dims.map(d=>r['d_'+d]).concat(meas.map(m=>r['m_'+m])).map(esc).join(',')));
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`${(R.t||'report').replace(/[\\/:*?"<>|]/g,'')}_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
+function erRepPrint(){ const D=ER.rx.data; if(!D||!D.R){ erToast('اعرض التقرير الأول',false); return; } if(!erCan('erp-reports','print')){ erToast('معندكش صلاحية طباعة',false); return; }
+  erTbPrintPick({sec:'erp-reports', key:'rx-'+(ER.rx.cur||''), pane:'erx-out', title:D.R.t, sub:(D.from||D.to?`الفترة من ${D.from||'البداية'} إلى ${D.to||''}`:'كل الفترة')+(D.cmp?` — مقارنة بـ ${D.cmp.range[0]} → ${D.cmp.range[1]}`:'')}); }
+
+// ── 🛠️ اعمل تقريرك بنفسك
+function erxBuilder(fromCur){ const M=ER.rx.meta, cur=fromCur?erxCurDef():null; const st=ER.__erxB={ src:cur?cur.src:'sales', dims:cur?cur.dims.slice():['client'], meas:cur?cur.meas.slice():['net','qty'], t:cur?cur.t+' (نسختى)':'', view:cur&&cur.view||'table' };
+  ER.edit=st; ER.ro=false; st.__render=()=>erModalBody(erxBForm()); erModal('🛠️ اعمل تقريرك بنفسك', erxBForm(), `<button class="qt-btn" onclick="erxBRun(false)">▶️ اعرض</button><button class="qt-btn ghost" onclick="erxBRun(true)">⭐ احفظ فى تقاريرى واعرض</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+function erxBForm(){ const st=ER.__erxB, M=ER.rx.meta, S=M.srcs[st.src];
+  return `<div class="qt-card"><div class="qt-row">${erFld('البيانات (المصدر)', `<select class="qt-inp" style="width:100%" onchange="ER.__erxB.src=this.value;ER.__erxB.dims=[];ER.__erxB.meas=[];ER.__erxB.__render()">${Object.keys(M.srcs).map(k=>`<option value="${k}" ${k===st.src?'selected':''}>${erEsc(M.srcs[k].label)}</option>`).join('')}</select>`,2)}
+    ${erFld('اسم التقرير', `<input class="qt-inp" style="width:100%" value="${erEsc(st.t)}" placeholder="مثلاً: مبيعات قليوب بالصنف" oninput="ER.__erxB.t=this.value">`,2)}</div></div>
+  <div class="qt-card"><div class="qt-h">1️⃣ جمّع بـ (لحد 3 — بالترتيب)</div><div class="erx-bgrid">${Object.keys(S.dims).map(k=>{ const i=st.dims.indexOf(k); return `<label class="qt-check erx-bopt ${i>=0?'on':''}"><input type="checkbox" ${i>=0?'checked':''} onchange="erxBTog('dims','${k}',this.checked)"> ${i>=0?`<b class="erx-bn">${i+1}</b>`:''}${erEsc(S.dims[k][0])}</label>`; }).join('')}</div>
+    <div class="qt-sub" style="margin-top:6px">${st.dims.length===2?'🔀 لو اخترت حاجتين ينفع تعرضه جدول محورى':''}</div></div>
+  <div class="qt-card"><div class="qt-h">2️⃣ اعرض (القياسات)</div><div class="erx-bgrid">${Object.keys(S.meas).map(k=>`<label class="qt-check erx-bopt ${st.meas.includes(k)?'on':''}"><input type="checkbox" ${st.meas.includes(k)?'checked':''} onchange="erxBTog('meas','${k}',this.checked)"> ${erEsc(S.meas[k][0])}${S.meas[k][2]==='cost'?' 🔒':''}</label>`).join('')}</div></div>`; }
+function erxBTog(k,v,on){ const st=ER.__erxB; let a=st[k].filter(x=>x!==v); if(on) a.push(v); if(k==='dims' && a.length>3){ erToast('لحد 3 بس',false); a=a.slice(0,3); } st[k]=a; st.__render(); }
+function erxBRun(save){ const st=ER.__erxB; if(!st.meas.length){ erToast('اختار قياس واحد على الأقل',false); return; }
+  const r={ id:'m'+Date.now(), cat:'fav', mine:true, sub:'تقاريرى', t:st.t||('تقريرى: '+st.dims.map(d=>ER.rx.meta.srcs[st.src].dims[d][0]).join(' × ')), src:st.src, dims:st.dims, meas:st.meas, view:st.dims.length===2?'pivot':'table' };
+  if(save){ const mine=erxMine(); mine.push(r); erxSaveLS('erx_mine',mine); erToast('⭐ اتحفظ فى تقاريرى'); } else { r.id='tmp'; ER.__erxTmp=r; }
+  erClose(); if(!save){ const L=erxLib(); const i=L.findIndex(x=>x.id==='tmp'); if(i>=0) L.splice(i,1); L.push(r); } erxPick(r.id); erxRenderLib(); }
 
 // ════════════════ 🖨️ طباعة المستندات (A4) ════════════════
 function erCoInfo(){ const st=(ER.boot&&ER.boot.settings)||{}; return { name:st.co_legal||st.company_name||'', tax:st.co_tax_no||'', cr:st.co_cr||'', addr:st.co_address||'' }; }
@@ -23216,7 +23556,7 @@ const ER_TB = {
     pend:{ pane:'erg-pane-pend', nwTab:()=>erRegTab('reg'), open:/^erRegOpenDel\(/ },
     find:{ pane:'erg-pane-find', nwTab:()=>erRegTab('reg'), open:/^erRegOpenDel\(/ },
     alerts:{ pane:'erg-pane-alerts', nwTab:()=>erRegTab('reg') } } },
-  'erp-reports': { t:{ main:{ pane:'errp-pane', nwMsg:'التقارير للعرض بس — اختار التقرير والفترة ودوس «اعرض»' } } },
+  'erp-reports': { t:{ main:{ pane:'erx-out', nwMsg:'التقارير للعرض بس — اختار التقرير من المكتبة، أو دوس «🛠️ اعمل تقريرك بنفسك»', printOk:()=>!!(ER.rx&&ER.rx.data&&ER.rx.data.R), printFn:()=>erRepPrint() } } },
   'erp-letters': { tab:()=>ER.tab.lt, t:{
     new:{ none:true, nw:()=>{ ER.lt.look=null; ER.lt.q=''; erRenderLtNew(); },
       delOk:()=>{ const L=ER.lt.look&&ER.lt.look.letter; return !!(L&&!L.tinv); }, delFn:()=>{ const L=ER.lt.look&&ER.lt.look.letter; if(L&&!L.tinv) erLtCancel(L.id); },
@@ -23299,7 +23639,7 @@ function erTbPrintPick(cfg){ const t=erTbTable(cfg); if(!t){ erToast('مفيش �
     <div class="er-mfoot"><button class="qt-btn" id="er-pp-go">🖨️ اطبع</button><button class="qt-btn ghost" onclick="document.getElementById('er-pp').style.display='none'">إلغاء</button></div></div>`;
   o.style.display='flex';
   document.getElementById('er-pp-go').onclick=()=>{ const cols=Array.from(o.querySelectorAll('.er-ppc:checked')).map(c=>Number(c.value)); if(!cols.length){ erToast('اختار عمود واحد على الأقل',false); return; }
-    const nz=!!(document.getElementById('er-pp-nz')||{}).checked; try{ localStorage.setItem(key, JSON.stringify({cols,nz})); }catch(e){} o.style.display='none'; erTbPrintList(cfg,{cols,nz,stk:stk?stk.i:null}); }; }
+    const nz=!!(document.getElementById('er-pp-nz')||{}).checked; try{ localStorage.setItem(key, JSON.stringify({cols,nz})); }catch(e){} o.style.display='none'; erTbPrintList(cfg,{cols,nz,stk:stk?stk.i:null,title:cfg.title,sub:cfg.sub}); }; }
 function erTbNav(dir){ const cfg=erTbCfg(); if(!cfg) return; const rows=erTbRows(cfg); if(!rows.length) return; const cur=erTbSelRow(cfg); let i=cur?rows.indexOf(cur):-1;
   i = dir==='first'?0:dir==='last'?rows.length-1:dir==='next'?Math.min(rows.length-1,i+1):Math.max(0,i<0?0:i-1);
   erTbSelect(rows[i],cfg); const m=document.getElementById('er-modal'); if(ER.__tbOpen && m && m.style.display!=='none'){ erClose(); erTbOpen(); } }
@@ -23323,8 +23663,8 @@ function erTbPrintList(cfg, opt){ const t=erTbTable(cfg); if(!t){ erToast('مف�
     const n=c.tHead.rows[0].cells.length, keep=new Set(opt.cols), full=Array.from(c.rows).filter(r=>r.cells.length===n); for(let i=n-1;i>=0;i--){ if(keep.has(i)) continue; full.forEach(r=>{ if(r.cells[i]) r.deleteCell(i); }); } }
   c.querySelectorAll('button,input,select').forEach(b=>b.remove()); c.querySelectorAll('thead th').forEach(th=>{ th.textContent=th.textContent.replace(/[▲▼]/g,'').trim(); });
   const last=c.tHead.rows[0].cells.length-1; if(last>0 && !c.tHead.rows[0].cells[last].innerText.trim()){ Array.from(c.rows).forEach(r=>{ if(r.cells[last]) r.deleteCell(last); }); }
-  const s=document.getElementById('sec-'+cfg.sec); const title=((s&&s.querySelector('.page-title'))||{}).innerText||'';
-  const tab=((s&&s.querySelector('.bl-tab.active'))||{}).innerText||'';
+  const s=document.getElementById('sec-'+cfg.sec); const title=(opt&&opt.title)||((s&&s.querySelector('.page-title'))||{}).innerText||'';
+  const tab=(opt&&opt.sub)||((s&&s.querySelector('.bl-tab.active'))||{}).innerText||'';
   const w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة',false); return; }
   w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"><style>@page{size:A4 landscape;margin:10mm}body{font-family:Cairo,Tahoma,sans-serif;font-size:12px;color:#111}h2{margin:0 0 4px}.s{color:#555;margin-bottom:8px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:4px 6px;text-align:right;vertical-align:top}th{background:#f3ead2}tr.del{color:#999;text-decoration:line-through}.qt-sub{color:#666;font-size:11px}img{max-width:56px;max-height:44px;object-fit:contain}</style></head><body><h2>${erEsc(title)}</h2><div class="s">${erEsc(tab)} — ${erEsc(new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}))}</div>${c.outerHTML}<script>window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){window.print();},150);});}<\/script></body></html>`);
   w.document.close(); }
