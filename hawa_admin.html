@@ -2550,6 +2550,7 @@ body:has(#er-modal[style*="flex"]) #refreshTimerBadge{display:none!important}
 #er-qhint table{width:100%;border-collapse:collapse}#er-qhint td,#er-qhint th{padding:3px 6px;text-align:right;border-bottom:1px solid var(--border)}#er-qhint th{color:var(--text-dim);font-weight:600}
 #er-qhint tr.on td{color:var(--gold);font-weight:900}#er-qhint tr.pick{cursor:pointer}#er-qhint tr.pick:hover td{background:rgba(201,168,76,.1)}
 .er-stmt .er-stmt-prior td{background:rgba(201,168,76,.06);font-weight:700}.er-stmt .er-stmt-it td{font-size:12px;color:var(--text-dim);border-top:0;padding-top:2px;padding-bottom:2px}.er-stmt .er-stmt-tot td{background:rgba(201,168,76,.1);font-weight:900}
+.er-mstat{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:7px 14px;border-top:1px solid var(--border);background:rgba(201,168,76,.07);font-size:12.5px}.er-mstat:empty{display:none}.er-mstat b{color:var(--gold)}.er-mstat b.bad{color:var(--error)}.er-mstat-sep{color:var(--text-dim)}
 .er-lstk{font-size:11.5px;color:var(--text-dim);margin-top:3px;white-space:nowrap}.er-lstk b{color:var(--text)}.er-lstk .bad{color:var(--error)}
 .er-fs{border:0;padding:0;margin:0;min-width:0}
 .er-fs .qt-card{background:var(--dark3)}
@@ -21048,10 +21049,10 @@ function erModal(title, body, foot){
     m.innerHTML=`<div class="qt-modal-box er-mbox"><div class="qt-modal-hd"><b id="er-m-title"></b><div style="flex:1"></div><div class="er-mctl">
         <button class="qt-btn ghost sm" onclick="erModalMin()" title="تصغير (الشاشة تفضل مفتوحة تحت)">➖</button>
         <button class="qt-btn ghost sm" id="er-m-maxb" onclick="erModalMax()" title="تكبير / تصغير الحجم">🗗</button>
-        <button class="qt-btn ghost sm" onclick="erClose()" title="قفل">✖</button></div></div><div class="er-mbody" id="er-m-body"></div><div class="er-mfoot" id="er-m-foot"></div></div>`;
+        <button class="qt-btn ghost sm" onclick="erClose()" title="قفل">✖</button></div></div><div class="er-mbody" id="er-m-body"></div><div class="er-mstat" id="er-m-stat"></div><div class="er-mfoot" id="er-m-foot"></div></div>`;
     m.addEventListener('mousedown',ev=>{ if(ev.target===m) erClose(); }); document.body.appendChild(m); }
   document.getElementById('er-m-title').innerHTML=title; document.getElementById('er-m-body').innerHTML=body; document.getElementById('er-m-foot').innerHTML=foot||'';
-  m.classList.toggle('er-max', erModalMaxPref()); erModalMaxBtn(); erModalDock(false);
+  m.classList.toggle('er-max', erModalMaxPref()); erModalMaxBtn(); erModalDock(false); erMStat(null);
   m.style.display='flex';
 }
 // 🗖 الشاشة بتفتح بكامل الشاشة — ➖ تصغير (تفضل فى شريط تحت) / 🗗 تكبير وتصغير الحجم / ✖ قفل
@@ -21067,7 +21068,11 @@ function erModalDock(show){ let d=document.getElementById('er-mdock');
   d.innerHTML=`<span class="er-mdock-t" onclick="erModalRestore()" title="رجّع الشاشة">${t}</span><button class="qt-btn sm" onclick="erModalRestore()" title="رجّع الشاشة">⬆️ فتح</button><button class="qt-btn ghost sm" onclick="erClose()" title="قفل">✖</button>`;
   d.style.display='flex'; }
 let __erRendering=false;
-function erModalBody(body){ if(__erRendering){ setTimeout(()=>erModalBody(body),0); return; } const b=document.getElementById('er-m-body'); if(!b) return; __erRendering=true; try{ const st=b.scrollTop; b.innerHTML=body; b.scrollTop=st; } finally{ __erRendering=false; } }
+function erModalBody(body){ if(__erRendering){ setTimeout(()=>erModalBody(body),0); return; } const b=document.getElementById('er-m-body'); if(!b) return; __erRendering=true;
+  const ae=document.activeElement, g=ae&&b.contains(ae)&&ae.getAttribute&&ae.getAttribute('data-g');
+  try{ const st=b.scrollTop; b.innerHTML=body; b.scrollTop=st; } finally{ __erRendering=false; }
+  // المؤشر يفضل فى نفس الخانة / نفس السطر بعد ما الشاشة تترسم (مايرجعش لأول صنف فوق)
+  if(g && !(ER.edit&&ER.edit.__focus)) setTimeout(()=>{ if(ER.edit&&ER.edit.__focus) return; const a=document.activeElement; if(a&&a!==document.body&&b.contains(a)) return; const n=b.querySelector(`[data-g="${g}"]`); if(n){ try{ n.focus({preventScroll:true}); }catch(e){} } },0); }
 function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; erModalDock(false); erQHintHide(); ER.edit=null; if(ER.iedit && document.getElementById('eri-ed')) ER.edit=ER.iedit; }
 function erFoot(saveFn, ro){ return ro ? `<span class="qt-sub">👁️ عرض بس — معندكش صلاحية تعديل</span>` : `<button class="qt-btn" id="er-save-btn" onclick="${saveFn}">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`; }
 async function erRun(btnId, fn){ const b=document.getElementById(btnId); if(b){ if(b.disabled) return; b.disabled=true; } try{ await fn(); }catch(e){ erToast('❌ '+erErr(e), false); } finally{ if(b) b.disabled=false; } }
@@ -21710,7 +21715,7 @@ function erPoOpen(id){
 }
 function erPoCalc(o){ let sub=0; o.items.forEach(l=>{ const q=erNum(l.qty)||0, p=erNum(l.price)||0, dp=erNum(l.disc_pct)||0, da=erNum(l.disc_amt)||0; l.__tot=Math.round((q*p - q*p*dp/100 - da)*100)/100; sub+=l.__tot; });
   const tot=Math.round((sub - sub*(erNum(o.discount_pct)||0)/100 - (erNum(o.discount_amount)||0))*100)/100; return {sub,tot}; }
-function erPoLine(i,k,v){ if(typeof __erRendering!=='undefined' && __erRendering) return; const l=ER.edit.items[i]; if(!l) return; if(k==='item'){ const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; if(it && !l.price && it.purchase_price!=null && String(it.purchase_currency_id)===String(ER.edit.currency_id)) l.price=it.purchase_price; ER.edit.__render(); return; } l[k]=v; erPoTotals(); }
+function erPoLine(i,k,v){ if(typeof __erRendering!=='undefined' && __erRendering) return; const l=ER.edit.items[i]; if(!l) return; if(k==='item'){ const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; if(it && !l.price && it.purchase_price!=null && String(it.purchase_currency_id)===String(ER.edit.currency_id)) l.price=it.purchase_price; if(it) ER.edit.__focus=[i,1]; ER.edit.__render(); return; } l[k]=v; erPoTotals(); }
 function erPoTotals(){ const o=ER.edit, t=erPoCalc(o), cu=erCur(o.currency_id); o.items.forEach((l,i)=>{ const e=document.getElementById('er-pol-'+i); if(e) e.textContent=erMoney(l.__tot,2); });
   const e=document.getElementById('er-po-tot'); if(e) e.innerHTML=`الإجمالى قبل خصم الطلبية: <b>${erMoney(t.sub,2)}</b> &nbsp;•&nbsp; <span style="font-size:16px">الإجمالى: <b>${erMoney(t.tot,2)} ${erEsc(cu.code||'')}</b></span>`; }
 function erPoForm(){
@@ -21722,7 +21727,7 @@ function erPoForm(){
   if(!ER.ro){ const last=o.items[o.items.length-1]; if(!last || last.item_id || last.__txt) o.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''}); }
   const G=(i,c)=>`data-g="${i},${c}" onkeydown="erGridKey(event,${i},${c},4)"`;
   const rows=o.items.map((l,i)=>{ const sq=Number((o.shipped||{})[l.line_no]||0); const it=erById(B.items,l.item_id); const blank=!l.item_id&&!l.__txt;
-    return `<tr><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erPoLine(${i},'item',this.value)" ${G(i,0)} ${sq>0?'disabled':''}>${it?`<div class="qt-sub">${ER_KIND[it.kind]}${it.stock_mode==='components'?' 🧩 مفكك':''}</div>`:(l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':'')}</td>
+    return `<tr data-sit="${l.item_id||''}" data-swh=""><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erPoLine(${i},'item',this.value)" ${G(i,0)} ${sq>0?'disabled':''}>${it?`<div class="qt-sub">${ER_KIND[it.kind]}${it.stock_mode==='components'?' 🧩 مفكك':''}</div>`:(l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':'')}</td>
       <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erPoLine(${i},'qty',this.value)" onfocus="erQHint(this,${l.item_id||'null'},null,'po',${i})" onblur="erQHintBlur()" ${G(i,1)}>${sq?`<div class="qt-sub">اتشحن ${erQ(sq)}</div>`:''}</td>
       <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erPoLine(${i},'price',this.value)" ${G(i,2)}></td>
       <td><input class="qt-inp" type="number" step="0.01" min="0" max="100" style="width:70px" value="${erEsc(l.disc_pct)}" oninput="erPoLine(${i},'disc_pct',this.value)" ${G(i,3)}></td>
@@ -21808,18 +21813,22 @@ function erShipForm(){
   const cu=erCur(s.currency_id); if(s.__cur!==undefined && String(s.__cur)!==String(s.currency_id)) s.rate=cu.is_base?1:(cu.rate||''); s.__cur=s.currency_id;
   let tot=0, gk=0;
   if(!po && !ER.ro){ const last=s.items[s.items.length-1]; if(!last || last.item_id || last.__txt) s.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',__txt:''}); }
-  const G=(i,c)=>`data-g="${i},${c}" onkeydown="erGridKey(event,${i},${c},4)"`;
+  const G=(i,c)=>`data-g="${i},${c}" onkeydown="erGridKey(event,${i},${c},5)"`;
   const rows = po ? po.items.map(pl=>{ let l=s.items.find(x=>Number(x.po_line)===Number(pl.line_no));
       const rem=Number(pl.qty)-Number((po.shipped||{})[pl.line_no]||0)+(l?Number(l.__orig||0):0);
       if(!l){ if(rem<=0) return ''; l={po_line:pl.line_no,item_id:pl.item_id,qty:'',price:pl.net_unit,__orig:0}; s.items.push(l); }
       if(l.price==null||l.price==='') l.price=pl.net_unit; const lt=(erNum(l.qty)||0)*(erNum(l.price)||0); tot+=lt;
-      return `<tr><td>${erEsc(erItemLbl(pl.item_id))}</td><td>${erQ(pl.qty)}</td><td>${erQ(rem)}</td><td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erShipQty(${pl.line_no},this.value)" onfocus="erQHint(this,${pl.item_id},${s.warehouse_id||'null'},'ship',0)" onblur="erQHintBlur()" data-g="${gk},0" onkeydown="erGridKey(event,${gk++},0,0,true)">${erLineStock(pl.item_id,s.warehouse_id)}</td><td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erShipPoPrice(${pl.line_no},this.value)" title="سعر الطلبية ${erMoney(pl.net_unit,4)} — تقدر تغيّره">${Number(erNum(l.price))!==Number(pl.net_unit)?`<div class="qt-sub">الطلبية: ${erMoney(pl.net_unit,4)}</div>`:''}</td><td><b id="er-shl-${pl.line_no}">${erMoney(lt,2)}</b></td></tr>`; }).join('')
+      const lw=l.warehouse_id||s.warehouse_id, rcv=l.line_no!=null?Number((s.received||{})[l.line_no]||0):0;
+      return `<tr data-sit="${pl.item_id}" data-swh="${lw||''}"><td>${erEsc(erItemLbl(pl.item_id))}</td><td>${erShipWhSel(lw,`erShipLineWhPo(${pl.line_no},this.value)`)}</td><td>${erQ(pl.qty)}</td><td>${erQ(rem)}</td><td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="erShipQty(${pl.line_no},this.value)" onfocus="erQHint(this,${pl.item_id},${lw||'null'},'shipl',${s.items.indexOf(l)})" onblur="erQHintBlur()" data-g="${gk},0" onkeydown="erGridKey(event,${gk++},0,0,true)">${erLineStock(pl.item_id,lw)}</td>${s.id?`<td>${rcv?`<b style="color:var(--success)">${erQ(rcv)}</b>`:'<span class="qt-sub">0</span>'}</td>`:''}<td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erShipPoPrice(${pl.line_no},this.value)" title="سعر الطلبية ${erMoney(pl.net_unit,4)} — تقدر تغيّره">${Number(erNum(l.price))!==Number(pl.net_unit)?`<div class="qt-sub">الطلبية: ${erMoney(pl.net_unit,4)}</div>`:''}</td><td><b id="er-shl-${pl.line_no}">${erMoney(lt,2)}</b></td></tr>`; }).join('')
     : s.items.map((l,i)=>{ const it=erById(B.items,l.item_id); const blank=!l.item_id&&!l.__txt; const q=erNum(l.qty)||0, p=erNum(l.price)||0; const lt=q*p - q*p*(erNum(l.disc_pct)||0)/100 - (erNum(l.disc_amt)||0); tot+=lt;
-      return `<tr><td style="min-width:240px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erShipLine(${i},'item',this.value)" ${G(i,0)}>${!it&&l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
-        <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" onchange="erShipLine(${i},'qty',this.value)" onfocus="erQHint(this,${l.item_id||'null'},${s.warehouse_id||'null'},'ship',${i})" onblur="erQHintBlur()" ${G(i,1)}>${erLineStock(l.item_id,s.warehouse_id)}</td>
-        <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" onchange="erShipLine(${i},'price',this.value)" ${G(i,2)}></td>
-        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:70px" value="${erEsc(l.disc_pct)}" onchange="erShipLine(${i},'disc_pct',this.value)" ${G(i,3)}></td>
-        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" onchange="erShipLine(${i},'disc_amt',this.value)" ${G(i,4)}></td>
+      const lw=l.warehouse_id||s.warehouse_id, rcv=l.line_no!=null?Number((s.received||{})[l.line_no]||0):0;
+      return `<tr data-sit="${l.item_id||''}" data-swh="${lw||''}"><td style="min-width:240px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erShipLine(${i},'item',this.value)" ${G(i,0)}>${!it&&l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
+        <td>${erShipWhSel(lw,`erShipLine(${i},'warehouse_id',this.value)`,G(i,1))}</td>
+        <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" onchange="erShipLine(${i},'qty',this.value)" onfocus="erQHint(this,${l.item_id||'null'},${lw||'null'},'shipl',${i})" onblur="erQHintBlur()" ${G(i,2)}>${erLineStock(l.item_id,lw)}</td>
+        ${s.id?`<td>${rcv?`<b style="color:var(--success)">${erQ(rcv)}</b>`:'<span class="qt-sub">0</span>'}</td>`:''}
+        <td><input class="qt-inp" type="number" step="0.0001" min="0" style="width:110px" value="${erEsc(l.price)}" onchange="erShipLine(${i},'price',this.value)" ${G(i,3)}></td>
+        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:70px" value="${erEsc(l.disc_pct)}" onchange="erShipLine(${i},'disc_pct',this.value)" ${G(i,4)}></td>
+        <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" onchange="erShipLine(${i},'disc_amt',this.value)" ${G(i,5)}></td>
         <td><b>${erMoney(lt,2)}</b></td><td>${blank?'':`<button class="qt-btn red sm" tabindex="-1" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('');
   setTimeout(erInvFocus,0);
   return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${po?'':erItemDl()}
@@ -21829,14 +21838,14 @@ function erShipForm(){
     ${erFld('رقم فاتورة المورد / البوليصة', erInp('ref_no',s.ref_no,{dir:'ltr'}),1)}${erFld('الكونتينر', erInp('container',s.container,{dir:'ltr'}),1)}
   </div><div class="qt-row" style="margin-top:10px">
     ${erFld('تاريخ الشحن / الفاتورة', erInp('ship_date',s.ship_date,{type:'date'}),1)}${erFld('الوصول المتوقع', erInp('eta',s.eta,{type:'date'}),1)}
-    ${erFld('رايحة لمخزن *', erSel('warehouse_id',s.warehouse_id,[['','— اختار —']].concat(B.warehouses.filter(w=>w.is_active||String(w.id)===String(s.warehouse_id)).map(w=>[w.id,`${w.code} — ${w.name}`]))),2)}
+    ${erFld('المخزن الافتراضى للشحنة *', erSel('warehouse_id',s.warehouse_id,[['','— اختار —']].concat(B.warehouses.filter(w=>w.is_active||String(w.id)===String(s.warehouse_id)).map(w=>[w.id,`${w.code} — ${w.name}`]))),2)}
   </div><div class="qt-row" style="margin-top:10px">
     ${po?erFld('العملة', `<div class="qt-inp" style="opacity:.8">${erEsc(cu.code||'')} — ${erEsc(cu.name||'')}</div>`,1):erFld('العملة', erSel('currency_id',s.currency_id,B.currencies.filter(c=>c.is_active||String(c.id)===String(s.currency_id)).map(c=>[c.id,`${c.code} — ${c.name}`]),true),1)}
     ${cu.is_base?'':erFld(`سعر الصرف (1 ${erEsc(cu.code||'')} = ? ج.م) *`, erInp('rate',s.rate,{type:'number',step:'0.0001'}),1)}
     ${erFld('شرط التسليم', erSel('incoterm',s.incoterm,Object.keys(ER_INCO).map(k=>[k,ER_INCO[k]])),2)}
   </div>${s.supplier_id?erPartyBox('supplier',s.supplier_id):''}</div>
   <div class="qt-card"><div class="qt-h">📦 الأصناف ${po?'<span class="qt-sub">— اكتب الكمية اللى اتشحنت من كل سطر (فاضى أو صفر = مش فى الشحنة دى)</span>':''}</div>
-    <div style="overflow:auto"><table class="qt-tbl"><thead><tr>${po?'<th>الصنف</th><th>فى الطلبية</th><th>الباقى</th><th>الكمية المشحونة</th><th>السعر (بتكتبه بإيدك)</th><th>الإجمالى</th>':'<th>الصنف</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th>'}</tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr>${po?`<th>الصنف</th><th>المخزن</th><th>فى الطلبية</th><th>الباقى</th><th>الكمية المشحونة</th>${s.id?'<th>المستلم</th>':''}<th>السعر (بتكتبه بإيدك)</th><th>الإجمالى</th>`:`<th>الصنف</th><th>المخزن</th><th>الكمية</th>${s.id?'<th>المستلم</th>':''}<th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th>`}</tr></thead><tbody>${rows}</tbody></table></div>
     <div class="qt-sub" style="margin-top:6px">⏎ Enter ينقلك للخانة اللى بعدها${po?'':'، وآخر السطر يفتح سطر جديد'}</div>
     <div class="qt-tot" style="margin-top:10px" id="er-ship-tot">قيمة الشحنة: <b>${erMoney(tot,2)} ${erEsc(cu.code||'')}</b>${cu.is_base?'':` ≈ <b>${erMoney(tot*(erNum(s.rate)||0),2)} ج.م</b>`}</div>
   </div>
@@ -21847,12 +21856,15 @@ function erShipQty(pln, v){ const s=ER.edit, po=erById(ER.pu.pos,s.po_id); let l
   const pl=po.items.find(x=>x.line_no===pln); const pr=l&&l.price!==''&&l.price!=null?(erNum(l.price)||0):Number(pl.net_unit); const e=document.getElementById('er-shl-'+pln); if(e) e.textContent=erMoney((erNum(v)||0)*pr,2);
   let tot=0; po.items.forEach(x=>{ const y=s.items.find(z=>Number(z.po_line)===Number(x.line_no)); const yp=y&&y.price!==''&&y.price!=null?(erNum(y.price)||0):Number(x.net_unit); tot+=(erNum(y&&y.qty)||0)*yp; }); const cu=erCur(s.currency_id);
   const t=document.getElementById('er-ship-tot'); if(t) t.innerHTML=`قيمة الشحنة: <b>${erMoney(tot,2)} ${erEsc(cu.code||'')}</b>${cu.is_base?'':` ≈ <b>${erMoney(tot*(erNum(s.rate)||0),2)} ج.م</b>`}`; }
-function erShipLine(i,k,v){ if(typeof __erRendering!=='undefined' && __erRendering) return; const l=ER.edit.items[i]; if(!l) return; if(k==='item'){ const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; if(it && !l.price && it.purchase_price!=null && String(it.purchase_currency_id)===String(ER.edit.currency_id)) l.price=it.purchase_price; if(it && !ER.edit.warehouse_id && it.default_warehouse_id){ ER.edit.warehouse_id=String(it.default_warehouse_id); erToast(`🏬 المخزن اتحط «${erWhName(it.default_warehouse_id)}» (الافتراضى للصنف) — تقدر تغيّره`); } } else l[k]=v; ER.edit.__render(); }
+function erShipLine(i,k,v){ if(typeof __erRendering!=='undefined' && __erRendering) return; const l=ER.edit.items[i]; if(!l) return; if(k==='item'){ const it=erItemFromTxt(v); l.item_id=it?it.id:null; l.__txt=v; if(it && !l.price && it.purchase_price!=null && String(it.purchase_currency_id)===String(ER.edit.currency_id)) l.price=it.purchase_price; if(it && !ER.edit.warehouse_id && it.default_warehouse_id){ ER.edit.warehouse_id=String(it.default_warehouse_id); }
+    if(it && !l.warehouse_id) l.warehouse_id=String(it.default_warehouse_id||ER.edit.warehouse_id||''); if(it) ER.edit.__focus=[i,2]; } else l[k]=v; ER.edit.__render(); }
+function erShipWhSel(val, onch, extra){ const B=ER.boot; return `<select class="qt-inp" style="min-width:150px" onchange="${onch}" ${extra||''}><option value="">— المخزن —</option>${B.warehouses.filter(w=>w.is_active||String(w.id)===String(val)).map(w=>`<option value="${w.id}" ${String(w.id)===String(val)?'selected':''}>${erEsc(w.name)}</option>`).join('')}</select>`; }
+function erShipLineWhPo(pln, v){ const l=ER.edit.items.find(x=>Number(x.po_line)===Number(pln)); if(l){ l.warehouse_id=v; ER.edit.__render(); } }
 async function erShipSave(){ await erRun('er-save-btn', async ()=>{ const s=ER.edit;
   const bad=s.items.find(l=>l.__txt && !l.item_id && !s.po_id); if(bad) throw new Error(`الصنف «${bad.__txt}» مش موجود — اختاره من القايمة`);
   const p={ id:s.id, po_id:s.po_id, supplier_id:s.supplier_id||null, currency_id:s.currency_id||null, rate:erNum(s.rate), incoterm:s.incoterm, ship_date:s.ship_date, eta:s.eta||null,
     ref_no:s.ref_no, container:s.container, warehouse_id:s.warehouse_id||null, notes:s.notes,
-    items: s.po_id ? s.items.filter(l=>erNum(l.qty)).map(l=>({po_line:l.po_line,qty:erNum(l.qty),price:erNum(l.price)})) : s.items.filter(l=>l.item_id).map(l=>({item_id:l.item_id,qty:erNum(l.qty),price:erNum(l.price)||0,disc_pct:erNum(l.disc_pct)||0,disc_amt:erNum(l.disc_amt)||0})) };
+    items: s.po_id ? s.items.filter(l=>erNum(l.qty)).map(l=>({po_line:l.po_line,qty:erNum(l.qty),price:erNum(l.price),warehouse_id:l.warehouse_id||s.warehouse_id||null})) : s.items.filter(l=>l.item_id).map(l=>({item_id:l.item_id,qty:erNum(l.qty),price:erNum(l.price)||0,disc_pct:erNum(l.disc_pct)||0,disc_amt:erNum(l.disc_amt)||0,warehouse_id:l.warehouse_id||s.warehouse_id||null})) };
   await rpcSecure('erp_ship_save',{p}); erClose(); ER.stock=null; await erPuReload(); erToast('✅ اتحفظت الشحنة — الرصيد الدفترى اتحدّث'); }); }
 
 // ════════ 💰 تكاليف الشحنة
@@ -22058,7 +22070,7 @@ function erTrOpen(){ if(!erCan('erp-stock','edit')){ erToast('معندكش صل�
     return `${erItemDl()}<div class="qt-card"><div class="qt-row">${erFld('من مخزن *', erSel('from_wh',t.from_wh,whs.map(w=>[w.id,w.name]),true),2)}${erFld('إلى مخزن *', erSel('to_wh',t.to_wh,whs.map(w=>[w.id,w.name]),true),2)}${erFld('التاريخ', erInp('tr_date',t.tr_date,{type:'date'}),1)}</div></div>
     <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— ⏎ Enter ينقلك للخانة اللى بعدها، وآخر السطر يفتح سطر جديد</span></div><table class="qt-tbl"><thead><tr><th>الصنف</th><th>الكمية</th><th>فعلى فى «من»</th><th>فعلى فى «إلى»</th><th></th></tr></thead><tbody>
       ${t.items.map((l,i)=>{ const blank=!l.item_id&&!l.__txt; const av=l.item_id?erAvailAct(l.item_id,t.from_wh):null;
-        return `<tr><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erTrLine(${i},this.value)" ${G(i,0)}>${l.__txt&&!l.item_id?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
+        return `<tr data-sit="${l.item_id||''}" data-swh="${t.from_wh||''}"><td style="min-width:260px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erTrLine(${i},this.value)" ${G(i,0)}>${l.__txt&&!l.item_id?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':''}</td>
           <td><input class="qt-inp" type="number" min="0" style="width:90px" value="${erEsc(l.qty)}" oninput="ER.edit.items[${i}].qty=this.value" onfocus="erQHint(this,${l.item_id||'null'},${t.from_wh||'null'},'tr',${i})" onblur="erQHintBlur()" ${G(i,1)}></td>
           <td>${av!=null?`<b style="color:${av<(erNum(l.qty)||0)?'var(--error)':''}">${erQ(av)}</b>`:''}</td><td>${l.item_id?(a=>a==null?'؟':erQ(a))(erAvailAct(l.item_id,t.to_wh)):''}</td>
           <td>${blank?'':`<button class="qt-btn red sm" tabindex="-1" onclick="ER.edit.items.splice(${i},1);ER.edit.__render()">✖</button>`}</td></tr>`; }).join('')}</tbody></table></div>
@@ -22137,22 +22149,34 @@ let __erQH=null;
 async function erQHint(el, itemId, whId, kind, idx){
   if(!itemId){ erQHintHide(); return; } __erQH={el,itemId,whId,kind,idx};
   if(!ER.stock){ await erStockEnsure(); if(!__erQH||__erQH.el!==el) return; }
-  const rows=erItemWhStock(itemId); if(!rows){ erQHintHide(); return; }
+  const all=erItemWhStock(itemId); if(!all){ erQHintHide(); return; }
+  const rows=all.filter(r=>r.book||r.actual||String(r.w.id)===String(whId)); // المخزن اللى مفيهوش رصيد مايظهرش
   const it=erById(ER.boot.items,itemId); let h=document.getElementById('er-qhint'); if(!h){ h=document.createElement('div'); h.id='er-qhint'; document.body.appendChild(h); }
-  const tb=rows.reduce((a,r)=>a+r.book,0), ta=rows.reduce((a,r)=>a+r.actual,0), pick=kind==='inv'||kind==='ship';
+  const tb=rows.reduce((a,r)=>a+r.book,0), ta=rows.reduce((a,r)=>a+r.actual,0), pick=kind==='inv'||kind==='ship'||kind==='shipl';
   h.innerHTML=`<div style="margin-bottom:5px"><b style="color:var(--gold)">${erEsc(it.code)}</b> ${erEsc(it.name_ar)}${it.stock_mode==='components'?' <span class="qt-sub">🧩 من المكونات</span>':''}</div>
     <table><thead><tr><th>المخزن</th><th>دفترى</th><th>فعلى</th></tr></thead><tbody>
     ${rows.map(r=>`<tr class="${String(r.w.id)===String(whId)?'on':''} ${pick?'pick':''}" ${pick?`onmousedown="event.preventDefault();erQHintPick(${r.w.id})" title="دوس علشان تسحب${kind==='ship'?' / تضيف':''} من المخزن ده"`:''}><td>${String(r.w.id)===String(whId)?'▶ ':''}${erEsc(r.w.name)}${String(r.w.id)===String(it.default_warehouse_id)?' <span class="qt-sub">⭐ الافتراضى</span>':''}</td><td>${erQ(r.book)}</td><td>${erQ(r.actual)}</td></tr>`).join('')}
-    <tr><td><b>الإجمالى</b></td><td><b>${erQ(tb)}</b></td><td><b>${erQ(ta)}</b></td></tr></tbody></table>
+    ${rows.length?'':'<tr><td colspan="3" class="qt-sub">مفيش رصيد فى أى مخزن</td></tr>'}<tr><td><b>الإجمالى</b></td><td><b>${erQ(tb)}</b></td><td><b>${erQ(ta)}</b></td></tr></tbody></table>
     ${pick?'<div class="qt-sub" style="margin-top:4px">💡 دوس على مخزن علشان تغيّر المخزن</div>':''}`;
   h.style.display='block'; const r=el.getBoundingClientRect(), hh=h.offsetHeight, ww=h.offsetWidth;
   let top=r.bottom+4; if(top+hh>window.innerHeight-6) top=Math.max(6,r.top-hh-4);
   let left=r.right-ww; left=Math.max(6,Math.min(left,window.innerWidth-ww-6)); h.style.top=top+'px'; h.style.left=left+'px'; }
+// 📊 شريط الرصيد تحت الشاشة (زى البرنامج القديم): الصنف اللى واقف عليه — دفترى / فعلى فى مخزنه + الكميات فى المخازن التانية
+function erMStat(itemId, whId){ const el=document.getElementById('er-m-stat'); if(!el) return; if(!itemId||!ER.boot){ el.innerHTML=''; return; }
+  if(!ER.stock){ erStockEnsure().then(()=>{ if(ER.stock) erMStat(itemId,whId); }); el.innerHTML='<span class="qt-sub">⏳ بنجيب الرصيد...</span>'; return; }
+  const it=erById(ER.boot.items,itemId), all=erItemWhStock(itemId); if(!it||!all){ el.innerHTML=''; return; }
+  const cur=all.find(r=>String(r.w.id)===String(whId)), oth=all.filter(r=>String(r.w.id)!==String(whId)&&(r.book||r.actual));
+  el.innerHTML=`<span>📦 كود الصنف: <b>${erEsc(it.code)}</b> — ${erEsc(it.name_ar)}</span>
+    ${cur?`<span>🏬 ${erEsc(cur.w.name)}</span><span>كمية دفترية: <b class="${cur.book<=0?'bad':''}">${erQ(cur.book)}</b></span><span>كمية فعلية: <b class="${cur.actual<=0?'bad':''}">${erQ(cur.actual)}</b></span>`:'<span class="qt-sub">اختار المخزن</span>'}
+    <span class="er-mstat-sep">||</span><span>كميات بمخازن أخرى: ${oth.length?oth.map(r=>`<b>${erEsc(r.w.name)}</b> ${erQ(r.book)} / ${erQ(r.actual)}`).join(' — '):'<span class="qt-sub">مفيش</span>'}</span>`; }
+document.addEventListener('focusin', ev=>{ const t=ev.target; if(!t||!t.closest||!t.closest('#er-m-body')) return; const tr=t.closest('tr[data-sit]'); if(!tr) return;
+  erMStat(tr.dataset.sit?Number(tr.dataset.sit):null, tr.dataset.swh||null); });
 function erQHintHide(){ __erQH=null; const h=document.getElementById('er-qhint'); if(h) h.style.display='none'; }
 function erQHintBlur(){ setTimeout(()=>{ const a=document.activeElement; if(!__erQH||a!==__erQH.el) erQHintHide(); },120); }
 function erQHintPick(whId){ const q=__erQH; if(!q) return; erQHintHide();
   if(q.kind==='inv'){ erInvLine(q.idx,'warehouse_id',String(whId)); }
-  else if(q.kind==='ship'){ ER.edit.warehouse_id=String(whId); ER.edit.__render(); } }
+  else if(q.kind==='ship'){ ER.edit.warehouse_id=String(whId); ER.edit.__render(); }
+  else if(q.kind==='shipl'){ const l=ER.edit.items[q.idx]; if(l){ l.warehouse_id=String(whId); ER.edit.__render(); } } }
 function erAvailAct(itemId, wh){ const it=erById(ER.boot.items,itemId); if(!it||!ER.stock) return null; const m=erStockMap();
   if(it.stock_mode==='components') return erKitAvail(it,m,wh).actual; return ((m[it.id]||{})[wh]||{}).actual||0; }
 function erInvRem(v){ return Math.max(0, Math.round((Number(v.total)-Number(v.paid||0))*100)/100); }
@@ -22271,7 +22295,8 @@ function erInvLine(i,k,val){ if(typeof __erRendering!=='undefined' && __erRender
   if(k==='item'){ const it=erItemFromTxt(val); const old={id:l.item_id,txt:l.__txt}; l.item_id=it?it.id:null; l.__txt=val;
     if(it){ const cl=erCl(v.client_id); const p=erPriceFor(it,cl); if(p!=null) l.price=p;
       if(!l.warehouse_id){ l.warehouse_id = it.default_warehouse_id || (erBestWh(it.id)||{}).id || ''; }
-      const d=dupOf(it.id,l.warehouse_id); if(d){ l.item_id=old.id; l.__txt=old.txt||''; erToast(`❌ «${it.name_ar}» موجود قبل كده على مخزن «${erWhName(d.warehouse_id)}» — زوّد الكمية فى نفس السطر أو اختار مخزن تانى`,false); } }
+      const d=dupOf(it.id,l.warehouse_id); if(d){ l.item_id=old.id; l.__txt=old.txt||''; v.__focus=[i,0]; erToast(`❌ «${it.name_ar}» موجود قبل كده على مخزن «${erWhName(d.warehouse_id)}» — زوّد الكمية فى نفس السطر أو اختار مخزن تانى`,false); }
+      else v.__focus=[i,2]; }
     v.__render(); return; }
   if(k==='qty'){ l.qty=val; const need=erNum(val)||0; if(l.item_id && l.warehouse_id && need>0 && ER.stock){ const av=erInvAvail(l);
       if(need>av){ const best=erBestWh(l.item_id,l.warehouse_id);
@@ -22337,12 +22362,12 @@ function erInvForm(){
   if(!lk && !ER.ro){ const last=v.items[v.items.length-1]; if(!last || last.item_id || last.__txt) v.items.push({item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',warehouse_id:'',__txt:''}); }
   const G=(i,c)=>`data-g="${i},${c}" onkeydown="erInvKey(event,${i},${c})"`;
   const rows=v.items.map((l,i)=>{ const blank=!l.item_id&&!l.__txt; const it=erById(B.items,l.item_id); const av=it&&l.warehouse_id&&ER.stock?erInvAvail(l):null; const dq=Number((v.shipped||v.delivered||{})[l.line_no]||0);
-    return `<tr><td style="min-width:250px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erInvLine(${i},'item',this.value)" ${G(i,0)} ${lk?'disabled':''}>
+    return `<tr data-sit="${l.item_id||''}" data-swh="${l.warehouse_id||''}"><td style="min-width:250px"><input class="qt-inp" list="er-item-dl" style="width:100%" value="${erEsc(l.__txt||'')}" placeholder="كود أو اسم الصنف" onchange="erInvLine(${i},'item',this.value)" ${G(i,0)} ${lk?'disabled':''}>
         ${it?`<div class="qt-sub">${it.stock_mode==='components'?'🧩 مفكك':''} ${it.reg_mode!=='none'?ER_REG[it.reg_mode]:''}</div>`:(l.__txt?'<div style="color:var(--error);font-size:12px">❌ مش موجود</div>':'')}</td>
       <td><select class="qt-inp" onchange="erInvLine(${i},'warehouse_id',this.value)" ${G(i,1)} ${lk?'disabled':''}><option value="">— المخزن —</option>${whs.map(w=>`<option value="${w.id}" ${String(w.id)===String(l.warehouse_id)?'selected':''}>${erEsc(w.name)}</option>`).join('')}</select>
         ${av!=null?`<div class="er-lstk">متاح <b class="${av<(erNum(l.qty)||0)?'bad':''}">${erQ(av)}</b> • دفترى ${erQ(erAvail(l.item_id,l.warehouse_id))} • فعلى ${erQ(erAvailAct(l.item_id,l.warehouse_id))}</div>`:''}
         ${it&&String(l.warehouse_id)===String(it.default_warehouse_id)?'<div class="qt-sub" style="font-size:11px">⭐ المخزن الافتراضى</div>':''}</td>
-      <td><input class="qt-inp" type="number" min="0" style="width:80px" value="${erEsc(l.qty)}" onchange="erInvLine(${i},'qty',this.value)" onfocus="erQHint(this,${l.item_id||'null'},${l.warehouse_id||'null'},'inv',${i})" onblur="erQHintBlur()" ${G(i,2)} ${lk?'disabled':''}>${dq?`<div class="qt-sub">اتسلم ${erQ(dq)}</div>`:''}</td>
+      <td><input class="qt-inp" type="number" min="0" style="width:80px" value="${erEsc(l.qty)}" onchange="erInvLine(${i},'qty',this.value)" onfocus="erQHint(this,${l.item_id||'null'},${l.warehouse_id||'null'},'inv',${i})" onblur="erQHintBlur()" ${G(i,2)} ${lk?'disabled':''}></td>${v.id?`<td>${dq?`<b style="color:${dq>=Number(l.qty)?'var(--success)':'var(--gold)'}">${erQ(dq)}</b>`:'<span class="qt-sub">0</span>'}</td>`:''}
       <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:110px" value="${erEsc(l.price)}" oninput="erInvLine(${i},'price',this.value)" ${G(i,3)} ${lk?'disabled':''}></td>
       <td><input class="qt-inp" type="number" step="0.01" min="0" max="100" style="width:65px" value="${erEsc(l.disc_pct)}" oninput="erInvLine(${i},'disc_pct',this.value)" ${G(i,4)} ${lk?'disabled':''}></td>
       <td><input class="qt-inp" type="number" step="0.01" min="0" style="width:90px" value="${erEsc(l.disc_amt)}" oninput="erInvLine(${i},'disc_amt',this.value)" ${G(i,5)} ${lk?'disabled':''}></td>
@@ -22361,7 +22386,7 @@ function erInvForm(){
     ${erFld('تاريخ الاستحقاق', erInp('due_date',v.due_date,{type:'date'}),1)}
   </div>${cl.id?erPartyBox('client',cl.id):''}</div>
   <div class="qt-card"><div class="qt-h">📦 الأصناف <span class="qt-sub">— السعر بييجى من فئة سعر التاجر، ولو المخزن مش كفاية البند بيتقسم أوتوماتيك • ⏎ Enter ينقلك للخانة اللى بعدها، وآخر السطر يفتح سطر جديد</span></div>
-    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>المخزن</th><th>الكمية</th><th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>المخزن</th><th>الكمية</th>${v.id?'<th>الكمية المسلّمة</th>':''}<th>السعر</th><th>خصم %</th><th>خصم قيمة</th><th>الإجمالى</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="qt-row" style="margin-top:12px">${erFld('خصم على الفاتورة %', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:100px" value="${erEsc(v.discount_pct)}" oninput="ER.edit.discount_pct=this.value;erInvTotals()" ${lk?'disabled':''}>`)}
       ${erFld('خصم قيمة', `<input class="qt-inp" type="number" step="0.01" min="0" style="width:130px" value="${erEsc(v.discount_amount)}" oninput="ER.edit.discount_amount=this.value;erInvTotals()" ${lk?'disabled':''}>`)}
       <div style="flex:1"></div><div class="qt-tot" id="er-inv-tot"></div></div></div>
@@ -23260,7 +23285,21 @@ async function erTbDel(){ const c0=erTbCfg(); if(c0&&c0.delFn){ if(!erCan(c0.sec
     ER.edit.is_active=!on; await saveFn(); return; }
   erToast('السطر ده مينفعش يتلغى',false); }
 function erTbPrint(){ const cfg=erTbCfg(); if(!cfg) return; if(!erCan(cfg.sec,'print')){ erToast('معندكش صلاحية طباعة',false); return; }
-  if(cfg.printFn) return cfg.printFn(); const tr=erTbSelRow(cfg), b=erTbBtn(tr,cfg.print); if(b){ b.click(); return; } erTbPrintList(cfg); }
+  if(cfg.printFn) return cfg.printFn(); const tr=erTbSelRow(cfg), b=erTbBtn(tr,cfg.print); if(b){ b.click(); return; } erTbPrintPick(cfg); }
+// 🖨️ طباعة القايمة: تختار الأعمدة اللى تتطبع (زى شاشة العملاء) + تخفى اللى رصيده صفر
+function erTbPrintPick(cfg){ const t=erTbTable(cfg); if(!t){ erToast('مفيش قايمة للطباعة هنا',false); return; }
+  const hs=Array.from(t.tHead.rows[0].cells).map((c,i)=>({i,l:(c.innerText||'').replace(/[▲▼]/g,'').trim()})).filter(h=>h.l);
+  const key='er_pp_'+cfg.sec+':'+cfg.key; let sv=null; try{ sv=JSON.parse(localStorage.getItem(key)||'null'); }catch(e){}
+  const stk=hs.find(h=>/^(ال)?فعلى$/.test(h.l)) || hs.find(h=>/فعلى/.test(h.l));
+  let o=document.getElementById('er-pp'); if(!o){ o=document.createElement('div'); o.id='er-pp'; o.className='qt-modal'; document.body.appendChild(o); o.addEventListener('mousedown',ev=>{ if(ev.target===o) o.style.display='none'; }); }
+  o.innerHTML=`<div class="qt-modal-box" style="width:min(460px,100%)"><div class="qt-modal-hd"><b>🖨️ اختار اللى يتطبع</b><div style="flex:1"></div><button class="qt-btn ghost sm" onclick="document.getElementById('er-pp').style.display='none'">✖</button></div>
+    <div style="padding:12px 14px;max-height:60vh;overflow:auto"><div class="qt-row" style="gap:6px;margin-bottom:8px"><button class="qt-btn ghost sm" onclick="document.querySelectorAll('#er-pp .er-ppc').forEach(c=>c.checked=true)">☑️ الكل</button><button class="qt-btn ghost sm" onclick="document.querySelectorAll('#er-pp .er-ppc').forEach(c=>c.checked=false)">⬜ ولا حاجة</button></div>
+    ${hs.map(h=>`<label class="qt-check" style="display:flex;gap:8px;align-items:center;padding:6px 2px;border-bottom:1px solid var(--border)"><input type="checkbox" class="er-ppc" value="${h.i}" ${!sv||!sv.cols||sv.cols.includes(h.i)?'checked':''}> ${erEsc(h.l)}</label>`).join('')}
+    ${stk?`<label class="qt-check" style="display:flex;gap:8px;align-items:center;padding:10px 2px 2px"><input type="checkbox" id="er-pp-nz" ${sv&&sv.nz?'checked':''}> <b>مايطبعش اللى رصيده الفعلى صفر</b></label>`:''}</div>
+    <div class="er-mfoot"><button class="qt-btn" id="er-pp-go">🖨️ اطبع</button><button class="qt-btn ghost" onclick="document.getElementById('er-pp').style.display='none'">إلغاء</button></div></div>`;
+  o.style.display='flex';
+  document.getElementById('er-pp-go').onclick=()=>{ const cols=Array.from(o.querySelectorAll('.er-ppc:checked')).map(c=>Number(c.value)); if(!cols.length){ erToast('اختار عمود واحد على الأقل',false); return; }
+    const nz=!!(document.getElementById('er-pp-nz')||{}).checked; try{ localStorage.setItem(key, JSON.stringify({cols,nz})); }catch(e){} o.style.display='none'; erTbPrintList(cfg,{cols,nz,stk:stk?stk.i:null}); }; }
 function erTbNav(dir){ const cfg=erTbCfg(); if(!cfg) return; const rows=erTbRows(cfg); if(!rows.length) return; const cur=erTbSelRow(cfg); let i=cur?rows.indexOf(cur):-1;
   i = dir==='first'?0:dir==='last'?rows.length-1:dir==='next'?Math.min(rows.length-1,i+1):Math.max(0,i<0?0:i-1);
   erTbSelect(rows[i],cfg); const m=document.getElementById('er-modal'); if(ER.__tbOpen && m && m.style.display!=='none'){ erClose(); erTbOpen(); } }
@@ -23278,14 +23317,16 @@ function erTbView(tr,cfg){ const t=erTbTable(cfg); const hs=t?Array.from(t.tHead
   const t0=(tr.cells[0]?tr.cells[0].innerText.trim().split(/\s+/)[0]:'');
   erModal(`👁️ ${erEsc(hs[0]||'عرض')} <span style="color:var(--gold)">${erEsc(t0)}</span>`, `<div class="qt-card er-tb-view">${body}</div>`, `<button class="qt-btn ghost" onclick="erClose()">قفل</button>`);
   document.querySelectorAll('#er-m-body .er-tb-view button').forEach(b=>b.remove()); }
-function erTbPrintList(cfg){ const t=erTbTable(cfg); if(!t){ erToast('مفيش قايمة للطباعة هنا',false); return; }
+function erTbPrintList(cfg, opt){ const t=erTbTable(cfg); if(!t){ erToast('مفيش قايمة للطباعة هنا',false); return; }
   const c=t.cloneNode(true); Array.from(c.tBodies[0].rows).forEach(r=>{ if(r.classList.contains('er-tb-hide')) r.remove(); });
-  c.querySelectorAll('button,input,select').forEach(b=>b.remove());
+  if(opt){ if(opt.nz && opt.stk!=null) Array.from(c.tBodies[0].rows).forEach(r=>{ const cell=r.cells[opt.stk]; if(!cell||r.cells.length!==c.tHead.rows[0].cells.length) return; const v=Number(String(cell.innerText).replace(/[^0-9.\-]/g,'')); if(!v) r.remove(); });
+    const n=c.tHead.rows[0].cells.length, keep=new Set(opt.cols), full=Array.from(c.rows).filter(r=>r.cells.length===n); for(let i=n-1;i>=0;i--){ if(keep.has(i)) continue; full.forEach(r=>{ if(r.cells[i]) r.deleteCell(i); }); } }
+  c.querySelectorAll('button,input,select').forEach(b=>b.remove()); c.querySelectorAll('thead th').forEach(th=>{ th.textContent=th.textContent.replace(/[▲▼]/g,'').trim(); });
   const last=c.tHead.rows[0].cells.length-1; if(last>0 && !c.tHead.rows[0].cells[last].innerText.trim()){ Array.from(c.rows).forEach(r=>{ if(r.cells[last]) r.deleteCell(last); }); }
   const s=document.getElementById('sec-'+cfg.sec); const title=((s&&s.querySelector('.page-title'))||{}).innerText||'';
   const tab=((s&&s.querySelector('.bl-tab.active'))||{}).innerText||'';
   const w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة',false); return; }
-  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"><style>@page{size:A4 landscape;margin:10mm}body{font-family:Cairo,Tahoma,sans-serif;font-size:12px;color:#111}h2{margin:0 0 4px}.s{color:#555;margin-bottom:8px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:4px 6px;text-align:right;vertical-align:top}th{background:#f3ead2}tr.del{color:#999;text-decoration:line-through}.qt-sub{color:#666;font-size:11px}</style></head><body><h2>${erEsc(title)}</h2><div class="s">${erEsc(tab)} — ${erEsc(new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}))}</div>${c.outerHTML}<script>window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){window.print();},150);});}<\/script></body></html>`);
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet"><style>@page{size:A4 landscape;margin:10mm}body{font-family:Cairo,Tahoma,sans-serif;font-size:12px;color:#111}h2{margin:0 0 4px}.s{color:#555;margin-bottom:8px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:4px 6px;text-align:right;vertical-align:top}th{background:#f3ead2}tr.del{color:#999;text-decoration:line-through}.qt-sub{color:#666;font-size:11px}img{max-width:56px;max-height:44px;object-fit:contain}</style></head><body><h2>${erEsc(title)}</h2><div class="s">${erEsc(tab)} — ${erEsc(new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}))}</div>${c.outerHTML}<script>window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){window.print();},150);});}<\/script></body></html>`);
   w.document.close(); }
 // اختيار السطر بالضغط، والفتح بالدبل كليك
 document.addEventListener('click', ev=>{ const tr=ev.target.closest&&ev.target.closest('.section[id^="sec-erp-"] .qt-scroll table.qt-tbl > tbody > tr'); if(!tr) return;
