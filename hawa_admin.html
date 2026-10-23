@@ -22455,22 +22455,22 @@ ER.rx = ER.rx || { meta:null, R:null, sid:null, sf:{}, f:{}, fx:{}, per:'year', 
 // كل شاشة: الفلاتر اللى تظهر + «اعرض حسب» (تجميع) + «اختيارات» — والمحرك واحد (erp_rep_query)
 const ERX_CATS = [ ['stock','📦 تقارير المخازن'], ['purch','🛒 تقارير المشتريات والموردين'], ['sales','🧾 تقارير المبيعات والعملاء'], ['debt','💳 المديونية والتحصيل'],
   ['money','💰 تقارير مالية'], ['regs','✉️ تقارير الجوابات والمواتير'], ['admin','👤 تقارير إدارية'], ['smart','🧠 تحليلات ذكية'], ['mine','⭐ تقاريرى'] ];
-function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(cat,t,src,fl,g,o)=>L.push(Object.assign({id:'s'+(L.length+1),cat,t,src,fl,g},o||{}));
+function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(cat,t,src,fl,g,o)=>L.push(Object.assign({id:'s'+(L.length+1),cat,t,src,fl:(fl||[]).includes('date')||!src?fl:['date'].concat(fl||[]),g},o||{}));
   const IT=['item','cat','vtype','kind'], CL=['client','gov'], WH=['wh','site'];
   // 📦 المخازن
-  S('stock','قائمة الأصناف وأرصدتها','stock',[...IT,...WH],[['بالصنف',['item'],['book','actual','reserved']],['الصنف × المخزن (كميات وأماكن الأصناف)',['item','wh'],['actual','book'],{view:'pivot'}],['بالمخزن',['wh'],['actual','book','items']],['بالفئة',['cat'],['actual','book','items']],['بنوع العربية',['vtype'],['actual','book','items']]],
+  S('stk','قائمة الأصناف وأرصدتها','stk',[...IT,...WH],[['بالصنف',['item'],['opening','pin','pout','actual','book']],['الصنف × المخزن (كميات وأماكن الأصناف)',['item','wh'],['actual','book'],{view:'pivot'}],['بالمخزن',['wh'],['actual','book','items']],['بالفئة',['cat'],['actual','book','items']],['بنوع العربية',['vtype'],['actual','book','items']]],
     {r:[['الكل',{}],['اللى ليها رصيد بس',{hv:[['actual','>',0]]}],['الأصناف المصفّرة',{hv:[['actual','<=',0]]}]]});
-  S('stock','يومية صنف','moves',['date',...IT,...WH],[['باليوم',['day','item'],['ain','aout','anet','bin','bout']],['بالمستند',['doc','item'],['ain','aout','bin','bout']],['بنوع الحركة',['doctype'],['ain','aout','bin','bout','cnt']]]);
-  S('stock','الحركة المخزنية للأصناف','moves',['date',...IT,...WH],[['بالصنف',['item'],['ain','aout','anet','bin','bout']],['بالمخزن',['wh'],['ain','aout','anet']],['الصنف × المخزن',['item','wh'],['anet'],{view:'pivot'}],['بالشهر',['month'],['ain','aout','anet']],['بالفئة',['cat'],['ain','aout','anet']]]);
-  S('stock','حد الطلب','stock',[...IT,...WH],[['بالصنف',['item'],['book','reorder','short','out30','cover']],['الصنف × المخزن',['item','wh'],['book','reorder','short']]],{r:[['تحت حد الطلب بس',{hv:[['short','>',0]],order:'m_short'}],['كل الأصناف',{}]]});
-  S('stock','الأصناف الراكدة','stock',[...IT,...WH],[['بالصنف',['item'],['actual','idle','value','out90']],['الصنف × المخزن',['item','wh'],['actual','idle']]],
+  S('stk','يومية صنف','moves',['date',...IT,...WH],[['باليوم',['day','item'],['ain','aout','anet','bin','bout']],['بالمستند',['doc','item'],['ain','aout','bin','bout']],['بنوع الحركة',['doctype'],['ain','aout','bin','bout','cnt']]]);
+  S('stk','الحركة المخزنية للأصناف','moves',['date',...IT,...WH],[['بالصنف',['item'],['ain','aout','anet','bin','bout']],['بالمخزن',['wh'],['ain','aout','anet']],['الصنف × المخزن',['item','wh'],['anet'],{view:'pivot'}],['بالشهر',['month'],['ain','aout','anet']],['بالفئة',['cat'],['ain','aout','anet']]]);
+  S('stk','حد الطلب','stk',[...IT,...WH],[['بالصنف',['item'],['book','reorder','short','out30','cover']],['الصنف × المخزن',['item','wh'],['book','reorder','short']]],{r:[['تحت حد الطلب بس',{hv:[['short','>',0]],order:'m_short'}],['كل الأصناف',{}]]});
+  S('stk','الأصناف الراكدة','stk',[...IT,...WH],[['بالصنف',['item'],['actual','idle','value','out90']],['الصنف × المخزن',['item','wh'],['actual','idle']]],
     {r:[['من غير صرف أكتر من 30 يوم',{hv:[['idle','>',30]],order:'m_idle'}],['أكتر من 60 يوم',{hv:[['idle','>',60]],order:'m_idle'}],['أكتر من 90 يوم',{hv:[['idle','>',90]],order:'m_idle'}],['أكتر من 180 يوم',{hv:[['idle','>',180]],order:'m_idle'}]]});
-  S('stock','قيمة المخزون','stock',[...IT,...WH],[['بالصنف',['item'],['actual','value','svalue','potential']],['بالفئة',['cat'],['actual','value','svalue','potential']],['بالمخزن',['wh'],['actual','value','svalue']],['بالموقع',['site'],['actual','value','svalue']],['الفئة × المخزن',['cat','wh'],['value'],{view:'pivot'}]],{cost:1});
-  S('stock','سرعة الصرف وتغطية المخزون','stock',[...IT,...WH],[['بالصنف',['item'],['actual','out30','out90','cover']],['بالفئة',['cat'],['actual','out30','out90','cover']]],{r:[['الكل',{}],['هيخلص فى أقل من 15 يوم',{hv:[['cover','<',15],['out30','>',0]],order:'m_cover',dir:'asc'}]]});
-  S('stock','تحويلات المخازن','trf',['date','item','cat','vtype'],[['بالتحويل',['doc','route'],['qty','items']],['بالصنف',['item'],['qty','cnt']],['بالاتجاه',['route'],['qty','cnt']],['بالشهر',['month'],['qty','cnt']]]);
-  S('stock','تسليمات مخزنية','dlv',['date',...CL,...IT,...WH],[['بالمستند',['doc','client'],['qty','delay']],['بالتاجر',['client'],['qty','docs','delay']],['بالصنف',['item'],['qty','docs']],['باليوم',['day'],['qty','docs']],['بالمخزن',['wh'],['qty','docs']]],
+  S('stk','قيمة المخزون','stk',[...IT,...WH],[['بالصنف',['item'],['actual','value','svalue','potential']],['بالفئة',['cat'],['actual','value','svalue','potential']],['بالمخزن',['wh'],['actual','value','svalue']],['بالموقع',['site'],['actual','value','svalue']],['الفئة × المخزن',['cat','wh'],['value'],{view:'pivot'}]],{cost:1});
+  S('stk','سرعة الصرف وتغطية المخزون','stk',[...IT,...WH],[['بالصنف',['item'],['actual','out30','out90','cover']],['بالفئة',['cat'],['actual','out30','out90','cover']]],{r:[['الكل',{}],['هيخلص فى أقل من 15 يوم',{hv:[['cover','<',15],['out30','>',0]],order:'m_cover',dir:'asc'}]]});
+  S('stk','تحويلات المخازن','trf',['date','item','cat','vtype'],[['بالتحويل',['doc','route'],['qty','items']],['بالصنف',['item'],['qty','cnt']],['بالاتجاه',['route'],['qty','cnt']],['بالشهر',['month'],['qty','cnt']]]);
+  S('stk','تسليمات مخزنية','dlv',['date',...CL,...IT,...WH],[['بالمستند',['doc','client'],['qty','delay']],['بالتاجر',['client'],['qty','docs','delay']],['بالصنف',['item'],['qty','docs']],['باليوم',['day'],['qty','docs']],['بالمخزن',['wh'],['qty','docs']]],
     {r:[['الكل',{}],['اتأخرت أكتر من أسبوع',{hv:[['maxdelay','>',7]]}]]});
-  S('stock','الأصناف المسلّمة والغير مسلّمة','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','dqty','undq','dpct']],['بالتاجر',['client'],['qty','dqty','undq','dpct']],['بالفاتورة',['doc','client'],['qty','dqty','undq']],['بالمخزن (المسلّم والغير مسلّم بناءً على المخازن)',['wh'],['qty','dqty','undq']],['الصنف × المخزن',['item','wh'],['undq'],{view:'pivot'}]],
+  S('stk','الأصناف المسلّمة والغير مسلّمة','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','dqty','undq','dpct']],['بالتاجر',['client'],['qty','dqty','undq','dpct']],['بالفاتورة',['doc','client'],['qty','dqty','undq']],['بالمخزن (المسلّم والغير مسلّم بناءً على المخازن)',['wh'],['qty','dqty','undq']],['الصنف × المخزن',['item','wh'],['undq'],{view:'pivot'}]],
     {r:[['المسلّم والغير مسلّم',{}],['الغير مسلّم بس',{hv:[['undq','>',0]]}],['المسلّم بالكامل بس',{hv:[['undq','<=',0]]}]]});
   // 🛒 المشتريات
   S('purch','الأصناف المشتراه خلال فترة','purch',['date','supplier',...IT,...WH],[['بالصنف',['item'],['qty','egp','fc']],['بالمورد',['supplier'],['qty','egp','ships']],['بالشحنة',['doc','supplier'],['qty','egp','fc']],['بالشهر',['month'],['qty','egp']],['بالفئة',['cat'],['qty','egp']],['الصنف × المورد',['item','supplier'],['qty'],{view:'pivot'}]]);
@@ -22521,9 +22521,9 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   S('admin','أنشطة المستخدمين','act',['date'],[['بالمستخدم',['user'],['cnt','days','last']],['بالعملية',['action'],['cnt','users']],['المستخدم × العملية',['user','action'],['cnt'],{view:'pivot'}],['باليوم',['day'],['cnt','users']],['بالساعة',['hour'],['cnt'],{view:'chart'}]]);
   // 🧠 ذكية
   S('smart','تحليل ABC (باريتو)','sales',['date',...CL,...IT,...WH],[['الأصناف بالقيمة',['item'],['net','qty']],['التجار بالقيمة',['client'],['net','invs']],['المحافظات',['gov'],['net','clients']],['الأصناف بالربح',['item'],['profit','net'],{cost:1}]],{smart:'abc',note:'A = اللى عاملين 80% — B = الـ 15% اللى بعدهم — C = الباقى'});
-  S('smart','تحليل ABC للمخزون','stock',[...IT,...WH],[['بالصنف',['item'],['value','actual']]],{smart:'abc',cost:1});
+  S('smart','تحليل ABC للمخزون','stk',[...IT,...WH],[['بالصنف',['item'],['value','actual']]],{smart:'abc',cost:1});
   S('smart','نمو المبيعات','sales',['date',...CL,...IT,...WH],[['شهر بشهر',['month'],['net','qty','invs']],['أسبوع بأسبوع',['week'],['net','qty']],['يوم بيوم',['day'],['net','qty']]],{smart:'growth',view:'chart',perDef:'all'});
-  S('smart','توقع مبيعات آخر الشهر','sales',[...CL,...IT,...WH],[['باليوم',['day'],['net','qty']]],{smart:'forecast',view:'chart',perDef:'month',noDate:1});
+  S('smart','توقع مبيعات آخر الشهر','sales',['date',...CL,...IT,...WH],[['باليوم',['day'],['net','qty']]],{smart:'forecast',view:'chart',perDef:'month'});
   S('smart','تجار جداد (أول شراء فى الفترة)','sales',['date','gov','ctype'],[['بالتاجر',['client'],['first','net','invs']]],{smart:'newc',perDef:'month'});
   ER.__erxScr=L; return L; }
 function erxMine(){ try{ return JSON.parse(localStorage.getItem('erx_mine')||'[]'); }catch(e){ return []; } }
@@ -22612,9 +22612,10 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
         :`<select class="qt-inp" onchange="if(this.value)erxSFAdd('${x[0]}','${x[2]}',this.value,1)"><option value="">${vals.length?'+ كمان':'الكل'}</option>${opts.filter(o=>!vals.map(String).includes(String(o[0]))).map(o=>`<option value="${erEsc(String(o[0]))}">${erEsc(o[1])}</option>`).join('')}</select>`}</div></div>`; };
   const rng=st.per==='custom'?[st.from,st.to]:erxPer(st.per);
   return `<div class="erx-form">
-    ${fl.includes('date')&&!s.noDate?`<div class="erx-ff erx-ffd"><label>الفترة</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).per=this.value;ER.edit.__render()">${ERX_PERS.map(p=>`<option value="${p[0]}" ${st.per===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>
+    ${fl.includes('date')&&!s.noDate?`<div class="erx-ff erx-ffd"><label>${S.asof?'الفترة':'الفترة'}</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).per=this.value;ER.edit.__render()">${ERX_PERS.map(p=>`<option value="${p[0]}" ${st.per===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>
       <span class="qt-sub">من</span><input class="qt-inp" type="date" value="${erEsc(rng[0]||'')}" onchange="const t=erxSt(erxScr(ER.rx.sid));t.per='custom';t.from=this.value;t.to=t.to||'${erEsc(rng[1]||'')}';ER.edit.__render()">
-      <span class="qt-sub">إلى</span><input class="qt-inp" type="date" value="${erEsc(rng[1]||'')}" onchange="const t=erxSt(erxScr(ER.rx.sid));t.per='custom';t.to=this.value;t.from=t.from||'${erEsc(rng[0]||'')}';ER.edit.__render()"></div></div>`:''}
+      <span class="qt-sub">إلى</span><input class="qt-inp" type="date" value="${erEsc(rng[1]||'')}" onchange="const t=erxSt(erxScr(ER.rx.sid));t.per='custom';t.to=this.value;t.from=t.from||'${erEsc(rng[0]||'')}';ER.edit.__render()"></div></div>
+      ${S.asof?'<div class="qt-sub" style="margin-top:-6px">📌 الرصيد بيتحسب لحد تاريخ «إلى» — و«أول المدة / الوارد / المنصرف» على الفترة</div>':''}`:''}
     <div class="erx-fgrid">${fl.filter(k=>k!=='date').map(field).join('')}</div>
     ${s.g.length>1?`<div class="erx-ff"><label>اعرض حسب</label><div class="erx-ffv erx-rad">${s.g.map((g,i)=>`<label class="qt-radio ${st.g===i?'er-on':''}"><input type="radio" name="erx-g" ${st.g===i?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).g=${i};ER.edit.__render()"> ${erEsc(g[0])}</label>`).join('')}</div></div>`:''}
     ${s.r?`<div class="erx-ff"><label>اختيارات</label><div class="erx-ffv erx-rad">${s.r.map((r,i)=>`<label class="qt-radio ${st.r===i?'er-on':''}"><input type="radio" name="erx-r" ${st.r===i?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).r=${i};ER.edit.__render()"> ${erEsc(r[0])}</label>`).join('')}</div></div>`:''}
@@ -22648,7 +22649,7 @@ function erxRenderOut(){ const el=document.getElementById('erx-out'); if(!el) re
   if(!D){ el.innerHTML=''; return; } if(D.err){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(D.err)}</div>`; return; } if(D.err){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(D.err)}</div>`; return; }
   const R=D.R, S=ER.rx.meta.srcs[R.src], meas=R.meas.filter(m=>S.meas[m]), dims=R.dims, M=m=>S.meas[m]||[m,'n',''];
   let rows=D.rows.slice(); const cmpMap={}; if(D.cmp) D.cmp.rows.forEach(r=>{ cmpMap[erxKey(r,dims)]=r; });
-  const m0=meas[0], tot0=Number(D.tot['m_'+m0])||rows.reduce((a,r)=>a+(Number(r['m_'+m0])||0),0);
+  const m0=erxM0(meas), tot0=Number(D.tot['m_'+m0])||rows.reduce((a,r)=>a+(Number(r['m_'+m0])||0),0);
   // معالجة ذكية
   let cum=0; rows.forEach((r,i)=>{ const v=Number(r['m_'+m0])||0; r.__share=tot0?100*v/tot0:0; cum+=v; r.__cum=tot0?100*cum/tot0:0; r.__rank=i+1; });
   if(R.smart==='abc'){ rows.sort((a,b)=>(Number(b['m_'+m0])||0)-(Number(a['m_'+m0])||0)); let c=0; rows.forEach((r,i)=>{ c+=Number(r['m_'+m0])||0; r.__cum=tot0?100*c/tot0:0; r.__rank=i+1; r.__abc=r.__cum<=80.0001||i===0?'A':(r.__cum<=95.0001?'B':'C'); }); }
@@ -22677,7 +22678,8 @@ function erxRenderOut(){ const el=document.getElementById('erx-out'); if(!el) re
   else if(ER.rx.view==='pivot') body=erxPivot(rows,dims,meas,S);
   else body=erxTable(rows,dims,meas,S,D,cmpMap,tot0);
   el.innerHTML=`<div class="erx-kpis">${cards}</div>${extra}${vbar}${body}`; }
-function erxTable(rows,dims,meas,S,D,cmpMap,tot0){ const M=m=>S.meas[m]||[m,'n',''], o=ER.rx.opt, R=D.R, m0=meas[0], max0=Math.max(...rows.map(r=>Math.abs(Number(r['m_'+m0])||0)),1), srt=ER.rx.sort;
+function erxM0(meas){ return meas.includes('actual')?'actual':(meas.find(m=>m!=='opening')||meas[0]); }
+function erxTable(rows,dims,meas,S,D,cmpMap,tot0){ const M=m=>S.meas[m]||[m,'n',''], o=ER.rx.opt, R=D.R, m0=erxM0(meas), max0=Math.max(...rows.map(r=>Math.abs(Number(r['m_'+m0])||0)),1), srt=ER.rx.sort;
   const th=(k,l)=>`<th class="erx-th" onclick="erxSort('${k}')">${l}${srt&&srt[0]===k?(srt[1]>0?' ▲':' ▼'):''}</th>`;
   const cm=D.cmp?meas.slice(0,2):[];
   const head=`<tr>${o.rank?'<th>#</th>':''}${dims.map(d=>th('d_'+d,erEsc((S.dims[d]||[d])[0]))).join('')}${meas.map(m=>th('m_'+m,erEsc(M(m)[0]))).join('')}
@@ -22692,7 +22694,7 @@ function erxTable(rows,dims,meas,S,D,cmpMap,tot0){ const M=m=>S.meas[m]||[m,'n',
   const foot=`<tr class="er-tb-skip erx-tot">${o.rank?'<td></td>':''}<td colspan="${Math.max(dims.length,1)}">الإجمالى</td>${meas.map(m=>`<td>${erxFmt(M(m)[1],D.tot['m_'+m])}</td>`).join('')}${cm.map(m=>{ const pv=D.cmp.tot['m_'+m]; const v=D.tot['m_'+m]; const dl=Number(pv)?100*(Number(v)-Number(pv))/Math.abs(Number(pv)):null; return `<td>${erxFmt(M(m)[1],pv)}</td><td class="erx-dl ${dl==null?'':(dl>=0?'up':'dn')}">${dl==null?'—':(dl>=0?'▲':'▼')+Math.abs(Math.round(dl))+'%'}</td>`; }).join('')}${o.share?'<td>100%</td>':''}${o.cum?'<td></td>':''}${R.smart==='abc'?'<td></td>':''}${R.smart==='growth'?'<td></td><td></td>':''}${R.smart==='spread'?'<td></td>':''}${R.smart==='running'?'<td></td>':''}</tr>`;
   return `<div class="qt-scroll erx-tbl"><table class="qt-tbl"><thead>${head}</thead><tbody>${body}${foot}</tbody></table></div>`; }
 function erxSort(k){ const s=ER.rx.sort; ER.rx.sort = s&&s[0]===k ? [k,-s[1]] : [k,-1]; erxRenderOut(); }
-function erxPivot(rows,dims,meas,S){ const m=meas[0], M=S.meas[m], rk=[], ck=[], cell={}, rt={}, ct={}; let gt=0;
+function erxPivot(rows,dims,meas,S){ const m=erxM0(meas), M=S.meas[m], rk=[], ck=[], cell={}, rt={}, ct={}; let gt=0;
   rows.forEach(r=>{ const a=r['d_'+dims[0]]??'—', b=r['d_'+dims[1]]??'—', v=Number(r['m_'+m])||0; if(!rk.includes(a)) rk.push(a); if(!ck.includes(b)) ck.push(b);
     cell[a+'¦'+b]=(cell[a+'¦'+b]||0)+v; rt[a]=(rt[a]||0)+v; ct[b]=(ct[b]||0)+v; gt+=v; });
   if(ERX_TIME.includes(dims[1])||dims[1].endsWith('bk')) ck.sort((x,y)=>String(x).localeCompare(String(y),'ar',{numeric:true})); else ck.sort((x,y)=>ct[y]-ct[x]);
@@ -22701,7 +22703,7 @@ function erxPivot(rows,dims,meas,S){ const m=meas[0], M=S.meas[m], rk=[], ck=[],
   <div class="qt-scroll erx-tbl"><table class="qt-tbl erx-pv"><thead><tr><th>${erEsc(S.dims[dims[0]][0])}</th>${cols.map(c=>`<th>${erEsc(c)}</th>`).join('')}<th>الإجمالى</th></tr></thead><tbody>
   ${rk.map(a=>`<tr class="er-tb-skip"><td style="font-weight:700">${erEsc(a)}</td>${cols.map(b=>{ const v=cell[a+'¦'+b]; return `<td style="${v?`background:rgba(201,168,76,${(0.08+0.5*Math.abs(v)/mx).toFixed(2)})`:''}">${v?erxFmt(M[1],v):''}</td>`; }).join('')}<td><b>${erxFmt(M[1],rt[a])}</b></td></tr>`).join('')}
   <tr class="er-tb-skip erx-tot"><td>الإجمالى</td>${cols.map(b=>`<td>${erxFmt(M[1],ct[b])}</td>`).join('')}<td>${erxFmt(M[1],gt)}</td></tr></tbody></table></div>`; }
-function erxChart(rows,dims,meas,S,D,cmpMap){ const m=meas[0], M=S.meas[m], time=ERX_TIME.includes(dims[0])||dims[0]==='agebk'||dims[0]==='idlebk';
+function erxChart(rows,dims,meas,S,D,cmpMap){ const m=erxM0(meas), M=S.meas[m], time=ERX_TIME.includes(dims[0])||dims[0]==='agebk'||dims[0]==='idlebk';
   let rs=rows.slice(); if(!time) rs=rs.sort((a,b)=>(Number(b['m_'+m])||0)-(Number(a['m_'+m])||0)).slice(0,25);
   const lbl=r=>dims.map(d=>r['d_'+d]??'—').join(' / '), vals=rs.map(r=>Number(r['m_'+m])||0), cv=rs.map(r=>{ const c=cmpMap[erxKey(r,dims)]; return c?Number(c['m_'+m])||0:null; });
   const mx=Math.max(...vals.map(Math.abs),...cv.filter(x=>x!=null).map(Math.abs),1);
