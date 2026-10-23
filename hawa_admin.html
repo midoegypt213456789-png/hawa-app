@@ -22474,10 +22474,10 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   S('stock','تحويلات المخازن','trf',['date','item','cat','vtype'],[['بالتحويل',['doc','route'],['qty','items']],['بالصنف',['item'],['qty','cnt']],['بالاتجاه',['route'],['qty','cnt']],['بالشهر',['month'],['qty','cnt']]]);
   S('stock','تسليمات مخزنية','dlv',['date',...CL,...IT,...WH],[['بالمستند',['doc','client'],['qty','delay']],['بالتاجر',['client'],['qty','docs','delay']],['بالصنف',['item'],['qty','docs']],['باليوم',['day'],['qty','docs']],['بالمخزن',['wh'],['qty','docs']]],
     {r:[['الكل',{}],['اتأخرت أكتر من أسبوع',{hv:[['maxdelay','>',7]]}]]});
-  S('stock','تقرير الأصناف المحمّلة من فواتير المبيعات','sales',['date','client','site','wh','item','cat','kind'],[['بالفاتورة',['doc','day','client','item','site','wh','invnote'],['qty','dqty','undq'],{order:'i_doc',dir:'asc'}]],
-    {blk:true, r:[['غير محمّلة فقط',{hv:[['undq','>',0]],blk:'und'}],['محمّلة وغير محمّلة',{blk:'all'}],['محمّلة فقط',{hv:[['dqty','>',0]],blk:'del'}]], note:'زى «تقرير الأصناف المحملة» فى البرنامج القديم — كل فاتورة لوحدها بأصنافها'});
-  S('stock','الأصناف المسلّمة والغير مسلّمة','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','dqty','undq','dpct']],['بالتاجر',['client'],['qty','dqty','undq','dpct']],['بالفاتورة',['doc','client'],['qty','dqty','undq']],['بالمخزن (المسلّم والغير مسلّم بناءً على المخازن)',['wh'],['qty','dqty','undq']],['الصنف × المخزن',['item','wh'],['undq'],{view:'pivot'}]],
-    {r:[['المسلّم والغير مسلّم',{}],['الغير مسلّم بس',{hv:[['undq','>',0]]}],['المسلّم بالكامل بس',{hv:[['undq','<=',0]]}]]});
+  S('stock','الأصناف المحمّلة والغير محمّلة (من فواتير المبيعات)','sales',['date',...CL,...IT,...WH],[
+    ['بالفاتورة — زى البرنامج القديم',['doc','day','client','item','site','wh','invnote'],['qty','dqty','undq'],{order:'i_doc',dir:'asc',blk:true}],
+    ['بالصنف',['item'],['qty','dqty','undq','dpct']],['بالتاجر',['client'],['qty','dqty','undq','dpct']],['بالمخزن',['wh'],['qty','dqty','undq']],['الصنف × المخزن',['item','wh'],['undq'],{view:'pivot'}]],
+    {blk:true, r:[['غير محمّلة فقط',{hv:[['undq','>',0]],blk:'und'}],['محمّلة وغير محمّلة',{blk:'all'}],['محمّلة فقط',{hv:[['dqty','>',0]],blk:'del'}]], note:'«بالفاتورة» = زى «تقرير الأصناف المحملة» فى البرنامج القديم — كل فاتورة لوحدها بأصنافها'});
   // 🛒 المشتريات
   S('purch','الأصناف المشتراه خلال فترة','purch',['date','supplier',...IT,...WH],[['بالصنف',['item'],['qty','egp','fc']],['بالمورد',['supplier'],['qty','egp','ships']],['بالشحنة',['doc','supplier'],['qty','egp','fc']],['بالشهر',['month'],['qty','egp']],['بالفئة',['cat'],['qty','egp']],['الصنف × المورد',['item','supplier'],['qty'],{view:'pivot'}]]);
   S('purch','إجمالى المشتريات لمورد','purch',['date','supplier','vtype'],[['بالمورد',['supplier'],['egp','fc','qty','ships']],['المورد × الشهر',['supplier','month'],['egp'],{view:'pivot'}],['بالبلد',['country'],['egp','ships']],['بالعملة',['currency'],['fc','egp']]],{cmp:1});
@@ -22631,7 +22631,7 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
     ${(s.cmp&&S.date)||s.top?`<div class="erx-fgrid">${s.cmp&&S.date?`<div class="erx-ff"><label>مقارنة</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).cmp=this.value"><option value="">من غير</option><option value="prev" ${st.cmp==='prev'?'selected':''}>بالفترة اللى قبلها</option><option value="yoy" ${st.cmp==='yoy'?'selected':''}>بنفس الفترة السنة اللى فاتت</option></select></div></div>`:''}
       ${s.top?`<div class="erx-ff"><label>العدد</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).limit=this.value">${[['','الكل'],['10','10'],['20','20'],['50','50'],['100','100']].map(o=>`<option value="${o[0]}" ${String(st.limit)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>`:''}</div>`:''}
     ${s.note?`<div class="qt-sub" style="margin-top:8px">💡 ${erEsc(s.note)}</div>`:''}</div>`; }
-function erxHierForm(s,st,S){ if(s.blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
+function erxHierForm(s,st,S){ if(s.blk && ((s.g[st.g]||s.g[0])[3]||{}).blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
       <label class="qt-radio ${st.pp?'er-on':''}"><input type="checkbox" ${st.pp?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).pp=this.checked;ER.edit.__render()"> 📄 إذن (فاتورة) واحد فى الصفحة</label>
       <label class="qt-radio ${st.nonote?'er-on':''}"><input type="checkbox" ${st.nonote?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).nonote=this.checked;ER.edit.__render()"> بدون ملاحظات</label></div></div>`;
   const cand=ERX_HIER.filter(k=>S.dims[k]); const H=st.hier||[], N=['①','②','③'];
@@ -22671,10 +22671,10 @@ function erxSFDel(k,v){ const st=erxSt(erxScr(ER.rx.sid)); st.fx[k]=(st.fx[k]||[
 function erxScrGo(print){ const s=erxScr(ER.rx.sid); if(!s) return; const st=erxSt(s); const g=s.g[st.g]||s.g[0], go=g[3]||{}, ro=s.r?(s.r[st.r]||s.r[0])[1]:{};
   ER.rx.R={ t:s.t+(s.g.length>1?' — '+g[0]:'')+(s.r&&st.r?' ('+s.r[st.r][0]+')':''), src:s.src, dims:g[1], meas:g[2], view:go.view||s.view||'table', smart:go.smart||s.smart||null,
     hv:(s.hv||[]).concat(go.hv||[],ro.hv||[]), df:Object.assign({},s.df||{},ro.df||{}), order:ro.order||go.order||null, dir:ro.dir||go.dir||null, limit:st.limit||null, cost:s.cost||go.cost };
-  const SS=ER.rx.meta.srcs[s.src], H=s.blk?[]:(st.hier||[]).filter(k=>SS.dims[k]);
-  if(s.blk){ ER.rx.R.view='docblk'; ER.rx.R.blk={ mode:ro.blk||'all', pp:!!st.pp, nonote:!!st.nonote }; ER.rx.R.t=s.t+(s.r&&st.r?' ('+s.r[st.r][0]+')':''); }
+  const isBlk=!!(s.blk&&go.blk), SS=ER.rx.meta.srcs[s.src], H=isBlk?[]:(st.hier||[]).filter(k=>SS.dims[k]);
+  if(isBlk){ ER.rx.R.view='docblk'; ER.rx.R.blk={ mode:ro.blk||'all', pp:!!st.pp, nonote:!!st.nonote }; ER.rx.R.t=s.t+' ('+s.r[st.r||0][0]+')'; }
   if(H.length){ ER.rx.R.dims=H.slice(); ER.rx.R.hier=H.length>1; ER.rx.R.order=null; ER.rx.R.dir=null; ER.rx.R.view='table'; ER.rx.R.t=s.t+' — حسب '+H.map(k=>SS.dims[k][0]).join(' ← '); }
-  if(!s.blk && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
+  if(!isBlk && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
   ER.rx.nr = s.docRange&&(st.nfrom||st.nto)?[st.nfrom||'',st.nto||'']:null;
   ER.rx.per=s.noDate?(s.perDef||'month'):st.per; ER.rx.f={from:st.from,to:st.to}; ER.rx.fx=JSON.parse(JSON.stringify(st.fx)); ER.rx.cmp=st.cmp||''; ER.rx.limit=st.limit||''; ER.rx.q='';
   ER.rx.dd=null; ER.rx.crumbs=[]; ER.rx.sort=null; ER.rx.view=ER.rx.R.view; ER.rx.data=null; ER.rx.__print=!!print;
