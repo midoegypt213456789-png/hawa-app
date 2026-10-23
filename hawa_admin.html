@@ -2562,6 +2562,7 @@ body:has(#er-modal[style*="flex"]) #refreshTimerBadge{display:none!important}
 .erx-title{font-size:19px;font-weight:900;color:var(--gold-light)}.erx-fbar{margin-top:10px;align-items:flex-end;gap:8px}.erx-range{padding-bottom:10px}
 .erx-fchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.erx-f{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:var(--dark);border:1px solid var(--border);border-radius:10px;padding:4px 8px}.erx-fin{width:140px;padding:4px 6px;font-size:12px}
 .erx-form{display:flex;flex-direction:column;gap:12px}.erx-fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 16px}.erx-fgrid>.erx-ff{min-width:0}
+.erx-pk{position:fixed;z-index:100000;display:none;overflow:auto;background:#161616;border:1px solid #C9A84C;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.6);direction:rtl}.erx-pko{padding:8px 12px;cursor:pointer;font-size:13px;color:#F0EDE8;border-bottom:1px solid #222}.erx-pko:hover,.erx-pko.on{background:rgba(201,168,76,.18)}.erx-pko.all{color:#E8C97A;font-weight:700;position:sticky;top:0;background:#1E1A10}
 .erx-ff{display:flex;align-items:flex-start;gap:10px}.erx-ff>label{min-width:90px;padding-top:9px;color:#E05555;font-weight:700;font-size:13px}.erx-ffv{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.erx-ffv .qt-inp{flex:1;min-width:120px;width:100%}
 .erx-ffd .qt-inp[type=date]{max-width:170px}.erx-rad{gap:6px}.erx-rad .qt-radio{padding:6px 10px}
 .erx-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--dark2);border:1px solid var(--border);border-radius:12px;padding:10px 14px}.erx-bart b{font-size:16px;color:var(--gold-light)}
@@ -21099,7 +21100,7 @@ function erModalBody(body){ if(__erRendering){ setTimeout(()=>erModalBody(body),
   try{ const st=b.scrollTop; b.innerHTML=body; b.scrollTop=st; } finally{ __erRendering=false; }
   // المؤشر يفضل فى نفس الخانة / نفس السطر بعد ما الشاشة تترسم (مايرجعش لأول صنف فوق)
   if(g && !(ER.edit&&ER.edit.__focus)) setTimeout(()=>{ if(ER.edit&&ER.edit.__focus) return; const a=document.activeElement; if(a&&a!==document.body&&b.contains(a)) return; const n=b.querySelector(`[data-g="${g}"]`); if(n){ try{ n.focus({preventScroll:true}); }catch(e){} } },0); }
-function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; erModalDock(false); erQHintHide(); ER.edit=null; if(ER.iedit && document.getElementById('eri-ed')) ER.edit=ER.iedit; }
+function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; if(window.erxPkHide) erxPkHide(); erModalDock(false); erQHintHide(); ER.edit=null; if(ER.iedit && document.getElementById('eri-ed')) ER.edit=ER.iedit; }
 function erFoot(saveFn, ro){ return ro ? `<span class="qt-sub">👁️ عرض بس — معندكش صلاحية تعديل</span>` : `<button class="qt-btn" id="er-save-btn" onclick="${saveFn}">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`; }
 async function erRun(btnId, fn){ const b=document.getElementById(btnId); if(b){ if(b.disabled) return; b.disabled=true; } try{ await fn(); }catch(e){ erToast('❌ '+erErr(e), false); } finally{ if(b) b.disabled=false; } }
 function erFld(label, html, w){ return `<div class="qt-fld" style="${w?`flex:${w}`:''}"><label>${label}</label>${html}</div>`; }
@@ -22569,7 +22570,7 @@ async function erxRun(){ const R=erxCurDef(); if(!R) return; const S=ER.rx.meta.
 const ERX_F = [ ['client_id','التاجر','client'], ['item_id','الصنف','item'], ['cat_id','الفئة','cat'], ['wh_id','المخزن','wh'], ['supplier_id','المورد','sup'], ['treasury_id','الخزينة','tre'],
   ['gov','المحافظة','gov'], ['vtype','نوع العربية','vt'], ['item_kind','التصنيف','kind'], ['pay_type','نوع الحركة','pay'], ['site','الموقع','site'] ];
 function erxFOpts(t){ const B=ER.boot; switch(t){
-  case 'client': return ((ER.sl&&ER.sl.clients)||[]).map(c=>[c.id,(c.code||'')+' — '+c.name]);
+  case 'client': return ((ER.sl&&ER.sl.clients)||[]).map(c=>[c.id,(c.code||'')+' — '+c.name+(c.gov?' ('+c.gov+')':''),(c.phone||'')+' #'+c.id]);
   case 'item': return B.items.map(i=>[i.id,i.code+' — '+i.name_ar]); case 'cat': return (B.categories||[]).map(c=>[c.id,c.name]); case 'wh': return B.warehouses.map(w=>[w.id,w.name]);
   case 'sup': return B.suppliers.map(s=>[s.id,s.code+' — '+s.name]); case 'tre': return (B.treasuries||[]).map(t=>[t.id,t.name]);
   case 'gov': return [...new Set(((ER.sl&&ER.sl.clients)||[]).map(c=>c.gov).filter(Boolean))].map(g=>[g,g]);
@@ -22606,10 +22607,9 @@ function erxOpenScr(id){ const s=erxScr(id); if(!s) return; if(s.link){ s.link()
 function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs[s.src];
   const fl=(s.fl||[]).filter(k=>k==='date'?S.date:ERX_FK[k]&&S.cols.includes(ERX_FK[k]));
   const fdef=k=>ERX_F.find(x=>x[0]===ERX_FK[k]);
-  const field=k=>{ const x=fdef(k); if(!x) return ''; const vals=st.fx[x[0]]||[], opts=erxFOpts(x[2]); const lbl=v=>{ const o=opts.find(o=>String(o[0])===String(v)); return o?o[1]:v; }; const big=opts.length>40;
+  const field=k=>{ const x=fdef(k); if(!x) return ''; const vals=st.fx[x[0]]||[], opts=erxFOpts(x[2]); const lbl=v=>{ const o=opts.find(o=>String(o[0])===String(v)); return o?o[1]:v; };
     return `<div class="erx-ff"><label>${x[1]}</label><div class="erx-ffv">${vals.map(v=>`<span class="qt-chip in">${erEsc(lbl(v))} <b style="cursor:pointer" onclick="erxSFDel('${x[0]}','${erEsc(String(v))}')">✖</b></span>`).join('')}
-      ${big?`<input class="qt-inp" list="erx-dl-${x[2]}" placeholder="${vals.length?'+ كمان':'الكل'}" onchange="erxSFAdd('${x[0]}','${x[2]}',this.value)"><datalist id="erx-dl-${x[2]}">${opts.map(o=>`<option value="${erEsc(o[1])}">`).join('')}</datalist>`
-        :`<select class="qt-inp" onchange="if(this.value)erxSFAdd('${x[0]}','${x[2]}',this.value,1)"><option value="">${vals.length?'+ كمان':'الكل'}</option>${opts.filter(o=>!vals.map(String).includes(String(o[0]))).map(o=>`<option value="${erEsc(String(o[0]))}">${erEsc(o[1])}</option>`).join('')}</select>`}</div></div>`; };
+      <input class="qt-inp erx-pki" autocomplete="off" data-k="${x[0]}" data-t="${x[2]}" placeholder="🔍 ${vals.length?'+ كمان — اكتب كود أو اسم':'الكل — اكتب كود أو اسم'}" oninput="erxPk(this)" onfocus="erxPk(this)" onclick="erxPk(this)" onkeydown="erxPkKey(event,this)" onblur="setTimeout(erxPkBlur,150)">${vals.length>1?`<b class="qt-sub" style="cursor:pointer" onclick="erxSFClr('${x[0]}')">✖ امسح الكل</b>`:''}</div></div>`; };
   const rng=st.per==='custom'?[st.from,st.to]:erxPer(st.per);
   return `<div class="erx-form">
     ${fl.includes('date')&&!s.noDate?`<div class="erx-ff erx-ffd"><label>${S.asof?'الفترة':'الفترة'}</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).per=this.value;ER.edit.__render()">${ERX_PERS.map(p=>`<option value="${p[0]}" ${st.per===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>
@@ -22624,6 +22624,29 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
     ${s.note?`<div class="qt-sub" style="margin-top:8px">💡 ${erEsc(s.note)}</div>`:''}</div>`; }
 function erxSFAdd(k,t,v,isId){ const st=erxSt(erxScr(ER.rx.sid)); let val=v; if(!isId){ const o=erxFOpts(t).find(o=>o[1]===v); if(!o){ erToast('مش موجود فى القايمة',false); return; } val=o[0]; }
   if(k.endsWith('_id')) val=Number(val); st.fx[k]=(st.fx[k]||[]).filter(x=>String(x)!==String(val)).concat([val]); ER.edit.__render(); }
+// 🔍 اختيار بالبحث (كود أو اسم) — لكل فلاتر التقارير
+function erxNz(t){ return String(t||'').toLowerCase().replace(/[ً-ْـ]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).trim(); }
+function erxPkEl(){ let p=document.getElementById('erx-pk'); if(!p){ p=document.createElement('div'); p.id='erx-pk'; p.className='erx-pk'; p.addEventListener('mousedown',e=>e.preventDefault()); document.body.appendChild(p); } return p; }
+function erxPkBlur(){ const a=document.activeElement; if(!(a&&a.classList&&a.classList.contains('erx-pki'))) erxPkHide(); }
+function erxPkHide(){ const p=document.getElementById('erx-pk'); if(p) p.style.display='none'; ER.__pk=null; }
+function erxPk(inp){ const k=inp.dataset.k, t=inp.dataset.t, st=erxSt(erxScr(ER.rx.sid)), sel=(st.fx[k]||[]).map(String);
+  const ws=erxNz(inp.value).split(/\s+/).filter(Boolean);
+  const all=erxFOpts(t).filter(o=>!sel.includes(String(o[0]))), hit=all.filter(o=>{ const n=erxNz(o[1]+' '+(o[2]||'')); return ws.every(w=>n.includes(w)); });
+  const p=erxPkEl(), r=inp.getBoundingClientRect(), below=window.innerHeight-r.bottom, h=Math.min(320, Math.max(below-12, r.top-12));
+  ER.__pk={inp, k, t, hit, i:(ER.__pk&&ER.__pk.inp===inp)?Math.min(ER.__pk.i,Math.max(hit.length-1,0)):0};
+  const sh=hit.slice(0,150);
+  p.innerHTML=(hit.length?`${ws.length&&hit.length>1?`<div class="erx-pko all" onclick="erxPkAll()">✔ اختار كل اللى ظاهر (${hit.length})</div>`:''}${sh.map((o,i)=>`<div class="erx-pko ${i===ER.__pk.i?'on':''}" onclick="erxPkPick(${i})">${erEsc(o[1])}</div>`).join('')}${hit.length>sh.length?`<div class="qt-sub" style="padding:6px 10px">… و${hit.length-sh.length} كمان — اكتب أكتر</div>`:''}`
+    :`<div class="qt-sub" style="padding:8px 10px">${all.length?'مفيش نتيجة':'كله متختار'}</div>`);
+  Object.assign(p.style,{display:'block', width:Math.max(r.width,260)+'px', maxHeight:h+'px', right:(window.innerWidth-r.right)+'px', left:'auto', top:(below>=200||below>=r.top?r.bottom+2:r.top-2-Math.min(h,p.scrollHeight))+'px'}); }
+function erxPkKey(e,inp){ const P=ER.__pk; if(!P||P.inp!==inp){ if(e.key==='ArrowDown') erxPk(inp); return; }
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); P.i=Math.max(0,Math.min(Math.min(P.hit.length,150)-1,P.i+(e.key==='ArrowDown'?1:-1))); const os=document.querySelectorAll('#erx-pk .erx-pko:not(.all)'); os.forEach((o,i)=>o.classList.toggle('on',i===P.i)); if(os[P.i]) os[P.i].scrollIntoView({block:'nearest'}); }
+  else if(e.key==='Enter'){ e.preventDefault(); if(P.hit.length) erxPkPick(P.i); } else if(e.key==='Escape'){ erxPkHide(); } }
+function erxPkAdd(k,ids){ const st=erxSt(erxScr(ER.rx.sid)); const cur=(st.fx[k]||[]).map(String); st.fx[k]=(st.fx[k]||[]).concat(ids.filter(v=>!cur.includes(String(v))).map(v=>k.endsWith('_id')?Number(v):v)); }
+function erxPkRe(k,q){ ER.edit.__render(); setTimeout(()=>{ const n=document.querySelector(`#er-m-body .erx-pki[data-k="${k}"]`); if(n){ n.value=q||''; n.focus(); erxPk(n); } },0); }
+function erxPkPick(i){ const P=ER.__pk; if(!P||!P.hit[i]) return; const q=P.inp.value; erxPkAdd(P.k,[P.hit[i][0]]); erxPkRe(P.k,q); }
+function erxPkAll(){ const P=ER.__pk; if(!P) return; erxPkAdd(P.k,P.hit.map(o=>o[0])); erxPkRe(P.k,''); }
+document.addEventListener('scroll',e=>{ const P=(typeof ER!=='undefined')&&ER.__pk; if(!P||(e.target&&e.target.id==='erx-pk')) return; if(P.inp&&P.inp.isConnected) erxPk(P.inp); else erxPkHide(); },true);
+function erxSFClr(k){ const st=erxSt(erxScr(ER.rx.sid)); delete st.fx[k]; ER.edit.__render(); }
 function erxSFDel(k,v){ const st=erxSt(erxScr(ER.rx.sid)); st.fx[k]=(st.fx[k]||[]).filter(x=>String(x)!==String(v)); if(!st.fx[k].length) delete st.fx[k]; ER.edit.__render(); }
 function erxScrGo(print){ const s=erxScr(ER.rx.sid); if(!s) return; const st=erxSt(s); const g=s.g[st.g]||s.g[0], go=g[3]||{}, ro=s.r?(s.r[st.r]||s.r[0])[1]:{};
   ER.rx.R={ t:s.t+(s.g.length>1?' — '+g[0]:'')+(s.r&&st.r?' ('+s.r[st.r][0]+')':''), src:s.src, dims:g[1], meas:g[2], view:go.view||s.view||'table', smart:go.smart||s.smart||null,
