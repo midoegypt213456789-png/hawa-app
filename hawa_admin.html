@@ -23373,6 +23373,7 @@ function erRenderReg(){
         <div><div class="qt-sub">مستند التسليم</div><b style="font-size:26px;color:var(--gold)">${d.del_no}</b>${erTestChip(d)}${d.status!=='سارى'?' '+erStChip(d.status):''}</div>
         <div><div class="qt-sub">التاجر</div><b>${erEsc(D.client.name)}</b> <span class="qt-sub">(${erEsc(D.client.code||'')})</span></div>
         <div><div class="qt-sub">الفاتورة</div><b>${D.inv_no}</b></div><div><div class="qt-sub">التاريخ</div><b>${erEsc(d.del_date)}</b></div>
+        <div><div class="qt-sub">مستند أرقام المواتير</div><b style="font-size:22px;color:${D.reg_doc?'var(--gold)':'var(--text-dim)'}">${D.reg_doc?D.reg_doc.no:'جديد'}</b>${D.reg_doc?'':'<div class="qt-sub">رقمه بيطلع مع أول ماتور</div>'}</div>
         <div style="flex:1"></div><div class="er-stat"><div class="qt-sub">اتسجل</div><b style="color:${done>=need?'#6dc49a':'var(--gold)'}">${done} / ${need}</b></div></div>
       <div style="margin-top:12px">${ls.map(l=>{ const pc=Math.min(100,Math.round(Number(l.done)*100/Math.max(1,Number(l.qty))));
         return `<label class="qt-radio ${l.inv_line===ER.rg.line?'er-on':''}" style="display:flex;margin-bottom:6px;width:100%;box-sizing:border-box"><input type="radio" name="er-rgl" ${l.inv_line===ER.rg.line?'checked':''} onchange="ER.rg.line=${l.inv_line};erRenderReg()">
@@ -23402,9 +23403,15 @@ function erRenderReg(){
   }
   el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><input class="qt-inp" id="er-rg-delno" inputmode="numeric" style="width:200px;font-size:18px" placeholder="رقم التسليم" value="${D?D.delivery.del_no:''}" onkeydown="if(event.key==='Enter')erRegOpenDel(this.value)">
     <button class="qt-btn" onclick="erRegOpenDel(document.getElementById('er-rg-delno').value)">🔍 افتح</button>${D?`<button class="qt-btn ghost sm" onclick="erRegOpenDel(${D.delivery.del_no})" title="تحديث">🔄</button><div style="flex:1"></div>
-      <button class="qt-btn ghost" onclick="erRegBack()" title="رجوع لقايمة المستنية تسجيل">↩️ رجوع</button><button class="qt-btn ghost" onclick="erRegClose()" title="اقفل المستند ده">✖ قفل المستند</button>`:''}</div>` + (body||`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🔢 اكتب رقم مستند التسليم — أو اختاره من تاب «مستنية تسجيل»</div>`);
+      <button class="qt-btn ghost" onclick="erRegBack()" title="رجوع لقايمة المستنية تسجيل">↩️ رجوع</button>${D.reg_doc?`<button class="qt-btn ghost" onclick="erRegDocPrint()" title="طباعة مستند أرقام المواتير">🖨️ طباعة</button>`:''}<button class="qt-btn" onclick="erRegSaveDoc()" title="حفظ وقفل المستند">💾 حفظ المستند</button>`:''}</div>` + (body||`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🔢 اكتب رقم مستند التسليم — أو اختاره من تاب «مستنية تسجيل»</div>`);
   const f=document.getElementById(ER.rg.mode==='chassis'?'er-rg-ch':'er-rg-eng'); if(f) setTimeout(()=>{ try{ f.focus(); }catch(e){} },30);
 }
+function erRegSaveDoc(){ const D=ER.rg.del; if(D&&D.reg_doc){ const n=D.regs.filter(r=>r.status==='سارى').length; erToast(`✅ اتحفظ مستند أرقام المواتير رقم ${D.reg_doc.no} — ${n} ماتور (مستند تسليم ${D.delivery.del_no})`); } else if(D) erToast('مفيش أرقام اتسجلت على المستند ده',false); erRegClose(); }
+function erRegDocPrint(){ const D=ER.rg.del; if(!D||!D.reg_doc) return; if(!erNeedPrint('erp-regs')) return; const rs=D.regs.filter(r=>r.status==='سارى').slice().reverse(); const nm=id=>{ const l=D.lines.find(x=>Number(x.item_id)===Number(id)); return l?l.name:''; };
+  erDocPrint({ title:'مستند أرقام مواتير', no:D.reg_doc.no, date:D.reg_doc.date, sub:'مستند تسليم '+D.delivery.del_no+' — فاتورة '+D.inv_no, test:D.delivery.is_test,
+    info:[['التاجر',`${D.client.name} (${D.client.code||''})`],['فاتورة المبيعات',D.inv_no],['مستند التسليم',D.delivery.del_no],['عدد المواتير',String(rs.length)]],
+    cols:[['م','36px'],['الصنف'],['رقم الماتور','170px'],['رقم الشاسيه','200px']], rows:rs.map((r,i)=>[String(i+1), erEsc(nm(r.item_id)), `<span dir="ltr">${erEsc(r.engine||'')}</span>`, `<span dir="ltr">${erEsc(r.chassis||'')}</span>`]),
+    sigs:['أمين المخزن','موظف التسجيل','المستلم'] }); }
 function erRegClose(){ ER.rg.del=null; ER.rg.last=null; ER.rg.line=null; erRenderReg(); setTimeout(()=>{ const i=document.getElementById('er-rg-delno'); if(i){ i.value=''; i.focus(); } },40); }
 function erRegBack(){ ER.rg.del=null; ER.rg.last=null; ER.rg.line=null; erRegTab(ER.rg.from||'pend'); }
 async function erRegSubmit(){
@@ -23451,9 +23458,9 @@ async function erRegFind(){ const q=document.getElementById('er-rg-q').value.tri
   try{ const r=await rpcSecure('erp_reg_lookup',{p_q:q}); if(seq!==ER.__rgSeq) return;
     box.innerHTML = (r.letter?`<div class="qt-card"><div class="qt-h">📄 من أرقامنا</div><div>⚙️ <b dir="ltr">${erEsc(r.letter.engine)}</b> &nbsp; 🔩 <b dir="ltr">${erEsc(r.letter.chassis)}</b> — ${erEsc(r.letter.model)}</div><div style="margin-top:6px">${erLetterTxt(r.letter.letter)}</div></div>`
         :(q.length>=9?'<div class="qt-card" style="color:#ff8a8a">❌ الرقم ده مش موجود فى الكتب الدورية الجديدة</div>':''))
-      + (r.regs.length?`<div class="qt-card"><div class="qt-h">🔢 متسجل على</div><div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الماتور</th><th>الشاسيه</th><th>التاجر</th><th>الفاتورة</th><th>التسليم</th><th>الصنف</th><th>الكتاب</th><th>الحالة</th></tr></thead><tbody>
+      + (r.regs.length?`<div class="qt-card"><div class="qt-h">🔢 متسجل على</div><div style="overflow:auto"><table class="qt-tbl"><thead><tr><th>الماتور</th><th>الشاسيه</th><th>التاجر</th><th>الفاتورة</th><th>التسليم</th><th>مستند المواتير</th><th>الصنف</th><th>الكتاب</th><th>الحالة</th></tr></thead><tbody>
         ${r.regs.map(x=>`<tr class="${x.status==='ملغى'?'del':''}"><td dir="ltr" style="text-align:right"><b>${erEsc(x.engine)}</b></td><td dir="ltr" style="text-align:right">${erEsc(x.chassis||'—')}</td><td><b>${erEsc(x.client)}</b> <span class="qt-sub">${erEsc(x.code||'')}</span></td>
-          <td>${x.inv_no}</td><td><a href="#" onclick="erRegOpenDel(${x.del_no});return false">${x.del_no}</a></td><td class="qt-sub">${erEsc(x.item)}</td><td style="font-size:12px">${erLetterTxt(x.letter)}</td><td>${erStChip(x.status)}${x.status==='سارى'&&erCan('erp-letters','view')&&typeof erGoLetter==='function'?` <button class="qt-btn ghost sm" onclick="erGoLetter('${erEsc(x.engine)}')">✉️ جواب</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`
+          <td>${x.inv_no}</td><td><a href="#" onclick="erRegOpenDel(${x.del_no});return false">${x.del_no}</a></td><td>${x.reg_doc_no||'—'}</td><td class="qt-sub">${erEsc(x.item)}</td><td style="font-size:12px">${erLetterTxt(x.letter)}</td><td>${erStChip(x.status)}${x.status==='سارى'&&erCan('erp-letters','view')&&typeof erGoLetter==='function'?` <button class="qt-btn ghost sm" onclick="erGoLetter('${erEsc(x.engine)}')">✉️ جواب</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`
         :`<div class="qt-card qt-sub">${r.letter?'الرقم ده لسه متسجلش على أى تاجر':'مفيش تسجيلات بالرقم ده'}</div>`);
   }catch(e){ box.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(erErr(e))}</div>`; } }
 async function erRenderRegAlerts(){
@@ -23509,7 +23516,7 @@ function erLetterPrint(){ if(!erNeedPrint('erp-letters')) return; const R=ER.lt.
   const pl=R.pl; const src=pl?`كتاب دورى رقم ${pl.doc_no||''}${pl.date?' بتاريخ '+pl.date:''}`:(g.letter&&g.letter.legacy?`أرشيف 2027 — كتاب ${g.letter.doc_no||''}`:'');
   erDocPrint({ title:'جواب بيع موتوسيكل', no:L.jawab_no, date:(L.created_at||'').slice(0,10)||erToday(), sub:F.traffic_dept?('إلى: '+F.traffic_dept):'', test:L.is_test, cancelled:L.status&&L.status!=='سارى',
     info:[['اسم المشترى',F.buyer_name],[F.buyer_kind==='شركة'?'السجل / البطاقة الضريبية':'الرقم القومى',F.buyer_id_no],['العنوان',[F.buyer_address,F.buyer_gov].filter(Boolean).join(' — ')],['التليفون',F.buyer_phone],
-      ['نوع الصفقة',F.deal_type==='installment'?'تقسيط':'كاش'],['وحدة المرور',F.traffic_dept],['التاجر',`${c.name} (${c.code||''})`],F.sub_trader?['التاجر الفرعى',F.sub_trader]:null,['فاتورة المبيعات',R.invoice.inv_no],['مستند التسليم',R.delivery.del_no]],
+      ['نوع الصفقة',F.deal_type==='installment'?'تقسيط':'كاش'],['وحدة المرور',F.traffic_dept],['التاجر',`${c.name} (${c.code||''})`],F.sub_trader?['التاجر الفرعى',F.sub_trader]:null,['فاتورة المبيعات',R.invoice.inv_no],['مستند التسليم',R.delivery.del_no],R.reg_doc?['مستند أرقام المواتير',R.reg_doc.no]:null],
     cols:[['م','36px'],['البيان'],['رقم الماتور','150px'],['رقم الشاسيه','190px']],
     rows:[[ '1', `<b>${erEsc(R.item.name)}</b><div class="s">${[R.item.model, F.model_year?'موديل '+F.model_year:'', F.color?'لون '+F.color:'', F.cc?F.cc+' cc':''].filter(Boolean).map(erEsc).join(' — ')}</div>${src?`<div class="s">${erEsc(src)}</div>`:''}`,
       `<b dir="ltr">${erEsc(g.engine)}</b>`, `<b dir="ltr">${erEsc(g.chassis||g.derived_chassis||F.chassis||'—')}</b>` ]],
@@ -23532,7 +23539,8 @@ function erRenderLtNew(){
       <div class="qt-row" style="gap:18px;margin-top:12px">
         <div><div class="qt-sub">التاجر</div><b>${erEsc(c.name)}</b> <span class="qt-sub">(${erEsc(c.code||'')})</span> ${c.dist?'<span class="qt-chip in">🤝 موزع بالعمولة</span>':''} ${locked?`<span class="qt-chip del">🔒 قفل جوابات${c.lock_reason?': '+erEsc(c.lock_reason):''}</span>`:''}</div>
         <div><div class="qt-sub">فاتورة المبيعات</div><b>${v.inv_no}</b> <span class="qt-sub">${erEsc(v.date)} — سعر الوحدة ${erMoney(v.unit_price,2)}</span></div>
-        <div><div class="qt-sub">مستند التسليم</div><b>${d.del_no}</b> <span class="qt-sub">${erEsc(d.date)}</span></div></div>
+        <div><div class="qt-sub">مستند التسليم</div><b>${d.del_no}</b> <span class="qt-sub">${erEsc(d.date)}</span></div>
+        <div><div class="qt-sub">مستند أرقام المواتير</div><b>${R.reg_doc?R.reg_doc.no:'—'}</b>${R.reg_doc?` <span class="qt-sub">${erEsc(R.reg_doc.date||'')}</span>`:''}</div></div>
       ${c.dist?`<div class="qt-row" style="gap:18px;margin-top:10px"><div><div class="qt-sub">البطاقة الضريبية</div><b dir="ltr">${erEsc(c.tax_reg_no||'—')}</b></div><div><div class="qt-sub">السجل التجارى</div><b dir="ltr">${erEsc(c.commercial_reg||'—')}</b></div><div><div class="qt-sub">المأمورية</div><b>${erEsc(c.tax_office||'—')}</b></div></div>`:''}
       <div class="er-banner" style="margin-top:12px;margin-bottom:0">${pl?`📄 كتاب دورى <b>${erEsc(pl.doc_no)}</b> — ${erEsc(pl.date||'')} — ${erEsc(pl.status||'')}${pl.cancelled?' ❌ ملغى':''} — `:erLetterTxt(g.letter)+' — '}
         ${bl?`📰 منشور <b>${erEsc(bl.title)}</b> ${erPlLink(bl.numbers_url,'🔢 الأرقام')} ${erPlLink(bl.approvals_url,'📑 الموافقات')}`:(pl&&pl.bulletin_no?`📰 منشور <b>${erEsc(pl.bulletin_no)}</b> <span class="qt-sub">(لسه مترفعش على شاشة المنشورات)</span>`:'<span style="color:#f0c75e">⏳ لسه مفيش منشور</span>')}</div></div>
