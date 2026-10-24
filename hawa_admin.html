@@ -23368,6 +23368,8 @@ async function erPdfWorkerTick(){ if(ER.__pdfBusy||ER.__pdfOff||typeof SESSION_T
   catch(e){ if(/صلاحي|مسموح|permission|غير صالحة/i.test(e.message||'')) ER.__pdfOff=true; }
   finally{ ER.__pdfBusy=false; } }
 function erPdfKick(){ clearTimeout(ER.__pdfKick); ER.__pdfKick=setTimeout(erPdfWorkerTick,1500); }
+// 🖨️ عامل الـ PDF على السيرفر بيفتح الصفحة بـ ?pdfsvc=1 وبيشغّل المستندات بنفسه (Chromium) — يبقى العامل اللى جوه الصفحة يقف
+if(/[?&]pdfsvc=1/.test(location.search)) ER.__pdfOff=true;
 setInterval(()=>{ try{ erPdfWorkerTick(); }catch(e){} },45000);
 
 // ── ⚖️ التسويات (عميل / مورد) — زى «تسويات» فى البرنامج القديم: مدينة / دائنة + تصفية حساب
