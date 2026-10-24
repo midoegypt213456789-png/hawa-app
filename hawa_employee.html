@@ -282,6 +282,7 @@ async function rpcLoginTry(secureFn, oldFn, u, p){
   try{
     const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_username:u,p_password:p})});
     if(r.ok){ const j=await r.json(); return j||null; }
+    try{ const e=await r.json(); if(e&&e.message&&/موقوف|محاولات دخول/.test(e.message)){ window.__LOGIN_MSG=e.message; return null; } }catch(_){}
   }catch(e){}
   try{
     const r2=await fetch(`${SB}/rest/v1/rpc/${oldFn}`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_username:u,p_password:p})});
@@ -289,6 +290,54 @@ async function rpcLoginTry(secureFn, oldFn, u, p){
   }catch(e){}
   return null;
 }
+// ════════════════════════════════════════════════════════════════
+// 👁️ تتبع نشاط المستخدم: الشاشات (فتح/قفل + المدة) — كل ضغطة — الطباعة — الاستعراض — الوقوف (مفيش حركة) — قفل البرنامج
+// بيتبعت للسيرفر كل 30 ثانية (ua_log) — ولو الجلسة اتقفلت (إيقاف / إنهاء جلسة) الصفحة بتخرج لوحدها
+// ════════════════════════════════════════════════════════════════
+const UA={q:[],sid:null,la:Date.now(),idle:false,idleMin:10,kickMin:0,scr:'',scrAt:0,busy:false,started:false};
+function uaOff(){ try{ return /[?&]pdfsvc=1/.test(location.search) || !SESSION_TOKEN; }catch(e){ return true; } }
+function uaDur(s){ s=Math.max(0,Math.round(s)); if(s>=3600) return Math.floor(s/3600)+' ساعة و'+Math.floor((s%3600)/60)+' دقيقة'; if(s>=60) return Math.floor(s/60)+' دقيقة'; return s+' ثانية'; }
+function uaEv(k,l,extra){ if(uaOff()) return; UA.q.push(Object.assign({k,t:Date.now(),s:UA.scr||'',l:l==null?'':String(l).replace(/\s+/g,' ').trim().slice(0,200)},extra||{})); if(UA.q.length>350) UA.q.splice(0,UA.q.length-350); }
+function uaSid(){ if(UA.sid) return UA.sid; try{ UA.sid=sessionStorage.getItem('ua_sid'); }catch(e){} if(!UA.sid){ UA.sid=Date.now().toString(36)+Math.random().toString(36).slice(2,10); try{ sessionStorage.setItem('ua_sid',UA.sid); }catch(e){} } return UA.sid; }
+async function uaFlush(final){ if(uaOff()) return; if(UA.busy&&!final) return; const ev=UA.q.splice(0);
+  const body=JSON.stringify({p_token:SESSION_TOKEN,p_sid:uaSid(),p_state:{la:String(UA.la),s:UA.scr||'',st:final?'closed':(UA.idle?'idle':'active'),ag:(navigator.userAgent||'').slice(0,160)},p_events:ev});
+  if(!final) UA.busy=true;
+  try{ const r=await fetch(`${SB}/rest/v1/rpc/ua_log`,{method:'POST',keepalive:!!final,headers:{...HDR,'Content-Type':'application/json'},body});
+    if(final) return; if(!r.ok){ UA.q=ev.concat(UA.q).slice(-350); return; } const j=await r.json();
+    if(j&&j.ok===false){ uaKicked(); return; } if(j){ UA.idleMin=Math.max(1,Number(j.idle)||10); UA.kickMin=Math.max(0,Number(j.kick)||0); } }
+  catch(e){ if(!final) UA.q=ev.concat(UA.q).slice(-350); } finally{ if(!final) UA.busy=false; } }
+function uaClearSess(){ try{ ['hawa_admin','hawa_admin_emp','hawa_emp'].forEach(k=>sessionStorage.removeItem(k)); }catch(e){} }
+function uaKicked(){ if(window.__uaKicked) return; window.__uaKicked=true; uaClearSess(); try{ alert('⛔ جلستك اتقفلت — يا إما حسابك اتوقف أو الأدمن طلّعك أو الجلسة خلصت.\nسجّل الدخول تانى.'); }catch(e){} location.reload(); }
+async function uaForceOut(msg){ if(window.__uaKicked) return; window.__uaKicked=true; uaEv('logout',msg); await uaFlush(true);
+  try{ await fetch(`${SB}/rest/v1/rpc/logout_session`,{method:'POST',keepalive:true,headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}); }catch(e){}
+  uaClearSess(); try{ alert('🚪 '+msg); }catch(e){} location.reload(); }
+function uaBye(){ if(uaOff()) return; if(UA.scr) uaEv('leave',UA.scr,{s:UA.scr,d:Math.round((Date.now()-UA.scrAt)/1000)}); UA.scr=''; uaFlush(true); }
+function uaSetScreen(name){ if(uaOff()||!name||name===UA.scr) return; const n=Date.now(); if(UA.scr) uaEv('leave',UA.scr,{s:UA.scr,d:Math.round((n-UA.scrAt)/1000)}); UA.scr=name; UA.scrAt=n; uaEv('open',name,{s:name}); }
+// ⏸️ شاشة تنبيه الوقوف
+function uaIdleEl(){ let o=document.getElementById('ua-idle'); if(!o){ o=document.createElement('div'); o.id='ua-idle'; o.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;font-family:Cairo,Tahoma,sans-serif;direction:rtl';
+    o.innerHTML='<div style="background:#111;border:2px solid #C9A84C;border-radius:18px;padding:28px 34px;max-width:440px;text-align:center;color:#F0EDE8"><div style="font-size:46px">⏸️</div><div id="ua-idle-t" style="font-size:20px;font-weight:900;color:#E8C97A;margin:8px 0"></div><div id="ua-idle-s" style="font-size:14px;color:#8A8580;line-height:1.8"></div><button style="margin-top:14px;background:#C9A84C;color:#0A0A0A;border:0;border-radius:10px;padding:10px 26px;font-weight:900;font-family:inherit;font-size:15px;cursor:pointer">▶️ أنا رجعت — كمّل</button></div>';
+    document.body.appendChild(o); } return o; }
+function uaIdleUpd(){ const o=uaIdleEl(), m=(Date.now()-UA.la)/1000; const t=document.getElementById('ua-idle-t'), s=document.getElementById('ua-idle-s'); if(t) t.textContent='إنت واقف بقالك '+uaDur(m);
+  if(s) s.innerHTML='مفيش أى حركة على السيستم من ساعة '+new Date(UA.la).toLocaleTimeString('ar-EG',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit'})+' — وده بيتسجل فى نشاطك.'+(UA.kickMin>0?'<br><b style="color:#E05555">هيتعملك خروج تلقائى بعد '+uaDur(UA.kickMin*60-m)+'</b>':'')+'<br>حرّك الماوس أو دوس أى زرار عشان تكمل.'; return o; }
+function uaAct(){ const n=Date.now(); if(UA.idle){ const d=Math.round((n-UA.la)/1000); UA.idle=false; uaEv('back','رجع يشتغل بعد وقوف '+uaDur(d),{d}); const o=document.getElementById('ua-idle'); if(o) o.style.display='none'; UA.la=n; uaFlush(); return; } UA.la=n; }
+['mousemove','mousedown','keydown','wheel','touchstart','scroll','input'].forEach(e=>document.addEventListener(e,uaAct,{passive:true,capture:true}));
+setInterval(()=>{ if(uaOff()) return; const sec=(Date.now()-UA.la)/1000;
+  if(!UA.idle && sec>=UA.idleMin*60){ UA.idle=true; uaEv('idle','وقف — مفيش حركة من '+uaDur(sec),{t:UA.la}); uaIdleUpd().style.display='flex'; uaFlush(); }
+  else if(UA.idle) uaIdleUpd();
+  if(UA.kickMin>0 && sec>=UA.kickMin*60) uaForceOut('خروج تلقائى — مفيش حركة من '+uaDur(sec)); },10000);
+setInterval(()=>{ if(!uaOff()) uaFlush(); },30000);
+// 🖱️ كل ضغطة على زرار / تاب / لينك / اختيار
+document.addEventListener('click',e=>{ if(uaOff()) return; const el=e.target&&e.target.closest&&e.target.closest('button,a,[onclick],.bl-tab,label,summary,select,input[type=checkbox],input[type=radio],tr[data-erid],.nav-item'); if(!el) return;
+  if(el.closest&&el.closest('#ua-idle')) return; let l='';
+  if(el.matches('input[type=checkbox],input[type=radio]')){ const lb=el.closest('label'); l=(lb?lb.textContent:'')+(el.checked?' ✔':' ✖'); }
+  else if(el.tagName==='SELECT') return; else l=el.getAttribute('title')||el.textContent||el.getAttribute('aria-label')||'';
+  l=String(l).replace(/\s+/g,' ').trim(); if(!l) return; uaEv('click',l.slice(0,90)); },true);
+document.addEventListener('change',e=>{ const el=e.target; if(uaOff()||!el||el.tagName!=='SELECT') return; const o=el.options&&el.options[el.selectedIndex]; uaEv('click','اختار: '+(o?o.text:el.value).slice(0,80)); },true);
+// 🖨️ الطباعة (أى نافذة طباعة / معاينة بتتفتح)
+(function(){ const o=window.open; window.open=function(u){ const w=o.apply(window,arguments); try{ if(!uaOff()){ if(!u||u==='about:blank'){ setTimeout(()=>{ let t=''; try{ t=(w&&w.document&&w.document.title)||''; }catch(e){} uaEv('print','طباعة / معاينة: '+(t||'مستند')); },1200); } else uaEv('view','فتح: '+String(u).slice(0,120)); } }catch(e){} return w; }; })();
+window.addEventListener('pagehide',()=>{ if(uaOff()) return; if(UA.scr) uaEv('leave',UA.scr,{s:UA.scr,d:Math.round((Date.now()-UA.scrAt)/1000)}); uaEv('close','قفل البرنامج / الصفحة'); uaFlush(true); });
+document.addEventListener('visibilitychange',()=>{ if(!uaOff() && document.visibilityState==='hidden') uaFlush(); });
+setInterval(()=>{ try{ if(!uaOff()&&!UA.scr) uaSetScreen('📦 شاشة المخازن'+(typeof warehouse!=='undefined'&&warehouse?' — '+warehouse:'')); }catch(e){} },3000);
 // ⏰ ============ المواعيد الديناميكية ============
 // SLOTS بتتولد من ساعات عمل المخازن (من الداتابيز) + أي موعد موجود فعلاً في الحجوزات
 // → أي تغيير في ساعات العمل ينعكس هنا تلقائياً، ومفيش حجز يختفي أبداً
@@ -611,7 +660,7 @@ async function doLogin(){
       fetch(`${SB}/rest/v1/activity_log`,{method:'POST',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({
         user_type:'employee',user_id:null,user_name:u,action:'login_failed',action_label:'⚠️ محاولة دخول فاشلة',details:{username:u}
       })}).catch(()=>{});
-      showLoginErr('اسم المستخدم أو كلمة المرور غلط');
+      showLoginErr(window.__LOGIN_MSG||'اسم المستخدم أو كلمة المرور غلط'); window.__LOGIN_MSG='';
     }
   }catch(e){showLoginErr('خطأ في الاتصال');}
   btn.disabled=false;btn.innerHTML='دخول';
@@ -1088,6 +1137,7 @@ async function dlSave(){
 
 function doLogout(){
   showDialog('🚪','تسجيل الخروج','هتخرج من الحساب؟',false,()=>{
+    try{ uaBye(); }catch(e){}
     logActivity('emp_logout','🚪 خرج من النظام');
     if(SESSION_TOKEN){ try{ fetch(`${SB}/rest/v1/rpc/logout_session`,{method:'POST',headers:{...HDR},body:JSON.stringify({p_token:SESSION_TOKEN})}); }catch(e){} }
     SESSION_TOKEN=null;

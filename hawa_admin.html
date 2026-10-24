@@ -2944,6 +2944,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         <div class="page-title">👷 <span>الموظفين</span></div>
         <button class="add-btn" onclick="openEmpModal()">+ إضافة موظف</button>
       </div>
+      <div id="ua-live" style="margin-bottom:14px"></div>
       <div class="tbl-wrap">
         <div id="emp-table"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       </div>
@@ -5918,7 +5919,7 @@ async function rpcLoginTry(secureFn, oldFn, u, p){
     const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
     if(r.ok){ const j=await r.json(); return j||null; }
     // 🔒 قفل مؤقت بعد محاولات غلط كتير — نعرض رسالة السيرفر بدل «الباسورد غلط»
-    try{ const e=await r.json(); if(e&&e.message&&/محاولات دخول/.test(e.message)){ LOGIN_LOCK_MSG=e.message; return null; } }catch(_){}
+    try{ const e=await r.json(); if(e&&e.message&&/محاولات دخول|موقوف/.test(e.message)){ LOGIN_LOCK_MSG=e.message; return null; } }catch(_){}
   }catch(e){}
   try{
     const r2=await fetch(`${SB}/rest/v1/rpc/${oldFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
@@ -5936,6 +5937,125 @@ async function rpcSecure(fn, args){
     throw new Error(msg); }
   return j;
 }
+// ════════════════════════════════════════════════════════════════
+// 👁️ تتبع نشاط المستخدم: الشاشات (فتح/قفل + المدة) — كل ضغطة — الطباعة — الاستعراض — الوقوف (مفيش حركة) — قفل البرنامج
+// بيتبعت للسيرفر كل 30 ثانية (ua_log) — ولو الجلسة اتقفلت (إيقاف / إنهاء جلسة) الصفحة بتخرج لوحدها
+// ════════════════════════════════════════════════════════════════
+const UA={q:[],sid:null,la:Date.now(),idle:false,idleMin:10,kickMin:0,scr:'',scrAt:0,busy:false,started:false};
+function uaOff(){ try{ return /[?&]pdfsvc=1/.test(location.search) || !SESSION_TOKEN; }catch(e){ return true; } }
+function uaDur(s){ s=Math.max(0,Math.round(s)); if(s>=3600) return Math.floor(s/3600)+' ساعة و'+Math.floor((s%3600)/60)+' دقيقة'; if(s>=60) return Math.floor(s/60)+' دقيقة'; return s+' ثانية'; }
+function uaEv(k,l,extra){ if(uaOff()) return; UA.q.push(Object.assign({k,t:Date.now(),s:UA.scr||'',l:l==null?'':String(l).replace(/\s+/g,' ').trim().slice(0,200)},extra||{})); if(UA.q.length>350) UA.q.splice(0,UA.q.length-350); }
+function uaSid(){ if(UA.sid) return UA.sid; try{ UA.sid=sessionStorage.getItem('ua_sid'); }catch(e){} if(!UA.sid){ UA.sid=Date.now().toString(36)+Math.random().toString(36).slice(2,10); try{ sessionStorage.setItem('ua_sid',UA.sid); }catch(e){} } return UA.sid; }
+async function uaFlush(final){ if(uaOff()) return; if(UA.busy&&!final) return; const ev=UA.q.splice(0);
+  const body=JSON.stringify({p_token:SESSION_TOKEN,p_sid:uaSid(),p_state:{la:String(UA.la),s:UA.scr||'',st:final?'closed':(UA.idle?'idle':'active'),ag:(navigator.userAgent||'').slice(0,160)},p_events:ev});
+  if(!final) UA.busy=true;
+  try{ const r=await fetch(`${SB}/rest/v1/rpc/ua_log`,{method:'POST',keepalive:!!final,headers:{...HDR,'Content-Type':'application/json'},body});
+    if(final) return; if(!r.ok){ UA.q=ev.concat(UA.q).slice(-350); return; } const j=await r.json();
+    if(j&&j.ok===false){ uaKicked(); return; } if(j){ UA.idleMin=Math.max(1,Number(j.idle)||10); UA.kickMin=Math.max(0,Number(j.kick)||0); } }
+  catch(e){ if(!final) UA.q=ev.concat(UA.q).slice(-350); } finally{ if(!final) UA.busy=false; } }
+function uaClearSess(){ try{ ['hawa_admin','hawa_admin_emp','hawa_emp'].forEach(k=>sessionStorage.removeItem(k)); }catch(e){} }
+function uaKicked(){ if(window.__uaKicked) return; window.__uaKicked=true; uaClearSess(); try{ alert('⛔ جلستك اتقفلت — يا إما حسابك اتوقف أو الأدمن طلّعك أو الجلسة خلصت.\nسجّل الدخول تانى.'); }catch(e){} location.reload(); }
+async function uaForceOut(msg){ if(window.__uaKicked) return; window.__uaKicked=true; uaEv('logout',msg); await uaFlush(true);
+  try{ await fetch(`${SB}/rest/v1/rpc/logout_session`,{method:'POST',keepalive:true,headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}); }catch(e){}
+  uaClearSess(); try{ alert('🚪 '+msg); }catch(e){} location.reload(); }
+function uaBye(){ if(uaOff()) return; if(UA.scr) uaEv('leave',UA.scr,{s:UA.scr,d:Math.round((Date.now()-UA.scrAt)/1000)}); UA.scr=''; uaFlush(true); }
+function uaSetScreen(name){ if(uaOff()||!name||name===UA.scr) return; const n=Date.now(); if(UA.scr) uaEv('leave',UA.scr,{s:UA.scr,d:Math.round((n-UA.scrAt)/1000)}); UA.scr=name; UA.scrAt=n; uaEv('open',name,{s:name}); }
+// ⏸️ شاشة تنبيه الوقوف
+function uaIdleEl(){ let o=document.getElementById('ua-idle'); if(!o){ o=document.createElement('div'); o.id='ua-idle'; o.style.cssText='position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;font-family:Cairo,Tahoma,sans-serif;direction:rtl';
+    o.innerHTML='<div style="background:#111;border:2px solid #C9A84C;border-radius:18px;padding:28px 34px;max-width:440px;text-align:center;color:#F0EDE8"><div style="font-size:46px">⏸️</div><div id="ua-idle-t" style="font-size:20px;font-weight:900;color:#E8C97A;margin:8px 0"></div><div id="ua-idle-s" style="font-size:14px;color:#8A8580;line-height:1.8"></div><button style="margin-top:14px;background:#C9A84C;color:#0A0A0A;border:0;border-radius:10px;padding:10px 26px;font-weight:900;font-family:inherit;font-size:15px;cursor:pointer">▶️ أنا رجعت — كمّل</button></div>';
+    document.body.appendChild(o); } return o; }
+function uaIdleUpd(){ const o=uaIdleEl(), m=(Date.now()-UA.la)/1000; const t=document.getElementById('ua-idle-t'), s=document.getElementById('ua-idle-s'); if(t) t.textContent='إنت واقف بقالك '+uaDur(m);
+  if(s) s.innerHTML='مفيش أى حركة على السيستم من ساعة '+new Date(UA.la).toLocaleTimeString('ar-EG',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit'})+' — وده بيتسجل فى نشاطك.'+(UA.kickMin>0?'<br><b style="color:#E05555">هيتعملك خروج تلقائى بعد '+uaDur(UA.kickMin*60-m)+'</b>':'')+'<br>حرّك الماوس أو دوس أى زرار عشان تكمل.'; return o; }
+function uaAct(){ const n=Date.now(); if(UA.idle){ const d=Math.round((n-UA.la)/1000); UA.idle=false; uaEv('back','رجع يشتغل بعد وقوف '+uaDur(d),{d}); const o=document.getElementById('ua-idle'); if(o) o.style.display='none'; UA.la=n; uaFlush(); return; } UA.la=n; }
+['mousemove','mousedown','keydown','wheel','touchstart','scroll','input'].forEach(e=>document.addEventListener(e,uaAct,{passive:true,capture:true}));
+setInterval(()=>{ if(uaOff()) return; const sec=(Date.now()-UA.la)/1000;
+  if(!UA.idle && sec>=UA.idleMin*60){ UA.idle=true; uaEv('idle','وقف — مفيش حركة من '+uaDur(sec),{t:UA.la}); uaIdleUpd().style.display='flex'; uaFlush(); }
+  else if(UA.idle) uaIdleUpd();
+  if(UA.kickMin>0 && sec>=UA.kickMin*60) uaForceOut('خروج تلقائى — مفيش حركة من '+uaDur(sec)); },10000);
+setInterval(()=>{ if(!uaOff()) uaFlush(); },30000);
+// 🖱️ كل ضغطة على زرار / تاب / لينك / اختيار
+document.addEventListener('click',e=>{ if(uaOff()) return; const el=e.target&&e.target.closest&&e.target.closest('button,a,[onclick],.bl-tab,label,summary,select,input[type=checkbox],input[type=radio],tr[data-erid],.nav-item'); if(!el) return;
+  if(el.closest&&el.closest('#ua-idle')) return; let l='';
+  if(el.matches('input[type=checkbox],input[type=radio]')){ const lb=el.closest('label'); l=(lb?lb.textContent:'')+(el.checked?' ✔':' ✖'); }
+  else if(el.tagName==='SELECT') return; else l=el.getAttribute('title')||el.textContent||el.getAttribute('aria-label')||'';
+  l=String(l).replace(/\s+/g,' ').trim(); if(!l) return; uaEv('click',l.slice(0,90)); },true);
+document.addEventListener('change',e=>{ const el=e.target; if(uaOff()||!el||el.tagName!=='SELECT') return; const o=el.options&&el.options[el.selectedIndex]; uaEv('click','اختار: '+(o?o.text:el.value).slice(0,80)); },true);
+// 🖨️ الطباعة (أى نافذة طباعة / معاينة بتتفتح)
+(function(){ const o=window.open; window.open=function(u){ const w=o.apply(window,arguments); try{ if(!uaOff()){ if(!u||u==='about:blank'){ setTimeout(()=>{ let t=''; try{ t=(w&&w.document&&w.document.title)||''; }catch(e){} uaEv('print','طباعة / معاينة: '+(t||'مستند')); },1200); } else uaEv('view','فتح: '+String(u).slice(0,120)); } }catch(e){} return w; }; })();
+window.addEventListener('pagehide',()=>{ if(uaOff()) return; if(UA.scr) uaEv('leave',UA.scr,{s:UA.scr,d:Math.round((Date.now()-UA.scrAt)/1000)}); uaEv('close','قفل البرنامج / الصفحة'); uaFlush(true); });
+document.addEventListener('visibilitychange',()=>{ if(!uaOff() && document.visibilityState==='hidden') uaFlush(); });
+
+// ── 🔗 ربط التتبع بلوحة التحكم
+function uaScrName(sec){ try{ const t=document.querySelector('#sec-'+sec+' .page-title'); return (((t&&t.textContent)||sec||'')+'').replace(/\s+/g,' ').trim().slice(0,70); }catch(e){ return String(sec||''); } }
+(function(){ const g=goTo; goTo=function(){ const r=g.apply(this,arguments); try{ uaSetScreen(uaScrName(currentSection)); }catch(e){} return r; }; })();
+setInterval(()=>{ try{ const app=document.getElementById('app'); if(!uaOff()&&!UA.scr&&app&&app.classList.contains('show')) uaSetScreen(uaScrName(currentSection)); }catch(e){} },3000);
+window.addEventListener('load',()=>{ try{ if(typeof erxRun==='function'){ const f=erxRun; erxRun=function(){ try{ const R=ER.rx&&ER.rx.R; if(R) uaEv('view','تقرير: '+R.t); }catch(e){} return f.apply(this,arguments); }; } }catch(e){} });
+
+// ════ 🟢 المستخدمين دلوقتى + ⛔ إيقاف مستخدم + ⏏️ إنهاء جلسة + إعدادات تنبيه الوقوف (فوق جدول الموظفين)
+function uaEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uaTm(ts){ return ts?new Date(ts).toLocaleTimeString('ar-EG',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit'}):'—'; }
+function uaDt(ts){ return ts?new Date(ts).toLocaleString('ar-EG',{timeZone:'Africa/Cairo',day:'numeric',month:'numeric',hour:'numeric',minute:'2-digit'}):'—'; }
+function uaAgo(ts,now){ if(!ts) return '—'; const s=(now-new Date(ts).getTime())/1000; return s<45?'دلوقتى':'من '+uaDur(s); }
+function uaState(u,D){ const now=new Date(D.now).getTime(), p=u.p;
+  if(!u.is_active) return {k:'sus',t:'⛔ موقوف',c:'var(--error)'};
+  if(!p||!p.last_seen) return u.sessions>0?{k:'in',t:'🔵 داخل (من غير تتبع)',c:'var(--blue)'}:{k:'off',t:'⚫ مش فاتح',c:'var(--text-dim)'};
+  const seen=(now-new Date(p.last_seen).getTime())/1000;
+  if(p.state==='closed'||seen>150) return u.sessions>0&&seen<1800?{k:'in',t:'🔵 داخل — الصفحة مقفولة',c:'var(--blue)'}:{k:'off',t:'⚫ مش فاتح',c:'var(--text-dim)'};
+  const idle=(now-new Date(p.last_active).getTime())/1000;
+  if(p.state==='idle'||idle>=D.idle*60) return {k:'idle',t:'🟡 واقف من '+uaDur(idle),c:'var(--gold-light)'};
+  return {k:'on',t:'🟢 شغال',c:'var(--success)'}; }
+async function uaLiveLoad(){ const el=document.getElementById('ua-live'); if(!el) return; try{ UA.live=await rpcSecure('ua_live',{}); uaLiveRender(); }catch(e){ el.innerHTML=`<div class="empty-txt" style="padding:10px">⚠️ ${uaEsc(e.message||e)}</div>`; } }
+function uaCanEdit(){ try{ return !EMP_MODE || can('employees','edit'); }catch(e){ return false; } }
+function uaLiveRender(){ const el=document.getElementById('ua-live'), D=UA.live; if(!el||!D) return; const now=new Date(D.now).getTime(), ce=uaCanEdit();
+  const rows=D.users.map(u=>Object.assign(u,{st:uaState(u,D)})); const ord={on:0,idle:1,in:2,off:3,sus:4}; rows.sort((a,b)=>ord[a.st.k]-ord[b.st.k]||String(a.name).localeCompare(String(b.name),'ar'));
+  const cnt=k=>rows.filter(r=>r.st.k===k).length; const me=D.me||{};
+  el.innerHTML=`<div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
+   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+     <b style="font-size:16px;color:var(--gold)">👁️ المستخدمين دلوقتى</b>
+     <span style="color:var(--success)">🟢 شغال ${cnt('on')}</span><span style="color:var(--gold-light)">🟡 واقف ${cnt('idle')}</span><span style="color:var(--blue)">🔵 داخل ${cnt('in')}</span><span style="color:var(--text-dim)">⚫ مش فاتح ${cnt('off')}</span><span style="color:var(--error)">⛔ موقوف ${cnt('sus')}</span>
+     <button class="act-btn" style="margin-inline-start:auto" onclick="uaLiveLoad()">🔄 تحديث</button>
+     <button class="act-btn" onclick="uaOpenReport('')">📜 تقرير أنشطة المستخدمين</button></div>
+   ${ce?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;font-size:13px;color:var(--text-dim)">⏸️ نبّه المستخدم لو واقف (مفيش حركة) بعد
+     <input id="ua-set-idle" type="number" min="1" max="600" value="${D.idle}" style="width:70px;background:#1E1E1E;border:2px solid #4A4540;color:#fff;border-radius:8px;padding:4px 6px"> دقيقة —
+     🚪 خروج تلقائى بعد <input id="ua-set-kick" type="number" min="0" max="1440" value="${D.kick}" style="width:70px;background:#1E1E1E;border:2px solid #4A4540;color:#fff;border-radius:8px;padding:4px 6px"> دقيقة <span>(0 = مقفول)</span>
+     <button class="act-btn edit" onclick="uaSaveSet()">💾 حفظ</button></div>`:''}
+   <div style="overflow:auto"><table><thead><tr><th>المستخدم</th><th>الحالة</th><th>الشاشة دلوقتى</th><th>آخر حركة</th><th>دخل النهارده</th><th>آخر خروج</th><th>وقوف النهارده</th><th>حركات النهارده</th><th></th></tr></thead><tbody>
+   ${rows.map(u=>{ const self=me.type===u.type&&Number(me.id)===Number(u.id), adm=u.type==='admin', canAct=ce&&!self&&(!adm||me.type==='admin');
+     return `<tr><td><b>${adm?'👑 ':''}${uaEsc(u.name)}</b><div style="font-size:11px;color:var(--text-dim)">${uaEsc(u.username||'')} — ${adm?'أدمن':'موظف'} ${adm?'A':'E'}${u.id}${self?' — (إنت)':''}</div></td>
+       <td><b style="color:${u.st.c}">${uaEsc(u.st.t)}</b>${u.tabs>1?`<div style="font-size:11px;color:var(--text-dim)">${u.tabs} صفحات مفتوحة</div>`:''}${!u.is_active?`<div style="font-size:11px;color:var(--text-dim)">${uaEsc(u.reason||'')}${u.until?' — لحد '+uaDt(u.until):' — لحد ما يترجّع'}${u.sus_by?' — بواسطة '+uaEsc(u.sus_by):''}</div>`:''}</td>
+       <td style="font-size:12px">${u.p&&(u.st.k==='on'||u.st.k==='idle')?uaEsc(u.p.screen||'—'):'—'}</td>
+       <td style="font-size:12px">${u.p?uaAgo(u.p.last_active,now):'—'}</td>
+       <td style="font-size:12px">${uaTm(u.login_today)}</td><td style="font-size:12px">${uaDt(u.last_out)}</td>
+       <td style="font-size:12px">${u.idle_today?uaDur(u.idle_today):'—'}</td><td>${u.ev_today||'—'}</td>
+       <td><div class="act-btns" style="flex-wrap:nowrap">
+         <button class="act-btn" onclick="uaOpenReport(${JSON.stringify(u.name).replace(/"/g,'&quot;')})" title="كل حركاته النهارده">📜 نشاطه</button>
+         ${canAct&&u.is_active&&(u.sessions>0||u.st.k==='on'||u.st.k==='idle')?`<button class="act-btn toggle" onclick="uaKick('${u.type}',${u.id})" title="يطلع من السيستم دلوقتى (من غير إيقاف)">⏏️ طلّعه</button>`:''}
+         ${canAct?(u.is_active?`<button class="act-btn del" onclick="uaSuspAsk('${u.type}',${u.id})">⛔ إيقاف</button>`:`<button class="act-btn edit" onclick="uaUnsusp('${u.type}',${u.id})">✅ رجّعه</button>`):''}
+       </div></td></tr>`; }).join('')}</tbody></table></div>
+   <div style="font-size:11px;color:var(--text-dim);margin-top:6px">💡 الحالة بتتحدث لوحدها كل 30 ثانية. «⏏️ طلّعه» = يقفل جلسته دلوقتى ويقدر يدخل تانى. «⛔ إيقاف» = يتقفل حسابه ومش هيعرف يدخل لحد ما ترجّعه (أو لحد الميعاد اللى تحدده).</div></div>`; }
+setInterval(()=>{ try{ if(!uaOff()&&currentSection==='employees'&&document.visibilityState==='visible') uaLiveLoad(); }catch(e){} },30000);
+async function uaSaveSet(){ const i=Number(document.getElementById('ua-set-idle').value), k=Number(document.getElementById('ua-set-kick').value);
+  try{ await rpcSecure('ua_settings_set',{p_idle:i,p_kick:k}); UA.idleMin=i; UA.kickMin=k; alert('✅ اتحفظ — التنبيه بعد '+i+' دقيقة'+(k?' والخروج التلقائى بعد '+k+' دقيقة':' — والخروج التلقائى مقفول')); uaLiveLoad(); }catch(e){ alert('❌ '+(e.message||e)); } }
+async function uaKick(t,id){ const u=(UA.live.users||[]).find(x=>x.type===t&&x.id===id); if(!confirm(`⏏️ تطلّع «${u?u.name:''}» من السيستم دلوقتى؟\n(هيقدر يدخل تانى — لو عايز تمنعه استخدم «⛔ إيقاف»)`)) return;
+  try{ const r=await rpcSecure('ua_kick',{p_type:t,p_id:id}); alert('✅ اتقفلت '+(r.sessions||0)+' جلسة'); uaLiveLoad(); }catch(e){ alert('❌ '+(e.message||e)); } }
+function uaSuspAsk(t,id){ const u=((UA.live&&UA.live.users)||[]).find(x=>x.type===t&&x.id===id)||{name:''};
+  const body=`<div style="display:flex;flex-direction:column;gap:12px;padding:4px 2px">
+    <div>هتوقف <b style="color:var(--gold)">${uaEsc(u.name)}</b> — هيطلع من السيستم فوراً ومش هيعرف يدخل.</div>
+    <label style="display:flex;flex-direction:column;gap:6px">سبب الإيقاف *<input id="ua-s-reason" class="qt-inp" style="background:#1E1E1E;border:2px solid #4A4540;color:#fff" placeholder="مثلاً: غياب / تحقيق / إجازة"></label>
+    <label style="display:flex;flex-direction:column;gap:6px">مدة الإيقاف<select id="ua-s-dur" class="qt-inp" onchange="document.getElementById('ua-s-dtw').style.display=this.value==='at'?'':'none'">
+      <option value="">لحد ما أرجّعه بنفسى</option><option value="1h">ساعة</option><option value="3h">3 ساعات</option><option value="eod">لآخر النهارده</option><option value="1d">يوم</option><option value="3d">3 أيام</option><option value="7d">أسبوع</option><option value="30d">شهر</option><option value="at">لحد تاريخ محدد…</option></select></label>
+    <label id="ua-s-dtw" style="display:none;flex-direction:column;gap:6px">لحد<input id="ua-s-dt" type="datetime-local" class="qt-inp"></label></div>`;
+  erModal('⛔ إيقاف مستخدم', body, `<button class="qt-btn red" onclick="uaSuspGo('${t}',${id})">⛔ أوقفه</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
+  setTimeout(()=>{ const i=document.getElementById('ua-s-reason'); if(i) i.focus(); },60); }
+async function uaSuspGo(t,id){ const reason=(document.getElementById('ua-s-reason').value||'').trim(), dur=document.getElementById('ua-s-dur').value; if(!reason){ alert('اكتب سبب الإيقاف'); return; }
+  let until=null; const n=new Date(), H=3600e3;
+  if(dur==='1h') until=new Date(+n+H); else if(dur==='3h') until=new Date(+n+3*H); else if(dur==='1d') until=new Date(+n+24*H); else if(dur==='3d') until=new Date(+n+72*H); else if(dur==='7d') until=new Date(+n+168*H); else if(dur==='30d') until=new Date(+n+720*H);
+  else if(dur==='eod'){ const d=erToday(); until=new Date(d+'T23:59:00+03:00'); } else if(dur==='at'){ const v=document.getElementById('ua-s-dt').value; if(!v){ alert('اختار التاريخ'); return; } until=new Date(v); }
+  try{ await rpcSecure('ua_suspend',{p_type:t,p_id:id,p_on:true,p_reason:reason,p_until:until?until.toISOString():null}); erClose(); alert('⛔ اتوقف — وطلع من السيستم'); uaLiveLoad(); if(typeof loadEmployees==='function') loadEmployees(); }catch(e){ alert('❌ '+(e.message||e)); } }
+async function uaUnsusp(t,id){ const u=((UA.live&&UA.live.users)||[]).find(x=>x.type===t&&x.id===id)||{name:''}; if(!confirm(`✅ ترجّع «${u.name}» يشتغل تانى؟`)) return;
+  try{ await rpcSecure('ua_suspend',{p_type:t,p_id:id,p_on:false,p_reason:null,p_until:null}); uaLiveLoad(); if(typeof loadEmployees==='function') loadEmployees(); }catch(e){ alert('❌ '+(e.message||e)); } }
+function uaOpenReport(name){ goTo('erp-reports'); let n=0; const go=()=>{ try{ if(!(ER.rx&&ER.rx.meta)){ if(++n<40) return setTimeout(go,250); return; } const s=erxScreens().find(x=>x.t==='أنشطة المستخدمين'); if(!s) return; const st=erxSt(s); st.per='today'; st.g=name?1:0; st.r=0; st.fx=name?{uname:[name]}:{}; ER.rx.sid=s.id; erxOpenScr(s.id); if(name) setTimeout(()=>{ try{ erxScrGo(false); }catch(e){} },150); }catch(e){} }; setTimeout(go,300); }
+
 let EMP_MODE = false;     // true لو اللى فاتح موظف (مش أدمن)
 let EMP_PERMS = null;     // { screen: {view,edit,del,print} } أو { __all__:true }
 let EMP_WH = null;        // 💬 مخزن الموظف (قليوب/السادات) — 'عام' أو null = مش أدمن مخزن
@@ -6313,6 +6433,7 @@ function initResizeHandle(){
 
 function doLogout(){
   showConfirm('🚪','تسجيل الخروج','هتخرج من لوحة التحكم؟',false,()=>{
+    try{ if(typeof uaBye==='function') uaBye(); }catch(e){}
     stopAutoRefresh();
     if(SESSION_TOKEN){ try{ fetch(`${SB}/rest/v1/rpc/logout_session`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN})}); }catch(e){} }
     SESSION_TOKEN=null;
@@ -9589,7 +9710,7 @@ async function loadEmployees(){
   try{
     await fetchRoles();
     let empColsErr = null;
-    const r=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at,role_id,perms_override,bot_link_code,telegram_id&order=created_at.asc`,{headers:HDR});
+    const r=await fetch(`${SB}/rest/v1/employees?select=id,name,username,role,is_active,created_at,role_id,perms_override,bot_link_code,telegram_id,suspend_reason,suspended_until&order=created_at.asc`,{headers:HDR});
     let data=await r.json();
     // fallback لو الأعمدة الجديدة لسه متعملتش فى القاعدة
     if(!Array.isArray(data)){
@@ -9647,7 +9768,7 @@ async function loadEmployees(){
         <td><span style="color:var(--gold);font-size:11px">🌐 الكل</span></td>
         <td><span style="color:var(--text-dim);font-size:11px">—</span></td>
         <td>${a.is_active!==false?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
-        <td><span style="font-size:11px;color:var(--text-dim)">🔒 حساب رئيسي — مبيتعدلش من هنا</span></td>
+        <td>${(!EMP_MODE && admin && Number(admin.id)!==Number(a.id))?(a.is_active!==false?`<button class="act-btn toggle" onclick="uaSuspAsk('admin',${a.id})">⛔ إيقاف</button>`:`<button class="act-btn edit" onclick="uaUnsusp('admin',${a.id})">✅ رجّعه</button>`):'<span style="font-size:11px;color:var(--text-dim)">🔒 حساب رئيسي — مبيتعدلش من هنا</span>'}</td>
       </tr>`;
     });
     data.forEach(e=>{
@@ -9670,17 +9791,18 @@ async function loadEmployees(){
         <td>${jrBadge}</td>
         <td>${empScopeCell(e, jr, govCount, secCount, supCount)}</td>
         <td>${botCodeCell(e)}</td>
-        <td>${e.is_active?'<span class="badge active">نشط ✅</span>':'<span class="badge cancelled">معطّل ❌</span>'}</td>
+        <td>${e.is_active?'<span class="badge active">نشط ✅</span>':`<span class="badge cancelled">موقوف ⛔</span>${e.suspend_reason?`<div style="font-size:11px;color:var(--text-dim)">${uaEsc(e.suspend_reason)}${e.suspended_until?' — لحد '+uaDt(e.suspended_until):''}</div>`:''}`}</td>
         <td><div class="act-btns">
           <button class="act-btn edit" onclick="openEmpModal(${JSON.stringify(e).replace(/"/g,'&quot;')})">✏️ تعديل</button>
           <button class="act-btn" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="openEmpRating(${e.id}, '${String(e.name||'').replace(/'/g,"\\'")}')">⭐ تقييم</button>
-          <button class="act-btn toggle" onclick="toggleEmployee(${e.id},${e.is_active})">${e.is_active?'🔕 تعطيل':'✅ تفعيل'}</button>
+          ${e.is_active?`<button class="act-btn toggle" onclick="uaSuspAsk('employee',${e.id})">⛔ إيقاف</button>`:`<button class="act-btn toggle" onclick="uaUnsusp('employee',${e.id})">✅ رجّعه</button>`}
           <button class="act-btn del" onclick="deleteEmployee(${e.id},'${e.name}')">🗑️ حذف</button>
         </div></td>
       </tr>`;
     });
     html+='</tbody></table>';
     document.getElementById('emp-table').innerHTML=diagHtml+html;
+    try{ uaLiveLoad(); }catch(e){}
   }catch(e){document.getElementById('emp-table').innerHTML='<div class="empty-txt">❌ خطأ في التحميل: '+((e&&e.message)||'')+'</div>';}
 }
 
@@ -22549,7 +22671,12 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   S('regs','المواتير المتسجلة','regs',['date','client','item','vtype','user'],[['بالتاجر',['client'],['cnt','nolet']],['بالصنف',['item'],['cnt']],['بالمصدر (كتاب / أرشيف)',['source'],['cnt']],['باليوم',['day'],['cnt']],['بمين سجّل',['user'],['cnt']]],{docRange:1,r:[['الكل',{}],['مطلعش ليها جوابات',{df:{hasl:['من غير جواب']}}],['طلع ليها جوابات',{df:{hasl:['عليه جواب']}}]]});
   S('regs','جوابات من غير فاتورة ضريبية','letters',['date','client','item','user'],[['بالتاجر',['client'],['cnt']],['بالجواب',['doc','client'],['cnt']]],{df:{hast:['من غير فاتورة ضريبية']},perDef:'all',docRange:1});
   // 👤 إدارية
-  S('admin','أنشطة المستخدمين','act',['date'],[['بالمستخدم',['user'],['cnt','days','last']],['بالعملية',['action'],['cnt','users']],['المستخدم × العملية',['user','action'],['cnt'],{view:'pivot'}],['باليوم',['day'],['cnt','users']],['بالساعة',['hour'],['cnt'],{view:'chart'}]]);
+  S('admin','أنشطة المستخدمين','ua',['date','user'],[['مختصر — بالمستخدم',['user'],['logins','fin','logouts','lout','first','last','opens','views','prints','adds','edits','dels','clicks','idles','idle_min','fails','cnt']],
+    ['تفصيلى — كل حركة بالوقت',['user','doc','akind','screen','label','dur'],['cnt'],{dblk:{by:'user',cols:['doc','akind','screen','label','dur','m:cnt']}}],
+    ['حضور وانصراف (المستخدم × اليوم)',['day','user'],['fin','lout','first','last','logins','idles','idle_min','opens','cnt']],['المستخدم × نوع النشاط',['user','akind'],['cnt'],{view:'pivot'}],
+    ['بنوع النشاط',['akind'],['cnt','users']],['بالشاشة',['screen'],['opens','scr_min','users']],['باليوم',['day'],['cnt','users']],['بالساعة',['hour'],['cnt'],{view:'chart'}]],
+    {perDef:'today',rLbl:'نوع النشاط',r:[['الكل',{}],['دخول',{df:{akind:['دخول']}}],['خروج',{df:{akind:['خروج']}}],['إغلاق البرنامج',{df:{akind:['إغلاق البرنامج']}}],['فتح شاشة',{df:{akind:['فتح شاشة']}}],['إغلاق شاشة',{df:{akind:['إغلاق شاشة']}}],['إضافة',{df:{akind:['إضافة']}}],['تعديل',{df:{akind:['تعديل']}}],['حذف / إلغاء',{df:{akind:['حذف / إلغاء']}}],['استعراض',{df:{akind:['استعراض']}}],['طباعة',{df:{akind:['طباعة']}}],['ضغطات (كليك)',{df:{akind:['ضغطة (كليك)']}}],['وقوف / مفيش حركة',{df:{akind:['وقوف — مفيش حركة','رجوع للشغل']}}],['محاولات دخول فاشلة',{df:{akind:['محاولة دخول فاشلة']}}]],
+    note:'كل حركة المستخدم فى السيستم: الدخول والخروج، فتح وقفل كل شاشة ومدتها، كل ضغطة، الطباعة، والوقوف (مفيش حركة) — والإضافة والتعديل والحذف من سجل العمليات. المستخدمين دلوقتى والإيقاف من شاشة «الموظفين».'});
   // 🧠 ذكية
   S('smart','تحليل ABC (باريتو)','sales',['date',...CL,...IT,...WH],[['الأصناف بالقيمة',['item'],['net','qty']],['التجار بالقيمة',['client'],['net','invs']],['المحافظات',['gov'],['net','clients']],['الأصناف بالربح',['item'],['profit','net'],{cost:1}]],{smart:'abc',note:'A = اللى عاملين 80% — B = الـ 15% اللى بعدهم — C = الباقى'});
   S('smart','تحليل ABC للمخزون','stk',[...IT,...WH],[['بالصنف',['item'],['value','actual']]],{smart:'abc',cost:1});
@@ -22705,7 +22832,7 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
     <div class="erx-fgrid">${fl.filter(k=>k!=='date').map(field).join('')}</div>
     ${s.docRange?`<div class="erx-ff"><label>${S.dims.doc?'رقم '+erEsc(S.dims.doc[0]):'رقم المستند'}</label><div class="erx-ffv"><span class="qt-sub">من رقم</span><input class="qt-inp" type="number" min="1" style="width:120px" value="${erEsc(st.nfrom||'')}" onchange="erxSt(erxScr(ER.rx.sid)).nfrom=this.value"><span class="qt-sub">إلى رقم</span><input class="qt-inp" type="number" min="1" style="width:120px" value="${erEsc(st.nto||'')}" onchange="erxSt(erxScr(ER.rx.sid)).nto=this.value"></div></div>`:''}
     ${s.g.length>1?`<div class="erx-ff"><label>اعرض حسب</label><div class="erx-ffv erx-rad">${s.g.map((g,i)=>`<label class="qt-radio ${st.g===i?'er-on':''}"><input type="radio" name="erx-g" ${st.g===i?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).g=${i};ER.edit.__render()"> ${erEsc(g[0])}</label>`).join('')}</div></div>`:''}
-    ${s.r?`<div class="erx-ff"><label>اختيارات</label><div class="erx-ffv erx-rad">${s.r.map((r,i)=>`<label class="qt-radio ${st.r===i?'er-on':''}"><input type="radio" name="erx-r" ${st.r===i?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).r=${i};ER.edit.__render()"> ${erEsc(r[0])}</label>`).join('')}</div></div>`:''}
+    ${s.r?`<div class="erx-ff"><label>${s.rLbl||'اختيارات'}</label><div class="erx-ffv erx-rad">${s.r.map((r,i)=>`<label class="qt-radio ${st.r===i?'er-on':''}"><input type="radio" name="erx-r" ${st.r===i?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).r=${i};ER.edit.__render()"> ${erEsc(r[0])}</label>`).join('')}</div></div>`:''}
     ${erxHierForm(s,st,S)}
     ${(s.cmp&&S.date)||s.top?`<div class="erx-fgrid">${s.cmp&&S.date?`<div class="erx-ff"><label>مقارنة</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).cmp=this.value"><option value="">من غير</option><option value="prev" ${st.cmp==='prev'?'selected':''}>بالفترة اللى قبلها</option><option value="yoy" ${st.cmp==='yoy'?'selected':''}>بنفس الفترة السنة اللى فاتت</option></select></div></div>`:''}
       ${s.top?`<div class="erx-ff"><label>العدد</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).limit=this.value">${[['','الكل'],['10','10'],['20','20'],['50','50'],['100','100']].map(o=>`<option value="${o[0]}" ${String(st.limit)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>`:''}</div>`:''}
@@ -22958,7 +23085,7 @@ function erxDbSpec(go){ const c=go.dblk.cols||[]; return { by:go.dblk.by, cols:c
 function erxDbCols(R,S){ const out=[]; (R.dblk.cols||[]).forEach(c=>{ if(c.startsWith('m:')){ const m=c.slice(2); out.push({t:'m',k:m,l:(S.meas[m]||[m])[0],f:(S.meas[m]||[])[1]}); }
     else if(c.startsWith('s:')){ const [l,v]=c.slice(2).split('='); out.push({t:'s',l,v}); }
     else if(ERX_DB_SPLIT.includes(c)){ const L=ERX_DB_LBL[c]; out.push({t:'dc',k:c,l:'كود '+L}); out.push({t:'dn',k:c,l:'اسم '+L}); }
-    else out.push({t:'d',k:c,l:c==='day'?(R.src==='letters'?'تاريخ الجواب':R.src==='lhand'?'ت.تسليم جوابات':'التاريخ'):c==='doc'?(['letters','lhand'].includes(R.src)&&S.dims.doc?'رقم '+S.dims.doc[0]:'رقم المستند'):(S.dims[c]||[c])[0]}); }); return out; }
+    else out.push({t:'d',k:c,l:c==='day'?(R.src==='letters'?'تاريخ الجواب':R.src==='lhand'?'ت.تسليم جوابات':'التاريخ'):c==='doc'?(R.src==='ua'?'الوقت':['letters','lhand'].includes(R.src)&&S.dims.doc?'رقم '+S.dims.doc[0]:'رقم المستند'):(S.dims[c]||[c])[0]}); }); return out; }
 function erxDbAdd(f){ return ['m','n','c'].includes(f); }
 function erxDBlk(D,forPrint){ const R=D.R, S=ER.rx.meta.srcs[R.src], cols=erxDbCols(R,S), by=R.dblk.by, L=(S.dims[by]||[by])[0];
   const fmt=(c,v)=>c.f==='m'?erMoney(v||0,2):c.f==='n'?erQ(v):c.f==='p'?(v==null?'':(Math.round(Number(v)*10)/10)+'%'):c.f==='t'?erEsc(v||''):(v==null?'':erQ(v));
