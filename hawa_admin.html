@@ -22505,7 +22505,7 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   // 🧾 المبيعات
   S('sales','إجمالى مبيعات عميل خلال فترة','sales',['date',...CL,'ctype','pay',...IT,...WH],[['بالتاجر',['client'],['net','qty','invs','avginv']],['التاجر × الشهر',['client','month'],['net'],{view:'pivot'}],['بالمحافظة',['gov'],['net','qty','clients']],['بالمدينة / المركز',['city'],['net','qty','clients']],['بنوع العميل',['ctype'],['net','qty','clients']],['بالقطاع',['region'],['net','qty','clients']]],{cmp:1,top:1});
   S('sales','إجمالى مبيعات صنف','sales',['date',...CL,...IT,...WH,'pay'],[['مجمل — بالصنف',['item'],['qty','avgp','net','rqty']],['مفصّل — كل فاتورة تحت صنفها (زى البرنامج القديم)',['item','day','doc','client'],['qty','avgp','net','rqty'],{iblk:true}],['بالفئة',['cat'],['qty','net']],['بنوع العربية',['vtype'],['qty','net']],['بالتصنيف',['kind'],['qty','net']],['الصنف × الشهر',['item','month'],['qty'],{view:'pivot'}],['الصنف × المخزن',['item','wh'],['qty'],{view:'pivot'}]],{cmp:1,top:1});
-  S('sales','كشف حساب عميل (مختصر / مفصّل بالأصناف)','sinv',['date','client','gov'],[['مختصر — مدين / دائن / الرصيد',[],[],{stmt:'sum'}],['مفصّل بالأصناف — أذون الصرف / نقدية / مرتجعات',[],[],{stmt:'det'}]],{note:'زى «كشف حساب عميل» و«كشف حساب عميل بالأصناف» فى البرنامج القديم — رصيد ما قبله + كل حركة + الرصيد بعدها + الإجماليات تحت'});
+  S('sales','كشف حساب عميل (مختصر / مفصّل بالأصناف)','sales',['date','client','gov','item','cat','wh'],[['مختصر — مدين / دائن / الرصيد',[],[],{stmt:'sum'}],['مفصّل بالأصناف — أذون الصرف / نقدية / مرتجعات',[],[],{stmt:'det'}]],{note:'زى «كشف حساب عميل» و«كشف حساب عميل بالأصناف» فى البرنامج القديم — رصيد ما قبله + كل حركة + الرصيد بعدها + الإجماليات تحت'});
   S('sales','مبيعات عميل بالأصناف','sales',['date','client',...IT],[['بالفاتورة والصنف',['doc','item'],['qty','avgp','net'],{order:'i_doc',dir:'asc'}],['بالصنف',['item'],['qty','net','avgp']]]);
   S('sales','مقارنة الأصناف (فترة ضد فترة)','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','net']],['بنوع العربية',['vtype'],['qty','net']],['بالفئة',['cat'],['qty','net']],['بالتاجر',['client'],['net','qty']]],{cmp:1,cmpDef:'prev'});
   S('sales','الأصناف الأكثر والأقل مبيعاً','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','net'],{view:'chart'}],['بالفئة',['cat'],['qty','net']],['بنوع العربية',['vtype'],['qty','net']]],{top:1,topDef:'10',r:[['الأكثر',{order:'m_qty'}],['الأقل',{order:'m_qty',dir:'asc'}]]});
@@ -22768,19 +22768,19 @@ function erxPriceInit(){ Object.keys(ERX_PRICE).forEach(k=>{ const S=ER.rx.meta&
 function erxPriceFix(R,rows,tot){ if(!R.price) return; const [q,v]=R.price, f=o=>{ if(!o) return; const qq=Number(o['m_'+q])||0; o.m___price=qq?(Number(o['m_'+v])||0)/qq:null; }; (rows||[]).forEach(f); f(tot); }
 // 📒 كشف حساب عميل زى البرنامج القديم — «مختصر» (مدين / دائن / الرصيد) و«مفصّل بالأصناف» (أذون الصرف / نقدية / مرتجعات / الرصيد) + الفوتر
 const ERX_STMT_DOC={inv:'ف مبيعات',rcpt:'م قبض',sret:'مرتجع',stl:'تسوية'};
-function erxStmtCalc(c){ let bal=Number(c.opening)||0; const T={inv:0,rcpt:0,sret:0,stlD:0,stlC:0,itemDisc:0,invDisc:0,deb:0,cred:0};
+function erxStmtCalc(c){ let bal=Number(c.opening)||0; const noOp=c.opening==null; const T={inv:0,rcpt:0,sret:0,stlD:0,stlC:0,itemDisc:0,invDisc:0,deb:0,cred:0};
   const ls=(c.lines||[]).map(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0; bal+=d-cr; T.deb+=d; T.cred+=cr;
     if(l.kind==='inv'){ T.inv+=d; T.itemDisc+=Number(l.item_disc)||0; T.invDisc+=Number(l.inv_disc)||0; } else if(l.kind==='rcpt') T.rcpt+=cr; else if(l.kind==='sret') T.sret+=cr; else if(l.kind==='stl'){ T.stlD+=d; T.stlC+=cr; }
     return Object.assign({},l,{bal}); });
-  return Object.assign({},c,{ls,T,close:bal}); }
+  return Object.assign({},c,{ls,T,close:bal,noOp}); }
 function erxStmtType(l){ return l.kind==='inv'?'مدين':l.kind==='rcpt'?'دائن':l.kind==='sret'?'مرتجع':(l.side==='debit'?'تسوية مدينة':'تسوية دائنة'); }
-function erxStmtHd(c){ return `<div class="erx-sth"><div>كود العميل: <b>${erEsc(c.code||'')}</b></div><div>اسم العميل: <b>${erEsc(c.name||'')}</b></div><div>رصيد ما قبله: <b>${erMoney(c.opening||0,2)}</b> ج.م</div></div>`; }
+function erxStmtHd(c){ return `<div class="erx-sth"><div>كود العميل: <b>${erEsc(c.code||'')}</b></div><div>اسم العميل: <b>${erEsc(c.name||'')}</b></div>${c.noOp?'<div>⚠️ متفلتر بالأصناف / الفئة / المخزن — ظاهر مسحوبات ومرتجعات الأصناف دى بس (من غير قبض ولا تسويات)، والرصيد = تراكمى ليهم</div>':`<div>رصيد ما قبله: <b>${erMoney(c.opening||0,2)}</b> ج.م</div>`}</div>`; }
 function erxStmtSum(c,forPrint){ const M=v=>v?erMoney(v,2):''; const op=(no,id,kind)=>forPrint?erEsc(no):`<b style="color:var(--gold);cursor:pointer" onclick="erxStmtOpen('${kind}',${Number(id)||0})">${erEsc(no)}</b>`;
   const rows=c.ls.map(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0;
     return `<tr><td>${erEsc(l.date||'')}</td><td>${d?`${ERX_STMT_DOC[l.kind]} ${op(l.no,l.id,l.kind)}`:''}</td><td class="qt-sub">${erEsc(d&&l.kind==='inv'?(l.pay||''):(d?(l.notes||''):''))}</td><td class="n">${M(d)}</td>
       <td>${cr?`${ERX_STMT_DOC[l.kind]} ${op(l.no,l.id,l.kind)}`:''}</td><td>${erEsc(erxStmtType(l))}${cr&&l.notes?`<div class="qt-sub">${erEsc(l.notes)}</div>`:''}</td><td class="n">${M(cr)}</td><td class="n">${erMoney(l.bal,2)}</td></tr>`; }).join('');
   return `<table class="qt-tbl erx-stm"><thead><tr><th>التاريخ</th><th>رقم المستند</th><th>الشرح</th><th>المبلغ (مدين)</th><th>رقم المستند</th><th>نوع الحركة</th><th>المبلغ (دائن)</th><th>الرصيد</th></tr></thead><tbody>
-    <tr class="erx-op"><td colspan="7">رصيد ما قبله</td><td class="n">${erMoney(c.opening||0,2)}</td></tr>${rows}</tbody></table>
+    ${c.noOp?'':`<tr class="erx-op"><td colspan="7">رصيد ما قبله</td><td class="n">${erMoney(c.opening||0,2)}</td></tr>`}${rows}</tbody></table>
     <div class="erx-stf"><div>إجمالى المدين: <b>${erMoney(c.T.deb,2)}</b></div><div>إجمالى الدائن: <b>${erMoney(c.T.cred,2)}</b></div><div class="big">صافى الرصيد: <b>${erMoney(c.close,2)}</b> ج.م ${c.close>0.004?'(عليه)':(c.close<-0.004?'(ليه)':'')}</div></div>`; }
 function erxStmtDet(c,forPrint){ const M=v=>v?erMoney(v,2):'', Q=v=>v?erQ(v):''; const op=(no,id,kind)=>forPrint?erEsc(no):`<b style="color:var(--gold);cursor:pointer" onclick="erxStmtOpen('${kind}',${Number(id)||0})">${erEsc(no)}</b>`; let h='';
   c.ls.forEach(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0;
@@ -22794,7 +22794,7 @@ function erxStmtDet(c,forPrint){ const M=v=>v?erMoney(v,2):'', Q=v=>v?erQ(v):'';
   const T=c.T, F=(k,v)=>`<div>${k}: <b>${erMoney(v||0,2)}</b></div>`;
   return `<table class="qt-tbl erx-stm erx-std"><thead><tr><th rowspan="2">تاريخ الصدور</th><th rowspan="2">رقم المستند</th><th rowspan="2">البيان</th><th colspan="3">أذون الصرف</th><th rowspan="2">استلام / صرف نقدية</th><th colspan="3">مرتجعات</th><th rowspan="2">الرصيد</th></tr>
     <tr><th>كمية</th><th>سعر</th><th>قيمة</th><th>كمية</th><th>سعر</th><th>قيمة</th></tr></thead><tbody>
-    <tr class="erx-op"><td colspan="10">رصيد ما قبله</td><td class="n">${erMoney(c.opening||0,2)}</td></tr>${h}</tbody></table>
+    ${c.noOp?'':`<tr class="erx-op"><td colspan="10">رصيد ما قبله</td><td class="n">${erMoney(c.opening||0,2)}</td></tr>`}${h}</tbody></table>
     <div class="erx-stf erx-stf3">${F('رصيد ما قبله',c.opening)}${F('إجمالى المسحوبات',T.inv)}${F('إجمالى المرتجعات',T.sret)}
       ${F('إجمالى الدفعات',T.rcpt)}${F('صافى الدفعات',T.rcpt)}<div></div>
       ${F('إجمالى التسويات المدينة',T.stlD)}${F('إجمالى التسويات الدائنة',T.stlC)}${F('صافى التسويات',T.stlD-T.stlC)}
