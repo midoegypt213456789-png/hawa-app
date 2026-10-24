@@ -5925,6 +5925,7 @@ async function rpcLoginTry(secureFn, oldFn, u, p){
 async function rpcSecure(fn, args){
   const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:SESSION_TOKEN, ...args})});
   const txt=await r.text(); let j=null; try{ j=txt?JSON.parse(txt):null; }catch(e){}
+  if(r.ok && /^erp_(inv|rcpt|stl|sret|del|chk)[a-z_]*_(save|cancel|set|collect|status)$|^erp_regdoc_notify$/.test(fn) && typeof erPdfKick==='function'){ try{ erPdfKick(); }catch(e){} }
   if(!r.ok){ const msg=(j&&(j.message||j.error))||txt||('HTTP '+r.status);
     if(/جلسة غير صالحة/.test(msg) && !window.__sessExp){ window.__sessExp=true; setTimeout(()=>{ alert('انتهت الجلسة — سجّل الدخول تانى'); location.reload(); },50); }
     throw new Error(msg); }
@@ -23030,6 +23031,7 @@ function erxBRun(save){ const st=ER.__erxB; if(!st.meas.length){ erToast('اخت
 // ════════════════ 🖨️ طباعة المستندات (A4) ════════════════
 function erCoInfo(){ const st=(ER.boot&&ER.boot.settings)||{}; return { name:st.co_legal||st.company_name||'', tax:st.co_tax_no||'', cr:st.co_cr||'', addr:st.co_address||'' }; }
 function erDocPrint(o, w){ const co=erCoInfo(), W=(typeof qtWordsEGP==='function')?qtWordsEGP:(()=>'');
+  if(window.__erCap){ const cap=window.__erCap; w={document:{open(){},close(){},write(h){ cap.push(h); }}}; }
   w=w||window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
   const info=(o.info||[]).filter(x=>x&&x[1]!=null&&x[1]!=='').map(x=>`<div><span>${erEsc(x[0])}:</span> <b>${x[2]?x[1]:erEsc(x[1])}</b></div>`).join('');
   const head=o.cols.map(c=>`<th${c[1]?` style="width:${c[1]}"`:''}>${erEsc(c[0])}</th>`).join('');
@@ -23051,7 +23053,7 @@ ${tots?`<table class="tot">${tots}</table>`:''}${o.words!=null?`<div class="wrd"
 <div class="sig">${(o.sigs||['المحاسب','المراجع','المستلم']).map(x=>`<div>${erEsc(x)}</div>`).join('')}</div>
 <script>window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){window.print();},150);});}<\/script></body></html>`);
   w.document.close(); }
-function erNeedPrint(scr){ if(!erCan(scr,'print')){ erToast('معندكش صلاحية طباعة',false); return false; } return true; }
+function erNeedPrint(scr){ if(window.__erCap) return true; if(!erCan(scr,'print')){ erToast('معندكش صلاحية طباعة',false); return false; } return true; }
 function erInvPrint(id){ if(!erNeedPrint('erp-sales')) return; const v=erById(ER.sl.invs,id); if(!v) return; const c=erCl(v.client_id);
   const sub=v.items.reduce((a,l)=>a+Number(l.total||0),0);
   erDocPrint({ title:'فاتورة مبيعات', no:v.inv_no, date:v.inv_date, sub:v.pay_type==='cash'?'نقدى':'آجل', test:v.is_test, cancelled:v.status!=='سارية', notes:v.notes,
@@ -23064,7 +23066,7 @@ function erInvPrint(id){ if(!erNeedPrint('erp-sales')) return; const v=erById(ER
 // ⏳ الناقص من الصنف (شاسيه/ماتور) لسه فى المخزن لحد ما يتسلّم بمستند النواقص
 function erDelHeld(x){ const a=[]; if(Number(x.held_chassis)>0) a.push('شاسيه '+erQ(x.held_chassis)); if(Number(x.held_engine)>0) a.push('ماتور '+erQ(x.held_engine)); return a.length?`<div class="s" style="color:#b45309">⏳ ناقص: ${a.join(' + ')}</div>`:''; }
 async function erDelPrint(id){ if(!erNeedPrint('erp-delivery')) return; const d=erById(ER.sl.dels,id); if(!d) return; const c=erCl(d.client_id), v=erById(ER.sl.invs,d.invoice_id)||{};
-  const w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; } try{ w.document.write('<p style="font-family:Tahoma;direction:rtl">⏳ جارى تجهيز المستند…</p>'); }catch(e){}
+  const w=window.__erCap?{document:{open(){},close(){},write(){}}}:window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; } try{ w.document.write('<p style="font-family:Tahoma;direction:rtl">⏳ جارى تجهيز المستند…</p>'); }catch(e){}
   let regs=[]; try{ if(erCan('erp-regs','view')){ const R=await rpcSecure('erp_reg_delivery',{p_del_no:Number(d.del_no)}); regs=(R.regs||[]).filter(r=>r.status==='سارى'); } }catch(e){}
   erDocPrint({ title:'مستند تسليم (إذن صرف)', no:d.del_no, date:d.del_date, sub:'فاتورة '+(v.inv_no||''), test:d.is_test, cancelled:d.status!=='سارى', notes:d.notes,
     info:[['التاجر',`${c.name||''} (${c.code||''})`],['المستلم',d.receiver||''],['رقم العربية',d.vehicle_no||''],['حجز التحميل',d.booking_id?('#'+d.booking_id):'']],
@@ -23283,6 +23285,56 @@ async function erRcptSave(){ await erRun('er-save-btn', async ()=>{ const r=ER.e
   if(r.mode==='manual' && !p.allocations.length) p.on_account=true;
   await rpcSecure('erp_rcpt_save',{p}); erClose(); await erSlReload(); erToast('✅ اتسجل سند القبض'); }); }
 async function erRcptCancel(id){ const r=erAsk('سبب إلغاء سند القبض؟'); if(!r) return; try{ await rpcSecure('erp_rcpt_cancel',{p_id:id,p_reason:r}); await erSlReload(); erToast('✅ اتلغى السند'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+
+// 📲 رسايل التاجر على التليجرام (زى البنك) — الـ PDF بيتعمل هنا من نفس شكل الطباعة ويترفع ويتبعت مع الرسالة
+// الداتا بيز بتعمل الرسالة لوحدها مع كل حركة (فاتورة / تعديل / دفعة / تسوية / مرتجع / تسليم / تسجيل مواتير / جوابات آخر اليوم)
+// وأى صفحة أدمن مفتوحة بتاخد الـ PDF المستنى، تعمله، ترفعه على erp_docs وتسيب الرسالة تتبعت. لو محدش عمله فى 10 دقايق بتتبعت نص بس.
+function erCapDoc(fn){ window.__erCap=[]; try{ const r=fn(); return Promise.resolve(r).then(()=>{ const h=(window.__erCap||[])[0]||null; window.__erCap=null; return h; }); }catch(e){ window.__erCap=null; throw e; } }
+async function erPdfJobHtml(j){ const k=j.kind, ref=j.ref; await erBoot();
+  if(k==='inv'||k==='rcpt'||k==='sret'||k==='del'){ await erSlReload(); const id=Number(ref);
+    return erCapDoc(()=>k==='inv'?erInvPrint(id):k==='rcpt'?erRcptPrint(id):k==='sret'?erSretPrint(id):erDelPrint(id)); }
+  if(k==='stl'){ await erBoot(); if(!ER.sl) await erSlLoad(); ER.stl=await rpcSecure('erp_stl_list',{}); return erCapDoc(()=>erStlPrint(Number(ref))); }
+  if(k==='regdoc'){ const D=await rpcSecure('erp_reg_delivery',{p_del_no:Number(ref)}); ER.rg=ER.rg||{}; const old=ER.rg.del; ER.rg.del=D; try{ return await erCapDoc(()=>erRegDocPrint()); } finally{ ER.rg.del=old; } }
+  if(k==='letters'){ const X=await rpcSecure('erp_letters_tg_data',{p_ids:String(ref)}); const rs=X.rows||[], c=X.client||{};
+    return erCapDoc(()=>erDocPrint({ title:'تقرير الجوابات المستلمة', no:`${rs.length} جواب`, date:erToday(), test:false,
+      info:[['التاجر',`${c.name||''} (${c.code||''})`],['عدد الجوابات',String(rs.length)]],
+      cols:[['م','26px'],['اسم المشترى'],['الشاسيه','118px'],['الماتور','86px'],['الموديل','80px'],['النوع','80px'],['رقم الجواب','52px'],['قيمة الفاتورة','78px'],['رقم الفاتورة','52px'],['ميعاد الاستحقاق','74px']],
+      rows:rs.map((r,i)=>[i+1, erEsc(r.buyer||''), `<span dir="ltr" style="font-size:10.5px">${erEsc(r.chassis||'')}</span>`, `<span dir="ltr" style="font-size:10.5px">${erEsc(r.engine||'')}</span>`,
+        erEsc([r.model,r.year].filter(Boolean).join(' ')), erEsc(r.kind||''), erEsc(r.jawab_no), erMoney(r.value||0,2), erEsc(r.inv_no||''), erEsc(r.due||(r.deal==='كاش'?'كاش':'—'))]),
+      totals:[['عدد الجوابات',String(rs.length)],['إجمالى القيمة',erMoney(rs.reduce((a,r)=>a+Number(r.value||0),0),2)+' ج.م']], sigs:['الجوابات','المحاسب','التاجر'] })); }
+  return null; }
+// HTML المستند → PDF (المتصفح بيرسم العربى صح) — بيتقسم على صفحات A4
+async function erHtmlPdf(html){
+  await shLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const doc=new DOMParser().parseFromString(html,'text/html'); const css=Array.from(doc.querySelectorAll('style')).map(s=>s.textContent).join('\n').replace(/@page\s*\{[^}]*\}/g,'');
+  doc.querySelectorAll('script').forEach(s=>s.remove());
+  const W=794, PH=1123;
+  const holder=document.createElement('div'); holder.setAttribute('dir','rtl');
+  holder.setAttribute('style',`position:fixed;left:-10000px;top:0;width:${W}px;box-sizing:border-box;padding:30px 34px;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;font-size:13px;direction:rtl`);
+  holder.innerHTML=`<style>${css} body,div,td,th{font-family:Tahoma,Arial,sans-serif}</style>`+doc.body.innerHTML;
+  document.body.appendChild(holder); const H=Math.max(Math.ceil(holder.scrollHeight)+10,400);
+  holder.setAttribute('style',`width:${W}px;height:${H}px;box-sizing:border-box;padding:30px 34px;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;font-size:13px;direction:rtl`);
+  const xhtml=new XMLSerializer().serializeToString(holder); holder.remove();
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject></svg>`;
+  const img=await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('مقدرناش نرسم المستند')); im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); });
+  const sc=2, cv=document.createElement('canvas'); cv.width=W*sc; cv.height=H*sc; const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height); cx.scale(sc,sc); cx.drawImage(img,0,0);
+  const { jsPDF }=window.jspdf; const pdf=new jsPDF({unit:'pt',format:'a4',orientation:'portrait'}); const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+  const pages=Math.max(1,Math.ceil(H/PH));
+  for(let p=0;p<pages;p++){ const part=document.createElement('canvas'); const hh=Math.min(PH,H-p*PH); part.width=W*sc; part.height=hh*sc; const pc=part.getContext('2d'); pc.fillStyle='#fff'; pc.fillRect(0,0,part.width,part.height);
+    pc.drawImage(cv,0,p*PH*sc,W*sc,hh*sc,0,0,W*sc,hh*sc); if(p) pdf.addPage(); pdf.addImage(part.toDataURL('image/jpeg',0.9),'JPEG',0,0,pw,ph*hh/PH); }
+  return pdf.output('blob'); }
+async function erPdfUpload(blob,j){ const rnd=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,16);
+  const path=`${j.kind}-${String(j.ref||'').replace(/[^0-9a-z]/gi,'').slice(0,20)}-${rnd}.pdf`;
+  const r=await fetch(`${SB}/storage/v1/object/erp_docs/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/pdf'},body:blob});
+  if(!r.ok) throw new Error('رفع الـ PDF فشل '+r.status); return `${SB}/storage/v1/object/public/erp_docs/${path}`; }
+async function erPdfWorkerTick(){ if(ER.__pdfBusy||ER.__pdfOff||typeof SESSION_TOKEN==='undefined'||!SESSION_TOKEN) return; ER.__pdfBusy=true;
+  try{ const jobs=await rpcSecure('erp_pdf_jobs',{});
+    for(const j of (jobs||[])){ let url=null; try{ const h=await erPdfJobHtml(j); if(h){ const b=await erHtmlPdf(h); url=await erPdfUpload(b,j); } }catch(e){ console.warn('📎 PDF',j,e); }
+      try{ await rpcSecure('erp_pdf_job_done',{p_id:j.id,p_url:url}); }catch(e){} } }
+  catch(e){ if(/صلاحي|مسموح|permission|غير صالحة/i.test(e.message||'')) ER.__pdfOff=true; }
+  finally{ ER.__pdfBusy=false; } }
+function erPdfKick(){ clearTimeout(ER.__pdfKick); ER.__pdfKick=setTimeout(erPdfWorkerTick,1500); }
+setInterval(()=>{ try{ erPdfWorkerTick(); }catch(e){} },45000);
 
 // ── ⚖️ التسويات (عميل / مورد) — زى «تسويات» فى البرنامج القديم: مدينة / دائنة + تصفية حساب
 ER.stf = ER.stf || { q:'', k:'', st:'سارى' };
@@ -23563,7 +23615,7 @@ function erRenderReg(){
       <button class="qt-btn ghost" onclick="erRegBack()" title="رجوع لقايمة المستنية تسجيل">↩️ رجوع</button>${D.reg_doc?`<button class="qt-btn ghost" onclick="erRegDocPrint()" title="طباعة مستند أرقام المواتير">🖨️ طباعة</button>`:''}<button class="qt-btn" onclick="erRegSaveDoc()" title="حفظ وقفل المستند">💾 حفظ المستند</button>`:''}</div>` + (body||`<div class="qt-card qt-sub" style="text-align:center;padding:30px">🔢 اكتب رقم مستند التسليم — أو اختاره من تاب «مستنية تسجيل»</div>`);
   const f=document.getElementById(ER.rg.mode==='chassis'?'er-rg-ch':'er-rg-eng'); if(f) setTimeout(()=>{ try{ f.focus(); }catch(e){} },30);
 }
-function erRegSaveDoc(){ const D=ER.rg.del; if(D&&D.reg_doc){ const n=D.regs.filter(r=>r.status==='سارى').length; erToast(`✅ اتحفظ مستند أرقام المواتير رقم ${D.reg_doc.no} — ${n} ماتور (مستند تسليم ${D.delivery.del_no})`); } else if(D) erToast('مفيش أرقام اتسجلت على المستند ده',false); erRegClose(); }
+function erRegSaveDoc(){ const D=ER.rg.del; if(D&&D.reg_doc){ rpcSecure('erp_regdoc_notify',{p_del_no:Number(D.delivery.del_no)}).then(x=>{ if(x&&x.sent) erToast('📲 اتبعت للتاجر — '+x.n+' ماتور'); }).catch(()=>{}); const n=D.regs.filter(r=>r.status==='سارى').length; erToast(`✅ اتحفظ مستند أرقام المواتير رقم ${D.reg_doc.no} — ${n} ماتور (مستند تسليم ${D.delivery.del_no})`); } else if(D) erToast('مفيش أرقام اتسجلت على المستند ده',false); erRegClose(); }
 function erRegDocPrint(){ const D=ER.rg.del; if(!D||!D.reg_doc) return; if(!erNeedPrint('erp-regs')) return; const rs=D.regs.filter(r=>r.status==='سارى').slice().reverse(); const nm=id=>{ const l=D.lines.find(x=>Number(x.item_id)===Number(id)); return l?l.name:''; };
   erDocPrint({ title:'مستند أرقام مواتير', no:D.reg_doc.no, date:D.reg_doc.date, sub:'مستند تسليم '+D.delivery.del_no+' — فاتورة '+D.inv_no, test:D.delivery.is_test,
     info:[['التاجر',`${D.client.name} (${D.client.code||''})`],['فاتورة المبيعات',D.inv_no],['مستند التسليم',D.delivery.del_no],['عدد المواتير',String(rs.length)]],
