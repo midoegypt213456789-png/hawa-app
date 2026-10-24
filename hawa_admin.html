@@ -22549,6 +22549,44 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   S('smart','نمو المبيعات','sales',['date',...CL,...IT,...WH],[['شهر بشهر',['month'],['net','qty','invs']],['أسبوع بأسبوع',['week'],['net','qty']],['يوم بيوم',['day'],['net','qty']]],{smart:'growth',view:'chart',perDef:'all'});
   S('smart','توقع مبيعات آخر الشهر','sales',['date',...CL,...IT,...WH],[['باليوم',['day'],['net','qty']]],{smart:'forecast',view:'chart',perDef:'month'});
   S('smart','تجار جداد (أول شراء فى الفترة)','sales',['date','gov','ctype'],[['بالتاجر',['client'],['first','net','invs']]],{smart:'newc',perDef:'month'});
+  // 📑 كل تقرير له «ملخص» (التجميعات العادية) و«مفصّل» (كل مستند تحت مجموعته — زى البرنامج القديم)
+  const DET={
+    'تحويلات المخازن':['مفصّل — كل تحويل تحت اتجاهه',{by:'route',cols:['day','doc','item','m:qty']}],
+    'تسليمات مخزنية':['مفصّل — كل مستند تسليم تحت تاجره',{by:'client',cols:['day','doc','item','wh','m:qty']}],
+    'الحركة المخزنية للأصناف':['مفصّل — كل حركة تحت صنفها',{by:'item',cols:['day','doctype','doc','party','wh','m:ain','m:aout','m:bin','m:bout']}],
+    'الأصناف المشتراه خلال فترة':['مفصّل — كل شحنة تحت صنفها',{by:'item',cols:['day','doc','supplier','wh','m:qty','m:fc','m:egp']}],
+    'إجمالى المشتريات لمورد':['مفصّل — كل شحنة تحت موردها',{by:'supplier',cols:['day','doc','currency','m:qty','m:fc','m:egp'],sum:'إجمالى المورد'}],
+    'الأصناف المستلمة من المشتريات':['مفصّل — أصناف كل مورد بالشحنة',{by:'supplier',cols:['day','doc','item','m:qty','m:rqty','m:pqty']}],
+    'التكلفة الكاملة للشحنات':['مفصّل — شحنات كل مورد',{by:'supplier',cols:['day','doc','m:egp','m:extra','m:landed','m:xpct']}],
+    'بنود تكاليف الشحنات':['مفصّل — كل شحنة تحت البند',{by:'kind',cols:['day','doc','supplier','m:egp']}],
+    'مدفوعات الموردين':['مفصّل — كل دفعة تحت موردها',{by:'supplier',cols:['day','doc','treasury','method','note','m:fc','m:egp'],sum:'إجمالى المدفوع'}],
+    'إجمالى مبيعات عميل خلال فترة':['مفصّل — فواتير كل تاجر',{by:'client',cols:['day','doc','pay','m:qty','m:gross','m:disc','m:net'],sum:'إجمالى مبيعات التاجر'}],
+    'مبيعات عميل بالأصناف':['مفصّل — أصناف كل تاجر بالفاتورة',{by:'client',cols:['day','doc','item','m:qty','m:avgp','m:net']}],
+    'المبيعات بالفترة الزمنية':['مفصّل — فواتير كل يوم',{by:'day',cols:['doc','client','pay','m:qty','m:net'],sum:'إجمالى اليوم'}],
+    'الربحية':['مفصّل — كل فاتورة تحت صنفها',{by:'item',cols:['day','doc','client','m:qty','m:net','m:cost','m:profit','m:margin']}],
+    'الخصومات':['مفصّل — خصومات كل تاجر بالفاتورة',{by:'client',cols:['day','doc','item','m:gross','m:disc','m:net']}],
+    'أسعار البيع':['مفصّل — أسعار كل صنف بالفاتورة',{by:'item',cols:['day','doc','client','uprice','m:qty','m:net']}],
+    'مرتجعات المبيعات':['مفصّل — مرتجعات كل تاجر',{by:'client',cols:['day','doc','item','reason','m:qty','m:value'],sum:'إجمالى المرتجع'}],
+    'أرصدة العملاء (المديونية)':['مفصّل — فواتير كل تاجر',{by:'client',cols:['day','doc','pay','m:total','m:paid','m:rem'],sum:'المديونية'}],
+    'أعمار الديون':['مفصّل — الفواتير المفتوحة لكل تاجر',{by:'client',cols:['day','doc','agebk','m:total','m:paid','m:rem'],sum:'المديونية'}],
+    'إجمالى مقبوضات عميل':['مفصّل — سندات كل تاجر',{by:'client',cols:['day','doc','m:amount','treasury','method','note'],sum:'إجمالى المقبوض'}],
+    'تقرير التسويات':['مفصّل — تسويات كل جهة',{by:'party',cols:['day','doc','side','user','note','m:debit','m:credit']}],
+    'الشيكات':['مفصّل — شيكات كل تاجر',{by:'client',cols:['day','doc','bank','status','due','m:amount'],sum:'إجمالى الشيكات'}],
+    'يومية خزينة':['مفصّل — حركات كل خزينة',{by:'treasury',cols:['day','dir','party','method','m:in','m:out','m:net'],sum:'صافى الخزينة'}],
+    'إجمالى مقبوضات خزينة':['مفصّل — كل سند تحت خزينته (زى البرنامج القديم)',{by:'treasury',cols:['day','doc','m:amount','s:نوع المستند=عميل','client','note'],sum:'صافى إيراد الخزينة'}],
+    'إجمالى مصروفات خزينة (للموردين)':['مفصّل — كل دفعة تحت خزينتها',{by:'treasury',cols:['day','doc','m:egp','s:نوع المستند=مورد','supplier','note'],sum:'صافى مصروف الخزينة'}],
+    'مصلحة الضرائب (الفواتير الضريبية)':['مفصّل — فواتير كل تاجر',{by:'client',cols:['day','doc','tkind','m:sub','m:tax','m:total']}],
+    'الجوابات خلال فترة':['مفصّل — جوابات كل تاجر',{by:'client',cols:['day','doc','item','deal','traffic','m:cnt']}],
+    'أرقام مواتير بدون جوابات':['مفصّل — كل تاجر بمستندات التسليم',{by:'client',cols:['day','doc','item','m:cnt']}],
+    'أرقام مواتير غير مسجلة':['مفصّل — كل تاجر بمستندات التسليم',{by:'client',cols:['day','doc','item','m:qty','m:done','m:pend']}],
+    'المواتير المتسجلة':['مفصّل — كل تاجر بمستندات التسليم',{by:'client',cols:['day','doc','item','user','m:cnt']}],
+    'جوابات من غير فاتورة ضريبية':['مفصّل — جوابات كل تاجر',{by:'client',cols:['day','doc','item','m:cnt']}]
+  };
+  L.forEach(s=>{ const d=DET[s.t]; if(!d||!s.g||!s.g.length) return; const sp=erxDbSpec({dblk:d[1]});
+    s.g=s.g.map((g,i)=>i===0&&!/^(ملخص|مجمل|مختصر)/.test(g[0])?['ملخص — '+g[0]].concat(g.slice(1)):g);
+    s.g.splice(1,0,[d[0],sp.dims,sp.meas,{dblk:d[1]}]); if(d[1].by==='user'||d[1].cols.includes('user')) s.fl=s.fl; });
+  // فلتر «المستخدم» فى التقارير اللى مصدرها فيه مستخدم
+  L.forEach(s=>{ if(['rcpt','spay','sales'].includes(s.src) && s.fl && !s.fl.includes('user')) s.fl=s.fl.concat(['user']); });
   ER.__erxScr=L; return L; }
 function erxMine(){ try{ return JSON.parse(localStorage.getItem('erx_mine')||'[]'); }catch(e){ return []; } }
 function erxSaveLS(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
@@ -22659,6 +22697,7 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
       ${s.top?`<div class="erx-ff"><label>العدد</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).limit=this.value">${[['','الكل'],['10','10'],['20','20'],['50','50'],['100','100']].map(o=>`<option value="${o[0]}" ${String(st.limit)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>`:''}</div>`:''}
     ${s.note?`<div class="qt-sub" style="margin-top:8px">💡 ${erEsc(s.note)}</div>`:''}</div>`; }
 function erxHierForm(s,st,S){ const g3=(s.g[st.g]||s.g[0])[3]||{}; if(g3.ledger||g3.iblk||g3.stmt) return '';
+  if(g3.dblk) return '';
   if(g3.tops) return `<div class="erx-ff"><label>خيارات</label><div class="erx-ffv erx-rad">
       <label class="qt-radio ${st.tprice!==false?'er-on':''}"><input type="checkbox" ${st.tprice!==false?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).tprice=this.checked;ER.edit.__render()"> 💲 تضمين السعر (سعر + قيمة)</label>
       <label class="qt-radio ${st.nochart?'er-on':''}"><input type="checkbox" ${st.nochart?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).nochart=this.checked;ER.edit.__render()"> 🙈 إخفاء الجرافيك (الرسم الدائرى)</label></div></div>`; if(s.blk && ((s.g[st.g]||s.g[0])[3]||{}).blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
@@ -22710,16 +22749,17 @@ function erxScrGo(print){ const s=erxScr(ER.rx.sid); if(!s) return; const st=erx
   ER.rx.R={ t:s.t+(s.g.length>1?' — '+g[0]:'')+(s.r&&st.r?' ('+s.r[st.r][0]+')':''), src:s.src, dims:g[1], meas:g[2], view:go.view||s.view||'table', smart:go.smart||s.smart||null,
     hv:(s.hv||[]).concat(go.hv||[],ro.hv||[]), df:Object.assign({},s.df||{},ro.df||{}), order:ro.order||go.order||null, dir:ro.dir||go.dir||null, limit:st.limit||null, cost:s.cost||go.cost };
   if(go.stmt){ ER.rx.R={ t:s.t.replace(/ \(.*\)$/,'')+' — '+(go.stmt==='det'?'مفصّل بالأصناف':'مختصر'), src:s.src, dims:[], meas:[], view:'stmt', stmt:go.stmt }; }
+  if(go.dblk){ Object.assign(ER.rx.R,{ view:'dblk', dblk:go.dblk, limit:20000, order:null, dir:null, t:s.t+' — مفصّل'+(s.r&&st.r?' ('+s.r[st.r][0]+')':'') }); }
   if(go.tops){ Object.assign(ER.rx.R,{ view:'tops', tops:go.tops, limitN:st.limit||'', limit:20000, order:null, dir:ro.dir||null, tprice:st.tprice!==false, nochart:!!st.nochart }); }
   if(go.iblk){ ER.rx.R.view='iblk'; ER.rx.R.iblk=true; ER.rx.R.order=null; ER.rx.limit=''; ER.rx.R.limit=null; }
   if(go.ledger){ ER.rx.R={ t:s.t+' — '+((s.r&&s.r[st.r||0])?s.r[st.r||0][0]:''), src:s.src, dims:[], meas:[], view:'ledger', ledger:{ basis:ro.basis||'book' } }; }
-  const isBlk=!!(s.blk&&go.blk), SS=ER.rx.meta.srcs[s.src], H=(isBlk||go.ledger||go.iblk||go.stmt||go.tops)?[]:(st.hier||[]).filter(k=>SS.dims[k]);
+  const isBlk=!!(s.blk&&go.blk), SS=ER.rx.meta.srcs[s.src], H=(isBlk||go.ledger||go.iblk||go.stmt||go.tops||go.dblk)?[]:(st.hier||[]).filter(k=>SS.dims[k]);
   if(isBlk){ ER.rx.R.view='docblk'; ER.rx.R.blk={ mode:ro.blk||'all', pp:!!st.pp, nonote:!!st.nonote }; ER.rx.R.t=s.t+' ('+s.r[st.r||0][0]+')'; }
   if(H.length){ ER.rx.R.dims=H.slice(); ER.rx.R.hier=H.length>1; ER.rx.R.order=null; ER.rx.R.dir=null; ER.rx.R.view='table'; ER.rx.R.t=s.t+' — حسب '+H.map(k=>SS.dims[k][0]).join(' ← '); }
-  if(!isBlk && !go.ledger && !go.iblk && !go.stmt && !go.tops && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
+  if(!isBlk && !go.ledger && !go.iblk && !go.stmt && !go.tops && !go.dblk && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
   ER.rx.nr = s.docRange&&(st.nfrom||st.nto)?[st.nfrom||'',st.nto||'']:null;
   ER.rx.per=s.noDate?(s.perDef||'month'):st.per; ER.rx.f={from:st.from,to:st.to}; ER.rx.fx=JSON.parse(JSON.stringify(st.fx)); ER.rx.cmp=st.cmp||''; ER.rx.limit=st.limit||''; ER.rx.q='';
-  if(go.tops) ER.rx.limit='';
+  if(go.tops||go.dblk) ER.rx.limit='';
   ER.rx.dd=null; ER.rx.crumbs=[]; ER.rx.sort=null; ER.rx.view=ER.rx.R.view; ER.rx.data=null; ER.rx.__print=!!print;
   erClose(); erxRenderHead(); erxRun(); }
 
@@ -22741,6 +22781,7 @@ function erxRenderOut(){ const el=document.getElementById('erx-out'); if(!el) re
   if(D.R.ledger){ el.innerHTML=erxLedger(D,false); return; }
   if(D.R.stmt){ el.innerHTML=erxStmtRep(D,false); return; }
   if(D.R.tops){ el.innerHTML=erxTops(D,false); return; }
+  if(D.R.dblk){ el.innerHTML=erxDBlk(D,false); return; }
   const R=D.R, S=ER.rx.meta.srcs[R.src], meas=R.meas.filter(m=>S.meas[m]), dims=R.dims, M=m=>S.meas[m]||[m,'n',''];
   let rows=D.rows.slice(); const cmpMap={}; if(D.cmp) D.cmp.rows.forEach(r=>{ cmpMap[erxKey(r,dims)]=r; });
   const m0=erxM0(meas), tot0=Number(D.tot['m_'+m0])||rows.reduce((a,r)=>a+(Number(r['m_'+m0])||0),0);
@@ -22896,6 +22937,51 @@ function erxItemBlkPrint(){ const D=ER.rx.data, co=erCoInfo(), w=window.open('',
     tr.erx-gs td{font-weight:700;background:#f3f3f3}.erx-dsum{border-top:3px double #000;margin-top:8px;padding-top:6px;font-size:13px}</style></head><body>
     <div class="co">${erEsc(co.name||'')}</div><h1>${erEsc(D.R.t)}</h1><div class="fl">${fs.map(x=>`<div>${erEsc(x[0])}: <b>${erEsc(x[1])}</b></div>`).join('')}</div>
     ${erxItemBlk(ER.rx.__rows||D.rows, D, true)}<script>setTimeout(()=>{window.print();},300)<\/script></body></html>`); w.document.close(); }
+// 📑 «مفصّل» عام زى البرنامج القديم: بلوك لكل (خزينة / تاجر / صنف / ...) — عنوانه + جدول المستندات تحته + إجمالى البلوك + الإجمالى العام
+// go.dblk = { by:'treasury', cols:['day','doc','m:amount','s:نوع المستند=عميل','client','note'], sum:'صافى إيراد الخزينة' }
+const ERX_DB_SPLIT=['client','supplier','item','party']; const ERX_DB_LBL={client:'العميل',supplier:'المورد',item:'الصنف',party:'الجهة'};   // الأبعاد دى بتتقسم «كود | الاسم»
+function erxDbSpec(go){ const c=go.dblk.cols||[]; return { by:go.dblk.by, cols:c, dims:[go.dblk.by].concat(c.filter(x=>!/^[ms]:/.test(x))), meas:c.filter(x=>/^m:/.test(x)).map(x=>x.slice(2)) }; }
+function erxDbCols(R,S){ const out=[]; (R.dblk.cols||[]).forEach(c=>{ if(c.startsWith('m:')){ const m=c.slice(2); out.push({t:'m',k:m,l:(S.meas[m]||[m])[0],f:(S.meas[m]||[])[1]}); }
+    else if(c.startsWith('s:')){ const [l,v]=c.slice(2).split('='); out.push({t:'s',l,v}); }
+    else if(ERX_DB_SPLIT.includes(c)){ const L=ERX_DB_LBL[c]; out.push({t:'dc',k:c,l:'كود '+L}); out.push({t:'dn',k:c,l:'اسم '+L}); }
+    else out.push({t:'d',k:c,l:c==='day'?'التاريخ':c==='doc'?'رقم المستند':(S.dims[c]||[c])[0]}); }); return out; }
+function erxDbAdd(f){ return ['m','n','c'].includes(f); }
+function erxDBlk(D,forPrint){ const R=D.R, S=ER.rx.meta.srcs[R.src], cols=erxDbCols(R,S), by=R.dblk.by, L=(S.dims[by]||[by])[0];
+  const fmt=(c,v)=>c.f==='m'?erMoney(v||0,2):c.f==='n'?erQ(v):c.f==='p'?(v==null?'':(Math.round(Number(v)*10)/10)+'%'):c.f==='t'?erEsc(v||''):(v==null?'':erQ(v));
+  const G={}, order=[]; (D.rows||[]).forEach(r=>{ const k=String(r['i_'+by]??r['d_'+by]??''); if(!G[k]){ G[k]={k, txt:r['d_'+by], rows:[]}; order.push(k); } G[k].rows.push(r); });
+  const gs=order.map(k=>G[k]).sort((a,b)=>String(a.txt).localeCompare(String(b.txt),'ar',{numeric:true}));
+  gs.forEach(g=>g.rows.sort((a,b)=>String(a.d_day||'').localeCompare(String(b.d_day||''))||(Number(a.d_doc)||0)-(Number(b.d_doc)||0)||String(a.d_doc||'').localeCompare(String(b.d_doc||''))));
+  if(!gs.length) return '<div class="qt-card qt-sub" style="text-align:center;padding:30px">📭 مفيش بيانات بالفلاتر دى — جرّب فترة أوسع</div>';
+  const mcols=cols.filter(c=>c.t==='m'&&erxDbAdd(c.f)), m0=mcols.find(c=>c.f==='m')||mcols[0], tot={}; mcols.forEach(c=>tot[c.k]=0);
+  const head=`<tr><th style="width:34px">م</th>${cols.map(c=>`<th>${erEsc(c.l)}</th>`).join('')}</tr>`;
+  const cell=(c,r)=>{ if(c.t==='m') return `<td class="n">${fmt(c,r['m_'+c.k])}</td>`; if(c.t==='s') return `<td>${erEsc(c.v)}</td>`; const v=r['d_'+c.k];
+    if(c.t==='dc') return `<td>${erEsc(erxSplit(v)[0])}</td>`; if(c.t==='dn') return `<td class="st">${erEsc(erxSplit(v)[1])}</td>`; return `<td${c.k==='note'?' class="st qt-sub"':''}>${erEsc(v??'')}</td>`; };
+  const foot=(g,lbl)=>{ let first=true; const span=cols.findIndex(c=>c.t==='m'&&erxDbAdd(c.f)); return `<tr class="erx-gs"><td colspan="${span<0?cols.length+1:span+1}">${erEsc(lbl)}</td>${cols.slice(span<0?cols.length:span).map(c=>c.t==='m'&&erxDbAdd(c.f)?`<td class="n red">${fmt(c,g[c.k])}</td>`:'<td></td>').join('')}</tr>`; };
+  const blocks=gs.map(g=>{ const s={}; mcols.forEach(c=>{ s[c.k]=g.rows.reduce((a,r)=>a+(Number(r['m_'+c.k])||0),0); tot[c.k]+=s[c.k]; });
+    const sp=ERX_DB_SPLIT.includes(by)?erxSplit(g.txt):null;
+    return `<div class="erx-doc erx-tg"><div class="erx-ih">${sp?`كود ${ERX_DB_LBL[by]}: <b>${erEsc(sp[0])}</b> &nbsp;&nbsp; اسم ${ERX_DB_LBL[by]}: <b>${erEsc(sp[1])}</b>`:`${erEsc(L)}: <b>${erEsc(g.txt??'—')}</b>`}
+      ${m0?`<span style="float:left">${erEsc(R.dblk.sum||('إجمالى '+m0.l))}: <b>${fmt(m0,s[m0.k])}</b></span>`:''}</div>
+      <table class="qt-tbl erx-tops"><thead>${head}</thead><tbody>${g.rows.map((r,i)=>`<tr><td class="qt-sub">${i+1}</td>${cols.map(c=>cell(c,r)).join('')}</tr>`).join('')}${foot(s,(R.dblk.sum||'الإجمالى')+' — '+g.rows.length+' سطر')}</tbody></table></div>`; }).join('');
+  const sum=`<div class="erx-dsum">العدد: <b>${gs.length}</b> ${erEsc(L)} · <b>${(D.rows||[]).length}</b> سطر${mcols.map(c=>` · ${erEsc(c.l)}: <b>${fmt(c,tot[c.k])}</b>`).join('')}</div>`;
+  return `<div class="erx-docs">${forPrint?'':sum}${blocks}${sum}</div>`; }
+function erxGenPrint(title, bodyHtml, landscape){ const D=ER.rx.data, co=erCoInfo(), w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
+  const fs=[['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||erToday()]].concat(erxFiltSum());
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(title)}</title><style>
+    @page{size:A4${landscape?' landscape':''};margin:12mm} *{-webkit-print-color-adjust:exact;print-color-adjust:exact} body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:12px}
+    .co{font-size:18px;font-weight:700;color:#1d4e89;border-bottom:2px solid #1d4e89;padding-bottom:4px} h1{text-align:center;font-size:19px;color:#1d4e89;border:1px solid #999;background:#eee;padding:6px;margin:10px 80px;box-shadow:3px 3px 0 #999}
+    .fl{border:1px dashed #bbb;border-radius:10px;padding:8px 14px;display:grid;grid-template-columns:1fr 1fr;gap:4px 30px;margin-bottom:10px;background:#eef1f8}.fl b{color:#a00}
+    .erx-doc{margin-bottom:14px;break-inside:avoid-page}.erx-ih{font-size:13px;padding:6px 8px;border:1px solid #999;background:#f3f3f3;margin-bottom:4px}.erx-ih b{color:#1d4e89}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #999;padding:4px;text-align:center} th{background:#eee} td.st{text-align:right} .red{color:#c00} .qt-sub{color:#555;font-size:11px}
+    tr.erx-gs td{font-weight:700}.erx-tf{display:flex;gap:30px;padding:6px 4px;font-size:12.5px}.erx-dsum{border-top:3px double #000;margin-top:8px;padding-top:6px;font-size:13px}
+    .erx-pie{border:1px solid #ccc;padding:8px;margin-bottom:12px;break-inside:avoid}.erx-pt{text-align:center;font-weight:700;margin-bottom:6px}.erx-pw{display:flex;gap:20px;align-items:center;justify-content:center}
+    .erx-pleg{display:grid;grid-template-columns:1fr;gap:2px;font-size:11px;border:1px solid #333;padding:6px}.erx-pl{display:flex;gap:6px;align-items:center}.erx-pl i{width:10px;height:10px;display:inline-block}.erx-pl b{margin-right:auto}
+    .pt{margin-top:14px;border-top:1px solid #000;padding-top:4px;font-size:10px}</style></head><body>
+    <div class="co">${erEsc(co.name||'')}</div><h1>${erEsc(title)}</h1><div class="fl">${fs.map(x=>`<div>${erEsc(x[0])}: <b>${erEsc(x[1])}</b></div>`).join('')}</div>
+    ${bodyHtml}<div class="pt">تاريخ الطباعة: ${new Date().toLocaleString('ar-EG')}</div><script>setTimeout(()=>{window.print();},300)<\/script></body></html>`); w.document.close(); }
+function erxDBlkCsv(){ const D=ER.rx.data, R=D.R, S=ER.rx.meta.srcs[R.src], cols=erxDbCols(R,S), by=R.dblk.by; const esc=v=>{ v=v==null?'':String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const L=[[S.dims[by][0]].concat(cols.map(c=>c.l)).map(esc).join(',')];
+  (D.rows||[]).forEach(r=>L.push([r['d_'+by]].concat(cols.map(c=>c.t==='m'?r['m_'+c.k]:c.t==='s'?c.v:c.t==='dc'?erxSplit(r['d_'+c.k])[0]:c.t==='dn'?erxSplit(r['d_'+c.k])[1]:r['d_'+c.k])).map(esc).join(',')));
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`${(R.t||'report').replace(/[\\/:*?"<>|]/g,'')}_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 // 🏆 «الأصناف الأكثر / الأقل مبيعاً» زى البرنامج القديم: مجمل (صنف × سعر) / أصناف (كل صنف وتجاره) / عملاء (كل تاجر وأصنافه) + رسم دائرى (يتخفى) + تضمين السعر
 const ERX_PIE_C=['#4A90D9','#C9A84C','#4CAF7D','#E05555','#9B6BD6','#E8954A','#3BB3B3','#D65A9B','#8AA63B','#6B7BD6','#C46B3B','#5A8A9B','#B3A13B'];
 function erxPie(parts,title,forPrint){ const tot=parts.reduce((a,p)=>a+p[1],0); if(!tot) return ''; let a0=-Math.PI/2; const R=110, cx=120, cy=120;
@@ -23065,7 +23151,7 @@ async function erxOpenDoc(src, id){ try{
   erToast('المستند ده مالوش شاشة فتح من هنا',false); }catch(e){ erToast('❌ '+erErr(e),false); } }
 
 // ── ⬇️ Excel / 🖨️ طباعة
-function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; if(D.R.ledger) return erxLedgerCsv(); if(D.R.stmt) return erxStmtCsv(); if(D.R.tops) return erxTopsCsv(); const R=D.R, S=ER.rx.meta.srcs[R.src], rows=ER.rx.__rows||D.rows, meas=R.meas.filter(m=>S.meas[m]);
+function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; if(D.R.ledger) return erxLedgerCsv(); if(D.R.stmt) return erxStmtCsv(); if(D.R.tops) return erxTopsCsv(); if(D.R.dblk) return erxDBlkCsv(); const R=D.R, S=ER.rx.meta.srcs[R.src], rows=ER.rx.__rows||D.rows, meas=R.meas.filter(m=>S.meas[m]);
   const esc=v=>{ v=v==null?'':String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const hd=R.dims.map(d=>S.dims[d][0]).concat(meas.map(m=>S.meas[m][0])); const lines=[hd.map(esc).join(',')].concat(rows.map(r=>R.dims.map(d=>r['d_'+d]).concat(meas.map(m=>r['m_'+m])).map(esc).join(',')));
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`${(R.t||'report').replace(/[\\/:*?"<>|]/g,'')}_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
@@ -23074,6 +23160,7 @@ function erRepPrint(){ const D=ER.rx.data; if(!D||!D.R){ erToast('اعرض ال�
   if(D.R.ledger) return erxLedgerPrint();
   if(D.R.stmt) return erxStmtPrint();
   if(D.R.tops) return erxTopsPrint();
+  if(D.R.dblk) return erxGenPrint(D.R.t, erxDBlk(D,true), (D.R.dblk.cols||[]).length>7);
   if(D.R.iblk && ER.rx.view==='iblk') return erxItemBlkPrint();
   erTbPrintPick({sec:'erp-reports', key:'rx-'+(ER.rx.sid||''), pane:'erx-out', title:D.R.t, sub:(D.from||D.to?`الفترة من ${D.from||'البداية'} إلى ${D.to||''}`:'كل الفترة')+(D.cmp?` — مقارنة بـ ${D.cmp.range[0]} → ${D.cmp.range[1]}`:'')}); }
 
