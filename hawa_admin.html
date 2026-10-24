@@ -22258,7 +22258,7 @@ function erRenderInvs(){
       <td><b>${erMoney(v.total,2)}</b></td><td>${erMoney(v.paid,2)}</td><td><b style="color:${rem>0?'#f0c75e':'#6dc49a'}">${erMoney(rem,2)}</b></td>
       <td>${qq.d>=qq.t?'<span class="qt-chip in">✅ اتسلمت</span>':`${erQ(qq.d)} / ${erQ(qq.t)}`}${v.hold_delivery?`<div><span class="qt-chip del" title="${erEsc(v.hold_reason||'')}">🔒 موقوف التسليم</span></div>`:''}</td>
       <td>${ni?`<span class="qt-chip ${late?'del':'ex'}">${erEsc(ni.due_date)}</span><div class="qt-sub">${erMoney(ni.rem,2)}</div>`:'—'}</td>
-      <td style="white-space:nowrap">${v.status==='ملغية'?erStChip('ملغية'):`<button class="qt-btn ghost sm" onclick="erInvOpen(${v.id})">${canE?'✏️':'👁️'}</button>${erCan('erp-sales','print')?`<button class="qt-btn ghost sm" title="طباعة" onclick="erInvPrint(${v.id})">🖨️</button>`:''}
+      <td style="white-space:nowrap">${v.status==='ملغية'?erStChip('ملغية'):`<button class="qt-btn ghost sm" onclick="erInvOpen(${v.id})">${canE?'✏️':'👁️'}</button>${erCan('erp-sales','print')?`<button class="qt-btn ghost sm" title="طباعة" onclick="erInvPrintMenu(${v.id})">🖨️</button>`:''}
         ${canDl&&qq.d<qq.t&&!v.hold_delivery?`<button class="qt-btn ghost sm" onclick="erDelOpen(${v.id})">🚚 تسليم</button>`:''}
         ${canC&&rem>0?`<button class="qt-btn ghost sm" onclick="erRcptOpen(${v.client_id},${v.id})">💵 قبض</button>`:''}
         ${canE&&qq.d<qq.t?`<button class="qt-btn ghost sm" title="${v.hold_delivery?'فك إيقاف التسليم':'إيقاف التسليم'}" onclick="erInvHold(${v.id})">${v.hold_delivery?'🔓':'🔒'}</button>`:''}
@@ -22281,7 +22281,7 @@ function erInvOpen(id){
   ER.edit=v; ER.ro=!(erCan('erp-sales','edit') && v.status==='سارية') || v.__full;
   v.__render=()=>erModalBody(erInvForm());
   const taxBtn = (v.id && v.status==='سارية' ? '<div style="flex:1"></div>' : '')
-    + (v.id && erCan('erp-sales','print') ? `<button class="qt-btn ghost" onclick="erInvPrint(${v.id})">🖨️ طباعة</button>` : '')
+    + (v.id && erCan('erp-sales','print') ? `<button class="qt-btn ghost" onclick="erInvPrintMenu(${v.id})">🖨️ طباعة</button>` : '')
     + (v.id && v.status==='سارية' && erCan('erp-sales','edit') ? `<button class="qt-btn ghost" onclick="erSretOpen(${v.id})">↩️ مرتجع</button>` : '')
     + (v.id && v.status==='سارية' && erCan('erp-letters','view') ? `<button class="qt-btn ghost" onclick="erInvTaxOpen(${v.id})">🧾 الفاتورة الضريبية</button>` : '');
   erModal(id?`🧾 فاتورة مبيعات <span style="color:var(--gold)">${v.inv_no}</span>${v.status!=='سارية'?' '+erStChip(v.status):''}${v.__full?' <span class="qt-chip dim">🔒 اتسلمت بالكامل</span>':''}`:'➕ فاتورة مبيعات جديدة', erInvForm(), (v.__full?`<span class="qt-sub">🔒 الفاتورة اتسلمت بالكامل — المستند مقفول</span>`:erFoot('erInvSave()',ER.ro))+taxBtn);
@@ -23061,12 +23061,12 @@ async function erInvPrint(id){ if(!erNeedPrint('erp-sales')) return; const v=erB
   const dl={}; (ER.sl.dels||[]).filter(d=>String(d.invoice_id)===String(v.id)&&d.status==='سارى').forEach(d=>(d.items||[]).forEach(x=>{ const k=String(x.inv_line); dl[k]=(dl[k]||0)+Number(x.qty||0); }));
   const M=x=>erMoney(x,2), co=erCoInfo(), W=(typeof qtWordsEGP==='function')?qtWordsEGP:(()=>'');
   const its=v.items||[], sub=its.reduce((a,l)=>a+Number(l.total||0),0), invDisc=Math.max(0,sub-Number(v.total||0));
-  const hasDisc=its.some(l=>Math.abs(Number(l.qty)*Number(l.price)-Number(l.total||0))>0.004);
+  const hasDisc=true;
   let tq=0,td=0;
   const rows=its.map((l,i)=>{ const it=erById(ER.boot.items,l.item_id)||{}, q=Number(l.qty)||0, dq=dl[String(l.line_no)]||0, dsc=q*Number(l.price)-Number(l.total||0); tq+=q; td+=dq;
-    return `<tr><td>${i+1}</td><td>${erEsc(it.code||'')}</td><td class="nm">${erEsc(it.name_ar||'—')}</td><td>${erQ(dq)}</td><td>${erQ(q)}</td><td>${M(l.price)}</td>${hasDisc?`<td>${dsc>0.004?M(dsc):''}</td>`:''}<td>${M(l.total)}</td><td>${erEsc(erWhName(l.warehouse_id))}</td></tr>`; }).join('');
+    return `<tr><td>${i+1}</td><td>${erEsc(it.code||'')}</td><td class="nm">${erEsc(it.name_ar||'—')}</td><td>${erQ(dq)}</td><td>${erQ(q)}</td><td>${M(l.price)}</td>${hasDisc?`<td>${dsc>0.004?M(dsc)+(Number(l.qty)*Number(l.price)?`<div style="font-size:10px;color:#555">${(Math.round(dsc/(Number(l.qty)*Number(l.price))*10000)/100)}%</div>`:''):'—'}</td>`:''}<td>${M(l.total)}</td><td>${erEsc(erWhName(l.warehouse_id))}</td></tr>`; }).join('');
   const F=(k,val,cls)=>`<div class="f${cls?' '+cls:''}"><span>${erEsc(k)}</span><b>${val}</b></div>`;
-  const R=[F('رقم الفاتورة',erEsc(v.inv_no)),F('كود التاجر',erEsc(c.code||'')),F('الرصيد السابق',B?M(B.prev):'—'),F('قيمة الفاتورة',M(sub))].concat(invDisc>0.004?[F('خصم الفاتورة',M(invDisc))]:[]).concat([F('صافى الفاتورة',M(v.total),'k')]);
+  const R=[F('رقم الفاتورة',erEsc(v.inv_no)),F('كود التاجر',erEsc(c.code||'')),F('الرصيد السابق',B?M(B.prev):'—'),F('قيمة الفاتورة',M(its.reduce((a,l)=>a+Number(l.qty||0)*Number(l.price||0),0)))].concat([F('خصم الأصناف',M(its.reduce((a,l)=>a+Math.max(0,Number(l.qty)*Number(l.price)-Number(l.total||0)),0))),F('خصم الفاتورة',M(invDisc)+(sub&&invDisc>0.004?` (${Math.round(invDisc/sub*10000)/100}%)`:''))]).concat([F('صافى الفاتورة',M(v.total),'k')]);
   const L=[F('التاريخ',erEsc(v.inv_date)),F('اسم التاجر',erEsc(c.name||'')+(c.gov?` - ${erEsc(c.gov)}`:'')),F('نوع الفاتورة',v.pay_type==='cash'?'نقدى':'آجل'+(v.due_date?` — استحقاق ${erEsc(v.due_date)}`:'')),
            F('الحساب بعد الفاتورة',B?M(B.after):'—','k'),F('الحساب الحالى',B?M(B.cur):'—','k')];
   const now=new Date(), pd=now.toLocaleDateString('en-GB',{timeZone:'Africa/Cairo'}), pt=now.toLocaleTimeString('en-US',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit'}).toLowerCase();
@@ -23091,6 +23091,63 @@ ${v.is_test?'<div class="test">🧪 نسخة تجربة — السيستم لس�
 <script>window.onload=function(){setTimeout(function(){window.print();},200);}<\/script></body></html>`;
   if(window.__erCap){ window.__erCap.push(html); return; }
   try{ w.document.open(); }catch(e){} w.document.write(html); w.document.close(); }
+// 🖨️ قايمة الطباعة من الفاتورة زى البرنامج القديم: الفاتورة / إذن صرف بضاعة (مفكوك — كل مخزن وكل مكوّن «شاسيه / ماتور» فى ورقة لوحده) / صنف مجمع — مع اختيار الورق
+const ER_ROLE_LBL={chassis:'شاسيهات',engine:'مواتير',other:'مكونات أخرى'};
+function erPermitSheets(v,mode){ const S={}, order=[];
+  const add=(key,meta,row)=>{ if(!S[key]){ S[key]=Object.assign({rows:[]},meta); order.push(key); } const ex=S[key].rows.find(r=>String(r.item_id)===String(row.item_id)); if(ex) ex.qty+=row.qty; else S[key].rows.push(row); };
+  (v.items||[]).forEach(l=>{ const wh=l.warehouse_id, it=erById(ER.boot.items,l.item_id)||{}, q=Number(l.qty)||0;
+    const comps=(mode==='split'&&it.stock_mode==='components'&&Array.isArray(it.components))?it.components:null;
+    if(comps&&comps.length){ comps.forEach(c=>{ const role=c.role==='chassis'||c.role==='engine'?c.role:'other';
+        add(wh+'|'+role,{wh,role},{item_id:c.item_id,qty:q*(Number(c.qty)||1),parent:it.code}); }); }
+    else add(wh+'|items',{wh,role:null},{item_id:l.item_id,qty:q}); });
+  return order.map(k=>S[k]); }
+function erPermitLabel(s){ return erWhName(s.wh)+(s.role?' — '+ER_ROLE_LBL[s.role]:''); }
+function erPermitHtml(v,sheets,mode){ const c=erCl(v.client_id), sites={}; (ER.boot.sites||[]).forEach(x=>sites[x.id]=x);
+  const now=new Date(), pd=now.toLocaleDateString('en-GB',{timeZone:'Africa/Cairo'}), pt=now.toLocaleTimeString('en-US',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit'}).toLowerCase();
+  const F=(k,val)=>`<div class="f"><span>${erEsc(k)}</span><b>${val}</b></div>`;
+  const page=s=>{ const w=erById(ER.boot.warehouses,s.wh)||{}, siteId=w.site_id, site=sites[siteId]||{}; let tq=0;
+    const rows=s.rows.map((r,i)=>{ const it=erById(ER.boot.items,r.item_id)||{}; tq+=r.qty; return `<tr><td>${i+1}</td><td>${erEsc(it.code||'')}</td><td class="nm">${erEsc(it.name_ar||'—')}${r.parent?` <span class="s">(من ${erEsc(r.parent)})</span>`:''}</td><td>${erQ(r.qty)}</td></tr>`; }).join('');
+    return `<section class="pg">${v.is_test?'<div class="test">🧪 نسخة تجربة — السيستم لسه مش متفعل</div>':''}${v.status!=='سارية'?'<div class="test">❌ الفاتورة ملغاة</div>':''}
+      <div class="ttl">إذن تسليم${s.role?` — ${ER_ROLE_LBL[s.role]}`:''}</div>
+      <div class="hb"><div class="col">${F('إذن صرف بضاعة رقم',erEsc(v.inv_no))}${F('بناء على فاتورة',erEsc(v.inv_no))}${F('كود العميل',erEsc(c.code||''))}</div>
+        <div class="col">${F('تاريخ صدور الإذن',erEsc(erToday()))}${F('تاريخ الفاتورة',erEsc(v.inv_date))}${F('اسم العميل',erEsc(c.name||'')+(c.gov?' - '+erEsc(c.gov):''))}</div></div>
+      <div class="wh"><div>${F('كود الفرع',siteId?String(siteId).padStart(3,'0'):'—')}${F('كود المخزن',erEsc(w.code||''))}</div><div>${F('اسم الفرع',erEsc(site.name||''))}${F('اسم المخزن',erEsc(w.name||''))}</div></div>
+      <div class="sec">الأصناف${mode==='full'?' (مجمع)':''}</div>
+      <table><thead><tr><th style="width:55px">المسلسل</th><th style="width:110px">الكود</th><th>الاسم</th><th style="width:90px">الكمية</th></tr></thead><tbody>${rows}<tr class="tt"><td colspan="3">الإجمالى</td><td>${erQ(tq)}</td></tr></tbody></table>
+      <div class="sig"><div>أمين المخزن</div><div>المستلم</div></div>
+      <div class="pf">تاريخ الطباعة : ${erEsc(pd)} &nbsp; — &nbsp; وقت الطباعة : ${erEsc(pt)}</div></section>`; };
+  return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>إذن صرف بضاعة — فاتورة ${erEsc(v.inv_no)}</title>
+<style>@page{size:A4;margin:12mm 10mm 16mm;@bottom-left{content:"صفحة " counter(page) " من " counter(pages);font:11px Tahoma}}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Tahoma,Arial,sans-serif;color:#000;margin:0;font-size:12.5px}
+.pg{break-after:page}.pg:last-child{break-after:auto}.ttl{width:60%;margin:0 auto 10px;border:1.5px solid #000;text-align:center;font-size:22px;font-weight:700;padding:6px}
+.hb{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;border:1px solid #bbb;border-radius:14px;padding:10px 18px}.col{display:flex;flex-direction:column;gap:4px}
+.f{display:flex;gap:10px;align-items:baseline}.f span{min-width:120px;color:#333}.f span:after{content:" :"}
+.wh{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;padding:8px 18px}.wh .f span{border:1px solid #999;padding:1px 6px;min-width:96px}
+.sec{margin:10px 0 4px;font-weight:700;background:#ddd;display:inline-block;padding:1px 10px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:5px 6px;text-align:center}td.nm{text-align:right}.s{color:#555;font-size:10.5px}
+tr.tt td{font-weight:700;border-top:2px solid #000}.sig{display:flex;justify-content:space-around;margin-top:46px}.sig div{width:30%;text-align:center;border-top:1px solid #333;padding-top:4px}
+.test{color:#b00;font-weight:900;text-align:center;border:2px dashed #b00;padding:3px;margin-bottom:6px}.pf{margin-top:24px;border-top:1px solid #000;padding-top:4px;font-size:11.5px;font-weight:700}</style></head><body>
+${sheets.map(page).join('')}<script>window.onload=function(){setTimeout(function(){window.print();},200);}<\/script></body></html>`; }
+function erInvPrintMenu(id){ const v=erById(ER.sl.invs,id); if(!v) return; if(!erNeedPrint('erp-sales')) return;
+  const old=document.getElementById('erPrM'); if(old) old.remove();
+  const hasComp=(v.items||[]).some(l=>{ const it=erById(ER.boot.items,l.item_id)||{}; return it.stock_mode==='components'; });
+  const el=document.createElement('div'); el.id='erPrM'; el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:center;justify-content:center';
+  el.innerHTML=`<div style="background:#141414;border:1px solid #2A2A2A;border-radius:14px;padding:16px;width:min(440px,94vw);color:#F0EDE8;font-family:Cairo,sans-serif;max-height:90vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="color:#E8C97A">🖨️ طباعة — فاتورة ${erEsc(v.inv_no)}</b><button class="qt-btn ghost sm" onclick="document.getElementById('erPrM').remove()">✕</button></div>
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer"><input style="width:18px;height:18px;flex:none;margin:0" type="radio" name="erPrK" value="inv" checked onchange="erPrMRefresh(${v.id})"> 🧾 طباعة الفاتورة</label>
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer"><input style="width:18px;height:18px;flex:none;margin:0" type="radio" name="erPrK" value="split" onchange="erPrMRefresh(${v.id})"> 📦 طباعة إذن صرف بضاعة${hasComp?' <span style="color:#8A8580;font-size:12px">(المكونات: كل شاسيه / ماتور فى ورقة لوحده)</span>':''}</label>
+    <label style="display:flex;align-items:center;gap:8px;padding:7px 4px;cursor:pointer"><input style="width:18px;height:18px;flex:none;margin:0" type="radio" name="erPrK" value="full" onchange="erPrMRefresh(${v.id})"> 📦 طباعة صنف مجمع</label>
+    <div id="erPrMs" style="margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="qt-btn" style="flex:1" onclick="erPrMGo(${v.id})">🖨️ اطبع</button><button class="qt-btn ghost" onclick="document.getElementById('erPrM').remove()">إلغاء</button></div></div>`;
+  document.body.appendChild(el); erPrMRefresh(v.id); }
+function erPrMRefresh(id){ const v=erById(ER.sl.invs,id), box=document.getElementById('erPrMs'); if(!v||!box) return; const k=(document.querySelector('input[name="erPrK"]:checked')||{}).value;
+  if(k==='inv'){ box.innerHTML=''; return; }
+  const sh=erPermitSheets(v,k);
+  box.innerHTML=`<div style="color:#8A8580;font-size:12px;margin-bottom:4px">اختار الورق اللى هيتطبع (كل ورقة لوحدها):</div>`+sh.map((s,i)=>`<label style="display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid #2A2A2A;border-radius:8px;margin-bottom:5px;cursor:pointer"><input style="width:18px;height:18px;flex:none;margin:0" type="checkbox" class="erPrS" value="${i}" checked> <span style="flex:1">${erEsc(erPermitLabel(s))}</span><span style="white-space:nowrap;color:#8A8580;font-size:12px">${s.rows.length} صنف · ${erQ(s.rows.reduce((a,r)=>a+r.qty,0))}</span></label>`).join(''); }
+function erPrMGo(id){ const v=erById(ER.sl.invs,id); if(!v) return; const k=(document.querySelector('input[name="erPrK"]:checked')||{}).value;
+  if(k==='inv'){ document.getElementById('erPrM').remove(); return erInvPrint(id); }
+  const sh=erPermitSheets(v,k), pick=Array.from(document.querySelectorAll('.erPrS:checked')).map(x=>sh[Number(x.value)]).filter(Boolean);
+  if(!pick.length){ erToast('اختار ورقة واحدة على الأقل',false); return; }
+  const w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
+  w.document.open(); w.document.write(erPermitHtml(v,pick,k)); w.document.close(); document.getElementById('erPrM').remove(); }
 // ⏳ الناقص من الصنف (شاسيه/ماتور) لسه فى المخزن لحد ما يتسلّم بمستند النواقص
 function erDelHeld(x){ const a=[]; if(Number(x.held_chassis)>0) a.push('شاسيه '+erQ(x.held_chassis)); if(Number(x.held_engine)>0) a.push('ماتور '+erQ(x.held_engine)); return a.length?`<div class="s" style="color:#b45309">⏳ ناقص: ${a.join(' + ')}</div>`:''; }
 async function erDelPrint(id){ if(!erNeedPrint('erp-delivery')) return; const d=erById(ER.sl.dels,id); if(!d) return; const c=erCl(d.client_id), v=erById(ER.sl.invs,d.invoice_id)||{};
