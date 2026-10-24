@@ -23054,15 +23054,43 @@ ${tots?`<table class="tot">${tots}</table>`:''}${o.words!=null?`<div class="wrd"
 <script>window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){window.print();},150);});}<\/script></body></html>`);
   w.document.close(); }
 function erNeedPrint(scr){ if(window.__erCap) return true; if(!erCan(scr,'print')){ erToast('معندكش صلاحية طباعة',false); return false; } return true; }
-function erInvPrint(id){ if(!erNeedPrint('erp-sales')) return; const v=erById(ER.sl.invs,id); if(!v) return; const c=erCl(v.client_id);
-  const sub=v.items.reduce((a,l)=>a+Number(l.total||0),0);
-  erDocPrint({ title:'فاتورة مبيعات', no:v.inv_no, date:v.inv_date, sub:v.pay_type==='cash'?'نقدى':'آجل', test:v.is_test, cancelled:v.status!=='سارية', notes:v.notes,
-    info:[['التاجر',`${c.name||''} (${c.code||''})`],['التليفون',c.phone||''],['المحافظة',c.gov||''],['تاريخ الاستحقاق',v.due_date||'']],
-    cols:[['م','34px'],['الصنف'],['المخزن','110px'],['الكمية','60px'],['السعر','95px'],['الخصم','80px'],['الإجمالى','105px']],
-    rows:v.items.map((l,i)=>{ const q=Number(l.qty), pr=Number(l.price); const d=q*pr-Number(l.total||0); return [i+1, erEsc(erItemLbl(l.item_id)), erEsc(erWhName(l.warehouse_id)), erQ(q), erMoney(pr,2), d?erMoney(d,2):'—', erMoney(l.total,2)]; }),
-    totals:[['إجمالى الأصناف',erMoney(sub,2)]].concat(Number(sub)-Number(v.total)?[['خصم على الفاتورة',erMoney(Number(sub)-Number(v.total),2)]]:[]).concat([['الإجمالى',erMoney(v.total,2)+' ج.م']]),
-    words:v.total, extra:(v.installments||[]).length?`<table style="width:60%"><thead><tr><th>ميعاد الدفعة</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody>${v.installments.map(x=>`<tr><td>${erEsc(x.due_date)}</td><td>${erMoney(x.amount,2)}</td><td>${erEsc(x.note||'')}</td></tr>`).join('')}</tbody></table>`:'',
-    sigs:['المحاسب','المراجع','توقيع التاجر'] }); }
+// 🧾 فاتورة المبيعات بشكل البرنامج القديم: رقم الفاتورة / كود التاجر / الرصيد السابق / قيمة الفاتورة / الحساب بعد الفاتورة / الحساب الحالى + جدول الأصناف بالكمية المسحوبة والمخزن
+async function erInvPrint(id){ if(!erNeedPrint('erp-sales')) return; const v=erById(ER.sl.invs,id); if(!v) return; const c=erCl(v.client_id);
+  let w=null; if(!window.__erCap){ w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; } try{ w.document.write('<p style="font-family:Tahoma;direction:rtl">⏳ جارى تجهيز الفاتورة…</p>'); }catch(e){} }
+  let B=null; try{ B=await rpcSecure('erp_inv_bal_info',{p_inv:Number(v.id)}); }catch(e){}
+  const dl={}; (ER.sl.dels||[]).filter(d=>String(d.invoice_id)===String(v.id)&&d.status==='سارى').forEach(d=>(d.items||[]).forEach(x=>{ const k=String(x.inv_line); dl[k]=(dl[k]||0)+Number(x.qty||0); }));
+  const M=x=>erMoney(x,2), co=erCoInfo(), W=(typeof qtWordsEGP==='function')?qtWordsEGP:(()=>'');
+  const its=v.items||[], sub=its.reduce((a,l)=>a+Number(l.total||0),0), invDisc=Math.max(0,sub-Number(v.total||0));
+  const hasDisc=its.some(l=>Math.abs(Number(l.qty)*Number(l.price)-Number(l.total||0))>0.004);
+  let tq=0,td=0;
+  const rows=its.map((l,i)=>{ const it=erById(ER.boot.items,l.item_id)||{}, q=Number(l.qty)||0, dq=dl[String(l.line_no)]||0, dsc=q*Number(l.price)-Number(l.total||0); tq+=q; td+=dq;
+    return `<tr><td>${i+1}</td><td>${erEsc(it.code||'')}</td><td class="nm">${erEsc(it.name_ar||'—')}</td><td>${erQ(dq)}</td><td>${erQ(q)}</td><td>${M(l.price)}</td>${hasDisc?`<td>${dsc>0.004?M(dsc):''}</td>`:''}<td>${M(l.total)}</td><td>${erEsc(erWhName(l.warehouse_id))}</td></tr>`; }).join('');
+  const F=(k,val,cls)=>`<div class="f${cls?' '+cls:''}"><span>${erEsc(k)}</span><b>${val}</b></div>`;
+  const R=[F('رقم الفاتورة',erEsc(v.inv_no)),F('كود التاجر',erEsc(c.code||'')),F('الرصيد السابق',B?M(B.prev):'—'),F('قيمة الفاتورة',M(sub))].concat(invDisc>0.004?[F('خصم الفاتورة',M(invDisc))]:[]).concat([F('صافى الفاتورة',M(v.total),'k')]);
+  const L=[F('التاريخ',erEsc(v.inv_date)),F('اسم التاجر',erEsc(c.name||'')+(c.gov?` - ${erEsc(c.gov)}`:'')),F('نوع الفاتورة',v.pay_type==='cash'?'نقدى':'آجل'+(v.due_date?` — استحقاق ${erEsc(v.due_date)}`:'')),
+           F('الحساب بعد الفاتورة',B?M(B.after):'—','k'),F('الحساب الحالى',B?M(B.cur):'—','k')];
+  const now=new Date(), pd=now.toLocaleDateString('en-GB',{timeZone:'Africa/Cairo'}), pt=now.toLocaleTimeString('en-US',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit'}).toLowerCase();
+  const inst=(v.installments||[]).length?`<table class="sm"><thead><tr><th>ميعاد الدفعة</th><th>المبلغ</th><th>ملاحظة</th></tr></thead><tbody>${v.installments.map(x=>`<tr><td>${erEsc(x.due_date)}</td><td>${M(x.amount)}</td><td>${erEsc(x.note||'')}</td></tr>`).join('')}</tbody></table>`:'';
+  const html=`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>فاتورة مبيعات ${erEsc(v.inv_no)}</title>
+<style>@page{size:A4;margin:12mm 10mm 16mm;@bottom-left{content:"صفحة " counter(page) " من " counter(pages);font:11px Tahoma}}*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{font-family:Tahoma,Arial,sans-serif;color:#000;margin:0;font-size:12.5px}
+.co{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}.co b{font-size:16px}.co .t{font-size:17px;font-weight:700}
+.hb{display:grid;grid-template-columns:1fr 1fr;gap:0 40px;background:#e9e9e9;border-radius:14px;padding:10px 18px}.hb .col{display:flex;flex-direction:column;gap:3px}
+.f{display:flex;gap:10px;align-items:baseline}.f span{min-width:118px;color:#333}.f span:after{content:" :"}.f b{font-weight:700}.f.k b{font-size:13.5px}
+.sec{margin:12px 0 4px;font-weight:700;text-decoration:underline;background:#ddd;display:inline-block;padding:1px 10px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #333;padding:5px 6px;text-align:center}th{font-weight:700;background:#fff}td.nm{text-align:right}
+tr.tt td{font-weight:700;border-top:2px solid #000}table.sm{width:60%;margin-top:10px}.wrd{margin-top:8px;font-size:12px}.nt{margin-top:6px;font-size:12px}
+.test{color:#b00;font-weight:900;text-align:center;border:2px dashed #b00;padding:3px;margin-bottom:6px}.pf{margin-top:40px;border-top:1px solid #000;padding-top:4px;font-size:12px;font-weight:700}</style></head><body>
+${v.is_test?'<div class="test">🧪 نسخة تجربة — السيستم لسه مش متفعل</div>':''}${v.status!=='سارية'?'<div class="test">❌ فاتورة ملغاة</div>':''}
+<div class="co"><b>${erEsc(co.name||'')}</b><span class="t">فاتورة مبيعات</span></div>
+<div class="hb"><div class="col">${R.join('')}</div><div class="col">${L.join('')}</div></div>
+<div class="sec">الأصناف</div>
+<table><thead><tr><th style="width:42px">المسلسل</th><th style="width:90px">الكود</th><th>الاسم</th><th style="width:70px">كمية مسحوبة</th><th style="width:60px">الكمية</th><th style="width:85px">السعر</th>${hasDisc?'<th style="width:75px">الخصم</th>':''}<th style="width:95px">القيمة</th><th style="width:120px">اسم المخزن</th></tr></thead>
+<tbody>${rows}<tr class="tt"><td colspan="3">الإجمالى</td><td>${erQ(td)}</td><td>${erQ(tq)}</td><td></td>${hasDisc?'<td></td>':''}<td colspan="2">${M(sub)}</td></tr></tbody></table>
+<div class="wrd">${erEsc(W(v.total))} لا غير</div>${inst}${v.notes?`<div class="nt">ملاحظات: ${erEsc(v.notes)}</div>`:''}
+<div class="pf">تاريخ الطباعة : ${erEsc(pd)}<br>وقت الطباعة : ${erEsc(pt)}</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},200);}<\/script></body></html>`;
+  if(window.__erCap){ window.__erCap.push(html); return; }
+  try{ w.document.open(); }catch(e){} w.document.write(html); w.document.close(); }
 // ⏳ الناقص من الصنف (شاسيه/ماتور) لسه فى المخزن لحد ما يتسلّم بمستند النواقص
 function erDelHeld(x){ const a=[]; if(Number(x.held_chassis)>0) a.push('شاسيه '+erQ(x.held_chassis)); if(Number(x.held_engine)>0) a.push('ماتور '+erQ(x.held_engine)); return a.length?`<div class="s" style="color:#b45309">⏳ ناقص: ${a.join(' + ')}</div>`:''; }
 async function erDelPrint(id){ if(!erNeedPrint('erp-delivery')) return; const d=erById(ER.sl.dels,id); if(!d) return; const c=erCl(d.client_id), v=erById(ER.sl.invs,d.invoice_id)||{};
