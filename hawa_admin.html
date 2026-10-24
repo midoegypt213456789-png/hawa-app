@@ -22598,7 +22598,7 @@ async function erxRun(){ const R=erxCurDef(); if(!R) return; const S=ER.rx.meta.
 const ERX_F = [ ['client_id','التاجر','client'], ['item_id','الصنف','item'], ['cat_id','الفئة','cat'], ['wh_id','المخزن','wh'], ['supplier_id','المورد','sup'], ['treasury_id','الخزينة','tre'],
   ['gov','المحافظة','gov'], ['vtype','نوع العربية','vt'], ['item_kind','التصنيف','kind'], ['pay_type','نوع الحركة','pay'], ['site','الموقع','site'], ['hasnote','الملاحظات','hasnote'], ['uname','المستخدم','user'] ];
 function erxFOpts(t){ const B=ER.boot; switch(t){
-  case 'client': return ((ER.sl&&ER.sl.clients)||[]).map(c=>[c.id,(c.code||'')+' — '+c.name+(c.gov?' ('+c.gov+')':''),(c.phone||'')+' #'+c.id]);
+  case 'client': return ((ER.sl&&ER.sl.clients)||[]).map(c=>[c.id,(c.code||'')+' — '+c.name+(c.gov?' ('+c.gov+')':''),(c.phone||'')]);
   case 'item': return B.items.map(i=>[i.id,i.code+' — '+i.name_ar]); case 'cat': return (B.categories||[]).map(c=>[c.id,c.name]); case 'wh': return B.warehouses.map(w=>[w.id,w.name]);
   case 'sup': return B.suppliers.map(s=>[s.id,s.code+' — '+s.name]); case 'tre': return (B.treasuries||[]).map(t=>[t.id,t.name]);
   case 'gov': return [...new Set(((ER.sl&&ER.sl.clients)||[]).map(c=>c.gov).filter(Boolean))].map(g=>[g,g]);
@@ -22673,7 +22673,11 @@ function erxPkBlur(){ const a=document.activeElement; if(!(a&&a.classList&&a.cla
 function erxPkHide(){ const p=document.getElementById('erx-pk'); if(p) p.style.display='none'; ER.__pk=null; }
 function erxPk(inp){ const k=inp.dataset.k, t=inp.dataset.t, st=erxSt(erxScr(ER.rx.sid)), sel=(st.fx[k]||[]).map(String);
   const ws=erxNz(inp.value).split(/\s+/).filter(Boolean);
-  const all=erxFOpts(t).filter(o=>!sel.includes(String(o[0]))), hit=all.filter(o=>{ const n=erxNz(o[1]+' '+(o[2]||'')); return ws.every(w=>n.includes(w)); });
+  const all=erxFOpts(t).filter(o=>!sel.includes(String(o[0])));
+  // الترتيب: الكود بالظبط ← الكود بيبدأ بيه ← الكود فيه ← الاسم ← التليفون (وبيظهر التليفون لو هو اللى طابق)
+  const q1=ws.join(' '), sc=o=>{ const sp=String(o[1]).split(' — '), cd=sp.length>1?erxNz(sp[0]):'', nm=erxNz(sp.length>1?sp.slice(1).join(' — '):o[1]), ph=erxNz(o[2]||'');
+    if(!ws.length) return 5; if(cd&&cd===q1) return 0; if(cd&&cd.startsWith(q1)) return 1; if(cd&&cd.includes(q1)) return 2; const tx=cd+' '+nm; if(ws.every(w=>tx.includes(w))) return 3; if(ws.every(w=>(tx+' '+ph).includes(w))) return 4; return -1; };
+  const hit=all.map(o=>[o,sc(o)]).filter(x=>x[1]>=0).sort((a,b)=>a[1]-b[1]).map(x=>x[1]===4?[x[0][0],x[0][1]+' — 📞 '+x[0][2],x[0][2]]:x[0]);
   const p=erxPkEl(), r=inp.getBoundingClientRect(), below=window.innerHeight-r.bottom, h=Math.min(320, Math.max(below-12, r.top-12));
   ER.__pk={inp, k, t, hit, i:(ER.__pk&&ER.__pk.inp===inp)?Math.min(ER.__pk.i,Math.max(hit.length-1,0)):0};
   const sh=hit.slice(0,150);
