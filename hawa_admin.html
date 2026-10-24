@@ -2564,6 +2564,7 @@ body:has(#er-modal[style*="flex"]) #refreshTimerBadge{display:none!important}
 .erx-form{display:flex;flex-direction:column;gap:12px}.erx-fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 16px}.erx-fgrid>.erx-ff{min-width:0}
 .erx-docs{display:flex;flex-direction:column;gap:10px}.erx-doc{background:#121212;border:1px solid #2A2A2A;border-top:3px solid #C9A84C;border-radius:10px;padding:10px 12px}.erx-dh,.erx-dl{width:100%;border-collapse:collapse}.erx-dh th{color:#8A8580;font-size:11px;font-weight:600;padding:2px 6px;text-align:center}.erx-dh td{text-align:center;padding:4px 6px;font-size:14px}.erx-dl{margin-top:6px}.erx-dl th{color:#E8C97A;font-size:12px;border-bottom:1px solid #2A2A2A;padding:4px 6px;text-align:center}.erx-dl td{text-align:center;padding:5px 6px;border-bottom:1px dashed #222}.erx-dl td.n{font-weight:700}.erx-dn{margin-top:6px;color:#8A8580;font-size:12px}.erx-dsum{padding:8px 12px;background:#1E1A10;border-radius:8px;color:#E8C97A}
 .erx-ledger th.in,.erx-ledger td.in{background:rgba(76,175,125,.06)}.erx-ledger th.out,.erx-ledger td.out{background:rgba(224,85,85,.06)}.erx-ledger td.n{font-weight:700}.erx-op td{color:#8A8580;font-style:italic}
+.erx-stc{background:#121212;border:1px solid #2A2A2A;border-radius:10px;padding:10px 12px}.erx-sth{display:flex;flex-wrap:wrap;gap:24px;padding:6px 4px 10px;color:#8A8580}.erx-sth b{color:#E8C97A}.erx-stm td{text-align:center}.erx-stm td.st{text-align:right}.erx-stm td.n{font-weight:700}.erx-stm .red{color:#ff8a8a}.erx-stm .grn{color:#6dc49a}.erx-stm tr.erx-rc td{background:rgba(74,144,217,.06)}.erx-stf{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 18px;margin-top:10px;padding-top:8px;border-top:1px solid #4A4540;font-size:13px}.erx-stf b{color:#F0EDE8}.erx-stf .big b{color:#E8C97A;font-size:15px}
 .erx-ih{font-size:14px;color:#E8C97A;padding:2px 4px 6px;border-bottom:1px solid #2A2A2A}
 .erx-gh td{background:rgba(201,168,76,.10);color:#E8C97A;font-size:13px}.erx-gh1 td{background:rgba(201,168,76,.05);color:#F0EDE8}.erx-gs td{font-weight:700;border-top:1px solid #4A4540;background:#151515}.erx-gs0 td{color:#E8C97A;background:#1E1A10}
 .erx-pk{position:fixed;z-index:100000;display:none;overflow:auto;background:#161616;border:1px solid #C9A84C;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.6);direction:rtl}.erx-pko{padding:8px 12px;cursor:pointer;font-size:13px;color:#F0EDE8;border-bottom:1px solid #222}.erx-pko:hover,.erx-pko.on{background:rgba(201,168,76,.18)}.erx-pko.all{color:#E8C97A;font-weight:700;position:sticky;top:0;background:#1E1A10}
@@ -22504,7 +22505,8 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   // 🧾 المبيعات
   S('sales','إجمالى مبيعات عميل خلال فترة','sales',['date',...CL,'ctype','pay',...IT,...WH],[['بالتاجر',['client'],['net','qty','invs','avginv']],['التاجر × الشهر',['client','month'],['net'],{view:'pivot'}],['بالمحافظة',['gov'],['net','qty','clients']],['بالمدينة / المركز',['city'],['net','qty','clients']],['بنوع العميل',['ctype'],['net','qty','clients']],['بالقطاع',['region'],['net','qty','clients']]],{cmp:1,top:1});
   S('sales','إجمالى مبيعات صنف','sales',['date',...CL,...IT,...WH,'pay'],[['مجمل — بالصنف',['item'],['qty','avgp','net','rqty']],['مفصّل — كل فاتورة تحت صنفها (زى البرنامج القديم)',['item','day','doc','client'],['qty','avgp','net','rqty'],{iblk:true}],['بالفئة',['cat'],['qty','net']],['بنوع العربية',['vtype'],['qty','net']],['بالتصنيف',['kind'],['qty','net']],['الصنف × الشهر',['item','month'],['qty'],{view:'pivot'}],['الصنف × المخزن',['item','wh'],['qty'],{view:'pivot'}]],{cmp:1,top:1});
-  S('sales','كشف حساب عميل بالأصناف','sales',['date','client',...IT],[['بالفاتورة والصنف',['doc','item'],['qty','avgp','net'],{order:'i_doc',dir:'asc'}],['بالصنف',['item'],['qty','net','avgp']]]);
+  S('sales','كشف حساب عميل (مختصر / مفصّل بالأصناف)','sinv',['date','client','gov'],[['مختصر — مدين / دائن / الرصيد',[],[],{stmt:'sum'}],['مفصّل بالأصناف — أذون الصرف / نقدية / مرتجعات',[],[],{stmt:'det'}]],{note:'زى «كشف حساب عميل» و«كشف حساب عميل بالأصناف» فى البرنامج القديم — رصيد ما قبله + كل حركة + الرصيد بعدها + الإجماليات تحت'});
+  S('sales','مبيعات عميل بالأصناف','sales',['date','client',...IT],[['بالفاتورة والصنف',['doc','item'],['qty','avgp','net'],{order:'i_doc',dir:'asc'}],['بالصنف',['item'],['qty','net','avgp']]]);
   S('sales','مقارنة الأصناف (فترة ضد فترة)','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','net']],['بنوع العربية',['vtype'],['qty','net']],['بالفئة',['cat'],['qty','net']],['بالتاجر',['client'],['net','qty']]],{cmp:1,cmpDef:'prev'});
   S('sales','الأصناف الأكثر والأقل مبيعاً','sales',['date',...CL,...IT,...WH],[['بالصنف',['item'],['qty','net'],{view:'chart'}],['بالفئة',['cat'],['qty','net']],['بنوع العربية',['vtype'],['qty','net']]],{top:1,topDef:'10',r:[['الأكثر',{order:'m_qty'}],['الأقل',{order:'m_qty',dir:'asc'}]]});
   S('sales','المبيعات بالفترة الزمنية','sales',['date',...CL,...IT,...WH],[['باليوم',['day'],['net','qty','invs']],['بالأسبوع',['week'],['net','qty','invs']],['بالشهر',['month'],['net','qty','invs']],['بالربع',['quarter'],['net','qty']],['بالسنة',['year'],['net','qty']],['بيوم الأسبوع',['wday'],['net','invs']]],{view:'chart',cmp:1});
@@ -22574,6 +22576,9 @@ function erxBuild(R, from, to){ const f=Object.assign({}, ER.rx.fx||{}); const p
 async function erxRun(){ const R=erxCurDef(); if(!R) return; const S=ER.rx.meta.srcs[R.src]; if(!S){ erToast('مصدر التقرير مش متاح',false); return; }
   const [from,to]=ER.rx.per==='custom'?[ER.rx.f.from||'',ER.rx.f.to||'']:erxPer(ER.rx.per); ER.rx.f.from=from; ER.rx.f.to=to;
   const seq=(ER.__erxSeq=(ER.__erxSeq||0)+1); ER.rx.busy=true; erxRenderOut();
+  if(R.stmt){ try{ const X=await rpcSecure('erp_client_stmt_rep',{p:{from,to,f:ER.rx.fx||{}}}); if(seq!==ER.__erxSeq) return; ER.rx.data={R, stmt:X, rows:[], tot:{}, from, to}; }
+    catch(e){ if(seq===ER.__erxSeq) ER.rx.data={err:erErr(e)}; }
+    finally{ if(seq===ER.__erxSeq){ ER.rx.busy=false; erxRenderOut(); if(ER.rx.__print){ ER.rx.__print=false; if(ER.rx.data&&ER.rx.data.R) erRepPrint(); } } } return; }
   if(R.ledger){ try{ const L=await rpcSecure('erp_item_ledger',{p:{from,to,basis:R.ledger.basis,f:ER.rx.fx||{}}}); if(seq!==ER.__erxSeq) return; ER.rx.data={R, ledger:L, rows:[], tot:{}, from, to}; }
     catch(e){ if(seq===ER.__erxSeq) ER.rx.data={err:erErr(e)}; }
     finally{ if(seq===ER.__erxSeq){ ER.rx.busy=false; erxRenderOut(); if(ER.rx.__print){ ER.rx.__print=false; if(ER.rx.data&&ER.rx.data.R) erRepPrint(); } } } return; }
@@ -22648,7 +22653,7 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
     ${(s.cmp&&S.date)||s.top?`<div class="erx-fgrid">${s.cmp&&S.date?`<div class="erx-ff"><label>مقارنة</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).cmp=this.value"><option value="">من غير</option><option value="prev" ${st.cmp==='prev'?'selected':''}>بالفترة اللى قبلها</option><option value="yoy" ${st.cmp==='yoy'?'selected':''}>بنفس الفترة السنة اللى فاتت</option></select></div></div>`:''}
       ${s.top?`<div class="erx-ff"><label>العدد</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).limit=this.value">${[['','الكل'],['10','10'],['20','20'],['50','50'],['100','100']].map(o=>`<option value="${o[0]}" ${String(st.limit)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>`:''}</div>`:''}
     ${s.note?`<div class="qt-sub" style="margin-top:8px">💡 ${erEsc(s.note)}</div>`:''}</div>`; }
-function erxHierForm(s,st,S){ const g3=(s.g[st.g]||s.g[0])[3]||{}; if(g3.ledger||g3.iblk) return ''; if(s.blk && ((s.g[st.g]||s.g[0])[3]||{}).blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
+function erxHierForm(s,st,S){ const g3=(s.g[st.g]||s.g[0])[3]||{}; if(g3.ledger||g3.iblk||g3.stmt) return ''; if(s.blk && ((s.g[st.g]||s.g[0])[3]||{}).blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
       <label class="qt-radio ${st.pp?'er-on':''}"><input type="checkbox" ${st.pp?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).pp=this.checked;ER.edit.__render()"> 📄 إذن (فاتورة) واحد فى الصفحة</label>
       <label class="qt-radio ${st.nonote?'er-on':''}"><input type="checkbox" ${st.nonote?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).nonote=this.checked;ER.edit.__render()"> بدون ملاحظات</label></div></div>`;
   const cand=ERX_HIER.filter(k=>S.dims[k]); const H=st.hier||[], N=['①','②','③'];
@@ -22682,18 +22687,21 @@ function erxPkAdd(k,ids){ const st=erxSt(erxScr(ER.rx.sid)); const cur=(st.fx[k]
 function erxPkRe(k,q){ ER.edit.__render(); setTimeout(()=>{ const n=document.querySelector(`#er-m-body .erx-pki[data-k="${k}"]`); if(n){ n.value=q||''; n.focus(); erxPk(n); } },0); }
 function erxPkPick(i){ const P=ER.__pk; if(!P||!P.hit[i]) return; const q=P.inp.value; erxPkAdd(P.k,[P.hit[i][0]]); erxPkRe(P.k,q); }
 function erxPkAll(){ const P=ER.__pk; if(!P) return; erxPkAdd(P.k,P.hit.map(o=>o[0])); erxPkRe(P.k,''); }
+document.addEventListener('keydown',e=>{ const P=(typeof ER!=='undefined')&&ER.__pk; if(!P||!P.inp||!P.inp.isConnected) return; const a=document.activeElement; if(a===P.inp) return;
+  if(a&&a.matches&&a.matches('input,textarea,select,[contenteditable]')) return; if(e.key&&e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ P.inp.focus(); } },true);
 document.addEventListener('scroll',e=>{ const P=(typeof ER!=='undefined')&&ER.__pk; if(!P||(e.target&&e.target.id==='erx-pk')) return; if(P.inp&&P.inp.isConnected) erxPk(P.inp); else erxPkHide(); },true);
 function erxSFClr(k){ const st=erxSt(erxScr(ER.rx.sid)); delete st.fx[k]; ER.edit.__render(); }
 function erxSFDel(k,v){ const st=erxSt(erxScr(ER.rx.sid)); st.fx[k]=(st.fx[k]||[]).filter(x=>String(x)!==String(v)); if(!st.fx[k].length) delete st.fx[k]; ER.edit.__render(); }
 function erxScrGo(print){ const s=erxScr(ER.rx.sid); if(!s) return; const st=erxSt(s); const g=s.g[st.g]||s.g[0], go=g[3]||{}, ro=s.r?(s.r[st.r]||s.r[0])[1]:{};
   ER.rx.R={ t:s.t+(s.g.length>1?' — '+g[0]:'')+(s.r&&st.r?' ('+s.r[st.r][0]+')':''), src:s.src, dims:g[1], meas:g[2], view:go.view||s.view||'table', smart:go.smart||s.smart||null,
     hv:(s.hv||[]).concat(go.hv||[],ro.hv||[]), df:Object.assign({},s.df||{},ro.df||{}), order:ro.order||go.order||null, dir:ro.dir||go.dir||null, limit:st.limit||null, cost:s.cost||go.cost };
+  if(go.stmt){ ER.rx.R={ t:s.t.replace(/ \(.*\)$/,'')+' — '+(go.stmt==='det'?'مفصّل بالأصناف':'مختصر'), src:s.src, dims:[], meas:[], view:'stmt', stmt:go.stmt }; }
   if(go.iblk){ ER.rx.R.view='iblk'; ER.rx.R.iblk=true; ER.rx.R.order=null; ER.rx.limit=''; ER.rx.R.limit=null; }
   if(go.ledger){ ER.rx.R={ t:s.t+' — '+((s.r&&s.r[st.r||0])?s.r[st.r||0][0]:''), src:s.src, dims:[], meas:[], view:'ledger', ledger:{ basis:ro.basis||'book' } }; }
-  const isBlk=!!(s.blk&&go.blk), SS=ER.rx.meta.srcs[s.src], H=(isBlk||go.ledger||go.iblk)?[]:(st.hier||[]).filter(k=>SS.dims[k]);
+  const isBlk=!!(s.blk&&go.blk), SS=ER.rx.meta.srcs[s.src], H=(isBlk||go.ledger||go.iblk||go.stmt)?[]:(st.hier||[]).filter(k=>SS.dims[k]);
   if(isBlk){ ER.rx.R.view='docblk'; ER.rx.R.blk={ mode:ro.blk||'all', pp:!!st.pp, nonote:!!st.nonote }; ER.rx.R.t=s.t+' ('+s.r[st.r||0][0]+')'; }
   if(H.length){ ER.rx.R.dims=H.slice(); ER.rx.R.hier=H.length>1; ER.rx.R.order=null; ER.rx.R.dir=null; ER.rx.R.view='table'; ER.rx.R.t=s.t+' — حسب '+H.map(k=>SS.dims[k][0]).join(' ← '); }
-  if(!isBlk && !go.ledger && !go.iblk && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
+  if(!isBlk && !go.ledger && !go.iblk && !go.stmt && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
   ER.rx.nr = s.docRange&&(st.nfrom||st.nto)?[st.nfrom||'',st.nto||'']:null;
   ER.rx.per=s.noDate?(s.perDef||'month'):st.per; ER.rx.f={from:st.from,to:st.to}; ER.rx.fx=JSON.parse(JSON.stringify(st.fx)); ER.rx.cmp=st.cmp||''; ER.rx.limit=st.limit||''; ER.rx.q='';
   ER.rx.dd=null; ER.rx.crumbs=[]; ER.rx.sort=null; ER.rx.view=ER.rx.R.view; ER.rx.data=null; ER.rx.__print=!!print;
@@ -22715,6 +22723,7 @@ function erxRenderOut(){ const el=document.getElementById('erx-out'); if(!el) re
   if(ER.rx.busy && !D){ el.innerHTML='<div class="qt-card loading-txt">⏳ بنحسب التقرير...</div>'; return; }
   if(!D){ el.innerHTML=''; return; } if(D.err){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(D.err)}</div>`; return; } if(D.err){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(D.err)}</div>`; return; }
   if(D.R.ledger){ el.innerHTML=erxLedger(D,false); return; }
+  if(D.R.stmt){ el.innerHTML=erxStmtRep(D,false); return; }
   const R=D.R, S=ER.rx.meta.srcs[R.src], meas=R.meas.filter(m=>S.meas[m]), dims=R.dims, M=m=>S.meas[m]||[m,'n',''];
   let rows=D.rows.slice(); const cmpMap={}; if(D.cmp) D.cmp.rows.forEach(r=>{ cmpMap[erxKey(r,dims)]=r; });
   const m0=erxM0(meas), tot0=Number(D.tot['m_'+m0])||rows.reduce((a,r)=>a+(Number(r['m_'+m0])||0),0);
@@ -22753,6 +22762,63 @@ const ERX_PRICE = { sales:['qty','net'], purch:['qty','egp'], sret:['qty','value
 const ERX_HIER = ['client','supplier','party','gov','city','ctype','region','item','cat','vtype','kind','wh','site','treasury','user','side','ptype','doc','day','month','year'];
 function erxPriceInit(){ Object.keys(ERX_PRICE).forEach(k=>{ const S=ER.rx.meta&&ER.rx.meta.srcs[k]; if(S&&S.meas&&S.meas[ERX_PRICE[k][0]]&&S.meas[ERX_PRICE[k][1]]) S.meas.__price=['السعر (متوسط)','m','']; }); }
 function erxPriceFix(R,rows,tot){ if(!R.price) return; const [q,v]=R.price, f=o=>{ if(!o) return; const qq=Number(o['m_'+q])||0; o.m___price=qq?(Number(o['m_'+v])||0)/qq:null; }; (rows||[]).forEach(f); f(tot); }
+// 📒 كشف حساب عميل زى البرنامج القديم — «مختصر» (مدين / دائن / الرصيد) و«مفصّل بالأصناف» (أذون الصرف / نقدية / مرتجعات / الرصيد) + الفوتر
+const ERX_STMT_DOC={inv:'ف مبيعات',rcpt:'م قبض',sret:'مرتجع',stl:'تسوية'};
+function erxStmtCalc(c){ let bal=Number(c.opening)||0; const T={inv:0,rcpt:0,sret:0,stlD:0,stlC:0,itemDisc:0,invDisc:0,deb:0,cred:0};
+  const ls=(c.lines||[]).map(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0; bal+=d-cr; T.deb+=d; T.cred+=cr;
+    if(l.kind==='inv'){ T.inv+=d; T.itemDisc+=Number(l.item_disc)||0; T.invDisc+=Number(l.inv_disc)||0; } else if(l.kind==='rcpt') T.rcpt+=cr; else if(l.kind==='sret') T.sret+=cr; else if(l.kind==='stl'){ T.stlD+=d; T.stlC+=cr; }
+    return Object.assign({},l,{bal}); });
+  return Object.assign({},c,{ls,T,close:bal}); }
+function erxStmtType(l){ return l.kind==='inv'?'مدين':l.kind==='rcpt'?'دائن':l.kind==='sret'?'مرتجع':(l.side==='debit'?'تسوية مدينة':'تسوية دائنة'); }
+function erxStmtHd(c){ return `<div class="erx-sth"><div>كود العميل: <b>${erEsc(c.code||'')}</b></div><div>اسم العميل: <b>${erEsc(c.name||'')}</b></div><div>رصيد ما قبله: <b>${erMoney(c.opening||0,2)}</b> ج.م</div></div>`; }
+function erxStmtSum(c,forPrint){ const M=v=>v?erMoney(v,2):''; const op=(no,id,kind)=>forPrint?erEsc(no):`<b style="color:var(--gold);cursor:pointer" onclick="erxStmtOpen('${kind}',${Number(id)||0})">${erEsc(no)}</b>`;
+  const rows=c.ls.map(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0;
+    return `<tr><td>${erEsc(l.date||'')}</td><td>${d?`${ERX_STMT_DOC[l.kind]} ${op(l.no,l.id,l.kind)}`:''}</td><td class="qt-sub">${erEsc(d&&l.kind==='inv'?(l.pay||''):(d?(l.notes||''):''))}</td><td class="n">${M(d)}</td>
+      <td>${cr?`${ERX_STMT_DOC[l.kind]} ${op(l.no,l.id,l.kind)}`:''}</td><td>${erEsc(erxStmtType(l))}${cr&&l.notes?`<div class="qt-sub">${erEsc(l.notes)}</div>`:''}</td><td class="n">${M(cr)}</td><td class="n">${erMoney(l.bal,2)}</td></tr>`; }).join('');
+  return `<table class="qt-tbl erx-stm"><thead><tr><th>التاريخ</th><th>رقم المستند</th><th>الشرح</th><th>المبلغ (مدين)</th><th>رقم المستند</th><th>نوع الحركة</th><th>المبلغ (دائن)</th><th>الرصيد</th></tr></thead><tbody>
+    <tr class="erx-op"><td colspan="7">رصيد ما قبله</td><td class="n">${erMoney(c.opening||0,2)}</td></tr>${rows}</tbody></table>
+    <div class="erx-stf"><div>إجمالى المدين: <b>${erMoney(c.T.deb,2)}</b></div><div>إجمالى الدائن: <b>${erMoney(c.T.cred,2)}</b></div><div class="big">صافى الرصيد: <b>${erMoney(c.close,2)}</b> ج.م ${c.close>0.004?'(عليه)':(c.close<-0.004?'(ليه)':'')}</div></div>`; }
+function erxStmtDet(c,forPrint){ const M=v=>v?erMoney(v,2):'', Q=v=>v?erQ(v):''; const op=(no,id,kind)=>forPrint?erEsc(no):`<b style="color:var(--gold);cursor:pointer" onclick="erxStmtOpen('${kind}',${Number(id)||0})">${erEsc(no)}</b>`; let h='';
+  c.ls.forEach(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0;
+    if(l.kind==='inv'){ (l.items||[]).forEach(it=>{ h+=`<tr><td>${erEsc(l.date)}</td><td>${op(l.no,l.id,'inv')}</td><td class="st">${erEsc(it.name||'')} <span class="qt-sub">${erEsc(it.code||'')}</span></td><td class="n">${Q(it.qty)}</td><td>${M(it.price)}</td><td>${M(it.total)}</td><td></td><td></td><td></td><td></td><td></td></tr>`; });
+      if(Number(l.inv_disc)) h+=`<tr><td></td><td></td><td class="st qt-sub">خصم الفاتورة</td><td></td><td></td><td>-${M(l.inv_disc)}</td><td></td><td></td><td></td><td></td><td></td></tr>`;
+      h+=`<tr class="erx-gs"><td></td><td></td><td class="st">إجمالى المستند — ف مبيعات ${erEsc(l.no)} (${erEsc(l.pay||'')})</td><td></td><td></td><td class="red">${M(d)}</td><td></td><td></td><td></td><td></td><td class="n grn">${erMoney(l.bal,2)}</td></tr>`; }
+    else if(l.kind==='sret'){ (l.items||[]).forEach(it=>{ h+=`<tr><td>${erEsc(l.date)}</td><td>${op(l.no,l.id,'sret')}</td><td class="st">${erEsc(it.name||'')} <span class="qt-sub">مرتجع${l.inv_no?' من ف '+erEsc(l.inv_no):''}</span></td><td></td><td></td><td></td><td></td><td class="n">${Q(it.qty)}</td><td>${M(it.price)}</td><td>${M(it.total)}</td><td></td></tr>`; });
+      h+=`<tr class="erx-gs"><td></td><td></td><td class="st">إجمالى المرتجع ${erEsc(l.no)}</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="red">${M(cr)}</td><td class="n grn">${erMoney(l.bal,2)}</td></tr>`; }
+    else { const lab=l.kind==='rcpt'?'مستند قبض':(l.side==='debit'?'تسوية مدينة':'تسوية دائنة');
+      h+=`<tr class="erx-rc"><td>${erEsc(l.date)}</td><td>${op(l.no,l.id,l.kind)}</td><td class="st red">${lab}${l.notes?` <span class="qt-sub">${erEsc(l.notes)}</span>`:''}</td><td></td><td></td><td>${l.kind==='stl'&&d?M(d):''}</td><td class="n">${cr?M(cr):''}</td><td></td><td></td><td></td><td class="n grn">${erMoney(l.bal,2)}</td></tr>`; } });
+  const T=c.T, F=(k,v)=>`<div>${k}: <b>${erMoney(v||0,2)}</b></div>`;
+  return `<table class="qt-tbl erx-stm erx-std"><thead><tr><th rowspan="2">تاريخ الصدور</th><th rowspan="2">رقم المستند</th><th rowspan="2">البيان</th><th colspan="3">أذون الصرف</th><th rowspan="2">استلام / صرف نقدية</th><th colspan="3">مرتجعات</th><th rowspan="2">الرصيد</th></tr>
+    <tr><th>كمية</th><th>سعر</th><th>قيمة</th><th>كمية</th><th>سعر</th><th>قيمة</th></tr></thead><tbody>
+    <tr class="erx-op"><td colspan="10">رصيد ما قبله</td><td class="n">${erMoney(c.opening||0,2)}</td></tr>${h}</tbody></table>
+    <div class="erx-stf erx-stf3">${F('رصيد ما قبله',c.opening)}${F('إجمالى المسحوبات',T.inv)}${F('إجمالى المرتجعات',T.sret)}
+      ${F('إجمالى الدفعات',T.rcpt)}${F('صافى الدفعات',T.rcpt)}<div></div>
+      ${F('إجمالى التسويات المدينة',T.stlD)}${F('إجمالى التسويات الدائنة',T.stlC)}${F('صافى التسويات',T.stlD-T.stlC)}
+      ${F('إجمالى خصومات الأصناف',T.itemDisc)}${F('إجمالى خصومات الفواتير',T.invDisc)}<div class="big">الرصيد: <b>${erMoney(c.close,2)}</b> ج.م</div></div>`; }
+function erxStmtRep(D,forPrint){ const S=D.stmt||{}, mode=D.R.stmt, G=(S.clients||[]).map(erxStmtCalc);
+  if(!G.length) return '<div class="qt-card qt-sub" style="text-align:center;padding:30px">📭 مفيش حركة بالفلاتر دى — اختار التاجر أو وسّع الفترة</div>';
+  const body=G.map((c,i)=>`<div class="erx-stc${forPrint&&i?' pb':''}">${erxStmtHd(c)}${mode==='det'?erxStmtDet(c,forPrint):erxStmtSum(c,forPrint)}</div>`).join('');
+  const tot=G.length>1?`<div class="erx-dsum">عدد التجار: <b>${G.length}</b>${S.capped?' (أول 300 بس — حدد التاجر)':''} · إجمالى المدين: <b>${erMoney(G.reduce((a,c)=>a+c.T.deb,0),2)}</b> · إجمالى الدائن: <b>${erMoney(G.reduce((a,c)=>a+c.T.cred,0),2)}</b> · صافى الأرصدة: <b>${erMoney(G.reduce((a,c)=>a+c.close,0),2)}</b></div>`:'';
+  return `<div class="erx-docs">${forPrint?'':tot}${body}${forPrint?tot:''}</div>`; }
+async function erxStmtOpen(kind,id){ if(!id) return; try{ if(!ER.sl) await erSlLoad(); if(kind==='inv') return erInvOpen(id); if(kind==='rcpt') return erRcptPrint(id); if(kind==='sret'&&typeof erSretPrint==='function') return erSretPrint(id);
+  if(kind==='stl'){ if(!ER.stl) ER.stl=await rpcSecure('erp_stl_list',{}); return erStlOpen(id); } }catch(e){ erToast('❌ '+erErr(e),false); } }
+function erxStmtPrint(){ const D=ER.rx.data, co=erCoInfo(), w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
+  const det=D.R.stmt==='det', fs=[['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||erToday()]].concat(erxFiltSum());
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(D.R.t)}</title><style>
+    @page{size:A4${det?' landscape':''};margin:10mm} body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:11.5px}
+    .co{font-size:17px;font-weight:700;color:#1d4e89;border-bottom:2px solid #1d4e89;padding-bottom:4px} h1{text-align:center;font-size:18px;color:#1d4e89;border:1px solid #999;background:#eee;padding:6px;margin:8px 90px}
+    .fl{background:#eef1f8;border-radius:8px;padding:6px 12px;display:grid;grid-template-columns:1fr 1fr;gap:3px 24px;margin-bottom:8px}.fl b{color:#a00}
+    .erx-stc.pb{break-before:page}.erx-sth{display:flex;gap:30px;border:1px solid #999;border-radius:8px;padding:6px 12px;margin:8px 0}.erx-sth b{color:#1d4e89}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #999;padding:3px 4px;text-align:center} th{background:#eee} td.st{text-align:right}
+    tr.erx-op td{background:#fafafa;font-style:italic} tr.erx-gs td{font-weight:700} .red{color:#c00} .grn{color:#080} .qt-sub{color:#666;font-size:10px}
+    .erx-stf{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 20px;border-top:2px solid #000;margin-top:6px;padding-top:6px}.erx-stf .big{color:#c00;font-size:13px}
+    .erx-dsum{border-top:3px double #000;margin-top:8px;padding-top:6px;font-size:13px}</style></head><body>
+    <div class="co">${erEsc(co.name||'')}</div><h1>${erEsc(D.R.t)}</h1><div class="fl">${fs.map(x=>`<div>${erEsc(x[0])}: <b>${erEsc(x[1])}</b></div>`).join('')}</div>
+    ${erxStmtRep(D,true)}<div style="margin-top:14px;border-top:1px solid #000;padding-top:4px;font-size:10px">تاريخ الطباعة: ${new Date().toLocaleString('ar-EG')}</div><script>setTimeout(()=>{window.print();},300)<\/script></body></html>`); w.document.close(); }
+function erxStmtCsv(){ const D=ER.rx.data, G=((D.stmt||{}).clients||[]).map(erxStmtCalc); const esc=v=>{ v=v==null?'':String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const L=[['كود العميل','العميل','التاريخ','المستند','الرقم','نوع الحركة','مدين','دائن','الرصيد'].join(',')];
+  G.forEach(c=>{ L.push([c.code,c.name,'','رصيد ما قبله','','','','',c.opening||0].map(esc).join(',')); c.ls.forEach(l=>L.push([c.code,c.name,l.date,ERX_STMT_DOC[l.kind],l.no,erxStmtType(l),l.debit||0,l.credit||0,l.bal].map(esc).join(','))); });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`كشف_حساب_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 // 📒 «الحركة المخزنية للصنف» (يومية صنف) زى البرنامج القديم: كل حركة بتاريخها + الفاتورة + الجهة + السعر + الرصيد بعدها
 function erxLedgerCalc(L){ return (L.items||[]).map(it=>{ let bal=Number(it.opening)||0; let ti=0,to=0,vi=0,vo=0,pr=0,hasP=false;
     const ls=(it.lines||[]).map(l=>{ const i=Number(l.in)||0, o=Number(l.out)||0, p=l.price==null?null:Number(l.price); bal+=i-o; ti+=i; to+=o; if(p!=null){ vi+=i*p; vo+=o*p; }
@@ -22927,13 +22993,14 @@ async function erxOpenDoc(src, id){ try{
   erToast('المستند ده مالوش شاشة فتح من هنا',false); }catch(e){ erToast('❌ '+erErr(e),false); } }
 
 // ── ⬇️ Excel / 🖨️ طباعة
-function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; if(D.R.ledger) return erxLedgerCsv(); const R=D.R, S=ER.rx.meta.srcs[R.src], rows=ER.rx.__rows||D.rows, meas=R.meas.filter(m=>S.meas[m]);
+function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; if(D.R.ledger) return erxLedgerCsv(); if(D.R.stmt) return erxStmtCsv(); const R=D.R, S=ER.rx.meta.srcs[R.src], rows=ER.rx.__rows||D.rows, meas=R.meas.filter(m=>S.meas[m]);
   const esc=v=>{ v=v==null?'':String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const hd=R.dims.map(d=>S.dims[d][0]).concat(meas.map(m=>S.meas[m][0])); const lines=[hd.map(esc).join(',')].concat(rows.map(r=>R.dims.map(d=>r['d_'+d]).concat(meas.map(m=>r['m_'+m])).map(esc).join(',')));
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`${(R.t||'report').replace(/[\\/:*?"<>|]/g,'')}_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 function erRepPrint(){ const D=ER.rx.data; if(!D||!D.R){ erToast('اعرض التقرير الأول',false); return; } if(!erCan('erp-reports','print')){ erToast('معندكش صلاحية طباعة',false); return; }
   if(D.R.blk && ER.rx.view==='docblk') return erxDocBlkPrint();
   if(D.R.ledger) return erxLedgerPrint();
+  if(D.R.stmt) return erxStmtPrint();
   if(D.R.iblk && ER.rx.view==='iblk') return erxItemBlkPrint();
   erTbPrintPick({sec:'erp-reports', key:'rx-'+(ER.rx.sid||''), pane:'erx-out', title:D.R.t, sub:(D.from||D.to?`الفترة من ${D.from||'البداية'} إلى ${D.to||''}`:'كل الفترة')+(D.cmp?` — مقارنة بـ ${D.cmp.range[0]} → ${D.cmp.range[1]}`:'')}); }
 
