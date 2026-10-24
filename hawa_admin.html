@@ -23084,7 +23084,7 @@ ${v.is_test?'<div class="test">🧪 نسخة تجربة — السيستم لس�
 <div class="co"><b>${erEsc(co.name||'')}</b><span class="t">فاتورة مبيعات</span></div>
 <div class="hb"><div class="col">${R.join('')}</div><div class="col">${L.join('')}</div></div>
 <div class="sec">الأصناف</div>
-<table><thead><tr><th style="width:42px">المسلسل</th><th style="width:90px">الكود</th><th>الاسم</th><th style="width:70px">كمية مسحوبة</th><th style="width:60px">الكمية</th><th style="width:85px">السعر</th>${hasDisc?'<th style="width:75px">الخصم</th>':''}<th style="width:95px">القيمة</th><th style="width:120px">اسم المخزن</th></tr></thead>
+<table><thead><tr><th style="width:34px">م</th><th style="width:68px">الكود</th><th>الاسم</th><th style="width:52px">كمية مسحوبة</th><th style="width:46px">الكمية</th><th style="width:78px">السعر</th>${hasDisc?'<th style="width:64px">الخصم</th>':''}<th style="width:86px">القيمة</th><th style="width:96px">اسم المخزن</th></tr></thead>
 <tbody>${rows}<tr class="tt"><td colspan="3">الإجمالى</td><td>${erQ(td)}</td><td>${erQ(tq)}</td><td></td>${hasDisc?'<td></td>':''}<td colspan="2">${M(sub)}</td></tr></tbody></table>
 <div class="wrd">${erEsc(W(v.total))} لا غير</div>${inst}${v.notes?`<div class="nt">ملاحظات: ${erEsc(v.notes)}</div>`:''}
 <div class="pf">تاريخ الطباعة : ${erEsc(pd)}<br>وقت الطباعة : ${erEsc(pt)}</div>
