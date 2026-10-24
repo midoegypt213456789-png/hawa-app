@@ -22810,8 +22810,8 @@ function erxStmtRep(D,forPrint){ const S=D.stmt||{}, mode=D.R.stmt, G=(S.clients
   return `<div class="erx-docs">${forPrint?'':tot}${body}${forPrint?tot:''}</div>`; }
 async function erxStmtOpen(kind,id){ if(!id) return; try{ if(!ER.sl) await erSlLoad(); if(kind==='inv') return erInvOpen(id); if(kind==='rcpt') return erRcptPrint(id); if(kind==='sret'&&typeof erSretPrint==='function') return erSretPrint(id);
   if(kind==='stl'){ if(!ER.stl) ER.stl=await rpcSecure('erp_stl_list',{}); return erStlOpen(id); } }catch(e){ erToast('❌ '+erErr(e),false); } }
-function erxStmtPrint(){ const D=ER.rx.data, co=erCoInfo(), w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
-  const det=D.R.stmt==='det', fs=[['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||erToday()]].concat(erxFiltSum());
+function erxStmtPrint(){ const D=ER.rx.data, co=erCoInfo(), w=window.__erCap?erCapWin():window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
+  const det=D.R.stmt==='det', fs=[['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||erToday()]].concat(window.__erCap?[]:erxFiltSum());
   w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(D.R.t)}</title><style>
     @page{size:A4${det?' landscape':''};margin:10mm} body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:11.5px}
     .co{font-size:17px;font-weight:700;color:#1d4e89;border-bottom:2px solid #1d4e89;padding-bottom:4px} h1{text-align:center;font-size:18px;color:#1d4e89;border:1px solid #999;background:#eee;padding:6px;margin:8px 90px}
@@ -23289,15 +23289,21 @@ async function erRcptCancel(id){ const r=erAsk('سبب إلغاء سند الق�
 // 📲 رسايل التاجر على التليجرام (زى البنك) — الـ PDF بيتعمل هنا من نفس شكل الطباعة ويترفع ويتبعت مع الرسالة
 // الداتا بيز بتعمل الرسالة لوحدها مع كل حركة (فاتورة / تعديل / دفعة / تسوية / مرتجع / تسليم / تسجيل مواتير / جوابات آخر اليوم)
 // وأى صفحة أدمن مفتوحة بتاخد الـ PDF المستنى، تعمله، ترفعه على erp_docs وتسيب الرسالة تتبعت. لو محدش عمله فى 10 دقايق بتتبعت نص بس.
+function erCapWin(){ const cap=window.__erCap; return { document:{ open(){}, close(){}, write(h){ cap.push(h); } } }; }
 function erCapDoc(fn){ window.__erCap=[]; try{ const r=fn(); return Promise.resolve(r).then(()=>{ const h=(window.__erCap||[])[0]||null; window.__erCap=null; return h; }); }catch(e){ window.__erCap=null; throw e; } }
 async function erPdfJobHtml(j){ const k=j.kind, ref=j.ref; await erBoot();
   if(k==='inv'||k==='rcpt'||k==='sret'||k==='del'){ await erSlReload(); const id=Number(ref);
     return erCapDoc(()=>k==='inv'?erInvPrint(id):k==='rcpt'?erRcptPrint(id):k==='sret'?erSretPrint(id):erDelPrint(id)); }
   if(k==='stl'){ await erBoot(); if(!ER.sl) await erSlLoad(); ER.stl=await rpcSecure('erp_stl_list',{}); return erCapDoc(()=>erStlPrint(Number(ref))); }
   if(k==='regdoc'){ const D=await rpcSecure('erp_reg_delivery',{p_del_no:Number(ref)}); ER.rg=ER.rg||{}; const old=ER.rg.del; ER.rg.del=D; try{ return await erCapDoc(()=>erRegDocPrint()); } finally{ ER.rg.del=old; } }
-  if(k==='letters'){ const X=await rpcSecure('erp_letters_tg_data',{p_ids:String(ref)}); const rs=X.rows||[], c=X.client||{};
+  // 📊 طلبات التاجر من البوت: كشف حساب (مختصر/مفصّل) + تقرير جوابات بفترة
+  if(k==='cstmt'){ await erBoot(); const r=JSON.parse(ref||'{}'); const X=await rpcSecure('erp_client_stmt_rep',{p:{from:r.from||'',to:r.to||'',f:{client_id:[Number(r.c)]}}});
+    ER.rx=ER.rx||{}; const old=ER.rx.data; ER.rx.data={ R:{ t:'كشف حساب عميل — '+(r.m==='det'?'مفصّل بالأصناف':'مختصر'), stmt:r.m==='det'?'det':'sum' }, stmt:X, from:r.from||'', to:r.to||'' };
+    try{ return await erCapDoc(()=>erxStmtPrint()); } finally{ ER.rx.data=old; } }
+  if(k==='letters'||k==='clet'){ const cr=k==='clet'?JSON.parse(ref||'{}'):null; if(cr) await erBoot();
+    const X=cr?await rpcSecure('erp_cl_letters_adm',{p:cr}):await rpcSecure('erp_letters_tg_data',{p_ids:String(ref)}); const rs=X.rows||[], c=X.client||{};
     return erCapDoc(()=>erDocPrint({ title:'تقرير الجوابات المستلمة', no:`${rs.length} جواب`, date:erToday(), test:false,
-      info:[['التاجر',`${c.name||''} (${c.code||''})`],['عدد الجوابات',String(rs.length)]],
+      info:[['التاجر',`${c.name||''} (${c.code||''})`],['عدد الجوابات',String(rs.length)]].concat(cr?[['الفترة',`${cr.from||'من الأول'} ← ${cr.to||erToday()}`]]:[]),
       cols:[['م','26px'],['اسم المشترى'],['الشاسيه','118px'],['الماتور','86px'],['الموديل','80px'],['النوع','80px'],['رقم الجواب','52px'],['قيمة الفاتورة','78px'],['رقم الفاتورة','52px'],['ميعاد الاستحقاق','74px']],
       rows:rs.map((r,i)=>[i+1, erEsc(r.buyer||''), `<span dir="ltr" style="font-size:10.5px">${erEsc(r.chassis||'')}</span>`, `<span dir="ltr" style="font-size:10.5px">${erEsc(r.engine||'')}</span>`,
         erEsc([r.model,r.year].filter(Boolean).join(' ')), erEsc(r.kind||''), erEsc(r.jawab_no), erMoney(r.value||0,2), erEsc(r.inv_no||''), erEsc(r.due||(r.deal==='كاش'?'كاش':'—'))]),

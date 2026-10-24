@@ -249,6 +249,29 @@
   .sec         { display: none; }
   .sec.active  { display: block; }
 
+  /* 📊 حسابى */
+  .ac-seg{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .ac-seg button,.ac-pers button,.ac-acts button{flex:1;min-width:0;background:var(--dark3);border:1px solid var(--border);color:var(--text-dim);border-radius:10px;padding:8px 6px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer}
+  .ac-seg button.on{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);border-color:transparent}
+  .ac-seg2 button.on,.ac-pers button.on{background:rgba(201,168,76,.16);color:var(--gold-light);border-color:var(--gold)}
+  .ac-pers{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}.ac-pers button{flex:1 1 30%;font-size:12px;padding:7px 4px}
+  .ac-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}.ac-row label{flex:1;display:flex;gap:6px;align-items:center;color:var(--text-dim);font-size:12px}
+  .ac-in{flex:1;min-width:0;background:#1E1E1E;border:2px solid #4A4540;color:#fff;border-radius:10px;padding:9px 10px;font-family:inherit;font-size:15px}
+  .ac-go{background:linear-gradient(135deg,var(--gold),var(--gold-light));color:var(--dark);border:0;border-radius:10px;padding:10px 14px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer}
+  .ac-go.ac-wide{width:100%;margin-bottom:10px}.ac-go:disabled{opacity:.6}
+  .ac-acts{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}.ac-acts button{color:var(--text)}
+  .ac-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--text-dim);margin-bottom:8px}.ac-head b{color:var(--gold-light)}
+  .ac-ln{border-bottom:1px solid var(--border);padding:8px 2px;font-size:13px}.ac-l1{display:flex;justify-content:space-between;gap:8px}
+  .ac-d{color:#ff8a8a;font-weight:800;white-space:nowrap}.ac-c{color:#6dc49a;font-weight:800;white-space:nowrap}
+  .ac-bal{color:var(--text-dim);font-size:11.5px;margin-top:2px}.ac-dim{color:var(--text-dim);font-size:11.5px}
+  .ac-its{margin:4px 8px 0 0;font-size:12px;line-height:1.7}
+  .ac-foot{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;border-top:2px solid var(--gold);margin-top:8px;padding-top:8px;font-size:12.5px;color:var(--text-dim)}.ac-foot b{color:var(--text)}
+  .ac-big{grid-column:1/-1;font-size:15px}.ac-big b{color:var(--gold-light)!important;font-size:17px}
+  .ac-note{text-align:center;color:var(--text-dim);font-size:12.5px;padding:14px 4px}
+  .ac-av{display:flex;justify-content:space-between;gap:8px;align-items:center;border-radius:10px;padding:10px 12px;margin-top:8px;font-size:13.5px}
+  .ac-yes{background:rgba(76,175,125,.12);border:1px solid rgba(76,175,125,.5)}.ac-no{background:rgba(224,85,85,.10);border:1px solid rgba(224,85,85,.45)}
+  .ac-avs{font-weight:800;white-space:nowrap;font-size:15px}
+
   /* My Bookings */
   .bk-card {
     background: var(--dark2); border: 1px solid var(--border);
@@ -457,6 +480,7 @@
     <button class="tab-btn"        id="tabInbox" onclick="switchTab('inbox')" style="position:relative">📩 رسائلى<span id="inboxTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
     <button class="tab-btn"        id="tabChat" onclick="switchTab('chat')" style="position:relative">💬 تواصل معانا<span id="chatTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
     <button class="tab-btn"        id="tabShort" onclick="switchTab('short')" style="position:relative">📦 نواقصى<span id="shortTabBadge" style="display:none;position:absolute;top:5px;left:10px;background:var(--error);color:#fff;font-size:10px;font-weight:800;border-radius:9px;min-width:17px;height:17px;line-height:17px;padding:0 4px;text-align:center">0</span></button>
+    <button class="tab-btn"        id="tabAcct" onclick="switchTab('acct')" style="display:none">📊 حسابى</button>
     <button class="tab-btn" id="tabRefer" onclick="switchTab('refer')" style="position:relative;padding-bottom:6px">🎁 ترشيحات العملاء<div style="font-size:9px;font-weight:800;color:var(--gold);margin-top:2px;letter-spacing:1px">✨ قريباً</div></button>
     <button class="tab-btn" id="tabPoints" onclick="switchTab('points')" style="position:relative;padding-bottom:6px">💎 صرف النقط<div style="font-size:9px;font-weight:800;color:var(--gold);margin-top:2px;letter-spacing:1px">✨ قريباً</div></button>
   </div>
@@ -889,6 +913,14 @@
     </div>
   </div>
 
+  <!-- ═══ 📊 حسابى: كشف حساب + الجوابات + استعلام موتوسيكل ═══ -->
+  <div class="view" id="viewAcct">
+    <div style="background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:12px">
+      <div style="font-weight:800;font-size:14px;margin-bottom:10px">📊 حسابى</div>
+      <div id="acctBody"></div>
+    </div>
+  </div>
+
   <!-- ═══ 💬 تاب تواصل معانا (شات بشرى مع المخزن/الموظف) ═══ -->
   <div class="view" id="viewChat">
     <div class="ai-wrap">
@@ -1092,6 +1124,8 @@ document.getElementById('ucode').textContent  = user.company_code || '';
 
 // فحص ربط Telegram عند التحميل
 checkTelegramLink();
+// 📊 حسابى (بيظهر بس للحسابات المفعّلة)
+setTimeout(()=>{ try { acctCheck(); } catch(_){} }, 400);
 
 // ═══════════════════════════════════════════════════════════
 // 🔐 BIOMETRIC LOGIN (WebAuthn) — دخول بالبصمة زى البنوك
@@ -1964,7 +1998,7 @@ async function bioLoginNow(){
     }
 
     // إعادة تحميل البيانات بدل reload الصفحة (أنظف)
-    if (typeof checkTelegramLink === 'function') checkTelegramLink();
+    if (typeof checkTelegramLink === 'function') checkTelegramLink(); if (typeof acctCheck === 'function') setTimeout(acctCheck, 300);
     bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
   } catch(e) {
     console.error('bioLoginNow error:', e);
@@ -2464,7 +2498,7 @@ async function passwordLogin(){
     if (document.getElementById('ucode')) document.getElementById('ucode').textContent = user.company_code || '';
 
     if (typeof logActivity === 'function') logActivity('cl_login','🔓 دخول بالباسوورد');
-    if (typeof checkTelegramLink === 'function') checkTelegramLink();
+    if (typeof checkTelegramLink === 'function') checkTelegramLink(); if (typeof acctCheck === 'function') setTimeout(acctCheck, 300);
     bioToast('✅ أهلاً ' + (user.name || 'بيك') + '!');
   } catch(e) {
     console.error('passwordLogin error:', e);
@@ -3165,7 +3199,7 @@ async function mdlSearch(all){
 }
 
 function switchTab(tab) {
-  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], models:['tabModels','viewModels'], ai:['tabAI','viewAI'], inbox:['tabInbox','viewInbox'], short:['tabShort','viewShort'], chat:['tabChat','viewChat'], refer:['tabRefer','viewRefer'], points:['tabPoints','viewPoints'] };
+  const tabMap = { new:['tabNew','viewForm'], my:['tabMy','viewMy'], bulletin:['tabBulletin','viewBulletin'], models:['tabModels','viewModels'], ai:['tabAI','viewAI'], inbox:['tabInbox','viewInbox'], short:['tabShort','viewShort'], acct:['tabAcct','viewAcct'], chat:['tabChat','viewChat'], refer:['tabRefer','viewRefer'], points:['tabPoints','viewPoints'] };
   Object.keys(tabMap).forEach(t => {
     document.getElementById(tabMap[t][0]).classList.toggle('active', t === tab);
     document.getElementById(tabMap[t][1]).classList.toggle('active', t === tab);
@@ -3181,7 +3215,196 @@ function switchTab(tab) {
   if (tab === 'chat') { logActivity('cl_open_chat','💬 فتح تواصل معانا'); initChatTab(); }
   if (tab === 'inbox') { logActivity('cl_open_inbox','📩 فتح رسائلى'); inboxLoad(true); }
   if (tab === 'short') { logActivity('cl_open_shortages','📦 فتح نواقصى'); shortLoad(); }
+  if (tab === 'acct') acctInit();
   const sb = document.getElementById('shortBanner'); if (sb && tab === 'short') sb.style.display = 'none'; else if (tab !== 'short') shortBannerShow();
+}
+
+// ===================== 📊 حسابى — كشف حساب (مختصر / مفصّل) + تقرير الجوابات + استعلام عن موتوسيكل =====================
+// بيظهر بس لو حساب التاجر متفعّل له (cl_erp_portal) — قبل تفعيل النظام الجديد للتجار التجريبيين بس
+var _acct = { on:false, tg:false, sec:'stmt', m:'sum', per:'m', from:'', to:'', stmt:null, let:null, busy:false, err:'' };
+function acEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function acM(v){ return Number(v||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function acQ(v){ v=Number(v||0); return v.toLocaleString('en-US',{maximumFractionDigits:3}); }
+function acToday(){ try { const t=new Date().toLocaleDateString('en-CA',{timeZone:'Africa/Cairo'}); if(/^\d{4}-\d{2}-\d{2}$/.test(t)) return t; } catch(_){} return new Date().toISOString().slice(0,10); }
+function acInTg(){ const tw=window.Telegram&&window.Telegram.WebApp; return !!(tw&&tw.initData); }
+async function acctCheck(){
+  if (!clHasTok()) return;
+  try { const r=await clRpc('cl_erp_portal',{}); _acct.on=!!(r&&r.on); _acct.tg=!!(r&&r.tg); } catch(e){ _acct.on=false; }
+  const b=document.getElementById('tabAcct'); if (b) b.style.display=_acct.on?'':'none';
+  if (_acct.on) acctDeepLink();
+}
+// لينك من البوت: ?go=acct&r=stmt|let&m=sum|det&from=..&to=..
+function acctDeepLink(){
+  let q; try { q=new URLSearchParams(location.search); } catch(_){ return; }
+  if (q.get('go')!=='acct' || _acct.__dl) return; _acct.__dl=true;
+  _acct.sec=q.get('r')==='let'?'let':(q.get('r')==='av'?'av':'stmt'); _acct.m=q.get('m')==='det'?'det':'sum';
+  const f=q.get('from')||'', t=q.get('to')||'';
+  if (f||t){ _acct.per='c'; _acct.from=/^\d{4}-\d{2}-\d{2}$/.test(f)?f:''; _acct.to=/^\d{4}-\d{2}-\d{2}$/.test(t)?t:''; if(!_acct.from&&!f) _acct.per='a'; }
+  switchTab('acct');
+  if (_acct.sec!=='av') acctRun();
+}
+function acctInit(){ if (typeof logActivity==='function') logActivity('cl_open_acct','📊 فتح حسابى'); acctRender(); }
+function acctSec(s){ _acct.sec=s; _acct.err=''; acctRender(); if (s==='av') setTimeout(()=>{ const i=document.getElementById('acAvIn'); if(i) i.focus(); },120); }
+function acctPer(p){ _acct.per=p; acctRender(); }
+function acctMode(m){ _acct.m=m; if (_acct.stmt) _acct.stmt.__m=m; acctRender(); }
+function acctParams(){
+  if (_acct.per==='c'){ const f=document.getElementById('acFrom'), t=document.getElementById('acTo'); if(f) _acct.from=f.value; if(t) _acct.to=t.value; return { from:_acct.from||'', to:_acct.to||'' }; }
+  return { per:_acct.per };
+}
+async function acctRun(){
+  if (_acct.busy) return; _acct.busy=true; _acct.err=''; acctRender();
+  try {
+    if (_acct.sec==='stmt'){ _acct.stmt=await clRpc('cl_erp_stmt',{ p:acctParams() }); _acct.stmt.__m=_acct.m; }
+    else if (_acct.sec==='let'){ _acct.let=await clRpc('cl_erp_letters',{ p:acctParams() }); }
+  } catch(e){ _acct.err=clErr(e.message,'⛔ حصل خطأ — حاول تانى'); }
+  finally { _acct.busy=false; acctRender(); }
+}
+async function acctAvail(){
+  const i=document.getElementById('acAvIn'), out=document.getElementById('acAvOut'); if(!i||!out) return;
+  const q=i.value.trim(); if (q.length<2){ out.innerHTML='<div class="ac-note">✍️ اكتب الكود (حرفين على الأقل)</div>'; return; }
+  out.innerHTML='<div class="ac-note">⏳ بندوّر...</div>';
+  try {
+    const r=await clRpc('cl_erp_avail',{ p_q:q }); const its=(r&&r.items)||[];
+    if (typeof logActivity==='function') logActivity('cl_avail','🔎 استعلام توفر: '+q);
+    if (!its.length){ out.innerHTML=`<div class="ac-av ac-no">❓ مفيش موتوسيكل بالكود <b>${acEsc(q)}</b> — اتأكد من الكود</div>`; return; }
+    out.innerHTML=its.map(x=>`<div class="ac-av ${x.avail?'ac-yes':'ac-no'}"><div><b>${acEsc(x.code)}</b> <span class="ac-dim">${acEsc(x.name||'')}</span></div><div class="ac-avs">${x.avail?'✅ متوفر':'❌ غير متوفر حالياً'}</div></div>`).join('');
+  } catch(e){ out.innerHTML=`<div class="ac-av ac-no">${acEsc(clErr(e.message,'⛔ حصل خطأ'))}</div>`; }
+}
+// حسابات الكشف (نفس منطق شاشة الأدمن)
+function acStmtCalc(c){ let bal=Number(c.opening)||0; const T={inv:0,rcpt:0,sret:0,stlD:0,stlC:0,itemDisc:0,invDisc:0,deb:0,cred:0};
+  const ls=(c.lines||[]).map(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0; bal+=d-cr; T.deb+=d; T.cred+=cr;
+    if(l.kind==='inv'){ T.inv+=d; T.itemDisc+=Number(l.item_disc)||0; T.invDisc+=Number(l.inv_disc)||0; } else if(l.kind==='rcpt') T.rcpt+=cr; else if(l.kind==='sret') T.sret+=cr; else if(l.kind==='stl'){ T.stlD+=d; T.stlC+=cr; }
+    return Object.assign({},l,{bal}); });
+  return Object.assign({},c,{ls,T,close:bal}); }
+const AC_DOC={inv:'فاتورة',rcpt:'دفعة',sret:'مرتجع',stl:'تسوية'};
+function acType(l){ return l.kind==='inv'?'مدين':l.kind==='rcpt'?'دائن':l.kind==='sret'?'مرتجع':(l.side==='debit'?'تسوية مدينة':'تسوية دائنة'); }
+function acPerLabel(D){ return `${D.from?acEsc(D.from):'من الأول'} ← ${acEsc(D.to||acToday())}`; }
+// عرض الموبايل
+function acStmtScreen(D){ const c0=((D.clients||[])[0]); if(!c0) return '<div class="ac-note">📭 مفيش حساب</div>'; const c=acStmtCalc(c0), det=D.__m==='det';
+  let h=`<div class="ac-head"><div>📅 ${acPerLabel(D)}</div><div>رصيد ما قبله: <b>${acM(c.opening||0)}</b></div></div>`;
+  if(!c.ls.length) h+='<div class="ac-note">📭 مفيش حركات فى الفترة دى</div>';
+  h+=c.ls.map(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0;
+    let it=''; if(det&&Array.isArray(l.items)&&l.items.length) it=`<div class="ac-its">${l.items.map(x=>`<div>• ${acEsc(x.name||'')} <span class="ac-dim">${acEsc(x.code||'')}</span> — ${acQ(x.qty)} × ${acM(x.price)} = <b>${acM(x.total)}</b></div>`).join('')}${Number(l.inv_disc)?`<div class="ac-dim">خصم الفاتورة: -${acM(l.inv_disc)}</div>`:''}</div>`;
+    return `<div class="ac-ln"><div class="ac-l1"><span>${acEsc(l.date)} · ${AC_DOC[l.kind]||''} <b>${acEsc(l.no)}</b>${l.kind==='inv'&&l.pay?` <span class="ac-dim">(${acEsc(l.pay)})</span>`:''}${l.kind==='stl'?` <span class="ac-dim">(${acType(l)})</span>`:''}</span>
+      <span class="${d?'ac-d':'ac-c'}">${d?'مدين '+acM(d):'دائن '+acM(cr)}</span></div>${l.notes?`<div class="ac-dim">${acEsc(l.notes)}</div>`:''}${it}<div class="ac-bal">الرصيد: ${acM(l.bal)}</div></div>`; }).join('');
+  h+=`<div class="ac-foot"><div>إجمالى المدين: <b>${acM(c.T.deb)}</b></div><div>إجمالى الدائن: <b>${acM(c.T.cred)}</b></div>
+    ${det?`<div>إجمالى المسحوبات: <b>${acM(c.T.inv)}</b></div><div>إجمالى الدفعات: <b>${acM(c.T.rcpt)}</b></div><div>إجمالى المرتجعات: <b>${acM(c.T.sret)}</b></div><div>صافى التسويات: <b>${acM(c.T.stlD-c.T.stlC)}</b></div>`:''}
+    <div class="ac-big">صافى الرصيد: <b>${acM(Math.abs(c.close))}</b> ج.م ${c.close>0.004?'(عليك)':(c.close<-0.004?'(ليك)':'')}</div></div>`;
+  return h; }
+function acLetScreen(D){ const rs=D.rows||[]; let h=`<div class="ac-head"><div>📅 ${acPerLabel(D)}</div><div>عدد الجوابات: <b>${rs.length}</b></div></div>`;
+  if(!rs.length) return h+'<div class="ac-note">📭 مفيش جوابات فى الفترة دى</div>';
+  h+=rs.map(r=>`<div class="ac-ln"><div class="ac-l1"><span>جواب <b>${acEsc(r.jawab_no)}</b> · ${acEsc(r.date||'')}</span><span class="ac-dim">${acEsc(r.deal||'')}</span></div>
+    <div>${acEsc(r.buyer||'')}</div><div class="ac-dim">${acEsc([r.model||r.item,r.year].filter(Boolean).join(' '))} — شاسيه <span dir="ltr">${acEsc(r.chassis||'')}</span> — ماتور <span dir="ltr">${acEsc(r.engine||'')}</span></div>
+    <div class="ac-bal">فاتورة ${acEsc(r.inv_no||'—')}${Number(r.value)?' · '+acM(r.value)+' ج.م':''}</div></div>`).join('');
+  const tot=rs.reduce((a,r)=>a+Number(r.value||0),0); if(tot) h+=`<div class="ac-foot"><div class="ac-big">إجمالى القيمة: <b>${acM(tot)}</b> ج.م</div></div>`;
+  return h; }
+// شكل الطباعة A4 (زى البرنامج)
+const AC_PCSS=`@page{size:A4;margin:10mm} body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:11.5px}
+  .co{font-size:17px;font-weight:700;color:#1d4e89;border-bottom:2px solid #1d4e89;padding-bottom:4px} h1{text-align:center;font-size:18px;color:#1d4e89;border:1px solid #999;background:#eee;padding:6px;margin:8px 70px}
+  .fl{background:#eef1f8;border-radius:8px;padding:6px 12px;display:grid;grid-template-columns:1fr 1fr;gap:3px 24px;margin-bottom:8px}.fl b{color:#a00}
+  table{width:100%;border-collapse:collapse} th,td{border:1px solid #999;padding:3px 4px;text-align:center} th{background:#eee} td.st{text-align:right}
+  tr.op td{background:#fafafa;font-style:italic} tr.gs td{font-weight:700} .red{color:#c00} .grn{color:#080} .sub{color:#666;font-size:10px}
+  .ft{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 20px;border-top:2px solid #000;margin-top:6px;padding-top:6px}.ft .big{color:#c00;font-size:13px}
+  .pt{margin-top:14px;border-top:1px solid #000;padding-top:4px;font-size:10px}`;
+function acPrintHead(D,title,info){ return `<div class="co">${acEsc(D.co||'')}</div><h1>${acEsc(title)}</h1><div class="fl">${info.map(x=>`<div>${acEsc(x[0])}: <b>${acEsc(x[1])}</b></div>`).join('')}</div>`; }
+function acStmtPrintHtml(D){ const c0=((D.clients||[])[0])||{lines:[]}; const c=acStmtCalc(c0), det=D.__m==='det', M=v=>v?acM(v):'', Q=v=>v?acQ(v):'';
+  const title='كشف حساب عميل — '+(det?'مفصّل بالأصناف':'مختصر');
+  let body;
+  if(!det){ body=`<table><thead><tr><th>التاريخ</th><th>رقم المستند</th><th>الشرح</th><th>المبلغ (مدين)</th><th>رقم المستند</th><th>نوع الحركة</th><th>المبلغ (دائن)</th><th>الرصيد</th></tr></thead><tbody>
+      <tr class="op"><td colspan="7">رصيد ما قبله</td><td>${acM(c.opening||0)}</td></tr>
+      ${c.ls.map(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0; return `<tr><td>${acEsc(l.date)}</td><td>${d?(AC_DOC[l.kind]+' '+acEsc(l.no)):''}</td><td class="sub">${acEsc(d&&l.kind==='inv'?(l.pay||''):(d?(l.notes||''):''))}</td><td>${M(d)}</td><td>${cr?(AC_DOC[l.kind]+' '+acEsc(l.no)):''}</td><td>${acType(l)}${cr&&l.notes?`<div class="sub">${acEsc(l.notes)}</div>`:''}</td><td>${M(cr)}</td><td>${acM(l.bal)}</td></tr>`; }).join('')}</tbody></table>
+      <div class="ft"><div>إجمالى المدين: <b>${acM(c.T.deb)}</b></div><div>إجمالى الدائن: <b>${acM(c.T.cred)}</b></div><div class="big">صافى الرصيد: <b>${acM(c.close)}</b> ج.م ${c.close>0.004?'(عليه)':(c.close<-0.004?'(ليه)':'')}</div></div>`; }
+  else { let h=''; c.ls.forEach(l=>{ const d=Number(l.debit)||0, cr=Number(l.credit)||0;
+      if(l.kind==='inv'){ (l.items||[]).forEach(it=>{ h+=`<tr><td>${acEsc(l.date)}</td><td>${acEsc(l.no)}</td><td class="st">${acEsc(it.name||'')} <span class="sub">${acEsc(it.code||'')}</span></td><td>${Q(it.qty)}</td><td>${M(it.price)}</td><td>${M(it.total)}</td><td></td><td></td><td></td><td></td><td></td></tr>`; });
+        if(Number(l.inv_disc)) h+=`<tr><td></td><td></td><td class="st sub">خصم الفاتورة</td><td></td><td></td><td>-${M(l.inv_disc)}</td><td></td><td></td><td></td><td></td><td></td></tr>`;
+        h+=`<tr class="gs"><td></td><td></td><td class="st">إجمالى المستند — فاتورة ${acEsc(l.no)} (${acEsc(l.pay||'')})</td><td></td><td></td><td class="red">${M(d)}</td><td></td><td></td><td></td><td></td><td class="grn">${acM(l.bal)}</td></tr>`; }
+      else if(l.kind==='sret'){ (l.items||[]).forEach(it=>{ h+=`<tr><td>${acEsc(l.date)}</td><td>${acEsc(l.no)}</td><td class="st">${acEsc(it.name||'')} <span class="sub">مرتجع${l.inv_no?' من ف '+acEsc(l.inv_no):''}</span></td><td></td><td></td><td></td><td></td><td>${Q(it.qty)}</td><td>${M(it.price)}</td><td>${M(it.total)}</td><td></td></tr>`; });
+        h+=`<tr class="gs"><td></td><td></td><td class="st">إجمالى المرتجع ${acEsc(l.no)}</td><td></td><td></td><td></td><td></td><td></td><td></td><td class="red">${M(cr)}</td><td class="grn">${acM(l.bal)}</td></tr>`; }
+      else { const lab=l.kind==='rcpt'?'مستند قبض':(l.side==='debit'?'تسوية مدينة':'تسوية دائنة');
+        h+=`<tr><td>${acEsc(l.date)}</td><td>${acEsc(l.no)}</td><td class="st red">${lab}${l.notes?` <span class="sub">${acEsc(l.notes)}</span>`:''}</td><td></td><td></td><td>${l.kind==='stl'&&d?M(d):''}</td><td>${cr?M(cr):''}</td><td></td><td></td><td></td><td class="grn">${acM(l.bal)}</td></tr>`; } });
+    const T=c.T, F=(k,v)=>`<div>${k}: <b>${acM(v||0)}</b></div>`;
+    body=`<table><thead><tr><th rowspan="2">تاريخ الصدور</th><th rowspan="2">رقم المستند</th><th rowspan="2">البيان</th><th colspan="3">أذون الصرف</th><th rowspan="2">استلام / صرف نقدية</th><th colspan="3">مرتجعات</th><th rowspan="2">الرصيد</th></tr>
+      <tr><th>كمية</th><th>سعر</th><th>قيمة</th><th>كمية</th><th>سعر</th><th>قيمة</th></tr></thead><tbody><tr class="op"><td colspan="10">رصيد ما قبله</td><td>${acM(c.opening||0)}</td></tr>${h}</tbody></table>
+      <div class="ft">${F('رصيد ما قبله',c.opening)}${F('إجمالى المسحوبات',T.inv)}${F('إجمالى المرتجعات',T.sret)}${F('إجمالى الدفعات',T.rcpt)}${F('إجمالى التسويات المدينة',T.stlD)}${F('إجمالى التسويات الدائنة',T.stlC)}
+        ${F('إجمالى خصومات الأصناف',T.itemDisc)}${F('إجمالى خصومات الفواتير',T.invDisc)}<div class="big">الرصيد: <b>${acM(c.close)}</b> ج.م</div></div>`; }
+  return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${acEsc(title)}</title><style>${AC_PCSS}</style></head><body>
+    ${acPrintHead(D,title,[['كود العميل',c.code||''],['اسم العميل',c.name||''],['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||acToday()]])}${body}
+    <div class="pt">تاريخ الطباعة: ${new Date().toLocaleString('ar-EG')}</div></body></html>`; }
+function acLetPrintHtml(D){ const rs=D.rows||[], c=D.client||{}; const tot=rs.reduce((a,r)=>a+Number(r.value||0),0);
+  return `<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>تقرير الجوابات</title><style>${AC_PCSS} td{font-size:10.5px}</style></head><body>
+    ${acPrintHead(D,'تقرير الجوابات المستلمة',[['التاجر',`${c.name||''} (${c.code||''})`],['عدد الجوابات',String(rs.length)],['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||acToday()]])}
+    <table><thead><tr><th>م</th><th>اسم المشترى</th><th>الشاسيه</th><th>الماتور</th><th>الموديل</th><th>النوع</th><th>رقم الجواب</th><th>تاريخه</th><th>قيمة الفاتورة</th><th>رقم الفاتورة</th><th>ميعاد الاستحقاق</th></tr></thead><tbody>
+    ${rs.map((r,i)=>`<tr><td>${i+1}</td><td class="st">${acEsc(r.buyer||'')}</td><td dir="ltr">${acEsc(r.chassis||'')}</td><td dir="ltr">${acEsc(r.engine||'')}</td><td>${acEsc([r.model,r.year].filter(Boolean).join(' '))}</td><td>${acEsc(r.kind||'')}</td><td>${acEsc(r.jawab_no)}</td><td>${acEsc(r.date||'')}</td><td>${acM(r.value||0)}</td><td>${acEsc(r.inv_no||'')}</td><td>${acEsc(r.due||(r.deal==='كاش'?'كاش':'—'))}</td></tr>`).join('')}</tbody></table>
+    <div class="ft"><div>عدد الجوابات: <b>${rs.length}</b></div><div class="big">إجمالى القيمة: <b>${acM(tot)}</b> ج.م</div><div></div></div>
+    <div class="pt">تاريخ الطباعة: ${new Date().toLocaleString('ar-EG')}</div></body></html>`; }
+function acCurHtml(){ if(_acct.sec==='stmt'&&_acct.stmt) return acStmtPrintHtml(_acct.stmt); if(_acct.sec==='let'&&_acct.let) return acLetPrintHtml(_acct.let); return null; }
+function acCurName(){ return _acct.sec==='stmt'?('كشف_حساب_'+(_acct.stmt&&_acct.stmt.__m==='det'?'مفصل':'مختصر')):'تقرير_الجوابات'; }
+// HTML → PDF جوه المتصفح (العربى بيترسم صح) — نفس طريقة صفحة الأدمن
+function acLoadScript(src){ return new Promise((res,rej)=>{ if(document.querySelector(`script[src="${src}"]`)&&window.jspdf) return res(); const s=document.createElement('script'); s.src=src; s.onload=()=>res(); s.onerror=()=>rej(new Error('مقدرناش نحمّل مكتبة الـ PDF')); document.head.appendChild(s); }); }
+async function acHtmlPdf(html){
+  await acLoadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const doc=new DOMParser().parseFromString(html,'text/html'); const css=Array.from(doc.querySelectorAll('style')).map(s=>s.textContent).join('\n').replace(/@page\s*\{[^}]*\}/g,'');
+  doc.querySelectorAll('script').forEach(s=>s.remove());
+  const W=794, PH=1123; const holder=document.createElement('div'); holder.setAttribute('dir','rtl');
+  holder.setAttribute('style',`position:fixed;left:-10000px;top:0;width:${W}px;box-sizing:border-box;padding:30px 34px;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;font-size:13px;direction:rtl`);
+  holder.innerHTML=`<style>${css} body,div,td,th{font-family:Tahoma,Arial,sans-serif}</style>`+doc.body.innerHTML;
+  document.body.appendChild(holder); const H=Math.max(Math.ceil(holder.scrollHeight)+10,400);
+  holder.setAttribute('style',`width:${W}px;height:${H}px;box-sizing:border-box;padding:30px 34px;background:#fff;color:#111;font-family:Tahoma,Arial,sans-serif;font-size:13px;direction:rtl`);
+  const xhtml=new XMLSerializer().serializeToString(holder); holder.remove();
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><foreignObject x="0" y="0" width="100%" height="100%">${xhtml}</foreignObject></svg>`;
+  const img=await new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('مقدرناش نرسم الكشف')); im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg); });
+  const sc=2, cv=document.createElement('canvas'); cv.width=W*sc; cv.height=H*sc; const cx=cv.getContext('2d'); cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height); cx.scale(sc,sc); cx.drawImage(img,0,0);
+  const { jsPDF }=window.jspdf; const pdf=new jsPDF({unit:'pt',format:'a4',orientation:'portrait'}); const pw=pdf.internal.pageSize.getWidth(), ph=pdf.internal.pageSize.getHeight();
+  const pages=Math.max(1,Math.ceil(H/PH));
+  for(let p=0;p<pages;p++){ const part=document.createElement('canvas'); const hh=Math.min(PH,H-p*PH); part.width=W*sc; part.height=hh*sc; const pc=part.getContext('2d'); pc.fillStyle='#fff'; pc.fillRect(0,0,part.width,part.height);
+    pc.drawImage(cv,0,p*PH*sc,W*sc,hh*sc,0,0,W*sc,hh*sc); if(p) pdf.addPage(); pdf.addImage(part.toDataURL('image/jpeg',0.9),'JPEG',0,0,pw,ph*hh/PH); }
+  return pdf.output('blob'); }
+async function acUpload(blob){ const rnd=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
+  const path=`cl-${_acct.sec}-${rnd}.pdf`;
+  const r=await fetch(`${SB}/storage/v1/object/erp_docs/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/pdf'},body:blob});
+  if(!r.ok) throw new Error('رفع الـ PDF فشل — حاول تانى'); return `${SB}/storage/v1/object/public/erp_docs/${path}`; }
+async function acctPdf(send){
+  const html=acCurHtml(); if(!html){ bioToast('اعرض الكشف الأول','error'); return; }
+  const btn=document.getElementById(send?'acSendBtn':'acPdfBtn'); const old=btn?btn.textContent:''; if(btn){ btn.disabled=true; btn.textContent='⏳ بنجهز الـ PDF...'; }
+  try {
+    const blob=await acHtmlPdf(html);
+    if (!send && !acInTg()){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=acCurName()+'.pdf'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },800); bioToast('✅ الـ PDF نزل'); return; }
+    const url=await acUpload(blob);
+    if (send){ await clRpc('cl_erp_send_doc',{ p_url:url, p_caption:'📎 '+(_acct.sec==='stmt'?('كشف حساب '+(_acct.stmt.__m==='det'?'مفصّل':'مختصر')):'تقرير الجوابات')+' — '+acPerLabel(_acct.sec==='stmt'?_acct.stmt:_acct.let).replace(/&[a-z#0-9]+;/g,'') });
+      bioToast('✅ اتبعت — هيوصلك على التليجرام خلال دقيقة'); if (typeof logActivity==='function') logActivity('cl_acct_send','📲 بعت '+acCurName()+' على التليجرام'); }
+    else { const tw=window.Telegram&&window.Telegram.WebApp; try { tw.openLink(url); } catch(_){ window.open(url,'_blank'); } }
+  } catch(e){ bioToast(clErr(e.message,'⛔ معرفناش نعمل الـ PDF'),'error'); }
+  finally { if(btn){ btn.disabled=false; btn.textContent=old; } }
+}
+function acctPrint(){
+  const html=acCurHtml(); if(!html){ bioToast('اعرض الكشف الأول','error'); return; }
+  if (acInTg()) return acctPdf(false);   // جوه تليجرام الطباعة مش مدعومة → PDF يفتح برّه واطبعه
+  if (typeof logActivity==='function') logActivity('cl_acct_print','🖨️ طباعة '+acCurName());
+  const fr=document.createElement('iframe'); fr.style.cssText='position:fixed;left:-9999px;width:800px;height:600px;border:0'; document.body.appendChild(fr);
+  fr.contentDocument.open(); fr.contentDocument.write(html); fr.contentDocument.close();
+  setTimeout(()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); }catch(_){ const w=window.open('','_blank'); if(w){ w.document.write(html); w.document.close(); w.print(); } } setTimeout(()=>fr.remove(),60000); },400);
+}
+function acctRender(){
+  const el=document.getElementById('acctBody'); if(!el) return;
+  const S=_acct, segs=[['stmt','📒 كشف حساب'],['let','📨 الجوابات'],['av','🔎 استعلام موتوسيكل']];
+  const pers=[['m','الشهر ده'],['q','آخر 3 شهور'],['y','السنة دى'],['a','من الأول'],['c','فترة محددة']];
+  let h=`<div class="ac-seg">${segs.map(s=>`<button class="${S.sec===s[0]?'on':''}" onclick="acctSec('${s[0]}')">${s[1]}</button>`).join('')}</div>`;
+  if (S.sec==='av'){
+    h+=`<div class="ac-box"><div class="ac-note" style="text-align:right">اكتب كود الموتوسيكل وهنقولك متوفر فى المخازن ولا لأ</div>
+      <div class="ac-row"><input id="acAvIn" class="ac-in" dir="ltr" placeholder="مثال: T305" onkeydown="if(event.key==='Enter')acctAvail()"><button class="ac-go" onclick="acctAvail()">🔎 استعلم</button></div><div id="acAvOut"></div></div>`;
+    el.innerHTML=h; return;
+  }
+  if (S.sec==='stmt') h+=`<div class="ac-seg ac-seg2"><button class="${S.m==='sum'?'on':''}" onclick="acctMode('sum')">📄 مختصر</button><button class="${S.m==='det'?'on':''}" onclick="acctMode('det')">📑 مفصّل بالأصناف</button></div>`;
+  h+=`<div class="ac-pers">${pers.map(p=>`<button class="${S.per===p[0]?'on':''}" onclick="acctPer('${p[0]}')">${p[1]}</button>`).join('')}</div>`;
+  if (S.per==='c') h+=`<div class="ac-row"><label>من <input type="date" id="acFrom" class="ac-in" value="${acEsc(S.from)}"></label><label>إلى <input type="date" id="acTo" class="ac-in" value="${acEsc(S.to||acToday())}"></label></div>`;
+  h+=`<button class="ac-go ac-wide" onclick="acctRun()" ${S.busy?'disabled':''}>${S.busy?'⏳ جارى التحميل...':(S.sec==='stmt'?'📒 اعرض الكشف':'📨 اعرض الجوابات')}</button>`;
+  if (S.err) h+=`<div class="ac-av ac-no">${acEsc(S.err)}</div>`;
+  const D=S.sec==='stmt'?S.stmt:S.let;
+  if (D && !S.busy){
+    h+=`<div class="ac-acts"><button onclick="acctPrint()">🖨️ طباعة</button><button id="acPdfBtn" onclick="acctPdf(false)">⬇️ PDF</button>${S.tg?`<button id="acSendBtn" onclick="acctPdf(true)">📲 ابعته على التليجرام</button>`:''}</div>`;
+    h+=`<div class="ac-res">${S.sec==='stmt'?acStmtScreen(D):acLetScreen(D)}</div>`;
+  }
+  el.innerHTML=h;
 }
 
 // ===================== 📦 نواقصى =====================
