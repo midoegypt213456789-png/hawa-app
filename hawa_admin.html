@@ -12660,6 +12660,9 @@ async function saveClientEdit(){
 
 function deleteClient(id,name){
   showConfirm('🗑️','حذف عميل',`هتحذف "${name}" وكل بياناته؟ مش هتقدر ترجع!`,true,async()=>{
+    // الطريقة الجديدة: بيتمسح بأذوناته وحجوزاته اللى ماتنفذتش طالما محمّلش (admin_client_delete)
+    try{ const r=await rpcSecure('admin_client_delete',{p_client:id}); if(r&&r.ok){ if(typeof showToast==='function') showToast(`🗑️ اتمسح "${name}"${r.permits?` ومعاه ${r.permits} إذن`:''}${r.bookings?` و${r.bookings} حجز`:''}`); loadClients(); return; } }
+    catch(e){ if(!/admin_client_delete|function|schema cache/i.test(e.message)){ alert('❌ '+e.message); return; } }
     let ok=false, err='';
     try{ const r=await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'DELETE',headers:{...HDR,'Prefer':'return=representation'}});
       const t=await r.text(); if(r.ok){ let j=[]; try{ j=JSON.parse(t||'[]'); }catch(e){} ok=Array.isArray(j)&&j.length>0; if(!ok) err='الحذف ما اتنفذش (صلاحية)'; } else err=t; }catch(e){ err=e.message; }
