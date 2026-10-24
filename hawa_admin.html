@@ -2563,6 +2563,7 @@ body:has(#er-modal[style*="flex"]) #refreshTimerBadge{display:none!important}
 .erx-fchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.erx-f{display:flex;align-items:center;gap:5px;flex-wrap:wrap;background:var(--dark);border:1px solid var(--border);border-radius:10px;padding:4px 8px}.erx-fin{width:140px;padding:4px 6px;font-size:12px}
 .erx-form{display:flex;flex-direction:column;gap:12px}.erx-fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 16px}.erx-fgrid>.erx-ff{min-width:0}
 .erx-docs{display:flex;flex-direction:column;gap:10px}.erx-doc{background:#121212;border:1px solid #2A2A2A;border-top:3px solid #C9A84C;border-radius:10px;padding:10px 12px}.erx-dh,.erx-dl{width:100%;border-collapse:collapse}.erx-dh th{color:#8A8580;font-size:11px;font-weight:600;padding:2px 6px;text-align:center}.erx-dh td{text-align:center;padding:4px 6px;font-size:14px}.erx-dl{margin-top:6px}.erx-dl th{color:#E8C97A;font-size:12px;border-bottom:1px solid #2A2A2A;padding:4px 6px;text-align:center}.erx-dl td{text-align:center;padding:5px 6px;border-bottom:1px dashed #222}.erx-dl td.n{font-weight:700}.erx-dn{margin-top:6px;color:#8A8580;font-size:12px}.erx-dsum{padding:8px 12px;background:#1E1A10;border-radius:8px;color:#E8C97A}
+.erx-ledger th.in,.erx-ledger td.in{background:rgba(76,175,125,.06)}.erx-ledger th.out,.erx-ledger td.out{background:rgba(224,85,85,.06)}.erx-ledger td.n{font-weight:700}.erx-op td{color:#8A8580;font-style:italic}
 .erx-gh td{background:rgba(201,168,76,.10);color:#E8C97A;font-size:13px}.erx-gh1 td{background:rgba(201,168,76,.05);color:#F0EDE8}.erx-gs td{font-weight:700;border-top:1px solid #4A4540;background:#151515}.erx-gs0 td{color:#E8C97A;background:#1E1A10}
 .erx-pk{position:fixed;z-index:100000;display:none;overflow:auto;background:#161616;border:1px solid #C9A84C;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.6);direction:rtl}.erx-pko{padding:8px 12px;cursor:pointer;font-size:13px;color:#F0EDE8;border-bottom:1px solid #222}.erx-pko:hover,.erx-pko.on{background:rgba(201,168,76,.18)}.erx-pko.all{color:#E8C97A;font-weight:700;position:sticky;top:0;background:#1E1A10}
 .erx-ff{display:flex;align-items:flex-start;gap:10px}.erx-ff>label{min-width:90px;padding-top:9px;color:#E05555;font-weight:700;font-size:13px}.erx-ffv{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.erx-ffv .qt-inp{flex:1;min-width:120px;width:100%}
@@ -22475,7 +22476,7 @@ function erxScreens(){ if(ER.__erxScr) return ER.__erxScr; const L=[]; const S=(
   // 📦 المخازن
   S('stock','قائمة الأصناف وأرصدتها','stk',[...IT,...WH],[['بالصنف',['item'],['opening','pin','pout','actual','book']],['الصنف × المخزن (كميات وأماكن الأصناف)',['item','wh'],['actual','book'],{view:'pivot'}],['بالمخزن',['wh'],['actual','book','items']],['بالفئة',['cat'],['actual','book','items']],['بنوع العربية',['vtype'],['actual','book','items']]],
     {r:[['الكل',{}],['اللى ليها رصيد بس',{hv:[['actual','>',0]]}],['الأصناف المصفّرة',{hv:[['actual','<=',0]]}]]});
-  S('stock','يومية صنف','moves',['date',...IT,...WH],[['باليوم',['day','item'],['ain','aout','anet','bin','bout']],['بالمستند',['doc','item'],['ain','aout','bin','bout']],['بنوع الحركة',['doctype'],['ain','aout','bin','bout','cnt']]]);
+  S('stock','يومية صنف (الحركة المخزنية للصنف)','moves',['date','item','cat','vtype','wh','site','client','supplier'],[['حركة كل صنف — زى البرنامج القديم',[],[],{ledger:true}],['باليوم',['day','item'],['ain','aout','anet','bin','bout']],['بالمستند',['doc','item'],['ain','aout','bin','bout']],['بنوع الحركة',['doctype'],['ain','aout','bin','bout','cnt']]],{r:[['دفترى (الفواتير)',{basis:'book'}],['فعلى (التسليم والاستلام)',{basis:'actual'}]], note:'«حركة كل صنف» = كل حركة بتاريخها ورقم الفاتورة والجهة والسعر والرصيد بعدها — زى «الحركة المخزنية للصنف» فى البرنامج القديم'});
   S('stock','الحركة المخزنية للأصناف','moves',['date',...IT,...WH],[['بالصنف',['item'],['ain','aout','anet','bin','bout']],['بالمخزن',['wh'],['ain','aout','anet']],['الصنف × المخزن',['item','wh'],['anet'],{view:'pivot'}],['بالشهر',['month'],['ain','aout','anet']],['بالفئة',['cat'],['ain','aout','anet']]]);
   S('stock','حد الطلب','stk',[...IT,...WH],[['بالصنف',['item'],['book','reorder','short','out30','cover']],['الصنف × المخزن',['item','wh'],['book','reorder','short']]],{r:[['تحت حد الطلب بس',{hv:[['short','>',0]],order:'m_short'}],['كل الأصناف',{}]]});
   S('stock','الأصناف الراكدة','stk',[...IT,...WH],[['بالصنف',['item'],['actual','idle','value','out90']],['الصنف × المخزن',['item','wh'],['actual','idle']]],
@@ -22572,6 +22573,9 @@ function erxBuild(R, from, to){ const f=Object.assign({}, ER.rx.fx||{}); const p
 async function erxRun(){ const R=erxCurDef(); if(!R) return; const S=ER.rx.meta.srcs[R.src]; if(!S){ erToast('مصدر التقرير مش متاح',false); return; }
   const [from,to]=ER.rx.per==='custom'?[ER.rx.f.from||'',ER.rx.f.to||'']:erxPer(ER.rx.per); ER.rx.f.from=from; ER.rx.f.to=to;
   const seq=(ER.__erxSeq=(ER.__erxSeq||0)+1); ER.rx.busy=true; erxRenderOut();
+  if(R.ledger){ try{ const L=await rpcSecure('erp_item_ledger',{p:{from,to,basis:R.ledger.basis,f:ER.rx.fx||{}}}); if(seq!==ER.__erxSeq) return; ER.rx.data={R, ledger:L, rows:[], tot:{}, from, to}; }
+    catch(e){ if(seq===ER.__erxSeq) ER.rx.data={err:erErr(e)}; }
+    finally{ if(seq===ER.__erxSeq){ ER.rx.busy=false; erxRenderOut(); if(ER.rx.__print){ ER.rx.__print=false; if(ER.rx.data&&ER.rx.data.R) erRepPrint(); } } } return; }
   try{ const p=erxBuild(R,from,to), pt=Object.assign({},p,{dims:[],limit:1}); delete pt.order;
     const calls=[rpcSecure('erp_rep_query',{p}), rpcSecure('erp_rep_query',{p:pt})];
     const cr=S.date?erxCmpRange(from,to,ER.rx.cmp):null;
@@ -22624,7 +22628,8 @@ function erxOpenScr(id){ const s=erxScr(id); if(!s) return; if(s.link){ s.link()
   erModal(`📄 ${erEsc(s.t)}`, erxScrForm(), `<button class="qt-btn" id="erx-go" onclick="erxScrGo(false)">▶️ اعرض</button><button class="qt-btn ghost" onclick="erxScrGo(true)">🖨️ اعرض واطبع</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
   const m=document.getElementById('er-modal'); if(m){ m.classList.remove('er-max'); erModalMaxBtn(); } }
 function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs[s.src];
-  const fl=(s.fl||[]).filter(k=>k==='date'?S.date:ERX_FK[k]&&S.cols.includes(ERX_FK[k]));
+  const fl0=(s.fl||[]).slice(); if(S.cols.includes('client_id')&&!fl0.includes('client')) fl0.splice(fl0.includes('date')?1:0,0,'client');
+  const fl=fl0.filter(k=>k==='date'?S.date:ERX_FK[k]&&S.cols.includes(ERX_FK[k]));
   const fdef=k=>ERX_F.find(x=>x[0]===ERX_FK[k]);
   const field=k=>{ const x=fdef(k); if(!x) return ''; const vals=st.fx[x[0]]||[], opts=erxFOpts(x[2]); const lbl=v=>{ const o=opts.find(o=>String(o[0])===String(v)); return o?o[1]:v; };
     return `<div class="erx-ff"><label>${x[1]}</label><div class="erx-ffv">${vals.map(v=>`<span class="qt-chip in">${erEsc(lbl(v))} <b style="cursor:pointer" onclick="erxSFDel('${x[0]}','${erEsc(String(v))}')">✖</b></span>`).join('')}
@@ -22642,7 +22647,7 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
     ${(s.cmp&&S.date)||s.top?`<div class="erx-fgrid">${s.cmp&&S.date?`<div class="erx-ff"><label>مقارنة</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).cmp=this.value"><option value="">من غير</option><option value="prev" ${st.cmp==='prev'?'selected':''}>بالفترة اللى قبلها</option><option value="yoy" ${st.cmp==='yoy'?'selected':''}>بنفس الفترة السنة اللى فاتت</option></select></div></div>`:''}
       ${s.top?`<div class="erx-ff"><label>العدد</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).limit=this.value">${[['','الكل'],['10','10'],['20','20'],['50','50'],['100','100']].map(o=>`<option value="${o[0]}" ${String(st.limit)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select></div></div>`:''}</div>`:''}
     ${s.note?`<div class="qt-sub" style="margin-top:8px">💡 ${erEsc(s.note)}</div>`:''}</div>`; }
-function erxHierForm(s,st,S){ if(s.blk && ((s.g[st.g]||s.g[0])[3]||{}).blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
+function erxHierForm(s,st,S){ if(((s.g[st.g]||s.g[0])[3]||{}).ledger) return ''; if(s.blk && ((s.g[st.g]||s.g[0])[3]||{}).blk) return `<div class="erx-ff"><label>الطباعة</label><div class="erx-ffv erx-rad">
       <label class="qt-radio ${st.pp?'er-on':''}"><input type="checkbox" ${st.pp?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).pp=this.checked;ER.edit.__render()"> 📄 إذن (فاتورة) واحد فى الصفحة</label>
       <label class="qt-radio ${st.nonote?'er-on':''}"><input type="checkbox" ${st.nonote?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).nonote=this.checked;ER.edit.__render()"> بدون ملاحظات</label></div></div>`;
   const cand=ERX_HIER.filter(k=>S.dims[k]); const H=st.hier||[], N=['①','②','③'];
@@ -22682,10 +22687,11 @@ function erxSFDel(k,v){ const st=erxSt(erxScr(ER.rx.sid)); st.fx[k]=(st.fx[k]||[
 function erxScrGo(print){ const s=erxScr(ER.rx.sid); if(!s) return; const st=erxSt(s); const g=s.g[st.g]||s.g[0], go=g[3]||{}, ro=s.r?(s.r[st.r]||s.r[0])[1]:{};
   ER.rx.R={ t:s.t+(s.g.length>1?' — '+g[0]:'')+(s.r&&st.r?' ('+s.r[st.r][0]+')':''), src:s.src, dims:g[1], meas:g[2], view:go.view||s.view||'table', smart:go.smart||s.smart||null,
     hv:(s.hv||[]).concat(go.hv||[],ro.hv||[]), df:Object.assign({},s.df||{},ro.df||{}), order:ro.order||go.order||null, dir:ro.dir||go.dir||null, limit:st.limit||null, cost:s.cost||go.cost };
-  const isBlk=!!(s.blk&&go.blk), SS=ER.rx.meta.srcs[s.src], H=isBlk?[]:(st.hier||[]).filter(k=>SS.dims[k]);
+  if(go.ledger){ ER.rx.R={ t:s.t+' — '+((s.r&&s.r[st.r||0])?s.r[st.r||0][0]:''), src:s.src, dims:[], meas:[], view:'ledger', ledger:{ basis:ro.basis||'book' } }; }
+  const isBlk=!!(s.blk&&go.blk), SS=ER.rx.meta.srcs[s.src], H=(isBlk||go.ledger)?[]:(st.hier||[]).filter(k=>SS.dims[k]);
   if(isBlk){ ER.rx.R.view='docblk'; ER.rx.R.blk={ mode:ro.blk||'all', pp:!!st.pp, nonote:!!st.nonote }; ER.rx.R.t=s.t+' ('+s.r[st.r||0][0]+')'; }
   if(H.length){ ER.rx.R.dims=H.slice(); ER.rx.R.hier=H.length>1; ER.rx.R.order=null; ER.rx.R.dir=null; ER.rx.R.view='table'; ER.rx.R.t=s.t+' — حسب '+H.map(k=>SS.dims[k][0]).join(' ← '); }
-  if(!isBlk && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
+  if(!isBlk && !go.ledger && st.price && ERX_PRICE[s.src] && SS.meas.__price){ const [q,v]=ERX_PRICE[s.src]; ER.rx.R.price=[q,v]; ER.rx.R.meas=[q,'__price',v].concat(ER.rx.R.meas.filter(m=>m!==q&&m!==v&&m!=='__price')); ER.rx.R.t+=' 💲'; }
   ER.rx.nr = s.docRange&&(st.nfrom||st.nto)?[st.nfrom||'',st.nto||'']:null;
   ER.rx.per=s.noDate?(s.perDef||'month'):st.per; ER.rx.f={from:st.from,to:st.to}; ER.rx.fx=JSON.parse(JSON.stringify(st.fx)); ER.rx.cmp=st.cmp||''; ER.rx.limit=st.limit||''; ER.rx.q='';
   ER.rx.dd=null; ER.rx.crumbs=[]; ER.rx.sort=null; ER.rx.view=ER.rx.R.view; ER.rx.data=null; ER.rx.__print=!!print;
@@ -22706,6 +22712,7 @@ function erxRenderOut(){ const el=document.getElementById('erx-out'); if(!el) re
   if(rg && D && D.R) rg.innerHTML = !ER.rx.meta.srcs[D.R.src].date?'📸 دلوقتى':(D.from||D.to?`📅 ${erEsc(D.from||'البداية')} ← ${erEsc(D.to||'')}${D.cmp?` (مقارنة بـ ${erEsc(D.cmp.range[0])} ← ${erEsc(D.cmp.range[1])})`:''}`:'📅 كل الفترة');
   if(ER.rx.busy && !D){ el.innerHTML='<div class="qt-card loading-txt">⏳ بنحسب التقرير...</div>'; return; }
   if(!D){ el.innerHTML=''; return; } if(D.err){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(D.err)}</div>`; return; } if(D.err){ el.innerHTML=`<div class="qt-card" style="color:var(--error)">❌ ${erEsc(D.err)}</div>`; return; }
+  if(D.R.ledger){ el.innerHTML=erxLedger(D,false); return; }
   const R=D.R, S=ER.rx.meta.srcs[R.src], meas=R.meas.filter(m=>S.meas[m]), dims=R.dims, M=m=>S.meas[m]||[m,'n',''];
   let rows=D.rows.slice(); const cmpMap={}; if(D.cmp) D.cmp.rows.forEach(r=>{ cmpMap[erxKey(r,dims)]=r; });
   const m0=erxM0(meas), tot0=Number(D.tot['m_'+m0])||rows.reduce((a,r)=>a+(Number(r['m_'+m0])||0),0);
@@ -22743,6 +22750,41 @@ const ERX_PRICE = { sales:['qty','net'], purch:['qty','egp'], sret:['qty','value
 const ERX_HIER = ['client','supplier','party','gov','city','ctype','region','item','cat','vtype','kind','wh','site','treasury','user','side','ptype','doc','day','month','year'];
 function erxPriceInit(){ Object.keys(ERX_PRICE).forEach(k=>{ const S=ER.rx.meta&&ER.rx.meta.srcs[k]; if(S&&S.meas&&S.meas[ERX_PRICE[k][0]]&&S.meas[ERX_PRICE[k][1]]) S.meas.__price=['السعر (متوسط)','m','']; }); }
 function erxPriceFix(R,rows,tot){ if(!R.price) return; const [q,v]=R.price, f=o=>{ if(!o) return; const qq=Number(o['m_'+q])||0; o.m___price=qq?(Number(o['m_'+v])||0)/qq:null; }; (rows||[]).forEach(f); f(tot); }
+// 📒 «الحركة المخزنية للصنف» (يومية صنف) زى البرنامج القديم: كل حركة بتاريخها + الفاتورة + الجهة + السعر + الرصيد بعدها
+function erxLedgerCalc(L){ return (L.items||[]).map(it=>{ let bal=Number(it.opening)||0; let ti=0,to=0,vi=0,vo=0,pr=0,hasP=false;
+    const ls=(it.lines||[]).map(l=>{ const i=Number(l.in)||0, o=Number(l.out)||0, p=l.price==null?null:Number(l.price); bal+=i-o; ti+=i; to+=o; if(p!=null){ vi+=i*p; vo+=o*p; }
+      if(o>0&&p!=null&&l.cost!=null&&(l.raw==='inv'||l.raw==='del')){ pr+=o*(p-Number(l.cost)); hasP=true; } return Object.assign({},l,{bal}); });
+    return Object.assign({},it,{ls,ti,to,vi,vo,pr,hasP,close:bal}); }); }
+function erxLedger(D,forPrint){ const L=D.ledger||{}, G=erxLedgerCalc(L), cost=!!L.cost, party=!!L.party; const Q=v=>v?erQ(v):'', M=v=>v==null||v===''?'':erMoney(v,2);
+  if(!G.length) return '<div class="qt-card qt-sub" style="text-align:center;padding:30px">📭 مفيش حركة بالفلاتر دى — جرّب فترة أوسع</div>';
+  const head=`<tr><th rowspan="2">التاريخ</th><th rowspan="2">البيان</th><th rowspan="2">رقم المستند</th><th rowspan="2">فاتورة</th><th rowspan="2">الجهة</th><th rowspan="2">المخزن</th><th colspan="3" class="in">وارد</th><th colspan="3" class="out">منصرف</th><th rowspan="2">${party?'تراكمى':'الرصيد'}</th></tr>
+    <tr><th class="in">الكمية</th><th class="in">السعر</th><th class="in">القيمة</th><th class="out">الكمية</th><th class="out">السعر</th><th class="out">القيمة</th></tr>`;
+  let gi=0,go=0,gvi=0,gvo=0,gp=0,anyP=false;
+  const blocks=G.map(it=>{ gi+=it.ti; go+=it.to; gvi+=it.vi; gvo+=it.vo; gp+=it.pr; anyP=anyP||it.hasP;
+    const rows=it.ls.map(l=>{ const i=Number(l.in)||0, o=Number(l.out)||0, p=l.price;
+      return `<tr><td>${erEsc(l.d)}</td><td>${erEsc(l.type)}</td><td>${forPrint?erEsc(l.doc_no):`<b style="color:var(--gold);cursor:pointer" title="افتح المستند" onclick="erxLedgerOpen('${erEsc(l.raw)}',${Number(l.doc_id)||0})">${erEsc(l.doc_no)}</b>`}</td><td>${erEsc(l.ref||'')}</td><td>${erEsc(l.party||'')}${l.party_code?` <span class="qt-sub">${erEsc(l.party_code)}</span>`:''}</td><td class="qt-sub">${erEsc(l.wh||'')}</td>
+        <td class="n in">${Q(i)}</td><td class="in">${i&&p!=null?M(p):''}</td><td class="in">${i&&p!=null?M(i*p):''}</td><td class="n out">${Q(o)}</td><td class="out">${o&&p!=null?M(p):''}</td><td class="out">${o&&p!=null?M(o*p):''}</td><td class="n">${erQ(l.bal)}</td></tr>`; }).join('');
+    return `<tbody class="erx-lg"><tr class="erx-gh"><td colspan="13">▣ الصنف: <b>${erEsc(it.code)} — ${erEsc(it.name)}</b></td></tr>
+      ${party?'':`<tr class="erx-op"><td colspan="12">رصيد أول المدة${D.from?' (قبل '+erEsc(D.from)+')':''}</td><td class="n">${erQ(it.opening||0)}</td></tr>`}${rows}
+      <tr class="erx-gs"><td colspan="6">إجمالى ${erEsc(it.code)}${cost&&it.hasP?` — ربح المبيعات: <b>${erMoney(it.pr,2)}</b>`:''}</td><td class="n">${Q(it.ti)}</td><td></td><td>${M(it.vi)}</td><td class="n">${Q(it.to)}</td><td></td><td>${M(it.vo)}</td><td class="n">${party?'':erQ(it.close)}</td></tr></tbody>`; }).join('');
+  const foot=`<tbody><tr class="erx-tot"><td colspan="6">الإجمالى العام — ${G.length} صنف${cost&&anyP?` · صافى ربح المبيعات: <b>${erMoney(gp,2)}</b>`:''}</td><td class="n">${Q(gi)}</td><td></td><td>${M(gvi)}</td><td class="n">${Q(go)}</td><td></td><td>${M(gvo)}</td><td></td></tr></tbody>`;
+  const note=forPrint?'':`<div class="qt-sub" style="margin:6px 2px">${L.basis==='actual'?'📦 فعلى: التسليم للتاجر والاستلام من المورد':'📄 دفترى: فواتير البيع وفواتير/شحنات الشراء'}${party?' — ⚠️ متفلتر بتاجر/مورد: العمود الأخير تراكمى حركاته بس':''} · دوس على رقم المستند يفتحه</div>`;
+  return `${note}<div class="qt-scroll erx-tbl"><table class="qt-tbl erx-ledger"><thead>${head}</thead>${blocks}${foot}</table></div>`; }
+async function erxLedgerOpen(raw,id){ if(!id) return; try{ if(raw==='inv'){ if(!ER.sl) await erSlLoad(); return erInvOpen(id); } if(raw==='del'){ if(!ER.sl) await erSlLoad(); return erDelPrint(id); } if(raw==='ship'){ if(!ER.pu) ER.pu=await rpcSecure('erp_purch_list',{}); return erShipOpen(id); } erToast('افتحه من شاشته',false); }catch(e){ erToast('❌ '+erErr(e),false); } }
+function erxLedgerPrint(){ const D=ER.rx.data, co=erCoInfo(), w=window.open('','_blank'); if(!w){ erToast('المتصفح منع فتح نافذة الطباعة — اسمح بالـ popups',false); return; }
+  const fs=[['من تاريخ',D.from||'البداية'],['إلى تاريخ',D.to||erToday()]].concat(erxFiltSum());
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(D.R.t)}</title><style>
+    @page{size:A4 landscape;margin:10mm} body{font-family:Tahoma,Arial,sans-serif;color:#000;font-size:11px}
+    .co{font-size:17px;font-weight:700;color:#1d4e89;border-bottom:2px solid #1d4e89;padding-bottom:4px} h1{text-align:center;font-size:17px;color:#1d4e89;border:1px solid #999;background:#eee;padding:5px;margin:8px 80px}
+    .fl{background:#eef1f8;border-radius:8px;padding:6px 12px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px 24px;margin-bottom:8px}.fl b{color:#a00}
+    table{width:100%;border-collapse:collapse} th,td{border:1px solid #bbb;padding:3px 4px;text-align:center} th{background:#eee}
+    tr.erx-gh td{background:#e8eef8;text-align:right;font-size:12px} tr.erx-op td{background:#fafafa} tr.erx-gs td{font-weight:700;background:#f3f3f3} tr.erx-tot td{font-weight:700;background:#ddd;font-size:12px} tbody.erx-lg{break-inside:avoid}</style></head><body>
+    <div class="co">${erEsc(co.name||'')}</div><h1>${erEsc(D.R.t)}</h1><div class="fl">${fs.map(x=>`<div>${erEsc(x[0])}: <b>${erEsc(x[1])}</b></div>`).join('')}</div>
+    ${erxLedger(D,true)}<script>setTimeout(()=>{window.print();},300)<\/script></body></html>`); w.document.close(); }
+function erxLedgerCsv(){ const D=ER.rx.data, G=erxLedgerCalc(D.ledger||{}); const esc=v=>{ v=v==null?'':String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+  const L=[['كود الصنف','الصنف','التاريخ','البيان','رقم المستند','فاتورة','الجهة','المخزن','وارد','منصرف','السعر','الرصيد'].join(',')];
+  G.forEach(it=>{ L.push([it.code,it.name,'','رصيد أول المدة','','','','','','','',it.opening||0].map(esc).join(',')); it.ls.forEach(l=>L.push([it.code,it.name,l.d,l.type,l.doc_no,l.ref||'',l.party||'',l.wh||'',l.in||0,l.out||0,l.price??'',l.bal].map(esc).join(','))); });
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+L.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`يومية_صنف_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 // 📄 عرض «بالفاتورة» زى تقرير الأصناف المحملة فى البرنامج القديم
 function erxSplit(t){ t=String(t??''); const i=t.indexOf(' — '); return i<0?['',t]:[t.slice(0,i),t.slice(i+3)]; }
 function erxDocGroups(rows){ const G=[], by={}; rows.forEach(r=>{ const k=String(r.i_doc??r.d_doc); let g=by[k]; if(!g){ g=by[k]={no:r.d_doc, id:r.i_doc, date:r.d_day, client:erxSplit(r.d_client), note:r.d_invnote||'', lines:[]}; G.push(g); } g.lines.push(r); });
@@ -22857,12 +22899,13 @@ async function erxOpenDoc(src, id){ try{
   erToast('المستند ده مالوش شاشة فتح من هنا',false); }catch(e){ erToast('❌ '+erErr(e),false); } }
 
 // ── ⬇️ Excel / 🖨️ طباعة
-function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; const R=D.R, S=ER.rx.meta.srcs[R.src], rows=ER.rx.__rows||D.rows, meas=R.meas.filter(m=>S.meas[m]);
+function erxCsv(){ const D=ER.rx.data; if(!D||!D.R) return; if(D.R.ledger) return erxLedgerCsv(); const R=D.R, S=ER.rx.meta.srcs[R.src], rows=ER.rx.__rows||D.rows, meas=R.meas.filter(m=>S.meas[m]);
   const esc=v=>{ v=v==null?'':String(v); if(/^[=+\-@\t\r]/.test(v)) v="'"+v; return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
   const hd=R.dims.map(d=>S.dims[d][0]).concat(meas.map(m=>S.meas[m][0])); const lines=[hd.map(esc).join(',')].concat(rows.map(r=>R.dims.map(d=>r['d_'+d]).concat(meas.map(m=>r['m_'+m])).map(esc).join(',')));
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'})); a.download=`${(R.t||'report').replace(/[\\/:*?"<>|]/g,'')}_${D.from||''}_${D.to||''}.csv`; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 function erRepPrint(){ const D=ER.rx.data; if(!D||!D.R){ erToast('اعرض التقرير الأول',false); return; } if(!erCan('erp-reports','print')){ erToast('معندكش صلاحية طباعة',false); return; }
   if(D.R.blk && ER.rx.view==='docblk') return erxDocBlkPrint();
+  if(D.R.ledger) return erxLedgerPrint();
   erTbPrintPick({sec:'erp-reports', key:'rx-'+(ER.rx.sid||''), pane:'erx-out', title:D.R.t, sub:(D.from||D.to?`الفترة من ${D.from||'البداية'} إلى ${D.to||''}`:'كل الفترة')+(D.cmp?` — مقارنة بـ ${D.cmp.range[0]} → ${D.cmp.range[1]}`:'')}); }
 
 // ── 🛠️ اعمل تقريرك بنفسك
