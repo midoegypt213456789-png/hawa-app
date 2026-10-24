@@ -22630,7 +22630,8 @@ function erxMineDel(id){ if(!confirm('تمسح التقرير ده من تقار
 function erxSt(s){ ER.rx.sf=ER.rx.sf||{}; if(!ER.rx.sf[s.id]) ER.rx.sf[s.id]={ per:s.perDef||'year', from:'', to:'', fx:{}, g:0, r:0, cmp:s.cmpDef||'', limit:s.topDef||'', hier:[], price:false, nfrom:'', nto:'' }; return ER.rx.sf[s.id]; }
 function erxOpenScr(id){ const s=erxScr(id); if(!s) return; if(s.link){ s.link(); return; } ER.rx.sid=id; erxRenderLib();
   if(s.src==='stl' && !ER.__stlUsers){ ER.__stlUsers=[]; rpcSecure('erp_rep_query',{p:{src:'stl',dims:['user'],meas:['cnt'],f:{},limit:200}}).then(x=>{ ER.__stlUsers=(x.rows||[]).map(r=>r.d_user).filter(Boolean); if(ER.edit&&ER.edit.__erx) ER.edit.__render(); }).catch(()=>{}); }
-  const st=erxSt(s); ER.edit={__erx:1, __render:()=>erModalBody(erxScrForm())}; ER.ro=false;
+  const st=erxSt(s); ER.edit={__erx:1, __render:()=>{ const a=document.activeElement, k=a&&a.classList&&a.classList.contains('erx-pki')?a.dataset.k:null, v=k?a.value:'', pos=k?a.selectionStart:null;
+      erModalBody(erxScrForm()); if(k) setTimeout(()=>{ const n=document.querySelector(`#er-m-body .erx-pki[data-k="${k}"]`); if(n&&document.activeElement!==n){ n.value=v; n.focus(); try{ n.setSelectionRange(pos,pos); }catch(e){} erxPk(n); } },0); }}; ER.ro=false;
   erModal(`📄 ${erEsc(s.t)}`, erxScrForm(), `<button class="qt-btn" id="erx-go" onclick="erxScrGo(false)">▶️ اعرض</button><button class="qt-btn ghost" onclick="erxScrGo(true)">🖨️ اعرض واطبع</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
   const m=document.getElementById('er-modal'); if(m){ m.classList.remove('er-max'); erModalMaxBtn(); } }
 function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs[s.src];
@@ -22642,9 +22643,9 @@ function erxScrForm(){ const s=erxScr(ER.rx.sid), st=erxSt(s), S=ER.rx.meta.srcs
       <input class="qt-inp erx-pki" autocomplete="off" data-k="${x[0]}" data-t="${x[2]}" placeholder="🔍 ${vals.length?'+ كمان — اكتب كود أو اسم':'الكل — اكتب كود أو اسم'}" oninput="erxPk(this)" onfocus="erxPk(this)" onclick="erxPk(this)" onkeydown="erxPkKey(event,this)" onblur="setTimeout(erxPkBlur,150)">${vals.length>1?`<b class="qt-sub" style="cursor:pointer" onclick="erxSFClr('${x[0]}')">✖ امسح الكل</b>`:''}</div></div>`; };
   const rng=st.per==='custom'?[st.from,st.to]:erxPer(st.per);
   return `<div class="erx-form">
-    ${fl.includes('date')&&!s.noDate?`<div class="erx-ff erx-ffd"><label>${S.asof?'الفترة':'الفترة'}</label><div class="erx-ffv"><select class="qt-inp" onchange="erxSt(erxScr(ER.rx.sid)).per=this.value;ER.edit.__render()">${ERX_PERS.map(p=>`<option value="${p[0]}" ${st.per===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>
-      <span class="qt-sub">من</span><input class="qt-inp" type="date" value="${erEsc(rng[0]||'')}" onchange="const t=erxSt(erxScr(ER.rx.sid));t.per='custom';t.from=this.value;t.to=t.to||'${erEsc(rng[1]||'')}';ER.edit.__render()">
-      <span class="qt-sub">إلى</span><input class="qt-inp" type="date" value="${erEsc(rng[1]||'')}" onchange="const t=erxSt(erxScr(ER.rx.sid));t.per='custom';t.to=this.value;t.from=t.from||'${erEsc(rng[0]||'')}';ER.edit.__render()"></div></div>
+    ${fl.includes('date')&&!s.noDate?`<div class="erx-ff erx-ffd"><label>${S.asof?'الفترة':'الفترة'}</label><div class="erx-ffv"><select class="qt-inp erx-persel" onchange="erxSt(erxScr(ER.rx.sid)).per=this.value;ER.edit.__render()">${ERX_PERS.map(p=>`<option value="${p[0]}" ${st.per===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>
+      <span class="qt-sub">من</span><input class="qt-inp" type="date" value="${erEsc(rng[0]||'')}" onchange="const t=erxSt(erxScr(ER.rx.sid));t.per='custom';t.from=this.value;t.to=t.to||'${erEsc(rng[1]||'')}';erxPerSync()">
+      <span class="qt-sub">إلى</span><input class="qt-inp" type="date" value="${erEsc(rng[1]||'')}" onchange="const t=erxSt(erxScr(ER.rx.sid));t.per='custom';t.to=this.value;t.from=t.from||'${erEsc(rng[0]||'')}';erxPerSync()"></div></div>
       ${S.asof?'<div class="qt-sub" style="margin-top:-6px">📌 الرصيد بيتحسب لحد تاريخ «إلى» — و«أول المدة / الوارد / المنصرف» على الفترة</div>':''}`:''}
     <div class="erx-fgrid">${fl.filter(k=>k!=='date').map(field).join('')}</div>
     ${s.g.length>1?`<div class="erx-ff"><label>اعرض حسب</label><div class="erx-ffv erx-rad">${s.g.map((g,i)=>`<label class="qt-radio ${st.g===i?'er-on':''}"><input type="radio" name="erx-g" ${st.g===i?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).g=${i};ER.edit.__render()"> ${erEsc(g[0])}</label>`).join('')}</div></div>`:''}
@@ -22664,6 +22665,8 @@ function erxHierForm(s,st,S){ const g3=(s.g[st.g]||s.g[0])[3]||{}; if(g3.ledger|
     ${pr?`<div class="erx-ff"><label>الأسعار</label><div class="erx-ffv"><label class="qt-radio ${st.price?'er-on':''}"><input type="checkbox" ${st.price?'checked':''} onchange="erxSt(erxScr(ER.rx.sid)).price=this.checked;ER.edit.__render()"> 💲 بالأسعار — الكمية × السعر = القيمة (بإجماليات)</label></div></div>`:''}
     ${s.docRange?`<div class="erx-ff"><label>المستند</label><div class="erx-ffv"><span class="qt-sub">من رقم</span><input class="qt-inp" type="number" min="1" value="${erEsc(st.nfrom||'')}" onchange="erxSt(erxScr(ER.rx.sid)).nfrom=this.value"><span class="qt-sub">إلى رقم</span><input class="qt-inp" type="number" min="1" value="${erEsc(st.nto||'')}" onchange="erxSt(erxScr(ER.rx.sid)).nto=this.value"></div></div>`:''}`; }
 function erxHierTog(k){ const st=erxSt(erxScr(ER.rx.sid)); st.hier=st.hier||[]; const i=st.hier.indexOf(k); if(i>=0) st.hier.splice(i,1); else { if(st.hier.length>=3){ erToast('لحد 3 مستويات بس',false); ER.edit.__render(); return; } st.hier.push(k); } ER.edit.__render(); }
+function erxPerSync(){ const sel=document.querySelector('#er-m-body .erx-persel'); if(sel) sel.value='custom'; }
+function erxPkLive(){ const P=ER.__pk; if(!P) return null; if(P.inp&&P.inp.isConnected) return P.inp; const n=document.querySelector(`#er-m-body .erx-pki[data-k="${P.k}"]`); if(n){ P.inp=n; return n; } return null; }
 function erxSFAdd(k,t,v,isId){ const st=erxSt(erxScr(ER.rx.sid)); let val=v; if(!isId){ const o=erxFOpts(t).find(o=>o[1]===v); if(!o){ erToast('مش موجود فى القايمة',false); return; } val=o[0]; }
   if(k.endsWith('_id')) val=Number(val); st.fx[k]=(st.fx[k]||[]).filter(x=>String(x)!==String(val)).concat([val]); ER.edit.__render(); }
 // 🔍 اختيار بالبحث (كود أو اسم) — لكل فلاتر التقارير
@@ -22691,8 +22694,8 @@ function erxPkAdd(k,ids){ const st=erxSt(erxScr(ER.rx.sid)); const cur=(st.fx[k]
 function erxPkRe(k,q){ ER.edit.__render(); setTimeout(()=>{ const n=document.querySelector(`#er-m-body .erx-pki[data-k="${k}"]`); if(n){ n.value=q||''; n.focus(); erxPk(n); } },0); }
 function erxPkPick(i){ const P=ER.__pk; if(!P||!P.hit[i]) return; const q=P.inp.value; erxPkAdd(P.k,[P.hit[i][0]]); erxPkRe(P.k,q); }
 function erxPkAll(){ const P=ER.__pk; if(!P) return; erxPkAdd(P.k,P.hit.map(o=>o[0])); erxPkRe(P.k,''); }
-document.addEventListener('keydown',e=>{ const P=(typeof ER!=='undefined')&&ER.__pk; if(!P||!P.inp||!P.inp.isConnected) return; const a=document.activeElement; if(a===P.inp) return;
-  if(a&&a.matches&&a.matches('input,textarea,select,[contenteditable]')) return; if(e.key&&e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ P.inp.focus(); } },true);
+document.addEventListener('keydown',e=>{ const P=(typeof ER!=='undefined')&&ER.__pk; if(!P) return; const inp=erxPkLive(); if(!inp){ erxPkHide(); return; } const a=document.activeElement; if(a===inp) return;
+  if(a&&a.matches&&a.matches('input,textarea,select,[contenteditable]')) return; if(e.key&&(e.key.length===1||e.key==='Backspace')&&!e.ctrlKey&&!e.metaKey&&!e.altKey){ inp.focus(); } },true);
 document.addEventListener('scroll',e=>{ const P=(typeof ER!=='undefined')&&ER.__pk; if(!P||(e.target&&e.target.id==='erx-pk')) return; if(P.inp&&P.inp.isConnected) erxPk(P.inp); else erxPkHide(); },true);
 function erxSFClr(k){ const st=erxSt(erxScr(ER.rx.sid)); delete st.fx[k]; ER.edit.__render(); }
 function erxSFDel(k,v){ const st=erxSt(erxScr(ER.rx.sid)); st.fx[k]=(st.fx[k]||[]).filter(x=>String(x)!==String(v)); if(!st.fx[k].length) delete st.fx[k]; ER.edit.__render(); }
