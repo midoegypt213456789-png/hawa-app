@@ -4093,12 +4093,13 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erSetupLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="erx-tab-wh" onclick="erSetupTab('wh')">🏬 المخازن</button><button class="bl-tab" id="erx-tab-cur" onclick="erSetupTab('cur')">💱 العملات</button><button class="bl-tab" id="erx-tab-tier" onclick="erSetupTab('tier')">🏷️ فئات الأسعار</button><button class="bl-tab" id="erx-tab-tre" onclick="erSetupTab('tre')">🏦 الخزائن والبنوك</button><button class="bl-tab" id="erx-tab-status" onclick="erSetupTab('status')">🚦 حالة السيستم</button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erx-tab-wh" onclick="erSetupTab('wh')">🏬 المخازن</button><button class="bl-tab" id="erx-tab-cur" onclick="erSetupTab('cur')">💱 العملات</button><button class="bl-tab" id="erx-tab-tier" onclick="erSetupTab('tier')">🏷️ فئات الأسعار</button><button class="bl-tab" id="erx-tab-tre" onclick="erSetupTab('tre')">🏦 الخزائن والبنوك</button><button class="bl-tab" id="erx-tab-status" onclick="erSetupTab('status')">🚦 حالة السيستم</button><button class="bl-tab" id="erx-tab-per" onclick="erSetupTab('per')">📕 الفترات والإقفال</button></div>
       <div id="erx-pane-wh" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-cur" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-tier" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-tre" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-status" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erx-pane-per" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
 
     <div class="section" id="sec-feedback">
@@ -10908,6 +10909,7 @@ const EXTRA_PERMS = {
   'shortage-motor':    { icon: '⚙️', label: 'تسليم المواتير (شاشة المخازن)' },
   'warehouse-checkin': { icon: '✅', label: 'حضور الحجوزات (مع التسليم)' },
   'erp-cost':          { icon: '💲', label: 'تكلفة وسعر شراء الأصناف (السيستم الجديد) — دخول = يشوف، تعديل = يعدّل' },
+  'erp-periods':       { icon: '📕', label: 'الفترات المالية — دخول = يقدر يفتح الفترات المقفولة للعرض والطباعة (الإقفال نفسه للأدمن الرئيسى بس)' },
   'erp-overdraft':     { icon: '📉', label: 'البيع على المكشوف دفترى — دخول = يقدر يعمل فاتورة أكبر من الرصيد الدفترى (التسليم برضه لحد الرصيد الفعلى بس)' }
 };
 const PERM_ACTIONS = [
@@ -21648,9 +21650,9 @@ async function erTraderSave(){ await erRun('er-save-btn', async ()=>{ const e=ER
   const r=await rpcSecure('erp_trader_save',{p}); const t=erById(ER.traders,e.client_id); if(t) t.acc=r; erClose(); erRenderTraders(); erToast('✅ اتحفظ حساب التاجر'); }); }
 
 // ════════════════ 🧩 تعريفات السيستم ════════════════
-const ERS_TABS=['wh','cur','tier','tre','status'];
+const ERS_TABS=['wh','cur','tier','tre','status','per'];
 async function erSetupLoad(force){ try{ await erBoot(force); erSetupTab(ER.tab.setup); }catch(e){ erPaneErr('erx-pane-wh',e); } }
-function erSetupTab(t){ ER.tab.setup=t; erTabs('erx',ERS_TABS,t); ({wh:erRenderWh,cur:erRenderCur,tier:erRenderTier,tre:erRenderTre,status:erRenderStatus}[t])(); }
+function erSetupTab(t){ ER.tab.setup=t; erTabs('erx',ERS_TABS,t); ({wh:erRenderWh,cur:erRenderCur,tier:erRenderTier,tre:erRenderTre,status:erRenderStatus,per:erRenderPer}[t]||erRenderWh)(); }
 function erSimpleTable(id, head, rows, addBtn, empty){ const el=document.getElementById(id); if(!el) return;
   el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><div style="flex:1"></div>${addBtn||''}</div>` + (rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">${empty}</div>`); }
 function erRenderWh(){ const B=ER.boot, canE=erCan('erp-setup','edit');
@@ -22257,7 +22259,7 @@ async function erTrSave(){ await erRun('er-save-btn', async ()=>{ const t=ER.edi
   erClose(); ER.trs=null; ER.stock=await rpcSecure('erp_stock_list',{}); erStockTab('tr'); erToast('✅ اتعمل التحويل — الأرصدة اتحدّثت'); }); }
 async function erTrCancel(id){ const r=erAsk('سبب إلغاء التحويل؟ (البضاعة هترجع للمخزن الأولانى)'); if(!r) return;
   try{ await rpcSecure('erp_tr_cancel',{p_id:id,p_reason:r}); ER.trs=null; ER.stock=await rpcSecure('erp_stock_list',{}); erStockTab('tr'); erToast('✅ اتلغى التحويل'); }catch(e){ erToast('❌ '+erErr(e),false); } }
-function erStockMap(){ if(ER.__sm && ER.__smSrc===ER.stock) return ER.__sm; const m={}; (ER.stock||[]).forEach(r=>{ (m[r.item_id]=m[r.item_id]||{})[r.wh]={book:Number(r.book),actual:Number(r.actual)}; }); ER.__sm=m; ER.__smSrc=ER.stock; return m; }
+function erStockMap(){ if(ER.__sm && ER.__smSrc===ER.stock) return ER.__sm; const m={}; (ER.stock||[]).forEach(r=>{ (m[r.item_id]=m[r.item_id]||{})[r.wh]={book:Number(r.book),actual:Number(r.actual),old:Number(r.old_res||0)}; }); ER.__sm=m; ER.__smSrc=ER.stock; return m; }
 function erKitAvail(it, m, wh){ let best=null; (it.components||[]).forEach(c=>{ let b=0,a=0; const row=m[c.item_id]||{}; Object.keys(row).forEach(w=>{ if(!wh||String(w)===String(wh)){ b+=row[w].book; a+=row[w].actual; } });
   const kb=Math.floor(b/Number(c.qty)), ka=Math.floor(a/Number(c.qty)); best=best?{book:Math.min(best.book,kb),actual:Math.min(best.actual,ka)}:{book:kb,actual:ka}; }); return best||{book:0,actual:0}; }
 function erRenderStock(){
@@ -22267,7 +22269,7 @@ function erRenderStock(){
     if(it.stock_mode==='components'){ const k=erKitAvail(it,m,f.wh); if(f.nz==='1' && !k.book && !k.actual) return; rows.push({it,wh:f.wh||null,book:k.book,actual:k.actual,kit:true}); return; }
     const per=m[it.id]||{}; const whs=Object.keys(per).filter(w=>!f.wh||String(w)===String(f.wh));
     if(!whs.length){ if(f.nz!=='1') rows.push({it,wh:f.wh||null,book:0,actual:0}); return; }
-    whs.forEach(w=>rows.push({it,wh:w,book:per[w].book,actual:per[w].actual})); });
+    whs.forEach(w=>rows.push({it,wh:w,book:per[w].book,actual:per[w].actual,old:per[w].old||0})); });
   el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px">
     <input class="qt-inp" style="width:220px" placeholder="🔍 كود / اسم" value="${erEsc(f.q)}" oninput="ER.stf.q=this.value;erRenderStock()">
     <select class="qt-inp" onchange="ER.stf.wh=this.value;erRenderStock()"><option value="">كل المخازن</option>${B.warehouses.map(w=>`<option value="${w.id}" ${String(f.wh)===String(w.id)?'selected':''}>${erEsc(w.name)}</option>`).join('')}</select>
@@ -22278,7 +22280,7 @@ function erRenderStock(){
   ${rows.map(r=>{ const tr=Math.max(0,r.book-r.actual), sd=Math.max(0,r.actual-r.book); const low=r.it.reorder_level!=null && r.book<Number(r.it.reorder_level);
     return `<tr><td><b style="color:var(--gold)">${erEsc(r.it.code)}</b></td><td><b>${erEsc(r.it.name_ar)}</b>${r.kit?`<div class="qt-sub">🧩 مفكك — المتاح محسوب من أقل مكوّن</div>`:''}${low?' <span class="qt-chip del">⬇️ تحت حد الطلب</span>':''}</td>
       <td>${r.wh?erEsc(erWhName(r.wh)):'<span class="qt-sub">كل المخازن</span>'}</td><td><b style="font-size:15px">${erQ(r.book)}</b></td><td><b style="font-size:15px">${erQ(r.actual)}</b></td>
-      <td>${tr?`<span class="qt-chip ex">${erQ(tr)}</span>`:'—'}</td><td>${sd?`<span class="qt-chip in">${erQ(sd)}</span>`:'—'}</td>
+      <td>${tr?`<span class="qt-chip ex">${erQ(tr)}</span>`:'—'}</td><td>${sd?`<span class="qt-chip in">${erQ(sd)}</span>`:'—'}${r.old>0?`<div class="qt-sub" title="فواتير فى فترة مقفولة ولسه متحملتش — بتكمل تحميل عادى">📕 منهم ${erQ(r.old)} لفواتير الفترة المقفولة</div>`:''}</td>
       <td><button class="qt-btn ghost sm" onclick="erCardOpen(${r.kit?r.it.components.find(c=>c.role==='engine')?.item_id||r.it.components[0].item_id:r.it.id})">📜 كارت الصنف</button></td></tr>`; }).join('')}
   </tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">📊 مفيش أرصدة لسه — الرصيد بيدخل من الشحنات والاستلام</div>`}`;
 }
@@ -22807,7 +22809,7 @@ function erxRenderLib(){ const el=document.getElementById('erx-side'); if(!el) r
 function erxMineDel(id){ if(!confirm('تمسح التقرير ده من تقاريرك؟')) return; erxSaveLS('erx_mine', erxMine().filter(r=>r.id!==id)); erxRenderLib(); }
 
 // ── 🎛️ شاشة الفلاتر (زى «تقرير الأصناف المحملة» فى البرنامج القديم)
-function erxSt(s){ ER.rx.sf=ER.rx.sf||{}; if(!ER.rx.sf[s.id]) ER.rx.sf[s.id]={ per:s.perDef||'year', from:'', to:'', fx:{}, g:0, r:0, cmp:s.cmpDef||'', limit:s.topDef||'', hier:[], price:false, nfrom:'', nto:'' }; return ER.rx.sf[s.id]; }
+function erxSt(s){ ER.rx.sf=ER.rx.sf||{}; if(!ER.rx.sf[s.id]){ ER.rx.sf[s.id]={ per:s.perDef||'year', from:'', to:'', fx:{}, g:0, r:0, cmp:s.cmpDef||'', limit:s.topDef||'', hier:[], price:false, nfrom:'', nto:'' }; if(ER.per){ const x=ER.rx.sf[s.id]; x.per='custom'; x.from=ER.per.from||''; x.to=ER.per.to; } } return ER.rx.sf[s.id]; }
 function erxOpenScr(id){ const s=erxScr(id); if(!s) return; if(s.link){ s.link(); return; } ER.rx.sid=id; erxRenderLib();
   ER.__usrSrc=ER.__usrSrc||{}; const SU=ER.rx.meta.srcs[s.src];
   if(SU && SU.dims && SU.dims.user && ((s.fl||[]).includes('user')||s.src==='stl') && !ER.__usrSrc[s.src]){ ER.__usrSrc[s.src]=1; ER.__stlUsers=ER.__stlUsers||[];
@@ -24251,6 +24253,124 @@ async function erTmFromShip(){ const n=prompt('رقم الشحنة (فاتورة
   try{ const c=await rpcSecure('erp_tax_model_from_ship_no',{p_no:Number(erNum(n))}); await erLtReload(); erRenderTaxModels(); erToast(c?`✅ اتعمل ${c} نموذج — راجع الأسعار`:'مفيش أصناف جديدة فى الشحنة دى (أو اتعملت قبل كده)', !!c); }catch(e){ erToast('❌ '+erErr(e),false); } }
 async function erTmFromShipId(shipId){ try{ const c=await rpcSecure('erp_tax_model_from_ship',{p_ship:shipId}); erToast(c?`✅ اتعمل ${c} نموذج ضريبة من الشحنة — راجعه من شاشة الجوابات`:'النماذج متعملة قبل كده للشحنة دى', !!c); }catch(e){ erToast('❌ '+erErr(e),false); } }
 
+// ════════════════════════════════════════════════════════════════
+// 📕 الفترات المالية والإقفال — الأرصدة بتكمل تراكمى، والإقفال = قفل بالتاريخ من السيرفر (عرض وطباعة بس)
+// ════════════════════════════════════════════════════════════════
+ER.per = null;        // الفترة المقفولة اللى الأدمن فاتحها للعرض (null = الفترة الحالية)
+ER.pl = null;         // erp_periods_list
+ER.pc = null;         // معالج الإقفال
+(function(){ const base=erCan; erCan=function(scr,a){ if(ER.per && (a==='edit'||a==='del')) return false; return base(scr,a); }; })();
+async function erPerList(force){ if(!ER.pl||force){ ER.pl=await rpcSecure('erp_periods_list',{}); } return ER.pl; }
+function erPerClosed(){ return ((ER.pl&&ER.pl.periods)||[]).filter(p=>p.status==='مقفولة'); }
+function erPerCurFrom(){ return ER.pl&&ER.pl.cur_from?ER.pl.cur_from:''; }
+function erPerRange(){ return ER.per?[ER.per.from||'',ER.per.to]:null; }
+// 🔴 شريط الفترة المقفولة + زرار 📅 الفترة
+function erPerBar(){ let b=document.getElementById('er-per-bar'); const P=ER.per, cl=erPerClosed();
+  if(!b){ b=document.createElement('div'); b.id='er-per-bar'; document.body.appendChild(b); }
+  if(P){ b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99990;background:#7a1f1f;color:#fff;font-family:Cairo,Tahoma,sans-serif;direction:rtl;padding:7px 14px;display:flex;gap:10px;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.4)';
+    b.innerHTML=`📕 إنت فاتح فترة مقفولة: «${erEsc(P.name)}» (من ${erEsc(P.from||'البداية')} لـ ${erEsc(P.to)}) — عرض وطباعة بس <button onclick="erPerExit()" style="background:#fff;color:#7a1f1f;border:0;border-radius:8px;padding:3px 12px;font-weight:900;font-family:inherit;cursor:pointer">↩️ رجوع للفترة الحالية</button>`; return; }
+  if(cl.length && ER.pl && ER.pl.can_view){ b.style.cssText='position:fixed;top:8px;left:8px;z-index:9990;direction:rtl;font-family:Cairo,Tahoma,sans-serif';
+    b.innerHTML=`<button onclick="erPerPick()" title="اختار الفترة" style="background:#1A1A1A;color:#E8C97A;border:1px solid #C9A84C;border-radius:10px;padding:4px 10px;font-family:inherit;font-weight:700;cursor:pointer;font-size:12px">📅 الفترة الحالية (من ${erEsc(erPerCurFrom())})</button>`; return; }
+  b.style.display='none'; b.innerHTML=''; }
+function erPerPick(){ const L=erPerClosed();
+  const body=`<div style="display:flex;flex-direction:column;gap:8px">
+    <button class="qt-btn" style="justify-content:space-between;display:flex" onclick="erPerExit();erClose()"><span>🟢 الفترة الحالية (مفتوحة)</span><span>من ${erEsc(erPerCurFrom())}</span></button>
+    ${L.map(p=>`<button class="qt-btn ghost" style="justify-content:space-between;display:flex" onclick="erPerEnter(${p.id});erClose()"><span>📕 ${erEsc(p.name)}</span><span class="qt-sub">${erEsc(p.from||'')} ← ${erEsc(p.to)}</span></button>`).join('')}
+    <div class="qt-sub">💡 الفترة المقفولة بتفتح للعرض والطباعة والتقارير بس — والتقارير بتتحسب لحد آخر يوم فيها.</div></div>`;
+  erModal('📅 اختار الفترة', body, `<button class="qt-btn ghost" onclick="erClose()">إغلاق</button>`); }
+function erPerEnter(id){ const p=erPerClosed().find(x=>x.id===id); if(!p) return; ER.per={id:p.id,name:p.name,from:p.from,to:p.to}; if(ER.rx) ER.rx.sf={}; erPerBar(); erToast(`📕 فتحت «${p.name}» — عرض وطباعة بس`); try{ uaEv('view','فتح فترة مقفولة: '+p.name); }catch(e){} try{ goTo(currentSection); }catch(e){} }
+function erPerExit(){ if(!ER.per){ erPerBar(); return; } ER.per=null; if(ER.rx) ER.rx.sf={}; erPerBar(); erToast('🟢 رجعت للفترة الحالية'); try{ goTo(currentSection); }catch(e){} }
+// بعد الدخول: لو فيه فترات مقفولة والمستخدم يقدر يشوفها → اسأله يختار
+let __erPerAsked=false;
+setInterval(async()=>{ try{ if(__erPerAsked||typeof uaOff!=='function'||uaOff()) return; const app=document.getElementById('app'); if(!app||!app.classList.contains('show')) return; __erPerAsked=true;
+  await erPerList(true); erPerBar(); let asked=false; try{ asked=sessionStorage.getItem('er_per_asked')==='1'; }catch(e){}
+  if(!asked && ER.pl.can_view && erPerClosed().length){ try{ sessionStorage.setItem('er_per_asked','1'); }catch(e){} erPerPick(); } }catch(e){ __erPerAsked=false; } },2500);
+
+// ── تاب «📕 الفترات والإقفال» فى تعريفات السيستم
+async function erRenderPer(){ const el=document.getElementById('erx-pane-per'); if(!el) return;
+  try{ await erPerList(true); }catch(e){ erPaneErr('erx-pane-per',e); return; } erPerBar();
+  const P=ER.pl, adm=P.is_admin, L=P.periods||[], last=erPerClosed()[0];
+  const tot=t=>t?`عملاء عليهم ${erMoney(t.cl_debit,2)} — مخزون ${erQ(t.st_actual)} قطعة بقيمة ${erMoney(t.st_value,2)}`:'';
+  el.innerHTML=erBanner()+`<div class="qt-card" style="padding:14px 16px;margin-bottom:12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+     <div><b style="font-size:16px;color:var(--success)">🟢 الفترة الحالية مفتوحة</b><div class="qt-sub">من ${erEsc(P.cur_from||'أول التشغيل')} — لحد دلوقتى${P.closed_through?` — آخر إقفال لحد ${erEsc(P.closed_through)}`:''}</div></div>
+     <div style="flex:1"></div>${adm&&!ER.per?`<button class="qt-btn" onclick="erPcStart()">📕 إقفال الفترة الحالية</button>`:''}</div>
+   ${ER.pc?erPcHtml():''}
+   <div class="qt-card" style="padding:12px 14px"><b>📚 الفترات</b>
+   ${L.length?`<div class="qt-scroll" style="margin-top:8px"><table class="qt-tbl"><thead><tr><th>الفترة</th><th>من</th><th>إلى</th><th>الحالة</th><th>اتقفلت</th><th>الأرصدة الختامية</th><th></th></tr></thead><tbody>
+     ${L.map(p=>`<tr class="${p.status!=='مقفولة'?'del':''}"><td><b style="color:var(--gold)">${erEsc(p.name)}</b>${p.is_test?' <span class="qt-chip dim">🧪</span>':''}${p.notes?`<div class="qt-sub">${erEsc(p.notes)}</div>`:''}</td><td>${erEsc(p.from||'—')}</td><td><b>${erEsc(p.to)}</b></td>
+       <td>${p.status==='مقفولة'?'<span class="qt-chip in">📕 مقفولة</span>':`<span class="qt-chip del">↩️ اتلغى الإقفال</span><div class="qt-sub">${erEsc(p.undo_reason||'')} — ${erEsc(p.undone_by||'')}</div>`}</td>
+       <td class="qt-sub">${erDate(p.closed_at)}<div>${erEsc(p.closed_by||'')}</div></td><td class="qt-sub">${tot(p.tot)}</td>
+       <td style="white-space:nowrap">${p.status==='مقفولة'?`<button class="qt-btn ghost sm" onclick="erPerEnter(${p.id})">👁️ افتحها للعرض</button>`:''} <button class="qt-btn ghost sm" onclick="erPerReport(${p.id})">🖨️ تقرير الإقفال</button>
+         ${adm&&last&&last.id===p.id&&!ER.per?` <button class="qt-btn red sm" onclick="erPerUndo(${p.id})">↩️ إلغاء الإقفال</button>`:''}</td></tr>`).join('')}</tbody></table></div>`
+   :'<div class="qt-sub" style="padding:12px 0">لسه مفيش ولا فترة اتقفلت.</div>'}</div>
+   <div class="qt-sub" style="margin-top:10px">💡 الإقفال بيقفل كل المستندات اللى تاريخها لحد يوم الإقفال (إضافة / تعديل / إلغاء) من السيرفر نفسه — والأرصدة الختامية بتبقى هى الافتتاحى للفترة الجديدة تلقائى (مفيش أرقام بتتنقل يدوى).
+     بيكمل عادى: تحميل الفواتير القديمة اللى لسه متحملتش، استلام وتكاليف الشحنات اللى فى الطريق، الجوابات والمواتير والكتب الدورية والفواتير الضريبية. التصحيح بعد الإقفال = تسوية بتاريخ الفترة الجديدة.</div>`; }
+function erPcStart(){ const t=erToday(); ER.pc={date:t,name:'فترة لحد '+t,notes:'',chk:null,confirm:'',tab:'clients'}; erRenderPer(); }
+function erPcHtml(){ const C=ER.pc, K=C.chk, S=K&&K.snapshot, bl=K?K.blockers:[], wr=K?K.warnings:[];
+  const li=(it,k)=>{ if(!it||!it.items) return ''; const f={checks:x=>`شيك ${erEsc(x.check_no||x.no)} — ${erEsc(x.code||'')} ${erEsc(x.client)} — ${erMoney(x.amount,2)} — استحقاق ${erEsc(x.due||'')}`,
+      neg:x=>`${erEsc(x.item)} — ${erEsc(x.wh||'')} — دفترى ${erQ(x.book)} / فعلى ${erQ(x.actual)}`, users:x=>`${erEsc(x.name)} — ${erEsc(x.screen||'')}`,
+      undelivered:x=>`فاتورة ${x.no} — ${erEsc(x.date)} — ${erEsc(x.code||'')} ${erEsc(x.client)}`, ships:x=>`شحنة ${x.no} — ${erEsc(x.date)} — ${erEsc(x.supplier||'')} — ${erEsc(x.status)} — تكاليف: ${erEsc(x.cost||'—')}`}[k];
+    return f?`<details style="margin-top:4px"><summary class="qt-sub" style="cursor:pointer">التفاصيل (${it.items.length})</summary><div class="qt-sub" style="max-height:180px;overflow:auto;line-height:1.9">${it.items.slice(0,300).map(f).join('<br>')}</div></details>`:''; };
+  const act={users:`<button class="qt-btn ghost sm" onclick="goTo('employees')">👷 روح طلّعهم</button>`, checks:`<button class="qt-btn ghost sm" onclick="goTo('erp-cash')">🏦 روح للشيكات</button>`, neg:`<button class="qt-btn ghost sm" onclick="goTo('erp-stock')">📊 روح للأرصدة</button>`};
+  const tabs=[['clients','👥 العملاء'],['suppliers','🚢 الموردين'],['treasuries','💰 الخزائن والبنوك'],['stock','📦 الأصناف']];
+  return `<div class="qt-card" style="padding:14px 16px;margin-bottom:12px;border:1.5px solid var(--gold)">
+    <b style="font-size:16px;color:var(--gold)">📕 إقفال الفترة — خطوة بخطوة</b>
+    <div class="qt-row" style="gap:10px;flex-wrap:wrap;margin:10px 0"><span class="qt-sub">1️⃣ تاريخ الإقفال (آخر يوم فى الفترة)</span><input type="date" class="qt-inp" value="${erEsc(C.date)}" max="${erToday()}" onchange="ER.pc.date=this.value;ER.pc.chk=null;if(/^فترة لحد /.test(ER.pc.name)) ER.pc.name='فترة لحد '+this.value;erRenderPer()">
+      <span class="qt-sub">اسم الفترة</span><input class="qt-inp" style="width:220px" value="${erEsc(C.name)}" onchange="ER.pc.name=this.value.trim();ER.pc.confirm=''">
+      <input class="qt-inp" style="width:220px" placeholder="ملاحظات (اختيارى)" value="${erEsc(C.notes)}" onchange="ER.pc.notes=this.value">
+      <button class="qt-btn" onclick="erPcCheck()">2️⃣ 🔎 افحص وراجع</button><button class="qt-btn ghost sm" onclick="ER.pc=null;erRenderPer()">إلغاء</button></div>
+    <div class="qt-sub" style="margin-top:-4px">💡 يوم الإقفال نفسه بيتقفل — لو لسه فيه شغل النهارده (فواتير / تحميل / سندات) اقفل لحد امبارح.</div>
+    ${K?`<div style="margin-top:6px">${bl.length?bl.map(b=>`<div style="background:rgba(224,85,85,.12);border:1px solid rgba(224,85,85,.45);border-radius:10px;padding:8px 12px;margin-bottom:6px"><b style="color:var(--error)">⛔ ${erEsc(b.msg)}</b> ${act[b.k]||''}${li(b,b.k)}</div>`).join('')
+        :'<div style="background:rgba(76,175,125,.12);border:1px solid rgba(76,175,125,.4);border-radius:10px;padding:8px 12px;margin-bottom:6px"><b style="color:var(--success)">✅ مفيش موانع — ينفع تقفل</b></div>'}
+      ${wr.map(w=>`<div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.35);border-radius:10px;padding:8px 12px;margin-bottom:6px"><b style="color:var(--gold-light)">⚠️ ${erEsc(w.msg)}</b>${w.k==='letters'?`<span class="qt-sub"> — جوابات من غير فاتورة ضريبية: ${w.n_notinv} — جوه الاعتماد: ${w.n_inside}</span>`:''}${li(w,w.k)}</div>`).join('')}
+      ${K.later_docs?`<div class="qt-sub">ℹ️ فيه ${K.later_docs} مستند تاريخه بعد ${erEsc(C.date)} — هيبقوا فى الفترة الجديدة.</div>`:''}</div>
+     <div style="margin-top:10px"><b>3️⃣ معاينة الأرصدة الختامية (هى الافتتاحى للفترة الجديدة)</b>
+      <div class="qt-row" style="gap:12px;flex-wrap:wrap;margin:8px 0">${erPcTotHtml(S)}</div>
+      <div class="bl-tabs" style="margin-top:6px">${tabs.map(t=>`<button class="bl-tab ${C.tab===t[0]?'active':''}" onclick="ER.pc.tab='${t[0]}';erRenderPer()">${t[1]} <span class="bl-tab-count">${(S[t[0]]||[]).length}</span></button>`).join('')}</div>
+      ${erPcTbl(S,C.tab)}
+      <div class="qt-row" style="gap:8px;margin-top:8px"><button class="qt-btn ghost" onclick="erPerSnapPrint(ER.pc.chk.snapshot,{name:ER.pc.name,from:ER.pc.chk.from,to:ER.pc.date,preview:true})">🖨️ اطبع المعاينة</button><button class="qt-btn ghost" onclick="erPerCsv(ER.pc.chk.snapshot,ER.pc.name)">⬇️ Excel</button></div></div>
+     <div style="margin-top:14px;padding-top:10px;border-top:1px dashed var(--border)"><b>4️⃣ التأكيد</b> <span class="qt-sub">— اكتب اسم الفترة بالظبط: <b style="color:var(--gold)">${erEsc(C.name)}</b></span>
+      <div class="qt-row" style="gap:10px;margin-top:6px"><input id="er-pc-conf" class="qt-inp" style="width:260px" value="${erEsc(C.confirm)}" oninput="ER.pc.confirm=this.value;const b=document.getElementById('er-pc-go');if(b) b.disabled=!(this.value.trim()===ER.pc.name&&${bl.length?'false':'true'})">
+       <button id="er-pc-go" class="qt-btn red" ${C.confirm.trim()===C.name&&!bl.length?'':'disabled'} onclick="erPcGo()">📕 اقفل الفترة</button></div>
+      <div class="qt-sub" style="margin-top:4px">بعد الإقفال: أى مستند تاريخه لحد ${erEsc(C.date)} هيبقى عرض وطباعة بس — ولو اتقفلت بالغلط تقدر تلغى آخر إقفال طول ما الفترة الجديدة لسه مفيهاش مستندات.</div></div>`:''}
+  </div>`; }
+function erPcTotHtml(S){ const T=S.tot||{}, card=(l,v)=>`<div class="er-stat"><div class="qt-sub">${l}</div><b>${v}</b></div>`;
+  return card('👥 عملاء ليهم رصيد',erQ(T.cl_n))+card('عليهم (مدين)',erMoney(T.cl_debit,2))+card('ليهم (دائن)',erMoney(T.cl_credit,2))
+    +Object.keys(T.sp||{}).map(c=>card('🚢 للموردين ('+erEsc(c)+')',erMoney(T.sp[c],2))).join('')+Object.keys(T.tr||{}).map(c=>card('💰 الخزائن ('+erEsc(c)+')',erMoney(T.tr[c],2))).join('')
+    +card('📦 دفترى',erQ(T.st_book))+card('📦 فعلى',erQ(T.st_actual))+card('قيمة المخزون (فعلى × آخر تكلفة)',erMoney(T.st_value,2)); }
+function erPcTbl(S,k){ const R=(S&&S[k])||[]; if(!R.length) return '<div class="qt-sub" style="padding:10px">مفيش أرصدة</div>';
+  const H={clients:['الكود','العميل','عليه','له'],suppliers:['الكود','المورد','العملة','له (دائن)','عليه (مدين)'],treasuries:['الخزينة / البنك','النوع','العملة','الرصيد'],stock:['الكود','الصنف','المخزن','دفترى','فعلى','منه محجوز لفواتير متحملتش','آخر تكلفة','القيمة']}[k];
+  const row={clients:r=>[erEsc(r.code||''),erEsc(r.name),r.bal>0?erMoney(r.bal,2):'—',r.bal<0?erMoney(-r.bal,2):'—'],suppliers:r=>[erEsc(r.code||''),erEsc(r.name),erEsc(r.cur||''),r.bal>0?erMoney(r.bal,2):'—',r.bal<0?erMoney(-r.bal,2):'—'],
+    treasuries:r=>[erEsc(r.name),erEsc(r.kind||''),erEsc(r.cur||''),erMoney(r.bal,2)],stock:r=>[erEsc(r.code),erEsc(r.name),erEsc(r.wh||''),erQ(r.book),erQ(r.actual),r.res>0?erQ(r.res):'—',erMoney(r.cost,2),erMoney(r.value,2)]}[k];
+  return `<div class="qt-scroll" style="max-height:420px;overflow:auto"><table class="qt-tbl"><thead><tr>${H.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${R.map(r=>`<tr>${row(r).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+async function erPcCheck(){ const C=ER.pc; if(!C.date){ erToast('اختار تاريخ الإقفال',false); return; } try{ C.chk=await rpcSecure('erp_period_check',{p_date:C.date}); C.confirm=''; erRenderPer(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erPcGo(){ const C=ER.pc; if(!C||!C.chk) return; if(!confirm(`📕 تقفل «${C.name}» لحد ${C.date}؟\nكل المستندات اللى تاريخها لحد اليوم ده هتبقى عرض وطباعة بس.`)) return;
+  try{ const r=await rpcSecure('erp_period_close',{p_date:C.date,p_name:C.name,p_confirm:C.confirm,p_notes:C.notes||''}); const snap=C.chk.snapshot, meta={name:C.name,from:C.chk.from,to:C.date};
+    ER.pc=null; ER.pl=null; erToast('📕 اتقفلت الفترة «'+r.name+'»'); erPerSnapPrint(snap,meta); await erRenderPer(); }catch(e){ erToast('❌ '+erErr(e),false); try{ await erPcCheck(); }catch(x){} } }
+async function erPerUndo(id){ const p=erPerClosed().find(x=>x.id===id); if(!p) return; const r=erAsk(`↩️ إلغاء إقفال «${p.name}» — اكتب السبب:\n(ينفع بس لو الفترة الجديدة لسه مفيهاش أى مستند)`); if(!r) return;
+  try{ await rpcSecure('erp_period_undo',{p_id:id,p_reason:r}); ER.pl=null; if(ER.per&&ER.per.id===id) ER.per=null; erToast('↩️ اتلغى الإقفال — الفترة رجعت مفتوحة'); await erRenderPer(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erPerReport(id){ try{ const p=await rpcSecure('erp_period_get',{p_id:id}); erPerSnapPrint(p.snapshot||{},{name:p.name,from:p.date_from,to:p.date_to,by:p.closed_by,at:p.closed_at,status:p.status}); }catch(e){ erToast('❌ '+erErr(e),false); } }
+function erPerSnapPrint(S,M){ if(!window.__erCap&&!erCan('erp-setup','print')&&!erCan('erp-reports','print')){ erToast('معندكش صلاحية طباعة',false); return; } S=S||{}; const T=S.tot||{};
+  const tb=(title,H,R,f,foot)=>R&&R.length?`<div class="blk"><div class="bh"><b>${title}</b> <span>(${R.length})</span></div><table><thead><tr><th>م</th>${H.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${R.map((r,i)=>`<tr><td>${i+1}</td>${f(r).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}${foot||''}</tbody></table></div>`:'';
+  const cl=S.clients||[], sumP=cl.filter(r=>r.bal>0).reduce((a,r)=>a+Number(r.bal),0), sumN=cl.filter(r=>r.bal<0).reduce((a,r)=>a-Number(r.bal),0);
+  const st=S.stock||[], sb=st.reduce((a,r)=>a+Number(r.book),0), sa=st.reduce((a,r)=>a+Number(r.actual),0), sv=st.reduce((a,r)=>a+Number(r.value),0);
+  const body=erLcRepHead((M.preview?'معاينة ':'')+'تقرير إقفال الفترة — '+(M.name||''), `من ${M.from||'البداية'} لحد ${M.to||''}${M.by?' — قفلها: '+M.by:''}${M.status&&M.status!=='مقفولة'?' — ❌ الإقفال اتلغى':''}`)
+    +`<div class="blk"><div class="bh"><b>الملخص</b></div><table><tbody><tr><td>عملاء عليهم (مدين)</td><td><b>${erMoney(T.cl_debit,2)}</b></td><td>عملاء ليهم (دائن)</td><td><b>${erMoney(T.cl_credit,2)}</b></td></tr>
+      <tr><td>للموردين</td><td>${Object.keys(T.sp||{}).map(c=>`<div><span dir="ltr">${erMoney(T.sp[c],2)}</span> ${erEsc(c)}</div>`).join('')||'—'}</td><td>الخزائن والبنوك</td><td>${Object.keys(T.tr||{}).map(c=>`<div><span dir="ltr">${erMoney(T.tr[c],2)}</span> ${erEsc(c)}</div>`).join('')||'—'}</td></tr>
+      <tr><td>المخزون</td><td>دفترى ${erQ(T.st_book)} — فعلى ${erQ(T.st_actual)}</td><td>قيمة المخزون</td><td><b>${erMoney(T.st_value,2)}</b></td></tr></tbody></table></div>`
+    +tb('👥 أرصدة العملاء',['الكود','العميل','عليه','له'],cl,r=>[erEsc(r.code||''),`<span style="text-align:right;display:block">${erEsc(r.name)}</span>`,r.bal>0?erMoney(r.bal,2):'',r.bal<0?erMoney(-r.bal,2):''],`<tr class="sum"><td></td><td></td><td>الإجمالى</td><td>${erMoney(sumP,2)}</td><td>${erMoney(sumN,2)}</td></tr>`)
+    +tb('🚢 أرصدة الموردين',['الكود','المورد','العملة','له','عليه'],S.suppliers,r=>[erEsc(r.code||''),erEsc(r.name),erEsc(r.cur||''),r.bal>0?erMoney(r.bal,2):'',r.bal<0?erMoney(-r.bal,2):''])
+    +tb('💰 الخزائن والبنوك',['الخزينة / البنك','النوع','العملة','الرصيد'],S.treasuries,r=>[erEsc(r.name),erEsc(r.kind||''),erEsc(r.cur||''),erMoney(r.bal,2)])
+    +tb('📦 أرصدة الأصناف',['الكود','الصنف','المخزن','دفترى','فعلى','محجوز لفواتير متحملتش','آخر تكلفة','القيمة'],st,r=>[erEsc(r.code),`<span style="text-align:right;display:block">${erEsc(r.name)}</span>`,erEsc(r.wh||''),erQ(r.book),erQ(r.actual),r.res>0?erQ(r.res):'',erMoney(r.cost,2),erMoney(r.value,2)],`<tr class="sum"><td></td><td></td><td></td><td>الإجمالى</td><td>${erQ(sb)}</td><td>${erQ(sa)}</td><td></td><td></td><td>${erMoney(sv,2)}</td></tr>`)
+    +`<div class="sg"><div>المحاسب</div><div>المراجع</div><div>المدير</div></div>`;
+  erLcWin('إقفال الفترة '+(M.name||''), ER_LC_RCSS, body, true); }
+function erPerCsv(S,name){ const esc=v=>{ v=v==null?'':String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }; const L=[];
+  L.push(['العملاء']); L.push(['الكود','العميل','الرصيد (موجب = عليه)']); (S.clients||[]).forEach(r=>L.push([r.code,r.name,r.bal])); L.push([]);
+  L.push(['الموردين']); L.push(['الكود','المورد','العملة','الرصيد (موجب = له)']); (S.suppliers||[]).forEach(r=>L.push([r.code,r.name,r.cur,r.bal])); L.push([]);
+  L.push(['الخزائن والبنوك']); L.push(['الاسم','النوع','العملة','الرصيد']); (S.treasuries||[]).forEach(r=>L.push([r.name,r.kind,r.cur,r.bal])); L.push([]);
+  L.push(['الأصناف']); L.push(['الكود','الصنف','المخزن','دفترى','فعلى','محجوز','آخر تكلفة','القيمة']); (S.stock||[]).forEach(r=>L.push([r.code,r.name,r.wh,r.book,r.actual,r.res,r.cost,r.value]));
+  const blob=new Blob(['﻿'+L.map(r=>r.map(esc).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='اقفال_'+String(name||'فترة').replace(/[\\/:*?"<>|]/g,'_')+'.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(e){} },500); }
+
 // ── 🖨️ طباعة الفاتورة الضريبية (A4) — الـ HTML لوحده عشان الطباعة بالجملة
 function erTinvHtml(t, co0){
     const co=co0||((ER.lt.data||{}).company)||{}, b=t.buyer||{}, cons=t.kind==='consolidated', W=(typeof qtWordsEGP==='function')?qtWordsEGP:(n=>'');
@@ -24562,7 +24682,7 @@ const ER_TB = {
     cur:{ pane:'erx-pane-cur', nw:()=>erCurOpen(), open:/^erCurOpen\(\d/, tog:['erCurOpen','erCurSave'] },
     tier:{ pane:'erx-pane-tier', nw:()=>erTierOpen(), open:/^erTierOpen\(\d/, tog:['erTierOpen','erTierSave'] },
     tre:{ pane:'erx-pane-tre', nw:()=>erTreOpen(), open:/^erTreOpen\(\d/, tog:['erTreOpen','erTreSave'] },
-    status:{ none:true } } },
+    status:{ none:true }, per:{ none:true } } },
   'erp-purchases': { tab:()=>ER.tab.pu, t:{
     po:{ pane:'erp-pu-pane-po', nw:()=>erPoOpen(), open:/^erPoOpen\(/, del:/^erPoStatus\(\d+,'ملغية'\)/, print:/^erPoPrint\(/ },
     ship:{ pane:'erp-pu-pane-ship', nw:()=>erShipOpen(), open:/^erShipOpen\(\d/, del:/^erShipCancel\(/ },
