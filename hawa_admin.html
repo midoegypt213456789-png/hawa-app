@@ -4062,7 +4062,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erLettersLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="erl-tab-new" onclick="erLtTab('new')">✉️ جواب برقم الماتور</button><button class="bl-tab" id="erl-tab-list" onclick="erLtTab('list')">📋 الجوابات <span class="bl-tab-count" id="erl-c-list">0</span></button><button class="bl-tab" id="erl-tab-tinv" onclick="erLtTab('tinv')">🧾 الفواتير الضريبية <span class="bl-tab-count" id="erl-c-tinv">0</span></button><button class="bl-tab" id="erl-tab-dist" onclick="erLtTab('dist')">🤝 الموزعين (مجمعة) <span class="bl-tab-count" id="erl-c-dist">0</span></button><button class="bl-tab" id="erl-tab-models" onclick="erLtTab('models')">🗂️ نماذج الضريبة <span class="bl-tab-count" id="erl-c-models">0</span></button><button class="bl-tab" id="erl-tab-prn" onclick="erLtTab('prn')">🖨️ طباعة الجوابات</button><button class="bl-tab" id="erl-tab-apr" onclick="erLtTab('apr')">🏷️ الاعتمادات (باركود)</button><button class="bl-tab" id="erl-tab-hand" onclick="erLtTab('hand')">✍️ استلامات التجار</button><button class="bl-tab" id="erl-tab-taxp" onclick="erLtTab('taxp')">🧾 طباعة نماذج الضرائب</button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erl-tab-new" onclick="erLtTab('new')">✉️ جواب برقم الماتور</button><button class="bl-tab" id="erl-tab-list" onclick="erLtTab('list')">📋 الجوابات <span class="bl-tab-count" id="erl-c-list">0</span></button><button class="bl-tab" id="erl-tab-tinv" onclick="erLtTab('tinv')">🧾 الفواتير الضريبية <span class="bl-tab-count" id="erl-c-tinv">0</span></button><button class="bl-tab" id="erl-tab-dist" onclick="erLtTab('dist')">🤝 الموزعين (مجمعة) <span class="bl-tab-count" id="erl-c-dist">0</span></button><button class="bl-tab" id="erl-tab-models" onclick="erLtTab('models')">🗂️ نماذج الضريبة <span class="bl-tab-count" id="erl-c-models">0</span></button><button class="bl-tab" id="erl-tab-prn" onclick="erLtTab('prn')">🖨️ طباعة الجوابات</button><button class="bl-tab" id="erl-tab-apr" onclick="erLtTab('apr')">🏷️ الاعتمادات (باركود)</button><button class="bl-tab" id="erl-tab-hand" onclick="erLtTab('hand')">✍️ استلامات التجار</button><button class="bl-tab" id="erl-tab-taxp" onclick="erLtTab('taxp')">🧾 طباعة نماذج الضرائب</button><button class="bl-tab" id="erl-tab-req" onclick="erLtTab('req')">📥 طلبات الجوابات <span class="bl-tab-count" id="erl-c-req" style="display:none">0</span></button></div>
       <div id="erl-pane-new" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erl-pane-list" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erl-pane-tinv" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -4072,6 +4072,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="erl-pane-apr" class="qt-pane" style="display:none"></div>
       <div id="erl-pane-hand" class="qt-pane" style="display:none"></div>
       <div id="erl-pane-taxp" class="qt-pane" style="display:none"></div>
+      <div id="erl-pane-req" class="qt-pane" style="display:none"></div>
     </div>
     <div class="section" id="sec-erp-stock">
       <div class="page-hd">
@@ -10910,6 +10911,7 @@ const EXTRA_PERMS = {
   'warehouse-checkin': { icon: '✅', label: 'حضور الحجوزات (مع التسليم)' },
   'erp-cost':          { icon: '💲', label: 'تكلفة وسعر شراء الأصناف (السيستم الجديد) — دخول = يشوف، تعديل = يعدّل' },
   'erp-periods':       { icon: '📕', label: 'الفترات المالية — دخول = يقدر يفتح الفترات المقفولة للعرض والطباعة (الإقفال نفسه للأدمن الرئيسى بس)' },
+  'erp-lt-req':        { icon: '📥', label: 'طلبات الجوابات من التجار (شيت Excel) — دخول = يشوف الطلبات وتجيله رسالة بالجديد، تعديل = يوافق/يرفض ويطبع' },
   'erp-overdraft':     { icon: '📉', label: 'البيع على المكشوف دفترى — دخول = يقدر يعمل فاتورة أكبر من الرصيد الدفترى (التسليم برضه لحد الرصيد الفعلى بس)' }
 };
 const PERM_ACTIONS = [
@@ -24078,13 +24080,13 @@ async function erRenderRegAlerts(){
 // شاشة erp-letters — كل القواعد فى السيرفر (erp_letter_save / erp_tinv_issue / erp_tinv_consolidated)
 // ════════════════════════════════════════════════════════════════
 ER.lt = { data:null, look:null, form:null, q:'', f:{ q:'', st:'1' }, tf:{ q:'', st:'1' }, mtax:'' }; ER.tab.lt = 'new';
-const ER_LT_TABS = ['new','list','tinv','dist','models','prn','apr','hand','taxp'];
-async function erLettersLoad(force){ try{ await erBoot(force); ER.lt.data = await rpcSecure('erp_letters_list',{}); erLtCounts(); erLtTab(ER.tab.lt); }catch(e){ erPaneErr('erl-pane-new',e); } }
+const ER_LT_TABS = ['new','list','tinv','dist','models','prn','apr','hand','taxp','req'];
+async function erLettersLoad(force){ try{ await erBoot(force); ER.lt.data = await rpcSecure('erp_letters_list',{}); erLtCounts(); erLtTab(ER.tab.lt); if(erCan('erp-lt-req','view')) erLrBadge(); }catch(e){ erPaneErr('erl-pane-new',e); } }
 async function erLtReload(){ ER.lt.data = await rpcSecure('erp_letters_list',{}); erLtCounts(); }
 function erLtCounts(){ const D=ER.lt.data; if(!D) return; const s=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
   s('erl-c-list', D.letters.filter(l=>l.status==='سارى').length); s('erl-c-tinv', D.tinvs.filter(t=>t.status==='سارية').length);
   s('erl-c-dist', D.dist_invs.filter(v=>!v.consolidated && !Number(v.singles)).length); s('erl-c-models', D.models.filter(m=>m.is_active).length); }
-function erLtTab(t){ ER.tab.lt=t; erTabs('erl',ER_LT_TABS,t); ({new:erRenderLtNew,list:erRenderLtList,tinv:erRenderTinvs,dist:erRenderLtDist,models:erRenderTaxModels,prn:erRenderLcPrn,apr:erRenderLcApr,hand:erRenderLcHand,taxp:erRenderLcTax}[t]||erRenderLtNew)(); }
+function erLtTab(t){ ER.tab.lt=t; erTabs('erl',ER_LT_TABS,t); ({new:erRenderLtNew,list:erRenderLtList,tinv:erRenderTinvs,dist:erRenderLtDist,models:erRenderTaxModels,prn:erRenderLcPrn,apr:erRenderLcApr,hand:erRenderLcHand,taxp:erRenderLcTax,req:erRenderLtReq}[t]||erRenderLtNew)(); }
 function erLtOpenEngine(no){ if(ER.tab.lt && ER.tab.lt!=='new') ER.lt.from=ER.tab.lt; ER.lt.q=String(no||''); erLtTab('new'); erLtLook(); }
 function erGoLetter(no){ try{ if(typeof goTo==='function') goTo('erp-letters'); }catch(e){} setTimeout(()=>erLtOpenEngine(no),200); }
 function erLtVal(k,v,opt){ opt=opt||{}; return `<input class="qt-inp" ${opt.type?`type="${opt.type}"`:''} ${opt.dir?`dir="${opt.dir}"`:''} ${opt.ph?`placeholder="${erEsc(opt.ph)}"`:''} ${opt.ro?'disabled':''} value="${erEsc(v==null?'':v)}" oninput="ER.lt.form['${k}']=this.value" style="width:100%">`; }
@@ -24408,7 +24410,7 @@ function erBar39(txt, h){ const P={'0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnn
 function erBeep(ok){ try{ const A=window.__erAC||(window.__erAC=new (window.AudioContext||window.webkitAudioContext)()); const o=A.createOscillator(), g=A.createGain(); o.type=ok?'sine':'square'; o.frequency.value=ok?1250:200; g.gain.value=0.07; o.connect(g); g.connect(A.destination); o.start(); o.stop(A.currentTime+(ok?0.08:0.35)); }catch(e){} }
 function erMeName(){ try{ return (JSON.parse(sessionStorage.getItem('hawa_admin')||'null')||{}).name||''; }catch(e){ return ''; } }
 function erLcS(){ if(!ER.lc){ const t=erToday(), m=t.slice(0,7)+'-01';
-  ER.lc={ f:{dfrom:m,dto:t,nfrom:'',nto:'',cfrom:'',cto:'',user:'',elec:false,blocked:false,printed:'',q:''}, rows:null, users:[], sel:{}, opt:{form:'1',page:'1',shape:'مبايعة',trader:'code',noeng:false,bar:true},
+  ER.lc={ f:{dfrom:m,dto:t,nfrom:'',nto:'',cfrom:'',cto:'',user:'',elec:false,blocked:false,printed:'',q:''}, rows:null, users:[], sel:{}, opt:{form:'1',page:'1',shape:'مبايعة',trader:'code',noeng:false,bar:true,qr:true},
     apr:{mode:'appr_out',basket:[],msg:null,print:true,notes:'', f:{dfrom:'',dto:'',cfrom:'',cto:'',st:'all',q:''}, rows:null, open:{}, batches:null},
     hand:{basket:[],msg:null,print:true,notes:'',code:'', f:{dfrom:m,dto:t,cfrom:'',cto:'',user:'',shape:'det'}, batches:null},
     tx:{f:{kind:'',tdfrom:m,tdto:t,ldfrom:'',ldto:'',lnfrom:'',lnto:'',tnfrom:'',tnto:'',cfrom:'',cto:'',sub:'',buyer:'',item:'',model:'',cancelled:false}, rows:null, co:null} }; } return ER.lc; }
@@ -24454,7 +24456,7 @@ function erRenderLcPrn(){ const el=document.getElementById('erl-pane-prn'); if(!
     <span class="qt-sub">الصفحة</span>${erLcSel('opt.page',o.page,[['1','الأصل بس'],['2','الصورة بس'],['all','الأصل + الصورة']])}
     <span class="qt-sub">شكل الجواب</span>${erLcSel('opt.shape',o.shape,[['مبايعة','مبايعة'],['تجديد','تجديد'],['مخالصة','مخالصة']])}
     <span class="qt-sub">التاجر على الجواب</span>${erLcSel('opt.trader',o.trader,[['code','بالكود'],['name','بالاسم'],['none','بدون']])}
-    ${erLcChk('opt.noeng',o.noeng,'بدون رقم موتور')}${erLcChk('opt.bar',o.bar,'▮▯ باركود رقم الجواب (للاعتماد)')}</div></div>
+    ${erLcChk('opt.noeng',o.noeng,'بدون رقم موتور')}${erLcChk('opt.bar',o.bar,'▮▯ باركود رقم الجواب (للاعتماد)')}${erLcChk('opt.qr',o.qr,'🔳 QR ببيانات الجواب كاملة')}</div></div>
   ${R?`<div class="qt-row" style="margin:8px 0;gap:8px;flex-wrap:wrap"><span class="qt-sub">${R.length} جواب — المختار <b id="erlc-nsel" style="color:var(--gold)">${nSel}</b></span>
     <button class="qt-btn ghost sm" onclick="erLcSelAll(true)">✔ اختيار الكل</button><button class="qt-btn ghost sm" onclick="erLcSelAll(false)">✖ إلغاء الاختيار</button>
     ${canP?`<button class="qt-btn" id="erlc-pbtn" ${nSel?'':'disabled'} onclick="erLcPrintSel()">🖨️ اطبع الجوابات المختارة (${nSel})</button>
@@ -24484,13 +24486,13 @@ function erLcLetterBody(r, o, copy){ const co=erCoInfo(), tr=o.trader==='name'?r
   return `<div class="lt${o.form==='2'?' half':''}">
    ${o.form!=='3'?`<div class="hd"><div><b>${erEsc(co.name||'')}</b>${co.tax?`<div>رقم التسجيل الضريبى: <span dir="ltr">${erEsc(co.tax)}</span></div>`:''}${co.cr?`<div>سجل تجارى: <span dir="ltr">${erEsc(co.cr)}</span></div>`:''}${co.addr?`<div>${erEsc(co.addr)}</div>`:''}</div><span class="cp">${copy}</span></div>`:`<div class="hd3"><span class="cp">${copy}</span></div>`}
    ${r.is_test?'<div class="test">🧪 نسخة تجربة — السيستم لسه مش متفعل</div>':''}
-   <div class="ttl"><div><h1>جواب بيع موتوسيكل — ${erEsc(o.shape)}</h1><div>رقم <b>${r.jawab_no}</b> — بتاريخ <b>${erEsc(r.d||'')}</b>${r.traffic_dept?` — إلى: ${erEsc(r.traffic_dept)}`:''}</div></div>${o.bar?`<div>${erBar39(r.jawab_no,o.form==='2'?26:34)}</div>`:''}</div>
+   <div class="ttl"><div><h1>جواب بيع موتوسيكل — ${erEsc(o.shape)}</h1><div>رقم <b>${r.jawab_no}</b> — بتاريخ <b>${erEsc(r.d||'')}</b>${r.traffic_dept?` — إلى: ${erEsc(r.traffic_dept)}`:''}</div></div>${o.bar||o.qr?`<div style="display:flex;gap:8px;align-items:center">${o.qr?`<div class="qrw">${erQrSvg(erLtQrTxt(r),o.form==='2'?66:88)}</div>`:''}${o.bar?erBar39(r.jawab_no,o.form==='2'?26:34):''}</div>`:''}</div>
    <div class="box">${info.map(x=>`<div><span>${erEsc(x[0])}:</span> <b>${erEsc(x[1])}</b></div>`).join('')}</div>
    <table><thead><tr><th style="width:30px">م</th><th>البيان</th>${o.noeng?'':'<th style="width:150px">رقم الماتور</th>'}<th style="width:190px">رقم الشاسيه</th></tr></thead><tbody><tr><td>1</td><td style="text-align:right"><b>${erEsc(r.item_name||'')}</b>${spec?`<div class="s">${spec}</div>`:''}</td>${o.noeng?'':`<td><b dir="ltr">${erEsc(r.engine_no||'')}</b></td>`}<td><b dir="ltr">${erEsc(r.chassis_no||'—')}</b></td></tr></tbody></table>
    ${r.notes?`<div class="nt">ملاحظات: ${erEsc(r.notes)}</div>`:''}
    <div class="sig"><div>المشترى</div><div>مسئول المبيعات</div><div>الختم</div></div></div>`; }
 async function erLcPrintSel(){ if(!erNeedPrint('erp-letters')) return; const S=erLcS(), rows=(S.rows||[]).filter(r=>S.sel[r.id]); if(!rows.length){ erToast('اختار جوابات الأول',false); return; }
-  const o=S.opt, copies=o.page==='all'?['أصل','صورة']:[o.page==='2'?'صورة':'أصل'];
+  const o=S.opt, copies=o.page==='all'?['أصل','صورة']:[o.page==='2'?'صورة':'أصل']; if(o.qr){ try{ await erQrLib(); }catch(e){ erToast('⚠️ '+erErr(e)+' — هيتطبع من غير QR',false); } }
   erLcWin(`جوابات ${rows[0].jawab_no}${rows.length>1?' - '+rows[rows.length-1].jawab_no:''}`, ER_LC_LCSS, rows.map(r=>copies.map(c=>erLcLetterBody(r,o,c)).join('')).join(''));
   try{ await rpcSecure('erp_lt_printed',{p_ids:rows.map(r=>r.id)}); rows.forEach(r=>r.print_count=(r.print_count||0)+1); erRenderLcPrn(); }catch(e){} }
 function erLcFDesc(f){ return [erLcRngTxt('تاريخ الجواب',f.dfrom,f.dto),erLcRngTxt('رقم الجواب',f.nfrom,f.nto),erLcRngTxt('كود التاجر',f.cfrom,f.cto),f.user?'المستخدم: '+f.user:'',f.elec?'كهرباء فقط':'',f.blocked?'الموقوفين فقط':''].filter(Boolean).join(' — '); }
@@ -24651,6 +24653,79 @@ function erLcTaxPrint(det){ if(!erNeedPrint('erp-letters')) return; const T=erLc
     ${g.rows.map((x,i)=>`<tr${x.cancelled?' style="text-decoration:line-through;color:#a00"':''}><td>${i+1}</td><td>${x.tinv_no}</td><td>${erEsc(x.d||'')}</td><td>${x.jawab}</td><td dir="ltr">${erEsc(x.engine)}</td><td dir="ltr">${erEsc(x.chassis)}</td><td style="text-align:right">${erEsc(x.name)}</td><td>${erMoney(x.price,2)}</td><td>${erMoney(x.tax,2)}</td><td>${erMoney(x.total,2)}</td><td dir="ltr">${erEsc(x.idno)}</td><td style="text-align:right">${erEsc(x.addr)}</td></tr>`).join('')}
     <tr class="sum"><td colspan="7">إجمالى ${erEsc(g.model)}</td><td>${erMoney(sm(g.rows,'price'),2)}</td><td>${erMoney(sm(g.rows,'tax'),2)}</td><td>${erMoney(sm(g.rows,'total'),2)}</td><td colspan="2"></td></tr></tbody></table></div>`; }).join('');
   erLcWin('طباعة نماذج الضرائب', ER_LC_RCSS, erLcRepHead('طباعة نماذج الضرائب — مجمل', desc)+body+`<div class="gt">الإجمالى العام: ${all.length} — السعر ${erMoney(sm(all,'price'),2)} — الضريبة ${erMoney(sm(all,'tax'),2)} — الإجمالى ${erMoney(sm(all,'total'),2)}</div>`, true); }
+
+// ════════════════════════════════════════════════════════════════
+// 📥 طلبات الجوابات (من شيت Excel التاجر — صفحة التاجر / البوت)
+// erp_lr_list / erp_lr_get (بيفحص السطور تانى على حالة النهارده) / erp_lr_approve (تسجيل + جواب + فاتورة ضريبية لكل سطر) / erp_lr_reject / erp_lr_print_data / erp_lr_printed
+// ════════════════════════════════════════════════════════════════
+function erLrS(){ if(!ER.lr) ER.lr={ st:'جديد', list:null, cur:null, busy:false }; return ER.lr; }
+const ER_LR_ST={'جديد':['⏳','جديد — مستنى المراجعة','gold'],'اتعمل':['✅','اتوافق — اتعمل','ok'],'اتطبع':['🖨️','اتطبع','ok'],'مرفوض':['❌','مرفوض','bad'],'ملغى':['↩️','لغاه التاجر','dim']};
+const ER_LR_LST={ok:['✅','سليم','var(--success)'],fixed:['🔧','اتصلّح','var(--success)'],err:['❌','مشكلة','var(--error)'],done:['✉️','اتعمل','var(--gold)']};
+function erLrChip(st){ const s=ER_LR_ST[st]||['•',st,'dim']; return `<span class="qt-chip ${s[2]==='ok'?'':s[2]==='bad'?'':''}" style="${s[2]==='bad'?'color:var(--error)':s[2]==='ok'?'color:var(--success)':s[2]==='gold'?'color:var(--gold)':''}">${s[0]} ${erEsc(s[1])}</span>`; }
+async function erLrLoad(){ const S=erLrS(); try{ S.list=await rpcSecure('erp_lr_list',{p:{status:S.st}}); erRenderLtReq(); erLrBadge(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erLrBadge(){ try{ const n=(erLrS().st==='جديد'&&erLrS().list)?erLrS().list.length:((await rpcSecure('erp_lr_list',{p:{status:'جديد'}}))||[]).length; const e=document.getElementById('erl-c-req'); if(e){ e.textContent=n; e.style.display=n?'':'none'; } }catch(e){} }
+async function erLrOpen(id){ const S=erLrS(); S.busy=true; erRenderLtReq(); try{ S.cur=await rpcSecure('erp_lr_get',{p_id:id}); }catch(e){ erToast('❌ '+erErr(e),false); } S.busy=false; erRenderLtReq(); }
+function erLrBack(){ const S=erLrS(); S.cur=null; erLrLoad(); }
+async function erLrApprove(){ const S=erLrS(), q=S.cur; if(!q) return; const n=(q.fresh||[]).filter(l=>l.st!=='err').length;
+  if(!n){ erToast('مفيش ولا سطر سليم',false); return; }
+  if(!confirm(`هيتعمل ${n} جواب + الفواتير الضريبية بتاعتهم لـ «${q.client}» — متأكد؟`)) return;
+  S.busy=true; erRenderLtReq();
+  try{ const r=await rpcSecure('erp_lr_approve',{p_id:q.id}); S.cur=r; erToast(`✅ اتعمل ${r.letters} جواب و ${r.tinv} فاتورة ضريبية${r.err?` — ${r.err} سطر فيهم مشاكل`:''}`); erBeep(true); }
+  catch(e){ erToast('❌ '+erErr(e),false); erBeep(false); }
+  S.busy=false; erRenderLtReq(); erLrBadge(); }
+async function erLrReject(){ const S=erLrS(), q=S.cur; if(!q) return; const r=erAsk('سبب الرفض؟ (هيتبعت للتاجر)'); if(!r) return;
+  try{ await rpcSecure('erp_lr_reject',{p_id:q.id,p_reason:r}); erToast('✅ اترفض وبلّغنا التاجر'); S.cur=await rpcSecure('erp_lr_get',{p_id:q.id}); erRenderLtReq(); erLrBadge(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+// 🔳 QR (فيه بيانات الجواب كاملة)
+function erQrLib(){ if(window.qrcode) return Promise.resolve(); return new Promise((ok,no)=>{ const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js'; s.onload=()=>{ try{ qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8']; }catch(e){} ok(); }; s.onerror=()=>no(new Error('مش قادر أحمّل مكتبة الـ QR')); document.head.appendChild(s); }); }
+function erLtQrTxt(r){ return ['HAWA — جواب '+r.jawab_no, 'التاريخ: '+(r.d||''), 'التاجر: '+[r.code,r.client].filter(Boolean).join(' - '), 'المشترى: '+(r.buyer_name||''), (r.buyer_kind==='شركة'?'السجل: ':'الرقم القومى: ')+(r.buyer_id_no||''),
+  'الموديل: '+[r.item_name,r.model_year].filter(Boolean).join(' '), r.color?'اللون: '+r.color:'', 'الماتور: '+(r.engine_no||''), 'الشاسيه: '+(r.chassis_no||''), r.inv_no?'إذن: '+r.inv_no:'', r.tinv_no?'فاتورة ضريبية: '+r.tinv_no:''].filter(Boolean).join('\n'); }
+function erQrSvg(txt, px){ try{ if(!window.qrcode) return ''; const q=qrcode(0,'M'); q.addData(txt); q.make(); const n=q.getModuleCount(), cs=Math.max(1,Math.floor((px||96)/n)); return q.createSvgTag({cellSize:cs,margin:1,scalable:false}); }catch(e){ return ''; } }
+async function erLrPrintLetters(){ if(!erNeedPrint('erp-letters')) return; const q=erLrS().cur; if(!q) return;
+  try{ await erQrLib(); }catch(e){ erToast('⚠️ '+erErr(e)+' — هيتطبع من غير QR',false); }
+  try{ const D=await rpcSecure('erp_lr_print_data',{p_id:q.id}); const rows=D.letters||[]; if(!rows.length){ erToast('مفيش جوابات للطباعة',false); return; }
+    const o=Object.assign({},erLcS().opt,{bar:true,qr:true}), copies=o.page==='all'?['أصل','صورة']:[o.page==='2'?'صورة':'أصل'];
+    erLcWin(`طلب جوابات ${D.req_no} — جوابات ${rows[0].jawab_no}${rows.length>1?' - '+rows[rows.length-1].jawab_no:''}`, ER_LC_LCSS+'.qrw svg{display:block}', rows.map(r=>copies.map(c=>erLcLetterBody(r,o,c)).join('')).join(''));
+    await rpcSecure('erp_lr_printed',{p_id:q.id}); erLrRefresh(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erLrPrintTinv(){ if(!erNeedPrint('erp-letters')) return; const q=erLrS().cur; if(!q) return;
+  try{ const D=await rpcSecure('erp_lr_print_data',{p_id:q.id}); const T=D.tinvs||[]; if(!T.length){ erToast('مفيش فواتير ضريبية فى الطلب ده',false); return; }
+    let css=''; const bodies=T.map(t=>{ const h=erTinvHtml(t); if(!css){ const m=h.match(/<style>([\s\S]*?)<\/style>/); css=m?m[1]:''; } const b=(h.match(/<body>([\s\S]*?)<script>/)||[])[1]||''; return `<div style="page-break-after:always">${b}</div>`; });
+    erLcWin(`فواتير ضريبية — طلب جوابات ${D.req_no}`, css, bodies.join(''));
+    T.forEach(t=>rpcSecure('erp_tinv_printed',{p_id:t.id}).catch(()=>{})); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erLrBooks(){ const q=erLrS().cur; if(!q) return; try{ const D=await rpcSecure('erp_lr_print_data',{p_id:q.id}); q.__books=D.letters||[]; erRenderLtReq(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erLrRefresh(){ const S=erLrS(); if(S.cur){ try{ S.cur=await rpcSecure('erp_lr_get',{p_id:S.cur.id}); }catch(e){} } erRenderLtReq(); }
+function erLrLine(l){ const s=ER_LR_LST[l.st]||['•',l.st,'']; const i=l.info||{};
+  return `<tr><td>${l.line_no}</td><td style="color:${s[2]};font-weight:800;white-space:nowrap">${s[0]} ${s[1]}</td><td dir="ltr" style="text-align:right">${erEsc(l.engine||'')}</td><td dir="ltr" style="text-align:right">${erEsc(l.chassis||'')}</td>
+    <td>${erEsc(i.item||'')}</td><td>${erEsc(l.buyer_name||'')}<div class="qt-sub" dir="ltr">${erEsc(l.buyer_id_no||'')}</div></td><td>${erEsc(l.color||'')}</td><td>${erEsc(i.inv_no||'')}${i.del_no?`<div class="qt-sub">تسليم ${erEsc(i.del_no)}</div>`:''}</td>
+    <td class="qt-sub">${erEsc(i.book||'')}${i.registered===false?`<div style="color:var(--gold)">🆕 ${l.st==='done'?'اتسجل من الطلب':'هيتسجل'}</div>`:''}</td>
+    <td>${l.jawab_no?`<b style="color:var(--gold)">${l.jawab_no}</b>`:''}${l.tinv_no?`<div class="qt-sub">🧾 ${l.tinv_no}</div>`:''}</td>
+    <td style="text-align:right;font-size:12px">${(l.msgs||[]).map(m=>'• '+erEsc(m)).join('<br>')}</td></tr>`; }
+function erRenderLtReq(){ const el=document.getElementById('erl-pane-req'); if(!el) return; const S=erLrS(), canE=erCan('erp-lt-req','edit'), canP=erCan('erp-letters','print');
+  if(!erCan('erp-lt-req','view')){ el.innerHTML='<div class="qt-card qt-sub" style="padding:20px;text-align:center">⛔ معندكش صلاحية «طلبات الجوابات» — كلم الأدمن</div>'; return; }
+  if(S.cur){ const q=S.cur, L=q.status==='جديد'?(q.fresh||[]):(q.lines||[]), ok=L.filter(l=>l.st!=='err').length;
+    el.innerHTML=erBanner()+erLcCss()+`<div class="qt-row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap"><button class="qt-btn ghost sm" onclick="erLrBack()">→ رجوع للطلبات</button>
+      <b style="font-size:18px">📥 طلب جوابات رقم <span style="color:var(--gold)">${q.req_no}</span></b>${erLrChip(q.status)}${erTestChip(q)}</div>
+     <div class="qt-card erlc-box"><div class="erlc-grid"><div><span class="qt-sub">التاجر:</span> <b>${erEsc(q.client)}</b> (${erEsc(q.code||'')})${q.dist?' <span class="qt-chip">🤝 موزع بالعمولة</span>':''}</div>
+       <div><span class="qt-sub">جه من:</span> ${q.source==='bot'?'🤖 البوت':'🌐 صفحة التاجر'}${q.file_name?` — ${erEsc(q.file_name)}`:''}</div><div><span class="qt-sub">وقت الطلب:</span> ${erEsc(String(q.created_at||'').replace('T',' ').slice(0,16))}</div>
+       <div><span class="qt-sub">الضريبة:</span> ${q.tax_mode==='invoice'?'بسعر الفاتورة':'بنموذج الشحنة'}</div>
+       ${q.approved_by?`<div><span class="qt-sub">وافق:</span> ${erEsc(q.approved_by)}</div>`:''}${q.printed_by?`<div><span class="qt-sub">طبع:</span> ${erEsc(q.printed_by)}</div>`:''}${q.reject_reason?`<div style="color:var(--error)"><span class="qt-sub">سبب الرفض:</span> ${erEsc(q.reject_reason)}</div>`:''}</div>
+       ${q.status==='جديد'?`<div class="qt-sub">🔎 السطور اتفحصت تانى دلوقتى على حالة السيستم النهارده — سليم <b style="color:var(--success)">${ok}</b> من ${L.length}</div>
+         ${canE?`<div class="erlc-row"><button class="qt-btn" ${ok&&!S.busy?'':'disabled'} onclick="erLrApprove()">${S.busy?'⏳ بنعمل الجوابات...':`✅ وافق واعمل ${ok} جواب + الفواتير الضريبية`}</button><button class="qt-btn ghost" onclick="erLrReject()">❌ رفض الطلب</button><button class="qt-btn ghost sm" onclick="erLrOpen(${q.id})">🔄 افحص تانى</button></div>`:''}`:''}
+       ${q.status==='اتعمل'||q.status==='اتطبع'?`<div class="erlc-row"><span class="qt-sub">اتعمل <b style="color:var(--gold)">${q.n_done}</b> جواب</span>
+         ${canP?`<button class="qt-btn" onclick="erLrPrintLetters()">🖨️ اطبع الجوابات (باركود + QR)</button><button class="qt-btn" onclick="erLrPrintTinv()">🧾 اطبع الفواتير الضريبية</button>`:''}<button class="qt-btn ghost" onclick="erLrBooks()">📕 الكتب الدورية</button>
+         <span class="qt-sub">شكل الطباعة من تاب «🖨️ طباعة الجوابات»: ${erEsc({'1':'نموذج 1','2':'نموذج 2 (نص صفحة)','3':'نموذج 3 (من غير هيدر)'}[erLcS().opt.form]||'')} — ${erEsc(erLcS().opt.shape)}</span></div>`:''}
+       ${q.__books?`<div class="qt-card" style="margin-top:8px;padding:10px">${q.__books.map(r=>`<div style="padding:3px 0">جواب <b>${r.jawab_no}</b> — <span dir="ltr">${erEsc(r.engine_no)}</span> — 📕 ${erEsc(r.book||'—')} ${r.bulletin?`${erPlLink(r.bulletin.numbers_url,'📄 الأرقام')} ${erPlLink(r.bulletin.approvals_url,'✅ الاعتمادات')} ${erPlLink(r.bulletin.motor_url,'⚙️ المواتير')} ${erPlLink(r.bulletin.chassis_url,'🔩 الشاسيهات')}`:'<span class="qt-sub">(مفيش منشور مرفوع على السيستم للكتاب ده)</span>'}</div>`).join('')}</div>`:''}</div>
+     <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>م</th><th>الحالة</th><th>الماتور</th><th>الشاسيه</th><th>الصنف</th><th>المشترى</th><th>اللون</th><th>الإذن</th><th>الكتاب الدورى</th><th>الجواب</th><th>ملاحظات</th></tr></thead><tbody>${L.map(erLrLine).join('')}</tbody></table></div>`;
+    return; }
+  const R=S.list;
+  el.innerHTML=erBanner()+erLcCss()+`<div class="qt-card erlc-box"><div class="erlc-row"><b>📥 طلبات الجوابات من التجار</b>
+     <select class="qt-inp" onchange="erLrS().st=this.value;erLrLoad()">${[['جديد','⏳ الجديدة (مستنية مراجعة)'],['اتعمل','✅ اتوافق عليها (لسه متطبعتش)'],['اتطبع','🖨️ اتطبعت'],['مرفوض','❌ المرفوضة'],['ملغى','↩️ اللى التاجر لغاها'],['','📋 الكل']].map(o=>`<option value="${o[0]}" ${S.st===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
+     <button class="qt-btn ghost sm" onclick="erLrLoad()">🔄 تحديث</button></div>
+     <div class="qt-sub">التاجر بيرفع شيت Excel من صفحته أو من البوت ← السيستم بيفحص كل سطر ← هنا بتوافق فيتعمل التسجيل والجواب والفاتورة الضريبية أوتوماتيك.</div></div>
+   ${R==null?'<div class="qt-card qt-sub" style="text-align:center;padding:24px">⏳ بنحمّل...</div>':!R.length?'<div class="qt-card qt-sub" style="text-align:center;padding:24px">مفيش طلبات</div>':
+   `<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم الطلب</th><th>التاجر</th><th>الوقت</th><th>من</th><th>السطور</th><th>سليم</th><th>اتعمل</th><th>الحالة</th><th></th></tr></thead><tbody>
+    ${R.map(q=>`<tr style="cursor:pointer" onclick="erLrOpen(${q.id})"><td><b style="color:var(--gold);font-size:15px">${q.req_no}</b>${erTestChip(q)}</td><td>${erEsc(q.client)}<div class="qt-sub">${erEsc(q.code||'')}</div></td>
+      <td class="qt-sub">${erEsc(String(q.created_at||'').replace('T',' ').slice(0,16))}</td><td>${q.source==='bot'?'🤖':'🌐'}</td><td>${q.n_lines}</td><td style="color:var(--success)">${q.n_ok}</td><td>${q.n_done||'—'}</td><td>${erLrChip(q.status)}</td><td><button class="qt-btn sm">فتح</button></td></tr>`).join('')}</tbody></table></div>`}`;
+  if(R==null && !S.__l){ S.__l=1; erLrLoad(); } }
 
 async function erTinvPrint(id){
   if(!erCan('erp-letters','print')){ erToast('معندكش صلاحية طباعة',false); return; }
