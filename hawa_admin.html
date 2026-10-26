@@ -10911,6 +10911,8 @@ const EXTRA_PERMS = {
   'warehouse-checkin': { icon: '✅', label: 'حضور الحجوزات (مع التسليم)' },
   'erp-cost':          { icon: '💲', label: 'تكلفة وسعر شراء الأصناف (السيستم الجديد) — دخول = يشوف، تعديل = يعدّل' },
   'erp-periods':       { icon: '📕', label: 'الفترات المالية — دخول = يقدر يفتح الفترات المقفولة للعرض والطباعة (الإقفال نفسه للأدمن الرئيسى بس)' },
+  'erp-lt-hand':       { icon: '🧰', label: 'تجهيز وتسليم جوابات طلبات التجار — دخول = تجيله رسالة بالتجهيز، تعديل = يمسح بالباركود ويبلّغ التاجر إنها جاهزة' },
+  'erp-lt-appr':       { icon: '🏷️', label: 'اعتماد جوابات طلبات التجار — دخول = تجيله رسالة لما التاجر يختار «تروح الاعتماد»' },
   'erp-lt-req':        { icon: '📥', label: 'طلبات الجوابات من التجار (شيت Excel) — دخول = يشوف الطلبات وتجيله رسالة بالجديد، تعديل = يوافق/يرفض ويطبع' },
   'erp-overdraft':     { icon: '📉', label: 'البيع على المكشوف دفترى — دخول = يقدر يعمل فاتورة أكبر من الرصيد الدفترى (التسليم برضه لحد الرصيد الفعلى بس)' }
 };
@@ -24658,12 +24660,12 @@ function erLcTaxPrint(det){ if(!erNeedPrint('erp-letters')) return; const T=erLc
 // 📥 طلبات الجوابات (من شيت Excel التاجر — صفحة التاجر / البوت)
 // erp_lr_list / erp_lr_get (بيفحص السطور تانى على حالة النهارده) / erp_lr_approve (تسجيل + جواب + فاتورة ضريبية لكل سطر) / erp_lr_reject / erp_lr_print_data / erp_lr_printed
 // ════════════════════════════════════════════════════════════════
-function erLrS(){ if(!ER.lr) ER.lr={ st:'جديد', list:null, cur:null, busy:false }; return ER.lr; }
-const ER_LR_ST={'جديد':['⏳','جديد — مستنى المراجعة','gold'],'اتعمل':['✅','اتوافق — اتعمل','ok'],'اتطبع':['🖨️','اتطبع','ok'],'مرفوض':['❌','مرفوض','bad'],'ملغى':['↩️','لغاه التاجر','dim']};
+function erLrS(){ if(!ER.lr) ER.lr={ st:'open', list:null, cur:null, busy:false, msg:null, day:null, dayD:erToday() }; return ER.lr; }
+const ER_LR_ST={'جديد':['⏳','جديد — مستنى المراجعة','gold'],'اتعمل':['✅','اتوافق — لسه متطبعش','ok'],'اتطبع':['🖨️','اتطبع — مستنى اختيار التاجر','gold'],'للتجهيز':['🧰','للتجهيز','gold'],'للاعتماد':['🏷️','رايح الاعتماد','gold'],'فى الاعتماد':['🏷️','جوه الاعتماد','gold'],'جاهز':['📦','جاهز للاستلام','ok'],'اتسلم':['✍️','اتسلم للتاجر','ok'],'مرفوض':['❌','مرفوض','bad'],'ملغى':['↩️','لغاه التاجر','dim']};
 const ER_LR_LST={ok:['✅','سليم','var(--success)'],fixed:['🔧','اتصلّح','var(--success)'],err:['❌','مشكلة','var(--error)'],done:['✉️','اتعمل','var(--gold)']};
 function erLrChip(st){ const s=ER_LR_ST[st]||['•',st,'dim']; return `<span class="qt-chip ${s[2]==='ok'?'':s[2]==='bad'?'':''}" style="${s[2]==='bad'?'color:var(--error)':s[2]==='ok'?'color:var(--success)':s[2]==='gold'?'color:var(--gold)':''}">${s[0]} ${erEsc(s[1])}</span>`; }
 async function erLrLoad(){ const S=erLrS(); try{ S.list=await rpcSecure('erp_lr_list',{p:{status:S.st}}); erRenderLtReq(); erLrBadge(); }catch(e){ erToast('❌ '+erErr(e),false); } }
-async function erLrBadge(){ try{ const n=(erLrS().st==='جديد'&&erLrS().list)?erLrS().list.length:((await rpcSecure('erp_lr_list',{p:{status:'جديد'}}))||[]).length; const e=document.getElementById('erl-c-req'); if(e){ e.textContent=n; e.style.display=n?'':'none'; } }catch(e){} }
+async function erLrBadge(){ try{ const n=((await rpcSecure('erp_lr_list',{p:{status:'جديد'}}))||[]).length; const e=document.getElementById('erl-c-req'); if(e){ e.textContent=n; e.style.display=n?'':'none'; } }catch(e){} }
 async function erLrOpen(id){ const S=erLrS(); S.busy=true; erRenderLtReq(); try{ S.cur=await rpcSecure('erp_lr_get',{p_id:id}); }catch(e){ erToast('❌ '+erErr(e),false); } S.busy=false; erRenderLtReq(); }
 function erLrBack(){ const S=erLrS(); S.cur=null; erLrLoad(); }
 async function erLrApprove(){ const S=erLrS(), q=S.cur; if(!q) return; const n=(q.fresh||[]).filter(l=>l.st!=='err').length;
@@ -24697,7 +24699,7 @@ function erLrLine(l){ const s=ER_LR_LST[l.st]||['•',l.st,'']; const i=l.info||
   return `<tr><td>${l.line_no}</td><td style="color:${s[2]};font-weight:800;white-space:nowrap">${s[0]} ${s[1]}</td><td dir="ltr" style="text-align:right">${erEsc(l.engine||'')}</td><td dir="ltr" style="text-align:right">${erEsc(l.chassis||'')}</td>
     <td>${erEsc(i.item||'')}</td><td>${erEsc(l.buyer_name||'')}<div class="qt-sub" dir="ltr">${erEsc(l.buyer_id_no||'')}</div></td><td>${erEsc(l.color||'')}</td><td>${erEsc(i.inv_no||'')}${i.del_no?`<div class="qt-sub">تسليم ${erEsc(i.del_no)}</div>`:''}</td>
     <td class="qt-sub">${erEsc(i.book||'')}${i.registered===false?`<div style="color:var(--gold)">🆕 ${l.st==='done'?'اتسجل من الطلب':'هيتسجل'}</div>`:''}</td>
-    <td>${l.jawab_no?`<b style="color:var(--gold)">${l.jawab_no}</b>`:''}${l.tinv_no?`<div class="qt-sub">🧾 ${l.tinv_no}</div>`:''}</td>
+    <td>${l.jawab_no?`<b style="color:var(--gold)">${l.jawab_no}</b>`:''}${l.tinv_no?`<div class="qt-sub">🧾 ${l.tinv_no}</div>`:''}</td><td class="qt-sub">${l.lt_cancelled?'<span style="color:var(--error)">❌ الجواب اتلغى</span>':erEsc(l.lt_state||'')}${l.prep_at?'<div style="color:var(--success);font-weight:800">✔ اتجهز</div>':''}</td>
     <td style="text-align:right;font-size:12px">${(l.msgs||[]).map(m=>'• '+erEsc(m)).join('<br>')}</td></tr>`; }
 function erRenderLtReq(){ const el=document.getElementById('erl-pane-req'); if(!el) return; const S=erLrS(), canE=erCan('erp-lt-req','edit'), canP=erCan('erp-letters','print');
   if(!erCan('erp-lt-req','view')){ el.innerHTML='<div class="qt-card qt-sub" style="padding:20px;text-align:center">⛔ معندكش صلاحية «طلبات الجوابات» — كلم الأدمن</div>'; return; }
@@ -24710,22 +24712,76 @@ function erRenderLtReq(){ const el=document.getElementById('erl-pane-req'); if(!
        ${q.approved_by?`<div><span class="qt-sub">وافق:</span> ${erEsc(q.approved_by)}</div>`:''}${q.printed_by?`<div><span class="qt-sub">طبع:</span> ${erEsc(q.printed_by)}</div>`:''}${q.reject_reason?`<div style="color:var(--error)"><span class="qt-sub">سبب الرفض:</span> ${erEsc(q.reject_reason)}</div>`:''}</div>
        ${q.status==='جديد'?`<div class="qt-sub">🔎 السطور اتفحصت تانى دلوقتى على حالة السيستم النهارده — سليم <b style="color:var(--success)">${ok}</b> من ${L.length}</div>
          ${canE?`<div class="erlc-row"><button class="qt-btn" ${ok&&!S.busy?'':'disabled'} onclick="erLrApprove()">${S.busy?'⏳ بنعمل الجوابات...':`✅ وافق واعمل ${ok} جواب + الفواتير الضريبية`}</button><button class="qt-btn ghost" onclick="erLrReject()">❌ رفض الطلب</button><button class="qt-btn ghost sm" onclick="erLrOpen(${q.id})">🔄 افحص تانى</button></div>`:''}`:''}
-       ${q.status==='اتعمل'||q.status==='اتطبع'?`<div class="erlc-row"><span class="qt-sub">اتعمل <b style="color:var(--gold)">${q.n_done}</b> جواب</span>
+       ${q.n_done&&!['جديد','مرفوض','ملغى'].includes(q.status)?`<div class="erlc-row"><span class="qt-sub">اتعمل <b style="color:var(--gold)">${q.n_done}</b> جواب</span>
          ${canP?`<button class="qt-btn" onclick="erLrPrintLetters()">🖨️ اطبع الجوابات (باركود + QR)</button><button class="qt-btn" onclick="erLrPrintTinv()">🧾 اطبع الفواتير الضريبية</button>`:''}<button class="qt-btn ghost" onclick="erLrBooks()">📕 الكتب الدورية</button>
          <span class="qt-sub">شكل الطباعة من تاب «🖨️ طباعة الجوابات»: ${erEsc({'1':'نموذج 1','2':'نموذج 2 (نص صفحة)','3':'نموذج 3 (من غير هيدر)'}[erLcS().opt.form]||'')} — ${erEsc(erLcS().opt.shape)}</span></div>`:''}
+       ${erLrFlow(q)}
        ${q.__books?`<div class="qt-card" style="margin-top:8px;padding:10px">${q.__books.map(r=>`<div style="padding:3px 0">جواب <b>${r.jawab_no}</b> — <span dir="ltr">${erEsc(r.engine_no)}</span> — 📕 ${erEsc(r.book||'—')} ${r.bulletin?`${erPlLink(r.bulletin.numbers_url,'📄 الأرقام')} ${erPlLink(r.bulletin.approvals_url,'✅ الاعتمادات')} ${erPlLink(r.bulletin.motor_url,'⚙️ المواتير')} ${erPlLink(r.bulletin.chassis_url,'🔩 الشاسيهات')}`:'<span class="qt-sub">(مفيش منشور مرفوع على السيستم للكتاب ده)</span>'}</div>`).join('')}</div>`:''}</div>
-     <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>م</th><th>الحالة</th><th>الماتور</th><th>الشاسيه</th><th>الصنف</th><th>المشترى</th><th>اللون</th><th>الإذن</th><th>الكتاب الدورى</th><th>الجواب</th><th>ملاحظات</th></tr></thead><tbody>${L.map(erLrLine).join('')}</tbody></table></div>`;
+     <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>م</th><th>الحالة</th><th>الماتور</th><th>الشاسيه</th><th>الصنف</th><th>المشترى</th><th>اللون</th><th>الإذن</th><th>الكتاب الدورى</th><th>الجواب</th><th>حالة الورق</th><th>ملاحظات</th></tr></thead><tbody>${L.map(erLrLine).join('')}</tbody></table></div>`;
     return; }
   const R=S.list;
   el.innerHTML=erBanner()+erLcCss()+`<div class="qt-card erlc-box"><div class="erlc-row"><b>📥 طلبات الجوابات من التجار</b>
-     <select class="qt-inp" onchange="erLrS().st=this.value;erLrLoad()">${[['جديد','⏳ الجديدة (مستنية مراجعة)'],['اتعمل','✅ اتوافق عليها (لسه متطبعتش)'],['اتطبع','🖨️ اتطبعت'],['مرفوض','❌ المرفوضة'],['ملغى','↩️ اللى التاجر لغاها'],['','📋 الكل']].map(o=>`<option value="${o[0]}" ${S.st===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
+     <select class="qt-inp" onchange="erLrS().st=this.value;erLrLoad()">${[['open','🔄 الشغالة (لسه مخلصتش)'],['جديد','⏳ الجديدة (مستنية مراجعة)'],['اتعمل','✅ اتوافق عليها (لسه متطبعتش)'],['اتطبع','🖨️ مستنية اختيار التاجر'],['للتجهيز','🧰 للتجهيز'],['للاعتماد','🏷️ رايحة الاعتماد'],['فى الاعتماد','🏷️ جوه الاعتماد'],['جاهز','📦 جاهزة للاستلام'],['اتسلم','✍️ اتسلمت'],['مرفوض','❌ المرفوضة'],['ملغى','↩️ اللى التاجر لغاها'],['','📋 الكل']].map(o=>`<option value="${o[0]}" ${S.st===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
      <button class="qt-btn ghost sm" onclick="erLrLoad()">🔄 تحديث</button></div>
-     <div class="qt-sub">التاجر بيرفع شيت Excel من صفحته أو من البوت ← السيستم بيفحص كل سطر ← هنا بتوافق فيتعمل التسجيل والجواب والفاتورة الضريبية أوتوماتيك.</div></div>
+     <div class="qt-sub">التاجر بيرفع شيت Excel من صفحته أو من البوت ← السيستم بيفحص كل سطر ← هنا بتوافق فيتعمل التسجيل والجواب والفاتورة الضريبية أوتوماتيك ← طباعة ← التاجر يختار (جهّزوها / اعتماد) ← تجهيز بالباركود ← تسليم ← التاجر يأكد.</div></div>
+   ${erLrDayBox()}
    ${R==null?'<div class="qt-card qt-sub" style="text-align:center;padding:24px">⏳ بنحمّل...</div>':!R.length?'<div class="qt-card qt-sub" style="text-align:center;padding:24px">مفيش طلبات</div>':
    `<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم الطلب</th><th>التاجر</th><th>الوقت</th><th>من</th><th>السطور</th><th>سليم</th><th>اتعمل</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${R.map(q=>`<tr style="cursor:pointer" onclick="erLrOpen(${q.id})"><td><b style="color:var(--gold);font-size:15px">${q.req_no}</b>${erTestChip(q)}</td><td>${erEsc(q.client)}<div class="qt-sub">${erEsc(q.code||'')}</div></td>
-      <td class="qt-sub">${erEsc(String(q.created_at||'').replace('T',' ').slice(0,16))}</td><td>${q.source==='bot'?'🤖':'🌐'}</td><td>${q.n_lines}</td><td style="color:var(--success)">${q.n_ok}</td><td>${q.n_done||'—'}</td><td>${erLrChip(q.status)}</td><td><button class="qt-btn sm">فتح</button></td></tr>`).join('')}</tbody></table></div>`}`;
+      <td class="qt-sub">${erEsc(String(q.created_at||'').replace('T',' ').slice(0,16))}</td><td>${q.source==='bot'?'🤖':'🌐'}</td><td>${q.n_lines}</td><td style="color:var(--success)">${q.n_ok}</td><td>${q.n_done||'—'}</td><td>${erLrChip(q.status)}${q.status==='اتسلم'?(q.cl_confirmed_at?'<div class="qt-sub" style="color:var(--success)">✅ التاجر أكد</div>':'<div class="qt-sub">⏳ مستنى تأكيد التاجر</div>'):''}${q.delivery_mode?`<div class="qt-sub">${q.delivery_mode==='ready'?'من غير اعتماد':'بالاعتماد'}</div>`:''}</td><td><button class="qt-btn sm">فتح</button></td></tr>`).join('')}</tbody></table></div>`}`;
   if(R==null && !S.__l){ S.__l=1; erLrLoad(); } }
+
+// ── 🔀 مراحل ما بعد الطباعة: اختيار التاجر ← (الاعتماد) ← التجهيز بالباركود ← التسليم ← تأكيد التاجر
+function erLrFlow(q){ const canE=erCan('erp-lt-req','edit'), canH=erCan('erp-lt-hand','edit'), S=erLrS(), n=q.n_done||0, np=q.n_prep||0;
+  const box=(t,b)=>`<div class="qt-card" style="margin-top:10px;padding:12px;border:1px solid var(--gold)"><b>${t}</b>${b}</div>`;
+  if(q.status==='اتعمل') return box('🖨️ الخطوة الجاية: اطبع الجوابات','<div class="qt-sub">أول ما تطبع، التاجر هتجيله رسالة يختار: «جهّزوها للاستلام» ولا «تروح الاعتماد».</div>');
+  if(q.status==='اتطبع') return box('⏳ مستنيين التاجر يختار',`<div class="qt-sub">اتبعتله رسالة فيها زرارين. لو كلمك فى التليفون تقدر تختار بداله:</div>
+    ${canE?`<div class="erlc-row"><button class="qt-btn" onclick="erLrMode('ready')">✅ جهّزوها للاستلام (من غير اعتماد)</button><button class="qt-btn ghost" onclick="erLrMode('appr')">🏷️ تروح الاعتماد</button></div>`:''}`);
+  if(q.status==='للاعتماد'||q.status==='فى الاعتماد') return box(q.status==='للاعتماد'?'🏷️ الورق لازم يخرج للاعتماد':'🏷️ الورق جوه الاعتماد',`<div class="qt-sub">الحركات بتتعمل من تاب «🏷️ الاعتمادات» بالباركود — الطلب بيتابعها لوحده ويبلّغ التاجر لما الورق يخرج ولما يرجع.</div>
+    <div class="erlc-row">${q.status==='للاعتماد'?`<button class="qt-btn" onclick="erLrToBasket('apr','appr_out')">🏷️ حط جوابات الطلب فى «خروج للاعتماد»</button>`:''}<button class="qt-btn ${q.status==='للاعتماد'?'ghost':''}" onclick="erLrToBasket('apr','appr_in')">↩️ حط جوابات الطلب فى «رجوع من الاعتماد»</button></div>`);
+  if(q.status==='للتجهيز') return box(`🧰 التجهيز — امسح كل جواب بالباركود (<span id="erlr-np">${np}</span> من ${n})`,`
+    <div style="height:8px;background:var(--dark3);border-radius:6px;margin:8px 0;overflow:hidden"><div style="height:100%;width:${n?Math.round(np*100/n):0}%;background:var(--success)"></div></div>
+    ${canH?`<input class="qt-inp erlc-scan" id="erlr-scan" placeholder="📷 امسح باركود الجواب هنا (أو اكتب رقمه واضغط Enter)" onkeydown="if(event.key==='Enter'){erLrScan(this)}" autocomplete="off">`:'<div class="qt-sub">⛔ معندكش صلاحية «التجهيز والتسليم»</div>'}
+    ${S.msg?`<div class="erlc-msg ${S.msg.ok?'ok':'bad'}">${erEsc(S.msg.t)}</div>`:''}
+    <div class="erlc-row"><button class="qt-btn ghost" onclick="erLrPrepSheet()">🖨️ كشف التجهيز</button>${canH?`<button class="qt-btn" ${np>=n&&n?'':'disabled'} onclick="erLrPrepDone()">✅ خلصت التجهيز — بلّغ التاجر إنها جاهزة</button>`:''}</div>`);
+  if(q.status==='جاهز') return box('📦 جاهزة للاستلام — اتبلّغ التاجر',`<div class="qt-sub">لما التاجر ييجى: سلّمه من تاب «✍️ استلامات التجار» (بيطبع إيصال الاستلام) — الطلب بيتقفل لوحده وبيتبعت للتاجر زرار يأكد بيه.</div>
+    <div class="erlc-row"><button class="qt-btn" onclick="erLrToBasket('hand','hand')">✍️ سلّم الجوابات للتاجر</button><button class="qt-btn ghost" onclick="erLrPrepSheet()">🖨️ كشف التجهيز</button></div>`);
+  if(q.status==='اتسلم') return box('✍️ اتسلمت للتاجر',`<div class="qt-sub">${q.handed_at?'وقت التسليم: '+erEsc(String(q.handed_at).replace('T',' ').slice(0,16))+' — ':''}${q.cl_confirmed_at?'<b style="color:var(--success)">✅ التاجر أكد الاستلام '+erEsc(String(q.cl_confirmed_at).replace('T',' ').slice(0,16))+'</b>':'⏳ مستنيين التاجر يدوس «✅ استلمت الجوابات»'}</div>`);
+  return ''; }
+async function erLrMode(m){ const q=erLrS().cur; if(!q) return; if(!confirm(m==='ready'?'التاجر هيستلم الورق من غير اعتماد؟':'الورق يروح الاعتماد الأول؟')) return;
+  try{ await rpcSecure('erp_lr_mode_admin',{p_id:q.id,p_mode:m}); erToast('✅ اتسجل'); await erLrRefresh(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erLrScan(inp){ const S=erLrS(), q=S.cur, code=(inp.value||'').trim(); inp.value=''; if(!code||!q) return;
+  try{ const r=await rpcSecure('erp_lr_prep_scan',{p_id:q.id,p_code:code}); q.n_prep=r.np; (q.lines||[]).forEach(l=>{ if(l.jawab_no===r.jawab_no&&!l.prep_at) l.prep_at=new Date().toISOString(); });
+    S.msg={ok:!r.dup,t:r.dup?`⚠️ الجواب ${r.jawab_no} اتمسح قبل كده (${r.np} من ${r.n})`:`✅ ${r.jawab_no} — اتجهز (${r.np} من ${r.n})${r.np>=r.n?' — 🎉 كله اتجهز':''}`}; erBeep(!r.dup); }
+  catch(e){ S.msg={ok:false,t:'❌ '+erErr(e)}; erBeep(false); }
+  erRenderLtReq(); const i=document.getElementById('erlr-scan'); if(i) i.focus(); }
+async function erLrPrepDone(){ const S=erLrS(), q=S.cur; if(!q) return; try{ await rpcSecure('erp_lr_prep_done',{p_id:q.id}); S.msg=null; erToast('✅ اتبلّغ التاجر إن الجوابات جاهزة'); erBeep(true); await erLrRefresh(); }catch(e){ erToast('❌ '+erErr(e),false); erBeep(false); } }
+async function erLrPrepSheet(){ if(!erNeedPrint('erp-letters')) return; const q=erLrS().cur; if(!q) return;
+  try{ const D=await rpcSecure('erp_lr_print_data',{p_id:q.id}); const R=D.letters||[]; if(!R.length){ erToast('مفيش جوابات',false); return; }
+    const done={}; (q.lines||[]).forEach(l=>{ if(l.prep_at) done[l.jawab_no]=1; });
+    const body=erLcRepHead('كشف تجهيز جوابات — طلب '+D.req_no, `التاجر: ${D.code||''} — ${D.client||''} — ${R.length} جواب`)
+      +`<table><thead><tr><th>م</th><th>رقم الجواب</th><th>رقم الشاسيه</th><th>رقم الماتور</th><th>الموديل</th><th>المشترى</th><th>اتجهز</th></tr></thead><tbody>${R.map((r,i)=>`<tr><td>${i+1}</td><td><b>${r.jawab_no}</b></td><td dir="ltr">${erEsc(r.chassis_no||'—')}</td><td dir="ltr">${erEsc(r.engine_no||'')}</td><td>${erEsc(r.item_name||'')}</td><td style="text-align:right">${erEsc(r.buyer_name||'')}</td><td>${done[r.jawab_no]?'✔':'☐'}</td></tr>`).join('')}</tbody></table>
+      <div class="gt">الإجمالى: ${R.length} جواب</div><div class="sg"><div>جهّزه</div><div>راجعه</div><div>استلمه التاجر</div></div>`;
+    erLcWin('كشف تجهيز طلب '+D.req_no, ER_LC_RCSS, body); }catch(e){ erToast('❌ '+erErr(e),false); } }
+// يحط جوابات الطلب فى سلة شاشة الاعتمادات / الاستلامات وينقلك ليها (الحفظ والإيصال من هناك زى العادى)
+async function erLrToBasket(w, kind){ const q=erLrS().cur; if(!q) return;
+  try{ const D=await rpcSecure('erp_lr_print_data',{p_id:q.id}); const S=erLcS();
+    const R=(D.letters||[]).filter(r=>kind==='appr_out'?!r.appr_out_at:kind==='appr_in'?(r.appr_out_at&&!r.appr_in_at):!r.handed_at);
+    if(!R.length){ erToast('مفيش جوابات فاضلة للحركة دى فى الطلب',false); return; }
+    if(w==='apr'){ S.apr.mode=kind; S.apr.basket=R; S.apr.msg={ok:true,t:`📥 اتحط ${R.length} جواب من طلب ${D.req_no} — راجع واحفظ`}; }
+    else { S.hand.basket=R; S.hand.msg={ok:true,t:`📥 اتحط ${R.length} جواب من طلب ${D.req_no} — راجع واحفظ (بيطبع إيصال الاستلام)`}; }
+    erLtTab(w); }catch(e){ erToast('❌ '+erErr(e),false); } }
+// 📊 ملخص اليوم: الجوابات اللى اتعملت + مين استلم وكام
+function erLrDayBox(){ const S=erLrS(), D=S.day;
+  return `<div class="qt-card erlc-box"><div class="erlc-row"><b>📊 ملخص يوم</b><input type="date" class="qt-inp" value="${erEsc(S.dayD)}" onchange="erLrS().dayD=this.value"><button class="qt-btn ghost sm" onclick="erLrDay()">اعرض</button>${D?`<button class="qt-btn ghost sm" onclick="erLrDayPrint()">🖨️ طباعة</button>`:''}</div>
+   ${D?`<div class="erlc-grid"><div style="min-width:280px"><b>✉️ الجوابات اللى اتعملت: ${D.made.reduce((a,x)=>a+Number(x.n),0)}</b>${D.made.map(x=>`<div class="qt-sub">${erEsc(x.code||'')} — ${erEsc(x.client)}: <b>${x.n}</b> (من ${x.from} لـ ${x.to})${x.via_req?` — ${x.via_req} من طلبات Excel`:''}</div>`).join('')||'<div class="qt-sub">مفيش</div>'}</div>
+     <div style="min-width:280px"><b>✍️ استلم النهارده: ${D.handed.reduce((a,x)=>a+Number(x.n),0)} جواب — ${new Set(D.handed.map(x=>x.code)).size} تاجر</b>${D.handed.map(x=>`<div class="qt-sub">${erEsc(x.at)} — ${erEsc(x.code||'')} ${erEsc(x.client)}: <b>${x.n}</b> (مستند ${x.batch_no}، سلّمه ${erEsc(x.by||'')})${x.confirmed===true?' ✅ أكد':x.confirmed===false?' ⏳':''}</div>`).join('')||'<div class="qt-sub">مفيش</div>'}</div></div>`:''}</div>`; }
+async function erLrDay(){ const S=erLrS(); try{ S.day=await rpcSecure('erp_lr_day',{p_date:S.dayD||null}); erRenderLtReq(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+function erLrDayPrint(){ if(!erNeedPrint('erp-letters')) return; const D=erLrS().day; if(!D) return;
+  const t1=D.made.reduce((a,x)=>a+Number(x.n),0), t2=D.handed.reduce((a,x)=>a+Number(x.n),0);
+  erLcWin('ملخص الجوابات '+D.date, ER_LC_RCSS, erLcRepHead('ملخص الجوابات اليومى', 'يوم '+D.date)
+   +`<div class="blk"><div class="bh">✉️ الجوابات اللى اتعملت — <b>${t1}</b></div><table><thead><tr><th>م</th><th>كود التاجر</th><th>التاجر</th><th>العدد</th><th>من جواب</th><th>لـ جواب</th><th>من طلبات Excel</th></tr></thead><tbody>${D.made.map((x,i)=>`<tr><td>${i+1}</td><td>${erEsc(x.code||'')}</td><td style="text-align:right">${erEsc(x.client)}</td><td><b>${x.n}</b></td><td>${x.from}</td><td>${x.to}</td><td>${x.via_req||'—'}</td></tr>`).join('')}<tr class="sum"><td colspan="3">الإجمالى</td><td>${t1}</td><td colspan="3"></td></tr></tbody></table></div>
+   <div class="blk"><div class="bh">✍️ مين استلم — <b>${t2}</b> جواب لـ <b>${new Set(D.handed.map(x=>x.code)).size}</b> تاجر</div><table><thead><tr><th>م</th><th>الوقت</th><th>كود التاجر</th><th>التاجر</th><th>مستند التسليم</th><th>العدد</th><th>سلّمه</th><th>تأكيد التاجر</th></tr></thead><tbody>${D.handed.map((x,i)=>`<tr><td>${i+1}</td><td>${erEsc(x.at)}</td><td>${erEsc(x.code||'')}</td><td style="text-align:right">${erEsc(x.client)}</td><td>${x.batch_no}</td><td><b>${x.n}</b></td><td>${erEsc(x.by||'')}</td><td>${x.confirmed===true?'✅':x.confirmed===false?'⏳':'—'}</td></tr>`).join('')}<tr class="sum"><td colspan="5">الإجمالى</td><td>${t2}</td><td colspan="2"></td></tr></tbody></table></div>`); }
 
 async function erTinvPrint(id){
   if(!erCan('erp-letters','print')){ erToast('معندكش صلاحية طباعة',false); return; }

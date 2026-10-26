@@ -3476,7 +3476,9 @@ function lrLineHtml(l, dist){ const s=LR_ST[l.st]||['•',l.st,'']; const i=l.in
     <div class="ac-dim" style="direction:ltr;text-align:right">${l.engine?'🔧 '+acEsc(l.engine):''}${l.chassis?' · 🔩 '+acEsc(l.chassis):''}</div>
     ${!dist&&(l.buyer_name||l.buyer_id_no)?`<div>${acEsc(l.buyer_name||'')} ${l.buyer_id_no?`<span class="ac-dim" dir="ltr">${acEsc(l.buyer_id_no)}</span>`:''}${l.color?` · ${acEsc(l.color)}`:''}</div>`:''}
     ${(l.msgs||[]).length?`<div style="font-size:12px;margin-top:3px">${l.msgs.map(m=>'• '+acEsc(m)).join('<br>')}</div>`:''}</div>`; }
-const LR_RST={'جديد':'⏳ مستنى المراجعة','اتعمل':'✅ اتوافق — بيتطبع','اتطبع':'🖨️ اتطبع','مرفوض':'❌ مرفوض','ملغى':'↩️ ملغى'};
+const LR_RST={'جديد':'⏳ مستنى المراجعة','اتعمل':'✅ اتوافق — بيتطبع','اتطبع':'🖨️ اتطبع — اختار','للتجهيز':'🧰 بيتجهز','للاعتماد':'🏷️ رايح الاعتماد','فى الاعتماد':'🏷️ فى الاعتماد','جاهز':'📦 جاهز للاستلام','اتسلم':'✍️ اتسلم','مرفوض':'❌ مرفوض','ملغى':'↩️ ملغى'};
+async function lrMode(id,m){ if(!confirm(m==='ready'?'تستلم الجوابات من غير اعتماد؟':'الجوابات تروح الاعتماد الأول؟')) return; try { const r=await clRpc('cl_erp_lr_mode',{ p_id:id, p_mode:m }); bioToast(r&&r.text?r.text:'✅', r&&r.ok?'':'error'); await lrLoadList(); } catch(e){ bioToast(clErr(e.message),'error'); } }
+async function lrConfirm(id){ try { const r=await clRpc('cl_erp_lr_confirm',{ p_id:id }); bioToast(r&&r.text?r.text:'✅', r&&r.ok?'':'error'); await lrLoadList(); } catch(e){ bioToast(clErr(e.message),'error'); } }
 function lrRender(){
   const S=_lr; let h=`<div class="ac-box"><div class="ac-note" style="text-align:right;line-height:1.9">
     1️⃣ نزّل الشيت الفاضى واملاه (كل موتوسيكل فى سطر)<br>2️⃣ ارفعه هنا — السيستم هيراجع كل سطر<br>3️⃣ ابعت الطلب والشركة هتعمل الجوابات والفواتير الضريبية وتبلغك</div>
@@ -3497,6 +3499,8 @@ function lrRender(){
   else h+=S.list.map(q=>`<div class="ac-ln"><div class="ac-l1" onclick="lrTog(${q.id})" style="cursor:pointer"><span>طلب <b>${acEsc(q.req_no)}</b> · ${acEsc(String(q.created_at||'').slice(0,10))}</span><span>${LR_RST[q.status]||acEsc(q.status)}</span></div>
       <div class="ac-dim">${q.n_ok} جواب مطلوب${q.n_done?` · اتعمل ${q.n_done}`:''}${q.reject_reason?` · السبب: ${acEsc(q.reject_reason)}`:''}</div>
       ${q.status==='جديد'?`<button class="ac-go" style="padding:4px 10px;font-size:12px;margin-top:4px;background:var(--dark3);color:var(--text)" onclick="lrCancel(${q.id})">↩️ الغى الطلب</button>`:''}
+      ${(q.status==='اتطبع'||q.status==='اتعمل')&&!q.delivery_mode?`<div class="ac-acts" style="margin-top:6px"><button onclick="lrMode(${q.id},'ready')">✅ جهّزوها للاستلام</button><button onclick="lrMode(${q.id},'appr')">🏷️ تروح الاعتماد</button></div>`:''}
+      ${q.status==='اتسلم'?(q.cl_confirmed_at?'<div class="ac-dim" style="color:var(--success)">✅ أكدت الاستلام</div>':`<button class="ac-go" style="padding:6px 12px;font-size:13px;margin-top:4px" onclick="lrConfirm(${q.id})">✅ استلمت الجوابات</button>`):''}
       ${S.open[q.id]?(q.lines||[]).map(l=>lrLineHtml(l,false)).join(''):`<div class="ac-dim" style="font-size:11.5px">اضغط علشان تشوف السطور</div>`}</div>`).join('');
   return h;
 }
