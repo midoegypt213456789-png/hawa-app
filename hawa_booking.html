@@ -3481,7 +3481,7 @@ async function lrMode(id,m){ if(!confirm(m==='ready'?'تستلم الجوابا�
 async function lrConfirm(id){ try { const r=await clRpc('cl_erp_lr_confirm',{ p_id:id }); bioToast(r&&r.text?r.text:'✅', r&&r.ok?'':'error'); await lrLoadList(); } catch(e){ bioToast(clErr(e.message),'error'); } }
 function lrRender(){
   const S=_lr; let h=`<div class="ac-box"><div class="ac-note" style="text-align:right;line-height:1.9">
-    1️⃣ نزّل الشيت الفاضى واملاه (كل موتوسيكل فى سطر)<br>2️⃣ ارفعه هنا — السيستم هيراجع كل سطر<br>3️⃣ ابعت الطلب والشركة هتعمل الجوابات والفواتير الضريبية وتبلغك</div>
+    1️⃣ نزّل الشيت الفاضى واملاه (كل موتوسيكل فى سطر)<br>2️⃣ ارفعه هنا — السيستم هيراجع كل سطر<br>3️⃣ ابعت الطلب والشركة هتعمل الجوابات والفواتير الضريبية وتبلغك<br>📎 أو ابعت ملف الإكسيل للبوت فى الشات على طول</div>
     <div class="ac-acts"><button onclick="lrDownload()">⬇️ نزّل الشيت الفاضى</button><button onclick="document.getElementById('lrFile').click()" ${S.busy?'disabled':''}>📤 ارفع الشيت</button></div>
     <input type="file" id="lrFile" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" style="display:none" onchange="lrPick(this)"></div>`;
   if (S.busy) h+='<div class="ac-note">⏳ لحظة...</div>';
