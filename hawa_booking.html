@@ -3441,10 +3441,11 @@ async function lrPick(inp){
   const f=inp&&inp.files&&inp.files[0]; if(!f) return; inp.value='';
   _lr.err=''; _lr.chk=null; _lr.rows=null; _lr.file=f.name; _lr.busy=true; acctRender();
   try {
-    if (f.size>3*1024*1024) throw new Error('الملف كبير قوى (أكتر من 3 ميجا)');
+    if (f.size>20*1024*1024) throw new Error('الملف أكبر من 20 ميجا — احذف الصور أو الشيتات الزيادة');
     await lrLib();
-    const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});
-    const sn=wb.SheetNames.find(n=>/جواب/.test(n))||wb.SheetNames[0];
+    const buf=new Uint8Array(await f.arrayBuffer());
+    const names=XLSX.read(buf,{type:'array',bookSheets:true}).SheetNames, sn=names.find(n=>/جواب/.test(n))||names[0];
+    const wb=XLSX.read(buf,{type:'array',sheets:sn,sheetRows:1000,dense:true});   // شيت الجوابات بس وأول 1000 سطر — علشان الملفات الكبيرة متهنّجش الموبايل
     const rows=lrParse(XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:true,defval:''}));
     if (!rows.length) throw new Error('الشيت فاضى — مفيش ولا سطر مكتوب');
     if (rows.length>300) throw new Error('الشيت فيه '+rows.length+' سطر — الحد 300 فى الطلب الواحد، قسّمه');
