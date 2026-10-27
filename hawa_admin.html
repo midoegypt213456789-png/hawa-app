@@ -11222,7 +11222,7 @@ async function loadClients(){
   document.getElementById('cl-table').innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>';
   try{
     const [r1, r2, r3, r4] = await Promise.all([
-      fetch(`${SB}/rest/v1/clients?approval_status=neq.rejected&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,religion,approval_status,last_unblocked_at,tier_id,region,assigned_emp_id&order=name.asc`,{headers:{...HDR,'Range':'0-4999'}}),
+      fetch(`${SB}/rest/v1/clients?approval_status=neq.rejected&select=id,company_code,name,phone,governorate,city,address,username,telegram_id,created_at,district,is_blocked,no_show_count,client_type,is_active,active_manual,religion,approval_status,last_unblocked_at,tier_id,region,assigned_emp_id&order=name.asc`,{headers:{...HDR,'Range':'0-4999'}}),
       fetch(`${SB}/rest/v1/client_types?select=*&order=id.asc`,{headers:HDR}),
       fetch(`${SB}/rest/v1/religions?select=*&order=id.asc`,{headers:HDR}),
       fetch(`${SB}/rest/v1/client_tiers?select=*&is_active=eq.true&order=sort_order.asc`,{headers:HDR})
@@ -11555,6 +11555,7 @@ function filterClients(){
     if(isBlocked) statusCell += '<span class="badge blocked">محظور 🔒</span> ';
     if(isInactive) statusCell += '<span class="badge inactive">لا يستقبل 🔕</span> ';
     if(!isBlocked && !isInactive) statusCell = '<span class="badge active">نشط ✅</span>';
+    if(c.active_manual===true||c.active_manual===false) statusCell += ` <span class="badge" style="background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.4);cursor:pointer" title="${c.active_manual?'مفعّل يدوى — مش هيتقفل لوحده لو مفيش حجوزات':'موقوف يدوى'} — اضغط علشان يرجع تلقائى" onclick="event.stopPropagation();clientActiveAuto(${c.id},'${(c.name||'').replace(/'/g,"\\'")}')">📌 يدوى</span>`;
 
     const nameEsc = (c.name||'').replace(/'/g,"\\'");
 
@@ -12830,15 +12831,23 @@ async function blockClient(id,name){
 
 async function deactivateClient(id,name){
   showConfirm('🔕','إيقاف استقبال الرسائل',`هتوقف استقبال الرسائل لـ "${name}"؟\n\nمش هيوصله أي رسالة broadcast بعد كده.`,true,async()=>{
-    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:false})});
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:false,active_manual:false})});
     loadClients();
   });
 }
 
 async function activateClient(id,name){
-  showConfirm('🔔','تفعيل استقبال الرسائل',`هتفعّل استقبال الرسائل لـ "${name}"؟`,false,async()=>{
-    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:true})});
+  showConfirm('🔔','تفعيل استقبال الرسائل',`هتفعّل استقبال الرسائل لـ "${name}"؟\n\n📌 هيفضل مفعّل حتى لو معملش حجوزات (مش هيتقفل لوحده) — ولو عاوزه يرجع تلقائى دوس على «📌 يدوى».`,false,async()=>{
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({is_active:true,active_manual:true})});
     loadClients();
+  });
+}
+
+// 📌 يرجّع استقبال الرسائل للحساب التلقائى (نشط = عنده حجز متنفّذ خلال المدة اللى فى الإعدادات)
+async function clientActiveAuto(id,name){
+  showConfirm('🔄','استقبال الرسائل تلقائى',`«${name}» يرجع تلقائى؟\n\nهيبقى نشط لو عنده حجز اتنفّذ خلال المدة اللى فى الإعدادات، وغير كده هيتوقف لوحده.`,false,async()=>{
+    await fetch(`${SB}/rest/v1/clients?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({active_manual:null})});
+    await refreshClientActivity(true); loadClients();
   });
 }
 
