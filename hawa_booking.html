@@ -1126,6 +1126,104 @@ document.getElementById('ucode').textContent  = user.company_code || '';
 checkTelegramLink();
 // 📊 حسابى (بيظهر بس للحسابات المفعّلة)
 setTimeout(()=>{ try { acctCheck(); } catch(_){} }, 400);
+// 📍 لوكيشن المحل (لو مطلوب ومتحدّثش الصفحة بتتقفل)
+setTimeout(()=>{ try { locCheck(); } catch(_){} }, 250);
+
+// ═══════════════════════════════════════════════════════════
+// 📍 تحديث لوكيشن المحل — لو مطلوب ومبعتش (أو مش مطابق للعنوان) الصفحة كلها بتتقفل لحد ما يحدّث
+// cl_loc_state / cl_loc_set — والفحص (مطابقة اللوكيشن مع المحافظة والمدينة) فى السيرفر
+// ═══════════════════════════════════════════════════════════
+var _loc = { st:null, map:null, mk:null, lat:null, lng:null, acc:null, busy:false, msg:'', msgOk:false, edit:false, gov:'', city:'', forced:false };
+function locEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function locHtml(s){ return locEsc(s).replace(/&lt;(\/?)b&gt;/g,'<$1b>').replace(/\n/g,'<br>'); }
+function locLib(){ if(window.L) return Promise.resolve(); return new Promise((ok,no)=>{ const c=document.createElement('link'); c.rel='stylesheet'; c.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(c);
+  const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; s.onload=ok; s.onerror=()=>no(new Error('map')); document.head.appendChild(s); }); }
+async function locCheck(){
+  if (!user || !user.id) return;
+  let q; try { q=new URLSearchParams(location.search); } catch(_){ q=null; }
+  const want = q && q.get('go')==='loc';
+  if (!clHasTok()){ if (want) locShowNoTok(); return; }
+  let st=null; try { st=await clRpc('cl_loc_state',{}); } catch(e){ return; }
+  if (!st || st.session===false){ if (want) locShowNoTok(); return; }
+  _loc.st=st; _loc.gov=st.gov||''; _loc.city=st.city||''; _loc.edit=st.status==='mismatch';
+  if (st.required && !st.ok){ _loc.forced=true; locOpen(); }
+  else if (want){ _loc.forced=false; locOpen(); }
+}
+function locShowNoTok(){ const o=locEl(); o.innerHTML=`<div class="loc-card"><div class="loc-t">📍 تحديث لوكيشن المحل</div><div class="loc-s">علشان تحدّث بياناتك لازم تسجّل خروج وتدخل تانى.</div><button class="loc-go" onclick="doLogout()">🚪 خروج ودخول تانى</button></div>`; o.style.display='flex'; }
+function locEl(){ let o=document.getElementById('locGate'); if(!o){ o=document.createElement('div'); o.id='locGate'; document.body.appendChild(o);
+  const st=document.createElement('style'); st.textContent=`#locGate{position:fixed;inset:0;z-index:99990;background:rgba(5,5,5,.96);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:14px;direction:rtl;font-family:Cairo,Tahoma,sans-serif}
+  .loc-card{background:var(--dark2,#111);border:1.5px solid var(--gold,#C9A84C);border-radius:18px;padding:16px;max-width:520px;width:100%;color:var(--text,#F0EDE8);margin:auto}
+  .loc-t{font-size:19px;font-weight:900;color:var(--gold-light,#E8C97A);margin-bottom:6px}.loc-s{font-size:13.5px;line-height:1.9;color:var(--text,#F0EDE8)}
+  .loc-map{height:300px;border-radius:12px;margin:10px 0;border:1px solid var(--border,#2A2A2A);background:#1a1a1a}
+  .loc-go{width:100%;background:linear-gradient(135deg,var(--gold,#C9A84C),var(--gold-light,#E8C97A));color:#0A0A0A;border:0;border-radius:12px;padding:12px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer;margin-top:8px}
+  .loc-go:disabled{opacity:.55}.loc-b2{width:100%;background:var(--dark3,#1A1A1A);color:var(--text,#F0EDE8);border:1px solid var(--border,#2A2A2A);border-radius:12px;padding:10px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px}
+  .loc-msg{border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13.5px;line-height:1.8}.loc-ok{background:rgba(76,175,125,.13);border:1px solid rgba(76,175,125,.5)}.loc-bad{background:rgba(224,85,85,.11);border:1px solid rgba(224,85,85,.5)}
+  .loc-row{display:flex;gap:8px;margin-top:8px}.loc-row select{flex:1;min-width:0;background:var(--dark3,#1A1A1A);color:var(--text,#F0EDE8);border:1px solid var(--border,#2A2A2A);border-radius:10px;padding:9px;font-family:inherit;font-size:14px}
+  .loc-dim{font-size:12px;color:var(--text-dim,#8A8580);margin-top:6px;line-height:1.7}`; document.head.appendChild(st); } return o; }
+function locOpen(){ if (typeof logActivity==='function') logActivity('cl_loc_open','📍 فتح تحديث لوكيشن المحل'); locRender(); locEl().style.display='flex'; locInitMap(); }
+function locClose(){ const o=document.getElementById('locGate'); if(o) o.style.display='none'; }
+function locRender(){
+  const S=_loc, st=S.st||{}, govs=st.govs||{}, cities=(govs[S.gov]||[]);
+  const o=locEl();
+  o.innerHTML=`<div class="loc-card">
+    <div class="loc-t">📍 تحديث بيانات المحل</div>
+    <div class="loc-s">${locHtml(st.text||'')}</div>
+    <div id="locMap" class="loc-map"></div>
+    <div class="loc-dim">${S.lat!=null?`📌 المكان المختار: <span dir="ltr">${S.lat.toFixed(5)}, ${S.lng.toFixed(5)}</span>${S.acc?` (دقة ~${Math.round(S.acc)} متر)`:''} — تقدر تحرّك الدبوس أو تدوس على الخريطة لو محتاج تظبطه`:'دوس «حدّد مكانى» وانت فى المحل، أو دوس على مكان المحل على الخريطة.'}</div>
+    <button class="loc-b2" onclick="locGps()" ${S.busy?'disabled':''}>🛰️ حدّد مكانى (GPS)</button>
+    ${S.edit?`<div class="loc-dim" style="margin-top:12px;color:var(--gold-light,#E8C97A)">✏️ العنوان المسجل:</div>
+      <div class="loc-row"><select onchange="_loc.gov=this.value;_loc.city='';locRender();locInitMap()">${Object.keys(govs).map(g=>`<option ${g===S.gov?'selected':''}>${locEsc(g)}</option>`).join('')}${govs[S.gov]?'':`<option selected>${locEsc(S.gov)}</option>`}</select>
+      <select onchange="_loc.city=this.value"><option value="">— المدينة / المركز —</option>${cities.map(c=>`<option ${c===S.city?'selected':''}>${locEsc(c)}</option>`).join('')}${S.city&&cities.indexOf(S.city)<0?`<option selected>${locEsc(S.city)}</option>`:''}</select></div>`
+     :`<button class="loc-b2" onclick="_loc.edit=true;locRender();locInitMap()">✏️ عدّل العنوان (${locEsc(S.gov)} — ${locEsc(S.city)})</button>`}
+    ${S.msg?`<div class="loc-msg ${S.msgOk?'loc-ok':'loc-bad'}">${locHtml(S.msg)}</div>`:''}
+    <button class="loc-go" onclick="locSave()" ${S.lat==null||S.busy?'disabled':''}>${S.busy?'⏳ لحظة...':'✅ احفظ لوكيشن المحل'}</button>
+    ${S.forced?'':'<button class="loc-b2" onclick="locClose()">✖ إغلاق</button>'}
+    <div class="loc-dim">💡 لو الـ GPS مش شغال: من البوت دوس 📎 ← Location وابعت مكان المحل.</div></div>`;
+}
+async function locInitMap(){
+  try { await locLib(); } catch(e){ const m=document.getElementById('locMap'); if(m) m.innerHTML='<div class="loc-dim" style="padding:14px">⚠️ الخريطة مش راضية تحمّل — استخدم «حدّد مكانى» أو ابعت اللوكيشن من البوت.</div>'; return; }
+  const el=document.getElementById('locMap'); if(!el) return;
+  const S=_loc, st=S.st||{};
+  if (S.lat==null && st.lat!=null){ S.lat=st.lat; S.lng=st.lng; }
+  const c=S.lat!=null?[S.lat,S.lng]:[30.2,31.2];
+  S.map=L.map(el,{zoomControl:true,attributionControl:true}).setView(c, S.lat!=null?16:7);
+  const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
+  const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
+  sat.addTo(S.map); L.control.layers({'🛰️ قمر صناعى':sat,'🗺️ خريطة':osm},null,{position:'topleft'}).addTo(S.map);
+  S.mk=null; if (S.lat!=null) locPin(S.lat,S.lng,false);
+  S.map.on('click',e=>{ S.acc=null; locPin(e.latlng.lat,e.latlng.lng,false); locRefreshTxt(); });
+  setTimeout(()=>{ try{ S.map.invalidateSize(); }catch(_){} },250);
+}
+function locPin(lat,lng,fly){ const S=_loc; S.lat=lat; S.lng=lng;
+  if(!S.map) return;
+  if(!S.mk){ S.mk=L.marker([lat,lng],{draggable:true}).addTo(S.map); S.mk.on('dragend',()=>{ const p=S.mk.getLatLng(); S.lat=p.lat; S.lng=p.lng; S.acc=null; locRefreshTxt(); }); }
+  else S.mk.setLatLng([lat,lng]);
+  if(fly) S.map.setView([lat,lng],17); }
+function locRefreshTxt(){ const b=document.querySelector('#locGate .loc-go'); if(b) b.disabled=_loc.lat==null||_loc.busy;
+  const d=document.querySelectorAll('#locGate .loc-dim')[0]; if(d&&_loc.lat!=null) d.innerHTML=`📌 المكان المختار: <span dir="ltr">${_loc.lat.toFixed(5)}, ${_loc.lng.toFixed(5)}</span>${_loc.acc?` (دقة ~${Math.round(_loc.acc)} متر)`:''} — تقدر تحرّك الدبوس أو تدوس على الخريطة لو محتاج تظبطه`; }
+function locGps(){
+  if(!navigator.geolocation){ _loc.msg='⚠️ الموبايل ده مش بيدعم تحديد المكان — ابعت اللوكيشن من البوت.'; _loc.msgOk=false; locRender(); locInitMap(); return; }
+  const b=document.querySelector('#locGate .loc-b2'); if(b){ b.disabled=true; b.textContent='⏳ بنحدّد مكانك...'; }
+  navigator.geolocation.getCurrentPosition(p=>{ _loc.acc=p.coords.accuracy; locPin(p.coords.latitude,p.coords.longitude,true); _loc.msg=''; if(b){ b.disabled=false; b.textContent='🛰️ حدّد مكانى (GPS)'; } locRefreshTxt(); const m=document.querySelector('#locGate .loc-msg'); if(m) m.remove(); },
+    e=>{ if(b){ b.disabled=false; b.textContent='🛰️ حدّد مكانى (GPS)'; } _loc.msg=e&&e.code===1?'⚠️ لازم تسمح للتطبيق يعرف مكانك (Location) — أو دوس على مكان المحل على الخريطة.':'⚠️ مقدرناش نحدّد مكانك — شغّل الـ GPS، أو دوس على مكان المحل على الخريطة.'; _loc.msgOk=false;
+      const box=document.querySelector('#locGate .loc-card'); let m=box&&box.querySelector('.loc-msg'); if(box&&!m){ m=document.createElement('div'); box.insertBefore(m, box.querySelector('.loc-go')); } if(m){ m.className='loc-msg loc-bad'; m.innerHTML=locHtml(_loc.msg); } },
+    { enableHighAccuracy:true, timeout:20000, maximumAge:0 });
+}
+async function locSave(){
+  const S=_loc; if(S.lat==null||S.busy) return;
+  const st=S.st||{}, chg=S.edit&&(S.gov!==(st.gov||'')||S.city!==(st.city||''));
+  if (S.edit && !S.city){ S.msg='⚠️ اختار المدينة / المركز'; S.msgOk=false; locRender(); locInitMap(); return; }
+  S.busy=true; locRefreshTxt();
+  try {
+    const r=await clRpc('cl_loc_set',{ p_lat:S.lat, p_lng:S.lng, p_gov: chg?S.gov:null, p_city: chg?S.city:null, p_acc: S.acc });
+    if (typeof logActivity==='function') logActivity('cl_loc_set','📍 تحديث لوكيشن المحل: '+((r&&r.status)||''));
+    S.msg=(r&&r.text)||''; S.msgOk=!!(r&&r.ok); if (r&&r.state){ const g=st.govs; S.st=Object.assign({},r.state,{govs:g}); }
+    if (r && r.ok){ S.busy=false; S.forced=false; locRender(); locInitMap(); setTimeout(()=>{ locClose(); try{ const u=new URL(location.href); if(u.searchParams.get('go')==='loc'){ u.searchParams.delete('go'); history.replaceState(null,'',u.toString()); } }catch(_){} },2200); return; }
+    if (r && r.status==='mismatch'){ S.edit=true; S.msg=''; }
+  } catch(e){ S.msg=clErr(e.message,'⛔ حصل خطأ — حاول تانى'); S.msgOk=false; }
+  S.busy=false; locRender(); locInitMap();
+}
+
 
 // ═══════════════════════════════════════════════════════════
 // 🔐 BIOMETRIC LOGIN (WebAuthn) — دخول بالبصمة زى البنوك
