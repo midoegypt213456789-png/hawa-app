@@ -3045,6 +3045,9 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
             <option value="blocked">محظور 🔒</option>
             <option value="inactive">لا يستقبل رسائل 🔕</option>
             <option value="noemp">⚠️ من غير موظف</option>
+            <option value="loc_ok">📍 لوكيشن مطابق / معتمد</option>
+            <option value="loc_bad">📍 لوكيشن مش مطابق</option>
+            <option value="loc_none">📍 لسه مبعتش لوكيشن</option>
           </select>
           <style>.emp-combo-item{padding:8px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid rgba(42,42,42,0.5)}.emp-combo-item:hover{background:rgba(201,168,76,0.12);color:var(--gold)}.emp-combo-item:last-child{border-bottom:none}</style>
           <div style="position:relative;display:inline-block" id="cl-emp-wrap">
@@ -11265,7 +11268,7 @@ async function loadClients(){
     // 🗺️ نطاق البيانات: الموظف يشوف عملاءه بس
     await ensureEmpScope();
     allClients = empScopeFilter(allClients);
-    await clLoadBalances();
+    await Promise.all([clLoadBalances(), clLoadLoc()]);
 
     initAdminGovDropdown();
     initClientTypeFilter();
@@ -11493,6 +11496,9 @@ function filterClients(){
   if(status==='blocked') data=data.filter(c=>c.is_blocked);
   if(status==='inactive') data=data.filter(c=>c.is_active===false);
   if(status==='noemp') data=data.filter(c=>!effectiveEmpId(c));
+  if(status==='loc_ok') data=data.filter(c=>['ok','manual','check'].includes(clLocSt(c.id)));
+  if(status==='loc_bad') data=data.filter(c=>clLocSt(c.id)==='mismatch');
+  if(status==='loc_none') data=data.filter(c=>clLocSt(c.id)==='none');
 
   // 👤 فلتر الموظف المسؤول (كومبوبوكس)
   const empTxt=((document.getElementById('cl-emp-input')||{}).value||'').trim().toLowerCase();
@@ -11532,7 +11538,7 @@ function filterClients(){
     <th>👤 الموظف</th>
     <th>الكود</th><th>الهاتف</th>
     <th>💰 افتتاحى مدين</th><th>💰 افتتاحى دائن</th><th>📒 الرصيد الختامى${CL_BAL&&CL_BAL.__err?` <span title="${String(CL_BAL.__err).replace(/"/g,'&quot;')}" style="color:#E05555;cursor:help">⚠️</span>`:''}</th>
-    <th>المحافظة</th><th>المدينة</th><th>العنوان</th>
+    <th>المحافظة</th><th>المدينة</th><th>العنوان</th><th>📍 اللوكيشن</th>
     <th>اليوزر نيم</th><th>الباسورد</th>
     <th style="width:60px">no-show</th><th>الحالة</th><th>إجراءات</th>
   </tr></thead><tbody>`;
@@ -11581,6 +11587,7 @@ function filterClients(){
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.governorate,search)}</td>
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.city,search)}</td>
       <td style="font-size:11px;color:var(--text-dim);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${c.address||''}">${hl(c.address,search)}</td>
+      <td>${clLocCell(c.id)}</td>
       <td style="font-size:12px;color:var(--text-dim)">${hl(c.username,search)||'-'}</td>
       <td style="font-size:11px;color:rgba(138,133,128,0.5);letter-spacing:3px">••••</td>
       <td style="color:${nsColor};font-weight:${ns>0?700:400};text-align:center">${ns}</td>
@@ -11673,6 +11680,7 @@ function filterClients(){
     ${activeCnt>0?`<span ${st('status','active')}>نشط: <b>${activeCnt}</b></span>`:''}
     ${blockedCnt>0?`<span ${st('status','blocked')}>محظور: <b style="color:#e88080">${blockedCnt}</b></span>`:''}
     ${inactiveCnt>0?`<span ${st('status','inactive')}>لا يستقبل: <b style="color:var(--text-dim)">${inactiveCnt}</b></span>`:''}
+    ${(()=>{ const ok=data.filter(c=>['ok','manual','check'].includes(clLocSt(c.id))).length, bad=data.filter(c=>clLocSt(c.id)==='mismatch').length; return `<span ${st('status','loc_ok')}>📍 حدّث: <b style="color:#4CAF7D">${ok}</b></span>${bad?`<span ${st('status','loc_bad')}>❌ مش مطابق: <b style="color:#E05555">${bad}</b></span>`:''}<span ${st('status','loc_none')}>⏳ لسه: <b style="color:var(--text-dim)">${data.length-ok-bad}</b></span>`; })()}
     ${balStats}
     <span style="margin-right:auto;font-size:11px;opacity:0.5">💡 دبل كليك على أي رقم للفلترة بيه — وعلى الإجمالي لمسح الفلاتر</span>`;
 }
@@ -12718,6 +12726,20 @@ function onEditGovChange(){
 
 // 💰 الرصيد الافتتاحى (مدين/دائن) والختامى — من حسابات السيستم الجديد (erp_client_accounts + الفواتير − السندات)
 let CL_BAL = {};
+// 📍 لوكيشن المحلات فى جدول التجار
+let CL_LOC = {};
+async function clLoadLoc(){ try{ const r=await rpcSecure('loc_admin_brief',{}); CL_LOC={}; (r||[]).forEach(x=>CL_LOC[x.c]=x); }catch(e){ CL_LOC={}; } }
+function clLocSt(id){ const l=CL_LOC[id]; if(!l||(!l.st&&l.lat==null)) return 'none'; return l.st||'none'; }
+function clLocCell(id){ const l=CL_LOC[id], st=clLocSt(id);
+  const M={ok:['✅ مطابق','#4CAF7D'],manual:['🟦 معتمد يدوى','#4A90D9'],mismatch:['❌ مش مطابق','#E05555'],check:['🟨 مستنى فحص','#E8C97A'],none:['⏳ لسه مبعتش','var(--text-dim)']}[st]||['—','var(--text-dim)'];
+  let h=`<span style="color:${M[1]};font-weight:${st==='none'?400:800};font-size:12px;white-space:nowrap">${M[0]}</span>`;
+  if(l&&l.d!=null) h+=`<div style="font-size:10.5px;color:var(--text-dim)">${l.d} كم من المدينة${l.chg?' · ✏️ غيّر عنوانه':''}</div>`;
+  if(l&&l.lat!=null){ const g=`https://www.google.com/maps?q=${(+l.lat).toFixed(6)},${(+l.lng).toFixed(6)}`;
+    h+=`<div style="display:flex;gap:4px;margin-top:3px"><button class="act-btn" title="افتح على خريطة التجار" onclick="event.stopPropagation();clOpenOnMap(${id})" style="padding:2px 6px">🗺️</button>
+      <a class="act-btn" title="جوجل ماب" href="${g}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="padding:2px 6px;text-decoration:none">📍</a>
+      <button class="act-btn" title="نسخ اللوكيشن" onclick="event.stopPropagation();lmCopy('${g}')" style="padding:2px 6px">📋</button></div>`; }
+  return h; }
+function clOpenOnMap(id){ try{ goTo('clients-map'); }catch(e){} let n=0; const t=setInterval(()=>{ n++; if(typeof LM!=='undefined'&&LM.d&&LM.d.rows){ clearInterval(t); lmGo(id); } else if(n>40) clearInterval(t); },250); }
 async function clLoadBalances(){ try{ const r=await rpcSecure('erp_client_balances',{}); CL_BAL={}; (r||[]).forEach(x=>CL_BAL[x.c]=x); }catch(e){ CL_BAL={__err:(e&&e.message)||String(e)}; } }
 function clMoney(n){ const v=Number(n||0); return v?v.toLocaleString('en-US',{maximumFractionDigits:2}):'—'; }
 function clBalCell(id){ const b=CL_BAL[id]; const v=b?Number(b.bal||0):0; if(!v) return '<span style="color:var(--text-dim)">—</span>';
