@@ -24842,7 +24842,7 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
   const tabs=[['map','🗺️ الخريطة'],['near','📍 أقرب وكيل'],['track',`📋 متابعة التحديث <span class="bl-tab-count">${C.all-C.done}</span>`],['run','⚙️ التشغيل']];
   let h=`<div class="bl-tabs" style="margin-bottom:10px">${tabs.map(t=>`<button class="bl-tab ${LM.tab===t[0]?'active':''}" onclick="lmTab('${t[0]}')">${t[1]}</button>`).join('')}</div>
    <div class="qt-card" style="padding:10px 14px;margin-bottom:10px;display:flex;gap:14px;flex-wrap:wrap;align-items:center">
-     <b>📍 حدّث ${C.done} من ${C.all} (${pct}%)</b><span style="color:#4CAF7D">✅ ${C.ok}</span><span style="color:#4A90D9">🟦 ${C.manual}</span><span style="color:#E05555">❌ ${C.mismatch}</span><span style="color:#E8C97A">🟨 ${C.check}</span><span class="qt-sub">⏳ لسه ${C.none}</span>${C.chg?`<span style="color:var(--gold)">✏️ غيّر عنوانه ${C.chg}</span>`:''}
+     ${lmStat('done',`<b>📍 حدّث ${C.done} من ${C.all} (${pct}%)</b>`,'')}${lmStat('ok','✅ '+C.ok,'#4CAF7D')}${lmStat('manual','🟦 '+C.manual,'#4A90D9')}${lmStat('mismatch','❌ '+C.mismatch,'#E05555')}${lmStat('check','🟨 '+C.check,'#E8C97A')}${lmStat('none','⏳ لسه '+C.none,'var(--text-dim)')}${C.chg?lmStat('chg','✏️ غيّر عنوانه '+C.chg,'var(--gold)'):''}<span class="qt-sub" style="font-size:10.5px">💡 دبل كليك على أى رقم للفلترة</span>
      <span class="qt-sub" style="margin-inline-start:auto">${D.required?'🔒 القفل شغال على كل التجار':(D.pilot?`🧪 القفل تجربة على: ${erEsc(D.pilot)}`:'🔓 القفل مش شغال')}</span></div>`;
   if(LM.tab==='map'){
     const govs=[...new Set(D.rows.map(r=>r.gov).filter(Boolean))].sort(), emps=[...new Set(D.rows.map(r=>r.emp).filter(Boolean))].sort();
@@ -24867,11 +24867,11 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
     el.innerHTML=h; lmNearInit(); return; }
   if(LM.tab==='track'){
     const f=LM.ft, q=(f.q||'').trim().toLowerCase();
-    const R=D.rows.filter(r=>{ const s=lmSt(r); if(f.st==='pending'&&(s==='ok'||s==='manual'||s==='check')) return false; if(f.st&&f.st!=='pending'&&f.st!=='chg'&&f.st!=='notg'&&s!==f.st) return false; if(f.st==='chg'&&!r.addr_chg) return false; if(f.st==='notg'&&r.tg) return false;
+    const R=D.rows.filter(r=>{ const s=lmSt(r); if(f.st==='pending'&&(s==='ok'||s==='manual'||s==='check')) return false; if(f.st==='done'&&!(s==='ok'||s==='manual'||s==='check')) return false; if(f.st&&f.st!=='pending'&&f.st!=='done'&&f.st!=='chg'&&f.st!=='notg'&&s!==f.st) return false; if(f.st==='chg'&&!r.addr_chg) return false; if(f.st==='notg'&&r.tg) return false;
       if(q&&!(String(r.code||'').toLowerCase().includes(q)||String(r.name||'').toLowerCase().includes(q)||String(r.phone||'').includes(q))) return false; return true; });
     const canE=erCan('clients-map','edit');
     h+=`<div class="qt-card" style="padding:10px;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <select class="qt-inp" onchange="LM.ft.st=this.value;lmRender()">${[['pending','⏳ اللى لسه (مبعتش + مش مطابق)'],['none','⏳ مبعتش'],['mismatch','❌ مش مطابق'],['ok','✅ مطابق'],['manual','🟦 معتمد يدوى'],['check','🟨 مستنى فحص'],['chg','✏️ غيّر عنوانه'],['notg','📵 مش مربوط بالبوت'],['','📋 الكل']].map(o=>`<option value="${o[0]}" ${f.st===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
+      <select class="qt-inp" onchange="LM.ft.st=this.value;lmRender()">${[['pending','⏳ اللى لسه (مبعتش + مش مطابق)'],['done','📍 اللى حدّث (مطابق + يدوى + فحص)'],['none','⏳ مبعتش'],['mismatch','❌ مش مطابق'],['ok','✅ مطابق'],['manual','🟦 معتمد يدوى'],['check','🟨 مستنى فحص'],['chg','✏️ غيّر عنوانه'],['notg','📵 مش مربوط بالبوت'],['','📋 الكل']].map(o=>`<option value="${o[0]}" ${f.st===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
       <input class="qt-inp" style="width:220px" placeholder="🔎 كود / اسم / تليفون" value="${erEsc(f.q)}" oninput="LM.ft.q=this.value;clearTimeout(LM.__t);LM.__t=setTimeout(lmRender,300)">
       <span class="qt-sub">${R.length} تاجر</span>
       ${canE?`<button class="qt-btn sm" onclick="lmRemind(${JSON.stringify(R.filter(r=>r.tg&&!['ok','manual','check'].includes(lmSt(r))).map(r=>r.id))})">📨 ابعت تذكير دلوقتى للى فى القايمة (${R.filter(r=>r.tg&&!['ok','manual','check'].includes(lmSt(r))).length})</button>`:''}</div>
@@ -24920,6 +24920,12 @@ async function lmMap(){
   L.control.layers({'🛰️ قمر صناعى (زى جوجل إيرث)':satL,'🗺️ خريطة شوارع':osm},null,{position:'topleft'}).addTo(LM.map);
   LM.map.on('baselayerchange',e=>{ LM.base=e.layer===osm?'osm':'sat'; });
   lmDraw(true); setTimeout(()=>{ try{ LM.map.invalidateSize(); }catch(_){} },300); }
+function lmStatAct(k){ if(LM.tab==='map') return !!LM.f.st&&LM.f.st===k; if(LM.tab==='track') return (LM.ft.st||'')===k; return false; }
+function lmStat(k,txt,col){ const a=lmStatAct(k); return `<span style="cursor:pointer;user-select:none;padding:3px 8px;border-radius:8px;border:1px solid ${a?'var(--gold)':'transparent'};${a?'background:rgba(201,168,76,0.08);':''}${col?'color:'+col+';':''}" title="دبل كليك للفلترة — ودبل كليك تانى يلغيها" ondblclick="lmStatFilter('${k}')">${txt}</span>`; }
+function lmStatFilter(k){ const onMap=['ok','manual','mismatch','check'];
+  if(LM.tab==='map'&&onMap.includes(k)){ LM.f.st=(LM.f.st===k?'':k); lmRender(); return; }
+  if(LM.tab==='track'&&(LM.ft.st||'')===k){ LM.ft.st='pending'; lmRender(); return; }
+  LM.tab='track'; LM.ft.st=k; LM.ft.q=''; lmRender(); }
 function lmRows(){ const f=LM.f; return (LM.d?LM.d.rows:[]).filter(r=>r.lat!=null&&r.lng!=null&&(!f.gov||r.gov===f.gov)&&(!f.st||lmSt(r)===f.st)&&(!f.emp||r.emp===f.emp)); }
 function lmDraw(fit){ if(!LM.map) return; if(LM.cl){ LM.map.removeLayer(LM.cl); } LM.cl=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:45}); LM.mk={};
   const R=lmRows(); R.forEach(r=>{ const m=L.marker([r.lat,r.lng],{icon:lmIcon(lmSt(r)),title:`${r.code} — ${r.name}`}).bindPopup(lmPop(r)).bindTooltip(`${r.name} (${r.code||''})`,{direction:'top',offset:[0,-22]}); LM.mk[r.id]=m; LM.cl.addLayer(m); });
