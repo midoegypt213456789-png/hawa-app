@@ -24867,8 +24867,8 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
         oninput="clearTimeout(LMN.__st);const v=this.value;LMN.__st=setTimeout(()=>lmNearSug(v),120)" onfocus="if(this.value.trim())lmNearSug(this.value)" onkeydown="lmNearKey(event)" onblur="setTimeout(()=>lmNearSugHide(),200)">
         <div id="lmn-sug" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:1200;margin-top:4px;background:var(--dark2);border:1px solid var(--gold);border-radius:12px;max-height:360px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.6)"></div></span>
       <button class="qt-btn" onclick="lmNearSearch()">🔎 دوّر</button><span class="qt-sub">أو</span>
-      <select class="qt-inp" id="lmn-gov" onchange="LMN.gov=this.value;LMN.city='';lmNearCities()"></select>
-      <select class="qt-inp" id="lmn-city" onchange="LMN.city=this.value"></select><button class="qt-btn ghost" onclick="lmNearCity()">📍 هات الأقرب</button>
+      <select class="qt-inp" id="lmn-gov" onchange="LMN.gov=this.value;LMN.city='';lmNearCities();if(this.value)lmNearCity()"></select>
+      <select class="qt-inp" id="lmn-city" onchange="LMN.city=this.value;if(LMN.gov)lmNearCity()"></select><button class="qt-btn" onclick="if(!LMN.gov){erToast('اختار المحافظة الأول',false);return;}lmNearCity()">🔎 بحث</button>
       <span class="qt-sub">أو دوس على الخريطة</span>
       <label class="qt-sub"><input type="checkbox" ${LMN.only?'checked':''} onchange="LMN.only=this.checked;lmNearCalc()"> المطابقين بس</label>
       <select class="qt-inp" onchange="LMN.n=+this.value;lmNearRender()">${[10,15,25,50].map(n=>`<option ${LMN.n===n?'selected':''} value="${n}">أقرب ${n}</option>`).join('')}</select></div>
