@@ -12734,6 +12734,7 @@ function clLocCell(id){ const l=CL_LOC[id], st=clLocSt(id);
   const M={ok:['✅ مطابق','#4CAF7D'],manual:['🟦 معتمد يدوى','#4A90D9'],mismatch:['❌ مش مطابق','#E05555'],check:['🟨 مستنى فحص','#E8C97A'],none:['⏳ لسه مبعتش','var(--text-dim)']}[st]||['—','var(--text-dim)'];
   let h=`<span style="color:${M[1]};font-weight:${st==='none'?400:800};font-size:12px;white-space:nowrap">${M[0]}</span>`;
   if(l&&l.d!=null) h+=`<div style="font-size:10.5px;color:var(--text-dim)">${l.d} كم من المدينة${l.chg?' · ✏️ غيّر عنوانه':''}</div>`;
+  if(l&&l.nb>1) h+=`<div style="font-size:11px;color:var(--gold);font-weight:700">🏪 ${l.nb} فروع</div>`;
   if(l&&l.lat!=null){ const g=`https://www.google.com/maps?q=${(+l.lat).toFixed(6)},${(+l.lng).toFixed(6)}`;
     h+=`<div style="display:flex;gap:4px;margin-top:3px"><button class="act-btn" title="افتح على خريطة التجار" onclick="event.stopPropagation();clOpenOnMap(${id})" style="padding:2px 6px">🗺️</button>
       <a class="act-btn" title="جوجل ماب" href="${g}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="padding:2px 6px;text-decoration:none">📍</a>
@@ -24830,6 +24831,9 @@ function erLrDayPrint(){ if(!erNeedPrint('erp-letters')) return; const D=erLrS()
 var LM = { tab:'map', d:null, map:null, cl:null, mk:{}, f:{ q:'', gov:'', st:'', emp:'' }, ft:{ st:'pending', q:'' }, base:'sat' };
 const LM_ST = { ok:['✅','مطابق','#4CAF7D'], manual:['🟦','معتمد يدوى','#4A90D9'], mismatch:['❌','مش مطابق','#E05555'], check:['🟨','مستنى فحص','#E8C97A'], none:['⏳','لسه مبعتش','#8A8580'] };
 function lmSt(r){ return r.st && LM_ST[r.st] ? r.st : 'none'; }
+function lmBrs(r){ return (r.br&&r.br.length)?r.br:(r.lat!=null?[{n:1,lat:r.lat,lng:r.lng,st:r.st,d:r.dist}]:[]); }
+function lmBrMain(r){ const B=lmBrs(r); return B.find(b=>Math.abs(b.lat-r.lat)<1e-7&&Math.abs(b.lng-r.lng)<1e-7)||B[0]; }
+function lmBrTxt(r,b){ const B=lmBrs(r); return B.length>1&&b?`🏪 فرع ${b.n} من ${B.length}${b.label?` — ${b.label}`:''}`:''; }
 function lmLib(){ if(window.L && L.markerClusterGroup) return Promise.resolve(); const add=(t,u)=>new Promise((ok,no)=>{ const e=document.createElement(t); if(t==='link'){ e.rel='stylesheet'; e.href=u; e.onload=ok; e.onerror=ok; } else { e.src=u; e.onload=ok; e.onerror=()=>no(new Error('map lib')); } document.head.appendChild(e); });
   const B='https://cdnjs.cloudflare.com/ajax/libs/';
   return Promise.all([add('link',B+'leaflet/1.9.4/leaflet.min.css'), add('link',B+'leaflet.markercluster/1.5.3/MarkerCluster.min.css'), add('link',B+'leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css')])
@@ -24877,7 +24881,7 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
       ${canE?`<button class="qt-btn sm" onclick="lmRemind(${JSON.stringify(R.filter(r=>r.tg&&!['ok','manual','check'].includes(lmSt(r))).map(r=>r.id))})">📨 ابعت تذكير دلوقتى للى فى القايمة (${R.filter(r=>r.tg&&!['ok','manual','check'].includes(lmSt(r))).length})</button>`:''}</div>
       <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>التاجر</th><th>التليفون</th><th>العنوان المسجل</th><th>الحالة</th><th>البعد عن المدينة</th><th>آخر تحديث</th><th>البوت</th><th></th></tr></thead><tbody>
       ${R.slice(0,600).map(r=>{ const s=LM_ST[lmSt(r)]; return `<tr><td><b style="color:var(--gold)">${erEsc(r.code||'')}</b></td><td>${erEsc(r.name)}${r.emp?`<div class="qt-sub">👤 ${erEsc(r.emp)}</div>`:''}</td><td dir="ltr">${erEsc(r.phone||'')}</td>
-        <td>${erEsc(r.gov||'')} — ${erEsc(r.city||'')}${r.addr_chg?'<div class="qt-sub" style="color:var(--gold)">✏️ غيّر عنوانه</div>':''}</td><td style="color:${s[2]};font-weight:800;white-space:nowrap">${s[0]} ${s[1]}</td>
+        <td>${erEsc(r.gov||'')} — ${erEsc(r.city||'')}${r.addr_chg?'<div class="qt-sub" style="color:var(--gold)">✏️ غيّر عنوانه</div>':''}</td><td style="color:${s[2]};font-weight:800;white-space:nowrap">${s[0]} ${s[1]}${r.br&&r.br.length>1?`<div style="color:var(--gold);font-size:11.5px">🏪 ${r.br.length} فروع</div>`:''}</td>
         <td>${r.dist!=null?r.dist+' كم':'—'}</td><td class="qt-sub">${r.at?erEsc(String(r.at).replace('T',' ').slice(0,16)):'—'}${r.src?`<div>${{bot:'🤖 البوت',page:'🌐 الصفحة',admin:'👤 الأدمن'}[r.src]||erEsc(r.src)}</div>`:''}</td>
         <td>${r.tg?'✅':'📵'}${r.notified?`<div class="qt-sub">📨 ${erEsc(String(r.notified).replace('T',' ').slice(5,16))}</div>`:''}</td>
         <td style="white-space:nowrap"><button class="qt-btn ghost sm" title="نسخ كل البيانات" onclick="lmCopy(decodeURIComponent('${encodeURIComponent(lmAllTxt(r)).replace(/'/g,'%27')}'))">📋</button>${r.lat!=null?`<button class="qt-btn ghost sm" onclick="lmGo(${r.id})">🗺️</button>`:''}<button class="qt-btn ghost sm" onclick="lmLog(${r.id})">📜</button>${canE&&lmSt(r)!=='manual'&&lmSt(r)!=='ok'?`<button class="qt-btn ghost sm" onclick="lmAct('approve',${r.id})" title="اعتماد يدوى">✅</button>`:''}${canE&&r.st?`<button class="qt-btn ghost sm" onclick="lmAct('reset',${r.id})" title="يطلب منه يحدّث تانى">↺</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>${R.length>600?'<div class="qt-sub">أول 600 بس — استخدم البحث</div>':''}`;
@@ -24896,17 +24900,21 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
       <span class="qt-sub">تجربة على أكواد/IDs:</span><input class="qt-inp" id="lm-pilot" style="width:140px" dir="ltr" value="${erEsc(D.pilot)}" placeholder="850"><button class="qt-btn ghost sm" onclick="lmRun('pilot')">حفظ</button></div>`:'<div class="qt-sub">⛔ التشغيل للأدمن الرئيسى بس</div>'}
   </div>`;
   el.innerHTML=h; }
-function lmIcon(st){ const c=LM_ST[st][2]; return L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-24],html:`<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${c};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>`}); }
-function lmPop(r){ const s=LM_ST[lmSt(r)], canE=erCan('clients-map','edit');
+function lmIcon(st,n){ const c=LM_ST[st][2]; return L.divIcon({className:'',iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-24],html:`<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${c};border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center"><span style="transform:rotate(45deg);color:#fff;font:800 11px Cairo,sans-serif">${n||''}</span></div>`}); }
+function lmPop(r,b){ const canE=erCan('clients-map','edit'), B=lmBrs(r); b=b||lmBrMain(r)||{n:1,lat:r.lat,lng:r.lng,st:r.st,d:r.dist}; r=Object.assign({},r,{lat:b.lat,lng:b.lng,bn:b.n,nb:B.length,blabel:b.label}); const s=LM_ST[lmSt({st:b.st})], cs=LM_ST[lmSt(r)];
   return `<div style="direction:rtl;font-family:Cairo,Tahoma,sans-serif;min-width:230px;line-height:1.7"><b style="font-size:14px">${erEsc(r.name)}</b>${lmCpBtn(r.name,'الاسم')} <b style="color:#b8860b">(${erEsc(r.code||'')})</b>${lmCpBtn(r.code,'الكود')}
     <div>📞 <span dir="ltr">${erEsc(r.phone||'')}</span>${r.phone?lmCpBtn(r.phone,'التليفون'):''}</div><div>📌 ${erEsc(r.gov||'')} — ${erEsc(r.city||'')}${lmCpBtn([r.gov,r.city,r.address].filter(Boolean).join(' — '),'العنوان')}</div>${r.address?`<div style="color:#555;font-size:12px">${erEsc(r.address)}</div>`:''}${r.emp?`<div>👤 ${erEsc(r.emp)}${lmCpBtn(r.emp,'الموظف')}</div>`:''}
     <div style="font-size:11.5px;color:#555" dir="ltr">${(+r.lat).toFixed(6)}, ${(+r.lng).toFixed(6)}${lmCpBtn(lmGmap(r),'اللوكيشن')}</div>
-    <div style="color:${s[2]};font-weight:800">${s[0]} ${s[1]}${r.dist!=null?` — ${r.dist} كم من المدينة`:''}</div><div style="color:#777;font-size:11px">${r.at?erEsc(String(r.at).replace('T',' ').slice(0,16)):''}</div>
+    ${B.length>1?`<div style="margin-top:4px;padding:4px 6px;background:#f6f0dc;border-radius:6px"><b>🏪 فرع ${b.n} من ${B.length}</b>${b.label?` — ${erEsc(b.label)}`:''}
+      <div style="font-size:11.5px">الفروع: ${B.map(x=>`<a href="#" onclick="lmGoBr(${r.id},${x.n});return false" style="margin-inline-end:6px;${x.n===b.n?'font-weight:800;color:#b8860b':''}">${LM_ST[lmSt({st:x.st})][0]} فرع ${x.n}</a>`).join('')}</div>
+      <div style="font-size:11.5px">حالة التاجر: <b style="color:${cs[2]}">${cs[0]} ${cs[1]}</b></div></div>`:''}
+    <div style="color:${s[2]};font-weight:800">${s[0]} ${s[1]}${b.d!=null?` — ${b.d} كم من المدينة`:''}</div><div style="color:#777;font-size:11px">${b.at||r.at?erEsc(String(b.at||r.at).replace('T',' ').slice(0,16)):''}</div>
     <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><a href="https://www.google.com/maps?q=${r.lat},${r.lng}" target="_blank" rel="noopener" style="background:#4285F4;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">📍 جوجل ماب</a>
     <a href="#" onclick="lmCopy(decodeURIComponent('${encodeURIComponent(lmGmap(r))}'));return false" style="background:#0F9D58;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">📋 نسخ اللوكيشن</a>
     <a href="#" onclick="lmCopy(decodeURIComponent('${encodeURIComponent(lmAllTxt(r)).replace(/'/g,'%27')}'));return false" style="background:#6b4fbb;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">📋 نسخ الكل</a>
     <a href="#" onclick="lmLog(${r.id});return false" style="background:#333;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">📜 السجل</a>
-    ${canE&&r.st==='mismatch'?`<a href="#" onclick="lmAct('approve',${r.id});return false" style="background:#4CAF7D;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">✅ اعتماد يدوى</a>`:''}</div></div>`; }
+    ${canE&&b.st==='mismatch'&&!['ok','manual','check'].includes(lmSt(r))?`<a href="#" onclick="lmAct('approve',${r.id},${b.n});return false" style="background:#4CAF7D;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">✅ اعتماد يدوى</a>`:''}
+    ${canE&&r.br&&r.br.length?`<a href="#" onclick="lmBrLabel(${r.id},${b.n});return false" style="background:#8a6d1f;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">✏️ اسم الفرع</a><a href="#" onclick="lmAct('br_off',${r.id},${b.n});return false" style="background:#E05555;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">🚫 مش فرع</a>`:''}</div></div>`; }
 async function lmMap(){
   try{ await lmLib(); }catch(e){ const m=document.getElementById('lm-map'); if(m) m.innerHTML='<div class="qt-sub" style="padding:20px">⚠️ مكتبة الخريطة مش راضية تحمّل</div>'; return; }
   const el=document.getElementById('lm-map'); if(!el) return;
@@ -24928,19 +24936,26 @@ function lmStatFilter(k){ const onMap=['ok','manual','mismatch','check'];
   LM.tab='track'; LM.ft.st=k; LM.ft.q=''; lmRender(); }
 function lmRows(){ const f=LM.f; return (LM.d?LM.d.rows:[]).filter(r=>r.lat!=null&&r.lng!=null&&(!f.gov||r.gov===f.gov)&&(!f.st||lmSt(r)===f.st)&&(!f.emp||r.emp===f.emp)); }
 function lmDraw(fit){ if(!LM.map) return; if(LM.cl){ LM.map.removeLayer(LM.cl); } LM.cl=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:45}); LM.mk={};
-  const R=lmRows(); R.forEach(r=>{ const m=L.marker([r.lat,r.lng],{icon:lmIcon(lmSt(r)),title:`${r.code} — ${r.name}`}).bindPopup(lmPop(r)).bindTooltip(`${r.name} (${r.code||''})`,{direction:'top',offset:[0,-22]}); LM.mk[r.id]=m; LM.cl.addLayer(m); });
-  LM.map.addLayer(LM.cl); const n=document.getElementById('lm-n'); if(n) n.textContent=`📍 ${R.length} تاجر على الخريطة`;
-  if(fit&&R.length){ try{ LM.map.fitBounds(L.latLngBounds(R.map(r=>[r.lat,r.lng])).pad(0.15),{maxZoom:14}); }catch(_){} } }
+  const R=lmRows(), pts=[]; let nbr=0; R.forEach(r=>{ const B=lmBrs(r), main=lmBrMain(r); B.forEach(b=>{ const m=L.marker([b.lat,b.lng],{icon:lmIcon(lmSt({st:b.st}),B.length>1?b.n:''),title:`${r.code} — ${r.name}`}).bindPopup(()=>lmPop(r,b)).bindTooltip(`${r.name} (${r.code||''})${B.length>1?` · فرع ${b.n}`:''}`,{direction:'top',offset:[0,-22]}); LM.mk[r.id+'_'+b.n]=m; if(b===main) LM.mk[r.id]=m; LM.cl.addLayer(m); pts.push([b.lat,b.lng]); }); if(B.length>1) nbr++; });
+  LM.map.addLayer(LM.cl); const n=document.getElementById('lm-n'); if(n) n.textContent=`📍 ${R.length} تاجر على الخريطة${pts.length>R.length?` (${pts.length} محل — ${nbr} تاجر عنده فروع)`:''}`;
+  if(fit&&pts.length){ try{ LM.map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:14}); }catch(_){} } }
 function lmFind(){ const q=String(LM.f.q||'').trim().toLowerCase(); if(!q) return; const R=(LM.d?LM.d.rows:[]);
   const r=R.find(x=>String(x.code||'').toLowerCase()===q)||R.find(x=>String(x.name||'').toLowerCase().includes(q)||String(x.code||'').toLowerCase().includes(q));
   if(!r){ erToast('مش لاقى التاجر ده',false); return; } if(r.lat==null){ erToast(`${r.name} (${r.code}) لسه مبعتش لوكيشن المحل`,false); return; } lmGoTo(r); }
 function lmGo(id){ const r=(LM.d.rows||[]).find(x=>x.id===id); if(!r) return; LM.tab='map'; LM.f={q:'',gov:'',st:'',emp:''}; lmRender(); setTimeout(()=>lmGoTo(r),700); }
-function lmGoTo(r){ if(!LM.map) return; const m=LM.mk[r.id]; LM.map.flyTo([r.lat,r.lng],18,{duration:1.2}); if(m&&LM.cl) setTimeout(()=>LM.cl.zoomToShowLayer(m,()=>m.openPopup()),1300); }
+function lmGoTo(r){ if(!LM.map) return; const m=LM.mk[r.id], B=lmBrs(r);
+  if(B.length>1){ LM.map.flyToBounds(L.latLngBounds(B.map(b=>[b.lat,b.lng])).pad(0.3),{maxZoom:16,duration:1.2}); erToast(`🏪 ${r.name} عنده ${B.length} فروع — كلهم على الخريطة`); if(m&&LM.cl) setTimeout(()=>LM.cl.zoomToShowLayer(m,()=>m.openPopup()),1400); return; }
+  LM.map.flyTo([r.lat,r.lng],18,{duration:1.2}); if(m&&LM.cl) setTimeout(()=>LM.cl.zoomToShowLayer(m,()=>m.openPopup()),1300); }
+function lmGoBr(id,n){ const m=LM.mk[id+'_'+n]; if(m&&LM.map&&LM.cl){ LM.map.flyTo(m.getLatLng(),18,{duration:1}); setTimeout(()=>LM.cl.zoomToShowLayer(m,()=>m.openPopup()),1100); return; }
+  const k=LMN.mk&&LMN.mk[id+'_'+n]; if(k&&LMN.map){ LMN.map.flyTo(k.getLatLng(),17); setTimeout(()=>k.openPopup(),900); } }
+async function lmBrLabel(id,n){ const r=(LM.d.rows||[]).find(x=>x.id===id)||{}, b=lmBrs(r).find(x=>x.n===n)||{}; const v=prompt(`اسم «فرع ${n}» بتاع ${r.name} (مثلاً: فرع الموقف / المعرض):`, b.label||''); if(v===null) return;
+  try{ await rpcSecure('loc_admin_action',{p:{action:'br_label',client_id:id,n,label:v}}); erToast('✅ تم'); await lmLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
 async function lmLog(id){ try{ const L2=await rpcSecure('loc_admin_log',{p_client:id}); const r=(LM.d.rows||[]).find(x=>x.id===id)||{};
     alert(`📜 سجل لوكيشن ${r.name||''} (${r.code||''})\n\n`+(L2.length?L2.map(x=>`${String(x.at).replace('T',' ').slice(0,16)} — ${{bot:'البوت',page:'الصفحة',admin:'الأدمن'}[x.src]||x.src} — ${(LM_ST[x.status]||[,x.status])[1]||x.status}${x.dist_km!=null?` (${x.dist_km} كم)`:''}${x.old_gov?` — غيّر العنوان من ${x.old_gov}/${x.old_city} لـ ${x.gov}/${x.city}`:''}${x.by?` — ${x.by}`:''}`).join('\n'):'مفيش حركات')); }catch(e){ erToast('❌ '+erErr(e),false); } }
-async function lmAct(act,id){ const r=(LM.d.rows||[]).find(x=>x.id===id)||{};
-  if(!confirm(act==='approve'?`اعتماد لوكيشن «${r.name}» يدوى؟ (هيتفتح له البرنامج)`:`تطلب من «${r.name}» يحدّث اللوكيشن تانى؟ (هيتقفل لحد ما يبعت)`)) return;
-  try{ await rpcSecure('loc_admin_action',{p:{action:act,client_id:id}}); erToast('✅ تم'); await lmLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function lmAct(act,id,n){ const r=(LM.d.rows||[]).find(x=>x.id===id)||{}, fb=n&&lmBrs(r).length>1?` (فرع ${n})`:'';
+  const q={approve:`اعتماد لوكيشن «${r.name}»${fb} يدوى؟ (هيتفتح له البرنامج)`, reset:`تطلب من «${r.name}» يحدّث اللوكيشن تانى؟ (كل فروعه هتتشال من الخريطة وهيتقفل لحد ما يبعت)`, br_off:`تشيل «فرع ${n}» من فروع «${r.name}»؟ (السجل محفوظ — ولو ده الفرع الوحيد المطابق هيتقفل عليه)`}[act];
+  if(!confirm(q||'متأكد؟')) return;
+  try{ await rpcSecure('loc_admin_action',{p:{action:act,client_id:id,n:n||null}}); erToast('✅ تم'); await lmLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
 async function lmRemind(ids){ if(!ids.length){ erToast('مفيش حد يتبعتله',false); return; } if(!confirm(`هيتبعت تذكير لـ ${ids.length} تاجر على البوت — تمام؟`)) return;
   try{ const r=await rpcSecure('loc_admin_action',{p:{action:'remind',ids}}); erToast(`✅ اتبعت لـ ${r.sent} تاجر`); await lmLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
 async function lmRun(act){ const D=LM.d||{};
@@ -24955,7 +24970,7 @@ async function lmRun(act){ const D=LM.d||{};
 function lmCopy(t){ const txt=String(t==null?'':t); const done=()=>erToast('📋 اتنسخ'); try{ if(navigator.clipboard&&window.isSecureContext){ navigator.clipboard.writeText(txt).then(done,()=>lmCopyOld(txt)); return; } }catch(e){} lmCopyOld(txt); }
 function lmCopyOld(txt){ const a=document.createElement('textarea'); a.value=txt; a.style.cssText='position:fixed;opacity:0;top:0'; document.body.appendChild(a); a.select(); try{ document.execCommand('copy'); erToast('📋 اتنسخ'); }catch(e){ prompt('انسخ من هنا:',txt); } a.remove(); }
 function lmGmap(r){ return r&&r.lat!=null?`https://www.google.com/maps?q=${(+r.lat).toFixed(6)},${(+r.lng).toFixed(6)}`:''; }
-function lmAllTxt(r,dist){ return [`👤 ${r.name}${r.code?` (كود ${r.code})`:''}`, r.phone?`📞 ${r.phone}`:'', `📌 ${[r.gov,r.city].filter(Boolean).join(' — ')}${r.address?` — ${r.address}`:''}`, dist!=null?`📏 على بعد ${dist} كم`:'', r.lat!=null?`📍 اللوكيشن: ${lmGmap(r)}`:''].filter(Boolean).join('\n'); }
+function lmAllTxt(r,dist){ return [`👤 ${r.name}${r.code?` (كود ${r.code})`:''}`, r.nb>1?`🏪 فرع ${r.bn}${r.blabel?` — ${r.blabel}`:''} (عنده ${r.nb} فروع)`:'', r.phone?`📞 ${r.phone}`:'', `📌 ${[r.gov,r.city].filter(Boolean).join(' — ')}${r.address?` — ${r.address}`:''}`, dist!=null?`📏 على بعد ${dist} كم`:'', r.lat!=null?`📍 اللوكيشن: ${lmGmap(r)}`:''].filter(Boolean).join('\n'); }
 function lmCpBtn(val,ttl){ return `<a href="#" title="نسخ ${erEsc(ttl||'')}" onclick="lmCopy(decodeURIComponent('${encodeURIComponent(String(val==null?'':val)).replace(/'/g,'%27')}'));return false" style="text-decoration:none;margin-inline-start:4px;font-size:12px;opacity:.75">📋</a>`; }
 // ── 📍 أقرب وكيل
 var LMN = { q:'', gov:'', city:'', pt:null, label:'', cands:[], res:null, n:15, only:true, map:null, centers:null, addr:null, busy:false };
@@ -24976,8 +24991,11 @@ async function lmNearCity(){ const cs=await lmCenters(); const g=LMN.gov, c=LMN.
   LMN.pt=pt; LMN.label=[g,c].filter(Boolean).join(' — '); LMN.addr={ names:c?[lmNorm(c)]:[], state:lmNorm(g), gov:g, city:c }; LMN.cands=[]; lmNearCalc(); }
 function lmNearCalc(){ const D=LM.d; if(!D||!LMN.pt) return; const [la,lo]=LMN.pt, A=LMN.addr||{names:[]};
   const govOf=x=>A.gov?x.gov===A.gov:(A.state&&lmNorm(x.gov)&&(A.state.includes(lmNorm(x.gov))||lmNorm(x.gov).includes(A.state)));
-  const R=D.rows.filter(r=>r.lat!=null&&!r.blocked&&(!LMN.only||['ok','manual','check'].includes(lmSt(r)))).map(r=>{ const d=lmKm(la,lo,r.lat,r.lng); const sameCity=A.city?r.city===A.city:A.names.some(n=>n&&lmNorm(r.city)===n); const sameGov=govOf(r);
-    return Object.assign({},r,{d:Math.round(d*10)/10, grp:sameCity?1:(sameGov?2:3)}); }).sort((a,b)=>a.grp-b.grp||a.d-b.d);
+  const hasAddr=!!(A.city||A.gov||A.state||(A.names||[]).filter(Boolean).length); const R=[]; D.rows.filter(r=>r.lat!=null&&!r.blocked&&(!LMN.only||['ok','manual','check'].includes(lmSt(r)))).forEach(r=>{ const B=lmBrs(r); B.forEach(b=>{ const d=lmKm(la,lo,b.lat,b.lng);
+    // الفرع المطابق للعنوان: نجمّع بالعنوان — الفرع اللى فى مكان تانى: نجمّع بالمسافة
+    const atAddr=hasAddr&&['ok','manual','check'].includes(b.st); const sameCity=atAddr?(A.city?r.city===A.city:A.names.some(n=>n&&lmNorm(r.city)===n)):d<=8; const sameGov=atAddr?govOf(r):d<=40;
+    R.push(Object.assign({},r,{lat:b.lat,lng:b.lng,bn:b.n,nb:B.length,blabel:b.label,bst:b.st,d:Math.round(d*10)/10, grp:sameCity?1:(sameGov?2:3)})); }); });
+  R.sort((a,b)=>a.grp-b.grp||a.d-b.d);
   LMN.res=R; lmNearRender(); }
 function lmNearRender(){ const el=document.getElementById('lmn-out'); if(!el) return; const R=LMN.res;
   let h=''; if(LMN.cands.length>1) h+=`<div class="qt-sub" style="margin:6px 0">نتايج تانية للبحث: ${LMN.cands.map((c,i)=>`<a href="#" onclick="lmNearPick(${i});return false" style="margin-inline-end:10px;${i===LMN.pick?'color:var(--gold);font-weight:800':''}">${erEsc(String(c.display_name).split(',').slice(0,3).join('،'))}</a>`).join('')}</div>`;
@@ -24989,10 +25007,10 @@ function lmNearRender(){ const el=document.getElementById('lmn-out'); if(!el) re
      <span class="qt-sub">${R.filter(x=>x.grp===1).length} فى نفس المنطقة · ${R.filter(x=>x.grp===2).length} فى نفس المحافظة</span>
      <button class="qt-btn sm" style="margin-inline-start:auto" onclick="lmNearCopy(3)">📋 نسخ أقرب 3 للعميل</button><button class="qt-btn ghost sm" onclick="lmNearCopy(${top.length})">📋 نسخ القايمة كلها</button></div>
     <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>#</th><th>التاجر</th><th>التليفون</th><th>العنوان</th><th>المسافة (GPS)</th><th>الحالة</th><th></th></tr></thead><tbody>
-    ${top.map((r,i)=>{ const gh=r.grp!==lastG?`<tr><td colspan="7" style="background:rgba(201,168,76,.08);color:var(--gold);font-weight:800;text-align:right">${G[r.grp]}</td></tr>`:''; lastG=r.grp; const s=LM_ST[lmSt(r)];
-      return gh+`<tr><td><b>${i+1}</b></td><td><b>${erEsc(r.name)}</b>${lmCpBtn(r.name,'الاسم')}<div class="qt-sub">كود ${erEsc(r.code||'')}${lmCpBtn(r.code,'الكود')}</div></td><td dir="ltr">${erEsc(r.phone||'')}${r.phone?lmCpBtn(r.phone,'التليفون'):''}</td>
-        <td>${erEsc([r.gov,r.city].filter(Boolean).join(' — '))}${r.address?`<div class="qt-sub">${erEsc(r.address)}</div>`:''}</td><td><b style="font-size:15px">${r.d}</b> كم</td><td style="color:${s[2]}">${s[0]}</td>
-        <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="lmNearFly(${r.id})">🗺️</button><a class="qt-btn ghost sm" href="${lmGmap(r)}" target="_blank" rel="noopener">📍</a><button class="qt-btn ghost sm" title="نسخ كل البيانات" onclick="lmCopy(decodeURIComponent('${encodeURIComponent(lmAllTxt(r,r.d)).replace(/'/g,'%27')}'))">📋</button></td></tr>`; }).join('')}
+    ${top.map((r,i)=>{ const gh=r.grp!==lastG?`<tr><td colspan="7" style="background:rgba(201,168,76,.08);color:var(--gold);font-weight:800;text-align:right">${G[r.grp]}</td></tr>`:''; lastG=r.grp; const s=r.nb>1&&r.bst==='mismatch'&&['ok','manual','check'].includes(lmSt(r))?['🏪','فرع بعيد عن العنوان','#C9A84C']:LM_ST[lmSt(r)];
+      return gh+`<tr><td><b>${i+1}</b></td><td><b>${erEsc(r.name)}</b>${lmCpBtn(r.name,'الاسم')}<div class="qt-sub">كود ${erEsc(r.code||'')}${lmCpBtn(r.code,'الكود')}</div>${r.nb>1?`<div style="color:var(--gold);font-size:11.5px;font-weight:700">🏪 فرع ${r.bn}${r.blabel?` — ${erEsc(r.blabel)}`:''} من ${r.nb}</div>`:''}</td><td dir="ltr">${erEsc(r.phone||'')}${r.phone?lmCpBtn(r.phone,'التليفون'):''}</td>
+        <td>${erEsc([r.gov,r.city].filter(Boolean).join(' — '))}${r.address?`<div class="qt-sub">${erEsc(r.address)}</div>`:''}</td><td><b style="font-size:15px">${r.d}</b> كم</td><td style="color:${s[2]}" title="${s[1]}">${s[0]}</td>
+        <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="lmNearFly('${r.id}_${r.bn}')">🗺️</button><a class="qt-btn ghost sm" href="${lmGmap(r)}" target="_blank" rel="noopener">📍</a><button class="qt-btn ghost sm" title="نسخ كل البيانات" onclick="lmCopy(decodeURIComponent('${encodeURIComponent(lmAllTxt(r,r.d)).replace(/'/g,'%27')}'))">📋</button></td></tr>`; }).join('')}
     </tbody></table></div>${R.length?'':'<div class="qt-sub">مفيش تجار عندهم لوكيشن لسه</div>'}`;
   el.innerHTML=h; lmNearMap(); }
 function lmNearCopy(n){ const R=(LMN.res||[]).slice(0,n); if(!R.length) return; lmCopy(`📍 أقرب وكلاء ليك${LMN.label?` (${String(LMN.label).split(',').slice(0,2).join('،')})`:''}:\n\n`+R.map((r,i)=>`${i+1}) `+lmAllTxt(r,r.d)).join('\n\n')); }
@@ -25006,7 +25024,7 @@ async function lmNearMap(){ const el=document.getElementById('lmn-map'); if(!el)
   LMN.mk={};
   if(LMN.pt){ L.marker(LMN.pt,{icon:L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],html:'<div style="font-size:26px;line-height:30px;text-align:center;filter:drop-shadow(0 2px 3px #000)">⭐</div>'})}).addTo(LMN.map).bindTooltip('العميل هنا',{permanent:false});
     const top=(LMN.res||[]).slice(0,LMN.n); const pts=[LMN.pt];
-    top.forEach((r,i)=>{ const m=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],html:`<div style="width:24px;height:24px;border-radius:50%;background:${LM_ST[lmSt(r)][2]};color:#fff;font:800 12px Cairo,sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #fff">${i+1}</div>`})}).addTo(LMN.map).bindPopup(lmPop(r)); LMN.mk[r.id]=m; pts.push([r.lat,r.lng]); });
+    top.forEach((r,i)=>{ const m=L.marker([r.lat,r.lng],{icon:L.divIcon({className:'',iconSize:[24,24],iconAnchor:[12,12],html:`<div style="width:24px;height:24px;border-radius:50%;background:${LM_ST[lmSt(r)][2]};color:#fff;font:800 12px Cairo,sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #fff">${i+1}</div>`})}).addTo(LMN.map).bindPopup(lmPop(r,{n:r.bn,lat:r.lat,lng:r.lng,st:r.bst,label:r.blabel,d:null})); LMN.mk[r.id+'_'+r.bn]=m; pts.push([r.lat,r.lng]); });
     if(top.length) L.polyline([LMN.pt,[top[0].lat,top[0].lng]],{color:'#C9A84C',dashArray:'6 6'}).addTo(LMN.map);
     try{ LMN.map.fitBounds(L.latLngBounds(pts.slice(0,6)).pad(0.25),{maxZoom:15}); }catch(_){} }
   setTimeout(()=>{ try{ LMN.map.invalidateSize(); }catch(_){} },250); }

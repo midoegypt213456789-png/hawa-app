@@ -467,6 +467,7 @@
       <div class="code" id="ucode">...</div>
     </div>
     <button id="bioBtnHeader" onclick="openBiometricModal()" style="display:none;background:transparent;border:1px solid rgba(201,168,76,0.4);color:#C9A84C;border-radius:20px;padding:4px 10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px" title="إدارة البصمة">🔐</button>
+    <button id="locBtnHeader" onclick="locManual()" style="display:none;background:transparent;border:1px solid rgba(201,168,76,0.4);color:#C9A84C;border-radius:20px;padding:4px 10px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin-left:6px" title="لوكيشن المحل والفروع">📍 فروعى</button>
     <button onclick="doLogout()" style="background:transparent;border:1px solid #444;color:#aaa;border-radius:20px;padding:4px 12px;font-family:Cairo,sans-serif;font-size:12px;font-weight:600;cursor:pointer">🚪 خروج</button>
   </div>
 
@@ -1133,7 +1134,7 @@ setTimeout(()=>{ try { locCheck(); } catch(_){} }, 250);
 // 📍 تحديث لوكيشن المحل — لو مطلوب ومبعتش (أو مش مطابق للعنوان) الصفحة كلها بتتقفل لحد ما يحدّث
 // cl_loc_state / cl_loc_set — والفحص (مطابقة اللوكيشن مع المحافظة والمدينة) فى السيرفر
 // ═══════════════════════════════════════════════════════════
-var _loc = { st:null, map:null, mk:null, lat:null, lng:null, acc:null, busy:false, msg:'', msgOk:false, edit:false, gov:'', city:'', forced:false };
+var _loc = { st:null, map:null, mk:null, lat:null, lng:null, acc:null, busy:false, msg:'', msgOk:false, edit:false, gov:'', city:'', forced:false, adding:false, bmk:[] };
 function locEsc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function locHtml(s){ return locEsc(s).replace(/&lt;(\/?)b&gt;/g,'<$1b>').replace(/\n/g,'<br>'); }
 function locLib(){ if(window.L) return Promise.resolve(); return new Promise((ok,no)=>{ const c=document.createElement('link'); c.rel='stylesheet'; c.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; document.head.appendChild(c);
@@ -1146,6 +1147,7 @@ async function locCheck(){
   let st=null; try { st=await clRpc('cl_loc_state',{}); } catch(e){ return; }
   if (!st || st.session===false){ if (want) locShowNoTok(); return; }
   _loc.st=st; _loc.gov=st.gov||''; _loc.city=st.city||''; _loc.edit=st.status==='mismatch';
+  try { const hb=document.getElementById('locBtnHeader'); if(hb) hb.style.display=''; } catch(_){}
   if (st.required && !st.ok){ _loc.forced=true; locOpen(); }
   else if (want){ _loc.forced=false; locOpen(); }
 }
@@ -1160,14 +1162,36 @@ function locEl(){ let o=document.getElementById('locGate'); if(!o){ o=document.c
   .loc-msg{border-radius:10px;padding:10px 12px;margin-top:10px;font-size:13.5px;line-height:1.8}.loc-ok{background:rgba(76,175,125,.13);border:1px solid rgba(76,175,125,.5)}.loc-bad{background:rgba(224,85,85,.11);border:1px solid rgba(224,85,85,.5)}
   .loc-row{display:flex;gap:8px;margin-top:8px}.loc-row select{flex:1;min-width:0;background:var(--dark3,#1A1A1A);color:var(--text,#F0EDE8);border:1px solid var(--border,#2A2A2A);border-radius:10px;padding:9px;font-family:inherit;font-size:14px}
   .loc-dim{font-size:12px;color:var(--text-dim,#8A8580);margin-top:6px;line-height:1.7}`; document.head.appendChild(st); } return o; }
+async function locManual(){
+  if (!clHasTok()){ locShowNoTok(); return; }
+  try { const st=await clRpc('cl_loc_state',{}); if(st&&st.session!==false){ _loc.st=st; _loc.gov=st.gov||''; _loc.city=st.city||''; _loc.edit=st.status==='mismatch'; } } catch(_){}
+  _loc.forced=!!(_loc.st&&_loc.st.required&&!_loc.st.ok); _loc.adding=false; _loc.lat=null; _loc.lng=null; _loc.msg=''; locOpen(); }
+const LOC_BST={ ok:['✅','مطابق للعنوان'], manual:['🟦','معتمد'], check:['🟨','بيتراجع'], mismatch:['📍','بعيد عن العنوان'] };
+function locBrList(){ const S=_loc, B=((S.st||{}).branches)||[]; if(!B.length) return '';
+  return `<div class="loc-dim" style="margin-top:10px;color:var(--gold-light,#E8C97A);font-weight:800">🏪 فروعك المسجلة (${B.length})</div>
+   ${B.map(b=>{ const t=LOC_BST[b.st]||['📍','']; return `<div style="display:flex;align-items:center;gap:6px;background:var(--dark3,#1A1A1A);border:1px solid var(--border,#2A2A2A);border-radius:10px;padding:7px 10px;margin-top:6px;font-size:13px">
+     <span style="flex:1">${t[0]} <b>فرع ${b.n}</b>${b.label?` — ${locEsc(b.label)}`:''} <span style="color:var(--text-dim,#8A8580);font-size:11.5px">${t[1]}</span></span>
+     <button onclick="locBrGo(${b.n})" style="background:none;border:1px solid var(--border,#2A2A2A);color:inherit;border-radius:8px;padding:3px 8px;cursor:pointer">🗺️</button>
+     <button onclick="locBrOff(${b.n})" style="background:none;border:1px solid rgba(224,85,85,.5);color:#E05555;border-radius:8px;padding:3px 8px;cursor:pointer" title="ده مش فرع ليا / غلط">🗑️</button></div>`; }).join('')}`; }
+function locBrGo(n){ const b=(((_loc.st||{}).branches)||[]).find(x=>x.n===n); if(!b) return; _loc.adding=false; _loc.acc=null; locPin(b.lat,b.lng,true); locRefreshTxt(); }
+function locAddBr(){ const S=_loc; S.adding=true; S.lat=null; S.lng=null; S.acc=null; S.msg=''; locRender(); locInitMap(); }
+async function locBrOff(n){ const B=((_loc.st||{}).branches)||[], b=B.find(x=>x.n===n); if(!b) return;
+  const good=B.filter(x=>x.n!==n&&['ok','manual','check'].includes(x.st)).length;
+  if(!confirm(`تشيل «فرع ${n}» من فروعك؟`+(['ok','manual','check'].includes(b.st)&&!good?'\n\n⚠️ ده الفرع الوحيد المطابق للعنوان — لو شلته البرنامج هيتقفل لحد ما تسجّل فرع مطابق.':''))) return;
+  try { const r=await clRpc('cl_loc_branch',{ p_n:n, p_action:'off' }); if(r&&r.state){ const g=(_loc.st||{}).govs; _loc.st=Object.assign({},r.state,{govs:g}); }
+    if (typeof logActivity==='function') logActivity('cl_loc_branch_off','🗑️ شال فرع '+n);
+    _loc.msg='✅ اتشال فرع '+n; _loc.msgOk=true; _loc.lat=null; _loc.lng=null;
+    if(_loc.st&&_loc.st.required&&!_loc.st.ok){ _loc.forced=true; _loc.msg=''; _loc.edit=true; }
+  } catch(e){ _loc.msg=clErr(e.message,'⛔ حصل خطأ — حاول تانى'); _loc.msgOk=false; }
+  locRender(); locInitMap(); }
 function locOpen(){ if (typeof logActivity==='function') logActivity('cl_loc_open','📍 فتح تحديث لوكيشن المحل'); locRender(); locEl().style.display='flex'; locInitMap(); }
 function locClose(){ const o=document.getElementById('locGate'); if(o) o.style.display='none'; }
 function locRender(){
   const S=_loc, st=S.st||{}, govs=st.govs||{}, cities=(govs[S.gov]||[]);
   const o=locEl();
   o.innerHTML=`<div class="loc-card">
-    <div class="loc-t">📍 تحديث بيانات المحل</div>
-    <div class="loc-s">${locHtml(st.text||'')}</div>
+    <div class="loc-t">${S.adding?'➕ إضافة فرع جديد':'📍 لوكيشن المحل والفروع'}</div>
+    <div class="loc-s">${S.adding?'حدّد مكان الفرع الجديد: دوس «حدّد مكانى» وانت فى الفرع، أو دوس على مكانه على الخريطة.':(S.forced||!st.ok?locHtml(st.text||''):'✅ بيانات محلك متحدّثة. تقدر تضيف فرع تانى أو تعدّل مكان فرع.')}</div>
     <div id="locMap" class="loc-map"></div>
     <div class="loc-dim">${S.lat!=null?`📌 المكان المختار: <span dir="ltr">${S.lat.toFixed(5)}, ${S.lng.toFixed(5)}</span>${S.acc?` (دقة ~${Math.round(S.acc)} متر)`:''} — تقدر تحرّك الدبوس أو تدوس على الخريطة لو محتاج تظبطه`:'دوس «حدّد مكانى» وانت فى المحل، أو دوس على مكان المحل على الخريطة.'}</div>
     <button class="loc-b2" onclick="locGps()" ${S.busy?'disabled':''}>🛰️ حدّد مكانى (GPS)</button>
@@ -1176,21 +1200,25 @@ function locRender(){
       <select onchange="_loc.city=this.value"><option value="">— المدينة / المركز —</option>${cities.map(c=>`<option ${c===S.city?'selected':''}>${locEsc(c)}</option>`).join('')}${S.city&&cities.indexOf(S.city)<0?`<option selected>${locEsc(S.city)}</option>`:''}</select></div>`
      :`<button class="loc-b2" onclick="_loc.edit=true;locRender();locInitMap()">✏️ عدّل العنوان (${locEsc(S.gov)} — ${locEsc(S.city)})</button>`}
     ${S.msg?`<div class="loc-msg ${S.msgOk?'loc-ok':'loc-bad'}">${locHtml(S.msg)}</div>`:''}
-    <button class="loc-go" onclick="locSave()" ${S.lat==null||S.busy?'disabled':''}>${S.busy?'⏳ لحظة...':'✅ احفظ لوكيشن المحل'}</button>
+    <button class="loc-go" onclick="locSave()" ${S.lat==null||S.busy?'disabled':''}>${S.busy?'⏳ لحظة...':(S.adding?'✅ احفظ الفرع الجديد':'✅ احفظ لوكيشن المحل')}</button>
+    ${locBrList()}
+    ${S.adding?'':`<button class="loc-b2" onclick="locAddBr()">➕ عندى فرع تانى — أضفه</button>`}
     ${S.forced?'':'<button class="loc-b2" onclick="locClose()">✖ إغلاق</button>'}
-    <div class="loc-dim">💡 لو الـ GPS مش شغال: من البوت دوس 📎 ← Location وابعت مكان المحل.</div></div>`;
+    <div class="loc-dim">💡 لو عندك أكتر من فرع: سجّل كل فرع لوحده — المهم فرع واحد على الأقل يكون فى العنوان المسجل. ولو الدبوس على فرع متسجل هيتحدّث مكانه.</div>
+    <div class="loc-dim">💡 لو الـ GPS مش شغال: من البوت دوس 📎 ← Location وابعت مكان المحل وانت فيه.</div></div>`;
 }
 async function locInitMap(){
   try { await locLib(); } catch(e){ const m=document.getElementById('locMap'); if(m) m.innerHTML='<div class="loc-dim" style="padding:14px">⚠️ الخريطة مش راضية تحمّل — استخدم «حدّد مكانى» أو ابعت اللوكيشن من البوت.</div>'; return; }
   const el=document.getElementById('locMap'); if(!el) return;
   const S=_loc, st=S.st||{};
-  if (S.lat==null && st.lat!=null){ S.lat=st.lat; S.lng=st.lng; }
-  const c=S.lat!=null?[S.lat,S.lng]:[30.2,31.2];
-  S.map=L.map(el,{zoomControl:true,attributionControl:true}).setView(c, S.lat!=null?16:7);
+  if (S.lat==null && st.lat!=null && !S.adding){ S.lat=st.lat; S.lng=st.lng; }
+  const c=S.lat!=null?[S.lat,S.lng]:(st.lat!=null?[st.lat,st.lng]:[30.2,31.2]);
+  S.map=L.map(el,{zoomControl:true,attributionControl:true}).setView(c, S.lat!=null?16:(st.lat!=null?12:7));
   const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
   const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
   sat.addTo(S.map); L.control.layers({'🛰️ قمر صناعى':sat,'🗺️ خريطة':osm},null,{position:'topleft'}).addTo(S.map);
   S.mk=null; if (S.lat!=null) locPin(S.lat,S.lng,false);
+  (st.branches||[]).forEach(b=>{ try{ L.circleMarker([b.lat,b.lng],{radius:7,color:'#fff',weight:2,fillColor:['ok','manual','check'].includes(b.st)?'#4CAF7D':'#C9A84C',fillOpacity:.9}).addTo(S.map).bindTooltip('فرع '+b.n+(b.label?' — '+b.label:''),{permanent:(st.branches||[]).length>1,direction:'top'}); }catch(_){} });
   S.map.on('click',e=>{ S.acc=null; locPin(e.latlng.lat,e.latlng.lng,false); locRefreshTxt(); });
   setTimeout(()=>{ try{ S.map.invalidateSize(); }catch(_){} },250);
 }
@@ -1218,7 +1246,10 @@ async function locSave(){
     const r=await clRpc('cl_loc_set',{ p_lat:S.lat, p_lng:S.lng, p_gov: chg?S.gov:null, p_city: chg?S.city:null, p_acc: S.acc });
     if (typeof logActivity==='function') logActivity('cl_loc_set','📍 تحديث لوكيشن المحل: '+((r&&r.status)||''));
     S.msg=(r&&r.text)||''; S.msgOk=!!(r&&r.ok); if (r&&r.state){ const g=st.govs; S.st=Object.assign({},r.state,{govs:g}); }
-    if (r && r.ok){ S.busy=false; S.forced=false; locRender(); locInitMap(); setTimeout(()=>{ locClose(); try{ const u=new URL(location.href); if(u.searchParams.get('go')==='loc'){ u.searchParams.delete('go'); history.replaceState(null,'',u.toString()); } }catch(_){} },2200); return; }
+    if (r && r.ok){ const wasForced=S.forced; S.busy=false; S.forced=false; S.adding=false; locRender(); locInitMap();
+      try{ const u=new URL(location.href); if(u.searchParams.get('go')==='loc'){ u.searchParams.delete('go'); history.replaceState(null,'',u.toString()); } }catch(_){}
+      if (wasForced && !(r.branches>1)) setTimeout(()=>{ locClose(); },2200);
+      return; }
     if (r && r.status==='mismatch'){ S.edit=true; S.msg=''; }
   } catch(e){ S.msg=clErr(e.message,'⛔ حصل خطأ — حاول تانى'); S.msgOk=false; }
   S.busy=false; locRender(); locInitMap();
