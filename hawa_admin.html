@@ -24828,7 +24828,7 @@ function erLrDayPrint(){ if(!erNeedPrint('erp-letters')) return; const D=erLrS()
 // 🗺️ خريطة التجار + متابعة تحديث لوكيشن المحلات + تشغيل القفل
 // loc_admin_list / loc_admin_log / loc_admin_action — صلاحية clients-map
 // ════════════════════════════════════════════════════════════════
-var LM = { tab:'map', d:null, map:null, cl:null, mk:{}, f:{ q:'', gov:'', st:'', emp:'' }, ft:{ st:'pending', q:'' }, base:'sat' };
+var LM = { tab:'map', d:null, map:null, cl:null, mk:{}, f:{ q:'', gov:'', city:'', st:'', emp:'' }, ft:{ st:'pending', q:'' }, base:'sat' };
 const LM_ST = { ok:['✅','مطابق','#4CAF7D'], manual:['🟦','معتمد يدوى','#4A90D9'], mismatch:['❌','مش مطابق','#E05555'], check:['🟨','مستنى فحص','#E8C97A'], none:['⏳','لسه مبعتش','#8A8580'] };
 function lmSt(r){ return r.st && LM_ST[r.st] ? r.st : 'none'; }
 function lmBrs(r){ return (r.br&&r.br.length)?r.br:(r.lat!=null?[{n:1,lat:r.lat,lng:r.lng,st:r.st,d:r.dist}]:[]); }
@@ -24849,15 +24849,18 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
      ${lmStat('done',`<b>📍 حدّث ${C.done} من ${C.all} (${pct}%)</b>`,'')}${lmStat('ok','✅ '+C.ok,'#4CAF7D')}${lmStat('manual','🟦 '+C.manual,'#4A90D9')}${lmStat('mismatch','❌ '+C.mismatch,'#E05555')}${lmStat('check','🟨 '+C.check,'#E8C97A')}${lmStat('none','⏳ لسه '+C.none,'var(--text-dim)')}${C.chg?lmStat('chg','✏️ غيّر عنوانه '+C.chg,'var(--gold)'):''}<span class="qt-sub" style="font-size:10.5px">💡 دبل كليك على أى رقم للفلترة</span>
      <span class="qt-sub" style="margin-inline-start:auto">${D.required?'🔒 القفل شغال على كل التجار':(D.pilot?`🧪 القفل تجربة على: ${erEsc(D.pilot)}`:'🔓 القفل مش شغال')}</span></div>`;
   if(LM.tab==='map'){
-    const govs=[...new Set(D.rows.map(r=>r.gov).filter(Boolean))].sort(), emps=[...new Set(D.rows.map(r=>r.emp).filter(Boolean))].sort();
+    const emps=[...new Set(D.rows.map(r=>r.emp).filter(Boolean))].sort();
     h+=`<div class="qt-card" style="padding:10px;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <input class="qt-inp" id="lm-q" style="width:230px" placeholder="🔎 كود أو اسم التاجر ← Enter" value="${erEsc(LM.f.q)}" onkeydown="if(event.key==='Enter'){LM.f.q=this.value;lmFind()}">
-      <select class="qt-inp" onchange="LM.f.gov=this.value;lmDraw(true)"><option value="">كل المحافظات</option>${govs.map(g=>`<option ${LM.f.gov===g?'selected':''}>${erEsc(g)}</option>`).join('')}</select>
-      <select class="qt-inp" onchange="LM.f.st=this.value;lmDraw(true)"><option value="">كل الحالات (اللى عندهم لوكيشن)</option>${['ok','manual','mismatch','check'].map(k=>`<option value="${k}" ${LM.f.st===k?'selected':''}>${LM_ST[k][0]} ${LM_ST[k][1]}</option>`).join('')}</select>
-      <select class="qt-inp" onchange="LM.f.emp=this.value;lmDraw(true)"><option value="">كل الموظفين</option>${emps.map(e=>`<option ${LM.f.emp===e?'selected':''}>${erEsc(e)}</option>`).join('')}</select>
+      <span style="position:relative;display:inline-block;width:260px"><input class="qt-inp" id="lm-q" autocomplete="off" style="width:100%" placeholder="🔎 اكتب كود / اسم / تليفون / عنوان" value="${erEsc(LM.f.q)}"
+        oninput="clearTimeout(LM.__qt);const v=this.value;LM.__qt=setTimeout(()=>lmQ(v),180)" onkeydown="lmQKey(event)" onblur="setTimeout(()=>{const b=document.getElementById('lm-sug');if(b)b.style.display='none'},200)">
+        <div id="lm-sug" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:1200;margin-top:4px;background:var(--dark2);border:1px solid var(--gold);border-radius:12px;max-height:340px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.6)"></div></span>
+      <select class="qt-inp" id="lm-gov" onchange="LM.f.gov=this.value;LM.f.city='';lmFiltOpts();lmDraw(true)"></select>
+      <select class="qt-inp" id="lm-city" onchange="LM.f.city=this.value;lmDraw(true)"></select>
+      <select class="qt-inp" onchange="LM.f.st=this.value;lmFiltOpts();lmDraw(true)"><option value="">كل الحالات (اللى عندهم لوكيشن)</option>${['ok','manual','mismatch','check'].map(k=>`<option value="${k}" ${LM.f.st===k?'selected':''}>${LM_ST[k][0]} ${LM_ST[k][1]}</option>`).join('')}</select>
+      <select class="qt-inp" onchange="LM.f.emp=this.value;lmFiltOpts();lmDraw(true)"><option value="">كل الموظفين</option>${emps.map(e=>`<option ${LM.f.emp===e?'selected':''}>${erEsc(e)}</option>`).join('')}</select>
       <button class="qt-btn ghost sm" onclick="lmLoad()">🔄 تحديث</button><button class="qt-btn ghost sm" id="lm-meas-btn" onclick="lmMeasToggle()" title="دوس على نقطتين أو دبوسين على الخريطة">📏 قياس مسافة</button><span class="qt-sub" id="lm-n"></span></div>
       <div id="lm-map" style="height:calc(100vh - 290px);min-height:420px;border-radius:14px;border:1px solid var(--border);background:#111"></div>`;
-    el.innerHTML=h; lmMap(); return; }
+    el.innerHTML=h; lmFiltOpts(); lmMap(); return; }
   if(LM.tab==='near'){
     h+=`<div class="qt-card" style="padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <span style="position:relative;display:inline-block;width:min(380px,100%)"><input class="qt-inp" id="lmn-q" autocomplete="off" style="width:100%" placeholder="🔎 اكتب محافظة / مدينة / حى / اسم تاجر أو كوده / أى علامة مميزة" value="${erEsc(LMN.q)}"
@@ -24963,7 +24966,36 @@ function lmMeasAdd(ll,name,row){ const M=LM.meas; if(!M) return; if(M.pts.length
     <a href="#" onclick="lmCopy(LM.meas.__txt);return false" style="background:#333;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">📋 نسخ بيانات الاتنين والمسافة</a></div>
     <div style="color:#777;font-size:11px;margin-top:2px">دوس على نقطة تالتة يبدأ قياس جديد</div></div>`).addTo(M.layer); }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&typeof LM!=='undefined'&&LM.meas&&LM.meas.on) lmMeasToggle(); });
-function lmRows(){ const f=LM.f; return (LM.d?LM.d.rows:[]).filter(r=>r.lat!=null&&r.lng!=null&&(!f.gov||r.gov===f.gov)&&(!f.st||lmSt(r)===f.st)&&(!f.emp||r.emp===f.emp)); }
+function lmTxt(r){ return r.__t||(r.__t=lmNorm([r.name,r.code,r.phone,r.gov,r.city,r.address,r.emp].filter(Boolean).join(' '))); }
+function lmRows(o){ const f=Object.assign({},LM.f,o||{}), q=lmNorm(f.q); return (LM.d?LM.d.rows:[]).filter(r=>r.lat!=null&&r.lng!=null&&(!f.gov||r.gov===f.gov)&&(!f.city||r.city===f.city)&&(!f.st||lmSt(r)===f.st)&&(!f.emp||r.emp===f.emp)&&(!q||lmTxt(r).includes(q))); }
+// المحافظة الأول وبعدين المركز / المدينة (اللى جوه المحافظة بس) — بالعدد
+function lmFiltOpts(){ const gs=document.getElementById('lm-gov'), cs=document.getElementById('lm-city'); if(!gs||!cs) return;
+  const cnt=(arr,k)=>arr.reduce((m,r)=>{ const v=r[k]; if(v) m[v]=(m[v]||0)+1; return m; },{});
+  const G=cnt(lmRows({gov:'',city:''}),'gov'); const gl=Object.keys(G).sort((a,b)=>a.localeCompare(b,'ar'));
+  if(LM.f.gov&&!G[LM.f.gov]) gl.unshift(LM.f.gov);
+  gs.innerHTML=`<option value="">🏛️ كل المحافظات</option>`+gl.map(g=>`<option value="${erEsc(g)}" ${LM.f.gov===g?'selected':''}>${erEsc(g)} (${G[g]||0})</option>`).join('');
+  if(!LM.f.gov){ cs.innerHTML='<option value="">🏙️ المركز / المدينة — اختار المحافظة الأول</option>'; cs.disabled=true; return; }
+  cs.disabled=false; const C=cnt(lmRows({city:''}),'city'); const cl=Object.keys(C).sort((a,b)=>a.localeCompare(b,'ar'));
+  cs.innerHTML=`<option value="">🏙️ كل مراكز ${erEsc(LM.f.gov)}</option>`+cl.map(c=>`<option value="${erEsc(c)}" ${LM.f.city===c?'selected':''}>${erEsc(c)} (${C[c]})</option>`).join(''); }
+// 🔎 الكتابة بتفلتر الخريطة على طول + قايمة بالتجار اللى طالعين (دوس على واحد يروحله)
+function lmQ(v){ LM.f.q=String(v||''); lmFiltOpts(); lmDraw(true); const box=document.getElementById('lm-sug'); if(!box) return; const q=lmNorm(v); LM.sg=[]; LM.si=0;
+  if(!q){ box.style.display='none'; return; }
+  const R=(LM.d?LM.d.rows:[]).filter(r=>(!LM.f.gov||r.gov===LM.f.gov)&&(!LM.f.city||r.city===LM.f.city)&&lmTxt(r).includes(q));
+  const sc=r=>String(r.code||'')===String(v).trim()?0:(lmNorm(r.name).startsWith(q)||String(r.code||'').startsWith(String(v).trim())?1:2);
+  R.sort((a,b)=>sc(a)-sc(b)||((a.lat==null)-(b.lat==null))); LM.sg=R.slice(0,12);
+  box.innerHTML=(LM.sg.length?LM.sg.map((r,i)=>`<div onmousedown="event.preventDefault();lmQPick(${i})" onmouseover="LM.si=${i};lmQHi()" style="padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;${i===0?'background:rgba(201,168,76,.12)':''}">${LM_ST[lmSt(r)][0]} <b>${erEsc(r.name)}</b> <span class="qt-sub">كود ${erEsc(r.code||'')} — ${erEsc(r.gov||'')}${r.city?' — '+erEsc(r.city):''}${r.lat==null?' · لسه مبعتش لوكيشن':''}</span></div>`).join('')
+    :'<div class="qt-sub" style="padding:10px">مفيش تاجر بالكلام ده</div>')+(R.length>12?`<div class="qt-sub" style="padding:6px 12px">+ ${R.length-12} كمان على الخريطة</div>`:'');
+  box.style.display='block'; }
+function lmQHi(){ const b=document.getElementById('lm-sug'); if(!b) return; [...b.children].forEach((d,i)=>d.style.background=i===LM.si?'rgba(201,168,76,.12)':''); }
+function lmQKey(e){ const b=document.getElementById('lm-sug'), open=b&&b.style.display==='block', n=(LM.sg||[]).length;
+  if(e.key==='ArrowDown'&&open&&n){ e.preventDefault(); LM.si=(LM.si+1)%n; lmQHi(); }
+  else if(e.key==='ArrowUp'&&open&&n){ e.preventDefault(); LM.si=(LM.si-1+n)%n; lmQHi(); }
+  else if(e.key==='Escape'){ if(b) b.style.display='none'; }
+  else if(e.key==='Enter'){ e.preventDefault(); clearTimeout(LM.__qt); lmQ(e.target.value); if((LM.sg||[]).length) lmQPick(LM.si||0); } }
+function lmQPick(i){ const r=(LM.sg||[])[i]; const b=document.getElementById('lm-sug'); if(b) b.style.display='none'; if(!r) return;
+  if(r.lat==null){ erToast(`${r.name} (${r.code}) لسه مبعتش لوكيشن المحل`,false); return; }
+  const inp=document.getElementById('lm-q'); if(inp) inp.value=''; LM.f.q=''; LM.f.st=''; if(LM.f.gov&&r.gov!==LM.f.gov){ LM.f.gov=''; LM.f.city=''; } if(LM.f.city&&r.city!==LM.f.city) LM.f.city='';
+  lmFiltOpts(); lmDraw(false); setTimeout(()=>lmGoTo(r),150); }
 function lmDraw(fit){ if(!LM.map) return; if(LM.cl){ LM.map.removeLayer(LM.cl); } LM.cl=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:45}); LM.mk={};
   const R=lmRows(), pts=[]; let nbr=0; R.forEach(r=>{ const B=lmBrs(r), main=lmBrMain(r); B.forEach(b=>{ const m=L.marker([b.lat,b.lng],{icon:lmIcon(lmSt({st:b.st}),B.length>1?b.n:''),title:`${r.code} — ${r.name}`}).bindPopup(()=>lmPop(r,b)).bindTooltip(`${r.name} (${r.code||''})${B.length>1?` · فرع ${b.n}`:''}`,{direction:'top',offset:[0,-22]}); LM.mk[r.id+'_'+b.n]=m; if(b===main) LM.mk[r.id]=m; m._lmName=`${r.name} (${r.code||''})${B.length>1?` فرع ${b.n}`:''}`; m._lmRow=r; m.on('click',()=>{ if(LM.meas&&LM.meas.on){ m.closePopup(); LM.meas._t=Date.now(); lmMeasAdd(m.getLatLng(),m._lmName,r); } }); LM.cl.addLayer(m); pts.push([b.lat,b.lng]); }); if(B.length>1) nbr++; });
   LM.map.addLayer(LM.cl); const n=document.getElementById('lm-n'); if(n) n.textContent=`📍 ${R.length} تاجر على الخريطة${pts.length>R.length?` (${pts.length} محل — ${nbr} تاجر عنده فروع)`:''}`;
@@ -24971,7 +25003,7 @@ function lmDraw(fit){ if(!LM.map) return; if(LM.cl){ LM.map.removeLayer(LM.cl); 
 function lmFind(){ const q=String(LM.f.q||'').trim().toLowerCase(); if(!q) return; const R=(LM.d?LM.d.rows:[]);
   const r=R.find(x=>String(x.code||'').toLowerCase()===q)||R.find(x=>String(x.name||'').toLowerCase().includes(q)||String(x.code||'').toLowerCase().includes(q));
   if(!r){ erToast('مش لاقى التاجر ده',false); return; } if(r.lat==null){ erToast(`${r.name} (${r.code}) لسه مبعتش لوكيشن المحل`,false); return; } lmGoTo(r); }
-function lmGo(id){ const r=(LM.d.rows||[]).find(x=>x.id===id); if(!r) return; LM.tab='map'; LM.f={q:'',gov:'',st:'',emp:''}; lmRender(); setTimeout(()=>lmGoTo(r),700); }
+function lmGo(id){ const r=(LM.d.rows||[]).find(x=>x.id===id); if(!r) return; LM.tab='map'; LM.f={q:'',gov:'',city:'',st:'',emp:''}; lmRender(); setTimeout(()=>lmGoTo(r),700); }
 function lmGoTo(r){ if(!LM.map) return; const m=LM.mk[r.id], B=lmBrs(r);
   if(B.length>1){ LM.map.flyToBounds(L.latLngBounds(B.map(b=>[b.lat,b.lng])).pad(0.3),{maxZoom:16,duration:1.2}); erToast(`🏪 ${r.name} عنده ${B.length} فروع — كلهم على الخريطة`); if(m&&LM.cl) setTimeout(()=>LM.cl.zoomToShowLayer(m,()=>m.openPopup()),1400); return; }
   LM.map.flyTo([r.lat,r.lng],18,{duration:1.2}); if(m&&LM.cl) setTimeout(()=>LM.cl.zoomToShowLayer(m,()=>m.openPopup()),1300); }
