@@ -24860,7 +24860,9 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
     el.innerHTML=h; lmMap(); return; }
   if(LM.tab==='near'){
     h+=`<div class="qt-card" style="padding:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <input class="qt-inp" id="lmn-q" style="width:min(380px,100%)" placeholder="🔎 العنوان / المنطقة / الحى / أى علامة مميزة (مثلاً: ميدان الجيزة)" value="${erEsc(LMN.q)}" onkeydown="if(event.key==='Enter')lmNearSearch()">
+      <span style="position:relative;display:inline-block;width:min(380px,100%)"><input class="qt-inp" id="lmn-q" autocomplete="off" style="width:100%" placeholder="🔎 اكتب محافظة / مدينة / حى / اسم تاجر أو كوده / أى علامة مميزة" value="${erEsc(LMN.q)}"
+        oninput="clearTimeout(LMN.__st);const v=this.value;LMN.__st=setTimeout(()=>lmNearSug(v),120)" onfocus="if(this.value.trim())lmNearSug(this.value)" onkeydown="lmNearKey(event)" onblur="setTimeout(()=>lmNearSugHide(),200)">
+        <div id="lmn-sug" style="display:none;position:absolute;top:100%;right:0;left:0;z-index:1200;margin-top:4px;background:var(--dark2);border:1px solid var(--gold);border-radius:12px;max-height:360px;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.6)"></div></span>
       <button class="qt-btn" onclick="lmNearSearch()">🔎 دوّر</button><span class="qt-sub">أو</span>
       <select class="qt-inp" id="lmn-gov" onchange="LMN.gov=this.value;LMN.city='';lmNearCities()"></select>
       <select class="qt-inp" id="lmn-city" onchange="LMN.city=this.value"></select><button class="qt-btn ghost" onclick="lmNearCity()">📍 هات الأقرب</button>
@@ -25004,6 +25006,34 @@ var LMN = { q:'', gov:'', city:'', pt:null, label:'', cands:[], res:null, n:15, 
 function lmNorm(s){ return String(s||'').replace(/[إأآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/^(مدينه|مركز|محافظه|حي)\s+/,'').replace(/\s+/g,'').toLowerCase(); }
 function lmKm(a,b,c,d){ const R=6371, r=x=>x*Math.PI/180; const h=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
 async function lmCenters(){ if(LMN.centers) return LMN.centers; try{ LMN.centers=await rpcSecure('loc_admin_centers',{}); }catch(e){ LMN.centers=[]; } return LMN.centers; }
+// 🔎 فلترة مع الكتابة: محافظات / مدن / تجار (اسم أو كود) / عناوين التجار — وآخر اختيار: البحث فى الخريطة (OpenStreetMap)
+function lmNearSug(v){ const box=document.getElementById('lmn-sug'); if(!box) return; const q=lmNorm(v); LMN.q=String(v||'').trim(); LMN.sug=[]; LMN.si=0;
+  if(!q){ box.style.display='none'; return; }
+  const cs=LMN.centers||[], rows=(LM.d&&LM.d.rows)||[], S=[], seen={}, add=(k,o)=>{ if(seen[k]) return; seen[k]=1; S.push(o); };
+  const sc=t=>{ const n=lmNorm(t); if(!n) return -1; if(n===q) return 0; if(n.startsWith(q)||n.startsWith('ال'+q)) return 1; return n.includes(q)?2:-1; };
+  const govs=new Set([...cs.map(x=>x.gov),...rows.map(r=>r.gov)].filter(Boolean));
+  govs.forEach(g=>{ const k=sc(g); if(k>=0) add('g|'+g,{t:'gov',g,k,r:0,html:`🏛️ محافظة <b>${erEsc(g)}</b>`}); });
+  const cities={}; cs.filter(x=>x.city&&x.city!=='*').forEach(x=>cities[x.gov+'|'+x.city]=[x.gov,x.city]); rows.forEach(r=>{ if(r.gov&&r.city) cities[r.gov+'|'+r.city]=[r.gov,r.city]; });
+  Object.values(cities).forEach(([g,c])=>{ const k=sc(c); if(k>=0) add('c|'+g+'|'+c,{t:'city',g,c,k,r:1,html:`🏙️ <b>${erEsc(c)}</b> <span class="qt-sub">— ${erEsc(g)}</span>`}); });
+  rows.forEach(r=>{ const k=Math.min(...[sc(r.name),String(r.code||'')===String(v).trim()?0:(String(r.code||'').startsWith(String(v).trim())?1:-1)].filter(x=>x>=0).concat([9])); if(k<9) add('t|'+r.id,{t:'tr',id:r.id,k,r:2,html:`🏪 <b>${erEsc(r.name)}</b> <span class="qt-sub">كود ${erEsc(r.code||'')} — ${erEsc(r.gov||'')} ${r.city?'— '+erEsc(r.city):''}${r.lat==null?' · لسه مبعتش لوكيشن':''}</span>`}); });
+  if(q.length>=3) rows.forEach(r=>{ if(r.address&&lmNorm(r.address).includes(q)) add('a|'+r.id,{t:'tr',id:r.id,k:3,r:3,html:`📌 ${erEsc(r.address)} <span class="qt-sub">— عند ${erEsc(r.name)} (${erEsc(r.code||'')})، ${erEsc(r.gov||'')}</span>`}); });
+  S.sort((a,b)=>a.k-b.k||a.r-b.r); LMN.sug=S.slice(0,14);
+  LMN.sug.push({t:'osm',html:`🌍 دوّر على «<b>${erEsc(LMN.q)}</b>» فى الخريطة (أماكن وعلامات مميزة)`});
+  box.innerHTML=LMN.sug.map((x,i)=>`<div onmousedown="event.preventDefault();lmNearSugPick(${i})" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13.5px;${i===LMN.si?'background:rgba(201,168,76,.12)':''}" onmouseover="LMN.si=${i};lmNearSugHi()">${x.html}</div>`).join('');
+  box.style.display='block'; }
+function lmNearSugHi(){ const box=document.getElementById('lmn-sug'); if(!box) return; [...box.children].forEach((d,i)=>d.style.background=i===LMN.si?'rgba(201,168,76,.12)':''); }
+function lmNearSugHide(){ const box=document.getElementById('lmn-sug'); if(box) box.style.display='none'; }
+function lmNearKey(e){ const n=(LMN.sug||[]).length, open=(document.getElementById('lmn-sug')||{style:{}}).style.display==='block';
+  if(e.key==='ArrowDown'&&open&&n){ e.preventDefault(); LMN.si=(LMN.si+1)%n; lmNearSugHi(); }
+  else if(e.key==='ArrowUp'&&open&&n){ e.preventDefault(); LMN.si=(LMN.si-1+n)%n; lmNearSugHi(); }
+  else if(e.key==='Escape') lmNearSugHide();
+  else if(e.key==='Enter'){ e.preventDefault(); clearTimeout(LMN.__st); const v=e.target.value; if(!open) lmNearSug(v); if((LMN.sug||[]).length) lmNearSugPick(open?LMN.si:0); else lmNearSearch(); } }
+async function lmNearSugPick(i){ const x=(LMN.sug||[])[i]; lmNearSugHide(); if(!x) return;
+  if(x.t==='osm'){ lmNearSearch(); return; }
+  if(x.t==='gov'||x.t==='city'){ LMN.gov=x.g; LMN.city=x.t==='city'?x.c:''; const inp=document.getElementById('lmn-q'); if(inp) inp.value=x.t==='city'?`${x.c} — ${x.g}`:x.g; LMN.q=inp?inp.value:''; lmNearCities(); const gs=document.getElementById('lmn-gov'); if(gs) gs.value=LMN.gov; await lmNearCity(); return; }
+  const r=((LM.d&&LM.d.rows)||[]).find(z=>z.id===x.id); if(!r) return; const inp=document.getElementById('lmn-q'); if(inp){ inp.value=`${r.name} (${r.code||''})`; LMN.q=inp.value; }
+  if(r.lat==null){ LMN.gov=r.gov||''; LMN.city=r.city||''; erToast(`${r.name} لسه مبعتش لوكيشن — بنحسب من مدينته`); await lmNearCity(); return; }
+  LMN.pt=[r.lat,r.lng]; LMN.label=`عند ${r.name} (${r.code||''}) — ${[r.gov,r.city].filter(Boolean).join(' — ')}`; LMN.addr={ names:r.city?[lmNorm(r.city)]:[], state:lmNorm(r.gov), gov:r.gov, city:r.city }; LMN.cands=[]; lmNearCalc(); }
 async function lmNearSearch(){ const q=(document.getElementById('lmn-q')||{}).value||''; LMN.q=q.trim(); if(!LMN.q){ erToast('اكتب العنوان أو المنطقة',false); return; }
   LMN.busy=true; lmNearRender();
   try{ const u='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=eg&accept-language=ar&addressdetails=1&q='+encodeURIComponent(LMN.q);
