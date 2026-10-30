@@ -24855,7 +24855,7 @@ function lmRender(){ const el=document.getElementById('lm-body'); if(!el) return
       <select class="qt-inp" onchange="LM.f.gov=this.value;lmDraw(true)"><option value="">كل المحافظات</option>${govs.map(g=>`<option ${LM.f.gov===g?'selected':''}>${erEsc(g)}</option>`).join('')}</select>
       <select class="qt-inp" onchange="LM.f.st=this.value;lmDraw(true)"><option value="">كل الحالات (اللى عندهم لوكيشن)</option>${['ok','manual','mismatch','check'].map(k=>`<option value="${k}" ${LM.f.st===k?'selected':''}>${LM_ST[k][0]} ${LM_ST[k][1]}</option>`).join('')}</select>
       <select class="qt-inp" onchange="LM.f.emp=this.value;lmDraw(true)"><option value="">كل الموظفين</option>${emps.map(e=>`<option ${LM.f.emp===e?'selected':''}>${erEsc(e)}</option>`).join('')}</select>
-      <button class="qt-btn ghost sm" onclick="lmLoad()">🔄 تحديث</button><span class="qt-sub" id="lm-n"></span></div>
+      <button class="qt-btn ghost sm" onclick="lmLoad()">🔄 تحديث</button><button class="qt-btn ghost sm" id="lm-meas-btn" onclick="lmMeasToggle()" title="دوس على نقطتين أو دبوسين على الخريطة">📏 قياس مسافة</button><span class="qt-sub" id="lm-n"></span></div>
       <div id="lm-map" style="height:calc(100vh - 290px);min-height:420px;border-radius:14px;border:1px solid var(--border);background:#111"></div>`;
     el.innerHTML=h; lmMap(); return; }
   if(LM.tab==='near'){
@@ -24919,7 +24919,7 @@ async function lmMap(){
   try{ await lmLib(); }catch(e){ const m=document.getElementById('lm-map'); if(m) m.innerHTML='<div class="qt-sub" style="padding:20px">⚠️ مكتبة الخريطة مش راضية تحمّل</div>'; return; }
   const el=document.getElementById('lm-map'); if(!el) return;
   if(LM.map){ try{ LM.map.remove(); }catch(_){} LM.map=null; }
-  LM.map=L.map(el,{zoomControl:true}).setView([30.4,31.1],7);
+  LM.map=L.map(el,{zoomControl:true,keyboard:false}).setView([30.4,31.1],7);   // keyboard:false = الدوسة على الخريطة متعملش scroll للصفحة (كانت بتزحلق مكان الدوسة)
   const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
   const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
   const lbl=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19});
@@ -24927,6 +24927,8 @@ async function lmMap(){
   (LM.base==='osm'?osm:satL).addTo(LM.map);
   L.control.layers({'🛰️ قمر صناعى (زى جوجل إيرث)':satL,'🗺️ خريطة شوارع':osm},null,{position:'topleft'}).addTo(LM.map);
   LM.map.on('baselayerchange',e=>{ LM.base=e.layer===osm?'osm':'sat'; });
+  LM.meas={on:false,pts:[],layer:L.layerGroup().addTo(LM.map)};
+  LM.map.on('click',e=>{ const M=LM.meas; if(!M||!M.on||Date.now()-(M._t||0)<400) return; const s=lmMeasSnap(e.latlng); if(s) lmMeasAdd(s.getLatLng(),s._lmName||''); else lmMeasAdd(e.latlng,''); });
   lmDraw(true); setTimeout(()=>{ try{ LM.map.invalidateSize(); }catch(_){} },300); }
 function lmStatAct(k){ if(LM.tab==='map') return !!LM.f.st&&LM.f.st===k; if(LM.tab==='track') return (LM.ft.st||'')===k; return false; }
 function lmStat(k,txt,col){ const a=lmStatAct(k); return `<span style="cursor:pointer;user-select:none;padding:3px 8px;border-radius:8px;border:1px solid ${a?'var(--gold)':'transparent'};${a?'background:rgba(201,168,76,0.08);':''}${col?'color:'+col+';':''}" title="دبل كليك للفلترة — ودبل كليك تانى يلغيها" ondblclick="lmStatFilter('${k}')">${txt}</span>`; }
@@ -24934,9 +24936,29 @@ function lmStatFilter(k){ const onMap=['ok','manual','mismatch','check'];
   if(LM.tab==='map'&&onMap.includes(k)){ LM.f.st=(LM.f.st===k?'':k); lmRender(); return; }
   if(LM.tab==='track'&&(LM.ft.st||'')===k){ LM.ft.st='pending'; lmRender(); return; }
   LM.tab='track'; LM.ft.st=k; LM.ft.q=''; lmRender(); }
+// 📏 قياس المسافة: دوس على نقطتين (أو دبوسين) — بيرسم خط ويكتب المسافة (خط مستقيم GPS) + لينك مسافة الطريق على جوجل ماب
+function lmMeasToggle(){ const M=LM.meas; if(!M||!LM.map) return; M.on=!M.on; M.pts=[]; M.layer.clearLayers();
+  const b=document.getElementById('lm-meas-btn'); if(b){ b.textContent=M.on?'✖ إنهاء القياس':'📏 قياس مسافة'; b.classList.toggle('ghost',!M.on); }
+  LM.map.getContainer().style.cursor=M.on?'crosshair':'';
+  if(M.on){ LM.map.closePopup(); erToast('📏 دوس على أول نقطة (أو دبوس) وبعدين التانية'); } }
+function lmMeasSnap(ll){ if(!LM.map) return null; const p=LM.map.latLngToContainerPoint(ll); let best=null, bd=22;
+  Object.keys(LM.mk).forEach(k=>{ if(!k.includes('_')) return; const m=LM.mk[k]; if(!m||!m._icon) return; const q=LM.map.latLngToContainerPoint(m.getLatLng()); const d=Math.hypot(q.x-p.x,(q.y-13)-p.y); if(d<bd){ bd=d; best=m; } }); return best; }
+function lmMeasAdd(ll,name){ const M=LM.meas; if(!M) return; if(M.pts.length>=2){ M.pts=[]; M.layer.clearLayers(); }
+  M.pts.push({ll,name}); L.circleMarker(ll,{radius:7,color:'#fff',weight:2,fillColor:'#C9A84C',fillOpacity:1}).addTo(M.layer).bindTooltip(name||(M.pts.length===1?'نقطة البداية':'نقطة النهاية'),{direction:'top'});
+  if(M.pts.length<2) return;
+  const [a,c]=M.pts, km=lmKm(a.ll.lat,a.ll.lng,c.ll.lat,c.ll.lng), txt=km<1?`${Math.round(km*1000)} متر`:`${km.toFixed(km<10?2:1)} كم`;
+  L.polyline([a.ll,c.ll],{color:'#C9A84C',weight:3,dashArray:'8 6'}).addTo(M.layer);
+  const mid=L.latLng((a.ll.lat+c.ll.lat)/2,(a.ll.lng+c.ll.lng)/2), g=`https://www.google.com/maps/dir/${a.ll.lat.toFixed(6)},${a.ll.lng.toFixed(6)}/${c.ll.lat.toFixed(6)},${c.ll.lng.toFixed(6)}`;
+  L.marker(mid,{interactive:false,icon:L.divIcon({className:'',iconSize:[0,0],html:`<div style="transform:translate(-50%,-50%);display:inline-block;white-space:nowrap;background:#0A0A0A;color:#E8C97A;border:1.5px solid #C9A84C;border-radius:10px;padding:3px 10px;font:800 14px Cairo,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.6)">📏 ${txt}</div>`})}).addTo(M.layer);
+  L.popup({closeOnClick:false,autoClose:false}).setLatLng(mid).setContent(`<div style="direction:rtl;font-family:Cairo,Tahoma,sans-serif;line-height:1.8;min-width:200px"><b style="font-size:15px">📏 المسافة: ${txt}</b> <span style="color:#777;font-size:11px">(خط مستقيم)</span>
+    <div style="font-size:12px">من: ${erEsc(a.name||'نقطة على الخريطة')}<br>إلى: ${erEsc(c.name||'نقطة على الخريطة')}</div>
+    <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap"><a href="${g}" target="_blank" rel="noopener" style="background:#4285F4;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">🚗 مسافة الطريق على جوجل ماب</a>
+    <a href="#" onclick="lmCopy(decodeURIComponent('${encodeURIComponent(`📏 المسافة: ${txt}\nمن: ${a.name||'نقطة'}\nإلى: ${c.name||'نقطة'}\n🚗 ${g}`).replace(/'/g,'%27')}'));return false" style="background:#333;color:#fff;padding:3px 8px;border-radius:6px;text-decoration:none;font-size:12px">📋 نسخ</a></div>
+    <div style="color:#777;font-size:11px;margin-top:2px">دوس على نقطة تالتة يبدأ قياس جديد</div></div>`).addTo(M.layer); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&typeof LM!=='undefined'&&LM.meas&&LM.meas.on) lmMeasToggle(); });
 function lmRows(){ const f=LM.f; return (LM.d?LM.d.rows:[]).filter(r=>r.lat!=null&&r.lng!=null&&(!f.gov||r.gov===f.gov)&&(!f.st||lmSt(r)===f.st)&&(!f.emp||r.emp===f.emp)); }
 function lmDraw(fit){ if(!LM.map) return; if(LM.cl){ LM.map.removeLayer(LM.cl); } LM.cl=L.markerClusterGroup({showCoverageOnHover:false,maxClusterRadius:45}); LM.mk={};
-  const R=lmRows(), pts=[]; let nbr=0; R.forEach(r=>{ const B=lmBrs(r), main=lmBrMain(r); B.forEach(b=>{ const m=L.marker([b.lat,b.lng],{icon:lmIcon(lmSt({st:b.st}),B.length>1?b.n:''),title:`${r.code} — ${r.name}`}).bindPopup(()=>lmPop(r,b)).bindTooltip(`${r.name} (${r.code||''})${B.length>1?` · فرع ${b.n}`:''}`,{direction:'top',offset:[0,-22]}); LM.mk[r.id+'_'+b.n]=m; if(b===main) LM.mk[r.id]=m; LM.cl.addLayer(m); pts.push([b.lat,b.lng]); }); if(B.length>1) nbr++; });
+  const R=lmRows(), pts=[]; let nbr=0; R.forEach(r=>{ const B=lmBrs(r), main=lmBrMain(r); B.forEach(b=>{ const m=L.marker([b.lat,b.lng],{icon:lmIcon(lmSt({st:b.st}),B.length>1?b.n:''),title:`${r.code} — ${r.name}`}).bindPopup(()=>lmPop(r,b)).bindTooltip(`${r.name} (${r.code||''})${B.length>1?` · فرع ${b.n}`:''}`,{direction:'top',offset:[0,-22]}); LM.mk[r.id+'_'+b.n]=m; if(b===main) LM.mk[r.id]=m; m._lmName=`${r.name} (${r.code||''})${B.length>1?` فرع ${b.n}`:''}`; m.on('click',()=>{ if(LM.meas&&LM.meas.on){ m.closePopup(); LM.meas._t=Date.now(); lmMeasAdd(m.getLatLng(),m._lmName); } }); LM.cl.addLayer(m); pts.push([b.lat,b.lng]); }); if(B.length>1) nbr++; });
   LM.map.addLayer(LM.cl); const n=document.getElementById('lm-n'); if(n) n.textContent=`📍 ${R.length} تاجر على الخريطة${pts.length>R.length?` (${pts.length} محل — ${nbr} تاجر عنده فروع)`:''}`;
   if(fit&&pts.length){ try{ LM.map.fitBounds(L.latLngBounds(pts).pad(0.15),{maxZoom:14}); }catch(_){} } }
 function lmFind(){ const q=String(LM.f.q||'').trim().toLowerCase(); if(!q) return; const R=(LM.d?LM.d.rows:[]);
@@ -25016,7 +25038,7 @@ function lmNearRender(){ const el=document.getElementById('lmn-out'); if(!el) re
 function lmNearCopy(n){ const R=(LMN.res||[]).slice(0,n); if(!R.length) return; lmCopy(`📍 أقرب وكلاء ليك${LMN.label?` (${String(LMN.label).split(',').slice(0,2).join('،')})`:''}:\n\n`+R.map((r,i)=>`${i+1}) `+lmAllTxt(r,r.d)).join('\n\n')); }
 async function lmNearMap(){ const el=document.getElementById('lmn-map'); if(!el) return; try{ await lmLib(); }catch(e){ return; }
   if(LMN.map){ try{ LMN.map.remove(); }catch(_){} LMN.map=null; }
-  LMN.map=L.map(el).setView(LMN.pt||[30.4,31.1], LMN.pt?12:7);
+  LMN.map=L.map(el,{keyboard:false}).setView(LMN.pt||[30.4,31.1], LMN.pt?12:7);
   const sat=L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'}),L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19})]);
   const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
   osm.addTo(LMN.map); L.control.layers({'🗺️ خريطة شوارع':osm,'🛰️ قمر صناعى':sat},null,{position:'topleft'}).addTo(LMN.map);

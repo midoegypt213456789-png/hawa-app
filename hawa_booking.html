@@ -1213,7 +1213,7 @@ async function locInitMap(){
   const S=_loc, st=S.st||{};
   if (S.lat==null && st.lat!=null && !S.adding){ S.lat=st.lat; S.lng=st.lng; }
   const c=S.lat!=null?[S.lat,S.lng]:(st.lat!=null?[st.lat,st.lng]:[30.2,31.2]);
-  S.map=L.map(el,{zoomControl:true,attributionControl:true}).setView(c, S.lat!=null?16:(st.lat!=null?12:7));
+  S.map=L.map(el,{zoomControl:true,attributionControl:true,keyboard:false}).setView(c, S.lat!=null?16:(st.lat!=null?12:7));
   const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'});
   const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'© Esri'});
   sat.addTo(S.map); L.control.layers({'🛰️ قمر صناعى':sat,'🗺️ خريطة':osm},null,{position:'topleft'}).addTo(S.map);
