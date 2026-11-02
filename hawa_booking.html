@@ -1130,6 +1130,34 @@ checkTelegramLink();
 setTimeout(()=>{ try { acctCheck(); } catch(_){} }, 400);
 // 📍 لوكيشن المحل (لو مطلوب ومتحدّثش الصفحة بتتقفل)
 setTimeout(()=>{ try { locCheck(); } catch(_){} }, 250);
+setTimeout(()=>{ try { bdCheck(); } catch(_){} }, 1500);
+
+// ═══════════════════════════════════════════════════════════
+// 🎂 تهنئة عيد الميلاد — يوم عيد ميلاد التاجر أول ما يفتح البرنامج يطلعله الكارت (مرة واحدة فى السنة) — cl_bday_state
+// ═══════════════════════════════════════════════════════════
+async function bdCheck(n){
+  if (!user || !user.id || typeof clHasTok!=='function' || !clHasTok()) return;
+  const g=document.getElementById('locGate'); if (g && g.style.display==='flex'){ if((n||0)<200) setTimeout(()=>bdCheck((n||0)+1), 3000); return; }
+  let st=null; try { st=await clRpc('cl_bday_state',{}); } catch(_){ return; }
+  if (!st || !st.today) return;
+  const k='hawa_bday_'+user.id+'_'+st.year; try { if (localStorage.getItem(k)) return; } catch(_){}
+  bdShow(st, k);
+}
+function bdShow(st, k){
+  if (typeof logActivity==='function') logActivity('cl_bday_open','🎂 شاف كارت عيد ميلاده');
+  const o=document.createElement('div'); o.id='bdGate';
+  o.style.cssText='position:fixed;inset:0;z-index:99995;background:rgba(5,5,5,.94);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:14px;direction:rtl;font-family:Cairo,Tahoma,sans-serif';
+  const conf=Array.from({length:60},(_,i)=>`<i style="position:absolute;top:-20px;left:${Math.random()*100}%;width:${6+Math.random()*6}px;height:${10+Math.random()*8}px;background:${['#C9A84C','#E8C97A','#F0EDE8','#C97A4C'][i%4]};opacity:.9;border-radius:2px;animation:bdFall ${3+Math.random()*3}s ${Math.random()*2}s linear forwards;transform:rotate(${Math.random()*360}deg)"></i>`).join('');
+  o.innerHTML=`<style>@keyframes bdFall{to{top:110%;transform:rotate(720deg)}}@keyframes bdPop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}</style>
+    <div style="position:fixed;inset:0;pointer-events:none;overflow:hidden">${conf}</div>
+    <div style="max-width:460px;width:100%;margin:auto;animation:bdPop .5s ease-out">
+      <img src="${String(st.img||'').replace(/"/g,'')}" alt="كل سنة وانت طيب" style="width:100%;border-radius:18px;border:1.5px solid var(--gold,#C9A84C);display:block;background:#111;min-height:200px">
+      <div style="background:var(--dark2,#111);border:1px solid var(--border,#2A2A2A);border-radius:14px;padding:12px 14px;margin-top:10px;color:var(--text,#F0EDE8);font-size:13.5px;line-height:1.9;white-space:pre-wrap">${String(st.text||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</div>
+      <button onclick="document.getElementById('bdGate').remove()" style="width:100%;margin-top:10px;background:linear-gradient(135deg,var(--gold,#C9A84C),var(--gold-light,#E8C97A));color:#0A0A0A;border:0;border-radius:12px;padding:12px;font-family:inherit;font-size:15px;font-weight:900;cursor:pointer">🙏 شكراً — يلا نكمل</button>
+    </div>`;
+  document.body.appendChild(o);
+  try { localStorage.setItem(k,'1'); } catch(_){}
+}
 
 // ═══════════════════════════════════════════════════════════
 // 📍 تحديث لوكيشن المحل — لو مطلوب ومبعتش (أو مش مطابق للعنوان) الصفحة كلها بتتقفل لحد ما يحدّث

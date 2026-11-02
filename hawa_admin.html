@@ -4150,6 +4150,10 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
     </div>
 
     <!-- UNLINKED CLIENTS -->
+    <div class="section" id="sec-bdays">
+      <div class="page-hd" style="flex-shrink:0"><div class="page-title">🎂 <span>أعياد ميلاد التجار</span></div></div>
+      <div id="bd-body"></div>
+    </div>
     <div class="section" id="sec-clients-map">
       <div class="page-hd" style="flex-shrink:0"><div class="page-title">🗺️ <span>خريطة التجار ولوكيشن المحلات</span></div></div>
       <div id="lm-body"></div>
@@ -6373,6 +6377,7 @@ function autoRefreshTick(){
     else if(sec==='templates' && typeof loadTemplates === 'function') loadTemplates();
     else if(sec==='unlinked' && typeof loadUnlinked === 'function') loadUnlinked();
     else if(sec==='clients-map' && typeof lmLoad === 'function') lmLoad();
+    else if(sec==='bdays' && typeof bdLoad === 'function') bdLoad();
     else if(sec==='vehicle-types' && typeof loadVehicleTypes === 'function') loadVehicleTypes();
     else if(sec==='schedule' && typeof loadSchedule === 'function') loadSchedule();
     else if(sec==='blocked' && typeof loadBlocked === 'function') loadBlocked();
@@ -6534,6 +6539,7 @@ function goTo(sec){
   else if(sec==='templates')loadTemplates();
   else if(sec==='unlinked')loadUnlinked();
   else if(sec==='clients-map')lmLoad();
+  else if(sec==='bdays')bdLoad();
   else if(sec==='vehicle-types')loadVehicleTypes();
   else if(sec==='schedule')loadSchedule();
   else if(sec==='blocked')loadBlocked();
@@ -18600,6 +18606,7 @@ const NAV_META = {
   'extra-contacts':   { icon: '📞',  label: 'جهات إضافية' },
   'unlinked':         { icon: '🔗',  label: 'عملاء لم يربطوا' },
   'clients-map':      { icon: '🗺️', label: 'خريطة التجار ولوكيشن المحلات' },
+  'bdays':            { icon: '🎂', label: 'أعياد ميلاد التجار' },
 
   'broadcast':        { icon: '📢',  label: 'إرسال رسائل' },
   'broadcast-logs':   { icon: '📬',  label: 'سجل الإرسال' },
@@ -18648,7 +18655,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
   favorites: [],
   categories: [
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permits', 'shortages', 'permit-alerts', 'blocked', 'booking-limits'] },
-    { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'clients-map', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
+    { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'clients-map', 'bdays', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
     { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
@@ -18665,6 +18672,7 @@ let __sidebarLoaded = false;
 const NAV_PREFERRED_CAT = {
   'permits':  { id: 'booking', icon: '📋', title: 'الحجز', index: 0 },
   'clients-map': { id: 'clients', icon: '👥', title: 'العملاء', index: 1 },
+  'bdays':       { id: 'clients', icon: '👥', title: 'العملاء', index: 1 },
   'shortages': { id: 'booking', icon: '📋', title: 'الحجز', index: 0 },
   'catalog':  { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'leads':    { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
@@ -19071,6 +19079,7 @@ const SECTION_LABELS_DEFAULT = {
   'templates':       '📝 القوالب',
   'unlinked':        '🔗 غير المرتبطين',
   'clients-map':     '🗺️ خريطة التجار',
+  'bdays':           '🎂 أعياد الميلاد',
   'vehicle-types':   '🚛 أنواع العربيات',
   'schedule':        '📅 الجدول',
   'blocked':         '🚫 المبلوكين',
@@ -24826,6 +24835,79 @@ function erLrDayPrint(){ if(!erNeedPrint('erp-letters')) return; const D=erLrS()
 
 // ════════════════════════════════════════════════════════════════
 // 🗺️ خريطة التجار + متابعة تحديث لوكيشن المحلات + تشغيل القفل
+
+// ═══════════════════════════════════════════════════════════
+// 🎂 أعياد ميلاد التجار — الرقم القومى ← تاريخ الميلاد ← كارت تهنئة (تليجرام + البرنامج) الساعة 12 بالليل
+// bday_admin_list / bday_admin_action — صلاحية bdays
+// ═══════════════════════════════════════════════════════════
+var BD = { d:null, f:'all', q:'', busy:false };
+function bdDays(d){ if(!d||!BD.d) return null; return Math.round((new Date(d+'T00:00:00')-new Date(BD.d.today+'T00:00:00'))/864e5); }
+function bdFmt(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('ar-EG',{day:'numeric',month:'long',year:'numeric'}); }
+function bdFmtDM(d){ if(!d) return '—'; const x=new Date(d+'T00:00:00'); return x.toLocaleDateString('ar-EG',{day:'numeric',month:'long'}); }
+async function bdLoad(){ const el=document.getElementById('bd-body'); if(!el) return; if(!BD.d) el.innerHTML='<div class="qt-card qt-sub" style="padding:20px;text-align:center">⏳ بنحمّل...</div>';
+  try{ BD.d=await rpcSecure('bday_admin_list',{}); }catch(e){ el.innerHTML=`<div class="qt-card qt-sub" style="padding:20px">❌ ${erEsc(erErr(e))}</div>`; return; } bdRender(); }
+function bdCounts(R){ const c={all:R.length,has:0,miss:0,today:0,week:0,month:0,next:0,notg:0}; const t=new Date(BD.d.today+'T00:00:00'), m=t.getMonth(), nm=(m+1)%12;
+  R.forEach(r=>{ if(r.bd){ c.has++; const dd=bdDays(r.next); if(dd===0) c.today++; if(dd>=0&&dd<=7) c.week++; const nx=new Date(r.next+'T00:00:00'); if(nx.getMonth()===m&&dd<=31) c.month++; if(nx.getMonth()===nm&&dd<=62) c.next++; } else c.miss++; if(!r.tg) c.notg++; }); return c; }
+function bdRows(){ const q=(typeof lmNorm==='function'?lmNorm(BD.q):String(BD.q||'').trim()), t=new Date(BD.d.today+'T00:00:00'), m=t.getMonth(), nm=(m+1)%12;
+  let R=BD.d.rows.filter(r=>{ const dd=bdDays(r.next), nx=r.next?new Date(r.next+'T00:00:00'):null;
+    if(BD.f==='has'&&!r.bd) return false; if(BD.f==='miss'&&r.bd) return false; if(BD.f==='today'&&dd!==0) return false; if(BD.f==='week'&&!(dd>=0&&dd<=7)) return false;
+    if(BD.f==='month'&&!(nx&&nx.getMonth()===m&&dd<=31)) return false; if(BD.f==='next'&&!(nx&&nx.getMonth()===nm&&dd<=62)) return false;
+    if(q){ const tx=(typeof lmNorm==='function'?lmNorm:(x=>String(x)))([r.name,r.code,r.phone,r.gov,r.city,r.nid].filter(Boolean).join(' ')); if(!tx.includes(q)) return false; } return true; });
+  if(BD.f!=='all'&&BD.f!=='miss') R=R.slice().sort((a,b)=>(bdDays(a.next)??9999)-(bdDays(b.next)??9999)); return R; }
+function bdStat(k,txt,col){ const a=BD.f===k; return `<span style="cursor:pointer;user-select:none;padding:3px 9px;border-radius:8px;border:1px solid ${a?'var(--gold)':'transparent'};${a?'background:rgba(201,168,76,0.08);':''}${col?'color:'+col+';':''}" title="دبل كليك للفلترة — ودبل كليك تانى يلغيها" ondblclick="BD.f=(BD.f==='${k}'?'all':'${k}');bdRender()">${txt}</span>`; }
+function bdRender(){ const el=document.getElementById('bd-body'); if(!el||!BD.d) return; const D=BD.d, C=bdCounts(D.rows), isAdm=!EMP_MODE, canE=erCan('bdays','edit'), R=bdRows();
+  let h=`<div class="qt-card" style="padding:12px 14px;margin-bottom:10px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+     <b style="color:${D.on?'#4CAF7D':'#E05555'}">${D.on?'🎂 التهنئة شغالة — بتتبعت الساعة 12 بالليل يوم عيد ميلاده (تليجرام + البرنامج + رسائلى)':'⏸️ التهنئة واقفة'}</b>
+     ${isAdm?`<button class="qt-btn ${D.on?'ghost':''} sm" onclick="bdAct({action:'settings',on:${!D.on}},'${D.on?'وقّفت':'شغّلت'} التهنئة')">${D.on?'⏸️ وقّف':'▶️ شغّل'}</button>`:''}</div>
+   <div class="qt-card" style="padding:10px 14px;margin-bottom:10px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+     ${bdStat('has',`<b>🪪 عندهم رقم قومى ${C.has} من ${C.all} (${C.all?Math.round(C.has*100/C.all):0}%)</b>`,'')}${bdStat('miss','⏳ ناقص '+C.miss,'var(--text-dim)')}${bdStat('today','🎂 النهاردة '+C.today,'#E8C97A')}${bdStat('week','📅 الأسبوع ده '+C.week,'#4CAF7D')}${bdStat('month','🗓️ الشهر ده '+C.month,'#4A90D9')}${bdStat('next','➡️ الشهر الجاى '+C.next,'#C97A4C')}
+     <span class="qt-sub" style="font-size:10.5px">💡 دبل كليك على أى رقم للفلترة</span></div>
+   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start;margin-bottom:10px">
+     <div class="qt-card" style="padding:10px;flex:0 0 auto"><a href="${erEsc(D.sample)}" target="_blank" rel="noopener" title="افتح الكارت"><img src="${erEsc(D.sample)}" style="width:170px;border-radius:10px;display:block;border:1px solid var(--border)" alt="كارت التهنئة"></a><div class="qt-sub" style="text-align:center;margin-top:4px">الاسم بيتغيّر لكل تاجر</div></div>
+     <div class="qt-card" style="padding:12px;flex:1;min-width:280px">
+       <b>✉️ رسالة التليجرام (تحت الكارت)</b> <span class="qt-sub">— <code>{name}</code> مكان اسم التاجر، و &lt;b&gt;..&lt;/b&gt; للخط التقيل</span>
+       <textarea id="bd-msg" class="qt-inp" style="width:100%;min-height:170px;margin-top:6px;line-height:1.8;font-family:inherit" ${isAdm?'':'readonly'}>${erEsc(D.msg||'')}</textarea>
+       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">${isAdm?`<button class="qt-btn sm" onclick="bdAct({action:'settings',msg:document.getElementById('bd-msg').value},'اتحفظت الرسالة')">💾 حفظ الرسالة</button>`:''}
+         ${canE?`<button class="qt-btn ghost sm" onclick="bdTest(850)">📲 جرّب ابعتهالى على التليجرام</button>`:''}
+         ${canE?`<label class="qt-btn ghost sm" style="cursor:pointer">📥 استيراد أرقام قومية من Excel<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="bdImport(this)"></label>`:''}
+         <span class="qt-sub">الإكسيل: عمود «الكود» وعمود «الرقم القومى»</span></div></div></div>
+   <div class="qt-card" style="padding:10px;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+     <input class="qt-inp" id="bd-q" style="width:260px" placeholder="🔎 اكتب كود / اسم / تليفون / رقم قومى" value="${erEsc(BD.q)}" oninput="BD.q=this.value;clearTimeout(BD.__t);BD.__t=setTimeout(bdTable,200)">
+     <select class="qt-inp" onchange="BD.f=this.value;bdRender()">${[['all','📋 الكل'],['miss','⏳ ناقص رقم قومى'],['has','🪪 عندهم رقم قومى'],['today','🎂 النهاردة'],['week','📅 الأسبوع ده'],['month','🗓️ الشهر ده'],['next','➡️ الشهر الجاى']].map(o=>`<option value="${o[0]}" ${BD.f===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
+     <span class="qt-sub" id="bd-n"></span></div>
+   <div id="bd-tbl"></div>`;
+  el.innerHTML=h; bdTable(); }
+function bdTable(){ const el=document.getElementById('bd-tbl'); if(!el) return; const R=bdRows(), canE=erCan('bdays','edit'), isAdm=!EMP_MODE, y=+String(BD.d.today).slice(0,4);
+  const n=document.getElementById('bd-n'); if(n) n.textContent=`${R.length} تاجر`;
+  el.innerHTML=`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>التاجر</th><th>التليفون</th><th>العنوان</th><th>🪪 الرقم القومى</th><th>تاريخ الميلاد</th><th>السن</th><th>عيد الميلاد الجاى</th><th>البوت</th><th></th></tr></thead><tbody>
+   ${R.slice(0,600).map(r=>{ const dd=bdDays(r.next);
+     return `<tr id="bd-r-${r.id}"><td><b>${erEsc(r.code||'')}</b></td><td><b>${erEsc(r.name)}</b>${r.emp?`<div class="qt-sub">👤 ${erEsc(r.emp)}</div>`:''}</td><td dir="ltr">${erEsc(r.phone||'')}</td><td>${erEsc(r.gov||'')}${r.city?' — '+erEsc(r.city):''}</td>
+       <td style="white-space:nowrap">${canE?`<input class="qt-inp" dir="ltr" inputmode="numeric" maxlength="20" style="width:165px;font-family:monospace;letter-spacing:1px" value="${erEsc(r.nid||'')}" placeholder="14 رقم" data-old="${erEsc(r.nid||'')}" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}" onblur="bdSaveNid(${r.id},this)">`:`<span dir="ltr" style="font-family:monospace">${erEsc(r.nid||'—')}</span>`}</td>
+       <td>${r.bd?bdFmt(r.bd):'<span class="qt-sub">—</span>'}</td><td>${r.age!=null?r.age+' سنة':'—'}</td>
+       <td>${r.next?`${bdFmtDM(r.next)}<div class="qt-sub" style="${dd===0?'color:#E8C97A;font-weight:800':''}">${dd===0?'🎂 النهاردة':dd===1?'بكرة':'بعد '+dd+' يوم'}${r.sent===y?' · ✅ اتبعتله السنة دى':''}</div>`:'—'}</td>
+       <td>${r.tg?'✅':'📵'}</td>
+       <td style="white-space:nowrap">${r.bd?`<button class="qt-btn ghost sm" title="شوف الكارت باسمه" onclick="bdCard(${r.id})">🖼️</button>${canE?`<button class="qt-btn ghost sm" title="ابعت الكارت ده ليا أنا (تجربة)" onclick="bdTest(${r.id})">📲</button>`:''}${isAdm&&r.tg&&r.sent!==y?`<button class="qt-btn ghost sm" title="ابعتله التهنئة دلوقتى" onclick="bdSendNow(${r.id})">🎂</button>`:''}`:''}</td></tr>`; }).join('')}
+   </tbody></table></div>${R.length>600?'<div class="qt-sub">أول 600 بس — استخدم البحث</div>':''}${R.length?'':'<div class="qt-sub" style="padding:12px">مفيش تجار هنا</div>'}`; }
+async function bdSaveNid(id,inp){ const v=String(inp.value||'').trim(), old=inp.dataset.old||''; if(v===old) return;
+  inp.disabled=true; try{ const r=await rpcSecure('bday_admin_action',{p:{action:'set_nid',client_id:id,nid:v}}); const row=BD.d.rows.find(x=>x.id===id); if(row){ row.nid=r.nid; row.bd=r.bd; row.next=r.next; row.age=r.age; }
+    inp.dataset.old=r.nid||''; inp.value=r.nid||''; erToast(r.bd?`✅ اتحفظ — مواليد ${bdFmt(r.bd)}`:'✅ اتمسح الرقم'); bdRender(); }
+  catch(e){ erToast('❌ '+erErr(e),false); inp.style.borderColor='#E05555'; inp.disabled=false; inp.focus(); } }
+async function bdAct(p,ok){ try{ await rpcSecure('bday_admin_action',{p}); erToast('✅ '+(ok||'تم')); await bdLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function bdTest(id){ try{ const r=await rpcSecure('bday_admin_action',{p:{action:'test',client_id:id}}); erToast('📲 الكارت هيوصلك على التليجرام خلال دقيقة'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function bdSendNow(id){ const r=BD.d.rows.find(x=>x.id===id)||{}; if(!confirm(`تبعت تهنئة عيد الميلاد لـ «${r.name}» دلوقتى؟`)) return; await bdAct({action:'send_now',client_id:id},'اتبعتت'); }
+async function bdCard(id){ try{ const r=await rpcSecure('bday_admin_action',{p:{action:'card_url',client_id:id}}); window.open(r.url,'_blank'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function bdImport(inp){ const f=inp.files&&inp.files[0]; inp.value=''; if(!f) return;
+  try{ const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}); const ws=wb.Sheets[wb.SheetNames[0]]; const A=XLSX.utils.sheet_to_json(ws,{header:1,raw:false,defval:''});
+    const nz=s=>String(s||'').replace(/[إأآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,'').toLowerCase();
+    let hi=-1, ci=-1, ni=-1; for(let i=0;i<Math.min(10,A.length)&&hi<0;i++){ (A[i]||[]).forEach((c,j)=>{ const n=nz(c); if(ci<0&&(n.includes('كود')||n==='code')) ci=j; if(ni<0&&(n.includes('قومي')||n.includes('national')||n.includes('بطاقه'))) ni=j; }); if(ci>=0&&ni>=0) hi=i; else { ci=-1; ni=-1; } }
+    if(hi<0){ erToast('❌ مش لاقى عمود «الكود» وعمود «الرقم القومى» فى أول سطر',false); return; }
+    const rows=A.slice(hi+1).map(r=>({code:String(r[ci]||'').trim(), nid:String(r[ni]||'').trim()})).filter(r=>r.code&&r.nid);
+    if(!rows.length){ erToast('❌ الملف فاضى',false); return; }
+    if(!confirm(`هيتحفظ ${rows.length} رقم قومى — تمام؟`)) return;
+    const r=await rpcSecure('bday_admin_action',{p:{action:'import',rows}});
+    alert(`✅ اتحفظ ${r.saved} من ${rows.length}`+((r.bad||[]).length?`\n\n❌ ${r.bad.length} مش اتحفظوا:\n`+r.bad.slice(0,25).map(b=>`• كود ${b.code}: ${b.err}`).join('\n'):''));
+    await bdLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+
 // loc_admin_list / loc_admin_log / loc_admin_action — صلاحية clients-map
 // ════════════════════════════════════════════════════════════════
 var LM = { tab:'map', d:null, map:null, cl:null, mk:{}, f:{ q:'', gov:'', city:'', st:'', emp:'' }, ft:{ st:'pending', q:'' }, base:'sat' };
