@@ -24460,6 +24460,69 @@ function erBar39(txt, h){ const P={'0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnn
   for(const ch of s){ const p=P[ch]; for(let i=0;i<9;i++){ const w=p[i]==='w'?Wd:N; if(i%2===0) r+=`<rect x="${x.toFixed(2)}" y="2" width="${w}" height="${h}"/>`; x+=w; } x+=N; }
   const W=x+Q-N; return `<svg xmlns="http://www.w3.org/2000/svg" width="${W.toFixed(0)}" height="${h+16}" viewBox="0 0 ${W.toFixed(2)} ${h+16}" style="display:inline-block;background:#fff"><rect width="100%" height="100%" fill="#fff"/><g fill="#000">${r}</g><text x="${(W/2).toFixed(1)}" y="${h+14}" font-size="11" text-anchor="middle" font-family="monospace" fill="#000">${erEsc(String(txt==null?'':txt))}</text></svg>`; }
 function erBeep(ok){ try{ const A=window.__erAC||(window.__erAC=new (window.AudioContext||window.webkitAudioContext)()); const o=A.createOscillator(), g=A.createGain(); o.type=ok?'sine':'square'; o.frequency.value=ok?1250:200; g.gain.value=0.07; o.connect(g); g.connect(A.destination); o.start(); o.stop(A.currentTime+(ok?0.08:0.35)); }catch(e){} }
+
+// ═══════════════════════════════════════════════════════════
+// 🖨️ عدّ الطباعة لكل مستند (السيستم الجديد): أول مرة عادى — المرة التانية تنبيه + «طبعة رقم N — نسخة مكررة» على الورقة
+// الجواب والفاتورة الضريبية: مرة واحدة بس — التانية بإذن الأدمن (الأدمن نفسه بيطبع بعد التنبيه)
+// erp_print_claim / erp_print_request — العدّ فى السيرفر (erp_print_log)
+// ═══════════════════════════════════════════════════════════
+const ER_PR_TYPE={ inv:'فاتورة مبيعات', del:'مستند تسليم', rcpt:'سند قبض', po:'طلبية شراء', sret:'مرتجع مبيعات', pret:'مرتجع مشتريات', tr:'إذن تحويل', stl:'تسوية', regdoc:'مستند أرقام مواتير', letter:'جواب', tinv:'فاتورة ضريبية', lcbatch:'كشف جوابات' };
+function erPrFmtAt(s){ if(!s) return ''; try{ return new Date(s).toLocaleString('ar-EG',{timeZone:'Africa/Cairo',day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit'}); }catch(e){ return String(s).slice(0,16); } }
+function erPrBox(html){ const old=document.getElementById('erPrBox'); if(old) old.remove(); const o=document.createElement('div'); o.id='erPrBox';
+  o.style.cssText='position:fixed;inset:0;z-index:100000;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;padding:14px;direction:rtl;font-family:Cairo,Tahoma,sans-serif';
+  o.innerHTML=`<div style="background:var(--dark2,#111);border:1.5px solid var(--gold,#C9A84C);border-radius:16px;max-width:560px;width:100%;max-height:86vh;overflow:auto;padding:16px;color:var(--text,#F0EDE8)">${html}</div>`; document.body.appendChild(o); return o; }
+function erPrList(docs){ return `<div style="margin:8px 0;max-height:240px;overflow:auto">${docs.slice(0,40).map(d=>`<div style="border:1px solid var(--border,#2A2A2A);border-radius:10px;padding:7px 10px;margin-bottom:5px;font-size:13px"><b>${erEsc(d.label||d.key)}</b> — اتطبع <b style="color:#E8C97A">${Number(d.n)||0}</b> مرة${d.last_by||d.last_at?`<div class="qt-sub">آخر مرة: ${erEsc(d.last_by||'')} ${erEsc(erPrFmtAt(d.last_at))}</div>`:''}${d.pending?'<div class="qt-sub" style="color:#E8C97A">⏳ فيه طلب إذن متبعت — مستنى الأدمن</div>':''}</div>`).join('')}${docs.length>40?`<div class="qt-sub">+ ${docs.length-40} كمان</div>`:''}</div>`; }
+async function erPrGate(type, keys, scr, labels){
+  if(window.__erCap) return true;
+  keys=(keys||[]).filter(k=>k!=null&&k!=='').map(String); if(!keys.length) return true;
+  const call=(confirm)=>rpcSecure('erp_print_claim',{p_type:type,p_keys:keys,p_screen:scr,p_confirm:!!confirm,p_labels:labels?labels.map(x=>String(x??'')):null});
+  let r; try{ r=await call(false); }catch(e){ erToast('❌ '+erErr(e),false); return false; }
+  if(r&&r.ok){ erPrArm(r.n); return true; }
+  const T=ER_PR_TYPE[type]||'المستند';
+  if(r&&r.blocked){
+    const pend=(r.docs||[]).every(d=>d.pending);
+    const o=erPrBox(`<div style="font-size:17px;font-weight:900;color:#E05555">🔒 ${erEsc(T)} اتطبع قبل كده</div>
+      <div style="font-size:13.5px;line-height:1.9;margin-top:4px">${erEsc(T)} بيتطبع <b>مرة واحدة بس</b> — إعادة الطباعة محتاجة <b>إذن الأدمن</b>.</div>${erPrList(r.docs||[])}
+      ${pend?'':`<textarea id="erPrNote" class="qt-inp" style="width:100%;min-height:60px;margin-top:6px" placeholder="سبب إعادة الطباعة (اختيارى)"></textarea>`}
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${pend?'':`<button class="qt-btn" id="erPrReq">📨 اطلب إذن من الأدمن</button>`}<button class="qt-btn ghost" onclick="document.getElementById('erPrBox').remove()">إغلاق</button></div>`);
+    const b=o.querySelector('#erPrReq'); if(b) b.onclick=async()=>{ b.disabled=true; try{ const x=await rpcSecure('erp_print_request',{p_type:type,p_keys:(r.docs||[]).map(d=>String(d.key)),p_screen:scr,p_note:(document.getElementById('erPrNote')||{}).value||null,p_labels:(r.docs||[]).map(d=>String(d.label||d.key))}); o.remove(); erToast('📨 اتبعت طلب الإذن للأدمن — أول ما يوافق تقدر تطبع'); }catch(e){ b.disabled=false; erToast('❌ '+erErr(e),false); } };
+    return false; }
+  if(r&&r.need_confirm){
+    const D=r.docs||[], prev=D.filter(d=>Number(d.n)>0), mx=Math.max(...D.map(d=>Number(d.n)||0))+1;
+    return await new Promise(res=>{ const o=erPrBox(`<div style="font-size:17px;font-weight:900;color:#E8C97A">⚠️ ${D.length>1?'فيه مستندات اتطبعت':erEsc(T)+' اتطبع'} قبل كده</div>
+      ${r.locked?`<div style="font-size:12.5px;color:${D.some(d=>Number(d.grant)>0)?'#4CAF7D':'#E05555'};margin-top:4px">${D.some(d=>Number(d.grant)>0)?'✅ معاك إذن من الأدمن بإعادة الطباعة — والطباعة دى هتتسجل.':`🔒 ${erEsc(T)} المفروض يتطبع مرة واحدة بس — إنت أدمن فتقدر تطبعه، والطباعة دى هتتسجل.`}</div>`:''}
+      ${erPrList(prev)}<div style="font-size:13.5px">دى هتبقى <b style="color:#E8C97A">الطبعة رقم ${mx}</b>، وهيتكتب على الورقة «طبعة رقم ${mx} — نسخة مكررة».</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="qt-btn" id="erPrGo">🖨️ اطبع (الطبعة رقم ${mx})</button><button class="qt-btn ghost" id="erPrNo">إلغاء</button></div>`);
+      o.querySelector('#erPrNo').onclick=()=>{ o.remove(); res(false); };
+      o.querySelector('#erPrGo').onclick=async(ev)=>{ ev.target.disabled=true; try{ const r2=await call(true); o.remove(); if(r2&&r2.ok){ erPrArm(r2.n); res(true); } else { erToast('❌ مقدرناش نسجّل الطباعة',false); res(false); } }catch(e){ o.remove(); erToast('❌ '+erErr(e),false); res(false); } }; }); }
+  erToast('❌ مقدرناش نتأكد من الطباعة',false); return false; }
+// الطبعة التانية وما بعدها: ختم «طبعة رقم N — نسخة مكررة» فى كل صفحة (بيتحط على أول نافذة طباعة بتتفتح)
+function erPrArm(n){ n=Number(n)||1; if(n<2) return; const st=`<div style="position:fixed;top:2mm;left:2mm;z-index:99999;border:2px solid #c00;color:#c00;background:#fff;padding:2px 10px;font:900 13px Tahoma,Arial,sans-serif;border-radius:5px;-webkit-print-color-adjust:exact;print-color-adjust:exact">طبعة رقم ${n} — نسخة مكررة</div>`;
+  const _open=window.open; let done=false; const restore=()=>{ if(!done){ done=true; window.open=_open; } };
+  window.open=function(){ const w=_open.apply(window,arguments); restore(); try{ if(w&&w.document){ const d=w.document, wr=d.write.bind(d); d.write=function(h){ if(typeof h==='string'&&/<body[^>]*>/i.test(h)) h=h.replace(/<body[^>]*>/i,m=>m+st); return wr(h); }; } }catch(e){} return w; };
+  setTimeout(restore,8000); }
+function erPrWrap(name, type, scr, keysF, labelsF){ const raw=window[name]; if(typeof raw!=='function'||raw.__prw) return;
+  const f=async function(){ const a=arguments; if(window.__erCap) return raw.apply(this,a); let keys=null, labels=null, sc=scr;
+    try{ keys=keysF.apply(null,a); labels=labelsF?labelsF.apply(null,a):null; if(typeof scr==='function') sc=scr.apply(null,a); }catch(e){ keys=null; }
+    if(!keys||!keys.length) return raw.apply(this,a);
+    if(!(await erPrGate(type, keys, sc, labels))) return; return raw.apply(this,a); };
+  f.__prw=true; window[name]=f; }
+(function erPrInit(){
+  const one=(arr,id,k)=>{ const x=(arr||[]).find(v=>String(v.id)===String(id)); return x?[String(x[k]??id)]:[String(id)]; };
+  erPrWrap('erInvPrint','inv','erp-sales',id=>[id],id=>one(ER.sl&&ER.sl.invs,id,'inv_no'));
+  erPrWrap('erDelPrint','del','erp-delivery',id=>[id],id=>one(ER.sl&&ER.sl.dels,id,'del_no'));
+  erPrWrap('erRcptPrint','rcpt','erp-cash',id=>[id],id=>one(ER.sl&&ER.sl.rcpts,id,'rcpt_no'));
+  erPrWrap('erPoPrint','po','erp-purchases',id=>[id],id=>one(ER.pu&&ER.pu.pos,id,'po_no'));
+  erPrWrap('erSretPrint','sret','erp-sales',id=>[id],id=>one(ER.sl&&ER.sl.rets,id,'ret_no'));
+  erPrWrap('erPretPrint','pret','erp-purchases',id=>[id],id=>one(ER.pu&&ER.pu.prets,id,'ret_no'));
+  erPrWrap('erTrPrint','tr','erp-stock',id=>[id],id=>one(ER.trs,id,'tr_no'));
+  erPrWrap('erStlPrint','stl',id=>{ const t=((ER.stl||{}).rows||[]).find(x=>x.id===id)||{}; return t.kind==='supplier'?'erp-purchases':'erp-cash'; },id=>[id],id=>one((ER.stl||{}).rows,id,'no'));
+  erPrWrap('erRegDocPrint','regdoc','erp-regs',()=>{ const D=ER.rg&&ER.rg.del; return D&&D.reg_doc?[D.reg_doc.id||D.reg_doc.no]:[]; },()=>{ const D=ER.rg.del; return [D.reg_doc.no]; });
+  erPrWrap('erLetterPrint','letter','erp-letters',()=>{ const R=ER.lt&&ER.lt.look; return R&&R.letter&&R.letter.id?[R.letter.id]:[]; },()=>['جواب '+ER.lt.look.letter.jawab_no]);
+  erPrWrap('erLcPrintSel','letter','erp-letters',()=>{ const S=erLcS(); return (S.rows||[]).filter(r=>S.sel[r.id]).map(r=>r.id); },()=>{ const S=erLcS(); return (S.rows||[]).filter(r=>S.sel[r.id]).map(r=>'جواب '+r.jawab_no); });
+  erPrWrap('erTinvPrint','tinv','erp-letters',id=>[id],id=>{ const t=(((ER.lt||{}).data||{}).tinvs||[]).find(x=>x.id===id); return ['فاتورة ضريبية '+(t?t.tinv_no:id)]; });
+  erPrWrap('erLcTaxPrint','tinv','erp-letters',det=>{ if(!det) return []; const T=erLcS().tx; return (T.rows||[]).map(t=>t.id); },det=>{ const T=erLcS().tx; return (T.rows||[]).map(t=>'فاتورة ضريبية '+t.tinv_no); });
+})();
 function erMeName(){ try{ return (JSON.parse(sessionStorage.getItem('hawa_admin')||'null')||{}).name||''; }catch(e){ return ''; } }
 function erLcS(){ if(!ER.lc){ const t=erToday(), m=t.slice(0,7)+'-01';
   ER.lc={ f:{dfrom:m,dto:t,nfrom:'',nto:'',cfrom:'',cto:'',user:'',elec:false,blocked:false,printed:'',q:''}, rows:null, users:[], sel:{}, opt:{form:'1',page:'1',shape:'مبايعة',trader:'code',noeng:false,bar:true,qr:true},
@@ -24735,11 +24798,13 @@ function erQrSvg(txt, px){ try{ if(!window.qrcode) return ''; const q=qrcode(0,'
 async function erLrPrintLetters(){ if(!erNeedPrint('erp-letters')) return; const q=erLrS().cur; if(!q) return;
   try{ await erQrLib(); }catch(e){ erToast('⚠️ '+erErr(e)+' — هيتطبع من غير QR',false); }
   try{ const D=await rpcSecure('erp_lr_print_data',{p_id:q.id}); const rows=D.letters||[]; if(!rows.length){ erToast('مفيش جوابات للطباعة',false); return; }
+    if(!(await erPrGate('letter', rows.map(r=>r.id), 'erp-letters', rows.map(r=>'جواب '+r.jawab_no)))) return;
     const o=Object.assign({},erLcS().opt,{bar:true,qr:true}), copies=o.page==='all'?['أصل','صورة']:[o.page==='2'?'صورة':'أصل'];
     erLcWin(`طلب جوابات ${D.req_no} — جوابات ${rows[0].jawab_no}${rows.length>1?' - '+rows[rows.length-1].jawab_no:''}`, ER_LC_LCSS+'.qrw svg{display:block}', rows.map(r=>copies.map(c=>erLcLetterBody(r,o,c)).join('')).join(''));
     await rpcSecure('erp_lr_printed',{p_id:q.id}); erLrRefresh(); }catch(e){ erToast('❌ '+erErr(e),false); } }
 async function erLrPrintTinv(){ if(!erNeedPrint('erp-letters')) return; const q=erLrS().cur; if(!q) return;
   try{ const D=await rpcSecure('erp_lr_print_data',{p_id:q.id}); const T=D.tinvs||[]; if(!T.length){ erToast('مفيش فواتير ضريبية فى الطلب ده',false); return; }
+    if(!(await erPrGate('tinv', T.map(t=>t.id), 'erp-letters', T.map(t=>'فاتورة ضريبية '+t.tinv_no)))) return;
     let css=''; const bodies=T.map(t=>{ const h=erTinvHtml(t); if(!css){ const m=h.match(/<style>([\s\S]*?)<\/style>/); css=m?m[1]:''; } const b=(h.match(/<body>([\s\S]*?)<script>/)||[])[1]||''; return `<div style="page-break-after:always">${b}</div>`; });
     erLcWin(`فواتير ضريبية — طلب جوابات ${D.req_no}`, css, bodies.join(''));
     T.forEach(t=>rpcSecure('erp_tinv_printed',{p_id:t.id}).catch(()=>{})); }catch(e){ erToast('❌ '+erErr(e),false); } }
