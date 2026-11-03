@@ -2651,6 +2651,15 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
 .er-pst.bad{border-color:rgba(224,85,85,.55)}
 .er-pund{margin-top:8px;color:#fff;background:rgba(224,85,85,.18);border:1px solid rgba(224,85,85,.5);border-radius:8px;padding:6px 10px;font-size:13px}
 .er-cscope{position:relative}.er-cscope summary{cursor:pointer;white-space:nowrap;color:var(--gold);font-size:12.5px}.er-cscope-box{margin-top:6px;background:#161616;border:1px solid var(--border);border-radius:10px;padding:6px 8px;min-width:200px;max-height:200px;overflow:auto}.er-cs-lb{display:flex;gap:6px;align-items:center;margin:3px 0;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.er-bck{display:inline-flex;align-items:center;gap:5px;margin-inline-start:10px;padding:1px 9px;border:1px solid rgba(201,168,76,.45);border-radius:20px;cursor:pointer;font-size:12px;color:var(--gold-light);user-select:none;vertical-align:middle;font-weight:700}
+.er-bck.on{background:rgba(201,168,76,.18);border-color:var(--gold)}.er-bck:hover{border-color:var(--gold)}
+.er-brief{margin:0 0 10px;background:#121212;border:1px solid rgba(201,168,76,.4);border-radius:12px;padding:8px 10px}
+.er-brief-t{font-weight:900;color:var(--gold);font-size:13px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.er-bgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:7px}
+.er-bi{background:#181818;border:1px solid var(--border);border-radius:10px;padding:6px 10px;font-size:12.5px;line-height:1.6}
+.er-bi .h{color:var(--text-dim);font-size:11.5px}.er-bi b{color:#fff;font-size:13.5px}
+.er-bi.lnk{cursor:pointer;border-color:rgba(74,144,217,.5)}.er-bi.lnk:hover{background:rgba(74,144,217,.12)}
+.er-bi.warn{border-color:rgba(240,199,94,.55)}.er-bi .ago{color:var(--gold-light);font-size:11.5px}
 .er-prec{margin-top:8px}.er-prec summary{cursor:pointer;color:var(--gold);font-size:13px;font-weight:700}
 @media(max-width:700px){.eri-basic{flex-wrap:wrap!important}.eri-basic>div:last-child{flex:1 1 100%!important}.eri-basic .qt-row{flex-wrap:wrap}.eri-basic .qt-fld{min-width:140px}.eri-imgbox{width:auto;margin:0 auto 8px;display:flex;gap:10px;align-items:center}.eri-imgbox img,.eri-imgbox>span{width:92px;height:92px}.qt-scroll.eri-grid{max-height:70vh}}
 .qt-tbl th{position:sticky;top:0;z-index:2}
@@ -22591,7 +22600,8 @@ function erPartyHtml(kind, id){
     const b=Number(d.balance)||0, side=b>0.004?'<span class="qt-chip ex">مدين</span>':(b<-0.004?'<span class="qt-chip in">دائن</span>':'<span class="qt-chip dim">صفر</span>');
     const lk=d.locks||{}, chips=[`<span class="qt-chip dim">${erEsc(d.type)}</span>`, d.tier?`<span class="qt-chip dim">💲 ${erEsc(d.tier)}</span>`:'', lk.dealing?'<span class="qt-chip del">🚫 قفل تعامل</span>':'', lk.loading?'<span class="qt-chip del">🚚 قفل تحميل</span>':'', lk.letters?'<span class="qt-chip del">✉️ قفل جوابات</span>':'', d.test?'<span class="qt-chip dim">🧪 فيه حركات تجربة</span>':''].join(' ');
     const K={inv:'🧾 فاتورة',rcpt:'💵 قبض',sret:'↩️ مرتجع',stl:'⚖️ تسوية'};
-    return `<div class="er-party-hd">💳 <b>حساب التاجر</b> — ${erEsc(d.name)} <span class="qt-sub">(${erEsc(d.code||'')})</span> ${chips}<div style="flex:1"></div><button class="qt-btn ghost sm" onclick="delete ER.__party['client:${id}'];erPartyRefresh()" title="تحديث">🔄</button></div>
+    return `<div class="er-party-hd">💳 <b>حساب التاجر</b> — ${erEsc(d.name)} <span class="qt-sub">(${erEsc(d.code||'')})</span> ${chips}<div style="flex:1"></div><button class="qt-btn ghost sm" onclick="delete ER.__party['client:${id}'];delete ER.__brief[${id}];erPartyRefresh()" title="تحديث">🔄</button></div>
+    ${erBriefOn()?erBriefHtml(id):''}
     <div class="er-pgrid">
       ${stat('الرصيد', `${M(b)} ${side}`, b>0.004?'warn':'')}
       ${stat('حدود التعامل', d.credit_limit!=null?M(d.credit_limit):'<span style="color:var(--error)">لا يوجد</span>')}
@@ -22621,6 +22631,47 @@ async function erPartyLoad(kind, id){
   finally{ c.loading=false; c.t=Date.now(); }
   erPartyRefresh();
 }
+// ═══ 📋 ملخص العميل — «تاريخ حياة العميل فى ثانية» (تشيك بوكس فوق التاجر فى الفاتورة) ═══
+ER.__brief = ER.__brief || {};
+function erBriefOn(){ try{ return localStorage.getItem('er_brief_on')==='1'; }catch(e){ return !!ER.__briefOn; } }
+function erBriefTgl(){ const on=erBriefOn(); return ` <span class="er-bck ${on?'on':''}" onclick="event.preventDefault();event.stopPropagation();erBriefSet(!erBriefOn())" title="ملخص سريع: آخر دفعة / آخر إذن / آخر تسليم / الجوابات / التحميل">${on?'☑':'☐'} 📋 ملخص العميل</span>`; }
+function erBriefSet(on){ ER.__briefOn=on; try{ localStorage.setItem('er_brief_on',on?'1':'0'); }catch(e){}
+  document.querySelectorAll('.er-bck').forEach(el=>{ el.classList.toggle('on',on); el.textContent=(on?'☑':'☐')+' 📋 ملخص العميل'; }); erPartyRefresh(); }
+function erAgo(d){ if(!d) return ''; const t=new Date(erToday()+'T00:00:00'), x=new Date(String(d).slice(0,10)+'T00:00:00'); const n=Math.round((t-x)/864e5);
+  return n===0?'النهارده':n===1?'امبارح':n>0?`من ${n} يوم`:n===-1?'بكره':`بعد ${-n} يوم`; }
+function erBriefHtml(id){
+  const c=ER.__brief[id];
+  if(!c || (Date.now()-c.t > 60000 && !c.loading)) erBriefLoad(id);
+  const T=(x)=>`<div class="er-brief"><div class="er-brief-t">📋 ملخص العميل</div>${x}</div>`;
+  if(!c || !c.d) return T(c&&c.err?`<div class="qt-sub">${erEsc(c.err)}</div>`:'<div class="qt-sub">⏳ بنجيب الملخص...</div>');
+  const d=c.d, M=(v)=>erMoney(Math.abs(Number(v)||0),2), D=(x)=>`${erEsc(String(x||'').slice(0,10))} <span class="ago">(${erAgo(x)})</span>`;
+  const I=(h,body,o)=>`<div class="er-bi ${o&&o.cls||''}" ${o&&o.on?`onclick="${o.on}" title="${o.tt||'افتح'}"`:''}><div class="h">${h}${o&&o.on?' ↗':''}</div>${body}</div>`;
+  const R=d.last_rcpt, V=d.last_inv, L=d.last_del, H=d.last_hand, J=d.letters||{}, LD=d.last_load, BK=d.last_book, TP=d.today_paid||{};
+  const left=(Number(J.tot)||0)-(Number(J.hand)||0);
+  const ST={'تم التنفيذ':'✅','قيد الانتظار':'⏳','ملغي':'❌','no-show':'🚫 مجاش'};
+  return T(`<div class="er-bgrid">
+    ${I('💵 آخر دفعة قبل النهارده', R?`<b>${M(R.amount)} ج</b> — سند ${erEsc(R.no)}<br>${D(R.date)}`:'<b>—</b> مفيش دفعات')}
+    ${Number(TP.n)?I('💵 دفع النهارده', `<b>${M(TP.amount)} ج</b> (${TP.n} سند)`):''}
+    ${I('🧾 آخر إذن', V?`<b>رقم ${erEsc(V.no)}</b> — ${erQ(V.qty)} قطعة — ${M(V.total)} ج<br>${D(V.date)} · ${V.pay==='cash'?'نقدى':'آجل'}`:'<b>—</b>', V?{on:`erBriefInv(${V.id})`,cls:'lnk',tt:'افتح الإذن'}:null)}
+    ${I('📦 آخر مستند تسليم', L?`<b>رقم ${erEsc(L.no)}</b> — ${erQ(L.qty)} قطعة — على إذن ${erEsc(L.inv_no||'')}<br>${D(L.date)}`:'<b>—</b>', L&&L.inv_id?{on:`erBriefInv(${L.inv_id})`,cls:'lnk',tt:'افتح الإذن بتاع التسليم'}:null)}
+    ${I('✉️ آخر تسليم جوابات', H?`<b>${H.cnt} جواب</b> — كشف ${erEsc(H.no)}<br>${D(H.date)}`:'<b>—</b> لسه متسلّمش جوابات')}
+    ${I('🏛️ جوابات فى الاعتماد', `<b>${J.inside||0}</b> جواب${Number(J.wait)?` · رجع ومستنى تسليم <b>${J.wait}</b>`:''}`, Number(J.inside)?{cls:'warn'}:null)}
+    ${I('⏳ جوابات فاضلة للتاجر', `<b>${left}</b> من ${J.tot||0}${Number(J.nw)?` · لسه مخرجتش <b>${J.nw}</b>`:''}${Number(d.no_letter)?`<br>🏍️ <b>${d.no_letter}</b> ماتور متسجل من غير جواب`:''}`, left||Number(d.no_letter)?{cls:'warn'}:null)}
+    ${I('🚚 آخر تحميل موتوسيكلات', LD?`<b>${erEsc(LD.wh||'')}</b> — ${erEsc(LD.vt||'')} × ${LD.count||''}${LD.permit?` — إذن ${erEsc(LD.permit)}`:''}<br>${D(LD.date)}`:'<b>—</b> مفيش تحميل')}
+    ${I('📅 آخر حجز تحميل', BK?`<b>${erEsc(BK.wh||'')}</b> — ${erEsc(BK.vt||'')} × ${BK.count||''} — ${ST[BK.status]||''} ${erEsc(BK.status||'')}<br>يوم ${D(BK.date)}${BK.slot?` · ${erEsc(BK.slot)}`:''}`:'<b>—</b> مفيش حجوزات', BK&&BK.status==='قيد الانتظار'?{cls:'warn'}:null)}
+  </div>`);
+}
+async function erBriefLoad(id){
+  const c=ER.__brief[id]=ER.__brief[id]||{t:0}; if(c.loading) return; c.loading=true;
+  try{ c.d=await rpcSecure('erp_client_brief',{p_client:Number(id)}); c.err=null; }
+  catch(e){ c.err=/صلاحية/.test(erErr(e))?'الملخص مش ظاهر — معندكش صلاحية':('الملخص مش متاح: '+erErr(e)); }
+  finally{ c.loading=false; c.t=Date.now(); }
+  erPartyRefresh();
+}
+function erBriefInv(id){ const v=ER.edit;
+  if(v && v.id===id) { erToast('ده نفس الإذن المفتوح'); return; }
+  if(v && !v.id && !ER.ro && (v.items||[]).some(l=>l.item_id) && !confirm('الفاتورة اللى بتعملها لسه متسجلتش — تسيبها وتفتح الإذن؟')) return;
+  erxOpenDoc('sales', id); }
 function erPartyRefresh(){ document.querySelectorAll('.er-party').forEach(el=>{ const k=el.dataset.pk, id=el.dataset.pid; el.innerHTML=erPartyHtml(k,id); }); }
 function erInvForm(){
   const B=ER.boot, v=ER.edit, cl=erCl(v.client_id), lk=v.__locked;
@@ -22646,7 +22697,7 @@ function erInvForm(){
   return `<fieldset ${ER.ro?'disabled':''} class="er-fs">${erItemDl()}${erClDl()}
   ${lk?`<div class="er-banner">✏️ الفاتورة اتسلم منها${v.__full?' بالكامل':''} — تقدر تعدّل السعر والخصم والكمية (مش أقل من المتسلم) وتضيف أصناف جديدة. الصنف والمخزن للسطر اللى اتسلم منه ثابتين ومينفعش يتشال (ده بمرتجع).</div>`:''}
   <div class="qt-card"><div class="qt-row">
-    ${erFld('التاجر *', `<input class="qt-inp" list="er-cl-dl" style="width:100%" value="${erEsc(v.__cltxt)}" placeholder="كود أو اسم التاجر" onchange="erInvClient(this.value)" ${v.id?'disabled':''}>`,3)}
+    ${erFld('التاجر *'+(cl.id?erBriefTgl():''), `<input class="qt-inp" list="er-cl-dl" style="width:100%" value="${erEsc(v.__cltxt)}" placeholder="كود أو اسم التاجر" onchange="erInvClient(this.value)" ${v.id?'disabled':''}>`,3)}
     ${erFld('التاريخ', erInp('inv_date',v.inv_date,{type:'date',dis:lk}),1)}
     ${erFld('نوع الحركة', erSel('pay_type',v.pay_type,[['credit','🗓️ آجل'],['cash','💵 نقدى']],false,lk?'disabled':''),1)}
     ${erFld('تاريخ الاستحقاق', erInp('due_date',v.due_date,{type:'date'}),1)}
