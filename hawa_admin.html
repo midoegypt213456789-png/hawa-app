@@ -6477,6 +6477,7 @@ function doLogout(){
     admin=null;
     document.getElementById('loginScreen').style.display='flex';
     document.getElementById('app').classList.remove('show');
+    try{ const t=document.getElementById('erm-top'); if(t) t.remove(); document.body.classList.remove('erm-on'); }catch(e){}
     document.getElementById('aUser').value='';
     document.getElementById('aPass').value='';
   });
@@ -18913,6 +18914,8 @@ function ermCur(){ const sec=currentSection, tab=ermCurTab(sec); let last=''; tr
   C.sort((a,b)=>b.sc-a.sc); return C[0]||null; }
 // 🚀 فتح بند من القايمة: شاشة + تبويب (+ مستند جديد)
 function erMenuGo(mid, k){ ermDdClose(); const m=ERM.find(x=>x.id===mid), it=m&&m.items[k]; if(!it) return;
+  // مستند مفتوح: شاشة تانية → المستند يتصغّر تحت (يفضل مفتوح) — مستند جديد → يتأكد لو فيه حاجة متسجلتش
+  { const md=document.getElementById('er-modal'); if(md && md.style.display!=='none'){ if(it.a){ if(typeof erBriefLeaveOk==='function' && !erBriefLeaveOk()) return; } else if(typeof erModalMin==='function') erModalMin(); } }
   try{ localStorage.setItem('erm_last_mod',mid); }catch(e){}
   const tk=ERM_TABK[it.s];
   if(tk && it.t){ ER.tab=ER.tab||{}; ER.tab[tk[0]]=it.t; }
@@ -18924,18 +18927,31 @@ function erMenuGo(mid, k){ ermDdClose(); const m=ERM.find(x=>x.id===mid), it=m&&
     setTimeout(tick,60); }
 }
 // ── الشريط فوق
-function erHubBar(sec){ document.querySelectorAll('.erp-hub-bar').forEach(b=>{ if(!b.closest('#sec-'+sec)) b.remove(); });
-  ermDdClose();
+// 🖥️ على الكمبيوتر: شريط القوايم ثابت فوق الشاشة كلها زى MMS (فوق الشاشات والمستندات المفتوحة) — على الموبايل جوه الشاشة
+function ermTopMode(){ return window.innerWidth>700 && ermMods().length>0 && !!document.getElementById('app') && document.getElementById('app').classList.contains('show'); }
+function ermModsHtml(){ return `<div class="erm-mods">${ermMods().map(m=>`<button class="erm-mod" data-m="${m.id}" style="--mc:${m.c}" onclick="ermDdToggle('${m.id}',this)" onmouseenter="ermDdHover('${m.id}',this)"><span class="erm-mi">${m.icon}</span>${m.title}<span class="erm-car">▾</span></button>`).join('')}</div>`; }
+function erHubBar(sec){ ermDdClose();
+  const top=ermTopMode(); document.body.classList.toggle('erm-on',top);
+  let T=document.getElementById('erm-top');
+  if(top){ document.querySelectorAll('.erp-hub-bar').forEach(b=>b.remove());
+    if(!T){ T=document.createElement('div'); T.id='erm-top'; document.body.appendChild(T); }
+    T.innerHTML=`<div class="erm-logo">🏍️ HAWA</div>${ermModsHtml()}<div class="erm-crumb"></div>`;
+    if(ERP_HUB.includes(sec)) try{ localStorage.setItem('erp_hub_last',sec); }catch(e){}
+    erMenuMark(); return; }
+  if(T) T.remove();
+  document.querySelectorAll('.erp-hub-bar').forEach(b=>{ if(!b.closest('#sec-'+sec)) b.remove(); });
   const S=document.getElementById('sec-'+sec), inErp=ERP_HUB.includes(sec);
   if(!inErp){ erMenuMark(); return; } try{ localStorage.setItem('erp_hub_last',sec); }catch(e){}
   if(!S) return; let b=S.querySelector(':scope > .erp-hub-bar');
   if(!b){ b=document.createElement('div'); b.className='erp-hub-bar erm-bar'; S.insertBefore(b,S.firstChild); }
-  b.innerHTML=`<div class="erm-mods">${ermMods().map(m=>`<button class="erm-mod" data-m="${m.id}" style="--mc:${m.c}" onclick="ermDdToggle('${m.id}',this)" onmouseenter="ermDdHover('${m.id}',this)"><span class="erm-mi">${m.icon}</span>${m.title}<span class="erm-car">▾</span></button>`).join('')}</div><div class="erm-crumb" id="erm-crumb-${sec}"></div>`;
+  b.innerHTML=`${ermModsHtml()}<div class="erm-crumb"></div>`;
   erMenuMark(); }
+window.addEventListener('resize',()=>{ clearTimeout(window.__ermRz); window.__ermRz=setTimeout(()=>{ if(ermTopMode()!==document.body.classList.contains('erm-on')) erHubBar(currentSection); },200); });
 function erMenuMark(){ const cur=ERP_HUB.includes(currentSection)?ermCur():null;
   document.querySelectorAll('.erm-mod').forEach(x=>x.classList.toggle('on', !!cur && x.dataset.m===cur.m.id));
-  const cr=document.getElementById('erm-crumb-'+currentSection);
-  if(cr) cr.innerHTML=cur?`<span style="color:${cur.m.c}">${cur.m.icon} ${cur.m.title}</span> <span class="erm-sep">›</span> <b>${cur.it.i} ${cur.it.l}</b>`:'';
+  let ct=''; if(cur) ct=`<span style="color:${cur.m.c}">${cur.m.icon} ${cur.m.title}</span> <span class="erm-sep">›</span> <b>${cur.it.i} ${cur.it.l}</b>`;
+  else if(typeof NAV_META!=='undefined' && NAV_META[currentSection]) ct=`<b>${NAV_META[currentSection].icon} ${NAV_META[currentSection].label}</b>`;
+  document.querySelectorAll('.erm-crumb').forEach(cr=>cr.innerHTML=ct);
   const S=document.getElementById('sec-'+currentSection); if(S){ if(cur) S.style.setProperty('--erm-c',cur.m.c); S.classList.toggle('erm-sec',!!cur); }
   document.querySelectorAll('.erm-ni').forEach(n=>n.classList.toggle('active', !!cur && n.dataset.erm===cur.m.id+':'+cur.k));
   if(cur){ const g=document.querySelector(`.erm-sbg[data-m="${cur.m.id}"]`); if(g && !g.classList.contains('open') && !ermSbOpen().has('-'+cur.m.id)) g.classList.add('open'); }
@@ -18973,8 +18989,16 @@ function ermSidebarHtml(){ const S=ermSbOpen(), cur=ERP_HUB.includes(currentSect
 .erm-mod .erm-car{font-size:10px;color:var(--text-dim,#8A8580)}
 .erm-mod:hover,.erm-mod.open{background:color-mix(in srgb,var(--mc) 12%,transparent)}
 .erm-mod.on{border-bottom-color:var(--mc);color:var(--mc)}
+#erm-top{position:fixed;top:0;left:0;right:0;height:46px;z-index:9650;display:flex;align-items:center;gap:8px;padding:0 10px;background:linear-gradient(180deg,#171717,#0D0D0D);border-bottom:1px solid #2E2A22;box-shadow:0 4px 14px rgba(0,0,0,.45)}
+#erm-top .erm-logo{font-weight:900;color:var(--gold,#C9A84C);font-size:14px;white-space:nowrap;padding-inline-end:10px;border-inline-end:1px solid #2E2A22;letter-spacing:1px}
+#erm-top .erm-mod{padding:6px 10px 4px;font-size:13px}#erm-top .erm-mod .erm-mi{width:22px;height:22px}
+#erm-top .erm-crumb{overflow:hidden;text-overflow:ellipsis;max-width:34vw}
+body.erm-on .sidebar{top:46px;height:calc(100vh - 46px)}
+body.erm-on .main-area{margin-top:46px;height:calc(100vh - 46px)}
+body.erm-on .qt-modal{top:46px}
+body.erm-on #er-bdr{top:46px}
 .erm-crumb{font-size:12.5px;color:var(--text-dim,#8A8580);white-space:nowrap;padding:0 8px;margin-inline-start:auto}.erm-crumb b{color:var(--text,#F0EDE8)}.erm-sep{opacity:.6;margin:0 3px}
-#erm-dd{position:fixed;z-index:8500;display:none;min-width:270px;max-width:min(560px,96vw);background:#151515;border:1px solid color-mix(in srgb,var(--mc) 55%,#2A2A2A);border-top:3px solid var(--mc);border-radius:0 0 12px 12px;box-shadow:0 14px 34px rgba(0,0,0,.6);padding:6px;max-height:80vh;overflow:auto}
+#erm-dd{position:fixed;z-index:9700;display:none;min-width:270px;max-width:min(560px,96vw);background:#151515;border:1px solid color-mix(in srgb,var(--mc) 55%,#2A2A2A);border-top:3px solid var(--mc);border-radius:0 0 12px 12px;box-shadow:0 14px 34px rgba(0,0,0,.6);padding:6px;max-height:80vh;overflow:auto}
 .erm-ddh{font-weight:900;color:var(--mc);font-size:13px;padding:6px 10px 8px;border-bottom:1px solid #262626;margin-bottom:4px}
 .erm-g{font-size:11px;color:var(--text-dim,#8A8580);font-weight:800;padding:6px 10px 2px;letter-spacing:.5px}
 .erm-it{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--text,#F0EDE8);white-space:nowrap}
