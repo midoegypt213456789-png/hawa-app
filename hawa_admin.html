@@ -22653,7 +22653,11 @@ function erBriefHtml(id){
   const R=d.last_rcpt, V=d.last_inv, L=d.last_del, H=d.last_hand, J=d.letters||{}, LD=d.last_load, BK=d.last_book, TP=d.today_paid||{};
   const left=(Number(J.tot)||0)-(Number(J.hand)||0);
   const ST={'تم التنفيذ':'✅','قيد الانتظار':'⏳','ملغي':'❌','no-show':'🚫 مجاش'};
+  // 🕒 آخر زيارة = الأحدث بين آخر فاتورة وآخر توريد (دفعة) — شامل النهارده
+  const vs=[V&&{d:String(V.date).slice(0,10),w:'فاتورة '+V.no}, Number(TP.n)?{d:erToday(),w:'توريد النهارده'}:(R&&{d:String(R.date).slice(0,10),w:'توريد '+M(R.amount)+' ج'})].filter(Boolean).sort((x,y)=>x.d<y.d?1:-1);
+  const lv=vs[0]&&{d:vs[0].d,w:vs.filter(x=>x.d===vs[0].d).map(x=>x.w).join(' + ')}, lvn=lv?Math.round((new Date(erToday()+'T00:00:00')-new Date(lv.d+'T00:00:00'))/864e5):null;
   return T(erBriefAlerts(d)+`<div class="er-bgrid">
+    ${I('🕒 آخر زيارة (آخر فاتورة أو توريد)', lv?`<b style="font-size:16px;color:${lvn>60?'var(--error)':lvn>30?'var(--gold-light)':'var(--success)'}">${lvn===0?'النهارده':lvn===1?'امبارح':'من '+lvn+' يوم'}</b><br>${erEsc(lv.d)} · ${erEsc(lv.w)}`:'<b>—</b> مفيش فواتير ولا توريدات', lv&&lvn>30?{cls:'warn'}:null)}
     ${I('💵 آخر دفعة قبل النهارده', R?`<b>${M(R.amount)} ج</b> — سند ${erEsc(R.no)}<br>${D(R.date)}`:'<b>—</b> مفيش دفعات')}
     ${Number(TP.n)?I('💵 دفع النهارده', `<b>${M(TP.amount)} ج</b> (${TP.n} سند)`):''}
     ${I('🧾 آخر إذن', V?`<b>رقم ${erEsc(V.no)}</b> — ${erQ(V.qty)} قطعة — ${M(V.total)} ج<br>${D(V.date)} · ${V.pay==='cash'?'نقدى':'آجل'}`:'<b>—</b>', V?{on:`erBriefInv(${V.id})`,cls:'lnk',tt:'افتح الإذن'}:null)}
