@@ -4065,7 +4065,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erLettersLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="erl-tab-new" onclick="erLtTab('new')">✉️ جواب برقم الماتور</button><button class="bl-tab" id="erl-tab-list" onclick="erLtTab('list')">📋 الجوابات <span class="bl-tab-count" id="erl-c-list">0</span></button><button class="bl-tab" id="erl-tab-tinv" onclick="erLtTab('tinv')">🧾 الفواتير الضريبية <span class="bl-tab-count" id="erl-c-tinv">0</span></button><button class="bl-tab" id="erl-tab-dist" onclick="erLtTab('dist')">🤝 الموزعين (مجمعة) <span class="bl-tab-count" id="erl-c-dist">0</span></button><button class="bl-tab" id="erl-tab-models" onclick="erLtTab('models')">🗂️ نماذج الضريبة <span class="bl-tab-count" id="erl-c-models">0</span></button><button class="bl-tab" id="erl-tab-prn" onclick="erLtTab('prn')">🖨️ طباعة الجوابات</button><button class="bl-tab" id="erl-tab-apr" onclick="erLtTab('apr')">🏷️ الاعتمادات (باركود)</button><button class="bl-tab" id="erl-tab-hand" onclick="erLtTab('hand')">✍️ استلامات التجار</button><button class="bl-tab" id="erl-tab-taxp" onclick="erLtTab('taxp')">🧾 طباعة نماذج الضرائب</button><button class="bl-tab" id="erl-tab-req" onclick="erLtTab('req')">📥 طلبات الجوابات <span class="bl-tab-count" id="erl-c-req" style="display:none">0</span></button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erl-tab-new" onclick="erLtTab('new')">✉️ جواب برقم الماتور</button><button class="bl-tab" id="erl-tab-list" onclick="erLtTab('list')">📋 الجوابات <span class="bl-tab-count" id="erl-c-list">0</span></button><button class="bl-tab" id="erl-tab-tinv" onclick="erLtTab('tinv')">🧾 الفواتير الضريبية <span class="bl-tab-count" id="erl-c-tinv">0</span></button><button class="bl-tab" id="erl-tab-dist" onclick="erLtTab('dist')">🤝 الموزعين (مجمعة) <span class="bl-tab-count" id="erl-c-dist">0</span></button><button class="bl-tab" id="erl-tab-models" onclick="erLtTab('models')">🗂️ نماذج الضريبة <span class="bl-tab-count" id="erl-c-models">0</span></button><button class="bl-tab" id="erl-tab-prn" onclick="erLtTab('prn')">🖨️ طباعة الجوابات</button><button class="bl-tab" id="erl-tab-apr" onclick="erLtTab('apr')">🏷️ الاعتمادات (باركود)</button><button class="bl-tab" id="erl-tab-hand" onclick="erLtTab('hand')">✍️ استلامات التجار</button><button class="bl-tab" id="erl-tab-taxp" onclick="erLtTab('taxp')">🧾 طباعة نماذج الضرائب</button><button class="bl-tab" id="erl-tab-req" onclick="erLtTab('req')">📥 طلبات الجوابات <span class="bl-tab-count" id="erl-c-req" style="display:none">0</span></button><button class="bl-tab" id="erl-tab-perm" onclick="erLtTab('perm')">🔐 التصاريح والاستعلام</button><button class="bl-tab" onclick="goTo('bulletins')" title="بيفتح شاشة المنشورات">📄 الكتاب الدورى ↗</button><button class="bl-tab" onclick="goTo('erp-regs')" title="بيفتح شاشة تسجيل المواتير">🔢 مستند أرقام مواتير ↗</button></div>
       <div id="erl-pane-new" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erl-pane-list" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erl-pane-tinv" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -4076,6 +4076,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="erl-pane-hand" class="qt-pane" style="display:none"></div>
       <div id="erl-pane-taxp" class="qt-pane" style="display:none"></div>
       <div id="erl-pane-req" class="qt-pane" style="display:none"></div>
+      <div id="erl-pane-perm" class="qt-pane" style="display:none"></div>
     </div>
     <div class="section" id="sec-erp-stock">
       <div class="page-hd">
@@ -6498,6 +6499,7 @@ function goTo(sec){
       if(oc.includes(`'${sec}'`)) n.classList.add('active');
     });
   }
+  try{ erHubBar(sec); }catch(e){}
 
   if(sec==='bookings')loadBookings();
   else if(sec==='permit-alerts')loadPermitAlerts();
@@ -10928,6 +10930,7 @@ const EXTRA_PERMS = {
   'erp-periods':       { icon: '📕', label: 'الفترات المالية — دخول = يقدر يفتح الفترات المقفولة للعرض والطباعة (الإقفال نفسه للأدمن الرئيسى بس)' },
   'erp-lt-hand':       { icon: '🧰', label: 'تجهيز وتسليم جوابات طلبات التجار — دخول = تجيله رسالة بالتجهيز، تعديل = يمسح بالباركود ويبلّغ التاجر إنها جاهزة' },
   'erp-lt-appr':       { icon: '🏷️', label: 'اعتماد جوابات طلبات التجار — دخول = تجيله رسالة لما التاجر يختار «تروح الاعتماد»' },
+  'erp-lt-perm':       { icon: '🔐', label: 'تصاريح الجوابات — دخول = يشوف التصاريح وطلبات إعادة الطباعة ويستعلم، تعديل = يعمل تصريح طباعة/تعديل لمستخدم ويوافق على الطلبات' },
   'erp-lt-req':        { icon: '📥', label: 'طلبات الجوابات من التجار (شيت Excel) — دخول = يشوف الطلبات وتجيله رسالة بالجديد، تعديل = يوافق/يرفض ويطبع' },
   'erp-overdraft':     { icon: '📉', label: 'البيع على المكشوف دفترى — دخول = يقدر يعمل فاتورة أكبر من الرصيد الدفترى (التسليم برضه لحد الرصيد الفعلى بس)' }
 };
@@ -18795,6 +18798,26 @@ function saveSidebarLayout(){
 }
 
 // ── Render the entire sidebar from layout state
+// ═══════════════════════════════════════════════════════════
+// 🏭 السيستم الجديد = زرار واحد فى القايمة + تبويبات فوق كل شاشاته
+// ═══════════════════════════════════════════════════════════
+var ERP_HUB = ['erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
+var ERP_HUB_LBL = { 'erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
+function erHubAllowed(){ return ERP_HUB.filter(id=>!EMP_MODE||can(id,'view')); }
+function erHubGo(){ let last=''; try{ last=localStorage.getItem('erp_hub_last')||''; }catch(e){} const A=erHubAllowed(); goTo(A.includes(last)?last:(A[0]||'erp-sales')); }
+function erHubBar(sec){ document.querySelectorAll('.erp-hub-bar').forEach(b=>{ if(!b.closest('#sec-'+sec)) b.remove(); });
+  if(!ERP_HUB.includes(sec)) return; try{ localStorage.setItem('erp_hub_last',sec); }catch(e){}
+  const S=document.getElementById('sec-'+sec); if(!S) return; let b=S.querySelector(':scope > .erp-hub-bar');
+  if(!b){ b=document.createElement('div'); b.className='erp-hub-bar'; S.insertBefore(b,S.firstChild); }
+  b.innerHTML=`<div class="erp-hub-t">🏭 السيستم الجديد</div><div class="erp-hub-tabs">${erHubAllowed().map(id=>`<button class="erp-hub-tab${id===sec?' on':''}" onclick="goTo('${id}')">${ERP_HUB_LBL[id]||id}</button>`).join('')}</div>`;
+  try{ document.querySelectorAll('.nav-item[data-nav-id="erp-hub"]').forEach(n=>n.classList.add('active')); }catch(e){} }
+(function(){ const st=document.createElement('style'); st.textContent=`.erp-hub-bar{position:sticky;top:0;z-index:30;background:var(--dark,#0A0A0A);border:1px solid var(--border,#2A2A2A);border-radius:14px;padding:6px 8px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.erp-hub-t{font-weight:900;color:var(--gold,#C9A84C);white-space:nowrap;font-size:13px;padding:0 6px}
+.erp-hub-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;flex:1}
+.erp-hub-tab{background:transparent;border:1px solid transparent;color:var(--text-dim,#8A8580);border-radius:10px;padding:7px 12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+.erp-hub-tab:hover{color:var(--text,#F0EDE8);background:var(--dark3,#1A1A1A)}
+.erp-hub-tab.on{background:linear-gradient(135deg,var(--gold,#C9A84C),var(--gold-light,#E8C97A));color:#0A0A0A}`; document.head.appendChild(st); })();
+
 function renderSidebar(){
   const container = document.getElementById('sb-nav-container');
   if (!container) return;
@@ -18847,7 +18870,19 @@ function renderSidebar(){
 }
 
 function renderSidebarItems(ids, inFavorites){
+  // 🏭 السيستم الجديد: كل شاشاته زرار واحد فى القايمة — وجوه الشاشة تبويبات فوق (erHubBar)
+  let hubDone=false;
   return (ids||[]).map(id => {
+    if(!inFavorites && ERP_HUB.includes(id)){
+      if(hubDone) return ''; hubDone=true;
+      if(EMP_MODE && !ERP_HUB.some(x=>can(x,'view'))) return '';
+      const act = ERP_HUB.includes(currentSection) ? ' active' : '';
+      return `<div class="nav-item${act}" data-nav-id="erp-hub" onclick="erHubGo()" title="السيستم الجديد — كل الشاشات تبويبات جوه">
+      <span class="nav-drag-handle" style="visibility:hidden">⋮⋮</span>
+      <span class="ni">🏭</span>
+      <span class="nav-label">السيستم الجديد</span>
+    </div>`;
+    }
     const meta = NAV_META[id];
     if (!meta) return '';
     if (EMP_MODE && !can(id,'view')) return '';   // 🔑 شاشة من غير صلاحية دخول = متتبانش أصلاً
@@ -19098,6 +19133,8 @@ function getSecLabel(navId){
     const txt = (nav.textContent || '').trim().replace(/^[★⭐]\s*/,'').replace(/\s+/g,' ');
     if (txt) return txt;
   }
+  if (typeof ERP_HUB_LBL!=='undefined' && ERP_HUB_LBL[navId]) return ERP_HUB_LBL[navId];
+  if (typeof NAV_META!=='undefined' && NAV_META[navId]) return (NAV_META[navId].icon||'')+' '+NAV_META[navId].label;
   return SECTION_LABELS_DEFAULT[navId] || navId;
 }
 
@@ -24132,13 +24169,80 @@ async function erRenderRegAlerts(){
 // شاشة erp-letters — كل القواعد فى السيرفر (erp_letter_save / erp_tinv_issue / erp_tinv_consolidated)
 // ════════════════════════════════════════════════════════════════
 ER.lt = { data:null, look:null, form:null, q:'', f:{ q:'', st:'1' }, tf:{ q:'', st:'1' }, mtax:'' }; ER.tab.lt = 'new';
-const ER_LT_TABS = ['new','list','tinv','dist','models','prn','apr','hand','taxp','req'];
+const ER_LT_TABS = ['new','list','tinv','dist','models','prn','apr','hand','taxp','req','perm'];
 async function erLettersLoad(force){ try{ await erBoot(force); ER.lt.data = await rpcSecure('erp_letters_list',{}); erLtCounts(); erLtTab(ER.tab.lt); if(erCan('erp-lt-req','view')) erLrBadge(); }catch(e){ erPaneErr('erl-pane-new',e); } }
 async function erLtReload(){ ER.lt.data = await rpcSecure('erp_letters_list',{}); erLtCounts(); }
 function erLtCounts(){ const D=ER.lt.data; if(!D) return; const s=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
   s('erl-c-list', D.letters.filter(l=>l.status==='سارى').length); s('erl-c-tinv', D.tinvs.filter(t=>t.status==='سارية').length);
   s('erl-c-dist', D.dist_invs.filter(v=>!v.consolidated && !Number(v.singles)).length); s('erl-c-models', D.models.filter(m=>m.is_active).length); }
-function erLtTab(t){ ER.tab.lt=t; erTabs('erl',ER_LT_TABS,t); ({new:erRenderLtNew,list:erRenderLtList,tinv:erRenderTinvs,dist:erRenderLtDist,models:erRenderTaxModels,prn:erRenderLcPrn,apr:erRenderLcApr,hand:erRenderLcHand,taxp:erRenderLcTax,req:erRenderLtReq}[t]||erRenderLtNew)(); }
+function erLtTab(t){ try{ const b=document.getElementById('erl-tab-perm'); if(b) b.style.display=erCan('erp-lt-perm','view')?'':'none'; }catch(e){} if(t==='perm'&&!erCan('erp-lt-perm','view')) t='new'; ER.tab.lt=t; erTabs('erl',ER_LT_TABS,t); ({new:erRenderLtNew,list:erRenderLtList,tinv:erRenderTinvs,dist:erRenderLtDist,models:erRenderTaxModels,prn:erRenderLcPrn,apr:erRenderLcApr,hand:erRenderLcHand,taxp:erRenderLcTax,req:erRenderLtReq,perm:erRenderLtPerm}[t]||erRenderLtNew)(); }
+// ═══════════════════════════════════════════════════════════
+// 🔐 تصاريح الجوابات + استعلام (زى شاشة التصاريح فى البرنامج القديم)
+// بحث بأى حاجة → يختار الجواب/الجوابات → تصريح لمستخدم: طباعة N مرة / تعديل / تعديل المشترى + ملاحظات (التعديل المطلوب)
+// + طلبات الموظفين لإعادة الطباعة (جواب / فاتورة ضريبية) — erp_lt_perm_home / find / save / cancel / erp_print_req_decide
+// ═══════════════════════════════════════════════════════════
+function erLpS(){ ER.lp=ER.lp||{home:null,q:'',to:'',rows:null,sel:{},f:{user:'',print:true,n:1,edit:false,eb:false,notes:''},req:null,busy:false}; return ER.lp; }
+async function erLpLoad(){ const S=erLpS(); try{ S.home=await rpcSecure('erp_lt_perm_home',{}); }catch(e){ S.home={err:erErr(e)}; } erRenderLtPerm(); }
+async function erLpFind(){ const S=erLpS(), q=(document.getElementById('lp-q')||{}).value||S.q, to=(document.getElementById('lp-to')||{}).value||'';
+  S.q=String(q).trim(); S.to=String(to).trim(); if(!S.q){ erToast('اكتب أو امسح أى حاجة: باركود الجواب / ماتور / شاسيه / تليفون / فاتورة',false); return; }
+  S.busy=true; erRenderLtPerm(); try{ const r=await rpcSecure('erp_lt_perm_find',{p_q:S.q,p_to:S.to||null}); S.rows=r.rows||[]; S.sel={}; if(S.rows.length===1||S.to) S.rows.forEach(x=>S.sel[x.id]=true); if(!S.rows.length) erBeep(false); else erBeep(true); }
+  catch(e){ erToast('❌ '+erErr(e),false); } S.busy=false; erRenderLtPerm(); setTimeout(()=>{ const i=document.getElementById('lp-q'); if(i){ i.focus(); i.select(); } },50); }
+function erLpPermChips(P){ return (P||[]).map(p=>{ const off=p.status!=='سارى'; const t=[p.print?`🖨️ ${p.used}/${p.allowed}`:'', p.edit?`✏️ تعديل${p.edit_used?' (اتستخدم)':''}`:'', p.edit_buyer?`👤 المشترى${p.edit_used?' (اتستخدم)':''}`:''].filter(Boolean).join(' · ');
+  return `<span class="qt-chip ${off?'dim':''}" title="${erEsc((p.notes||'')+' — بواسطة '+(p.by||''))}" style="margin:2px;${off?'text-decoration:line-through':''}">#${p.no} ${erEsc(p.to)}: ${t}${!off&&erCan('erp-lt-perm','edit')?` <a href="#" onclick="erLpCancel(${p.id});return false" title="الغى التصريح" style="color:#E05555;text-decoration:none">✖</a>`:''}</span>`; }).join(''); }
+function erRenderLtPerm(){ const el=document.getElementById('erl-pane-perm'); if(!el) return; const S=erLpS(), H=S.home, canE=erCan('erp-lt-perm','edit');
+  if(!erCan('erp-lt-perm','view')){ el.innerHTML='<div class="qt-card qt-sub" style="padding:20px">⛔ معندكش صلاحية «تصاريح الجوابات»</div>'; return; }
+  if(!H){ el.innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>'; erLpLoad(); return; }
+  if(H.err){ el.innerHTML=`<div class="qt-card qt-sub" style="padding:20px">❌ ${erEsc(H.err)}</div>`; return; }
+  const R=S.rows, sel=(R||[]).filter(r=>S.sel[r.id]), f=S.f, users=H.users||[];
+  let h=`<div class="qt-card" style="padding:10px 14px;display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+      <span>📄 مستند: <b style="color:var(--gold)">${S.req?'من طلب':'جديد'}</b> <span class="qt-sub">(رقم التصريح الجاى ${H.next_no})</span></span><span>📅 تاريخ التحرير: <b>${erEsc(H.today)}</b></span><span>👤 المستخدم: <b>${erEsc(H.me)}</b></span>
+      <button class="qt-btn ghost sm" style="margin-inline-start:auto" onclick="erLpLoad()">🔄 تحديث</button></div>
+    <div class="qt-card" style="padding:12px"><div class="qt-h" style="margin-bottom:8px">🔎 بيانات الاستعلام</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <input id="lp-q" class="qt-inp" style="flex:1;min-width:260px;font-size:15px" autocomplete="off" placeholder="📷 امسح باركود / QR الجواب — أو اكتب: رقم الجواب / الماتور / الشاسيه / تليفون أو بطاقة أو اسم المشترى / رقم الفاتورة / كود التاجر" value="${erEsc(S.q)}" onkeydown="if(event.key==='Enter'){event.preventDefault();erLpFind();}">
+        <span class="qt-sub">إلى جواب</span><input id="lp-to" class="qt-inp" style="width:110px" inputmode="numeric" placeholder="(اختيارى)" value="${erEsc(S.to)}" onkeydown="if(event.key==='Enter'){event.preventDefault();erLpFind();}">
+        <button class="qt-btn" onclick="erLpFind()">🔎 هات البيانات</button>${R?`<button class="qt-btn ghost sm" onclick="erLpS().rows=null;erLpS().sel={};erLpS().q='';erLpS().to='';erLpS().req=null;erRenderLtPerm()">✖ مسح</button>`:''}</div>
+      ${S.busy?'<div class="qt-sub" style="padding:8px">⏳ بندوّر...</div>':''}
+      ${R?(R.length?`<div class="qt-scroll" style="margin-top:8px;max-height:46vh"><table class="qt-tbl"><thead><tr><th><input type="checkbox" ${R.length&&sel.length===R.length?'checked':''} onchange="erLpS().rows.forEach(r=>erLpS().sel[r.id]=this.checked);erRenderLtPerm()"></th><th>رقم الجواب</th><th>التاريخ</th><th>التاجر</th><th>الصنف / السعة</th><th>الماتور</th><th>الشاسيه</th><th>جهة المرور</th><th>المالك الحالى (المشترى)</th><th>اتطبع</th><th>التصاريح</th></tr></thead><tbody>
+        ${R.map(r=>`<tr style="${S.sel[r.id]?'background:rgba(201,168,76,.07)':''}"><td><input type="checkbox" ${S.sel[r.id]?'checked':''} onchange="erLpS().sel[${r.id}]=this.checked;erRenderLtPerm()"></td>
+          <td><b style="color:var(--gold);font-size:15px">${r.jawab_no}</b>${r.tinv_no?`<div class="qt-sub">ف.ض ${erEsc(r.tinv_no)}</div>`:''}</td><td>${erEsc(r.d||'')}</td><td>${erEsc(r.code||'')} — ${erEsc(r.client||'')}${r.inv_no?`<div class="qt-sub">فاتورة ${erEsc(r.inv_no)}</div>`:''}</td>
+          <td>${erEsc(r.item_name||'')}${r.cc?`<div class="qt-sub">${erEsc(r.cc)}</div>`:''}</td><td dir="ltr">${erEsc(r.engine_no||'')}</td><td dir="ltr" style="font-size:12px">${erEsc(r.chassis_no||'')}</td><td>${erEsc(r.traffic_dept||'—')}</td>
+          <td><b>${erEsc(r.buyer_name||'')}</b><div class="qt-sub" dir="ltr">${erEsc(r.buyer_id_no||'')}${r.buyer_phone?' · '+erEsc(r.buyer_phone):''}</div>${r.buyer_address?`<div class="qt-sub">${erEsc(r.buyer_address)}${r.buyer_gov?' — '+erEsc(r.buyer_gov):''}</div>`:''}</td>
+          <td><b style="color:${r.printed?'#E8C97A':'var(--text-dim)'}">${r.printed||0}</b>${r.last_by?`<div class="qt-sub">${erEsc(r.last_by)}</div>`:''}</td><td style="min-width:150px">${erLpPermChips(r.perms)||'<span class="qt-sub">—</span>'}</td></tr>`).join('')}
+        </tbody></table></div>`:'<div class="qt-card" style="color:#ff8a8a;margin-top:8px">❌ مفيش جواب سارى بالبيانات دى</div>'):''}
+    </div>`;
+  if(canE) h+=`<div class="qt-card" style="padding:12px"><div class="qt-h" style="margin-bottom:8px">🔐 التصريح ${sel.length?`<span class="qt-sub">— على ${sel.length} جواب: ${sel.slice(0,8).map(r=>r.jawab_no).join('، ')}${sel.length>8?'…':''}</span>`:'<span class="qt-sub">— اختار جواب من فوق الأول</span>'}</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <label>التصريح للمستخدم: <select class="qt-inp" id="lp-user" onchange="erLpS().f.user=this.value"><option value="">— اختار —</option><option value="*" ${f.user==='*'?'selected':''}>👥 أى مستخدم</option>${users.map(u=>{ const v=u.type+':'+u.id; return `<option value="${v}" ${f.user===v?'selected':''}>${u.type==='admin'?'👑 ':'👤 '}${erEsc(u.name)}</option>`; }).join('')}</select></label>
+        <label style="color:#E8C97A;font-weight:800"><input type="checkbox" ${f.print?'checked':''} onchange="erLpS().f.print=this.checked;erRenderLtPerm()"> 🖨️ طباعة</label>
+        ${f.print?`<label>عدد مرات الطباعة <input class="qt-inp" type="number" min="1" max="20" style="width:70px" value="${f.n}" oninput="erLpS().f.n=+this.value||1"></label>`:''}
+        <label style="color:#E05555;font-weight:800"><input type="checkbox" ${f.edit?'checked':''} onchange="erLpS().f.edit=this.checked"> ✏️ تعديل</label>
+        <label style="color:#E05555;font-weight:800"><input type="checkbox" ${f.eb?'checked':''} onchange="erLpS().f.eb=this.checked"> 👤 يستطيع تعديل المشترى</label></div>
+      ${sel.length===1?(()=>{ const r=sel[0], act=(r.perms||[]).filter(p=>p.status==='سارى'&&p.print), al=act.reduce((a,p)=>a+Number(p.allowed||0),0), us=act.reduce((a,p)=>a+Number(p.used||0),0); return `<div style="display:flex;gap:16px;margin-top:8px;flex-wrap:wrap"><span>المطبوع: <b>${r.printed||0}</b></span><span>تصاريح طباعة: <b>${al}</b></span><span>المتبقى: <b style="color:${al-us>0?'#4CAF7D':'var(--text-dim)'}">${Math.max(0,al-us)}</b></span></div>`; })():''}
+      <textarea id="lp-notes" class="qt-inp" style="width:100%;min-height:60px;margin-top:8px" placeholder="ملاحظات — اكتب التعديل المطلوب (مثلاً: تغيير اسم المشترى لـ … / تصحيح الشاسيه / إعادة طباعة لأن الأصل باظ)" oninput="erLpS().f.notes=this.value">${erEsc(f.notes)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="qt-btn" ${sel.length?'':'disabled'} onclick="erLpSave()">💾 حفظ التصريح${sel.length?` (${sel.length} جواب)`:''}</button></div></div>`;
+  const Q=H.reqs||[];
+  h+=`<div class="qt-card" style="padding:12px"><div class="qt-h">📨 طلبات إعادة الطباعة من الموظفين <span class="bl-tab-count">${Q.length}</span></div>
+    ${Q.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>المستند</th><th>طلبه</th><th>إمتى</th><th>السبب</th><th>اتطبع</th><th></th></tr></thead><tbody>${Q.map(q=>`<tr><td><b>${erEsc(q.label||q.key)}</b><div class="qt-sub">${q.type==='tinv'?'🧾 فاتورة ضريبية':'✉️ جواب'}</div></td><td>${erEsc(q.by||'')}</td><td class="qt-sub">${erEsc(erPrFmtAt(q.at))}</td><td>${erEsc(q.note||'—')}</td><td>${q.printed||0}</td>
+      <td style="white-space:nowrap">${canE?(q.type==='letter'&&q.jawab_no?`<button class="qt-btn sm" onclick="erLpFromReq(${q.id})">🔐 اعمل تصريح</button>`:`<button class="qt-btn sm" onclick="erLpDecide(${q.id},1)">✅ وافق (مرة)</button>`)+` <button class="qt-btn ghost sm" onclick="erLpDecide(${q.id},0)">❌ رفض</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:'<div class="qt-sub" style="padding:6px">مفيش طلبات معلّقة ✅</div>'}</div>`;
+  const T=H.recent||[];
+  h+=`<div class="qt-card" style="padding:12px"><div class="qt-h">📜 آخر التصاريح</div>${T.length?`<div class="qt-scroll" style="max-height:40vh"><table class="qt-tbl"><thead><tr><th>رقم</th><th>التاريخ</th><th>الجواب</th><th>للمستخدم</th><th>طباعة (اتطبع / المسموح)</th><th>تعديل</th><th>تعديل المشترى</th><th>ملاحظات</th><th>بواسطة</th><th>الحالة</th><th></th></tr></thead><tbody>
+    ${T.map(p=>`<tr class="${p.status!=='سارى'?'del':''}"><td><b>${p.no}</b></td><td>${erEsc(p.d||'')}</td><td><a href="#" onclick="erLpOpen('${p.jawab_no}');return false" style="color:var(--gold);font-weight:800">${p.jawab_no}</a></td><td>${erEsc(p.to)}</td><td>${p.print?`${p.used} / ${p.allowed}`:'—'}</td><td>${p.edit?(p.edit_used?'✅ اتعمل':'⏳ لسه'):'—'}</td><td>${p.edit_buyer?(p.edit_used?'✅ اتعمل':'⏳ لسه'):'—'}</td><td style="max-width:240px">${erEsc(p.notes||'')}</td><td>${erEsc(p.by||'')}</td><td>${p.status==='سارى'?'✅ سارى':'❌ ملغى'}</td><td>${canE&&p.status==='سارى'?`<button class="qt-btn ghost sm" onclick="erLpCancel(${p.id})">✖</button>`:''}</td></tr>`).join('')}</tbody></table></div>`:'<div class="qt-sub">لسه مفيش تصاريح</div>'}</div>`;
+  el.innerHTML=h; }
+async function erLpSave(){ const S=erLpS(), f=S.f, ids=(S.rows||[]).filter(r=>S.sel[r.id]).map(r=>r.id); if(!ids.length){ erToast('اختار جواب الأول',false); return; }
+  if(!f.user){ erToast('اختار التصريح لمين',false); return; } if(!f.print&&!f.edit&&!f.eb){ erToast('اختار نوع التصريح',false); return; }
+  const [t,i]=f.user==='*'?['','']:f.user.split(':');
+  try{ const r=await rpcSecure('erp_lt_perm_save',{p:{ids,print:f.print,print_n:f.print?f.n:0,edit:f.edit,edit_buyer:f.eb,notes:f.notes,to_type:t,to_id:i,req_id:S.req}});
+    erToast(`✅ اتحفظ تصريح رقم ${r.no} على ${r.cnt} جواب`); erBeep(true); S.f={user:'',print:true,n:1,edit:false,eb:false,notes:''}; S.req=null;
+    S.home=await rpcSecure('erp_lt_perm_home',{}); if(S.q){ const x=await rpcSecure('erp_lt_perm_find',{p_q:S.q,p_to:S.to||null}); S.rows=x.rows||[]; } erRenderLtPerm(); }
+  catch(e){ erToast('❌ '+erErr(e),false); erBeep(false); } }
+async function erLpCancel(id){ if(!confirm('تلغى التصريح ده؟')) return; try{ await rpcSecure('erp_lt_perm_cancel',{p_id:id}); erToast('✅ اتلغى'); const S=erLpS(); S.home=await rpcSecure('erp_lt_perm_home',{}); if(S.q){ const x=await rpcSecure('erp_lt_perm_find',{p_q:S.q,p_to:S.to||null}); S.rows=x.rows||[]; } erRenderLtPerm(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erLpDecide(id,allow){ const note=allow?'':(prompt('سبب الرفض (اختيارى):','')||''); if(!allow&&note===null) return;
+  try{ await rpcSecure('erp_print_req_decide',{p_id:id,p_allow:allow?1:0,p_note:note}); erToast(allow?'✅ اتوافق — يقدر يطبع مرة':'❌ اترفض'); const S=erLpS(); S.home=await rpcSecure('erp_lt_perm_home',{}); erRenderLtPerm(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erLpFromReq(id){ const S=erLpS(), q=(S.home.reqs||[]).find(x=>x.id===id); if(!q) return; S.req=id; S.q=String(q.jawab_no); S.to='';
+  const a=q.by_actor||{}; S.f={user:a.type&&a.id!=null?a.type+':'+a.id:'',print:true,n:1,edit:false,eb:false,notes:q.note?('طلب إعادة طباعة: '+q.note):'طلب إعادة طباعة'}; await erLpFind(); }
+function erLpOpen(no){ const S=erLpS(); S.q=String(no); S.to=''; erLpFind(); }
+
 function erLtOpenEngine(no){ if(ER.tab.lt && ER.tab.lt!=='new') ER.lt.from=ER.tab.lt; ER.lt.q=String(no||''); erLtTab('new'); erLtLook(); }
 function erGoLetter(no){ try{ if(typeof goTo==='function') goTo('erp-letters'); }catch(e){} setTimeout(()=>erLtOpenEngine(no),200); }
 function erLtVal(k,v,opt){ opt=opt||{}; return `<input class="qt-inp" ${opt.type?`type="${opt.type}"`:''} ${opt.dir?`dir="${opt.dir}"`:''} ${opt.ph?`placeholder="${erEsc(opt.ph)}"`:''} ${opt.ro?'disabled':''} value="${erEsc(v==null?'':v)}" oninput="ER.lt.form['${k}']=this.value" style="width:100%">`; }
