@@ -2659,7 +2659,11 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
 .er-bi{background:#181818;border:1px solid var(--border);border-radius:10px;padding:6px 10px;font-size:12.5px;line-height:1.6}
 .er-bi .h{color:var(--text-dim);font-size:11.5px}.er-bi b{color:#fff;font-size:13.5px}
 .er-bi.lnk{cursor:pointer;border-color:rgba(74,144,217,.5)}.er-bi.lnk:hover{background:rgba(74,144,217,.12)}
-.er-bi.warn{border-color:rgba(240,199,94,.55)}.er-bi .ago{color:var(--gold-light);font-size:11.5px}
+.er-bi.warn{border-color:rgba(240,199,94,.55)}
+.er-bal{margin-bottom:8px;background:rgba(224,85,85,.08);border:1px solid rgba(224,85,85,.45);border-radius:10px;padding:6px 10px;font-size:12.5px;line-height:1.75}
+.er-bal.ok{background:rgba(76,175,125,.08);border-color:rgba(76,175,125,.4);color:var(--success)}
+.er-bal .t{font-weight:900;color:#ff9b9b;margin-bottom:2px}.er-bal .r{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.er-bal .late{color:#ff8a8a;font-weight:700}.er-bal .soon{color:var(--gold-light)}.er-bal .lnk{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}.er-bi .ago{color:var(--gold-light);font-size:11.5px}
 .er-prec{margin-top:8px}.er-prec summary{cursor:pointer;color:var(--gold);font-size:13px;font-weight:700}
 @media(max-width:700px){.eri-basic{flex-wrap:wrap!important}.eri-basic>div:last-child{flex:1 1 100%!important}.eri-basic .qt-row{flex-wrap:wrap}.eri-basic .qt-fld{min-width:140px}.eri-imgbox{width:auto;margin:0 auto 8px;display:flex;gap:10px;align-items:center}.eri-imgbox img,.eri-imgbox>span{width:92px;height:92px}.qt-scroll.eri-grid{max-height:70vh}}
 .qt-tbl th{position:sticky;top:0;z-index:2}
@@ -22649,7 +22653,7 @@ function erBriefHtml(id){
   const R=d.last_rcpt, V=d.last_inv, L=d.last_del, H=d.last_hand, J=d.letters||{}, LD=d.last_load, BK=d.last_book, TP=d.today_paid||{};
   const left=(Number(J.tot)||0)-(Number(J.hand)||0);
   const ST={'تم التنفيذ':'✅','قيد الانتظار':'⏳','ملغي':'❌','no-show':'🚫 مجاش'};
-  return T(`<div class="er-bgrid">
+  return T(erBriefAlerts(d)+`<div class="er-bgrid">
     ${I('💵 آخر دفعة قبل النهارده', R?`<b>${M(R.amount)} ج</b> — سند ${erEsc(R.no)}<br>${D(R.date)}`:'<b>—</b> مفيش دفعات')}
     ${Number(TP.n)?I('💵 دفع النهارده', `<b>${M(TP.amount)} ج</b> (${TP.n} سند)`):''}
     ${I('🧾 آخر إذن', V?`<b>رقم ${erEsc(V.no)}</b> — ${erQ(V.qty)} قطعة — ${M(V.total)} ج<br>${D(V.date)} · ${V.pay==='cash'?'نقدى':'آجل'}`:'<b>—</b>', V?{on:`erBriefInv(${V.id})`,cls:'lnk',tt:'افتح الإذن'}:null)}
@@ -22660,6 +22664,25 @@ function erBriefHtml(id){
     ${I('🚚 آخر تحميل موتوسيكلات', LD?`<b>${erEsc(LD.wh||'')}</b> — ${erEsc(LD.vt||'')} × ${LD.count||''}${LD.permit?` — إذن ${erEsc(LD.permit)}`:''}<br>${D(LD.date)}`:'<b>—</b> مفيش تحميل')}
     ${I('📅 آخر حجز تحميل', BK?`<b>${erEsc(BK.wh||'')}</b> — ${erEsc(BK.vt||'')} × ${BK.count||''} — ${ST[BK.status]||''} ${erEsc(BK.status||'')}<br>يوم ${D(BK.date)}${BK.slot?` · ${erEsc(BK.slot)}`:''}`:'<b>—</b> مفيش حجوزات', BK&&BK.status==='قيد الانتظار'?{cls:'warn'}:null)}
   </div>`);
+}
+// ⚠️ ملاحظات العميل: شيكات / مستحقات / قفل / ملاحظات الحساب
+function erBriefAlerts(d){
+  const M=(v)=>erMoney(Math.abs(Number(v)||0),2), today=erToday();
+  const W=(dt)=>{ const x=String(dt||'').slice(0,10), late=x&&x<today, now=x===today; return `<span class="${late||now?'late':'soon'}">${erEsc(x)} (${late?'متأخر '+erAgo(x).replace('من ',''):erAgo(x)})</span>`; };
+  const A=[], ac=d.acc||{}, cl=d.cl||{}, CN=d.checks_n||{}, BO=d.bounced||{};
+  if(cl.blocked) A.push('🚫 <b>التاجر عليه بلوك</b>');
+  const lk=[ac.dealing&&'تعامل',ac.loading&&'تحميل',ac.letters&&'جوابات'].filter(Boolean);
+  if(lk.length||ac.lock_reason) A.push(`🔒 <b>قفل ${lk.join(' + ')||''}</b>${ac.lock_reason?' — '+erEsc(ac.lock_reason):''}`);
+  if(Number(BO.n)) A.push(`↩️ <b class="late">${BO.n} شيك مرتد</b> — ${M(BO.amount)} ج`);
+  (d.checks||[]).forEach(k=>A.push(`🏦 شيك ${erEsc(k.check_no||k.no||'')}${k.bank?' — '+erEsc(k.bank):''} — <b>${M(k.amount)} ج</b> — استحقاق ${W(k.due)}`));
+  if(Number(CN.n)>(d.checks||[]).length) A.push(`🏦 … وإجمالى <b>${CN.n}</b> شيك تحت التحصيل بـ ${M(CN.amount)} ج`);
+  (d.dues||[]).forEach(x=>A.push(`🗓️ <span class="lnk" onclick="erBriefInv(${x.inv_id})" title="افتح الإذن">مستحق على إذن ${erEsc(x.inv_no)}</span> — <b>${M(x.amount)} ج</b> — ${W(x.due)}`));
+  (d.held||[]).forEach(x=>A.push(`⛔ <span class="lnk" onclick="erBriefInv(${x.inv_id})">إذن ${erEsc(x.inv_no)}</span> موقوف تسليمه${x.reason?' — '+erEsc(x.reason):''}`));
+  if(Number(cl.no_show)) A.push(`🚫 مجاش لحجز تحميل <b>${cl.no_show}</b> مرة`);
+  if(ac.notes) A.push(`📝 ملاحظة الحساب: ${erEsc(ac.notes)}`);
+  if(cl.appr_note) A.push(`📝 ملاحظة: ${erEsc(cl.appr_note)}`);
+  if(!A.length) return '<div class="er-bal ok">✅ مفيش ملاحظات — لا شيكات ولا مستحقات ولا قفل</div>';
+  return `<div class="er-bal"><div class="t">⚠️ ملاحظات (${A.length})</div>${A.map(x=>`<div class="r">${x}</div>`).join('')}</div>`;
 }
 async function erBriefLoad(id){
   const c=ER.__brief[id]=ER.__brief[id]||{t:0}; if(c.loading) return; c.loading=true;
