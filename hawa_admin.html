@@ -6285,7 +6285,7 @@ function enterApp(){
   initAdminGovDropdown();
   initResizeHandle();
   // 🆕 Load the user's preferred default page (fallback to bookings)
-  goToDefaultPage();
+  if(!(typeof erNavRestore==='function' && erNavRestore())) goToDefaultPage();   // 🔄 الرفرش بيرجّع نفس الشاشة والمستند
   // 🚨 تحديث الـ badge بتاع تنبيهات الأذونات
   refreshAlertBadge();
   // 🔑 حمّل قايمة الوظائف (للمودالات)
@@ -18822,18 +18822,219 @@ var ERP_HUB = ['erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','e
 var ERP_HUB_LBL = { 'erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
 function erHubAllowed(){ return ERP_HUB.filter(id=>!EMP_MODE||can(id,'view')); }
 function erHubGo(){ let last=''; try{ last=localStorage.getItem('erp_hub_last')||''; }catch(e){} const A=erHubAllowed(); goTo(A.includes(last)?last:(A[0]||'erp-sales')); }
+// ═══════════════════════════════════════════════════════════
+// 🗂️ قوائم السيستم الجديد زى SAP — شريط أبواب فوق (كل باب قايمة منسدلة) + نفس الأبواب فى القايمة الجانبية
+//    كل باب له لون وأيقونة — والرفرش بيرجّع نفس الشاشة / التبويب / المستند المفتوح (والجديد بنفس اللى اتكتب)
+// ═══════════════════════════════════════════════════════════
+var ERM_TABK = { 'erp-sales':['sl','erSalesTab'], 'erp-delivery':['dl','erDelTab'], 'erp-cash':['cash','erCashTab'], 'erp-purchases':['pu','erPuTab'], 'erp-stock':['st','erStockTab'],
+  'erp-regs':['rg','erRegTab'], 'erp-letters':['lt','erLtTab'], 'erp-items':['items','erItemsTab'], 'erp-suppliers':['suppliers','erSupTab'], 'erp-setup':['setup','erSetupTab'] };
+var ERM = [
+  { id:'sales', title:'المبيعات', icon:'🧾', c:'#4A90D9', items:[
+    { l:'فاتورة بيع جديدة', i:'➕', s:'erp-sales', t:'inv', a:"erInvOpen(null)", w:()=>ER.sl, e:'erp-sales' },
+    { l:'مرتجع مبيعات جديد', i:'➕', s:'erp-sales', t:'ret', a:"erSretNew()", w:()=>ER.sl, e:'erp-sales' },
+    { l:'إذن صرف / مستند تسليم جديد', i:'➕', s:'erp-delivery', t:'ready', a:"erDelNew()", w:()=>ER.sl, e:'erp-delivery' },
+    { l:'فواتير المبيعات', i:'🧾', s:'erp-sales', t:'inv' },
+    { l:'مرتجعات المبيعات', i:'↩️', s:'erp-sales', t:'ret' },
+    { l:'أذونات مستنية تسليم', i:'📦', s:'erp-delivery', t:'ready' },
+    { l:'مستندات التسليم (أذونات الصرف)', i:'📄', s:'erp-delivery', t:'list' },
+    { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' } ]},
+  { id:'cash', title:'الخزينة والتحصيل', icon:'💵', c:'#4CAF7D', items:[
+    { l:'سند قبض جديد', i:'➕', s:'erp-cash', t:'rcpt', a:"erRcptOpen(null,null)", w:()=>ER.sl, e:'erp-cash' },
+    { l:'استلام شيك جديد', i:'➕', s:'erp-cash', t:'chk', a:"erChkOpen()", w:()=>ER.sl, e:'erp-cash' },
+    { l:'تسوية جديدة', i:'➕', s:'erp-cash', t:'stl', a:"erStlOpen()", w:()=>ER.stl, e:'erp-cash' },
+    { l:'سندات القبض', i:'💵', s:'erp-cash', t:'rcpt' },
+    { l:'الشيكات', i:'📝', s:'erp-cash', t:'chk' },
+    { l:'التسويات', i:'⚖️', s:'erp-cash', t:'stl' },
+    { l:'كشف حساب تاجر', i:'📒', s:'erp-cash', t:'stmt' },
+    { l:'أرصدة الخزائن والبنوك', i:'🏦', s:'erp-cash', t:'tre' } ]},
+  { id:'pur', title:'المشتريات', icon:'🛒', c:'#E0913A', items:[
+    { l:'طلبية شراء جديدة', i:'➕', s:'erp-purchases', t:'po', a:"erPoOpen(null)", w:()=>ER.pu, e:'erp-purchases' },
+    { l:'دفعة لمورد جديدة', i:'➕', s:'erp-purchases', t:'pay', a:"erPayOpen(null,null)", w:()=>ER.pu, e:'erp-purchases' },
+    { l:'مرتجع مشتريات جديد', i:'➕', s:'erp-purchases', t:'pret', a:"erPretNew()", w:()=>ER.pu, e:'erp-purchases' },
+    { l:'طلبيات الشراء', i:'📑', s:'erp-purchases', t:'po' },
+    { l:'الشحنات وفواتير الشراء', i:'🚢', s:'erp-purchases', t:'ship' },
+    { l:'التكاليف', i:'💰', s:'erp-purchases', t:'cost' },
+    { l:'الاستلامات', i:'📥', s:'erp-purchases', t:'rec' },
+    { l:'مرتجعات المشتريات', i:'↩️', s:'erp-purchases', t:'pret' },
+    { l:'مدفوعات الموردين', i:'💸', s:'erp-purchases', t:'pay' },
+    { l:'كشف حساب مورد', i:'📒', s:'erp-purchases', t:'stmt' } ]},
+  { id:'stock', title:'المخازن', icon:'🏬', c:'#2BB3A3', items:[
+    { l:'تحويل بين المخازن جديد', i:'➕', s:'erp-stock', t:'tr', a:"erTrOpen()", w:()=>ER.boot, e:'erp-stock' },
+    { l:'أرصدة المخازن', i:'📊', s:'erp-stock', t:'main' },
+    { l:'التحويلات بين المخازن', i:'🔁', s:'erp-stock', t:'tr' },
+    { l:'تسجيل المواتير والشاسيهات', i:'🔢', s:'erp-regs', t:'reg' },
+    { l:'مستنية تسجيل', i:'📋', s:'erp-regs', t:'pend' },
+    { l:'بحث برقم ماتور / شاسيه', i:'🔎', s:'erp-regs', t:'find' },
+    { l:'المحاولات المرفوضة', i:'🚨', s:'erp-regs', t:'alerts' } ]},
+  { id:'letters', title:'الجوابات', icon:'✉️', c:'#9B6BDF', items:[
+    { l:'جواب جديد برقم الماتور', i:'➕', s:'erp-letters', t:'new' },
+    { l:'الجوابات', i:'📋', s:'erp-letters', t:'list' },
+    { l:'طلبات الجوابات', i:'📥', s:'erp-letters', t:'req' },
+    { l:'طباعة الجوابات', i:'🖨️', s:'erp-letters', t:'prn' },
+    { l:'الاعتمادات (باركود)', i:'🏷️', s:'erp-letters', t:'apr' },
+    { l:'استلامات التجار', i:'✍️', s:'erp-letters', t:'hand' },
+    { l:'الفواتير الضريبية', i:'🧾', s:'erp-letters', t:'tinv' },
+    { l:'طباعة نماذج الضرائب', i:'🖨️', s:'erp-letters', t:'taxp' },
+    { l:'الموزعين (مجمعة)', i:'🤝', s:'erp-letters', t:'dist' },
+    { l:'نماذج الضريبة', i:'🗂️', s:'erp-letters', t:'models' },
+    { l:'التصاريح والاستعلام', i:'🔐', s:'erp-letters', t:'perm', p:'erp-lt-perm' },
+    { l:'الكتاب الدورى', i:'📄', s:'bulletins' },
+    { l:'مستند أرقام مواتير', i:'🔢', s:'erp-regs', t:'reg' } ]},
+  { id:'master', title:'البيانات الأساسية', icon:'🗃️', c:'#C9A84C', items:[
+    { l:'صنف جديد', i:'➕', s:'erp-items', t:'items', a:"erItemOpen(null)", w:()=>ER.boot, e:'erp-items' },
+    { l:'مورد جديد', i:'➕', s:'erp-suppliers', t:'list', a:"erSupOpen(null)", w:()=>ER.boot, e:'erp-suppliers' },
+    { l:'حسابات التجار', i:'👥', s:'erp-traders' },
+    { l:'الموردين', i:'🏭', s:'erp-suppliers', t:'list' },
+    { l:'فئات الموردين', i:'🗂️', s:'erp-suppliers', t:'cats' },
+    { l:'الأصناف', i:'📦', s:'erp-items', t:'items' },
+    { l:'فئات الأصناف', i:'🗂️', s:'erp-items', t:'cats' } ]},
+  { id:'rep', title:'التقارير', icon:'📈', c:'#E05577', items:[
+    { l:'كل التقارير', i:'📈', s:'erp-reports' },
+    { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' },
+    { l:'كشف حساب مورد', i:'📒', s:'erp-purchases', t:'stmt' },
+    { l:'أرصدة المخازن', i:'📊', s:'erp-stock', t:'main' },
+    { l:'أرصدة الخزائن والبنوك', i:'🏦', s:'erp-cash', t:'tre' } ]},
+  { id:'setup', title:'الإعدادات', icon:'⚙️', c:'#9A948C', items:[
+    { l:'المخازن', i:'🏬', s:'erp-setup', t:'wh' },
+    { l:'العملات', i:'💱', s:'erp-setup', t:'cur' },
+    { l:'فئات الأسعار', i:'🏷️', s:'erp-setup', t:'tier' },
+    { l:'الخزائن والبنوك', i:'🏦', s:'erp-setup', t:'tre' },
+    { l:'حالة السيستم', i:'🚦', s:'erp-setup', t:'status' },
+    { l:'الفترات والإقفال', i:'📕', s:'erp-setup', t:'per' } ]}
+];
+function ermOk(it){ if(it.s && !document.getElementById('sec-'+it.s)) return false;
+  if(EMP_MODE && !can(it.s,'view')) return false; if(it.p && !erCan(it.p,'view')) return false; if(it.e && !erCan(it.e,'edit')) return false; return true; }
+function ermMods(){ return ERM.map(m=>({...m, list:m.items.map((it,k)=>({...it,k})).filter(ermOk)})).filter(m=>m.list.length); }
+function ermCurTab(sec){ const k=ERM_TABK[sec]; return k?((ER.tab||{})[k[0]]||null):null; }
+// الباب + البند الحالى (شاشة + تبويب)
+function ermCur(){ const sec=currentSection, tab=ermCurTab(sec); let last=''; try{ last=localStorage.getItem('erm_last_mod')||''; }catch(e){}
+  const C=[]; ERM.forEach(m=>m.items.forEach((it,k)=>{ if(it.a||it.s!==sec) return; if(it.t && tab && it.t!==tab) return;
+    let sc=(it.t&&it.t===tab)?3:1; if(m.id===last) sc+=0.5; if(m.id==='rep') sc-=0.3; C.push({m,it,k,sc}); }));
+  C.sort((a,b)=>b.sc-a.sc); return C[0]||null; }
+// 🚀 فتح بند من القايمة: شاشة + تبويب (+ مستند جديد)
+function erMenuGo(mid, k){ ermDdClose(); const m=ERM.find(x=>x.id===mid), it=m&&m.items[k]; if(!it) return;
+  try{ localStorage.setItem('erm_last_mod',mid); }catch(e){}
+  const tk=ERM_TABK[it.s];
+  if(tk && it.t){ ER.tab=ER.tab||{}; ER.tab[tk[0]]=it.t; }
+  if(currentSection===it.s && tk && it.t && typeof window[tk[1]]==='function'){ try{ window[tk[1]](it.t); }catch(e){} erMenuMark(); }
+  else goTo(it.s);
+  if(it.a){ const t0=Date.now(); const tick=()=>{ let ok=false; try{ ok=!it.w||!!it.w(); }catch(e){}
+      if(ok){ try{ (new Function(it.a))(); }catch(e){ erToast('❌ '+erErr(e),false); } return; }
+      if(Date.now()-t0<15000) setTimeout(tick,150); else erToast('⏳ الشاشة لسه بتحمّل — جرّب تانى',false); };
+    setTimeout(tick,60); }
+}
+// ── الشريط فوق
 function erHubBar(sec){ document.querySelectorAll('.erp-hub-bar').forEach(b=>{ if(!b.closest('#sec-'+sec)) b.remove(); });
-  if(!ERP_HUB.includes(sec)) return; try{ localStorage.setItem('erp_hub_last',sec); }catch(e){}
-  const S=document.getElementById('sec-'+sec); if(!S) return; let b=S.querySelector(':scope > .erp-hub-bar');
-  if(!b){ b=document.createElement('div'); b.className='erp-hub-bar'; S.insertBefore(b,S.firstChild); }
-  b.innerHTML=`<div class="erp-hub-t">🏭 السيستم الجديد</div><div class="erp-hub-tabs">${erHubAllowed().map(id=>`<button class="erp-hub-tab${id===sec?' on':''}" onclick="goTo('${id}')">${ERP_HUB_LBL[id]||id}</button>`).join('')}</div>`;
-  try{ document.querySelectorAll('.nav-item[data-nav-id="erp-hub"]').forEach(n=>n.classList.add('active')); }catch(e){} }
-(function(){ const st=document.createElement('style'); st.textContent=`.erp-hub-bar{position:sticky;top:0;z-index:30;background:var(--dark,#0A0A0A);border:1px solid var(--border,#2A2A2A);border-radius:14px;padding:6px 8px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
-.erp-hub-t{font-weight:900;color:var(--gold,#C9A84C);white-space:nowrap;font-size:13px;padding:0 6px}
-.erp-hub-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;flex:1}
-.erp-hub-tab{background:transparent;border:1px solid transparent;color:var(--text-dim,#8A8580);border-radius:10px;padding:7px 12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
-.erp-hub-tab:hover{color:var(--text,#F0EDE8);background:var(--dark3,#1A1A1A)}
-.erp-hub-tab.on{background:linear-gradient(135deg,var(--gold,#C9A84C),var(--gold-light,#E8C97A));color:#0A0A0A}`; document.head.appendChild(st); })();
+  ermDdClose();
+  const S=document.getElementById('sec-'+sec), inErp=ERP_HUB.includes(sec);
+  if(!inErp){ erMenuMark(); return; } try{ localStorage.setItem('erp_hub_last',sec); }catch(e){}
+  if(!S) return; let b=S.querySelector(':scope > .erp-hub-bar');
+  if(!b){ b=document.createElement('div'); b.className='erp-hub-bar erm-bar'; S.insertBefore(b,S.firstChild); }
+  b.innerHTML=`<div class="erm-mods">${ermMods().map(m=>`<button class="erm-mod" data-m="${m.id}" style="--mc:${m.c}" onclick="ermDdToggle('${m.id}',this)" onmouseenter="ermDdHover('${m.id}',this)"><span class="erm-mi">${m.icon}</span>${m.title}<span class="erm-car">▾</span></button>`).join('')}</div><div class="erm-crumb" id="erm-crumb-${sec}"></div>`;
+  erMenuMark(); }
+function erMenuMark(){ const cur=ERP_HUB.includes(currentSection)?ermCur():null;
+  document.querySelectorAll('.erm-mod').forEach(x=>x.classList.toggle('on', !!cur && x.dataset.m===cur.m.id));
+  const cr=document.getElementById('erm-crumb-'+currentSection);
+  if(cr) cr.innerHTML=cur?`<span style="color:${cur.m.c}">${cur.m.icon} ${cur.m.title}</span> <span class="erm-sep">›</span> <b>${cur.it.i} ${cur.it.l}</b>`:'';
+  const S=document.getElementById('sec-'+currentSection); if(S){ if(cur) S.style.setProperty('--erm-c',cur.m.c); S.classList.toggle('erm-sec',!!cur); }
+  document.querySelectorAll('.erm-ni').forEach(n=>n.classList.toggle('active', !!cur && n.dataset.erm===cur.m.id+':'+cur.k));
+  if(cur){ const g=document.querySelector(`.erm-sbg[data-m="${cur.m.id}"]`); if(g && !g.classList.contains('open') && !ermSbOpen().has('-'+cur.m.id)) g.classList.add('open'); }
+}
+// ── القايمة المنسدلة
+function ermDdClose(){ const d=document.getElementById('erm-dd'); if(d){ d.style.display='none'; d.dataset.m=''; } document.querySelectorAll('.erm-mod.open').forEach(x=>x.classList.remove('open')); }
+function ermDdHover(mid, btn){ const d=document.getElementById('erm-dd'); if(d && d.style.display==='block' && d.dataset.m!==mid) ermDdOpen(mid,btn); }
+function ermDdToggle(mid, btn){ const d=document.getElementById('erm-dd'); if(d && d.style.display==='block' && d.dataset.m===mid){ if(Date.now()-(d.__t||0)>400) ermDdClose(); return; } ermDdOpen(mid,btn); }
+function ermDdOpen(mid, btn){ const m=ermMods().find(x=>x.id===mid); if(!m) return; let d=document.getElementById('erm-dd');
+  if(!d){ d=document.createElement('div'); d.id='erm-dd'; document.body.appendChild(d); }
+  const cur=ermCur(), news=m.list.filter(it=>it.a||it.t==='new'&&it.s==='erp-letters'), rest=m.list.filter(it=>!news.includes(it));
+  const row=it=>`<div class="erm-it${cur&&cur.m.id===m.id&&cur.k===it.k?' on':''}${it.a||news.includes(it)?' nw':''}" onclick="erMenuGo('${m.id}',${it.k})"><span class="erm-ii">${it.i}</span><span>${it.l}</span></div>`;
+  d.style.setProperty('--mc',m.c); d.dataset.m=mid; d.__t=Date.now();
+  d.innerHTML=`<div class="erm-ddh">${m.icon} ${m.title}</div>${news.length?`<div class="erm-g">مستند جديد</div>${news.map(row).join('')}`:''}<div class="erm-g">${news.length?'الشاشات والقوايم':'الشاشات'}</div><div class="${rest.length>8?'erm-2c':''}">${rest.map(row).join('')}</div>`;
+  d.style.display='block'; const r=btn.getBoundingClientRect(), w=d.offsetWidth;
+  let left=r.right-w; if(left<8) left=8; if(left+w>innerWidth-8) left=innerWidth-8-w;
+  d.style.top=(r.bottom+4)+'px'; d.style.left=left+'px';
+  document.querySelectorAll('.erm-mod').forEach(x=>x.classList.toggle('open',x===btn)); }
+document.addEventListener('mousedown',e=>{ const d=document.getElementById('erm-dd'); if(d&&d.style.display==='block'&&!d.contains(e.target)&&!e.target.closest('.erm-mod')) ermDdClose(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const d=document.getElementById('erm-dd'); if(d&&d.style.display==='block'){ ermDdClose(); e.stopPropagation(); } } },true);
+window.addEventListener('scroll',()=>ermDdClose(),true);
+// ── القايمة الجانبية: نفس الأبواب
+function ermSbOpen(){ try{ return new Set(JSON.parse(localStorage.getItem('erm_sb')||'[]')); }catch(e){ return new Set(); } }
+function ermSbToggle(mid){ const g=document.querySelector(`.erm-sbg[data-m="${mid}"]`); if(!g) return; const on=!g.classList.contains('open'); g.classList.toggle('open',on);
+  const s=ermSbOpen(); s.delete(mid); s.delete('-'+mid); s.add(on?mid:'-'+mid); try{ localStorage.setItem('erm_sb',JSON.stringify([...s])); }catch(e){} }
+function ermSidebarHtml(){ const S=ermSbOpen(), cur=ERP_HUB.includes(currentSection)?ermCur():null;
+  return `<div class="erm-sb">${ermMods().map(m=>{ const open=S.has(m.id)||(!S.has('-'+m.id)&&cur&&cur.m.id===m.id);
+    return `<div class="erm-sbg${open?' open':''}" data-m="${m.id}" style="--mc:${m.c}"><div class="erm-sbh" onclick="ermSbToggle('${m.id}')"><span class="erm-sbi">${m.icon}</span><span class="erm-sbt">${m.title}</span><span class="erm-sba">▾</span></div>
+      <div class="erm-sbl">${m.list.map(it=>`<div class="nav-item erm-ni${it.a?' nw':''}${cur&&cur.m.id===m.id&&cur.k===it.k?' active':''}" data-erm="${m.id}:${it.k}" onclick="erMenuGo('${m.id}',${it.k})"><span class="ni">${it.i}</span><span class="nav-label">${it.l}</span></div>`).join('')}</div></div>`; }).join('')}</div>`; }
+(function(){ const st=document.createElement('style'); st.textContent=`
+.erm-bar{position:sticky;top:0;z-index:30;background:linear-gradient(180deg,#141414,#0E0E0E);border:1px solid var(--border,#2A2A2A);border-radius:12px;padding:4px 6px;margin-bottom:12px;display:flex;align-items:center;gap:8px;box-shadow:0 6px 16px rgba(0,0,0,.35);flex-wrap:wrap}
+.erm-mods{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1 1 auto;min-width:0}.erm-mods::-webkit-scrollbar{display:none}
+.erm-mod{display:flex;align-items:center;gap:6px;background:transparent;border:0;border-bottom:3px solid transparent;color:var(--text,#F0EDE8);font-family:inherit;font-size:13px;font-weight:700;padding:8px 12px 6px;border-radius:8px 8px 0 0;cursor:pointer;white-space:nowrap}
+.erm-mod .erm-mi{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:color-mix(in srgb,var(--mc) 22%,transparent);font-size:13px}
+.erm-mod .erm-car{font-size:10px;color:var(--text-dim,#8A8580)}
+.erm-mod:hover,.erm-mod.open{background:color-mix(in srgb,var(--mc) 12%,transparent)}
+.erm-mod.on{border-bottom-color:var(--mc);color:var(--mc)}
+.erm-crumb{font-size:12.5px;color:var(--text-dim,#8A8580);white-space:nowrap;padding:0 8px;margin-inline-start:auto}.erm-crumb b{color:var(--text,#F0EDE8)}.erm-sep{opacity:.6;margin:0 3px}
+#erm-dd{position:fixed;z-index:8500;display:none;min-width:270px;max-width:min(560px,96vw);background:#151515;border:1px solid color-mix(in srgb,var(--mc) 55%,#2A2A2A);border-top:3px solid var(--mc);border-radius:0 0 12px 12px;box-shadow:0 14px 34px rgba(0,0,0,.6);padding:6px;max-height:80vh;overflow:auto}
+.erm-ddh{font-weight:900;color:var(--mc);font-size:13px;padding:6px 10px 8px;border-bottom:1px solid #262626;margin-bottom:4px}
+.erm-g{font-size:11px;color:var(--text-dim,#8A8580);font-weight:800;padding:6px 10px 2px;letter-spacing:.5px}
+.erm-it{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:600;color:var(--text,#F0EDE8);white-space:nowrap}
+.erm-it:hover{background:color-mix(in srgb,var(--mc) 16%,transparent)}.erm-it.on{background:color-mix(in srgb,var(--mc) 24%,transparent);color:#fff}
+.erm-it .erm-ii{width:22px;text-align:center}.erm-it.nw{color:color-mix(in srgb,var(--mc) 70%,#fff)}
+.erm-2c{display:grid;grid-template-columns:1fr 1fr;gap:0 4px}
+.section.erm-sec .bl-tab.active{color:var(--erm-c);border-top:2px solid var(--erm-c)}
+.section.erm-sec .page-title{border-inline-start:4px solid var(--erm-c);padding-inline-start:10px}
+.erm-sb{padding:2px 0 4px}
+.erm-sbh{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:800;color:var(--text,#F0EDE8);border-right:3px solid var(--mc);margin:2px 0;background:color-mix(in srgb,var(--mc) 6%,transparent)}
+.erm-sbh:hover{background:color-mix(in srgb,var(--mc) 14%,transparent)}
+.erm-sbi{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;border-radius:7px;background:color-mix(in srgb,var(--mc) 25%,transparent);font-size:13px}
+.erm-sbt{flex:1}.erm-sba{font-size:10px;color:var(--text-dim,#8A8580);transition:transform .2s}.erm-sbg:not(.open) .erm-sba{transform:rotate(90deg)}
+.erm-sbl{display:none}.erm-sbg.open .erm-sbl{display:block}
+.erm-ni{padding:7px 16px 7px 12px!important;padding-right:30px!important;font-size:12.5px!important}
+.erm-ni.nw{color:color-mix(in srgb,var(--mc) 60%,#ccc)}
+.erm-sbg .erm-ni.active{background:color-mix(in srgb,var(--mc) 16%,transparent);color:var(--mc);border-right-color:var(--mc)}
+.sb-cat[data-cat-id="booking"]{--cc:#4A90D9}.sb-cat[data-cat-id="clients"]{--cc:#4CAF7D}.sb-cat[data-cat-id="communication"]{--cc:#9B6BDF}.sb-cat[data-cat-id="sales"]{--cc:#E0913A}.sb-cat[data-cat-id="erp"]{--cc:#C9A84C}.sb-cat[data-cat-id="system"]{--cc:#9A948C}.sb-cat[data-cat-id="__favorites__"]{--cc:#E8C97A}
+.sb-cat-header .ci{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:color-mix(in srgb,var(--cc,#C9A84C) 22%,transparent)}
+.sb-cat-header .sb-cat-title span:last-child{color:var(--cc,inherit)}
+.sb-cat .nav-item.active:not(.erm-ni){border-right-color:var(--cc,var(--gold));color:var(--cc,var(--gold));background:color-mix(in srgb,var(--cc,#C9A84C) 10%,transparent)}
+@media(max-width:700px){.erm-crumb{display:none}.erm-mod{padding:7px 9px 5px;font-size:12.5px}}
+`; document.head.appendChild(st); })();
+
+// ═══ 🔄 الرفرش: نفس الشاشة + التبويب + المستند المفتوح (والجديد بنفس اللى اتكتب فيه) ═══
+var ERM_OPENERS = { erInvOpen:()=>ER.sl, erRcptOpen:()=>ER.sl, erSretOpen:()=>ER.sl, erDelOpen:()=>ER.sl, erChkOpen:()=>ER.sl, erStlOpen:()=>ER.stl,
+  erPoOpen:()=>ER.pu, erShipOpen:()=>ER.pu, erPayOpen:()=>ER.pu, erPretOpen:()=>ER.pu, erTrOpen:()=>ER.boot&&ER.stock, erItemOpen:()=>ER.boot, erSupOpen:()=>ER.boot };
+function ermWrapInit(){
+  Object.keys(ERM_OPENERS).forEach(n=>{ const f=window[n]; if(typeof f!=='function'||f.__erm) return;
+    const w=function(...a){ ER.__open={fn:n,args:a.map(x=>x===undefined?null:x)}; return f.apply(this,a); }; w.__erm=1; window[n]=w; });
+  const c=window.erClose; if(typeof c==='function' && !c.__erm){ const w=function(...a){ ER.__open=null; return c.apply(this,a); }; w.__erm=1; window.erClose=w; }
+  Object.keys(ERM_TABK).forEach(sec=>{ const n=ERM_TABK[sec][1], f=window[n]; if(typeof f!=='function'||f.__erm) return;
+    const w=function(...a){ const r=f.apply(this,a); try{ erMenuMark(); }catch(e){} return r; }; w.__erm=1; window[n]=w; });
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',ermWrapInit); else setTimeout(ermWrapInit,0);
+function erNavSave(){ try{ if(typeof admin==='undefined'||!admin) return; const m=document.getElementById('er-modal'), dk=document.getElementById('er-mdock');
+  const st={ sec:currentSection, tab:JSON.parse(JSON.stringify(ER.tab||{})), t:Date.now() };
+  const vis=m && m.style.display!=='none', dock=dk && dk.style.display==='flex';
+  if(ER.__open && (vis||dock) && ER.edit){ st.open={ fn:ER.__open.fn, args:ER.__open.args, min:!vis&&dock };
+    if(!ER.ro){ try{ st.open.draft=JSON.parse(JSON.stringify(ER.edit,(k,v)=>typeof v==='function'?undefined:v)); }catch(e){} } }
+  sessionStorage.setItem('hawa_nav',JSON.stringify(st)); }catch(e){} }
+window.addEventListener('beforeunload',erNavSave); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') erNavSave(); });
+// بيترجع true لو رجّع الشاشة (ساعتها مش هنروح للصفحة الافتراضية)
+function erNavRestore(){ let st=null; try{ st=JSON.parse(sessionStorage.getItem('hawa_nav')||'null'); }catch(e){}
+  if(!st || !st.sec || Date.now()-(st.t||0)>12*3600e3 || !document.getElementById('sec-'+st.sec)) return false;
+  if(EMP_MODE && !can(st.sec,'view')) return false;
+  const go=()=>{ try{ ER.tab=Object.assign(ER.tab||{}, st.tab||{}); }catch(e){}
+  try{ ermWrapInit(); }catch(e){}
+  goTo(st.sec);
+  const o=st.open; if(o && ERM_OPENERS[o.fn]){ const t0=Date.now(); const tick=()=>{ let ok=false; try{ ok=!!ERM_OPENERS[o.fn](); }catch(e){}
+      if(!ok){ if(Date.now()-t0<20000) setTimeout(tick,200); return; }
+      try{ window[o.fn](...(o.args||[]));
+        if(o.draft && ER.edit && typeof ER.edit.__render==='function' && String(ER.edit.id||'')===String(o.draft.id||'')){ Object.assign(ER.edit,o.draft); ER.edit.__render(); }
+        if(o.min && typeof erModalMin==='function') erModalMin();
+        erToast(o.draft&&!o.draft.id?'↩️ رجّعنا المستند الجديد زى ما كان (لسه متسجلش)':'↩️ رجّعنا المستند اللى كان مفتوح');
+      }catch(e){ console.warn('nav restore',e); } };
+    setTimeout(tick,300); } };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(go,0)); else setTimeout(go,0);
+  return true; }
+
 
 function renderSidebar(){
   const container = document.getElementById('sb-nav-container');
@@ -18893,12 +19094,7 @@ function renderSidebarItems(ids, inFavorites){
     if(!inFavorites && ERP_HUB.includes(id)){
       if(hubDone) return ''; hubDone=true;
       if(EMP_MODE && !ERP_HUB.some(x=>can(x,'view'))) return '';
-      const act = ERP_HUB.includes(currentSection) ? ' active' : '';
-      return `<div class="nav-item${act}" data-nav-id="erp-hub" onclick="erHubGo()" title="السيستم الجديد — كل الشاشات تبويبات جوه">
-      <span class="nav-drag-handle" style="visibility:hidden">⋮⋮</span>
-      <span class="ni">🏭</span>
-      <span class="nav-label">السيستم الجديد</span>
-    </div>`;
+      return ermSidebarHtml();   // 🗂️ أبواب السيستم الجديد (مبيعات / خزينة / مشتريات ...) بلون وأيقونة لكل باب
     }
     const meta = NAV_META[id];
     if (!meta) return '';
