@@ -25671,7 +25671,7 @@ function lmNearSug(v){ const box=document.getElementById('lmn-sug'); if(!box) re
   rows.forEach(r=>{ const k=Math.min(...[sc(r.name),String(r.code||'')===String(v).trim()?0:(String(r.code||'').startsWith(String(v).trim())?1:-1)].filter(x=>x>=0).concat([9])); if(k<9) add('t|'+r.id,{t:'tr',id:r.id,k,r:2,html:`🏪 <b>${erEsc(r.name)}</b> <span class="qt-sub">كود ${erEsc(r.code||'')} — ${erEsc(r.gov||'')} ${r.city?'— '+erEsc(r.city):''}${r.lat==null?' · لسه مبعتش لوكيشن':''}</span>`}); });
   if(q.length>=3) rows.forEach(r=>{ if(r.address&&lmNorm(r.address).includes(q)) add('a|'+r.id,{t:'tr',id:r.id,k:3,r:3,html:`📌 ${erEsc(r.address)} <span class="qt-sub">— عند ${erEsc(r.name)} (${erEsc(r.code||'')})، ${erEsc(r.gov||'')}</span>`}); });
   S.sort((a,b)=>a.k-b.k||a.r-b.r); LMN.sug=S.slice(0,14);
-  LMN.sug.push({t:'osm',html:`🌍 دوّر على «<b>${erEsc(LMN.q)}</b>» فى الخريطة (أماكن وعلامات مميزة)`});
+  LMN.sug.push({t:'osm',html:`🌍 دوّر على «<b>${erEsc(LMN.q)}</b>» فى الخريطة (أى قرية / شارع / علامة مميزة)`});
   box.innerHTML=LMN.sug.map((x,i)=>`<div onmousedown="event.preventDefault();lmNearSugPick(${i})" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13.5px;${i===LMN.si?'background:rgba(201,168,76,.12)':''}" onmouseover="LMN.si=${i};lmNearSugHi()">${x.html}</div>`).join('');
   box.style.display='block'; }
 function lmNearSugHi(){ const box=document.getElementById('lmn-sug'); if(!box) return; [...box.children].forEach((d,i)=>d.style.background=i===LMN.si?'rgba(201,168,76,.12)':''); }
@@ -25689,10 +25689,21 @@ async function lmNearSugPick(i){ const x=(LMN.sug||[])[i]; lmNearSugHide(); if(!
   LMN.pt=[r.lat,r.lng]; LMN.label=`عند ${r.name} (${r.code||''}) — ${[r.gov,r.city].filter(Boolean).join(' — ')}`; LMN.addr={ names:r.city?[lmNorm(r.city)]:[], state:lmNorm(r.gov), gov:r.gov, city:r.city }; LMN.cands=[]; lmNearCalc(); }
 async function lmNearSearch(){ const q=(document.getElementById('lmn-q')||{}).value||''; LMN.q=q.trim(); if(!LMN.q){ erToast('اكتب العنوان أو المنطقة',false); return; }
   LMN.busy=true; lmNearRender();
-  try{ const u='https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=eg&accept-language=ar&addressdetails=1&q='+encodeURIComponent(LMN.q);
-    const r=await fetch(u,{headers:{'Accept':'application/json'}}); const j=await r.json(); LMN.cands=Array.isArray(j)?j:[];
+  try{ LMN.cands=await lmGeo(LMN.q);
     if(!LMN.cands.length){ LMN.busy=false; erToast('مش لاقى المكان ده — جرّب تكتبه بشكل تانى أو اختار المحافظة والمدينة',false); lmNearRender(); return; }
     LMN.busy=false; lmNearPick(0); }catch(e){ LMN.busy=false; erToast('❌ البحث مش شغال دلوقتى — اختار المحافظة والمدينة أو دوس على الخريطة',false); lmNearRender(); } }
+// 🌍 البحث عن أى عنوان / قرية / علامة: ArcGIS (بيعرف القرى المصرية وبيستحمل اختلاف الإملاء: البسراط = البصراط) + OpenStreetMap
+async function lmGeo(q){
+  const P=t=>String(t||'').split(',').map(x=>x.trim()).filter(Boolean);
+  const arc=fetch('https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?f=json&maxLocations=8&countryCode=EGY&langCode=ar&outFields=Addr_type,Region,Subregion,City&singleLine='+encodeURIComponent(q))
+    .then(r=>r.json()).then(j=>(j.candidates||[]).filter(c=>c.score>=70&&c.location).map(c=>{ const p=P(c.address), A=c.attributes||{};
+      return { lat:+c.location.y, lon:+c.location.x, display_name:c.address, name:p[0], src:'arcgis', address:{ village:p[0], county:A.Subregion||p[1]||'', city:A.City||'', state:A.Region||(p.length>1?p[p.length-1]:'') } }; })).catch(()=>[]);
+  const osm=fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=eg&accept-language=ar&addressdetails=1&q='+encodeURIComponent(q),{headers:{'Accept':'application/json'}})
+    .then(r=>r.json()).then(j=>(Array.isArray(j)?j:[]).map(c=>({...c,lat:+c.lat,lon:+c.lon,src:'osm'}))).catch(()=>[]);
+  const [a,b]=await Promise.all([arc,osm]); const out=[];
+  [...a,...b].forEach(c=>{ if(isFinite(c.lat)&&isFinite(c.lon)&&!out.some(o=>lmKm(o.lat,o.lon,c.lat,c.lon)<1.5)) out.push(c); });
+  if(LMN.gov){ const g=lmNorm(LMN.gov); out.sort((x,y)=>(lmNorm((y.address||{}).state).includes(g)?1:0)-(lmNorm((x.address||{}).state).includes(g)?1:0)); }
+  return out.slice(0,8); }
 function lmNearPick(i){ const c=LMN.cands[i]; if(!c) return; const a=c.address||{}; LMN.pt=[+c.lat,+c.lon]; LMN.label=c.display_name; LMN.addr={ names:[a.city,a.town,a.village,a.suburb,a.city_district,a.county,a.state_district,a.neighbourhood,c.name].filter(Boolean).map(lmNorm), state:lmNorm(a.state) }; LMN.pick=i; lmNearCalc(); }
 async function lmNearCity(){ const cs=await lmCenters(); const g=LMN.gov, c=LMN.city; const hit=cs.find(x=>x.gov===g&&x.city===(c||'*'))||cs.find(x=>x.gov===g&&x.city==='*');
   const inGov=cs.filter(x=>x.gov===g&&x.city!=='*'); let pt=hit&&c?[hit.lat,hit.lng]:null;
@@ -25708,7 +25719,7 @@ function lmNearCalc(){ const D=LM.d; if(!D||!LMN.pt) return; const [la,lo]=LMN.p
   R.sort((a,b)=>a.grp-b.grp||a.d-b.d);
   LMN.res=R; lmNearRender(); }
 function lmNearRender(){ const el=document.getElementById('lmn-out'); if(!el) return; const R=LMN.res;
-  let h=''; if(LMN.cands.length>1) h+=`<div class="qt-sub" style="margin:6px 0">نتايج تانية للبحث: ${LMN.cands.map((c,i)=>`<a href="#" onclick="lmNearPick(${i});return false" style="margin-inline-end:10px;${i===LMN.pick?'color:var(--gold);font-weight:800':''}">${erEsc(String(c.display_name).split(',').slice(0,3).join('،'))}</a>`).join('')}</div>`;
+  let h=''; if(LMN.cands.length>1) h+=`<div class="qt-card" style="margin:8px 0;padding:8px 10px;border-color:rgba(201,168,76,.55)"><b style="color:var(--gold)">📍 لقيت ${LMN.cands.length} أماكن بالاسم ده — اتأكد إنه الصح:</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">${LMN.cands.map((c,i)=>`<button class="qt-btn ${i===LMN.pick?'':'ghost '}sm" onclick="lmNearPick(${i})">${i===LMN.pick?'✅ ':''}${erEsc(String(c.display_name).split(',').slice(0,3).join('، '))}</button>`).join('')}</div></div>`;
   if(LMN.busy){ el.innerHTML=h+'<div class="qt-sub" style="padding:10px">⏳ بندوّر...</div>'; return; }
   if(!R){ el.innerHTML=h+'<div class="qt-sub" style="padding:10px">اكتب العنوان أو أى علامة مميزة، أو اختار المحافظة والمدينة، أو دوس على الخريطة.</div>'; lmNearMap(); return; }
   const top=R.slice(0,LMN.n), G={1:'🏘️ جوه نفس المنطقة / المدينة',2:'🏙️ جوه نفس المحافظة',3:'🧭 أقرب من محافظات تانية'};
