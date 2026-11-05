@@ -3546,7 +3546,9 @@ async function acHtmlPdf(html){
   return pdf.output('blob'); }
 async function acUpload(blob){ const rnd=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,20);
   const path=`cl-${_acct.sec}-${rnd}.pdf`;
-  const r=await fetch(`${SB}/storage/v1/object/erp_docs/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/pdf'},body:blob});
+  const sg=await fetch(`${SB}/functions/v1/storage-sign`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','x-hawa-token':user.session_token||''},body:JSON.stringify({bucket:'erp_docs',path})}).then(x=>x.json()).catch(()=>({}));
+  if(!sg||!sg.url) throw new Error('رفع الـ PDF فشل — سجّل دخول تانى وحاول');
+  const r=await fetch(sg.url,{method:'PUT',headers:{'Content-Type':'application/pdf'},body:blob});
   if(!r.ok) throw new Error('رفع الـ PDF فشل — حاول تانى'); return `${SB}/storage/v1/object/public/erp_docs/${path}`; }
 async function acctPdf(send){
   const html=acCurHtml(); if(!html){ bioToast('اعرض الكشف الأول','error'); return; }

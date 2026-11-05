@@ -5948,14 +5948,18 @@ const HDR = {'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'applicat
 (function(){ const _f=window.fetch; window.fetch=function(u,o){ try{ const url=typeof u==='string'?u:((u&&u.url)||''); const tk=(typeof SESSION_TOKEN!=='undefined')?SESSION_TOKEN:null;
   if(tk && url.indexOf(SB+'/rest/v1/')===0){ o=Object.assign({},o||{}); const h=new Headers(o.headers||{}); if(!h.has('x-hawa-token')) h.set('x-hawa-token',tk); o.headers=h; } }catch(e){} return _f.call(this,u,o); }; })();
 
-// ⬆️ رفع للتخزين بـ XHR عشان نعرف نسبة التقدم (fetch مبيدعمش upload progress)
+// ⬆️ رفع للتخزين — 🔐 بلينك رفع موقّع من السيرفر (storage-sign بتوكن الجلسة)، الرفع المباشر بالمفتاح العام اتقفل
+// بـ XHR عشان نعرف نسبة التقدم (fetch مبيدعمش upload progress)
+async function sbSignUpload(bucket, path){
+  const r=await fetch(`${SB}/functions/v1/storage-sign`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','x-hawa-token':(typeof SESSION_TOKEN!=='undefined'&&SESSION_TOKEN)||''},body:JSON.stringify({bucket,path})});
+  let j={}; try{ j=await r.json(); }catch(e){} if(!r.ok||!j.url) throw new Error(j.error||('sign '+r.status)); return j; }
 function sbUploadX(objPath, body, mime, onPct){
-  return new Promise(resolve=>{
+  return new Promise(async resolve=>{
     try{
+      const i=objPath.indexOf('/'), bucket=objPath.slice(0,i), path=objPath.slice(i+1).split('/').map(x=>{ try{ return decodeURIComponent(x); }catch(e){ return x; } }).join('/');
+      let sg; try{ sg=await sbSignUpload(bucket, path); }catch(e){ resolve({ ok:false, status:403, text: async ()=> String(e.message||e) }); return; }
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', `${SB}/storage/v1/object/${objPath}`);
-      xhr.setRequestHeader('apikey', KEY);
-      xhr.setRequestHeader('Authorization', 'Bearer '+KEY);
+      xhr.open('PUT', sg.url);
       xhr.setRequestHeader('Content-Type', mime || 'application/octet-stream');
       xhr.setRequestHeader('x-upsert', 'true');
       xhr.upload.onprogress = e=>{ if(e.lengthComputable && typeof onPct==='function') onPct(Math.min(100, Math.round(e.loaded/e.total*100))); };
@@ -24249,7 +24253,7 @@ async function erHtmlPdf(html){
   return pdf.output('blob'); }
 async function erPdfUpload(blob,j){ const rnd=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2)).replace(/-/g,'').slice(0,16);
   const path=`${j.kind}-${String(j.ref||'').replace(/[^0-9a-z]/gi,'').slice(0,20)}-${rnd}.pdf`;
-  const r=await fetch(`${SB}/storage/v1/object/erp_docs/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/pdf'},body:blob});
+  const r=await sbUploadX(`erp_docs/${path}`, blob, 'application/pdf');
   if(!r.ok) throw new Error('رفع الـ PDF فشل '+r.status); return `${SB}/storage/v1/object/public/erp_docs/${path}`; }
 async function erPdfWorkerTick(){ if(ER.__pdfBusy||ER.__pdfOff||typeof SESSION_TOKEN==='undefined'||!SESSION_TOKEN) return; ER.__pdfBusy=true;
   try{ const jobs=await rpcSecure('erp_pdf_jobs',{});
@@ -26423,7 +26427,7 @@ async function erAttUpload(){ const A=window.__erAtt; const f=document.getElemen
       if(msg) msg.textContent=`⏳ بنرفع ${i+1} من ${files.length}...`;
       const ext=(x.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5), rnd=(crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(36).slice(2)).replace(/-/g,'');
       const path=`${A.k}/${A.id}/${rnd}.${ext}`;
-      const r=await fetch(`${SB}/storage/v1/object/erp_files/${path}`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':x.type||'application/octet-stream'},body:x});
+      const r=await sbUploadX(`erp_files/${path}`, x, x.type||'application/octet-stream');
       if(!r.ok) throw new Error('الرفع فشل '+r.status);
       await rpcSecure('erp_att_add',{p:{kind:A.k,id:A.id,name:x.name,url:`${SB}/storage/v1/object/public/erp_files/${path}`,mime:x.type,size:x.size,note}}); }
     erToast('✅ اترفع'); erAttCount(A.k,A.id); erAttOpen(A.k,A.id); }); }
