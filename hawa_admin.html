@@ -4103,9 +4103,10 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erStockLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="erst-tab-main" onclick="erStockTab('main')">📦 الأرصدة</button><button class="bl-tab" id="erst-tab-tr" onclick="erStockTab('tr')">🔁 التحويل بين المخازن</button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erst-tab-main" onclick="erStockTab('main')">📦 الأرصدة</button><button class="bl-tab" id="erst-tab-tr" onclick="erStockTab('tr')">🔁 التحويل بين المخازن</button><button class="bl-tab" id="erst-tab-cnt" onclick="erStockTab('cnt')">🧮 الجرد الفعلى</button></div>
       <div id="erst-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erst-pane-tr" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erst-pane-cnt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
     <div class="section" id="sec-erp-acc">
       <div class="page-hd">
@@ -10970,6 +10971,7 @@ const EXTRA_PERMS = {
   'erp-lt-appr':       { icon: '🏷️', label: 'اعتماد جوابات طلبات التجار — دخول = تجيله رسالة لما التاجر يختار «تروح الاعتماد»' },
   'erp-lt-perm':       { icon: '🔐', label: 'تصاريح الجوابات — دخول = يشوف التصاريح وطلبات إعادة الطباعة ويستعلم، تعديل = يعمل تصريح طباعة/تعديل لمستخدم ويوافق على الطلبات' },
   'erp-lt-req':        { icon: '📥', label: 'طلبات الجوابات من التجار (شيت Excel) — دخول = يشوف الطلبات وتجيله رسالة بالجديد، تعديل = يوافق/يرفض ويطبع' },
+  'erp-count-ok':      { icon: '🧮', label: 'اعتماد الجرد — تعديل = يعتمد الجرد وتتسوى الفروق فى المخزن (العدّ نفسه بصلاحية المخازن)' },
   'erp-overdraft':     { icon: '📉', label: 'البيع على المكشوف دفترى — دخول = يقدر يعمل فاتورة أكبر من الرصيد الدفترى (التسليم برضه لحد الرصيد الفعلى بس)' }
 };
 const PERM_ACTIONS = [
@@ -18883,6 +18885,8 @@ var ERM = [
     { l:'كشف حساب مورد', i:'📒', s:'erp-purchases', t:'stmt' } ]},
   { id:'stock', title:'المخازن', icon:'🏬', c:'#2BB3A3', items:[
     { l:'تحويل بين المخازن جديد', i:'➕', s:'erp-stock', t:'tr', a:"erTrOpen()", w:()=>ER.boot, e:'erp-stock' },
+    { l:'جرد جديد', i:'➕', s:'erp-stock', t:'cnt', a:"erCntNew()", w:()=>ER.boot&&ER.cnts, e:'erp-stock' },
+    { l:'الجرد الفعلى', i:'🧮', s:'erp-stock', t:'cnt' },
     { l:'أرصدة المخازن', i:'📊', s:'erp-stock', t:'main' },
     { l:'التحويلات بين المخازن', i:'🔁', s:'erp-stock', t:'tr' },
     { l:'تسجيل المواتير والشاسيهات', i:'🔢', s:'erp-regs', t:'reg' },
@@ -22586,9 +22590,9 @@ async function erRenderStmt(){
 async function erStockLoad(force){
   try{ await erBoot(force); if(force||!ER.stock) ER.stock=await rpcSecure('erp_stock_list',{}); if(force) ER.trs=null; erStockTab(ER.tab.st||'main'); }catch(e){ erPaneErr('erst-pane',e); }
 }
-function erStockTab(t){ ER.tab.st=t; const a=document.getElementById('erst-pane'), b=document.getElementById('erst-pane-tr'); if(a) a.style.display=t==='main'?'block':'none'; if(b) b.style.display=t==='tr'?'block':'none';
-  ['main','tr'].forEach(k=>{ const x=document.getElementById('erst-tab-'+k); if(x) x.classList.toggle('active',k===t); }); if(typeof erTbSync==='function') setTimeout(()=>erTbSync(),0);
-  if(t==='tr') erRenderTrs(); else erRenderStock(); }
+function erStockTab(t){ ER.tab.st=t; const a=document.getElementById('erst-pane'), b=document.getElementById('erst-pane-tr'), cn=document.getElementById('erst-pane-cnt'); if(a) a.style.display=t==='main'?'block':'none'; if(b) b.style.display=t==='tr'?'block':'none'; if(cn) cn.style.display=t==='cnt'?'block':'none'; if(t==='cnt'&&typeof erCntLoad==='function') erCntLoad();
+  ['main','tr','cnt'].forEach(k=>{ const x=document.getElementById('erst-tab-'+k); if(x) x.classList.toggle('active',k===t); }); if(typeof erTbSync==='function') setTimeout(()=>erTbSync(),0);
+  if(t==='tr') erRenderTrs(); else if(t!=='cnt') erRenderStock(); }
 // ════════ 🔁 التحويل بين المخازن (بيطلع من مخزن ويدخل التانى فى نفس اللحظة — دفترى وفعلى)
 async function erRenderTrs(){ const el=document.getElementById('erst-pane-tr'); if(!el) return;
   if(!ER.trs){ el.innerHTML='<div class="loading-txt">⏳ جاري التحميل...</div>'; try{ ER.trs=await rpcSecure('erp_tr_list',{}); }catch(e){ erPaneErr('erst-pane-tr',e); return; } }
@@ -26194,6 +26198,65 @@ async function erAcActivate(on){ if(on&&!confirm('تفعيل الحسابات؟\
   await erRun('erac-act', async()=>{ const r=await rpcSecure('acc_settings_save',{p:{active:on}}); erToast(on?`✅ الحسابات اتفعّلت — ${r.journals||0} قيد`:'⏸️ الحسابات اتوقفت'); await erAcRefresh(); }); }
 async function erAcRebuild(){ if(!confirm('إعادة بناء كل القيود الأوتوماتيك من المستندات؟ (القيود اليدوية والسندات بتتعمل تانى برضه)')) return;
   await erRun('erac-rb', async()=>{ const r=await rpcSecure('acc_settings_save',{p:{rebuild:true}}); erToast(`✅ اتبنى ${r.journals} قيد من ${r.docs} مستند${r.errors?` — ⚠️ ${r.errors} غلط`:''}`); await erAcRefresh(); }); }
+
+
+// ═══ 🧮 الجرد الفعلى ═══
+async function erCntLoad(){ try{ ER.cnts=await rpcSecure('erp_count_list',{}); }catch(e){ erPaneErr('erst-pane-cnt',e); return; } erRenderCnt(); }
+function erCntWh(id){ return (ER.boot.warehouses||[]).find(w=>w.id===id)||{}; }
+function erCntSum(c){ const L=c.lines||[]; const cnt=L.filter(l=>l.counted!=null).length; let up=0,dn=0; L.forEach(l=>{ if(l.counted==null) return; const d=Number(l.diff!=null?l.diff:(Number(l.counted)-Number(l.sys))); if(d>0) up+=d; else if(d<0) dn-=d; }); return {n:L.length,cnt,up,dn}; }
+function erRenderCnt(){ const el=document.getElementById('erst-pane-cnt'); if(!el) return; const C=ER.cnts||[], canE=erCan('erp-stock','edit'), canD=erCan('erp-stock','del');
+  el.innerHTML=`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center">${canE?'<button class="qt-btn" onclick="erCntNew()">➕ جرد جديد</button>':''}<div style="flex:1"></div><span class="qt-sub">💡 افتح الجرد واكتب العدد أو امسح الباركود — ولما تعتمد، الفروق بتتسوى فى المخزن لوحدها (الدفترى والفعلى) وبتطلع فى الحسابات «عجز وزيادة المخزون».</span></div>
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>التاريخ</th><th>المخزن</th><th>الأصناف</th><th>اتعدّ</th><th>زيادة</th><th>عجز</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${C.map(c=>{ const s=erCntSum(c); return `<tr><td><b>${c.no}</b>${c.test?' 🧪':''}</td><td>${erEsc(c.date)}</td><td>${erEsc(erCntWh(c.warehouse_id).name||'')}${c.cat_id?`<div class="qt-sub">${erEsc(((ER.boot.categories||[]).find(x=>x.id===c.cat_id)||{}).name||'')}</div>`:''}</td><td>${s.n}</td><td>${s.cnt}</td><td style="color:var(--success)">${s.up?erQ(s.up):''}</td><td style="color:var(--error)">${s.dn?erQ(s.dn):''}</td>
+    <td>${erStChip(c.status==='مسودة'?'مسودة':c.status==='معتمد'?'سارى':'ملغى')}${c.status==='معتمد'?`<div class="qt-sub">${erEsc(c.approved_by||'')}</div>`:''}</td>
+    <td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="erCntOpen(${c.id})">${c.status==='مسودة'&&canE?'✏️ عدّ':'👁️'}</button><button class="qt-btn ghost sm" title="كشف الجرد للعدّ على الورق" onclick="erCntPrint(${c.id},true)">🖨️</button>${c.status==='مسودة'&&canD?`<button class="qt-btn red sm" onclick="erCntCancel(${c.id})">✖</button>`:''}</td></tr>`; }).join('')}
+  </tbody></table></div>${C.length?'':'<div class="qt-sub" style="padding:10px">مفيش جرد لسه</div>'}`; }
+function erCntNew(){ const v={ warehouse_id:'', cat_id:'', date:erToday(), notes:'' }; ER.edit=v; ER.ro=false;
+  const form=()=>`<div class="qt-card"><div class="qt-row">${erFld('المخزن *',erSel('warehouse_id',v.warehouse_id,[['','— اختار —']].concat((ER.boot.warehouses||[]).filter(w=>w.is_active).map(w=>[w.id,w.name]))),2)}${erFld('تاريخ الجرد',erInp('date',v.date,{type:'date'}),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('فئة معيّنة (اختيارى)',erSel('cat_id',v.cat_id,[['','— كل الأصناف اللى ليها رصيد —']].concat((ER.boot.categories||[]).map(c=>[c.id,c.name]))),2)}${erFld('ملاحظات',erInp('notes',v.notes),2)}</div>
+    <div class="qt-sub" style="margin-top:8px">الجرد بياخد «صورة» من الرصيد الحالى، وانت بتكتب اللى اتعدّ فعلاً. عند الاعتماد الفرق بيتحسب على الرصيد ساعتها.</div></div>`;
+  v.__render=()=>erModalBody(form()); erModal('🧮 جرد جديد', form(), `<button class="qt-btn" id="er-save-btn" onclick="erCntNewGo()">➕ ابدأ الجرد</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+async function erCntNewGo(){ await erRun('er-save-btn', async()=>{ const v=ER.edit; const id=await rpcSecure('erp_count_new',{p:{warehouse_id:v.warehouse_id,cat_id:v.cat_id||null,date:v.date,notes:v.notes}}); erClose(); await erCntLoad(); erCntOpen(id); }); }
+function erCntBlind(){ try{ return localStorage.getItem('er_cnt_blind')==='1'; }catch(e){ return false; } }
+function erCntOpen(id){ const c=JSON.parse(JSON.stringify((ER.cnts||[]).find(x=>x.id===id)||null)); if(!c) return; const ro=!(c.status==='مسودة'&&erCan('erp-stock','edit'));
+  c.__dirty=false; ER.edit=c; ER.ro=ro; const it=i=>erById(ER.boot.items,i)||{};
+  const form=()=>{ const q=String(c.__q||'').trim().toLowerCase(), blind=erCntBlind()&&!ro, s=erCntSum(c);
+    const rows=(c.lines||[]).map((l,i)=>({l,i})).filter(({l})=>{ if(c.__only==='todo'&&l.counted!=null) return false; if(c.__only==='diff'&&(l.counted==null||Number(l.counted)===Number(l.sys))) return false; const x=it(l.item_id); return !q||[x.code,x.name_ar,x.barcode].join(' ').toLowerCase().includes(q); });
+    return `${ro?'':`<div class="qt-card" style="border-color:rgba(201,168,76,.5)"><div class="qt-row" style="gap:8px;align-items:center;flex-wrap:wrap"><input class="qt-inp" id="er-cnt-scan" style="width:min(420px,100%);flex:1 1 320px;font-size:16px" placeholder="📷 امسح الباركود أو اكتب كود الصنف واضغط Enter (+1)" onkeydown="if(event.key==='Enter'){event.preventDefault();erCntScan(this.value);this.value='';}">
+      <label style="display:flex;gap:6px;align-items:center;white-space:nowrap"><input type="checkbox" ${erCntBlind()?'checked':''} onchange="try{localStorage.setItem('er_cnt_blind',this.checked?'1':'0')}catch(e){};ER.edit.__render()"> 🙈 عدّ أعمى (من غير ما يشوف الرصيد)</label><div style="flex:1"></div><span id="er-cnt-msg" class="qt-sub"></span></div></div>`}
+    <div class="qt-row" style="gap:8px;margin:10px 0;align-items:center;flex-wrap:wrap"><input class="qt-inp" style="max-width:240px" placeholder="🔍 فلترة" value="${erEsc(c.__q||'')}" oninput="ER.edit.__q=this.value;ER.edit.__render()">
+      ${[['','الكل'],['todo','لسه متعدّش'],['diff','فيه فرق']].map(o=>`<button class="qt-btn ${String(c.__only||'')===o[0]?'':'ghost '}sm" onclick="ER.edit.__only='${o[0]}';ER.edit.__render()">${o[1]}</button>`).join('')}
+      <div style="flex:1"></div><b>${erEsc(erCntWh(c.warehouse_id).name||'')}</b><span class="qt-sub">اتعدّ ${s.cnt} من ${s.n} · زيادة <b style="color:var(--success)">${erQ(s.up)}</b> · عجز <b style="color:var(--error)">${erQ(s.dn)}</b></span></div>
+    <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الكود</th><th>الصنف</th>${blind?'':'<th>الرصيد بالسيستم</th>'}<th>اتعدّ فعلاً</th>${blind?'':'<th>الفرق</th>'}<th>ملاحظة</th></tr></thead><tbody>
+    ${rows.map(({l,i})=>{ const x=it(l.item_id), d=l.counted==null?null:Number(l.diff!=null?l.diff:Number(l.counted)-Number(l.sys)); return `<tr id="er-cnt-r${i}"><td dir="ltr">${erEsc(x.code||'')}</td><td style="text-align:right">${erEsc(x.name_ar||'#'+l.item_id)}${l.added?' <span class="qt-chip dim">اتزود</span>':''}</td>${blind?'':`<td>${erQ(l.sys)}</td>`}
+      <td>${ro?(l.counted==null?'—':`<b>${erQ(l.counted)}</b>`):`<input class="qt-inp" type="number" step="any" style="width:100px;font-size:15px" value="${l.counted==null?'':erEsc(l.counted)}" oninput="ER.edit.lines[${i}].counted=this.value===''?null:Number(this.value);ER.edit.__dirty=true;erCntRow(${i})">`}</td>
+      ${blind?'':`<td id="er-cnt-d${i}" style="font-weight:800;color:${d>0?'var(--success)':d<0?'var(--error)':'inherit'}">${d==null?'':(d>0?'+':'')+erQ(d)}</td>`}
+      <td>${ro?erEsc(l.note||''):`<input class="qt-inp" style="width:160px" value="${erEsc(l.note||'')}" oninput="ER.edit.lines[${i}].note=this.value;ER.edit.__dirty=true">`}</td></tr>`; }).join('')}
+    </tbody></table></div>`; };
+  c.__render=()=>{ erModalBody(form()); setTimeout(()=>{ const s=document.getElementById('er-cnt-scan'); if(s) s.focus(); },30); };
+  const foot=ro?`<button class="qt-btn ghost" onclick="erCntPrint(${id},false)">🖨️ طباعة بالنتيجة</button><button class="qt-btn ghost" onclick="erClose()">قفل</button>`
+    :`<button class="qt-btn" id="er-save-btn" onclick="erCntSave()">💾 حفظ العدّ</button><button class="qt-btn" style="background:var(--success)" id="er-cnt-ok" onclick="erCntApprove()">✅ اعتماد وتسوية الفروق</button><button class="qt-btn ghost" onclick="erCntPrint(${id},true)">🖨️ كشف العدّ</button><button class="qt-btn ghost" onclick="erClose()">قفل</button>`;
+  erModal(`🧮 جرد رقم ${c.no} — ${erEsc(erCntWh(c.warehouse_id).name||'')}`, form(), foot); setTimeout(()=>{ const s=document.getElementById('er-cnt-scan'); if(s) s.focus(); },50); }
+function erCntRow(i){ const l=ER.edit.lines[i], e=document.getElementById('er-cnt-d'+i); if(!e) return; const d=l.counted==null?null:Number(l.counted)-Number(l.sys); e.textContent=d==null?'':(d>0?'+':'')+erQ(d); e.style.color=d>0?'var(--success)':d<0?'var(--error)':'inherit'; }
+function erCntScan(v){ v=String(v||'').trim(); if(!v) return; const c=ER.edit, msg=document.getElementById('er-cnt-msg');
+  const x=(ER.boot.items||[]).find(i=>i.barcode&&String(i.barcode)===v)||(ER.boot.items||[]).find(i=>String(i.code).toLowerCase()===v.toLowerCase());
+  if(!x){ if(msg) msg.innerHTML=`<span style="color:var(--error)">❌ «${erEsc(v)}» مش لاقيه</span>`; if(typeof erBeep==='function') erBeep(false); return; }
+  let i=c.lines.findIndex(l=>l.item_id===x.id);
+  if(i<0){ c.lines.push({item_id:x.id,book:0,sys:0,counted:0,note:null,added:true}); i=c.lines.length-1; }
+  c.lines[i].counted=Number(c.lines[i].counted||0)+1; c.__dirty=true;
+  if(msg) msg.innerHTML=`✅ <b>${erEsc(x.code)}</b> ${erEsc(x.name_ar)} ← <b>${erQ(c.lines[i].counted)}</b>`; if(typeof erBeep==='function') erBeep(true);
+  c.__q=''; c.__render(); setTimeout(()=>{ const r=document.getElementById('er-cnt-r'+i); if(r){ r.scrollIntoView({block:'center'}); r.style.background='rgba(76,175,125,.18)'; } },60); }
+async function erCntSave(silent){ const c=ER.edit; await rpcSecure('erp_count_save',{p:{id:c.id,lines:c.lines.map(l=>({item_id:l.item_id,counted:l.counted,note:l.note||null}))}}); c.__dirty=false; if(!silent) erToast('💾 العدّ اتحفظ'); await erCntLoad(); }
+async function erCntApprove(){ const c=ER.edit, s=erCntSum(c), left=s.n-s.cnt; let zero=false;
+  if(left>0){ const r=prompt(`فيه ${left} صنف لسه متعدّش.\nاكتب 1 = سيبهم زى ما هم (من غير تسوية)\nاكتب 0 = اعتبرهم صفر (مش موجودين)`,'1'); if(r===null) return; zero=r.trim()==='0'; }
+  if(!confirm(`اعتماد الجرد؟\nزيادة ${erQ(s.up)} · عجز ${erQ(s.dn)}${zero&&left?` + ${left} صنف هيتصفّر`:''}\n\nالفروق هتتسوى فى المخزن ومينفعش ترجع (التصحيح بجرد جديد).`)) return;
+  await erRun('er-cnt-ok', async()=>{ await erCntSave(true); const r=await rpcSecure('erp_count_approve',{p_id:c.id,p_zero:zero}); erClose(); erToast(`✅ الجرد اتعتمد — ${r.moves} تسوية (${r.up} زيادة / ${r.down} عجز)`); ER.stock=null; await erCntLoad(); }); }
+async function erCntCancel(id){ const r=prompt('سبب إلغاء الجرد:'); if(!r) return; try{ await rpcSecure('erp_count_cancel',{p_id:id,p_reason:r}); erToast('✅ اتلغى'); await erCntLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+function erCntPrint(id, blank){ const c=(ER.cnts||[]).find(x=>x.id===id); if(!c) return; const it=i=>erById(ER.boot.items,i)||{};
+  erDocPrint({ title:blank?'كشف جرد (للعدّ)':'محضر جرد', no:c.no, date:c.date, sub:erCntWh(c.warehouse_id).name||'', test:c.test, notes:c.notes,
+    cols:blank?[['م','6%'],['الصنف'],['الكود','14%'],['العدد الفعلى','16%'],['ملاحظات','22%']]:[['م','5%'],['الصنف'],['الكود','12%'],['السيستم','11%'],['الفعلى','11%'],['الفرق','11%'],['ملاحظات','16%']],
+    rows:(c.lines||[]).map((l,i)=>{ const x=it(l.item_id); const d=l.counted==null?'':Number(l.diff!=null?l.diff:Number(l.counted)-Number(l.sys)); return blank?[i+1,erEsc(x.name_ar||''),erEsc(x.code||''),'','']:[i+1,erEsc(x.name_ar||''),erEsc(x.code||''),erQ(l.sys_at_ok!=null?l.sys_at_ok:l.sys),l.counted==null?'—':erQ(l.counted),d===''?'':(d>0?'+':'')+erQ(d),erEsc(l.note||'')]; }),
+    sigs:['أمين المخزن','القائم بالجرد','المراجع'] }); }
 
 </script>
 
