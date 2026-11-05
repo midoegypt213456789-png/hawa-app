@@ -5985,8 +5985,9 @@ async function chLoadThread(silent){
       ? `client_id=eq.${user.id}&kind=eq.warehouse&warehouse=eq.${encodeURIComponent(chDest.warehouse)}`
       : `client_id=eq.${user.id}&kind=eq.${chDest.kind}`;
     // 🧩 ممكن يكون فيه أكتر من ثريد لنفس الوجهة (موظفين مختلفين مثلاً) — نجمعهم كلهم فى محادثة واحدة
-    const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client,unread_staff&order=last_at.desc&limit=6`, { headers: HDR });
-    const td = await tr.json();
+    let td, __msgs=null;
+    if (clHasTok()) { const L = await clRpc('cl_chat_load', { p_kind: chDest.kind, p_warehouse: chDest.kind==='warehouse' ? chDest.warehouse : null }); td = L.threads; __msgs = L.messages; }
+    else { const tr = await fetch(`${SB}/rest/v1/chat_threads?${q}&select=id,unread_client,unread_staff&order=last_at.desc&limit=6`, { headers: HDR }); td = await tr.json(); }
     const tds = Array.isArray(td) ? td : [];
     if(!tds.length){ chThreadId=null; chLastCount=0; box.innerHTML = CH_EMPTY; return; }
     const t = {
@@ -5996,8 +5997,9 @@ async function chLoadThread(silent){
     };
     const tIds = tds.map(x=>x.id);
     chThreadId = t.id;
-    const mr = await fetch(`${SB}/rest/v1/chat_messages?thread_id=in.(${tIds.join(',')})&select=*&order=created_at.asc`, { headers: {...HDR,'Range':'0-299'} });
-    let msgs = await mr.json(); if(!Array.isArray(msgs)) msgs=[];
+    let msgs = __msgs;
+    if (!msgs) { const mr = await fetch(`${SB}/rest/v1/chat_messages?thread_id=in.(${tIds.join(',')})&select=*&order=created_at.asc`, { headers: {...HDR,'Range':'0-299'} }); msgs = await mr.json(); }
+    if(!Array.isArray(msgs)) msgs=[];
     const staffSeenChanged = (typeof chLastUnreadStaff==='number') && chLastUnreadStaff !== (t.unread_staff||0);
     chLastUnreadStaff = (t.unread_staff||0);
     if(!(silent && msgs.length===chLastCount && !staffSeenChanged)){
@@ -6108,8 +6110,9 @@ let chUnreadMap = {};   // 'w|السادات' / 'employee' / 'admin' → عدد 
 async function chBadge(){
   if(!user.id) return;
   try{
-    const r = await fetch(`${SB}/rest/v1/chat_threads?client_id=eq.${user.id}&unread_client=gt.0&select=kind,warehouse,unread_client`, { headers: HDR });
-    const d = await r.json();
+    let d;
+    if (clHasTok()) d = await clRpc('cl_chat_unread', {});
+    else { const r = await fetch(`${SB}/rest/v1/chat_threads?client_id=eq.${user.id}&unread_client=gt.0&select=kind,warehouse,unread_client`, { headers: HDR }); d = await r.json(); }
     chUnreadMap = {};
     let total = 0;
     (Array.isArray(d)?d:[]).forEach(t=>{
