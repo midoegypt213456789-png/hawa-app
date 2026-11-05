@@ -1061,6 +1061,16 @@ async function clRpc(fn, args){ const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{m
 function clErr(m, dflt){ m=String(m||''); const hit=m.match(/(?:PERMIT|CAPACITY|DUPLICATE)_[A-Z_]+:\s*(.+)$/); if(hit) return '⛔ '+hit[1].trim(); if(m==='session'){ try{ delete user.session_token; localStorage.setItem('hawa_user', JSON.stringify(user)); }catch(e){} return '⛔ الجلسة انتهت — سجّل الدخول تانى'; } if(/[\u0600-\u06FF]/.test(m)) return '⛔ '+m.replace(/^[A-Z_]+:\s*/,'').trim(); return dflt||('⛔ '+m); }
 function clHasTok(){ return !!(user && user.session_token); }
 
+// 🔐 خطة الأمان: الجلسة القديمة (من غير توكن) بتطلب دخول مرة واحدة — بعدها الحساب بيشتغل بالتوكن بس
+if (user && user.id && !user.session_token) {
+  try { sessionStorage.setItem('hw_relogin','1'); } catch(_){}
+  Object.keys(user).forEach(k=>{ delete user[k]; }); try { localStorage.removeItem('hawa_user'); } catch(_){}
+}
+(function(){ let f=false; try{ f=sessionStorage.getItem('hw_relogin')==='1'; }catch(_){} if(!f || (user&&user.id)) return;
+  const show=()=>{ if(document.getElementById('hwRelogin')) return; const d=document.createElement('div'); d.id='hwRelogin';
+    d.style.cssText='position:fixed;top:10px;left:10px;right:10px;z-index:100000;background:#1A1A1A;border:1px solid #C9A84C;color:#E8C97A;border-radius:12px;padding:10px 14px;font:700 14px Cairo,sans-serif;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.5)';
+    d.textContent='🔐 لأمان حسابك — سجّل الدخول مرة واحدة كمان (اليوزر والباسورد أو البصمة)'; d.onclick=()=>d.remove(); document.body.appendChild(d); setTimeout(()=>d.remove(),12000); };
+  if(document.body) show(); else document.addEventListener('DOMContentLoaded',show); })();
 // 🔐 Login Gate — الـ Lock Screen هو صفحة الدخول الموحّدة (form + bio)
 if (!user || !user.id) {
   const savedBio = (function(){ try { return JSON.parse(localStorage.getItem('hawa_biometric') || 'null'); } catch(e){ return null; } })();
