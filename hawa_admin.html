@@ -5984,16 +5984,39 @@ let currentSection = 'bookings';
 let SESSION_TOKEN = null;  // 🔑 توكن الجلسة الآمن (المرحلة ٢)
 // دخول آمن يصدر توكن — ولو الـ secure مش موجود لأى سبب بيرجع للقديم (مفيش كسر)
 let LOGIN_LOCK_MSG='';
+// 🔐 التحقق بخطوتين — كود على التليجرام لما تدخل من جهاز جديد (الجهاز بيتفتكر 30 يوم)
+function secDev(){ try{ let d=localStorage.getItem('hawa_dev'); if(!d||d.length<16){ d=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,'0')).join(''); localStorage.setItem('hawa_dev',d); } return d; }catch(e){ return ''; } }
+function secOtpAsk(x){ return new Promise(resolve=>{ const o=document.createElement('div'); o.id='sec-otp';
+  o.style.cssText='position:fixed;inset:0;z-index:2147483000;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;padding:16px;font-family:Cairo,sans-serif';
+  const B='flex:1;border:0;border-radius:12px;padding:11px;font:800 15px Cairo,sans-serif;cursor:pointer';
+  o.innerHTML=`<div dir="rtl" style="background:#111;border:1px solid #C9A84C;border-radius:16px;padding:20px;width:100%;max-width:360px;color:#F0EDE8;text-align:center;box-shadow:0 16px 48px rgba(0,0,0,.6)">
+    <div style="font-size:32px">🔐</div><div style="font-weight:800;font-size:17px;margin:4px 0">كود الدخول</div>
+    <div style="font-size:13px;color:#8A8580">بعتنالك كود من 6 أرقام على التليجرام ${x.tg?'('+String(x.tg).replace(/[<>&]/g,'')+')':''}</div>
+    <input id="sec-otp-in" inputmode="numeric" autocomplete="one-time-code" maxlength="6" dir="ltr" style="width:100%;margin-top:14px;background:#1A1A1A;border:1.5px solid #2A2A2A;border-radius:12px;padding:12px;color:#fff;font:800 24px monospace;letter-spacing:8px;text-align:center;outline:none">
+    <label style="display:flex;gap:6px;align-items:center;justify-content:center;margin-top:10px;font-size:13px;color:#8A8580;cursor:pointer"><input type="checkbox" id="sec-otp-tr" checked style="width:auto;margin:0;flex:0 0 auto"> افتكر الجهاز ده 30 يوم</label>
+    <div id="sec-otp-msg" style="color:#E05555;font-size:13px;min-height:18px;margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:6px"><button id="sec-otp-ok" style="${B};background:linear-gradient(135deg,#C9A84C,#E8C97A);color:#111">دخول</button><button id="sec-otp-x" style="${B};background:#1A1A1A;color:#F0EDE8;border:1px solid #2A2A2A;flex:0 0 90px">إلغاء</button></div></div>`;
+  document.body.appendChild(o); const inp=o.querySelector('#sec-otp-in'), msg=o.querySelector('#sec-otp-msg'), ok=o.querySelector('#sec-otp-ok'); setTimeout(()=>inp.focus(),50);
+  let busy=false; const go=async()=>{ if(busy) return; const c=inp.value.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/\D/g,''); if(c.length!==6){ msg.textContent='اكتب الـ 6 أرقام'; return; }
+    busy=true; ok.disabled=true; ok.textContent='⏳'; msg.textContent='';
+    try{ const r=await fetch(`${SB}/rest/v1/rpc/login_otp_verify`,{method:'POST',headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','x-hawa-device':secDev()},body:JSON.stringify({p_otp:x.otp,p_code:c,p_trust:o.querySelector('#sec-otp-tr').checked})});
+      const t=await r.text(); let j=null; try{ j=JSON.parse(t); }catch(e){}
+      if(!r.ok||!j||j.error||!j.token){ msg.textContent=(j&&(j.error||j.message))||'الكود غلط'; inp.value=''; if(/خلص|ادخل تانى/.test(msg.textContent)){ setTimeout(()=>{ o.remove(); resolve(null); },1600); } return; }
+      o.remove(); resolve(j); }
+    catch(e){ msg.textContent='📶 مفيش نت — حاول تانى'; } finally{ busy=false; ok.disabled=false; ok.textContent='دخول'; } };
+  ok.onclick=go; inp.addEventListener('keydown',e=>{ if(e.key==='Enter') go(); }); inp.addEventListener('input',()=>{ if(inp.value.replace(/\D/g,'').length===6) go(); });
+  o.querySelector('#sec-otp-x').onclick=()=>{ o.remove(); resolve(null); }; }); }
+
 async function rpcLoginTry(secureFn, oldFn, u, p){
   try{
-    const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
-    if(r.ok){ const j=await r.json(); return j||null; }
+    const r=await fetch(`${SB}/rest/v1/rpc/${secureFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json','x-hawa-device':secDev()},body:JSON.stringify({p_username:u,p_password:p})});
+    if(r.ok){ let j=await r.json(); if(j&&j.need_otp){ j=await secOtpAsk(j); if(!j){ LOGIN_LOCK_MSG='اتلغى الدخول — لازم كود التليجرام'; return null; } } return j||null; }
     // 🔒 قفل مؤقت بعد محاولات غلط كتير — نعرض رسالة السيرفر بدل «الباسورد غلط»
     try{ const e=await r.json(); if(e&&e.message&&/محاولات دخول|موقوف/.test(e.message)){ LOGIN_LOCK_MSG=e.message; return null; } }catch(_){}
   }catch(e){}
   try{
     const r2=await fetch(`${SB}/rest/v1/rpc/${oldFn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_username:u,p_password:p})});
-    if(r2.ok){ const j2=await r2.json(); return j2||null; }
+    if(r2.ok){ let j2=await r2.json(); if(j2&&j2.need_otp) j2=await secOtpAsk(j2); return j2||null; }
   }catch(e){}
   return null;
 }
