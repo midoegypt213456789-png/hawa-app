@@ -10971,6 +10971,7 @@ const EXTRA_PERMS = {
   'erp-lt-appr':       { icon: '🏷️', label: 'اعتماد جوابات طلبات التجار — دخول = تجيله رسالة لما التاجر يختار «تروح الاعتماد»' },
   'erp-lt-perm':       { icon: '🔐', label: 'تصاريح الجوابات — دخول = يشوف التصاريح وطلبات إعادة الطباعة ويستعلم، تعديل = يعمل تصريح طباعة/تعديل لمستخدم ويوافق على الطلبات' },
   'erp-lt-req':        { icon: '📥', label: 'طلبات الجوابات من التجار (شيت Excel) — دخول = يشوف الطلبات وتجيله رسالة بالجديد، تعديل = يوافق/يرفض ويطبع' },
+  'erp-approve':       { icon: '✅', label: 'الموافقات — تعديل = يوافق/يرفض طلبات تجاوز حد الائتمان والخصم الكبير (زى المدير)' },
   'erp-count-ok':      { icon: '🧮', label: 'اعتماد الجرد — تعديل = يعتمد الجرد وتتسوى الفروق فى المخزن (العدّ نفسه بصلاحية المخازن)' },
   'erp-overdraft':     { icon: '📉', label: 'البيع على المكشوف دفترى — دخول = يقدر يعمل فاتورة أكبر من الرصيد الدفترى (التسليم برضه لحد الرصيد الفعلى بس)' }
 };
@@ -18973,7 +18974,7 @@ function erHubBar(sec){ ermDdClose();
   let T=document.getElementById('erm-top');
   if(top){ document.querySelectorAll('.erp-hub-bar').forEach(b=>b.remove());
     if(!T){ T=document.createElement('div'); T.id='erm-top'; document.body.appendChild(T); }
-    T.innerHTML=`<div class="erm-logo">🏍️ HAWA</div>${ermModsHtml()}<div class="erm-crumb"></div>`;
+    T.innerHTML=`<div class="erm-logo">🏍️ HAWA</div>${ermModsHtml()}<button class="erm-appr" style="display:none" onclick="erApprInbox()" title="طلبات الموافقة">🔔 الموافقات</button><div class="erm-crumb"></div>`; if(typeof erApprBadge==='function') setTimeout(erApprBadge,300);
     if(ERP_HUB.includes(sec)) try{ localStorage.setItem('erp_hub_last',sec); }catch(e){}
     erMenuMark(); return; }
   if(T) T.remove();
@@ -21616,7 +21617,7 @@ function erModalBody(body){ if(__erRendering){ setTimeout(()=>erModalBody(body),
   if(g && !(ER.edit&&ER.edit.__focus)) setTimeout(()=>{ if(ER.edit&&ER.edit.__focus) return; const a=document.activeElement; if(a&&a!==document.body&&b.contains(a)) return; const n=b.querySelector(`[data-g="${g}"]`); if(n){ try{ n.focus({preventScroll:true}); }catch(e){} } },0); }
 function erClose(){ const m=document.getElementById('er-modal'); if(m) m.style.display='none'; if(window.erxPkHide) erxPkHide(); erModalDock(false); erQHintHide(); ER.edit=null; if(ER.iedit && document.getElementById('eri-ed')) ER.edit=ER.iedit; }
 function erFoot(saveFn, ro){ return ro ? `<span class="qt-sub">👁️ عرض بس — معندكش صلاحية تعديل</span>` : `<button class="qt-btn" id="er-save-btn" onclick="${saveFn}">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`; }
-async function erRun(btnId, fn){ const b=document.getElementById(btnId); if(b){ if(b.disabled) return; b.disabled=true; } try{ await fn(); }catch(e){ erToast('❌ '+erErr(e), false); } finally{ if(b) b.disabled=false; } }
+async function erRun(btnId, fn){ const b=document.getElementById(btnId); if(b){ if(b.disabled) return; b.disabled=true; } try{ await fn(); }catch(e){ const m=erErr(e); if(/^APPROVAL:/.test(m) && typeof erApprAsk==='function') erApprAsk(m); else erToast('❌ '+m, false); } finally{ if(b) b.disabled=false; } }
 function erFld(label, html, w){ return `<div class="qt-fld" style="${w?`flex:${w}`:''}"><label>${label}</label>${html}</div>`; }
 function erInp(k, v, opt){ opt=opt||{}; return `<input class="qt-inp" ${opt.type?`type="${opt.type}"`:''} ${opt.step?`step="${opt.step}"`:''} ${opt.ph?`placeholder="${erEsc(opt.ph)}"`:''} ${opt.dir?`dir="${opt.dir}"`:''} ${opt.list?`list="${opt.list}"`:''} ${opt.dis?'disabled':''} value="${erEsc(v==null?'':v)}" oninput="erSet('${k}',this.value)" style="width:100%${opt.style?';'+opt.style:''}">`; }
 function erSel(k, v, opts, rerender, extra){ return `<select class="qt-inp" style="width:100%" onchange="erSet('${k}',this.value,${rerender?'true':'false'})" ${extra||''}>${opts.map(o=>`<option value="${erEsc(o[0])}" ${String(o[0])===String(v==null?'':v)?'selected':''}>${erEsc(o[1])}</option>`).join('')}</select>`; }
@@ -26257,6 +26258,56 @@ function erCntPrint(id, blank){ const c=(ER.cnts||[]).find(x=>x.id===id); if(!c)
     cols:blank?[['م','6%'],['الصنف'],['الكود','14%'],['العدد الفعلى','16%'],['ملاحظات','22%']]:[['م','5%'],['الصنف'],['الكود','12%'],['السيستم','11%'],['الفعلى','11%'],['الفرق','11%'],['ملاحظات','16%']],
     rows:(c.lines||[]).map((l,i)=>{ const x=it(l.item_id); const d=l.counted==null?'':Number(l.diff!=null?l.diff:Number(l.counted)-Number(l.sys)); return blank?[i+1,erEsc(x.name_ar||''),erEsc(x.code||''),'','']:[i+1,erEsc(x.name_ar||''),erEsc(x.code||''),erQ(l.sys_at_ok!=null?l.sys_at_ok:l.sys),l.counted==null?'—':erQ(l.counted),d===''?'':(d>0?'+':'')+erQ(d),erEsc(l.note||'')]; }),
     sigs:['أمين المخزن','القائم بالجرد','المراجع'] }); }
+
+
+// ═══ ✅ الموافقات (تجاوز حد الائتمان / خصم كبير) ═══
+(function(){ const st=document.createElement('style'); st.textContent=`
+#er-appr-ov{position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
+#er-appr-ov .bx{background:var(--dark2,#111);border:1px solid var(--gold,#C9A84C);border-radius:14px;max-width:720px;width:100%;max-height:86vh;overflow:auto;padding:16px;box-shadow:0 16px 40px rgba(0,0,0,.6)}
+.erm-appr{position:relative;background:transparent;border:1px solid #333;color:var(--text,#F0EDE8);border-radius:9px;padding:5px 10px;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap}
+.erm-appr:hover{border-color:var(--gold,#C9A84C)}.erm-appr b{background:var(--error,#E05555);color:#fff;border-radius:10px;padding:0 6px;font-size:11px;margin-inline-start:4px}`; document.head.appendChild(st); })();
+function erApprOv(html){ let o=document.getElementById('er-appr-ov'); if(!o){ o=document.createElement('div'); o.id='er-appr-ov'; o.addEventListener('mousedown',e=>{ if(e.target===o) erApprClose(); }); document.body.appendChild(o); } o.innerHTML=`<div class="bx">${html}</div>`; o.style.display='flex'; return o; }
+function erApprClose(){ const o=document.getElementById('er-appr-ov'); if(o) o.remove(); clearInterval(window.__erApprPoll); }
+const ER_APPR_K={credit:'💳 تجاوز حد الائتمان',disc:'🏷️ خصم أكبر من المسموح'};
+// بيتنادى لما الحفظ يرجع APPROVAL:kind|amount|limit|نص
+function erApprAsk(msg){ const p=String(msg).replace(/^APPROVAL:/,'').split('|'), kind=p[0], amount=p[1], lim=p[2], text=p.slice(3).join('|'); const v=ER.edit||{};
+  window.__erApprReq={kind,amount,limit:lim,client_id:v.client_id||null,doc_id:v.id||null};
+  erApprOv(`<div style="font-size:16px;font-weight:900;color:var(--gold)">🔔 محتاج موافقة المدير</div><div style="margin:8px 0;color:#fff">${erEsc(text)}</div>
+    <div class="qt-sub">تقدر تبعت طلب للمدير — يوصله على التليجرام وفى البرنامج. أول ما يوافق ارجع دوس «حفظ» تانى (الفاتورة هتفضل مفتوحة زى ما هى).</div>
+    <textarea class="qt-inp" id="er-appr-reason" rows="3" style="width:100%;margin-top:10px" placeholder="اكتب السبب للمدير (مثلاً: التاجر هيدفع شيك يوم الخميس)"></textarea>
+    <div id="er-appr-st" style="margin-top:8px"></div>
+    <div class="qt-row" style="gap:8px;margin-top:10px"><button class="qt-btn" id="er-appr-send" onclick="erApprSend()">📨 ابعت طلب الموافقة</button><button class="qt-btn ghost" onclick="erApprClose()">إلغاء</button></div>`);
+  setTimeout(()=>{ const t=document.getElementById('er-appr-reason'); if(t) t.focus(); },50); }
+async function erApprSend(){ const R=window.__erApprReq; if(!R) return; const reason=(document.getElementById('er-appr-reason')||{}).value||'';
+  await erRun('er-appr-send', async()=>{ const id=await rpcSecure('erp_appr_request',{p:{kind:R.kind,amount:R.amount,limit:R.limit,client_id:R.client_id,doc_id:R.doc_id,reason}}); R.id=id;
+    const st=document.getElementById('er-appr-st'); if(st) st.innerHTML='⏳ <b>الطلب اتبعت — مستنيين رد المدير...</b>'; const b=document.getElementById('er-appr-send'); if(b) b.style.display='none';
+    clearInterval(window.__erApprPoll); window.__erApprPoll=setInterval(erApprPollMine,7000); }); }
+async function erApprPollMine(){ const R=window.__erApprReq; if(!R||!R.id) return; try{ const r=await rpcSecure('erp_appr_list',{p:{mine:true}}); const x=(r.rows||[]).find(z=>z.id===R.id); if(!x||x.status==='pending') return; clearInterval(window.__erApprPoll);
+  const st=document.getElementById('er-appr-st'); if(!st) return;
+  st.innerHTML=x.status==='approved'?`<div style="color:var(--success);font-weight:900;font-size:15px">✅ المدير وافق${x.note?' — '+erEsc(x.note):''}</div><div class="qt-sub">اقفل الرسالة دى ودوس «حفظ» فى الفاتورة.</div>`:`<div style="color:var(--error);font-weight:900;font-size:15px">❌ المدير رفض${x.note?' — '+erEsc(x.note):''}</div>`;
+  if(typeof erBeep==='function') erBeep(x.status==='approved'); }catch(e){} }
+// صندوق الموافقات للمدير
+async function erApprInbox(){ let r; try{ r=await rpcSecure('erp_appr_list',{p:{}}); }catch(e){ erToast('❌ '+erErr(e),false); return; } const rows=r.rows||[], ap=r.approver;
+  erApprOv(`<div class="qt-row" style="align-items:center"><div style="font-size:16px;font-weight:900;color:var(--gold)">🔔 ${ap?'طلبات الموافقة':'طلباتى'}</div><div style="flex:1"></div><button class="qt-btn ghost sm" onclick="erApprClose()">✖</button></div>
+    <div class="qt-scroll" style="margin-top:10px"><table class="qt-tbl"><thead><tr><th>الطلب</th><th>من</th><th>التاجر</th><th>القيمة</th><th>السبب</th><th>الحالة</th>${ap?'<th></th>':''}</tr></thead><tbody>
+    ${rows.map(x=>`<tr style="${x.status==='pending'?'background:rgba(201,168,76,.08)':'opacity:.75'}"><td style="white-space:nowrap">${ER_APPR_K[x.kind]||x.kind}<div class="qt-sub">${erEsc(new Date(x.at).toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}))}</div></td><td>${erEsc(x.by||'')}</td><td style="text-align:right">${erEsc(x.client||'')}</td>
+      <td style="white-space:nowrap">${x.kind==='disc'?`${erEsc(x.amount)}% <span class="qt-sub">(المسموح ${erEsc(x.limit)}%)</span>`:`${erMoney(x.amount,2)}<div class="qt-sub">الحد ${erMoney(x.limit,2)}</div>`}</td><td style="text-align:right">${erEsc(x.reason||'')}</td>
+      <td>${{pending:'⏳ مستنى',approved:'✅ اتوافق',rejected:'❌ اترفض',used:'✔️ اتنفذ',cancelled:'— اتلغى'}[x.status]||x.status}${x.decided_by?`<div class="qt-sub">${erEsc(x.decided_by)}${x.note?' — '+erEsc(x.note):''}</div>`:''}</td>
+      ${ap?`<td style="white-space:nowrap">${x.status==='pending'?`<button class="qt-btn sm" style="background:var(--success)" onclick="erApprDecide(${x.id},true)">✅ موافق</button><button class="qt-btn red sm" onclick="erApprDecide(${x.id},false)">❌ رفض</button>`:''}</td>`:''}</tr>`).join('')}
+    </tbody></table></div>${rows.length?'':'<div class="qt-sub" style="padding:10px">مفيش طلبات</div>'}
+    ${(typeof EMP_MODE==='undefined'||!EMP_MODE)?`<details style="margin-top:12px" ontoggle="if(this.open)erApprSetLoad()"><summary style="cursor:pointer;color:var(--gold);font-weight:800">⚙️ إعدادات الموافقات</summary><div id="er-appr-set" class="qt-sub" style="margin-top:8px">⏳</div></details>`:''}`); }
+async function erApprSetLoad(){ const el=document.getElementById('er-appr-set'); if(!el) return; try{ const r=await rpcSecure('erp_appr_settings',{p:{}});
+  el.innerHTML=`<div class="qt-row" style="gap:10px;align-items:end;flex-wrap:wrap">${erFld('أقصى خصم على الفاتورة من غير موافقة (%) — 0 = مفيش حد',`<input class="qt-inp" id="er-appr-dp" type="number" step="0.1" style="width:120px" value="${erEsc(r.disc_pct)}">`,0)}
+    ${erFld('تليجرام اللى توصله الطلبات (أرقام بفاصلة — فاضى = '+erEsc(r.default_tg)+')',`<input class="qt-inp" id="er-appr-tg" dir="ltr" style="width:240px" value="${erEsc(r.tg)}">`,0)}<button class="qt-btn sm" onclick="erApprSetSave()">💾 حفظ</button></div>
+    <div style="margin-top:6px">💳 تجاوز حد الائتمان بيحتاج موافقة على طول (للتجار اللى ليهم حد). المدير وصاحب صلاحية «الموافقات» بيعدّوا من غير طلب.</div>`; }catch(e){ el.textContent='❌ '+erErr(e); } }
+async function erApprSetSave(){ try{ await rpcSecure('erp_appr_settings',{p:{disc_pct:document.getElementById('er-appr-dp').value,tg:document.getElementById('er-appr-tg').value}}); erToast('✅ اتحفظ'); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erApprDecide(id, ok){ const note=prompt(ok?'ملاحظة للموظف (اختيارى):':'سبب الرفض:',''); if(note===null) return;
+  try{ await rpcSecure('erp_appr_decide',{p_id:id,p_ok:ok,p_note:note}); erToast(ok?'✅ اتوافق':'❌ اترفض'); erApprBadge(); erApprInbox(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erApprBadge(){ try{ if(typeof SESSION_TOKEN==='undefined'||!SESSION_TOKEN) return; const r=await rpcSecure('erp_appr_list',{p:{}}); window.__erApprN=r.approver?r.pending:0;
+  document.querySelectorAll('.erm-appr').forEach(b=>{ b.style.display=r.approver||r.pending?'':'none'; b.innerHTML=`🔔 الموافقات${window.__erApprN?`<b>${window.__erApprN}</b>`:''}`; }); }catch(e){} }
+setInterval(()=>{ if(document.visibilityState==='visible' && document.getElementById('erm-top')) erApprBadge(); },60000);
+// رابط التليجرام: ?appr=ID → يفتح الموافقات بعد الدخول
+(function(){ try{ const q=new URLSearchParams(location.search); if(!q.get('appr')) return; const t0=Date.now(); const tk=()=>{ if(typeof SESSION_TOKEN!=='undefined'&&SESSION_TOKEN&&document.getElementById('app')&&document.getElementById('app').classList.contains('show')){ erApprInbox(); history.replaceState(null,'',location.pathname); return; } if(Date.now()-t0<120000) setTimeout(tk,800); }; setTimeout(tk,1500); }catch(e){} })();
 
 </script>
 
