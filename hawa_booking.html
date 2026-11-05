@@ -3404,11 +3404,11 @@ async function acctCheck(){
 function acctDeepLink(){
   let q; try { q=new URLSearchParams(location.search); } catch(_){ return; }
   if (q.get('go')!=='acct' || _acct.__dl) return; _acct.__dl=true;
-  _acct.sec=q.get('r')==='let'?'let':(q.get('r')==='av'?'av':(q.get('r')==='lreq'?'lreq':'stmt')); _acct.m=q.get('m')==='det'?'det':'sum';
+  _acct.sec=q.get('r')==='ord'?'ord':q.get('r')==='let'?'let':(q.get('r')==='av'?'av':(q.get('r')==='lreq'?'lreq':'stmt')); _acct.m=q.get('m')==='det'?'det':'sum';
   const f=q.get('from')||'', t=q.get('to')||'';
   if (f||t){ _acct.per='c'; _acct.from=/^\d{4}-\d{2}-\d{2}$/.test(f)?f:''; _acct.to=/^\d{4}-\d{2}-\d{2}$/.test(t)?t:''; if(!_acct.from&&!f) _acct.per='a'; }
   switchTab('acct');
-  if (_acct.sec!=='av' && _acct.sec!=='lreq') acctRun();
+  if (_acct.sec!=='av' && _acct.sec!=='lreq' && _acct.sec!=='ord') acctRun();
 }
 function acctInit(){ if (typeof logActivity==='function') logActivity('cl_open_acct','📊 فتح حسابى'); acctRender(); acctTgLoad(); }
 // 🎯 أهدافى ومكافآتى
@@ -3561,10 +3561,11 @@ function acctPrint(){
 }
 function acctRender(){
   const el=document.getElementById('acctBody'); if(!el) return;
-  const S=_acct, segs=[['stmt','📒 كشف حساب'],['let','📨 الجوابات'],['lreq','📥 طلب جوابات'],['av','🔎 استعلام موتوسيكل']];
+  const S=_acct, segs=[['ord','🛒 اطلب'],['stmt','📒 كشف حساب'],['let','📨 الجوابات'],['lreq','📥 طلب جوابات'],['av','🔎 استعلام موتوسيكل']];
   const pers=[['m','الشهر ده'],['q','آخر 3 شهور'],['y','السنة دى'],['a','من الأول'],['c','فترة محددة']];
   let h=`<div class="ac-seg">${segs.map(s=>`<button class="${S.sec===s[0]?'on':''}" onclick="acctSec('${s[0]}')">${s[1]}</button>`).join('')}</div>`;
   if (S.sec==='lreq'){ el.innerHTML=h+lrRender(); return; }
+  if (S.sec==='ord'){ el.innerHTML=h+'<div id="acctOrd"></div>'; ordLoad(); return; }
   if (S.sec==='av'){
     h+=`<div class="ac-box"><div class="ac-note" style="text-align:right">اكتب كود الموتوسيكل وهنقولك متوفر فى المخازن ولا لأ</div>
       <div class="ac-row"><input id="acAvIn" class="ac-in" dir="ltr" placeholder="مثال: T305" onkeydown="if(event.key==='Enter')acctAvail()"><button class="ac-go" onclick="acctAvail()">🔎 استعلم</button></div><div id="acAvOut"></div></div>`;
@@ -6286,6 +6287,50 @@ chBadge();
   else if (isAndroid) { setTimeout(function(){ if (!deferred) show(); }, 5000); }
   if (forced) setTimeout(function(){ if (!deferred) guide(); }, 1200);
 })();
+// ===================== 🛒 اطلب أونلاين (B2B) =====================
+// التاجر بيشوف الأصناف المتاحة بسعر شريحته ← يحط فى السلة ← يبعت الطلب ← الموظف يحوّله فاتورة من الأدمن (أو يرفضه) ← التاجر بيوصله إشعار
+var _ord = { cat:null, q:'', c:'', cart:{}, notes:'', mine:null, busy:false, err:'', ok:'' };
+async function ordLoad(force){ if(_ord.cat && !force){ ordRender(); return; } _ord.err=''; ordRender();
+  try{ _ord.cat=await clRpc('cl_erp_catalog',{p:{}}); _ord.mine=await clRpc('cl_erp_orders',{}); }catch(e){ _ord.err=clErr(e.message,'⛔ حصل خطأ — حاول تانى'); } ordRender(); }
+function ordQty(id,d){ const it=((_ord.cat&&_ord.cat.items)||[]).find(x=>x.id===id); if(!it||!it.avail) return; const n=Math.max(0,Math.min(1000,(Number(_ord.cart[id])||0)+d)); if(n) _ord.cart[id]=n; else delete _ord.cart[id]; _ord.ok=''; ordRender(); }
+function ordSetQty(id,v){ const n=Math.max(0,Math.min(1000,Math.floor(Number(v)||0))); if(n) _ord.cart[id]=n; else delete _ord.cart[id]; ordRender(); }
+function ordSum(){ const its=(_ord.cat&&_ord.cat.items)||[]; let n=0,t=0; Object.entries(_ord.cart).forEach(([id,q])=>{ const it=its.find(x=>String(x.id)===id); if(it){ n+=q; t+=q*Number(it.price||0); } }); return {n,t}; }
+async function ordSubmit(){ if(_ord.busy) return; const items=Object.entries(_ord.cart).map(([id,q])=>({item_id:Number(id),qty:q})); if(!items.length) return;
+  const nt=document.getElementById('ordNotes'); if(nt) _ord.notes=nt.value;
+  const S=ordSum(); if(!confirm(`تبعت الطلب؟\n${S.n} قطعة — الإجمالى ${acM(S.t)} ج\n(السعر النهائى بيتأكد فى الفاتورة)`)) return;
+  _ord.busy=true; _ord.err=''; ordRender();
+  try{ const r=await clRpc('cl_erp_order_submit',{p:{items,notes:_ord.notes}}); _ord.cart={}; _ord.notes=''; _ord.ok=`✅ طلبك رقم ${r.no} اتبعت — هيوصلك إشعار لما يتراجع`; if(typeof logActivity==='function') logActivity('cl_order','🛒 طلب أونلاين رقم '+r.no);
+    _ord.mine=await clRpc('cl_erp_orders',{}); }catch(e){ _ord.err=clErr(e.message,'⛔ الطلب ماتبعتش — حاول تانى'); }
+  finally{ _ord.busy=false; ordRender(); } }
+async function ordCancel(id){ if(!confirm('تلغى الطلب ده؟')) return; try{ await clRpc('cl_erp_order_cancel',{p_id:id}); _ord.mine=await clRpc('cl_erp_orders',{}); }catch(e){ _ord.err=clErr(e.message,'⛔ حصل خطأ'); } ordRender(); }
+function ordHtml(){ const C=_ord.cat; let h='';
+  if(_ord.err) h+=`<div class="ac-av ac-no">${acEsc(_ord.err)}</div>`; if(_ord.ok) h+=`<div class="ac-av ac-yes">${acEsc(_ord.ok)}</div>`;
+  if(!C) return h+(_ord.err?'':'<div class="ac-note">⏳ بنحمّل الأصناف...</div>');
+  const q=_ord.q.trim().toLowerCase(), its=(C.items||[]).filter(x=>(!_ord.c||String(x.cat)===_ord.c)&&(!q||(x.code+' '+x.name).toLowerCase().includes(q)));
+  h+=`<div class="ac-box"><input class="ac-in" style="width:100%" placeholder="🔎 دوّر بالكود أو الاسم" value="${acEsc(_ord.q)}" oninput="_ord.q=this.value;ordRenderList()">
+    <div class="ac-pers" style="margin-top:8px"><button class="${!_ord.c?'on':''}" onclick="_ord.c='';ordRender()">الكل</button>${(C.cats||[]).map(k=>`<button class="${_ord.c===String(k.id)?'on':''}" onclick="_ord.c='${k.id}';ordRender()">${acEsc(k.name)}</button>`).join('')}</div></div>
+    <div id="ordList">${ordListHtml(its)}</div>`;
+  const S=ordSum();
+  if(S.n) h+=`<div style="position:sticky;bottom:8px;background:var(--dark2);border:1px solid var(--gold);border-radius:14px;padding:10px 12px;margin-top:10px;box-shadow:0 8px 24px rgba(0,0,0,.5)">
+    <div style="display:flex;justify-content:space-between;font-weight:800"><span>🛒 ${S.n} قطعة</span><span style="color:var(--gold-light)">${acM(S.t)} ج</span></div>
+    <input id="ordNotes" class="ac-in" style="width:100%;margin-top:8px" placeholder="ملاحظة (مثلاً: ميعاد التحميل / طريقة الدفع)" value="${acEsc(_ord.notes)}" oninput="_ord.notes=this.value">
+    <button class="ac-go ac-wide" style="margin-top:8px" onclick="ordSubmit()" ${_ord.busy?'disabled':''}>${_ord.busy?'⏳ بنبعت...':'📤 ابعت الطلب'}</button>
+    <div class="ac-dim" style="font-size:11px;margin-top:4px">💡 الأسعار حسب شريحتك — الطلب بيتراجع من الشركة ويتحول فاتورة</div></div>`;
+  const M=_ord.mine||[]; if(M.length) h+=`<div style="font-weight:800;margin:16px 0 8px">📋 طلباتى</div>`+M.map(o=>{ const col=o.status==='جديد'?'#4A90D9':o.status==='اتعمل فاتورة'?'#4CAF7D':'#E05555';
+    return `<div class="ac-ln"><div class="ac-l1"><span>طلب <b>${acEsc(o.no)}</b> · ${acEsc(new Date(o.at).toLocaleDateString('ar-EG'))}</span><span style="color:${col};font-weight:800">${o.status==='جديد'?'⏳ مستنى المراجعة':acEsc(o.status)}${o.inv_no?' '+acEsc(o.inv_no):''}</span></div>
+      <div class="ac-its">${(o.items||[]).map(x=>`<div>• ${acEsc(x.name)} <span class="ac-dim">${acEsc(x.code)}</span> — ${acQ(x.qty)} × ${acM(x.price)}</div>`).join('')}</div>
+      ${o.reason&&o.status!=='اتعمل فاتورة'?`<div class="ac-dim">السبب: ${acEsc(o.reason)}</div>`:''}<div class="ac-bal">الإجمالى: ${acM(o.total)}${o.status==='جديد'?` <button style="margin-inline-start:8px;background:none;border:1px solid #E05555;color:#E05555;border-radius:8px;padding:2px 8px;font-family:inherit" onclick="ordCancel(${o.id})">✖ الغى</button>`:''}</div></div>`; }).join('');
+  return h; }
+function ordListHtml(its){ if(!its.length) return '<div class="ac-note">مفيش أصناف بالبحث ده</div>';
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">${its.map(x=>{ const n=_ord.cart[x.id]||0;
+    return `<div style="background:var(--dark3);border:1px solid ${n?'var(--gold)':'var(--border)'};border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;${x.avail?'':'opacity:.55'}">
+      ${x.img?`<img src="${acEsc(x.img)}" loading="lazy" style="width:100%;height:90px;object-fit:contain;background:#000;border-radius:8px">`:`<div style="height:60px;display:flex;align-items:center;justify-content:center;font-size:30px;background:#000;border-radius:8px">🏍️</div>`}
+      <div style="font-weight:800;font-size:13px">${acEsc(x.code)}</div><div class="ac-dim" style="font-size:12px;min-height:30px">${acEsc(x.name)}</div>
+      <div style="color:var(--gold-light);font-weight:800">${acM(x.price)} ج</div>
+      ${x.avail?`<div style="display:flex;align-items:center;gap:4px"><button class="ac-go" style="padding:4px 10px" onclick="ordQty(${x.id},-1)">−</button><input type="number" inputmode="numeric" class="ac-in" style="width:52px;text-align:center;padding:4px" value="${n||''}" placeholder="0" onchange="ordSetQty(${x.id},this.value)"><button class="ac-go" style="padding:4px 10px" onclick="ordQty(${x.id},1)">+</button></div>`:'<div class="ac-dim" style="font-size:12px">❌ مش متاح دلوقتى</div>'}</div>`; }).join('')}</div>`; }
+function ordRenderList(){ const C=_ord.cat; if(!C) return; const q=_ord.q.trim().toLowerCase(); const el=document.getElementById('ordList'); if(el) el.innerHTML=ordListHtml((C.items||[]).filter(x=>(!_ord.c||String(x.cat)===_ord.c)&&(!q||(x.code+' '+x.name).toLowerCase().includes(q)))); }
+function ordRender(){ if(_acct.sec!=='ord') return; const el=document.getElementById('acctOrd'); if(el) el.innerHTML=ordHtml(); }
+
 </script>
 </body>
 </html>

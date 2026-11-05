@@ -4019,10 +4019,11 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erSalesLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="ers3-tab-inv" onclick="erSalesTab('inv')">🧾 الفواتير <span class="bl-tab-count" id="ers3-c-inv">0</span></button><button class="bl-tab" id="ers3-tab-ret" onclick="erSalesTab('ret')">↩️ المرتجعات</button><button class="bl-tab" id="ers3-tab-stmt" onclick="erSalesTab('stmt')">📒 كشف حساب تاجر</button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="ers3-tab-inv" onclick="erSalesTab('inv')">🧾 الفواتير <span class="bl-tab-count" id="ers3-c-inv">0</span></button><button class="bl-tab" id="ers3-tab-ret" onclick="erSalesTab('ret')">↩️ المرتجعات</button><button class="bl-tab" id="ers3-tab-stmt" onclick="erSalesTab('stmt')">📒 كشف حساب تاجر</button><button class="bl-tab" id="ers3-tab-cord" onclick="erSalesTab('cord')">🛒 طلبات أونلاين <span class="bl-tab-count" id="ers3-c-cord" style="display:none">0</span></button></div>
       <div id="ers3-pane-inv" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="ers3-pane-ret" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="ers3-pane-stmt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="ers3-pane-cord" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
     <div class="section" id="sec-erp-delivery">
       <div class="page-hd">
@@ -18890,6 +18891,7 @@ var ERM = [
     { l:'أذونات مستنية تسليم', i:'📦', s:'erp-delivery', t:'ready' },
     { l:'مستندات التسليم (أذونات الصرف)', i:'📄', s:'erp-delivery', t:'list' },
     { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' },
+    { l:'طلبات التجار أونلاين', i:'🛒', s:'erp-sales', t:'cord' },
     { l:'أهداف ومكافآت التجار', i:'🎯', s:'erp-targets' } ]},
   { id:'cash', title:'الخزينة والتحصيل', icon:'💵', c:'#4CAF7D', items:[
     { l:'سند قبض جديد', i:'➕', s:'erp-cash', t:'rcpt', a:"erRcptOpen(null,null)", w:()=>ER.sl, e:'erp-cash' },
@@ -22765,7 +22767,7 @@ function erClChip(c){ if(!c||!c.id) return ''; return [c.dist?'<span class="qt-c
 
 // ════════════════ 🧾 المبيعات ════════════════
 async function erSalesLoad(force){ try{ await erSlLoad(force); erSalesTab(ER.tab.sl); }catch(e){ erPaneErr('ers3-pane-inv',e); } }
-function erSalesTab(t){ ER.tab.sl=t; erTabs('ers3',['inv','ret','stmt'],t); if(t==='ret'){ erRenderSrets(); return; } const c=document.getElementById('ers3-c-inv'); if(c&&ER.sl) c.textContent=ER.sl.invs.filter(v=>v.status==='سارية'&&erInvRem(v)>0).length;
+function erSalesTab(t){ ER.tab.sl=t; erTabs('ers3',['inv','ret','stmt','cord'],t); if(t==='cord'){ ER.cord=null; erCordLoad(); return; } if(typeof erCordCount==='function') erCordCount(); if(t==='ret'){ erRenderSrets(); return; } const c=document.getElementById('ers3-c-inv'); if(c&&ER.sl) c.textContent=ER.sl.invs.filter(v=>v.status==='سارية'&&erInvRem(v)>0).length;
   (t==='stmt'?()=>erRenderClStmt('ers3-pane-stmt'):erRenderInvs)(); }
 function erRenderInvs(){
   const el=document.getElementById('ers3-pane-inv'); if(!el||!ER.sl) return; const f=ER.sf2, q=f.q.trim().toLowerCase();
@@ -23119,7 +23121,7 @@ async function erInvSave(){ await erRun('er-save-btn', async ()=>{ const v=ER.ed
   { const p={ id:v.id, client_id:v.client_id, inv_date:v.inv_date, pay_type:v.pay_type, due_date:v.due_date||null, discount_pct:erNum(v.discount_pct)||0, discount_amount:erNum(v.discount_amount)||0,
       hold_delivery:!!v.hold_delivery, hold_reason:v.hold_reason, notes:v.notes, installments:inst,
       items:v.items.filter(l=>l.item_id).map(l=>({line_no:l.line_no||null,item_id:l.item_id,warehouse_id:l.warehouse_id||null,qty:erNum(l.qty),price:erNum(l.price),disc_pct:erNum(l.disc_pct)||0,disc_amt:erNum(l.disc_amt)||0})) };
-    const id=await rpcSecure('erp_inv_save',{p}); v.__newid=id; }
+    const id=await rpcSecure('erp_inv_save',{p}); v.__newid=id; if(v.__ord&&!v.id){ try{ await rpcSecure('erp_cl_order_done',{p_id:v.__ord,p_inv:id}); ER.cord=null; }catch(e){ erToast('⚠️ الفاتورة اتحفظت بس الطلب ماتربطش: '+erErr(e),false); } } }
   erClose(); await erSlReload(); const nv=erById(ER.sl.invs,v.__newid||v.id); erToast(`✅ اتحفظت الفاتورة ${nv?nv.inv_no:''}`); }); }
 
 // ════════════════ 📈 التقارير ════════════════
@@ -26559,6 +26561,32 @@ function erTgOpen(id){ const t=id?JSON.parse(JSON.stringify((ER.tgs||[]).find(x=
   t.__render=()=>erModalBody(form()); erModal(id?'✏️ تعديل هدف':'🎯 هدف جديد', form(), `<button class="qt-btn" id="er-save-btn" onclick="erTgSave()">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
 async function erTgSave(){ await erRun('er-save-btn', async()=>{ const t=ER.edit; await rpcSecure('erp_target_save',{p:{id:t.id,name:t.name,from:t.from,to:t.to,client_id:t.client_id||null,metric:t.metric,cat_id:t.cat_id||null,item_ids:t.item_ids,target:erNum(t.target),reward_type:t.reward_type,reward_value:erNum(t.reward_value),tiers:(t.tiers||[]).filter(x=>x.at&&x.reward!==''),status:t.status,notes:t.notes}}); erClose(); erToast('✅ اتحفظ'); ER.tgs=null; erTgLoad(); }); }
 async function erTgPay(tid,cid,rw){ if(!confirm(`صرف حافز ${erMoney(rw,2)} ج للتاجر؟\nهيتعمل تسوية دائنة بالمبلغ وتقلل مديونيته.`)) return; try{ const r=await rpcSecure('erp_target_pay',{p_target:tid,p_client:cid}); erToast(`✅ اتصرف ${erMoney(r,2)} ج`); ER.tgs=null; ER.sl=null; erTgLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+
+// ═══ 🛒 طلبات التجار أونلاين (B2B) — تاب فى المبيعات ═══
+async function erCordLoad(){ const el=document.getElementById('ers3-pane-cord'); if(el&&!ER.cord) el.innerHTML='<div class="loading-txt">⏳</div>';
+  try{ await erBoot(); ER.cord=await rpcSecure('erp_cl_orders_list',{p:{}}); }catch(e){ erPaneErr('ers3-pane-cord',e); return; } erCordBadge(); erRenderCord(); }
+async function erCordCount(){ try{ const r=await rpcSecure('erp_cl_orders_list',{p:{status:'جديد'}}); const c=document.getElementById('ers3-c-cord'); if(c){ c.textContent=r.length; c.style.display=r.length?'':'none'; } }catch(e){} }
+function erCordBadge(){ const c=document.getElementById('ers3-c-cord'); if(c&&ER.cord){ const n=ER.cord.filter(o=>o.status==='جديد').length; c.textContent=n; c.style.display=n?'':'none'; } }
+function erRenderCord(){ const el=document.getElementById('ers3-pane-cord'); if(!el||!ER.cord) return; const f=ER.cordf=ER.cordf||{st:'جديد'}, canE=erCan('erp-sales','edit');
+  const rows=ER.cord.filter(o=>!f.st||o.status===f.st), col={'جديد':'ex','اتعمل فاتورة':'in','مرفوض':'dim','ملغي':'dim'};
+  el.innerHTML=`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">${[['جديد','⏳ جديدة'],['اتعمل فاتورة','✅ اتعملت فواتير'],['مرفوض','❌ مرفوضة'],['ملغي','✖ ملغية'],['','الكل']].map(([k,l])=>`<button class="qt-btn ${f.st===k?'':'ghost'} sm" onclick="ER.cordf.st='${k}';erRenderCord()">${l} (${ER.cord.filter(o=>!k||o.status===k).length})</button>`).join('')}
+    <div style="flex:1"></div><button class="qt-btn ghost sm" onclick="ER.cord=null;erCordLoad()">🔄</button><span class="qt-sub">💡 التاجر بيطلب من صفحته (📊 حسابى ← 🛒 اطلب) بسعر شريحته ومن المتاح بس. «اعمل فاتورة» بيفتح فاتورة جاهزة تراجعها وتحفظها — والتاجر بيوصله إشعار.</span></div>
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>إمتى</th><th>التاجر</th><th>الأصناف</th><th>الإجمالى</th><th>ملاحظة</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${rows.map(o=>`<tr><td><b>${o.no}</b>${o.test?' 🧪':''}</td><td style="white-space:nowrap">${erEsc(new Date(o.at).toLocaleString('ar-EG',{timeZone:'Africa/Cairo',day:'numeric',month:'numeric',hour:'numeric',minute:'2-digit'}))}</td>
+    <td style="text-align:right">${erEsc(o.client)} <span class="qt-sub">${erEsc(o.code||'')}</span></td>
+    <td style="text-align:right">${(o.items||[]).map(x=>`<div>${erEsc(x.code)} × <b>${erQ(x.qty)}</b> <span class="qt-sub">@ ${erMoney(x.price,0)}</span>${o.status==='جديد'&&Number(x.free)<Number(x.qty)?` <span style="color:var(--error)">⚠️ المتاح ${erQ(x.free)}</span>`:''}${o.status==='جديد'&&x.now_price!=null&&Number(x.now_price)!==Number(x.price)?` <span style="color:var(--gold)">السعر بقى ${erMoney(x.now_price,0)}</span>`:''}</div>`).join('')}</td>
+    <td><b>${erMoney(o.total,2)}</b></td><td style="text-align:right;max-width:220px">${erEsc(o.notes||'')}</td>
+    <td><span class="qt-chip ${col[o.status]||'dim'}">${erEsc(o.status)}${o.inv_no?' '+erEsc(o.inv_no):''}</span>${o.reason?`<div class="qt-sub">${erEsc(o.reason)}</div>`:''}${o.by?`<div class="qt-sub">${erEsc(o.by)}</div>`:''}</td>
+    <td style="white-space:nowrap">${o.status==='جديد'&&canE?`<button class="qt-btn sm" onclick="erCordToInv(${o.id})">🧾 اعمل فاتورة</button> <button class="qt-btn red sm" onclick="erCordReject(${o.id})">❌ ارفض</button>`:''}${o.inv_id?`<button class="qt-btn ghost sm" onclick="erxOpenDoc('sales',${o.inv_id})">🧾 الفاتورة</button>`:''}</td></tr>`).join('')}
+  </tbody></table></div>${rows.length?'':'<div class="qt-sub" style="padding:10px">مفيش طلبات هنا</div>'}`; }
+async function erCordToInv(id){ const o=(ER.cord||[]).find(x=>x.id===id); if(!o) return; try{ await erSlLoad(); }catch(e){}
+  erInvOpen(null); const v=ER.edit; v.client_id=o.client_id; v.__cltxt=erClLbl(erCl(o.client_id))||o.client; v.__ord=o.id;
+  v.items=(o.items||[]).map(x=>({item_id:Number(x.item_id),qty:x.qty,price:x.now_price!=null?x.now_price:x.price,disc_pct:'',disc_amt:'',warehouse_id:'',__txt:erItemLbl(Number(x.item_id))})).concat([{item_id:null,qty:'',price:'',disc_pct:'',disc_amt:'',warehouse_id:'',__txt:''}]);
+  v.notes=`🛒 طلب أونلاين رقم ${o.no}`+(o.notes?` — ${o.notes}`:''); v.__render(); erToast('🧾 الفاتورة اتجهزت من الطلب — اختار المخزن وراجع واحفظ'); }
+async function erCordReject(id){ const r=prompt('سبب الرفض (هيوصل للتاجر):'); if(r==null) return; if(!r.trim()){ erToast('اكتب السبب',false); return; }
+  try{ await rpcSecure('erp_cl_order_reject',{p_id:id,p_reason:r.trim()}); erToast('✅ اترفض واتبعت للتاجر'); ER.cord=null; erCordLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+// رابط التليجرام ?clord=ID → يفتح الطلبات
+(function(){ try{ const q=new URLSearchParams(location.search); if(!q.get('clord')) return; const t0=Date.now(); const tk=()=>{ if(typeof SESSION_TOKEN!=='undefined'&&SESSION_TOKEN&&document.getElementById('app')&&document.getElementById('app').classList.contains('show')){ ER.tab=ER.tab||{}; ER.tab.sl='cord'; goTo('erp-sales'); history.replaceState(null,'',location.pathname); return; } if(Date.now()-t0<120000) setTimeout(tk,800); }; setTimeout(tk,1500); }catch(e){} })();
 
 </script>
 
