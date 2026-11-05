@@ -1,0 +1,19 @@
+{
+  "id": "hawa-wh",
+  "name": "HAWA CO — المخزن",
+  "short_name": "HAWA مخزن",
+  "description": "جرد واستعلام أصناف ومواتير بالباركود لموظفين مخازن HAWA CO",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "hawa_wh.html?app=1",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "icons": [
+    { "src": "icons/hawa-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/hawa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/hawa-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
