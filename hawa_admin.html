@@ -26588,6 +26588,105 @@ async function erCordReject(id){ const r=prompt('سبب الرفض (هيوصل �
 // رابط التليجرام ?clord=ID → يفتح الطلبات
 (function(){ try{ const q=new URLSearchParams(location.search); if(!q.get('clord')) return; const t0=Date.now(); const tk=()=>{ if(typeof SESSION_TOKEN!=='undefined'&&SESSION_TOKEN&&document.getElementById('app')&&document.getElementById('app').classList.contains('show')){ ER.tab=ER.tab||{}; ER.tab.sl='cord'; goTo('erp-sales'); history.replaceState(null,'',location.pathname); return; } if(Date.now()-t0<120000) setTimeout(tk,800); }; setTimeout(tk,1500); }catch(e){} })();
 
+// ═══ 🪟 النوافذ المفتوحة (زى MMS) — كذا مستند مفتوح فى نفس الوقت + اختصارات الكيبورد + 🔎 بحث الأوامر (Ctrl+K) ═══
+(function(){ const st=document.createElement('style'); st.textContent=`
+#er-mdock{flex-wrap:wrap;max-width:min(1100px,96vw)!important;gap:6px!important;padding:6px 8px!important}
+#er-mdock .erw-h{font-size:12px;color:var(--text-dim);font-weight:700;padding:0 4px}
+#er-mdock .erw-c{display:inline-flex;align-items:center;gap:4px;background:#1A1A1A;border:1px solid #3a3326;border-radius:9px;padding:3px 4px 3px 8px;max-width:260px}
+#er-mdock .erw-c:hover{border-color:var(--gold)}
+#er-mdock .erw-t{cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#er-mdock .erw-k{font-size:10px;color:var(--gold);border:1px solid #3a3326;border-radius:5px;padding:0 4px;flex:0 0 auto}
+#er-mdock .erw-x{background:none;border:0;color:#E05555;cursor:pointer;font-size:13px;padding:0 4px}
+#er-cmdk{position:fixed;inset:0;z-index:9900;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;padding-top:12vh}
+#er-cmdk .box{background:var(--dark2,#111);border:1px solid var(--gold,#C9A84C);border-radius:14px;width:min(620px,94vw);box-shadow:0 18px 50px rgba(0,0,0,.6);overflow:hidden}
+#er-cmdk input{width:100%;background:#0d0d0d;border:0;border-bottom:1px solid var(--border,#2A2A2A);color:#fff;font:700 17px Cairo,sans-serif;padding:14px 16px;outline:none}
+#er-cmdk .ls{max-height:56vh;overflow:auto;padding:6px}
+#er-cmdk .it{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;cursor:pointer;font-size:14px}
+#er-cmdk .it.on,#er-cmdk .it:hover{background:rgba(201,168,76,.14)}
+#er-cmdk .it .m{margin-inline-start:auto;font-size:11px;color:var(--text-dim);white-space:nowrap}
+#er-cmdk .ft{font-size:11px;color:var(--text-dim);padding:6px 12px;border-top:1px solid var(--border,#2A2A2A)}
+#er-keys table td{padding:5px 10px;border-bottom:1px dashed #262626}#er-keys kbd{background:#1d1d1d;border:1px solid #444;border-bottom-width:2px;border-radius:5px;padding:1px 6px;font:700 12px monospace;color:var(--gold-light,#E8C97A)}`; document.head.appendChild(st); })();
+ER.wins = ER.wins || [];
+function erWinCur(){ const m=document.getElementById('er-modal'); return (m && m.style.display!=='none') ? m : null; }
+function erWinTitle(m){ const t=m&&m.querySelector('#er-m-title'); return t?t.innerHTML:''; }
+function erWinDirty(w){ const v=w.edit; if(!v||v.id||w.ro) return false; return (v.items||[]).some(l=>l.item_id) || erNum(v.amount)>0 || !!(v.client_id||v.supplier_id); }
+// يركن المستند الظاهر تحت فى «النوافذ المفتوحة» (بكل اللى مكتوب فيه)
+function erWinPark(){ const m=erWinCur(); if(!m) return false;
+  if(ER.wins.length>=10){ erToast('⚠️ فيه 10 نوافذ مفتوحة — اقفل واحدة الأول',false); return false; }
+  try{ if(window.erxPkHide) erxPkHide(); if(typeof erQHintHide==='function') erQHintHide(); }catch(e){}
+  m.removeAttribute('id'); m.style.display='none'; m.remove();
+  ER.wins.push({ node:m, edit:ER.edit, ro:ER.ro, open:ER.__open, title:erWinTitle(m), at:Date.now() });
+  ER.edit=null; ER.__open=null; erModalDock(); return true; }
+function erWinOpen(i){ const w=ER.wins[i]; if(!w) return; if(erWinCur()){ if(!erWinPark()) return; }
+  const j=ER.wins.indexOf(w); ER.wins.splice(j,1);
+  const old=document.getElementById('er-modal'); if(old){ old.remove(); }
+  w.node.id='er-modal'; document.body.appendChild(w.node); ER.edit=w.edit; ER.ro=w.ro; ER.__open=w.open; w.node.style.display='flex'; erModalDock(); }
+function erWinClose(i){ const w=ER.wins[i]; if(!w) return; if(erWinDirty(w) && !confirm(`«${w.title.replace(/<[^>]+>/g,'')}» فيه حاجة لسه متسجلتش — تقفلها؟`)) return; ER.wins.splice(i,1); erModalDock(); }
+window.erModalMin = function(){ if(!erWinPark()){ const m=erWinCur(); if(m){ m.style.display='none'; } } erModalDock(); };
+window.erModalRestore = function(){ if(ER.wins.length) erWinOpen(ER.wins.length-1); };
+window.erModalDock = function(){ let d=document.getElementById('er-mdock'); const W=ER.wins||[];
+  if(!W.length){ if(d) d.style.display='none'; return; }
+  if(!d){ d=document.createElement('div'); d.id='er-mdock'; document.body.appendChild(d); }
+  d.innerHTML=`<span class="erw-h">🪟 النوافذ المفتوحة (${W.length})</span>`+W.map((w,i)=>`<span class="erw-c" title="رجّع الشاشة${i<9?` — Alt+${i+1}`:''}"><span class="erw-t" onclick="erWinOpen(${i})">${w.title}${erWinDirty(w)?' <span style="color:var(--gold)">●</span>':''}</span>${i<9?`<span class="erw-k">Alt+${i+1}</span>`:''}<button class="erw-x" onclick="erWinClose(${i})" title="قفل">✖</button></span>`).join('');
+  d.style.bottom=erWinCur()?'74px':'14px'; d.style.display='flex'; };
+(function(){ const _m=window.erModal; if(typeof _m!=='function'||_m.__w) return; const w=function(){ const r=_m.apply(this,arguments); try{ erModalDock(); }catch(e){} return r; }; w.__w=1; w.__x=_m.__x; window.erModal=w; })();
+(function(){ const _c=window.erClose; window.erClose=function(){ const r=_c.apply(this,arguments); try{ erModalDock(); }catch(e){} return r; }; })();
+// فتح مستند جديد وفيه مستند ظاهر → القديم يتركن تحت بدل ما يضيع
+window.erBriefLeaveOk = function(){ if(erWinCur() && ER.edit) erWinPark(); return true; };
+// الرفرش: النوافذ المركونة كمان بترجع
+(function(){ const _s=window.erNavSave; if(typeof _s!=='function') return; window.removeEventListener('beforeunload',_s);
+  window.erNavSave=function(){ _s(); try{ const st=JSON.parse(sessionStorage.getItem('hawa_nav')||'null'); if(!st) return;
+    st.wins=(ER.wins||[]).filter(w=>w.open&&ERM_OPENERS[w.open.fn]).map(w=>{ const o={fn:w.open.fn,args:w.open.args}; if(!w.ro&&w.edit){ try{ o.draft=JSON.parse(JSON.stringify(w.edit,(k,v)=>typeof v==='function'?undefined:v)); }catch(e){} } return o; });
+    sessionStorage.setItem('hawa_nav',JSON.stringify(st)); }catch(e){} };
+  window.addEventListener('beforeunload',window.erNavSave); })();
+function erWinRestoreParked(){ if(ER.__winRest) return; ER.__winRest=1; let st=null; try{ st=JSON.parse(sessionStorage.getItem('hawa_nav')||'null'); }catch(e){} const Q=((st&&st.wins)||[]).filter(o=>o&&ERM_OPENERS[o.fn]); if(!Q.length) return;
+  const vis=erWinCur(); let n=0;
+  const next=()=>{ const o=Q.shift(); if(!o){ if(n) erToast(`🪟 رجّعنا ${n} نافذة كانت مفتوحة تحت`); return; } const t0=Date.now();
+    const tick=()=>{ let ok=false; try{ ok=!!ERM_OPENERS[o.fn](); }catch(e){} if(!ok){ if(Date.now()-t0<20000) setTimeout(tick,250); else next(); return; }
+      try{ // المستند الظاهر يتركن مؤقتاً، نفتح المركون ونركنه، وبعدين نرجّع الظاهر
+        const cur=erWinCur()?(erWinPark(),ER.wins[ER.wins.length-1]):null;
+        window[o.fn](...(o.args||[])); if(o.draft && ER.edit && typeof ER.edit.__render==='function' && String(ER.edit.id||'')===String(o.draft.id||'')){ Object.assign(ER.edit,o.draft); ER.edit.__render(); }
+        erWinPark(); n++; if(cur){ const k=ER.wins.indexOf(cur); if(k>=0) erWinOpen(k); }
+      }catch(e){ console.warn('win restore',e); } setTimeout(next,200); };
+    setTimeout(tick,200); };
+  setTimeout(next, 2500); }
+(function(){ const _r=window.erNavRestore; if(typeof _r!=='function') return; window.erNavRestore=function(){ const r=_r.apply(this,arguments); if(r) erWinRestoreParked(); return r; }; })();
+(function(){ const f=()=>setTimeout(()=>{ try{ if(typeof admin!=='undefined'&&admin&&document.getElementById('app')&&document.getElementById('app').classList.contains('show')) erWinRestoreParked(); }catch(e){} },1500); if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',f); else f(); })();
+
+// ═══ 🔎 بحث الأوامر (Ctrl+K) — اكتب اسم أى شاشة أو مستند وافتحه ═══
+function erCmdItems(){ const L=[]; (typeof ERM!=='undefined'?ERM:[]).forEach(m=>m.items.forEach((it,k)=>{ if(typeof ermOk==="function" && !ermOk(it)) return; L.push({t:`${it.i} ${it.l}`, m:`${m.icon} ${m.title}`, run:()=>erMenuGo(m.id,k), q:(it.l+' '+m.title).toLowerCase()}); }));
+  (ER.wins||[]).forEach((w,i)=>L.unshift({t:'🪟 '+w.title.replace(/<[^>]+>/g,''), m:'نافذة مفتوحة', run:()=>erWinOpen(i), q:w.title.replace(/<[^>]+>/g,'').toLowerCase()}));
+  L.push({t:'⌨️ اختصارات الكيبورد', m:'مساعدة', run:()=>erKeysHelp(), q:'اختصارات كيبورد مساعدة keys help'}); return L; }
+function erCmdOpen(){ let o=document.getElementById('er-cmdk'); if(!o){ o=document.createElement('div'); o.id='er-cmdk'; o.innerHTML=`<div class="box"><input id="er-cmdk-q" placeholder="🔎 اكتب اسم الشاشة أو المستند... (مثلاً: سند قبض / فاتورة / جرد)" autocomplete="off"><div class="ls" id="er-cmdk-ls"></div><div class="ft">↑↓ للتنقل · Enter للفتح · Esc للقفل</div></div>`;
+    o.addEventListener('mousedown',e=>{ if(e.target===o) erCmdClose(); }); document.body.appendChild(o);
+    const q=o.querySelector('#er-cmdk-q'); q.addEventListener('input',()=>{ ER.__cmd.sel=0; erCmdRender(); });
+    q.addEventListener('keydown',e=>{ const C=ER.__cmd; if(e.key==='ArrowDown'){ e.preventDefault(); C.sel=Math.min(C.sel+1,C.res.length-1); erCmdRender(); } else if(e.key==='ArrowUp'){ e.preventDefault(); C.sel=Math.max(C.sel-1,0); erCmdRender(); } else if(e.key==='Enter'){ e.preventDefault(); erCmdRun(C.sel); } else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); erCmdClose(); } }); }
+  ER.__cmd={all:erCmdItems(),res:[],sel:0}; o.style.display='flex'; const q=document.getElementById('er-cmdk-q'); q.value=''; erCmdRender(); setTimeout(()=>q.focus(),0); }
+function erCmdClose(){ const o=document.getElementById('er-cmdk'); if(o) o.style.display='none'; }
+function erCmdNorm(s){ return String(s||'').toLowerCase().replace(/[أإآ]/g,'ا').replace(/ة/g,'ه').replace(/ى/g,'ي'); }
+function erCmdRender(){ const C=ER.__cmd, q=erCmdNorm(document.getElementById('er-cmdk-q').value.trim()); const ws=q.split(/\s+/).filter(Boolean);
+  C.res=C.all.filter(x=>{ const h=erCmdNorm(x.q); return ws.every(w=>h.includes(w)); }).slice(0,40);
+  document.getElementById('er-cmdk-ls').innerHTML=C.res.map((x,i)=>`<div class="it${i===C.sel?' on':''}" onmousedown="event.preventDefault();erCmdRun(${i})">${x.t}<span class="m">${x.m}</span></div>`).join('')||'<div class="it" style="color:var(--text-dim)">مفيش نتيجة</div>';
+  const on=document.querySelector('#er-cmdk .it.on'); if(on) on.scrollIntoView({block:'nearest'}); }
+function erCmdRun(i){ const x=ER.__cmd&&ER.__cmd.res[i]; if(!x) return; erCmdClose(); try{ x.run(); }catch(e){ console.warn(e); } }
+const ER_KEYS=[['Ctrl + K','🔎 بحث الأوامر — افتح أى شاشة أو مستند بالاسم'],['F2','➕ فاتورة بيع جديدة'],['F4','➕ سند قبض جديد'],['Ctrl + S  /  F9','💾 حفظ المستند المفتوح'],['Esc','➖ ركّن المستند المفتوح تحت (من غير ما يضيع)'],['Alt + 1 … 9','🪟 رجّع النافذة رقم كذا من النوافذ المفتوحة'],['Alt + D','📊 لوحة المؤشرات'],['F1','⌨️ الشاشة دى']];
+function erKeysHelp(){ erXOv(`<div class="qt-row" style="align-items:center"><b style="font-size:16px;color:var(--gold)">⌨️ اختصارات الكيبورد</b><div style="flex:1"></div><button class="qt-btn ghost sm" onclick="document.getElementById('er-x-ov').remove()">✖</button></div>
+  <div id="er-keys" style="margin-top:10px"><table style="width:100%;border-collapse:collapse">${ER_KEYS.map(k=>`<tr><td style="white-space:nowrap">${k[0].split(' / ').map(s=>s.split(' + ').map(x=>`<kbd>${erEsc(x.trim())}</kbd>`).join(' + ')).join(' أو ')}</td><td>${erEsc(k[1])}</td></tr>`).join('')}</table>
+  <div class="qt-sub" style="margin-top:10px">💡 تقدر تفتح كذا مستند مع بعض: افتح مستند جديد من المنيو والقديم بيتركن تحت فى «🪟 النوافذ المفتوحة» بكل اللى مكتوب فيه — ولو عملت رفرش بيرجعوا.</div></div>`); }
+function erMenuFind(lbl){ for(const m of (typeof ERM!=='undefined'?ERM:[])){ const k=m.items.findIndex(it=>it.l===lbl); if(k>=0) return ()=>erMenuGo(m.id,k); } return null; }
+document.addEventListener('keydown',e=>{ if(typeof admin==='undefined'||!admin) return; const app=document.getElementById('app'); if(app&&!app.classList.contains('show')) return;
+  const k=e.key, ctrl=e.ctrlKey||e.metaKey;
+  if(ctrl && (k==='k'||k==='K'||k==='ك')){ e.preventDefault(); erCmdOpen(); return; }
+  if(k==='F1'){ e.preventDefault(); erKeysHelp(); return; }
+  if((ctrl && (k==='s'||k==='S'||k==='س')) || k==='F9'){ const m=erWinCur(); const b=m&&m.querySelector('#er-save-btn'); if(b){ e.preventDefault(); if(document.activeElement&&document.activeElement.blur) document.activeElement.blur(); setTimeout(()=>b.click(),30); } else if(ctrl) e.preventDefault(); return; }
+  if(e.altKey && /^[1-9]$/.test(k)){ const i=Number(k)-1; if(ER.wins[i]){ e.preventDefault(); erWinOpen(i); } return; }
+  if(e.altKey && (k==='d'||k==='D'||k==='ي')){ e.preventDefault(); goTo('erp-dash'); return; }
+  if(k==='F2'||k==='F4'){ const f=erMenuFind(k==='F2'?'فاتورة بيع جديدة':'سند قبض جديد'); if(f){ e.preventDefault(); f(); } return; }
+  if(k==='Escape'){ const cm=document.getElementById('er-cmdk'); if(cm&&cm.style.display==='flex'){ erCmdClose(); return; }
+    if(document.getElementById('er-x-ov')||ER.__bq||ER.__pk) return; const dd=document.getElementById('erm-dd'); if(dd&&dd.style.display==='block') return;
+    const m=erWinCur(); if(m && ER.edit){ e.preventDefault(); erModalMin(); } }
+});
+
 </script>
 
 
