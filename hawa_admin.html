@@ -26332,7 +26332,8 @@ setInterval(()=>{ if(document.visibilityState==='visible' && document.getElement
 .erd-box h4{margin:0 0 8px;font-size:14px;color:var(--gold,#C9A84C)}
 .erd-row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed #262626;font-size:13px}.erd-row:last-child{border:0}`; document.head.appendChild(st); })();
 async function erDashLoad(){ const el=document.getElementById('erdash-pane'); if(!el) return; if(!ER.dash) el.innerHTML='<div class="loading-txt">⏳ بنجمّع الأرقام...</div>';
-  try{ await erBoot(); ER.dash=await rpcSecure('erp_dash',{}); }catch(e){ erPaneErr('erdash-pane',e); return; } erRenderDash(); }
+  try{ await erBoot(); ER.dash=await rpcSecure('erp_dash',{}); try{ ER.dash.smart=await rpcSecure('erp_smart_alerts',{}); }catch(e){ ER.dash.smart=[]; } }catch(e){ erPaneErr('erdash-pane',e); return; } erRenderDash(); }
+function erSmartGo(ref){ const [k,id]=String(ref||'').split(':'); const n=Number(id); if(k==='sinv') return erxOpenDoc('sales',n); if(k==='ship') return erxOpenDoc('purch',n); if(k==='chk'){ ER.tab.cash='chk'; return goTo('erp-cash'); } if(k==='item'){ ER.tab.st='main'; return goTo('erp-stock'); } if(k==='client'){ ER.tab.sl='stmt'; return goTo('erp-sales'); } }
 function erDashPct(a,b){ a=Number(a)||0; b=Number(b)||0; if(!b) return a?'<span class="erd-up">جديد</span>':''; const p=Math.round((a-b)/b*100); return `<span class="${p>=0?'erd-up':'erd-dn'}">${p>=0?'▲':'▼'} ${Math.abs(p)}%</span> عن نفس الفترة الشهر اللى فات`; }
 function erDashChart(D){ const W=640,H=170,P=26, n=D.length||1, mx=Math.max(1,...D.map(x=>Math.max(Number(x.s)||0,Number(x.c)||0))), bw=(W-P*2)/n;
   const y=v=>H-P-(Number(v)||0)/mx*(H-P*2);
@@ -26362,6 +26363,7 @@ function erRenderDash(){ const el=document.getElementById('erdash-pane'); if(!el
     ${d.approvals?K('🔔 موافقات مستنية',`${d.approvals} طلب`,'دوس عشان توافق','#E05555','erApprInbox()'):''}
     ${d.acc?K('📒 صافى ربح الشهر (الحسابات)',M(d.acc.rev-d.acc.exp)+' ج',`إيرادات ${M(d.acc.rev)} · تكاليف ومصروفات ${M(d.acc.exp)}`,'#6C8CFF',go('acc','قائمة الدخل (الأرباح والخسائر)')):''}
   </div>
+  ${(d.smart||[]).length?`<div class="erd-box" style="margin-top:10px;border-color:rgba(224,85,85,.45)"><h4>🧠 تنبيهات ذكية (${d.smart.length})</h4><div style="max-height:260px;overflow:auto">${d.smart.sort((a,b)=>b.sev-a.sev).map(x=>`<div class="erd-row" style="cursor:pointer" onclick="erSmartGo('${erEsc(x.ref)}')"><span>${x.icon} ${erEsc(x.text)}</span>${x.sev>1?'<b class="erd-dn">مهم</b>':''}</div>`).join('')}</div><div class="qt-sub" style="margin-top:6px">📨 بيوصلك ملخص بيهم على التليجرام كل يوم الصبح (لما السيستم يتفعّل).</div></div>`:''}
   <div class="erd-2"><div class="erd-box"><h4>📊 المبيعات والتحصيل</h4>${erDashChart(d.daily||[])}</div>
     <div class="erd-box"><h4>🏆 أكبر التجار الشهر ده</h4>${(d.top_clients||[]).map((x,i)=>`<div class="erd-row"><span>${i+1}. ${erEsc(x.name)} <span class="qt-sub">${erEsc(x.code||'')}</span></span><b>${M(x.val)} ج <span class="qt-sub">(${x.n})</span></b></div>`).join('')||'<div class="qt-sub">مفيش مبيعات الشهر ده لسه</div>'}</div>
     <div class="erd-box"><h4>🏍️ أكتر الأصناف مبيعاً الشهر ده</h4>${(d.top_items||[]).map((x,i)=>`<div class="erd-row"><span>${i+1}. ${erEsc(x.name)} <span class="qt-sub">${erEsc(x.code)}</span></span><b>${erQ(x.qty)} قطعة</b></div>`).join('')||'<div class="qt-sub">مفيش مبيعات الشهر ده لسه</div>'}</div>
