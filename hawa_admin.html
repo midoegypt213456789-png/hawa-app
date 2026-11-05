@@ -4109,6 +4109,10 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="erst-pane-tr" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erst-pane-cnt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
+    <div class="section" id="sec-erp-targets">
+      <div class="page-hd"><div class="page-hd-titles"><div class="page-title">🎯 <span>أهداف ومكافآت التجار</span></div><div class="page-sub">تارجت بالكمية أو القيمة لفترة — لتاجر أو للكل — وشرايح مكافأة، والحافز بيتصرف تسوية دائنة</div></div><button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="ER.tgs=null;erTgLoad()">🔄 تحديث</button></div>
+      <div id="ertg-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
     <div class="section" id="sec-erp-warranty">
       <div class="page-hd"><div class="page-hd-titles"><div class="page-title">🛡️ <span>الضمان وما بعد البيع</span></div><div class="page-sub">كارت الموتوسيكل بالماتور أو الشاسيه · مطالبات الضمان والصيانة · مطالبة المورد · قوايم الاستدعاء</div></div></div>
       <div class="bl-tabs"><button class="bl-tab active" id="erw-tab-find" onclick="erWrTab('find')">🔎 كارت الموتوسيكل</button><button class="bl-tab" id="erw-tab-claims" onclick="erWrTab('claims')">📋 المطالبات</button><button class="bl-tab" id="erw-tab-recall" onclick="erWrTab('recall')">📣 الاستدعاء</button></div>
@@ -6415,6 +6419,7 @@ function autoRefreshTick(){
     else if(sec==='erp-acc' && typeof erAcLoad === 'function') erAcLoad(true);
     else if(sec==='erp-dash' && typeof erDashLoad === 'function') erDashLoad();
     else if(sec==='erp-warranty' && typeof erWrLoad === 'function') erWrLoad();
+    else if(sec==='erp-targets' && typeof erTgLoad === 'function') erTgLoad();
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -6588,6 +6593,7 @@ function goTo(sec){
   else if(sec==='erp-acc')erAcLoad(true);
   else if(sec==='erp-dash')erDashLoad();
   else if(sec==='erp-warranty')erWrLoad();
+  else if(sec==='erp-targets')erTgLoad();
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -18708,7 +18714,8 @@ const NAV_META = {
   'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' },
   'erp-acc':          { icon: '📒',  label: 'الحسابات العامة (السيستم الجديد)' },
   'erp-dash':         { icon: '📊',  label: 'لوحة المؤشرات (السيستم الجديد)' },
-  'erp-warranty':     { icon: '🛡️',  label: 'الضمان وما بعد البيع (السيستم الجديد)' }
+  'erp-warranty':     { icon: '🛡️',  label: 'الضمان وما بعد البيع (السيستم الجديد)' },
+  'erp-targets':      { icon: '🎯',  label: 'أهداف ومكافآت التجار (السيستم الجديد)' }
 };
 
 // ── Default sidebar layout
@@ -18719,7 +18726,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'clients-map', 'bdays', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
-    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-dash', 'erp-warranty', 'erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
+    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-dash', 'erp-warranty', 'erp-targets', 'erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -18759,7 +18766,8 @@ const NAV_PREFERRED_CAT = {
   'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-acc': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-dash': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
-  'erp-warranty': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
+  'erp-warranty': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-targets': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
@@ -18862,7 +18870,7 @@ function saveSidebarLayout(){
 // ═══════════════════════════════════════════════════════════
 // 🏭 السيستم الجديد = زرار واحد فى القايمة + تبويبات فوق كل شاشاته
 // ═══════════════════════════════════════════════════════════
-var ERP_HUB = ['erp-dash','erp-warranty','erp-acc','erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
+var ERP_HUB = ['erp-dash','erp-warranty','erp-targets','erp-acc','erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
 var ERP_HUB_LBL = { 'erp-dash':'📊 لوحة المؤشرات','erp-warranty':'🛡️ الضمان','erp-acc':'📒 الحسابات','erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
 function erHubAllowed(){ return ERP_HUB.filter(id=>!EMP_MODE||can(id,'view')); }
 function erHubGo(){ let last=''; try{ last=localStorage.getItem('erp_hub_last')||''; }catch(e){} const A=erHubAllowed(); goTo(A.includes(last)?last:(A[0]||'erp-sales')); }
@@ -18881,7 +18889,8 @@ var ERM = [
     { l:'مرتجعات المبيعات', i:'↩️', s:'erp-sales', t:'ret' },
     { l:'أذونات مستنية تسليم', i:'📦', s:'erp-delivery', t:'ready' },
     { l:'مستندات التسليم (أذونات الصرف)', i:'📄', s:'erp-delivery', t:'list' },
-    { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' } ]},
+    { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' },
+    { l:'أهداف ومكافآت التجار', i:'🎯', s:'erp-targets' } ]},
   { id:'cash', title:'الخزينة والتحصيل', icon:'💵', c:'#4CAF7D', items:[
     { l:'سند قبض جديد', i:'➕', s:'erp-cash', t:'rcpt', a:"erRcptOpen(null,null)", w:()=>ER.sl, e:'erp-cash' },
     { l:'استلام شيك جديد', i:'➕', s:'erp-cash', t:'chk', a:"erChkOpen()", w:()=>ER.sl, e:'erp-cash' },
@@ -26520,6 +26529,36 @@ async function erShipCustoms(id){ let x; try{ x=await rpcSecure('erp_ship_custom
 async function erShipCustomsSave(){ const id=window.__erCus.id; const C={ broker:document.getElementById('ercu-broker').value.trim(), decl_no:document.getElementById('ercu-decl').value.trim(), port_name:document.getElementById('ercu-portn').value.trim(), notes:document.getElementById('ercu-notes').value.trim() };
   document.querySelectorAll('.ercu-d').forEach(i=>{ if(i.value) C[i.dataset.k]=i.value; });
   await erRun('ercu-save', async()=>{ await rpcSecure('erp_ship_customs_save',{p_id:id,p:{acid_no:document.getElementById('ercu-acid').value,bl_no:document.getElementById('ercu-bl').value,customs:C}}); erToast('✅ اتحفظ'); document.getElementById('er-x-ov').remove(); }); }
+
+
+// ═══ 🎯 أهداف ومكافآت التجار ═══
+async function erTgLoad(){ const el=document.getElementById('ertg-pane'); if(el&&!ER.tgs) el.innerHTML='<div class="loading-txt">⏳</div>'; try{ await erBoot(); try{ if(!ER.sl) await erSlLoad(); }catch(e){} ER.tgs=await rpcSecure('erp_targets_list',{p:{}}); }catch(e){ erPaneErr('ertg-pane',e); return; } erRenderTg(); }
+const ER_TG_RW={pct:'% من قيمة المبيعات',per_unit:'ج على كل قطعة',fixed:'ج مبلغ ثابت'};
+function erTgRwTxt(t){ if(t.tiers&&t.tiers.length) return 'شرايح: '+t.tiers.map(x=>`من ${x.at}% ← ${x.reward}${t.reward_type==='pct'?'%':' ج'}`).join(' · '); return `${erMoney(t.reward_value,2)} ${ER_TG_RW[t.reward_type]||''}`; }
+function erRenderTg(){ const el=document.getElementById('ertg-pane'); if(!el) return; const T=ER.tgs||[], canE=erCan('erp-targets','edit'), canPay=erCan('erp-cash','edit'), today=erToday();
+  el.innerHTML=`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center">${canE?'<button class="qt-btn" onclick="erTgOpen()">➕ هدف جديد</button>':''}<div style="flex:1"></div><span class="qt-sub">💡 الهدف بيتحسب من صافى المبيعات (فواتير − مرتجعات) فى الفترة. الحافز بيتصرف «تسوية دائنة» للتاجر — بتقلل مديونيته — والتاجر بيشوف تقدمه فى صفحته.</span></div>
+  ${T.map(t=>{ const live=today>=t.from&&today<=t.to, done=today>t.to; return `<div class="qt-card" style="margin-bottom:12px"><div class="qt-row" style="align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:15px">🎯 ${erEsc(t.name)}</b>${t.test?' 🧪':''}
+    <span class="qt-chip ${live?'in':done?'dim':'ex'}">${live?'شغال':done?'خلص':'لسه مبدأش'} — ${erEsc(t.from)} ← ${erEsc(t.to)}</span><span class="qt-chip dim">${t.client?erEsc(t.client):'كل التجار'}</span>
+    <span class="qt-sub">الهدف: <b>${erQ(t.target)}</b> ${t.metric==='qty'?'قطعة':'ج'} · المكافأة: ${erEsc(erTgRwTxt(t))}</span><div style="flex:1"></div>${canE?`<button class="qt-btn ghost sm" onclick="erTgOpen(${t.id})">✏️</button>`:''}</div>
+    <div class="qt-scroll" style="margin-top:8px"><table class="qt-tbl"><thead><tr><th>التاجر</th><th>المحقق</th><th style="min-width:200px">التقدم</th><th>المكافأة</th><th></th></tr></thead><tbody>
+    ${(t.rows||[]).map(r=>{ const p=Math.max(0,Number(r.pct)||0); return `<tr><td style="text-align:right">${erEsc(r.name)} <span class="qt-sub">${erEsc(r.code||'')}</span></td><td>${erQ(r.achieved)} ${t.metric==='qty'?'قطعة':'ج'}</td>
+      <td><div style="background:#222;border-radius:8px;height:12px;overflow:hidden"><div style="height:100%;width:${Math.min(100,p)}%;background:${p>=100?'var(--success)':p>=70?'var(--gold)':'#4A90D9'}"></div></div><div class="qt-sub">${p}%</div></td>
+      <td><b style="color:${r.reward>0?'var(--success)':'inherit'}">${erMoney(r.reward,2)}</b></td>
+      <td>${r.paid?`<span class="qt-chip in">✅ اتصرف ${erMoney(r.paid.reward,2)}</span>`:(r.reward>0&&canPay?`<button class="qt-btn sm" onclick="erTgPay(${t.id},${r.client_id},${r.reward})">💰 اصرف</button>`:'')}</td></tr>`; }).join('')}
+    </tbody></table></div>${(t.rows||[]).length?'':'<div class="qt-sub">مفيش مبيعات فى الفترة دى لسه</div>'}</div>`; }).join('')}${T.length?'':'<div class="qt-sub" style="padding:10px">مفيش أهداف لسه</div>'}`; }
+function erTgOpen(id){ const t=id?JSON.parse(JSON.stringify((ER.tgs||[]).find(x=>x.id===id))):{ id:null, name:'', from:erToday().slice(0,8)+'01', to:'', client_id:'', metric:'qty', cat_id:'', item_ids:[], target:'', reward_type:'per_unit', reward_value:'', tiers:[], notes:'', status:'شغال' };
+  t.tiers=t.tiers||[]; t.item_ids=t.item_ids||[]; t.__cltxt=t.client_id?erClLbl(erCl(t.client_id)):''; ER.edit=t; ER.ro=false;
+  const form=()=>`${erClDl()}<div class="qt-card"><div class="qt-row">${erFld('اسم الهدف *',erInp('name',t.name,{ph:'مثلاً: تارجت نوفمبر — هوجان'}),2)}${erFld('من',erInp('from',t.from,{type:'date'}),1)}${erFld('لحد',erInp('to',t.to,{type:'date'}),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('التاجر (فاضى = كل التجار)',`<input class="qt-inp" list="er-cl-dl" value="${erEsc(t.__cltxt)}" placeholder="كل التجار" onchange="(function(v){const c=erClFromTxt(v);ER.edit.__cltxt=v;ER.edit.client_id=c?c.id:'';})(this.value)">`,2)}
+      ${erFld('على',erSel('metric',t.metric,[['qty','عدد القطع'],['value','قيمة المبيعات (ج)']]),1)}${erFld('الهدف *',erInp('target',t.target,{type:'number'}),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('فئة الأصناف (اختيارى)',erSel('cat_id',t.cat_id,[['','كل الأصناف']].concat((ER.boot.categories||[]).map(c=>[c.id,c.name]))),2)}${erFld('المكافأة',erSel('reward_type',t.reward_type,Object.entries(ER_TG_RW),true),1)}${erFld('قيمتها',erInp('reward_value',t.reward_value,{type:'number',step:'0.01'}),1)}</div>
+    <div style="margin-top:10px"><b>📶 شرايح (اختيارى)</b> <span class="qt-sub">— لو حطيت شرايح، المكافأة بتتحسب حسب النسبة اللى وصلها (مثلاً 100% ← 1، 120% ← 1.5)</span>
+      ${t.tiers.map((x,i)=>`<div class="qt-row" style="gap:6px;margin-top:6px;align-items:center"><span class="qt-sub">من</span><input class="qt-inp" type="number" style="width:90px" value="${erEsc(x.at)}" oninput="ER.edit.tiers[${i}].at=Number(this.value)"><span class="qt-sub">% ← مكافأة</span><input class="qt-inp" type="number" step="0.01" style="width:110px" value="${erEsc(x.reward)}" oninput="ER.edit.tiers[${i}].reward=Number(this.value)"><button class="qt-btn red sm" onclick="ER.edit.tiers.splice(${i},1);ER.edit.__render()">✖</button></div>`).join('')}
+      <button class="qt-btn ghost sm" style="margin-top:6px" onclick="ER.edit.tiers.push({at:100,reward:''});ER.edit.__render()">➕ شريحة</button></div>
+    <div class="qt-row" style="margin-top:10px">${erFld('الحالة',erSel('status',t.status,[['شغال','شغال'],['موقوف','موقوف']]),1)}${erFld('ملاحظات',erInp('notes',t.notes),3)}</div></div>`;
+  t.__render=()=>erModalBody(form()); erModal(id?'✏️ تعديل هدف':'🎯 هدف جديد', form(), `<button class="qt-btn" id="er-save-btn" onclick="erTgSave()">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+async function erTgSave(){ await erRun('er-save-btn', async()=>{ const t=ER.edit; await rpcSecure('erp_target_save',{p:{id:t.id,name:t.name,from:t.from,to:t.to,client_id:t.client_id||null,metric:t.metric,cat_id:t.cat_id||null,item_ids:t.item_ids,target:erNum(t.target),reward_type:t.reward_type,reward_value:erNum(t.reward_value),tiers:(t.tiers||[]).filter(x=>x.at&&x.reward!==''),status:t.status,notes:t.notes}}); erClose(); erToast('✅ اتحفظ'); ER.tgs=null; erTgLoad(); }); }
+async function erTgPay(tid,cid,rw){ if(!confirm(`صرف حافز ${erMoney(rw,2)} ج للتاجر؟\nهيتعمل تسوية دائنة بالمبلغ وتقلل مديونيته.`)) return; try{ const r=await rpcSecure('erp_target_pay',{p_target:tid,p_client:cid}); erToast(`✅ اتصرف ${erMoney(r,2)} ج`); ER.tgs=null; ER.sl=null; erTgLoad(); }catch(e){ erToast('❌ '+erErr(e),false); } }
 
 </script>
 
