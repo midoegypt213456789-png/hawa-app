@@ -4149,13 +4149,14 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         </div>
         <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erSetupLoad(true)">🔄 تحديث</button>
       </div>
-      <div class="bl-tabs"><button class="bl-tab active" id="erx-tab-wh" onclick="erSetupTab('wh')">🏬 المخازن</button><button class="bl-tab" id="erx-tab-cur" onclick="erSetupTab('cur')">💱 العملات</button><button class="bl-tab" id="erx-tab-tier" onclick="erSetupTab('tier')">🏷️ فئات الأسعار</button><button class="bl-tab" id="erx-tab-tre" onclick="erSetupTab('tre')">🏦 الخزائن والبنوك</button><button class="bl-tab" id="erx-tab-status" onclick="erSetupTab('status')">🚦 حالة السيستم</button><button class="bl-tab" id="erx-tab-per" onclick="erSetupTab('per')">📕 الفترات والإقفال</button></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erx-tab-wh" onclick="erSetupTab('wh')">🏬 المخازن</button><button class="bl-tab" id="erx-tab-cur" onclick="erSetupTab('cur')">💱 العملات</button><button class="bl-tab" id="erx-tab-tier" onclick="erSetupTab('tier')">🏷️ فئات الأسعار</button><button class="bl-tab" id="erx-tab-tre" onclick="erSetupTab('tre')">🏦 الخزائن والبنوك</button><button class="bl-tab" id="erx-tab-status" onclick="erSetupTab('status')">🚦 حالة السيستم</button><button class="bl-tab" id="erx-tab-per" onclick="erSetupTab('per')">📕 الفترات والإقفال</button><button class="bl-tab" id="erx-tab-eta" onclick="erSetupTab('eta')">🧾 الفاتورة الإلكترونية</button></div>
       <div id="erx-pane-wh" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-cur" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-tier" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-tre" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-status" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erx-pane-per" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erx-pane-eta" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
 
     <div class="section" id="sec-feedback">
@@ -18976,7 +18977,8 @@ var ERM = [
     { l:'فئات الأسعار', i:'🏷️', s:'erp-setup', t:'tier' },
     { l:'الخزائن والبنوك', i:'🏦', s:'erp-setup', t:'tre' },
     { l:'حالة السيستم', i:'🚦', s:'erp-setup', t:'status' },
-    { l:'الفترات والإقفال', i:'📕', s:'erp-setup', t:'per' } ]}
+    { l:'الفترات والإقفال', i:'📕', s:'erp-setup', t:'per' },
+    { l:'الفاتورة الإلكترونية (ETA)', i:'🧾', s:'erp-setup', t:'eta' } ]}
 ];
 function ermOk(it){ if(it.s && !document.getElementById('sec-'+it.s)) return false;
   if(EMP_MODE && !can(it.s,'view')) return false; if(it.p && !erCan(it.p,'view')) return false; if(it.e && !erCan(it.e,'edit')) return false; return true; }
@@ -22053,9 +22055,9 @@ async function erTraderSave(){ await erRun('er-save-btn', async ()=>{ const e=ER
   const r=await rpcSecure('erp_trader_save',{p}); const t=erById(ER.traders,e.client_id); if(t) t.acc=r; erClose(); erRenderTraders(); erToast('✅ اتحفظ حساب التاجر'); }); }
 
 // ════════════════ 🧩 تعريفات السيستم ════════════════
-const ERS_TABS=['wh','cur','tier','tre','status','per'];
+const ERS_TABS=['wh','cur','tier','tre','status','per','eta'];
 async function erSetupLoad(force){ try{ await erBoot(force); erSetupTab(ER.tab.setup); }catch(e){ erPaneErr('erx-pane-wh',e); } }
-function erSetupTab(t){ ER.tab.setup=t; erTabs('erx',ERS_TABS,t); ({wh:erRenderWh,cur:erRenderCur,tier:erRenderTier,tre:erRenderTre,status:erRenderStatus,per:erRenderPer}[t]||erRenderWh)(); }
+function erSetupTab(t){ ER.tab.setup=t; erTabs('erx',ERS_TABS,t); ({wh:erRenderWh,cur:erRenderCur,tier:erRenderTier,tre:erRenderTre,status:erRenderStatus,per:erRenderPer,eta:()=>{ ER.eta=null; erRenderEta(); }}[t]||erRenderWh)(); }
 function erSimpleTable(id, head, rows, addBtn, empty){ const el=document.getElementById(id); if(!el) return;
   el.innerHTML = erBanner() + `<div class="qt-row" style="margin-bottom:12px"><div style="flex:1"></div>${addBtn||''}</div>` + (rows.length?`<div class="qt-scroll"><table class="qt-tbl"><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`:`<div class="qt-card qt-sub" style="text-align:center;padding:30px">${empty}</div>`); }
 function erRenderWh(){ const B=ER.boot, canE=erCan('erp-setup','edit');
@@ -26687,6 +26689,42 @@ document.addEventListener('keydown',e=>{ if(typeof admin==='undefined'||!admin) 
     if(document.getElementById('er-x-ov')||ER.__bq||ER.__pk) return; const dd=document.getElementById('erm-dd'); if(dd&&dd.style.display==='block') return;
     const m=erWinCur(); if(m && ER.edit){ e.preventDefault(); erModalMin(); } }
 });
+
+// ═══ 🧾 الفاتورة الإلكترونية (ETA) — تجهيز: إعدادات + أكواد الأصناف + جاهزية الفواتير الضريبية + معاينة JSON ═══
+async function erRenderEta(){ const el=document.getElementById('erx-pane-eta'); if(!el) return; if(!ER.eta) el.innerHTML='<div class="loading-txt">⏳</div>';
+  const F=ER.etaf=ER.etaf||{from:erToday().slice(0,8)+'01',to:erToday()};
+  try{ const [s,r]=await Promise.all([rpcSecure('erp_eta_settings',{p:null}), rpcSecure('erp_eta_ready',{p:{from:F.from,to:F.to}})]); ER.eta={s,r}; }catch(e){ erPaneErr('erx-pane-eta',e); return; } erEtaDraw(); }
+function erEtaDraw(){ const el=document.getElementById('erx-pane-eta'); if(!el||!ER.eta) return; const {s,r}=ER.eta, F=ER.etaf, canE=erCan('erp-setup','edit'), canI=erCan('erp-items','edit');
+  const inp=(k,l,ph,w,dir)=>erFld(l,`<input class="qt-inp eta-s" data-k="${k}" ${dir?`dir="${dir}"`:''} value="${erEsc(s[k]||'')}" placeholder="${erEsc(ph||'')}" ${canE?'':'disabled'}>`,w||1);
+  const CO=/^(رقم التسجيل الضريبى للشركة|كود النشاط|عنوان الفرع)/; (r.rows||[]).forEach(x=>{ x.__e=(x.errors||[]).filter(e=>!CO.test(e)); }); const rows=r.rows||[], bad=rows.filter(x=>(x.errors||[]).length), its=r.items||[], noCode=its.filter(i=>!i.eta).length;
+  const ok=s.erp_co_tax_no&&/^\d{9}$/.test(s.erp_co_tax_no)&&/^\d{4}$/.test(s.eta_activity||'')&&s.eta_gov&&s.eta_city&&s.eta_street&&s.eta_building;
+  el.innerHTML=`<div class="er-banner" style="border-color:rgba(74,144,217,.6)">🧾 <b>المرحلة دى تجهيز</b> — البرنامج بيبنى مستند كل فاتورة ضريبية بصيغة منظومة الفاتورة الإلكترونية (ETA v1.0) ويقولك إيه الناقص. الإرسال الفعلى محتاج: <b>① Client ID و Client Secret للـ ERP من بوابة المنظومة</b> (بيتحطوا كـ Secrets على السيرفر — مش هنا) و <b>② التوقيع الإلكترونى (فلاشة الـ e-Seal / e-Token)</b> على جهاز فى الشركة.</div>
+  <div class="erd-2" style="margin-top:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));display:grid;gap:8px">
+    ${[['🏢 بيانات الشركة',ok?'✅ كاملة':'⚠️ ناقصة',ok],['🏷️ أكواد الأصناف',noCode?`⚠️ ${noCode} صنف من غير كود`:'✅ كلها متكودة',!noCode],['🧾 فواتير الفترة',`${rows.length} فاتورة — ${bad.length?`<span style="color:var(--error)">${bad.length} فيها مشاكل</span>`:'✅ جاهزة'}`,!bad.length],['🔐 الربط بالمنظومة',s.eta_active==='1'?'🟢 شغال':'⏸️ لسه (مستنى الـ credentials)',s.eta_active==='1']].map(x=>`<div class="erd-k" style="--kc:${x[2]?'#4CAF7D':'#E0913A'}"><div class="h">${x[0]}</div><div class="s" style="font-size:14px;color:#fff;font-weight:800">${x[1]}</div></div>`).join('')}</div>
+  <div class="qt-card" style="margin-top:12px"><b>🏢 بيانات المُصدر (الشركة)</b>
+    <div class="qt-row" style="margin-top:8px">${inp('erp_co_tax_no','رقم التسجيل الضريبى (RIN) — 9 أرقام','123456789',1,'ltr')}${inp('eta_issuer_name','الاسم المسجل فى المنظومة','',2)}${inp('eta_activity','كود النشاط — 4 أرقام','مثلاً 4510',1,'ltr')}${inp('eta_branch_id','كود الفرع','0',1,'ltr')}</div>
+    <div class="qt-row" style="margin-top:8px">${inp('eta_gov','المحافظة','المنوفية')}${inp('eta_city','المدينة / المنطقة','مدينة السادات')}${inp('eta_street','الشارع','',2)}${inp('eta_building','رقم المبنى','',1,'ltr')}</div>
+    <div class="qt-row" style="margin-top:8px;align-items:end">${erFld('البيئة',`<select class="qt-inp eta-s" data-k="eta_env" ${canE?'':'disabled'}><option value="preprod" ${s.eta_env!=='prod'?'selected':''}>🧪 تجريبى (Pre-Production)</option><option value="prod" ${s.eta_env==='prod'?'selected':''}>🟢 فعلى (Production)</option></select>`,1)}
+      ${inp('eta_vat_subtype','نوع ضريبة القيمة المضافة','V009',1,'ltr')}${inp('eta_doc_version','إصدار المستند','1.0',1,'ltr')}<div style="flex:1"></div>${canE?'<button class="qt-btn" id="eta-s-save" onclick="erEtaSaveS()">💾 حفظ</button>':''}</div></div>
+  <div class="qt-card" style="margin-top:12px"><div class="qt-row" style="align-items:center"><b>🏷️ أكواد الأصناف فى المنظومة</b><span class="qt-sub">— كود EGS بتسجله فى بوابة المنظومة (EG-RIN-كودك) أو كود GS1 · الوحدة غالباً EA</span><div style="flex:1"></div>${canI?'<button class="qt-btn sm" id="eta-i-save" onclick="erEtaSaveI()">💾 حفظ الأكواد</button>':''}</div>
+    <div class="qt-scroll" style="max-height:340px;margin-top:8px"><table class="qt-tbl"><thead><tr><th>الصنف</th><th>النوع</th><th>كود المنظومة</th><th>الوحدة</th></tr></thead><tbody>
+    ${its.map(i=>`<tr data-eid="${i.id}"><td style="text-align:right"><b>${erEsc(i.code)}</b> ${erEsc(i.name)}</td><td><select class="qt-inp eta-it" data-f="type" style="width:90px" ${canI?'':'disabled'}><option ${i.type!=='GS1'?'selected':''}>EGS</option><option ${i.type==='GS1'?'selected':''}>GS1</option></select></td>
+      <td><input class="qt-inp eta-it" data-f="eta" dir="ltr" style="width:220px;${i.eta?'':'border-color:var(--error)'}" value="${erEsc(i.eta||'')}" placeholder="EG-${erEsc(s.erp_co_tax_no||'RIN')}-${erEsc(i.code)}" ${canI?'':'disabled'}></td><td><input class="qt-inp eta-it" data-f="unit" dir="ltr" style="width:70px" value="${erEsc(i.unit||'EA')}" ${canI?'':'disabled'}></td></tr>`).join('')}</tbody></table></div></div>
+  <div class="qt-card" style="margin-top:12px"><div class="qt-row" style="align-items:end;gap:8px;flex-wrap:wrap"><b style="margin-bottom:8px">🧾 جاهزية الفواتير الضريبية</b><div style="flex:1"></div>${erFld('من',`<input type="date" class="qt-inp" value="${F.from}" onchange="ER.etaf.from=this.value">`,0)}${erFld('لحد',`<input type="date" class="qt-inp" value="${F.to}" onchange="ER.etaf.to=this.value">`,0)}<button class="qt-btn ghost" style="margin-bottom:2px" onclick="erRenderEta()">🔄 اعرض</button></div>
+    <div class="qt-scroll" style="margin-top:8px"><table class="qt-tbl"><thead><tr><th>رقم</th><th>التاريخ</th><th>المشترى</th><th>الإجمالى</th><th>حالة المنظومة</th><th>المشاكل</th><th></th></tr></thead><tbody>
+    ${rows.map(x=>`<tr><td><b>${x.no}</b>${x.test?' 🧪':''}</td><td>${erEsc(x.date)}</td><td style="text-align:right">${erEsc(x.buyer||'')}</td><td>${erMoney(x.total,2)}</td><td><span class="qt-chip ${x.eta==='Valid'?'in':'dim'}">${erEsc(x.eta||(x.status==='سارية'?'لسه ماتبعتتش':x.status))}</span></td>
+      <td style="text-align:right;max-width:380px">${x.__e.length?x.__e.map(e=>`<div style="color:var(--error);font-size:12px">⛔ ${erEsc(e)}</div>`).join(''):((x.errors||[]).length?'<span class="qt-sub">⚠️ ناقص بيانات الشركة بس (فوق)</span>':'<span style="color:var(--success)">✅ جاهزة</span>')}${(x.warnings||[]).map(e=>`<div style="color:var(--gold);font-size:12px">⚠️ ${erEsc(e)}</div>`).join('')}</td>
+      <td><button class="qt-btn ghost sm" onclick="erEtaJson(${x.id})">👁️ المستند</button></td></tr>`).join('')}</tbody></table></div>${rows.length?'':'<div class="qt-sub" style="padding:8px">مفيش فواتير ضريبية فى الفترة دى</div>'}</div>`; }
+async function erEtaSaveS(){ const p={}; document.querySelectorAll('#erx-pane-eta .eta-s').forEach(i=>p[i.dataset.k]=i.value.trim());
+  if(p.erp_co_tax_no&&!/^\d{9}$/.test(p.erp_co_tax_no)){ erToast('رقم التسجيل الضريبى لازم 9 أرقام',false); return; } if(p.eta_activity&&!/^\d{4}$/.test(p.eta_activity)){ erToast('كود النشاط لازم 4 أرقام',false); return; }
+  await erRun('eta-s-save', async()=>{ await rpcSecure('erp_eta_settings',{p}); erToast('✅ اتحفظ'); ER.eta=null; erRenderEta(); }); }
+async function erEtaSaveI(){ const items=[...document.querySelectorAll('#erx-pane-eta tr[data-eid]')].map(tr=>{ const g=f=>tr.querySelector(`.eta-it[data-f="${f}"]`).value.trim(); return {id:Number(tr.dataset.eid),type:g('type'),eta:g('eta'),unit:g('unit')}; });
+  const prev=new Map(((ER.eta&&ER.eta.r.items)||[]).map(i=>[i.id,i])); const ch=items.filter(x=>{ const o=prev.get(x.id)||{}; return (o.eta||'')!==x.eta||(o.type||'EGS')!==x.type||(o.unit||'EA')!==x.unit; });
+  if(!ch.length){ erToast('مفيش تغيير'); return; } await erRun('eta-i-save', async()=>{ const n=await rpcSecure('erp_eta_items_save',{p:{items:ch}}); erToast(`✅ اتحفظ ${n} صنف`); ER.eta=null; erRenderEta(); }); }
+async function erEtaJson(id){ let d; try{ d=await rpcSecure('erp_eta_doc',{p_tinv:id}); }catch(e){ erToast('❌ '+erErr(e),false); return; } const js=JSON.stringify(d.doc,null,2); window.__etaJs={js,no:d.doc&&d.doc.internalID};
+  erXOv(`<div class="qt-row" style="align-items:center"><b style="font-size:16px;color:var(--gold)">🧾 مستند المنظومة — فاتورة ضريبية ${erEsc(d.doc&&d.doc.internalID)}</b><div style="flex:1"></div><button class="qt-btn ghost sm" onclick="navigator.clipboard&&navigator.clipboard.writeText(window.__etaJs.js);erToast('📋 اتنسخ')">📋 نسخ</button><button class="qt-btn ghost sm" onclick="(function(){const b=new Blob([window.__etaJs.js],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='eta-'+window.__etaJs.no+'.json';a.click();})()">⬇️ JSON</button><button class="qt-btn ghost sm" onclick="document.getElementById('er-x-ov').remove()">✖</button></div>
+    ${(d.errors||[]).length?`<div style="margin-top:8px">${d.errors.map(e=>`<div style="color:var(--error)">⛔ ${erEsc(e)}</div>`).join('')}</div>`:'<div style="color:var(--success);margin-top:8px">✅ المستند جاهز للتوقيع والإرسال</div>'}
+    <pre dir="ltr" style="text-align:left;background:#0b0b0b;border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:10px;max-height:56vh;overflow:auto;font-size:12px;white-space:pre-wrap">${erEsc(js)}</pre>`); }
 
 </script>
 
