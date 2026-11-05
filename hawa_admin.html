@@ -4108,6 +4108,10 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="erst-pane-tr" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erst-pane-cnt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
+    <div class="section" id="sec-erp-dash">
+      <div class="page-hd"><div class="page-hd-titles"><div class="page-title">📊 <span>لوحة المؤشرات</span></div><div class="page-sub">كل الأرقام المهمة فى شاشة واحدة — المبيعات والتحصيل والمديونية والمخزون والشحنات والجوابات والتحميل</div></div></div>
+      <div id="erdash-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
     <div class="section" id="sec-erp-acc">
       <div class="page-hd">
         <div class="page-hd-titles">
@@ -6403,6 +6407,7 @@ function autoRefreshTick(){
     else if(sec==='erp-letters' && typeof erLettersLoad === 'function') erLettersLoad(true);
     else if(sec==='erp-reports' && typeof erReportsLoad === 'function') erReportsLoad(true);
     else if(sec==='erp-acc' && typeof erAcLoad === 'function') erAcLoad(true);
+    else if(sec==='erp-dash' && typeof erDashLoad === 'function') erDashLoad();
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -6574,6 +6579,7 @@ function goTo(sec){
   else if(sec==='erp-letters')erLettersLoad(true);
   else if(sec==='erp-reports')erReportsLoad(true);
   else if(sec==='erp-acc')erAcLoad(true);
+  else if(sec==='erp-dash')erDashLoad();
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -18692,7 +18698,8 @@ const NAV_META = {
   'erp-letters':      { icon: '✉️',  label: 'الجوابات والفواتير الضريبية (السيستم الجديد)' },
   'erp-reports':      { icon: '📈',  label: 'تقارير السيستم الجديد' },
   'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' },
-  'erp-acc':          { icon: '📒',  label: 'الحسابات العامة (السيستم الجديد)' }
+  'erp-acc':          { icon: '📒',  label: 'الحسابات العامة (السيستم الجديد)' },
+  'erp-dash':         { icon: '📊',  label: 'لوحة المؤشرات (السيستم الجديد)' }
 };
 
 // ── Default sidebar layout
@@ -18703,7 +18710,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'clients-map', 'bdays', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
-    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
+    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-dash', 'erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -18741,7 +18748,8 @@ const NAV_PREFERRED_CAT = {
   'erp-letters': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-reports': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
-  'erp-acc': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
+  'erp-acc': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-dash': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
@@ -18844,8 +18852,8 @@ function saveSidebarLayout(){
 // ═══════════════════════════════════════════════════════════
 // 🏭 السيستم الجديد = زرار واحد فى القايمة + تبويبات فوق كل شاشاته
 // ═══════════════════════════════════════════════════════════
-var ERP_HUB = ['erp-acc','erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
-var ERP_HUB_LBL = { 'erp-acc':'📒 الحسابات','erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
+var ERP_HUB = ['erp-dash','erp-acc','erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
+var ERP_HUB_LBL = { 'erp-dash':'📊 لوحة المؤشرات','erp-acc':'📒 الحسابات','erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
 function erHubAllowed(){ return ERP_HUB.filter(id=>!EMP_MODE||can(id,'view')); }
 function erHubGo(){ let last=''; try{ last=localStorage.getItem('erp_hub_last')||''; }catch(e){} const A=erHubAllowed(); goTo(A.includes(last)?last:(A[0]||'erp-sales')); }
 // ═══════════════════════════════════════════════════════════
@@ -18929,6 +18937,7 @@ var ERM = [
     { l:'الميزانية (المركز المالى)', i:'🏛️', s:'erp-acc', t:'bs' },
     { l:'تشغيل الحسابات وإعداداتها', i:'⚙️', s:'erp-acc', t:'set' } ]},
   { id:'rep', title:'التقارير', icon:'📈', c:'#E05577', items:[
+    { l:'لوحة المؤشرات', i:'📊', s:'erp-dash' },
     { l:'كل التقارير', i:'📈', s:'erp-reports' },
     { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' },
     { l:'كشف حساب مورد', i:'📒', s:'erp-purchases', t:'stmt' },
@@ -18974,7 +18983,7 @@ function erHubBar(sec){ ermDdClose();
   let T=document.getElementById('erm-top');
   if(top){ document.querySelectorAll('.erp-hub-bar').forEach(b=>b.remove());
     if(!T){ T=document.createElement('div'); T.id='erm-top'; document.body.appendChild(T); }
-    T.innerHTML=`<div class="erm-logo">🏍️ HAWA</div>${ermModsHtml()}<button class="erm-appr" style="display:none" onclick="erApprInbox()" title="طلبات الموافقة">🔔 الموافقات</button><div class="erm-crumb"></div>`; if(typeof erApprBadge==='function') setTimeout(erApprBadge,300);
+    T.innerHTML=`<div class="erm-logo" style="cursor:pointer" title="لوحة المؤشرات" onclick="if(document.getElementById('sec-erp-dash')&&(!EMP_MODE||can('erp-dash','view')))goTo('erp-dash')">🏍️ HAWA</div>${ermModsHtml()}<button class="erm-appr" style="display:none" onclick="erApprInbox()" title="طلبات الموافقة">🔔 الموافقات</button><div class="erm-crumb"></div>`; if(typeof erApprBadge==='function') setTimeout(erApprBadge,300);
     if(ERP_HUB.includes(sec)) try{ localStorage.setItem('erp_hub_last',sec); }catch(e){}
     erMenuMark(); return; }
   if(T) T.remove();
@@ -26308,6 +26317,57 @@ async function erApprBadge(){ try{ if(typeof SESSION_TOKEN==='undefined'||!SESSI
 setInterval(()=>{ if(document.visibilityState==='visible' && document.getElementById('erm-top')) erApprBadge(); },60000);
 // رابط التليجرام: ?appr=ID → يفتح الموافقات بعد الدخول
 (function(){ try{ const q=new URLSearchParams(location.search); if(!q.get('appr')) return; const t0=Date.now(); const tk=()=>{ if(typeof SESSION_TOKEN!=='undefined'&&SESSION_TOKEN&&document.getElementById('app')&&document.getElementById('app').classList.contains('show')){ erApprInbox(); history.replaceState(null,'',location.pathname); return; } if(Date.now()-t0<120000) setTimeout(tk,800); }; setTimeout(tk,1500); }catch(e){} })();
+
+
+// ═══ 📊 لوحة المؤشرات ═══
+(function(){ const st=document.createElement('style'); st.textContent=`
+.erd-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.erd-k{background:linear-gradient(180deg,#151515,#101010);border:1px solid var(--border,#2A2A2A);border-radius:14px;padding:12px 14px;cursor:default;position:relative;overflow:hidden}
+.erd-k:before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--kc,#C9A84C)}
+.erd-k.lnk{cursor:pointer}.erd-k.lnk:hover{border-color:var(--kc,#C9A84C)}
+.erd-k .h{font-size:12px;color:var(--text-dim,#8A8580);font-weight:700}.erd-k .v{font-size:22px;font-weight:900;color:#fff;margin-top:2px;white-space:nowrap}.erd-k .s{font-size:12px;color:var(--text-dim,#8A8580);margin-top:2px}
+.erd-up{color:var(--success,#4CAF7D)}.erd-dn{color:var(--error,#E05555)}
+.erd-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;margin-top:10px}
+.erd-box{background:#121212;border:1px solid var(--border,#2A2A2A);border-radius:14px;padding:12px}
+.erd-box h4{margin:0 0 8px;font-size:14px;color:var(--gold,#C9A84C)}
+.erd-row{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed #262626;font-size:13px}.erd-row:last-child{border:0}`; document.head.appendChild(st); })();
+async function erDashLoad(){ const el=document.getElementById('erdash-pane'); if(!el) return; if(!ER.dash) el.innerHTML='<div class="loading-txt">⏳ بنجمّع الأرقام...</div>';
+  try{ await erBoot(); ER.dash=await rpcSecure('erp_dash',{}); }catch(e){ erPaneErr('erdash-pane',e); return; } erRenderDash(); }
+function erDashPct(a,b){ a=Number(a)||0; b=Number(b)||0; if(!b) return a?'<span class="erd-up">جديد</span>':''; const p=Math.round((a-b)/b*100); return `<span class="${p>=0?'erd-up':'erd-dn'}">${p>=0?'▲':'▼'} ${Math.abs(p)}%</span> عن نفس الفترة الشهر اللى فات`; }
+function erDashChart(D){ const W=640,H=170,P=26, n=D.length||1, mx=Math.max(1,...D.map(x=>Math.max(Number(x.s)||0,Number(x.c)||0))), bw=(W-P*2)/n;
+  const y=v=>H-P-(Number(v)||0)/mx*(H-P*2);
+  const bars=D.map((x,i)=>{ const h=(H-P)-y(x.s), X=P+i*bw; return `<rect x="${X+bw*0.15}" y="${y(x.s)}" width="${bw*0.7}" height="${Math.max(0,h-P+P)}" rx="2" fill="#4A90D9" opacity=".85"><title>${x.d}: مبيعات ${erMoney(x.s,0)}</title></rect>`; }).join('');
+  const line=D.map((x,i)=>`${P+i*bw+bw/2},${y(x.c)}`).join(' ');
+  const lbl=D.map((x,i)=>i%5===0||i===n-1?`<text x="${P+i*bw+bw/2}" y="${H-8}" font-size="10" fill="#8A8580" text-anchor="middle">${String(x.d).slice(8,10)}/${String(x.d).slice(5,7)}</text>`:'').join('');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto"><line x1="${P}" y1="${H-P}" x2="${W-P}" y2="${H-P}" stroke="#333"/>${bars}<polyline points="${line}" fill="none" stroke="#4CAF7D" stroke-width="2.2"/>${D.map((x,i)=>`<circle cx="${P+i*bw+bw/2}" cy="${y(x.c)}" r="2.4" fill="#4CAF7D"><title>${x.d}: تحصيل ${erMoney(x.c,0)}</title></circle>`).join('')}${lbl}
+    <text x="${W-P}" y="14" font-size="11" fill="#8A8580" text-anchor="end">أعلى يوم ${erMoney(mx,0)}</text></svg><div class="qt-sub" style="text-align:center">▮ <span style="color:#4A90D9">المبيعات</span> · — <span style="color:#4CAF7D">التحصيل</span> (آخر 30 يوم)</div>`; }
+function erRenderDash(){ const el=document.getElementById('erdash-pane'); if(!el||!ER.dash) return; const d=ER.dash, M=v=>erMoney(Math.round(Number(v)||0),0);
+  const K=(h,v,s,c,go)=>`<div class="erd-k${go?' lnk':''}" style="--kc:${c}" ${go?`onclick="${go}"`:''}><div class="h">${h}</div><div class="v">${v}</div>${s?`<div class="s">${s}</div>`:''}</div>`;
+  const S=d.sales||{}, C=d.coll||{}, A=d.ar||{}, Q=d.checks||{}, U=d.undelivered||{}, ST=d.stock||{}, SH=d.ships||{}, L=d.letters||{}, B=d.bookings||{};
+  const go=(mid,lbl)=>{ const m=ERM.find(x=>x.id===mid); const k=m?m.items.findIndex(it=>it.l===lbl):-1; return k>=0?`erMenuGo('${mid}',${k})`:''; };
+  el.innerHTML=`${d.test?'<div class="er-banner">🧪 السيستم لسه تجربة — الأرقام فيها حركات التجربة</div>':''}
+  <div class="qt-row" style="align-items:center;margin-bottom:10px"><b style="font-size:15px">📅 ${erEsc(new Date(d.today+'T00:00:00').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}</b><div style="flex:1"></div><button class="qt-btn ghost sm" onclick="ER.dash=null;erDashLoad()">🔄 تحديث</button></div>
+  <div class="erd-grid">
+    ${K('🧾 مبيعات النهارده',M(S.today)+' ج',`${S.today_n||0} فاتورة`,'#4A90D9',go('sales','فواتير المبيعات'))}
+    ${K('📈 مبيعات الشهر',M(S.month)+' ج',`${S.month_n||0} فاتورة · ${erQ(S.qty_month||0)} قطعة<br>${erDashPct(S.month,S.prev_same)}`,'#4A90D9')}
+    ${K('💵 تحصيل النهارده',M(C.today)+' ج','','#4CAF7D',go('cash','سندات القبض'))}
+    ${K('💰 تحصيل الشهر',M(C.month)+' ج',erDashPct(C.month,C.prev_same),'#4CAF7D')}
+    ${K('👥 مديونية التجار',M(A.total)+' ج',`${A.clients||0} تاجر عليه فلوس`,'#E0913A',go('sales','كشف حساب تاجر'))}
+    ${K('📝 شيكات تحت التحصيل',M(Q.amount)+' ج',`${Q.n||0} شيك · هذا الأسبوع ${Q.week_n||0} (${M(Q.week)})${Q.late_n?` · <span class="erd-dn">متأخر ${Q.late_n}</span>`:''}${d.bounced?` · <span class="erd-dn">مرتد ${d.bounced}</span>`:''}`,'#9B6BDF',go('cash','الشيكات'))}
+    ${K('📦 فواتير مستنية تسليم',`${U.invs||0} فاتورة`,`${erQ(U.qty||0)} قطعة لسه متسلّمتش`,'#2BB3A3',go('sales','أذونات مستنية تسليم'))}
+    ${K('🏬 قيمة المخزون',M(ST.value)+' ج',`${erQ(ST.qty||0)} قطعة${ST.low_n?` · <span class="erd-dn">${ST.low_n} صنف تحت حد الطلب</span>`:''}`,'#2BB3A3',go('stock','أرصدة المخازن'))}
+    ${K('🚢 شحنات جاية',`${SH.n||0} شحنة`,`${M(SH.egp)} ج${SH.late?` · <span class="erd-dn">${SH.late} متأخرة</span>`:''}`,'#E0913A',go('pur','الشحنات وفواتير الشراء'))}
+    ${K('✉️ الجوابات',`${L.inside||0} فى الاعتماد`,`لسه مخرجتش ${L.nw||0} · مستنية تسليم ${L.wait||0}${d.nolet?` · ماتور من غير جواب ${d.nolet}`:''}`,'#9B6BDF',go('letters','الجوابات'))}
+    ${K('🚚 تحميل النهارده',`${B.today||0} حجز`,`اتنفذ ${B.today_done||0} · جاى ${B.pending||0}${Object.keys(B.by_wh||{}).length?' · '+Object.entries(B.by_wh).map(([w,n])=>erEsc(w)+' '+n).join(' / '):''}`,'#C9A84C',"goTo('bookings')")}
+    ${d.approvals?K('🔔 موافقات مستنية',`${d.approvals} طلب`,'دوس عشان توافق','#E05555','erApprInbox()'):''}
+    ${d.acc?K('📒 صافى ربح الشهر (الحسابات)',M(d.acc.rev-d.acc.exp)+' ج',`إيرادات ${M(d.acc.rev)} · تكاليف ومصروفات ${M(d.acc.exp)}`,'#6C8CFF',go('acc','قائمة الدخل (الأرباح والخسائر)')):''}
+  </div>
+  <div class="erd-2"><div class="erd-box"><h4>📊 المبيعات والتحصيل</h4>${erDashChart(d.daily||[])}</div>
+    <div class="erd-box"><h4>🏆 أكبر التجار الشهر ده</h4>${(d.top_clients||[]).map((x,i)=>`<div class="erd-row"><span>${i+1}. ${erEsc(x.name)} <span class="qt-sub">${erEsc(x.code||'')}</span></span><b>${M(x.val)} ج <span class="qt-sub">(${x.n})</span></b></div>`).join('')||'<div class="qt-sub">مفيش مبيعات الشهر ده لسه</div>'}</div>
+    <div class="erd-box"><h4>🏍️ أكتر الأصناف مبيعاً الشهر ده</h4>${(d.top_items||[]).map((x,i)=>`<div class="erd-row"><span>${i+1}. ${erEsc(x.name)} <span class="qt-sub">${erEsc(x.code)}</span></span><b>${erQ(x.qty)} قطعة</b></div>`).join('')||'<div class="qt-sub">مفيش مبيعات الشهر ده لسه</div>'}</div>
+    <div class="erd-box"><h4>💳 أكبر مديونيات</h4>${(A.top||[]).map(x=>`<div class="erd-row"><span>${erEsc(x.name)} <span class="qt-sub">${erEsc(x.code||'')}</span></span><b>${M(x.bal)} ج</b></div>`).join('')||'<div class="qt-sub">مفيش مديونيات</div>'}</div>
+    <div class="erd-box"><h4>⚠️ أصناف تحت حد الطلب</h4>${(ST.low||[]).map(x=>`<div class="erd-row"><span>${erEsc(x.name)} <span class="qt-sub">${erEsc(x.code)}</span></span><b class="erd-dn">${erQ(x.qty)} <span class="qt-sub">/ الحد ${erQ(x.lvl)}</span></b></div>`).join('')||'<div class="qt-sub">✅ كله فوق حد الطلب</div>'}</div>
+  </div>`; }
 
 </script>
 
