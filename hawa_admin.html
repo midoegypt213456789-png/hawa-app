@@ -4108,6 +4108,11 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="erst-pane-tr" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erst-pane-cnt" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
+    <div class="section" id="sec-erp-warranty">
+      <div class="page-hd"><div class="page-hd-titles"><div class="page-title">🛡️ <span>الضمان وما بعد البيع</span></div><div class="page-sub">كارت الموتوسيكل بالماتور أو الشاسيه · مطالبات الضمان والصيانة · مطالبة المورد · قوايم الاستدعاء</div></div></div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erw-tab-find" onclick="erWrTab('find')">🔎 كارت الموتوسيكل</button><button class="bl-tab" id="erw-tab-claims" onclick="erWrTab('claims')">📋 المطالبات</button><button class="bl-tab" id="erw-tab-recall" onclick="erWrTab('recall')">📣 الاستدعاء</button></div>
+      <div id="erw-pane-find" class="qt-pane"></div><div id="erw-pane-claims" class="qt-pane" style="display:none"></div><div id="erw-pane-recall" class="qt-pane" style="display:none"></div>
+    </div>
     <div class="section" id="sec-erp-dash">
       <div class="page-hd"><div class="page-hd-titles"><div class="page-title">📊 <span>لوحة المؤشرات</span></div><div class="page-sub">كل الأرقام المهمة فى شاشة واحدة — المبيعات والتحصيل والمديونية والمخزون والشحنات والجوابات والتحميل</div></div></div>
       <div id="erdash-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
@@ -6408,6 +6413,7 @@ function autoRefreshTick(){
     else if(sec==='erp-reports' && typeof erReportsLoad === 'function') erReportsLoad(true);
     else if(sec==='erp-acc' && typeof erAcLoad === 'function') erAcLoad(true);
     else if(sec==='erp-dash' && typeof erDashLoad === 'function') erDashLoad();
+    else if(sec==='erp-warranty' && typeof erWrLoad === 'function') erWrLoad();
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -6580,6 +6586,7 @@ function goTo(sec){
   else if(sec==='erp-reports')erReportsLoad(true);
   else if(sec==='erp-acc')erAcLoad(true);
   else if(sec==='erp-dash')erDashLoad();
+  else if(sec==='erp-warranty')erWrLoad();
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -18699,7 +18706,8 @@ const NAV_META = {
   'erp-reports':      { icon: '📈',  label: 'تقارير السيستم الجديد' },
   'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' },
   'erp-acc':          { icon: '📒',  label: 'الحسابات العامة (السيستم الجديد)' },
-  'erp-dash':         { icon: '📊',  label: 'لوحة المؤشرات (السيستم الجديد)' }
+  'erp-dash':         { icon: '📊',  label: 'لوحة المؤشرات (السيستم الجديد)' },
+  'erp-warranty':     { icon: '🛡️',  label: 'الضمان وما بعد البيع (السيستم الجديد)' }
 };
 
 // ── Default sidebar layout
@@ -18710,7 +18718,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'clients-map', 'bdays', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
-    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-dash', 'erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
+    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-dash', 'erp-warranty', 'erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -18749,7 +18757,8 @@ const NAV_PREFERRED_CAT = {
   'erp-reports': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-acc': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
-  'erp-dash': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
+  'erp-dash': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-warranty': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
@@ -18852,15 +18861,15 @@ function saveSidebarLayout(){
 // ═══════════════════════════════════════════════════════════
 // 🏭 السيستم الجديد = زرار واحد فى القايمة + تبويبات فوق كل شاشاته
 // ═══════════════════════════════════════════════════════════
-var ERP_HUB = ['erp-dash','erp-acc','erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
-var ERP_HUB_LBL = { 'erp-dash':'📊 لوحة المؤشرات','erp-acc':'📒 الحسابات','erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
+var ERP_HUB = ['erp-dash','erp-warranty','erp-acc','erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
+var ERP_HUB_LBL = { 'erp-dash':'📊 لوحة المؤشرات','erp-warranty':'🛡️ الضمان','erp-acc':'📒 الحسابات','erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
 function erHubAllowed(){ return ERP_HUB.filter(id=>!EMP_MODE||can(id,'view')); }
 function erHubGo(){ let last=''; try{ last=localStorage.getItem('erp_hub_last')||''; }catch(e){} const A=erHubAllowed(); goTo(A.includes(last)?last:(A[0]||'erp-sales')); }
 // ═══════════════════════════════════════════════════════════
 // 🗂️ قوائم السيستم الجديد زى SAP — شريط أبواب فوق (كل باب قايمة منسدلة) + نفس الأبواب فى القايمة الجانبية
 //    كل باب له لون وأيقونة — والرفرش بيرجّع نفس الشاشة / التبويب / المستند المفتوح (والجديد بنفس اللى اتكتب)
 // ═══════════════════════════════════════════════════════════
-var ERM_TABK = { 'erp-acc':['ac','erAcTab'], 'erp-sales':['sl','erSalesTab'], 'erp-delivery':['dl','erDelTab'], 'erp-cash':['cash','erCashTab'], 'erp-purchases':['pu','erPuTab'], 'erp-stock':['st','erStockTab'],
+var ERM_TABK = { 'erp-warranty':['wr','erWrTab'], 'erp-acc':['ac','erAcTab'], 'erp-sales':['sl','erSalesTab'], 'erp-delivery':['dl','erDelTab'], 'erp-cash':['cash','erCashTab'], 'erp-purchases':['pu','erPuTab'], 'erp-stock':['st','erStockTab'],
   'erp-regs':['rg','erRegTab'], 'erp-letters':['lt','erLtTab'], 'erp-items':['items','erItemsTab'], 'erp-suppliers':['suppliers','erSupTab'], 'erp-setup':['setup','erSetupTab'] };
 var ERM = [
   { id:'sales', title:'المبيعات', icon:'🧾', c:'#4A90D9', items:[
@@ -18924,6 +18933,10 @@ var ERM = [
     { l:'فئات الموردين', i:'🗂️', s:'erp-suppliers', t:'cats' },
     { l:'الأصناف', i:'📦', s:'erp-items', t:'items' },
     { l:'فئات الأصناف', i:'🗂️', s:'erp-items', t:'cats' } ]},
+  { id:'after', title:'ما بعد البيع', icon:'🛡️', c:'#FF8A5B', items:[
+    { l:'كارت موتوسيكل (بحث بالماتور / الشاسيه)', i:'🔎', s:'erp-warranty', t:'find' },
+    { l:'مطالبات الضمان والصيانة', i:'📋', s:'erp-warranty', t:'claims' },
+    { l:'قايمة استدعاء (موديل / دفعة)', i:'📣', s:'erp-warranty', t:'recall' } ]},
   { id:'acc', title:'الحسابات', icon:'📒', c:'#6C8CFF', items:[
     { l:'سند صرف (مصروف) جديد', i:'➕', s:'erp-acc', t:'vch', a:"erAcVchOpen('out')", w:()=>ER.ac&&ER.ac.home, e:'erp-acc' },
     { l:'سند قبض متنوع جديد', i:'➕', s:'erp-acc', t:'vch', a:"erAcVchOpen('in')", w:()=>ER.ac&&ER.ac.home, e:'erp-acc' },
@@ -26406,6 +26419,63 @@ async function erAuditOpen(t,id){ let L=[]; try{ L=await rpcSecure('erp_audit_li
     <div class="qt-scroll" style="margin-top:10px"><table class="qt-tbl"><thead><tr><th>إمتى</th><th>مين</th><th>إيه اللى حصل</th></tr></thead><tbody>
     ${L.map(x=>`<tr><td style="white-space:nowrap">${erEsc(new Date(x.at).toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}))}</td><td>${erEsc(x.by||'—')}</td><td style="text-align:right">${x.op==='insert'?'➕ اتعمل':`${x.op==='status'?'🔄 ':'✏️ '}${Object.entries(x.changes||{}).map(([k,v])=>`<div><b>${erEsc(ER_AUD_F[k]||k)}</b>: ${erAudVal(v[0])} ← ${erAudVal(v[1])}</div>`).join('')}`}</td></tr>`).join('')}
     </tbody></table></div>${L.length?'':'<div class="qt-sub" style="padding:6px">السجل بيبتدى من النهارده (المستندات القديمة اتعملت قبل التسجيل)</div>'}`); }
+
+
+// ═══ 🛡️ الضمان وما بعد البيع ═══
+const ER_WR_TABS=['find','claims','recall'], ER_WR_ST=['مفتوح','تحت الفحص','مقبول','مرفوض','اتقفل'], ER_WR_SUP=['—','اتبعت','اتقبل','اترفض'];
+function erWrS(){ ER.wr=ER.wr||{ q:'', res:null, claims:null, st:'', rc:{} }; return ER.wr; }
+async function erWrLoad(){ try{ await erBoot(); }catch(e){} erWrTab(ER.tab.wr||'find'); }
+function erWrTab(t){ ER.tab.wr=t; erTabs('erw',ER_WR_TABS,t); ({find:erRenderWrFind,claims:erWrClaimsLoad,recall:erRenderWrRecall}[t]||erRenderWrFind)(); }
+async function erWrFind(){ const S=erWrS(); S.q=(document.getElementById('erw-q')||{}).value||S.q; try{ S.res=await rpcSecure('erp_wr_find',{p:{q:S.q}}); }catch(e){ erToast('❌ '+erErr(e),false); return; } erRenderWrFind(); }
+function erWrBadge(c){ const t=erToday(), on=c.w_end>=t; const left=Math.round((new Date(c.w_end+'T00:00:00')-new Date(t+'T00:00:00'))/864e5);
+  return on?`<span class="qt-chip in">🛡️ فى الضمان — فاضل ${left} يوم (لحد ${c.w_end})</span>`:`<span class="qt-chip del">⛔ الضمان خلص ${c.w_end}</span>`; }
+function erWrCard(c){ return `<div class="qt-card" style="margin-bottom:10px"><div class="qt-row" style="align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:15px">🏍️ ${erEsc(c.item)}</b>${erWrBadge(c)}${c.claims?`<span class="qt-chip ex">${c.claims} مطالبة قبل كده</span>`:''}<div style="flex:1"></div>
+    ${erCan('erp-warranty','edit')?`<button class="qt-btn" onclick='erWrOpen(null,${JSON.stringify({reg_id:c.reg_id,engine:c.engine,chassis:c.chassis,owner:c.letter&&c.letter.buyer||"",phone:c.letter&&c.letter.phone||""}).replace(/'/g,"&#39;")})'>➕ مطالبة ضمان / صيانة</button>`:''}<button class="qt-btn ghost sm" onclick="erWrHist(${c.reg_id})">📋 التاريخ</button></div>
+    <div class="er-pgrid" style="margin-top:8px">${[['الماتور',c.engine],['الشاسيه',c.chassis],['التاجر',c.client+(c.client_phone?' — '+c.client_phone:'')],['اتسلّم للتاجر',(c.del_date||'—')+(c.del_no?` (تسليم ${c.del_no})`:'')],
+      ['المشترى (من الجواب)',c.letter?`${c.letter.buyer||''} ${c.letter.phone?'— '+c.letter.phone:''}${c.letter.gov?' — '+c.letter.gov:''}`:'— لسه مطلعش جواب'],['بداية الضمان',`${c.w_start} (${c.w_months} شهر)`]].map(x=>`<div class="er-pst"><div class="qt-sub">${x[0]}</div><b dir="auto">${erEsc(x[1]||'')}</b></div>`).join('')}</div></div>`; }
+function erRenderWrFind(){ const el=document.getElementById('erw-pane-find'); if(!el) return; const S=erWrS();
+  el.innerHTML=`<div class="qt-row" style="gap:8px;margin-bottom:12px;align-items:center"><input class="qt-inp" id="erw-q" style="max-width:420px;font-size:16px" placeholder="📷 امسح أو اكتب الماتور / الشاسيه / تليفون المشترى" value="${erEsc(S.q||'')}" onkeydown="if(event.key==='Enter')erWrFind()"><button class="qt-btn" onclick="erWrFind()">🔎 بحث</button></div>
+  ${S.res==null?'<div class="qt-sub">💡 أى موتوسيكل اتسجّل ماتوره وشاسيهه فى السيستم ليه كارت: التاجر، تاريخ التسليم، المشترى من الجواب، والضمان فاضل فيه قد إيه.</div>':S.res.length?S.res.map(erWrCard).join(''):'<div class="qt-sub">مش لاقى موتوسيكل بالرقم ده</div>'}`;
+  setTimeout(()=>{ const q=document.getElementById('erw-q'); if(q) q.focus(); },30); }
+async function erWrClaimsLoad(){ const S=erWrS(); try{ S.claims=await rpcSecure('erp_wr_list',{p:{status:S.st||''}}); }catch(e){ erPaneErr('erw-pane-claims',e); return; } erRenderWrClaims(); }
+function erRenderWrClaims(rows, elId){ const el=document.getElementById(elId||'erw-pane-claims'); if(!el) return; const S=erWrS(), C=rows||S.claims||[]; const tot=C.reduce((s,x)=>s+Number(x.cost||0),0), sup=C.reduce((s,x)=>s+Number(x.sup_amount||0),0);
+  el.innerHTML=`${rows?'':`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap"><select class="qt-inp" style="width:170px" onchange="erWrS().st=this.value;erWrClaimsLoad()"><option value="">كل الحالات</option>${ER_WR_ST.map(s=>`<option ${S.st===s?'selected':''}>${s}</option>`).join('')}</select><div style="flex:1"></div><span class="qt-sub">${C.length} مطالبة · التكلفة ${erMoney(tot,2)} · المورد اتحمل ${erMoney(sup,2)}</span></div>`}
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>النوع</th><th>التاريخ</th><th>الموتوسيكل</th><th>المالك</th><th>الشكوى</th><th>التكلفة</th><th>الحالة</th><th>المورد</th><th></th></tr></thead><tbody>
+  ${C.map(x=>`<tr><td><b>${x.no}</b>${x.test?' 🧪':''}</td><td>${x.kind==='service'?'🔧 صيانة':'🛡️ ضمان'}</td><td>${erEsc(x.date)}</td><td style="text-align:right">${erEsc(x.item||'')}<div class="qt-sub" dir="ltr">${erEsc(x.chassis||'')} / ${erEsc(x.engine||'')}</div><div class="qt-sub">${erEsc(x.client||'')}</div></td>
+    <td>${erEsc(x.owner||'')}<div class="qt-sub">${erEsc(x.phone||'')}</div></td><td style="text-align:right;max-width:240px">${erEsc(x.complaint||'')}${x.diagnosis?`<div class="qt-sub">🔍 ${erEsc(x.diagnosis)}</div>`:''}</td><td>${erMoney(x.cost,2)}</td>
+    <td>${erEsc(x.status)}</td><td>${erEsc(x.sup_status||'—')}${x.sup_claim?`<div class="qt-sub">${erEsc(x.sup_claim)}</div>`:''}${x.sup_amount?`<div class="qt-sub">${erMoney(x.sup_amount,2)}</div>`:''}</td>
+    <td style="white-space:nowrap">${erCan('erp-warranty','edit')?`<button class="qt-btn ghost sm" onclick="erWrOpen(${x.id})">✏️</button>`:''}<button class="qt-btn ghost sm" onclick="erAttOpen('wr',${x.id})">📎</button><button class="qt-btn ghost sm" onclick="erAuditOpen('erp_warranty_claims',${x.id})">🕘</button><button class="qt-btn ghost sm" onclick="erWrPrint(${x.id})">🖨️</button></td></tr>`).join('')}
+  </tbody></table></div>${C.length?'':'<div class="qt-sub" style="padding:10px">مفيش مطالبات</div>'}`; }
+async function erWrHist(rid){ let C=[]; try{ C=await rpcSecure('erp_wr_list',{p:{reg_id:rid}}); }catch(e){ erToast('❌ '+erErr(e),false); return; } erXOv(`<div class="qt-row" style="align-items:center"><b style="font-size:16px;color:var(--gold)">📋 تاريخ الضمان والصيانة</b><div style="flex:1"></div><button class="qt-btn ghost sm" onclick="document.getElementById('er-x-ov').remove()">✖</button></div><div id="erw-hist" style="margin-top:10px"></div>`); erWrS().__hist=C; erRenderWrClaims(C,'erw-hist'); }
+function erWrOpen(id, pre){ const S=erWrS(); const x=id?JSON.parse(JSON.stringify(((S.claims||[]).concat(S.__hist||[])).find(c=>c.id===id)||{})):Object.assign({ id:null, kind:'warranty', date:erToday(), km:'', owner:'', phone:'', complaint:'', diagnosis:'', parts:[], labor:0, status:'مفتوح', sup_claim:'', sup_status:'—', sup_amount:'', notes:'' }, pre||{});
+  if(id&&!x.id){ erToast('افتح المطالبة من القايمة',false); return; } x.parts=x.parts||[]; ER.edit=x; ER.ro=false;
+  const form=()=>`<div class="qt-card">${x.engine||x.chassis?`<div style="margin-bottom:8px">🏍️ <b dir="ltr">${erEsc(x.chassis||'')} / ${erEsc(x.engine||'')}</b> ${erEsc(x.item||'')}</div>`:''}
+    <div class="qt-row">${erFld('النوع',erSel('kind',x.kind,[['warranty','🛡️ ضمان'],['service','🔧 صيانة / خدمة']]),1)}${erFld('التاريخ',erInp('date',x.date,{type:'date'}),1)}${erFld('العداد (كم)',erInp('km',x.km,{type:'number'}),1)}${erFld('الحالة',erSel('status',x.status,ER_WR_ST.map(s=>[s,s])),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('اسم المالك',erInp('owner',x.owner),2)}${erFld('تليفونه',erInp('phone',x.phone,{dir:'ltr'}),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('الشكوى *',erInp('complaint',x.complaint),2)}${erFld('التشخيص',erInp('diagnosis',x.diagnosis),2)}</div>
+    <div style="margin-top:10px"><b>🔩 قطع الغيار</b><table class="qt-tbl" style="margin-top:6px"><thead><tr><th>القطعة</th><th>العدد</th><th>التكلفة للواحدة</th><th></th></tr></thead><tbody>${x.parts.map((p,i)=>`<tr><td><input class="qt-inp" value="${erEsc(p.name||'')}" oninput="ER.edit.parts[${i}].name=this.value"></td><td><input class="qt-inp" type="number" style="width:80px" value="${erEsc(p.qty||1)}" oninput="ER.edit.parts[${i}].qty=this.value"></td><td><input class="qt-inp" type="number" step="0.01" style="width:120px" value="${erEsc(p.cost||'')}" oninput="ER.edit.parts[${i}].cost=this.value"></td><td><button class="qt-btn red sm" onclick="ER.edit.parts.splice(${i},1);ER.edit.__render()">✖</button></td></tr>`).join('')}</tbody></table>
+      <div class="qt-row" style="margin-top:6px;gap:8px;align-items:end"><button class="qt-btn ghost sm" onclick="ER.edit.parts.push({name:'',qty:1,cost:''});ER.edit.__render()">➕ قطعة</button>${erFld('مصنعية',erInp('labor',x.labor,{type:'number',step:'0.01'}),0)}</div></div>
+    <div class="qt-row" style="margin-top:10px">${erFld('مطالبة المورد',erSel('sup_status',x.sup_status||'—',ER_WR_SUP.map(s=>[s,s])),1)}${erFld('رقم المطالبة عند المورد',erInp('sup_claim',x.sup_claim),1)}${erFld('المورد اتحمّل (مبلغ)',erInp('sup_amount',x.sup_amount,{type:'number',step:'0.01'}),1)}</div>
+    <div style="margin-top:10px">${erFld('ملاحظات',erInp('notes',x.notes))}</div></div>`;
+  x.__render=()=>erModalBody(form()); erModal(id?`✏️ مطالبة ${x.no}`:'➕ مطالبة ضمان / صيانة', form(), `<button class="qt-btn" id="er-save-btn" onclick="erWrSave()">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+async function erWrSave(){ await erRun('er-save-btn', async()=>{ const x=ER.edit; await rpcSecure('erp_wr_save',{p:{id:x.id,reg_id:x.reg_id,engine:x.engine,chassis:x.chassis,kind:x.kind,date:x.date,km:x.km,owner:x.owner,phone:x.phone,complaint:x.complaint,diagnosis:x.diagnosis,
+  parts:(x.parts||[]).filter(p=>p.name).map(p=>({name:p.name,qty:erNum(p.qty)||1,cost:erNum(p.cost)||0})),labor:erNum(x.labor)||0,status:x.status,sup_claim:x.sup_claim,sup_status:x.sup_status,sup_amount:erNum(x.sup_amount),notes:x.notes}});
+  erClose(); erToast('✅ اتحفظت'); const S=erWrS(); S.claims=null; if(ER.tab.wr==='claims') erWrClaimsLoad(); else if(S.res) erWrFind(); }); }
+function erWrPrint(id){ const x=((erWrS().claims||[]).concat(erWrS().__hist||[])).find(c=>c.id===id); if(!x) return;
+  erDocPrint({ title:x.kind==='service'?'أمر صيانة':'مطالبة ضمان', no:x.no, date:x.date, sub:x.status, test:x.test, notes:x.notes,
+    info:[['الموتوسيكل',x.item||''],['الشاسيه',x.chassis||''],['الماتور',x.engine||''],['التاجر',x.client||''],['المالك',(x.owner||'')+' '+(x.phone||'')],['العداد',x.km?x.km+' كم':''],['الشكوى',x.complaint||''],['التشخيص',x.diagnosis||'']],
+    cols:[['القطعة'],['العدد','12%'],['التكلفة','18%'],['الإجمالى','18%']], rows:(x.parts||[]).map(p=>[erEsc(p.name),p.qty,erMoney(p.cost,2),erMoney((p.qty||1)*(p.cost||0),2)]),
+    totals:[['المصنعية',erMoney(x.labor||0,2)],['الإجمالى',erMoney(x.cost,2)+' ج']], sigs:['الفنى','مدير الصيانة','المالك'] }); }
+// 📣 الاستدعاء: كل الموتوسيكلات من موديل (ومدى شاسيهات اختيارى) بأرقام المشترين
+function erRenderWrRecall(){ const el=document.getElementById('erw-pane-recall'); if(!el) return; const R=erWrS().rc; const items=(ER.boot.items||[]).filter(i=>i.reg_mode&&i.reg_mode!=='none');
+  el.innerHTML=`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:end;flex-wrap:wrap">${erFld('الموديل',`<select class="qt-inp" id="erw-rc-it" style="min-width:260px"><option value="">— اختار —</option>${items.map(i=>`<option value="${i.id}" ${String(i.id)===String(R.item)?'selected':''}>${erEsc(i.code+' — '+i.name_ar)}</option>`).join('')}</select>`,0)}
+    ${erFld('من شاسيه (اختيارى)',`<input class="qt-inp" id="erw-rc-f" dir="ltr" value="${erEsc(R.from||'')}" style="width:200px">`,0)}${erFld('لـ شاسيه',`<input class="qt-inp" id="erw-rc-t" dir="ltr" value="${erEsc(R.to||'')}" style="width:200px">`,0)}<button class="qt-btn" onclick="erWrRecall()">🔎 طلّع القايمة</button>${R.rows&&R.rows.length?`<button class="qt-btn ghost" onclick="erWrRecallCsv()">⬇️ Excel</button>`:''}</div>
+  ${R.rows?`<div class="qt-sub" style="margin-bottom:6px">${R.rows.length} موتوسيكل · فى الضمان ${R.rows.filter(c=>c.w_end>=erToday()).length} · ليهم تليفون مشترى ${R.rows.filter(c=>c.letter&&c.letter.phone).length}</div>
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>الشاسيه</th><th>الماتور</th><th>التاجر</th><th>المشترى</th><th>التليفون</th><th>الضمان</th></tr></thead><tbody>${R.rows.map(c=>`<tr><td dir="ltr">${erEsc(c.chassis||'')}</td><td dir="ltr">${erEsc(c.engine||'')}</td><td style="text-align:right">${erEsc(c.client||'')}</td><td>${erEsc(c.letter&&c.letter.buyer||'')}</td><td dir="ltr">${erEsc(c.letter&&c.letter.phone||'')}</td><td>${c.w_end>=erToday()?'✅':'⛔'} ${erEsc(c.w_end)}</td></tr>`).join('')}</tbody></table></div>`:'<div class="qt-sub">💡 لو المورد قال فيه عيب فى دفعة معيّنة: اختار الموديل ومدى الشاسيهات وهتطلع قايمة بكل المشترين وتليفوناتهم والتاجر اللى باع.</div>'}`; }
+async function erWrRecall(){ const R=erWrS().rc; R.item=document.getElementById('erw-rc-it').value; R.from=document.getElementById('erw-rc-f').value.trim(); R.to=document.getElementById('erw-rc-t').value.trim(); if(!R.item){ erToast('اختار الموديل',false); return; }
+  try{ R.rows=await rpcSecure('erp_wr_find',{p:{item_id:R.item,from:R.from,to:R.to}}); }catch(e){ erToast('❌ '+erErr(e),false); return; } erRenderWrRecall(); }
+function erWrRecallCsv(){ const R=erWrS().rc; const L=[['الشاسيه','الماتور','الموديل','التاجر','تليفون التاجر','المشترى','تليفون المشترى','المحافظة','نهاية الضمان']].concat((R.rows||[]).map(c=>[c.chassis,c.engine,c.item,c.client,c.client_phone,c.letter&&c.letter.buyer,c.letter&&c.letter.phone,c.letter&&c.letter.gov,c.w_end]));
+  const csv='﻿'+L.map(r=>r.map(v=>{ v=v==null?'':String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; }).join(',')).join('\n'); const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='recall.csv'; a.click(); }
 
 </script>
 
