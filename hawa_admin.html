@@ -4107,6 +4107,24 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="erst-pane" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
       <div id="erst-pane-tr" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
     </div>
+    <div class="section" id="sec-erp-acc">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">📒 <span>الحسابات العامة</span></div>
+          <div class="page-sub">دليل الحسابات · اليومية · سندات الصرف والقبض المتنوعة · الأستاذ · ميزان المراجعة · قائمة الدخل · الميزانية — تشغيلها مستقل</div>
+        </div>
+        <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="erAcLoad(true)">🔄 تحديث</button>
+      </div>
+      <div class="bl-tabs"><button class="bl-tab active" id="erac-tab-coa" onclick="erAcTab('coa')">🌳 دليل الحسابات</button><button class="bl-tab" id="erac-tab-jr" onclick="erAcTab('jr')">📒 اليومية</button><button class="bl-tab" id="erac-tab-vch" onclick="erAcTab('vch')">💸 سندات الصرف والقبض</button><button class="bl-tab" id="erac-tab-led" onclick="erAcTab('led')">📖 دفتر الأستاذ</button><button class="bl-tab" id="erac-tab-tb" onclick="erAcTab('tb')">⚖️ ميزان المراجعة</button><button class="bl-tab" id="erac-tab-is" onclick="erAcTab('is')">📈 قائمة الدخل</button><button class="bl-tab" id="erac-tab-bs" onclick="erAcTab('bs')">🏛️ الميزانية</button><button class="bl-tab" id="erac-tab-set" onclick="erAcTab('set')">⚙️ التشغيل والإعدادات</button></div>
+      <div id="erac-pane-coa" class="qt-pane"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erac-pane-jr" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erac-pane-vch" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erac-pane-led" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erac-pane-tb" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erac-pane-is" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erac-pane-bs" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+      <div id="erac-pane-set" class="qt-pane" style="display:none"><div class="loading-txt">⏳ جاري التحميل...</div></div>
+    </div>
     <div class="section" id="sec-erp-setup">
       <div class="page-hd">
         <div class="page-hd-titles">
@@ -6383,6 +6401,7 @@ function autoRefreshTick(){
     else if(sec==='erp-regs' && typeof erRegsLoad === 'function') erRegsLoad(true);
     else if(sec==='erp-letters' && typeof erLettersLoad === 'function') erLettersLoad(true);
     else if(sec==='erp-reports' && typeof erReportsLoad === 'function') erReportsLoad(true);
+    else if(sec==='erp-acc' && typeof erAcLoad === 'function') erAcLoad(true);
     else if(sec==='permits' && typeof pmLoad === 'function') pmLoad();
     else if(sec==='shortages' && typeof shLoadAll === 'function') shLoadAll();
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
@@ -6553,6 +6572,7 @@ function goTo(sec){
   else if(sec==='erp-regs')erRegsLoad(true);
   else if(sec==='erp-letters')erLettersLoad(true);
   else if(sec==='erp-reports')erReportsLoad(true);
+  else if(sec==='erp-acc')erAcLoad(true);
   else if(sec==='permits')pmLoad();
   else if(sec==='shortages'){ shLoadAll(); if(_shA.tab==='settings') shLoadSettings(); }
   else if(sec==='consumers')cnLoad();
@@ -18668,7 +18688,8 @@ const NAV_META = {
   'erp-regs':         { icon: '🔢',  label: 'تسجيل المواتير والشاسيهات (السيستم الجديد)' },
   'erp-letters':      { icon: '✉️',  label: 'الجوابات والفواتير الضريبية (السيستم الجديد)' },
   'erp-reports':      { icon: '📈',  label: 'تقارير السيستم الجديد' },
-  'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' }
+  'erp-setup':        { icon: '🧩',  label: 'تعريفات السيستم الجديد' },
+  'erp-acc':          { icon: '📒',  label: 'الحسابات العامة (السيستم الجديد)' }
 };
 
 // ── Default sidebar layout
@@ -18679,7 +18700,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'clients-map', 'bdays', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
     { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
-    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
+    { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
   ],
   collapsed: {}
@@ -18716,7 +18737,8 @@ const NAV_PREFERRED_CAT = {
   'erp-regs': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-letters': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-reports': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
-  'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
+  'erp-setup': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
+  'erp-acc': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 }
 };
 
 // ── Repair: ensure all NAV_META ids exist somewhere, drop unknown ids
@@ -18819,15 +18841,15 @@ function saveSidebarLayout(){
 // ═══════════════════════════════════════════════════════════
 // 🏭 السيستم الجديد = زرار واحد فى القايمة + تبويبات فوق كل شاشاته
 // ═══════════════════════════════════════════════════════════
-var ERP_HUB = ['erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
-var ERP_HUB_LBL = { 'erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
+var ERP_HUB = ['erp-acc','erp-sales','erp-delivery','erp-regs','erp-letters','erp-cash','erp-traders','erp-purchases','erp-suppliers','erp-items','erp-stock','erp-reports','erp-setup'];
+var ERP_HUB_LBL = { 'erp-acc':'📒 الحسابات','erp-sales':'🧾 المبيعات','erp-delivery':'🚚 التسليم','erp-regs':'🔢 تسجيل المواتير','erp-letters':'✉️ الجوابات','erp-cash':'💵 الخزينة والتحصيل','erp-traders':'👥 حسابات التجار','erp-purchases':'🛒 المشتريات','erp-suppliers':'🏭 الموردين','erp-items':'📦 الأصناف','erp-stock':'📊 المخازن','erp-reports':'📈 التقارير','erp-setup':'🧩 التعريفات' };
 function erHubAllowed(){ return ERP_HUB.filter(id=>!EMP_MODE||can(id,'view')); }
 function erHubGo(){ let last=''; try{ last=localStorage.getItem('erp_hub_last')||''; }catch(e){} const A=erHubAllowed(); goTo(A.includes(last)?last:(A[0]||'erp-sales')); }
 // ═══════════════════════════════════════════════════════════
 // 🗂️ قوائم السيستم الجديد زى SAP — شريط أبواب فوق (كل باب قايمة منسدلة) + نفس الأبواب فى القايمة الجانبية
 //    كل باب له لون وأيقونة — والرفرش بيرجّع نفس الشاشة / التبويب / المستند المفتوح (والجديد بنفس اللى اتكتب)
 // ═══════════════════════════════════════════════════════════
-var ERM_TABK = { 'erp-sales':['sl','erSalesTab'], 'erp-delivery':['dl','erDelTab'], 'erp-cash':['cash','erCashTab'], 'erp-purchases':['pu','erPuTab'], 'erp-stock':['st','erStockTab'],
+var ERM_TABK = { 'erp-acc':['ac','erAcTab'], 'erp-sales':['sl','erSalesTab'], 'erp-delivery':['dl','erDelTab'], 'erp-cash':['cash','erCashTab'], 'erp-purchases':['pu','erPuTab'], 'erp-stock':['st','erStockTab'],
   'erp-regs':['rg','erRegTab'], 'erp-letters':['lt','erLtTab'], 'erp-items':['items','erItemsTab'], 'erp-suppliers':['suppliers','erSupTab'], 'erp-setup':['setup','erSetupTab'] };
 var ERM = [
   { id:'sales', title:'المبيعات', icon:'🧾', c:'#4A90D9', items:[
@@ -18889,6 +18911,18 @@ var ERM = [
     { l:'فئات الموردين', i:'🗂️', s:'erp-suppliers', t:'cats' },
     { l:'الأصناف', i:'📦', s:'erp-items', t:'items' },
     { l:'فئات الأصناف', i:'🗂️', s:'erp-items', t:'cats' } ]},
+  { id:'acc', title:'الحسابات', icon:'📒', c:'#6C8CFF', items:[
+    { l:'سند صرف (مصروف) جديد', i:'➕', s:'erp-acc', t:'vch', a:"erAcVchOpen('out')", w:()=>ER.ac&&ER.ac.home, e:'erp-acc' },
+    { l:'سند قبض متنوع جديد', i:'➕', s:'erp-acc', t:'vch', a:"erAcVchOpen('in')", w:()=>ER.ac&&ER.ac.home, e:'erp-acc' },
+    { l:'قيد يومية يدوى', i:'➕', s:'erp-acc', t:'jr', a:"erAcManOpen()", w:()=>ER.ac&&ER.ac.home, e:'erp-acc' },
+    { l:'دليل الحسابات', i:'🌳', s:'erp-acc', t:'coa' },
+    { l:'دفتر اليومية (القيود)', i:'📒', s:'erp-acc', t:'jr' },
+    { l:'سندات الصرف والقبض المتنوعة', i:'💸', s:'erp-acc', t:'vch' },
+    { l:'دفتر الأستاذ', i:'📖', s:'erp-acc', t:'led' },
+    { l:'ميزان المراجعة', i:'⚖️', s:'erp-acc', t:'tb' },
+    { l:'قائمة الدخل (الأرباح والخسائر)', i:'📈', s:'erp-acc', t:'is' },
+    { l:'الميزانية (المركز المالى)', i:'🏛️', s:'erp-acc', t:'bs' },
+    { l:'تشغيل الحسابات وإعداداتها', i:'⚙️', s:'erp-acc', t:'set' } ]},
   { id:'rep', title:'التقارير', icon:'📈', c:'#E05577', items:[
     { l:'كل التقارير', i:'📈', s:'erp-reports' },
     { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' },
@@ -25947,6 +25981,220 @@ document.addEventListener('input', ev=>{ const t=ev.target; if(!(t instanceof HT
 (function(){ const o=window.erTabs; if(typeof o==='function' && !o.__tb){ window.erTabs=function(prefix,tabs,which){ const r=o.apply(this,arguments); setTimeout(()=>erTbSync(),0); return r; }; window.erTabs.__tb=true; } })();
 (function(){ const o=window.erClose; if(typeof o==='function' && !o.__tb){ window.erClose=function(){ ER.__tbOpen=false; return o.apply(this,arguments); }; window.erClose.__tb=true; } })();
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', erTbMount); else erTbMount();
+</script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// 📒 الحسابات العامة — دليل / يومية / سندات صرف وقبض متنوعة / أستاذ / ميزان / دخل / ميزانية / تشغيل
+//    التشغيل مستقل (acc_active) — قبل التفعيل الشاشات «معاينة» والقيود بتتحسب من المستندات كل ما تفتح
+// ═══════════════════════════════════════════════════════════
+const ER_AC_TABS=['coa','jr','vch','led','tb','is','bs','set'];
+(function(){ const st=document.createElement('style'); st.textContent='#sec-erp-acc .qt-tbl a{color:inherit;text-decoration:none;border-bottom:1px dotted rgba(201,168,76,.45)}#sec-erp-acc .qt-tbl a:hover{color:var(--gold)}'; document.head.appendChild(st); })();
+const ER_AC_SRC={ sinv:'فاتورة مبيعات', sret:'مرتجع مبيعات', del:'تكلفة تسليم', rcpt:'سند قبض', spay:'دفعة مورد', stl:'تسوية', ship:'فاتورة شراء / شحنة', shipcost:'تكاليف استيراد', rec:'استلام شحنة', pret:'مرتجع مشتريات', tinv:'ضريبة القيمة المضافة', vch:'سند متنوع', manual:'قيد يدوى', open:'قيد افتتاحى' };
+const ER_AC_KIND={ asset:'أصول', liability:'خصوم', equity:'حقوق ملكية', revenue:'إيرادات', expense:'مصروفات' };
+function erAcS(){ ER.ac=ER.ac||{ f:{}, led:{}, jr:{}, tb:{lvl:'all',nz:true}, is:{}, bs:{} }; return ER.ac; }
+async function erAcLoad(force){ const S=erAcS();
+  try{ await erBoot(); try{ if(!ER.sl) await erSlLoad(); }catch(e){}
+    S.home=await rpcSecure('acc_home',{}); S.bal=await rpcSecure('acc_trial',{p:{}}); S.__m=null; erAcTab(ER.tab.ac||'coa');
+  }catch(e){ erPaneErr('erac-pane-coa',e); } }
+function erAcTab(t){ ER.tab.ac=t; erTabs('erac',ER_AC_TABS,t); const S=erAcS(); if(!S.home) return;
+  ({coa:erRenderAcCoa,jr:erAcJrLoad,vch:erAcVchLoad,led:erRenderAcLed,tb:erAcTbLoad,is:erAcIsLoad,bs:erAcBsLoad,set:erRenderAcSet}[t]||erRenderAcCoa)(); }
+function erAcM(){ const S=erAcS(); if(S.__m) return S.__m; const A=(S.home&&S.home.accounts)||[], by={}, kids={}; A.forEach(a=>{ by[a.id]=a; (kids[a.parent_id||0]=kids[a.parent_id||0]||[]).push(a); });
+  const depth=a=>{ let d=0,x=a; while(x&&x.parent_id){ d++; x=by[x.parent_id]; } return d; }; A.forEach(a=>a.__d=depth(a)); S.__m={A,by,kids}; return S.__m; }
+function erAcA(id){ return erAcM().by[id]||{}; }
+function erAcNat(a){ return (a.kind==='asset'||a.kind==='expense')?1:-1; }
+// تجميع أرصدة (ob/d/c) لكل حساب ومعاه كل اللى تحته
+function erAcRoll(rows){ const {A,by}=erAcM(), R={}; A.forEach(a=>R[a.id]={ob:0,d:0,c:0});
+  (rows||[]).forEach(r=>{ let a=by[r.id]; while(a){ const x=R[a.id]; x.ob+=Number(r.ob)||0; x.d+=Number(r.d)||0; x.c+=Number(r.c)||0; a=a.parent_id?by[a.parent_id]:null; } }); return R; }
+function erAcBal(v){ const n=Math.round((Number(v)||0)*100)/100; if(Math.abs(n)<0.005) return '<span class="qt-sub">0</span>'; return `${erMoney(Math.abs(n),2)} <span class="qt-chip ${n>0?'ex':'in'}" style="font-size:10.5px">${n>0?'مدين':'دائن'}</span>`; }
+function erAcBanner(){ const H=erAcS().home||{}; return H.active?'':`<div class="er-banner">👁️ <b>وضع معاينة</b> — الحسابات لسه مش متفعّلة. القيود هنا بتتحسب من المستندات كل ما تفتح الشاشة (آخر حساب: ${erEsc(H.last_rebuild?new Date(H.last_rebuild).toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}):'—')}). التفعيل من تبويب «⚙️ التشغيل والإعدادات».${H.test?' — 🧪 السيستم لسه تجربة: الأرقام فيها حركات التجربة.':''}</div>`; }
+function erAcAccOpts(sel, filt){ const {A}=erAcM(); return A.filter(a=>a.is_active&&(!filt||filt(a))).map(a=>`<option value="${a.id}" ${String(a.id)===String(sel)?'selected':''} ${a.is_group&&filt&&filt.leafOnly?'disabled':''}>${'　'.repeat(a.__d)}${erEsc(a.code)} — ${erEsc(a.name)}${a.is_group?' ▾':''}</option>`).join(''); }
+function erAcDates(prefix, f, fn){ return `<input class="qt-inp" type="date" style="width:150px" value="${erEsc(f.from||'')}" onchange="erAcS().${prefix}.from=this.value;${fn}()" title="من"><span class="qt-sub">لـ</span><input class="qt-inp" type="date" style="width:150px" value="${erEsc(f.to||'')}" onchange="erAcS().${prefix}.to=this.value;${fn}()" title="إلى">`; }
+function erAcPrint(title, sub, html){ const w=window.open('','_blank'); if(!w){ erToast('المتصفح منع النافذة — اسمح بالـ popups',false); return; } const co=(typeof erCoInfo==='function')?erCoInfo():{name:''};
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>${erEsc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"><style>@page{size:A4;margin:10mm}body{font-family:Cairo,Tahoma,sans-serif;font-size:12px;color:#111}h2{margin:0}.s{color:#555;margin:2px 0 8px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #999;padding:4px 6px;text-align:right}th{background:#f3ead2}td.n{text-align:left;white-space:nowrap}tr.g td{font-weight:700;background:#f7f7f7}tr.t td{font-weight:900;background:#f3ead2}.qt-chip{font-size:10px;color:#555}.qt-sub{color:#777}button,.noprint{display:none}</style></head><body><h2>${erEsc(co.name||'')} — ${erEsc(title)}</h2><div class="s">${erEsc(sub||'')} · طُبع ${erEsc(new Date().toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}))}</div>${html}<script>window.onload=function(){(document.fonts?document.fonts.ready:Promise.resolve()).then(function(){setTimeout(function(){window.print();},200);});}<\/script></body></html>`); w.document.close(); }
+function erAcParty(pk,pid){ if(!pid) return ''; if(pk==='client'){ const c=(typeof erCl==='function')?erCl(pid):null; return c&&c.id?`${c.code||''} — ${c.name}`:'تاجر #'+pid; } const s=(ER.boot.suppliers||[]).find(x=>x.id===pid); return s?`${s.code||''} — ${s.name}`:'مورد #'+pid; }
+
+// 🌳 الدليل
+function erRenderAcCoa(){ const el=document.getElementById('erac-pane-coa'); if(!el) return; const S=erAcS(), {A,kids}=erAcM(), R=erAcRoll(S.bal), canE=erCan('erp-acc','edit'); const q=String(S.coaq||'').trim().toLowerCase();
+  const rows=[]; const walk=(pid)=>{ (kids[pid]||[]).forEach(a=>{ rows.push(a); walk(a.id); }); }; walk(0);
+  const show=rows.filter(a=>!q||(a.code+' '+a.name).toLowerCase().includes(q));
+  el.innerHTML=erAcBanner()+`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center"><input class="qt-inp" style="max-width:300px" placeholder="🔍 كود أو اسم الحساب" value="${erEsc(S.coaq||'')}" oninput="erAcS().coaq=this.value;erRenderAcCoa()">
+    <div style="flex:1"></div><span class="qt-sub">${A.length} حساب · الأرصدة لحد النهارده</span><button class="qt-btn ghost sm" onclick="erAcPrint('دليل الحسابات','بالأرصدة لحد النهارده',document.getElementById('erac-coa-t').outerHTML)">🖨️ طباعة</button></div>
+  <div class="qt-scroll"><table class="qt-tbl" id="erac-coa-t"><thead><tr><th>الكود</th><th>الحساب</th><th>النوع</th><th>الرصيد</th><th class="noprint"></th></tr></thead><tbody>
+  ${show.map(a=>{ const x=R[a.id]||{ob:0,d:0,c:0}, b=x.ob+x.d-x.c; return `<tr class="${a.is_group?'g':''}" style="${a.is_group?'background:rgba(201,168,76,.05)':''}${a.is_active?'':';opacity:.5'}"><td dir="ltr" style="text-align:right"><b>${erEsc(a.code)}</b></td>
+    <td style="text-align:right;padding-inline-start:${8+a.__d*18}px">${a.is_group?'📁 <b>':''}${erEsc(a.name)}${a.is_group?'</b>':''}${a.party?` <span class="qt-chip dim">${a.party==='client'?'👥 دفتر التجار':'🏭 دفتر الموردين'}</span>`:''}${a.treasury_id?' <span class="qt-chip dim">🏦 خزينة</span>':''}${a.sys_key?' <span class="qt-chip dim" title="حساب ربط أوتوماتيك">🔗</span>':''}</td>
+    <td class="qt-sub">${ER_AC_KIND[a.kind]||''}</td><td style="white-space:nowrap">${erAcBal(b)}</td>
+    <td class="noprint" style="white-space:nowrap"><button class="qt-btn ghost sm" title="دفتر الأستاذ" onclick="erAcLedGo(${a.id})">📖</button>${canE?`<button class="qt-btn ghost sm" title="تعديل" onclick="erAcAccOpen(${a.id})">✏️</button>${a.is_group?`<button class="qt-btn ghost sm" title="حساب فرعى جديد تحته" onclick="erAcAccOpen(null,${a.id})">➕</button>`:''}`:''}</td></tr>`; }).join('')}
+  </tbody></table></div>`; }
+function erAcAccOpen(id, parent){ const a=id?{...erAcA(id)}:{ id:null, code:'', name:'', parent_id:parent, is_group:false, is_active:true, notes:'' };
+  if(!id&&parent){ const {kids}=erAcM(), sib=(kids[parent]||[]).map(x=>x.code).filter(c=>/^\d+$/.test(c)).sort((x,y)=>Number(y)-Number(x)); const p=erAcA(parent); a.code=sib.length?String(Number(sib[0])+1):(p.code+'01'); }
+  ER.edit=a; ER.ro=false; const form=()=>`<div class="qt-card"><div class="qt-row">${erFld('الكود *',erInp('code',a.code,{dir:'ltr'}),1)}${erFld('اسم الحساب *',erInp('name',a.name),3)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld('تحت حساب',`<select class="qt-inp" onchange="erSet('parent_id',this.value)" ${a.parent_id?'':'disabled'}>${erAcAccOpts(a.parent_id,x=>x.is_group&&x.id!==a.id)}</select>`,3)}
+    ${erFld('النوع',`<div class="qt-inp" style="opacity:.8">${ER_AC_KIND[(a.parent_id?erAcA(a.parent_id).kind:a.kind)]||'—'} (من الحساب الرئيسى)</div>`,1)}</div>
+    <div class="qt-row" style="margin-top:10px;gap:16px"><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${a.is_group?'checked':''} onchange="erSet('is_group',this.checked)" ${a.sys_key?'disabled':''}> 📁 حساب تجميعى (ليه حسابات تحته)</label>
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${a.is_active?'checked':''} onchange="erSet('is_active',this.checked)" ${a.sys_key?'disabled':''}> شغّال</label></div>
+    <div style="margin-top:10px">${erFld('ملاحظات',erInp('notes',a.notes||''))}</div>${a.sys_key?'<div class="qt-sub" style="margin-top:8px">🔗 ده حساب ربط أوتوماتيك — القيود بتتعمل عليه لوحدها. تقدر تغيّر اسمه وكوده بس.</div>':''}</div>`;
+  a.__render=()=>erModalBody(form()); erModal(id?'✏️ تعديل حساب':'➕ حساب جديد', form(), `<button class="qt-btn" id="er-save-btn" onclick="erAcAccSave()">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+async function erAcAccSave(){ await erRun('er-save-btn', async()=>{ const a=ER.edit; await rpcSecure('acc_account_save',{p:{id:a.id,code:a.code,name:a.name,parent_id:a.parent_id,is_group:!!a.is_group,is_active:a.is_active!==false,notes:a.notes}}); erClose(); erToast('✅ اتحفظ'); await erAcLoad(true); }); }
+
+// 📒 اليومية
+async function erAcJrLoad(){ const S=erAcS(), J=S.jr; if(!J.from){ J.from=erToday().slice(0,8)+'01'; } if(!J.to) J.to=erToday();
+  const el=document.getElementById('erac-pane-jr'); if(el&&!J.data) el.innerHTML='<div class="loading-txt">⏳</div>';
+  try{ J.data=await rpcSecure('acc_journal_list',{p:{from:J.from,to:J.to,source:J.src||''}}); }catch(e){ erPaneErr('erac-pane-jr',e); return; } erRenderAcJr(); }
+function erAcSrcOpen(src,sid){ if(src==='sinv') return erxOpenDoc('sales',sid); if(src==='ship'||src==='shipcost') return erxOpenDoc('purch',sid); if(src==='vch') return erAcVchPrint(sid); erToast('المستند ده بيتفتح من شاشته'); }
+function erRenderAcJr(){ const el=document.getElementById('erac-pane-jr'); if(!el) return; const S=erAcS(), J=S.jr, D=J.data||[], canE=erCan('erp-acc','edit'); const q=String(J.q||'').trim().toLowerCase();
+  const rows=D.filter(j=>!q||[j.jno,j.sno,j.memo,ER_AC_SRC[j.src]].join(' ').toLowerCase().includes(q)), tot=rows.reduce((s,j)=>s+Number(j.total||0),0);
+  el.innerHTML=erAcBanner()+`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">${erAcDates('jr',J,'erAcJrLoad')}
+    <select class="qt-inp" style="width:190px" onchange="erAcS().jr.src=this.value;erAcJrLoad()"><option value="">كل المصادر</option>${Object.entries(ER_AC_SRC).map(([k,v])=>`<option value="${k}" ${J.src===k?'selected':''}>${v}</option>`).join('')}</select>
+    <input class="qt-inp" style="max-width:220px" placeholder="🔍 رقم / بيان" value="${erEsc(J.q||'')}" oninput="erAcS().jr.q=this.value;erRenderAcJr()">
+    <div style="flex:1"></div><span class="qt-sub">${rows.length} قيد · ${erMoney(tot,2)} ج</span>${canE?`<button class="qt-btn" onclick="erAcManOpen()">➕ قيد يدوى</button>`:''}<button class="qt-btn ghost sm" onclick="erAcJrPrint()">🖨️ طباعة</button></div>
+  <div class="qt-scroll"><table class="qt-tbl" id="erac-jr-t"><thead><tr><th>رقم القيد</th><th>التاريخ</th><th>المصدر</th><th>البيان</th><th>الحساب</th><th>مدين</th><th>دائن</th></tr></thead><tbody>
+  ${rows.map(j=>{ const L=j.lines||[]; return L.map((l,i)=>{ const a=erAcA(l.acc); return `<tr style="${i===0?'border-top:2px solid var(--border)':''}">${i===0?`<td rowspan="${L.length}"><b>${j.jno}</b>${j.test?' 🧪':''}</td><td rowspan="${L.length}" style="white-space:nowrap">${erEsc(j.date)}</td><td rowspan="${L.length}"><a href="#" onclick="erAcSrcOpen('${j.src}',${j.sid||0});return false">${ER_AC_SRC[j.src]||j.src} ${erEsc(j.sno||'')}</a>${j.src==='manual'&&canE&&erCan('erp-acc','del')?`<div><button class="qt-btn red sm" onclick="erAcManCancel(${j.sid})">❌ إلغاء</button></div>`:''}</td><td rowspan="${L.length}" style="text-align:right;max-width:260px">${erEsc(j.memo||'')}</td>`:''}
+      <td style="text-align:right;${Number(l.c)>0?'padding-inline-start:28px':''}">${erEsc(a.code||'')} — ${erEsc(a.name||'')}${l.pid?`<div class="qt-sub">${erEsc(erAcParty(l.pk,l.pid))}</div>`:''}${l.m?`<div class="qt-sub">${erEsc(l.m)}</div>`:''}</td>
+      <td>${Number(l.d)?erMoney(l.d,2):''}</td><td>${Number(l.c)?erMoney(l.c,2):''}</td></tr>`; }).join(''); }).join('')}
+  </tbody></table></div>${rows.length?'':'<div class="qt-sub" style="padding:10px">مفيش قيود فى الفترة دى</div>'}`; }
+function erAcJrPrint(){ const t=document.getElementById('erac-jr-t'); if(!t) return; const J=erAcS().jr; erAcPrint('دفتر اليومية',`من ${J.from} لـ ${J.to}`,t.outerHTML); }
+function erAcManOpen(){ const m={ id:null, date:erToday(), memo:'', lines:[{account_id:'',debit:'',credit:'',party_id:'',memo:''},{account_id:'',debit:'',credit:'',party_id:'',memo:''}] }; ER.edit=m; ER.ro=false;
+  const leaf=Object.assign(x=>!x.is_group&&!x.treasury_id,{leafOnly:true});
+  const form=()=>{ const dr=m.lines.reduce((s,l)=>s+(erNum(l.debit)||0),0), cr=m.lines.reduce((s,l)=>s+(erNum(l.credit)||0),0);
+    return `<div class="qt-card"><div class="qt-row">${erFld('التاريخ',erInp('date',m.date,{type:'date'}),1)}${erFld('البيان',erInp('memo',m.memo,{ph:'مثلاً: إثبات إهلاك الشهر / تسوية عهدة'}),3)}</div>
+    <div class="qt-scroll" style="margin-top:10px"><table class="qt-tbl"><thead><tr><th>الحساب</th><th>تاجر / مورد</th><th>مدين</th><th>دائن</th><th>بيان السطر</th><th></th></tr></thead><tbody>
+    ${m.lines.map((l,i)=>{ const a=erAcA(l.account_id); return `<tr><td style="min-width:260px"><select class="qt-inp" onchange="ER.edit.lines[${i}].account_id=this.value;ER.edit.lines[${i}].party_id='';ER.edit.__render()"><option value="">— الحساب —</option>${erAcAccOpts(l.account_id,leaf)}</select></td>
+      <td style="min-width:200px">${a.party?`<select class="qt-inp" onchange="ER.edit.lines[${i}].party_id=this.value"><option value="">— اختار —</option>${(a.party==='client'?(ER.sl&&ER.sl.clients||[]).map(c=>[c.id,(c.code||'')+' — '+c.name]):(ER.boot.suppliers||[]).map(s=>[s.id,(s.code||'')+' — '+s.name])).map(o=>`<option value="${o[0]}" ${String(o[0])===String(l.party_id)?'selected':''}>${erEsc(o[1])}</option>`).join('')}</select>`:'<span class="qt-sub">—</span>'}</td>
+      <td><input class="qt-inp" type="number" step="0.01" style="width:120px" value="${erEsc(l.debit)}" oninput="ER.edit.lines[${i}].debit=this.value;if(this.value)ER.edit.lines[${i}].credit='';erAcManTot()"></td>
+      <td><input class="qt-inp" type="number" step="0.01" style="width:120px" value="${erEsc(l.credit)}" oninput="ER.edit.lines[${i}].credit=this.value;if(this.value)ER.edit.lines[${i}].debit='';erAcManTot()"></td>
+      <td><input class="qt-inp" style="width:180px" value="${erEsc(l.memo)}" oninput="ER.edit.lines[${i}].memo=this.value"></td>
+      <td>${m.lines.length>2?`<button class="qt-btn red sm" onclick="ER.edit.lines.splice(${i},1);ER.edit.__render()">✖</button>`:''}</td></tr>`; }).join('')}
+    </tbody></table></div><div class="qt-row" style="margin-top:8px;align-items:center"><button class="qt-btn ghost sm" onclick="ER.edit.lines.push({account_id:'',debit:'',credit:'',party_id:'',memo:''});ER.edit.__render()">➕ سطر</button><div style="flex:1"></div><div id="erac-man-tot">${erAcManTotHtml(dr,cr)}</div></div></div>`; };
+  m.__render=()=>erModalBody(form()); erModal('📝 قيد يومية يدوى', form(), `<button class="qt-btn" id="er-save-btn" onclick="erAcManSave()">💾 حفظ القيد</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+function erAcManTotHtml(dr,cr){ const ok=Math.abs(dr-cr)<0.005&&dr>0; return `مدين <b>${erMoney(dr,2)}</b> · دائن <b>${erMoney(cr,2)}</b> · ${ok?'<span style="color:var(--success)">✅ متوازن</span>':`<span style="color:var(--error)">الفرق ${erMoney(Math.abs(dr-cr),2)}</span>`}`; }
+function erAcManTot(){ const m=ER.edit; if(!m||!m.lines) return; const dr=m.lines.reduce((s,l)=>s+(erNum(l.debit)||0),0), cr=m.lines.reduce((s,l)=>s+(erNum(l.credit)||0),0); const e=document.getElementById('erac-man-tot'); if(e) e.innerHTML=erAcManTotHtml(dr,cr); }
+async function erAcManSave(){ await erRun('er-save-btn', async()=>{ const m=ER.edit; await rpcSecure('acc_manual_save',{p:{date:m.date,memo:m.memo,lines:m.lines.map(l=>({account_id:l.account_id,debit:erNum(l.debit),credit:erNum(l.credit),party_id:l.party_id||null,memo:l.memo}))}}); erClose(); erToast('✅ القيد اتسجل'); await erAcRefresh(); }); }
+async function erAcManCancel(id){ const r=prompt('سبب إلغاء القيد اليدوى:'); if(!r) return; try{ await rpcSecure('acc_manual_cancel',{p_id:id,p_reason:r}); erToast('✅ اتلغى'); await erAcRefresh(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erAcRefresh(){ const S=erAcS(); try{ S.home=await rpcSecure('acc_home',{}); S.bal=await rpcSecure('acc_trial',{p:{}}); S.__m=null; }catch(e){} S.jr.data=null; S.vch=null; erAcTab(ER.tab.ac||'coa'); }
+
+// 💸 سندات الصرف والقبض المتنوعة
+async function erAcVchLoad(){ const S=erAcS(); try{ S.vch=await rpcSecure('acc_vouchers_list',{p:{}}); }catch(e){ erPaneErr('erac-pane-vch',e); return; } erRenderAcVch(); }
+function erAcTre(id){ return (ER.boot.treasuries||(erAcS().home||{}).treasuries||[]).find(t=>t.id===id)||((erAcS().home||{}).treasuries||[]).find(t=>t.id===id)||{}; }
+function erRenderAcVch(){ const el=document.getElementById('erac-pane-vch'); if(!el) return; const S=erAcS(), V=S.vch||[], canE=erCan('erp-acc','edit'), canD=erCan('erp-acc','del'); const q=String(S.vq||'').trim().toLowerCase(), k=S.vk||'';
+  const rows=V.filter(v=>(!k||v.kind===k)&&(!q||[v.vno,v.payee,v.notes,erAcA(v.account_id).name].join(' ').toLowerCase().includes(q)));
+  const sum=kd=>rows.filter(v=>v.kind===kd&&v.status==='سارى').reduce((s,v)=>s+Number(v.amount),0);
+  el.innerHTML=`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">${canE?`<button class="qt-btn" onclick="erAcVchOpen('out')">➕ سند صرف (مصروف)</button><button class="qt-btn ghost" onclick="erAcVchOpen('in')">➕ سند قبض متنوع (إيراد)</button>`:''}
+    <select class="qt-inp" style="width:170px" onchange="erAcS().vk=this.value;erRenderAcVch()"><option value="">الكل</option><option value="out" ${k==='out'?'selected':''}>سندات الصرف</option><option value="in" ${k==='in'?'selected':''}>سندات القبض المتنوعة</option></select>
+    <input class="qt-inp" style="max-width:220px" placeholder="🔍 رقم / المستفيد / الحساب" value="${erEsc(S.vq||'')}" oninput="erAcS().vq=this.value;erRenderAcVch()"><div style="flex:1"></div>
+    <span class="qt-sub">صرف <b style="color:var(--error)">${erMoney(sum('out'),2)}</b> · قبض <b style="color:var(--success)">${erMoney(sum('in'),2)}</b></span></div>
+  <div class="qt-sub" style="margin-bottom:8px">💡 سند الصرف بيطلع الفلوس من الخزينة على حساب مصروف (إيجار، مرتبات، نقل، جمارك...) — وبيقلل رصيد الخزينة فى شاشة «أرصدة الخزائن» على طول حتى قبل تفعيل الحسابات.</div>
+  <div class="qt-scroll"><table class="qt-tbl"><thead><tr><th>رقم</th><th>النوع</th><th>التاريخ</th><th>الخزينة</th><th>الحساب</th><th>المبلغ</th><th>المستفيد / البيان</th><th>الحالة</th><th></th></tr></thead><tbody>
+  ${rows.map(v=>{ const a=erAcA(v.account_id); return `<tr style="${v.status!=='سارى'?'opacity:.55':''}"><td><b>${v.vno}</b>${v.test?' 🧪':''}</td><td>${v.kind==='out'?'💸 صرف':'💵 قبض'}</td><td>${erEsc(v.date)}</td><td>${erEsc(erAcTre(v.treasury_id).name||'')}</td>
+    <td style="text-align:right">${erEsc(a.code||'')} — ${erEsc(a.name||'')}</td><td><b style="color:${v.kind==='out'?'var(--error)':'var(--success)'}">${erMoney(v.amount,2)}</b></td><td style="text-align:right">${erEsc(v.payee||'')}${v.notes?`<div class="qt-sub">${erEsc(v.notes)}</div>`:''}</td>
+    <td>${erStChip(v.status)}${v.cancel_reason?`<div class="qt-sub">${erEsc(v.cancel_reason)}</div>`:''}</td><td style="white-space:nowrap"><button class="qt-btn ghost sm" onclick="erAcVchPrint(${v.id})">🖨️</button>${canD&&v.status==='سارى'?`<button class="qt-btn red sm" onclick="erAcVchCancel(${v.id})">✖</button>`:''}</td></tr>`; }).join('')}
+  </tbody></table></div>${rows.length?'':'<div class="qt-sub" style="padding:10px">مفيش سندات</div>'}`; }
+function erAcVchOpen(kind){ const v={ kind, date:erToday(), treasury_id:((ER.boot.treasuries||(erAcS().home||{}).treasuries||[]).find(t=>t.is_active!==false)||{}).id||'', account_id:'', amount:'', payee:'', notes:'' }; ER.edit=v; ER.ro=false;
+  const filt=Object.assign(x=>!x.is_group&&!x.party&&!x.treasury_id&&(kind==='out'?['expense','asset','liability','equity'].includes(x.kind):['revenue','liability','equity','asset'].includes(x.kind)),{leafOnly:true});
+  const form=()=>`<div class="qt-card"><div class="qt-row">${erFld('التاريخ',erInp('date',v.date,{type:'date'}),1)}${erFld(kind==='out'?'من خزينة / بنك *':'لخزينة / بنك *',erSel('treasury_id',v.treasury_id,[['','— اختار —']].concat((ER.boot.treasuries||(erAcS().home||{}).treasuries||[]).filter(t=>t.is_active!==false).map(t=>[t.id,t.name]))),2)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld(kind==='out'?'على حساب (المصروف) *':'من حساب (الإيراد) *',`<select class="qt-inp" onchange="erSet('account_id',this.value)"><option value="">— اختار الحساب —</option>${erAcAccOpts(v.account_id,filt)}</select>`,3)}${erFld('المبلغ *',erInp('amount',v.amount,{type:'number',step:'0.01'}),1)}</div>
+    <div class="qt-row" style="margin-top:10px">${erFld(kind==='out'?'اتصرف لمين':'اتقبض من مين',erInp('payee',v.payee,{ph:kind==='out'?'مثلاً: صاحب المخزن / شركة الكهرباء':'مثلاً: بيع خردة'}),2)}${erFld('البيان',erInp('notes',v.notes,{ph:'مثلاً: إيجار شهر نوفمبر'}),3)}</div></div>`;
+  v.__render=()=>erModalBody(form()); erModal(kind==='out'?'💸 سند صرف جديد':'💵 سند قبض متنوع جديد', form(), `<button class="qt-btn" id="er-save-btn" onclick="erAcVchSave()">💾 حفظ</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`); }
+async function erAcVchSave(){ await erRun('er-save-btn', async()=>{ const v=ER.edit; const id=await rpcSecure('acc_voucher_save',{p:{kind:v.kind,date:v.date,treasury_id:v.treasury_id,account_id:v.account_id,amount:erNum(v.amount),payee:v.payee,notes:v.notes}}); erClose(); erToast('✅ السند اتسجل');
+  await erAcRefresh(); if(confirm('تطبع السند؟')) erAcVchPrint(id); ER.sl&&(ER.__trebal=null); }); }
+async function erAcVchCancel(id){ const r=prompt('سبب إلغاء السند:'); if(!r) return; try{ await rpcSecure('acc_voucher_cancel',{p_id:id,p_reason:r}); erToast('✅ اتلغى'); await erAcRefresh(); }catch(e){ erToast('❌ '+erErr(e),false); } }
+async function erAcVchPrint(id){ let v=(erAcS().vch||[]).find(x=>x.id===id); if(!v){ try{ erAcS().vch=await rpcSecure('acc_vouchers_list',{p:{}}); v=erAcS().vch.find(x=>x.id===id); }catch(e){} } if(!v) return; const a=erAcA(v.account_id);
+  erDocPrint({ title:v.kind==='out'?'سند صرف نقدية':'سند قبض متنوع', no:v.vno, date:v.date, test:v.test, cancelled:v.status!=='سارى', notes:v.notes,
+    info:[[v.kind==='out'?'من خزينة':'لخزينة',erAcTre(v.treasury_id).name||''],[v.kind==='out'?'على حساب':'من حساب',(a.code||'')+' — '+(a.name||'')],[v.kind==='out'?'اتصرف لـ':'اتقبض من',v.payee||'']],
+    cols:[['البيان'],['المبلغ','25%']], rows:[[erEsc(v.notes||a.name||''),erMoney(v.amount,2)]], totals:[['الإجمالى',erMoney(v.amount,2)+' ج']], words:Number(v.amount), sigs:['المحاسب','المدير',v.kind==='out'?'المستلم':'المورّد'] }); }
+
+// 📖 دفتر الأستاذ
+function erAcLedGo(id){ const L=erAcS().led; L.acc=id; L.pid=''; L.data=null; erAcTab('led'); }
+async function erRenderAcLed(){ const el=document.getElementById('erac-pane-led'); if(!el) return; const S=erAcS(), L=S.led; const a=erAcA(L.acc);
+  const partyOpts=a.party?(a.party==='client'?(ER.sl&&ER.sl.clients||[]).map(c=>[c.id,(c.code||'')+' — '+c.name]):(ER.boot.suppliers||[]).map(s=>[s.id,(s.code||'')+' — '+s.name])):[];
+  let head=erAcBanner()+`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap"><select class="qt-inp" style="min-width:300px;max-width:380px" onchange="erAcS().led.acc=this.value;erAcS().led.pid='';erAcS().led.data=null;erRenderAcLed()"><option value="">— اختار الحساب —</option>${erAcAccOpts(L.acc)}</select>
+    ${a.party?`<select class="qt-inp" style="min-width:220px" onchange="erAcS().led.pid=this.value;erAcS().led.data=null;erRenderAcLed()"><option value="">${a.party==='client'?'كل التجار':'كل الموردين'}</option>${partyOpts.map(o=>`<option value="${o[0]}" ${String(o[0])===String(L.pid)?'selected':''}>${erEsc(o[1])}</option>`).join('')}</select>`:''}
+    ${erAcDates('led',L,"(()=>{erAcS().led.data=null;erRenderAcLed()})")}<div style="flex:1"></div>${L.data?`<button class="qt-btn ghost sm" onclick="erAcPrint('دفتر الأستاذ — ${erEsc((a.code||'')+' '+(a.name||''))}','${erEsc((L.from||'البداية')+' ← '+(L.to||erToday()))}',document.getElementById('erac-led-t').outerHTML)">🖨️ طباعة</button>`:''}</div>`;
+  if(!L.acc){ el.innerHTML=head+'<div class="qt-sub" style="padding:10px">اختار حساب — أو دوس 📖 جنب أى حساب فى الدليل</div>'; return; }
+  if(!L.data){ el.innerHTML=head+'<div class="loading-txt">⏳</div>'; try{ L.data=await rpcSecure('acc_ledger',{p:{account_id:L.acc,from:L.from||'',to:L.to||'',party_kind:L.pid?a.party:'',party_id:L.pid||''}}); }catch(e){ el.innerHTML=head; erToast('❌ '+erErr(e),false); return; } }
+  let run=Number(L.data.ob)||0, td=0, tc=0; const R=L.data.rows||[];
+  el.innerHTML=head+`<div class="qt-scroll"><table class="qt-tbl" id="erac-led-t"><thead><tr><th>التاريخ</th><th>رقم القيد</th><th>المستند</th><th>البيان</th>${a.party&&!L.pid?'<th>'+(a.party==='client'?'التاجر':'المورد')+'</th>':''}${a.is_group?'<th>الحساب</th>':''}<th>مدين</th><th>دائن</th><th>الرصيد</th></tr></thead><tbody>
+    <tr class="g"><td colspan="${4+(a.party&&!L.pid?1:0)+(a.is_group?1:0)}" style="text-align:right"><b>رصيد أول المدة</b></td><td></td><td></td><td>${erAcBal(run)}</td></tr>
+    ${R.map(r=>{ run+=Number(r.d)-Number(r.c); td+=Number(r.d); tc+=Number(r.c); const ra=erAcA(r.acc); return `<tr><td style="white-space:nowrap">${erEsc(r.date)}</td><td>${r.jno}</td><td><a href="#" onclick="erAcSrcOpen('${r.src}',${r.sid||0});return false">${ER_AC_SRC[r.src]||r.src} ${erEsc(r.sno||'')}</a></td><td style="text-align:right">${erEsc(r.memo||'')}</td>${a.party&&!L.pid?`<td style="text-align:right">${erEsc(r.party||'')}</td>`:''}${a.is_group?`<td style="text-align:right" class="qt-sub">${erEsc(ra.code||'')} ${erEsc(ra.name||'')}</td>`:''}<td>${Number(r.d)?erMoney(r.d,2):''}</td><td>${Number(r.c)?erMoney(r.c,2):''}</td><td style="white-space:nowrap">${erAcBal(run)}</td></tr>`; }).join('')}
+    <tr class="t" style="font-weight:900;background:var(--dark3)"><td colspan="${4+(a.party&&!L.pid?1:0)+(a.is_group?1:0)}" style="text-align:right">الإجمالى (${R.length} حركة)</td><td>${erMoney(td,2)}</td><td>${erMoney(tc,2)}</td><td>${erAcBal(run)}</td></tr></tbody></table></div>`; }
+
+// ⚖️ ميزان المراجعة
+async function erAcTbLoad(){ const S=erAcS(), T=S.tb; if(!T.from){ T.from=(acStartOr()); } if(!T.to) T.to=erToday(); const el=document.getElementById('erac-pane-tb'); if(el&&!T.data) el.innerHTML='<div class="loading-txt">⏳</div>';
+  try{ T.data=await rpcSecure('acc_trial',{p:{from:T.from,to:T.to}}); }catch(e){ erPaneErr('erac-pane-tb',e); return; } erRenderAcTb(); }
+function acStartOr(){ const H=erAcS().home||{}; return H.start||(erToday().slice(0,4)+'-01-01'); }
+function erRenderAcTb(){ const el=document.getElementById('erac-pane-tb'); if(!el) return; const S=erAcS(), T=S.tb, {kids}=erAcM(), R=erAcRoll(T.data);
+  const rows=[]; const walk=(pid)=>{ (kids[pid]||[]).forEach(a=>{ rows.push(a); walk(a.id); }); }; walk(0);
+  const lvl=T.lvl==='all'?99:Number(T.lvl), show=rows.filter(a=>a.__d<lvl&&(!T.nz||(()=>{ const x=R[a.id]; return Math.abs(x.ob)>0.004||Math.abs(x.d)>0.004||Math.abs(x.c)>0.004; })()));
+  const roots=(kids[0]||[]), tot=roots.reduce((s,a)=>{ const x=R[a.id]; s.ob_d+=Math.max(x.ob,0); s.ob_c+=Math.max(-x.ob,0); s.d+=x.d; s.c+=x.c; const e=x.ob+x.d-x.c; s.e_d+=Math.max(e,0); s.e_c+=Math.max(-e,0); return s; },{ob_d:0,ob_c:0,d:0,c:0,e_d:0,e_c:0});
+  const M=v=>Math.abs(v)>0.004?erMoney(v,2):'';
+  el.innerHTML=erAcBanner()+`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">${erAcDates('tb',T,'erAcTbLoad')}
+    <select class="qt-inp" style="width:170px" onchange="erAcS().tb.lvl=this.value;erRenderAcTb()">${[['1','المستوى الأول'],['2','لحد المستوى التانى'],['3','لحد المستوى التالت'],['all','كل الحسابات']].map(o=>`<option value="${o[0]}" ${String(T.lvl)===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>
+    <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${T.nz?'checked':''} onchange="erAcS().tb.nz=this.checked;erRenderAcTb()"> من غير الأصفار</label><div style="flex:1"></div>
+    <span style="color:${Math.abs(tot.e_d-tot.e_c)<0.01?'var(--success)':'var(--error)'};font-weight:800">${Math.abs(tot.e_d-tot.e_c)<0.01?'✅ الميزان متوازن':'⚠️ الميزان مش متوازن'}</span><button class="qt-btn ghost sm" onclick="erAcPrint('ميزان المراجعة','من ${T.from} لـ ${T.to}',document.getElementById('erac-tb-t').outerHTML)">🖨️ طباعة</button></div>
+  <div class="qt-scroll"><table class="qt-tbl" id="erac-tb-t"><thead><tr><th rowspan="2">الكود</th><th rowspan="2">الحساب</th><th colspan="2">رصيد أول المدة</th><th colspan="2">حركة الفترة</th><th colspan="2">رصيد آخر المدة</th></tr><tr><th>مدين</th><th>دائن</th><th>مدين</th><th>دائن</th><th>مدين</th><th>دائن</th></tr></thead><tbody>
+  ${show.map(a=>{ const x=R[a.id], e=x.ob+x.d-x.c; return `<tr class="${a.is_group?'g':''}" style="${a.is_group?'font-weight:700;background:rgba(201,168,76,.05)':''}"><td dir="ltr" style="text-align:right">${erEsc(a.code)}</td><td style="text-align:right;padding-inline-start:${8+a.__d*16}px"><a href="#" onclick="erAcS().led.from='${T.from}';erAcS().led.to='${T.to}';erAcLedGo(${a.id});return false">${erEsc(a.name)}</a></td>
+    <td>${M(Math.max(x.ob,0))}</td><td>${M(Math.max(-x.ob,0))}</td><td>${M(x.d)}</td><td>${M(x.c)}</td><td>${M(Math.max(e,0))}</td><td>${M(Math.max(-e,0))}</td></tr>`; }).join('')}
+  <tr class="t" style="font-weight:900;background:var(--dark3)"><td></td><td style="text-align:right">الإجمالى</td><td>${erMoney(tot.ob_d,2)}</td><td>${erMoney(tot.ob_c,2)}</td><td>${erMoney(tot.d,2)}</td><td>${erMoney(tot.c,2)}</td><td>${erMoney(tot.e_d,2)}</td><td>${erMoney(tot.e_c,2)}</td></tr></tbody></table></div>`; }
+
+// 📈 قائمة الدخل
+async function erAcIsLoad(){ const S=erAcS(), I=S.is; if(!I.from) I.from=acStartOr(); if(!I.to) I.to=erToday(); try{ I.data=await rpcSecure('acc_trial',{p:{from:I.from,to:I.to}}); }catch(e){ erPaneErr('erac-pane-is',e); return; } erRenderAcIs(); }
+function erRenderAcIs(){ const el=document.getElementById('erac-pane-is'); if(!el) return; const S=erAcS(), I=S.is, {A,kids,by}=erAcM(), R=erAcRoll(I.data);
+  const net=a=>{ const x=R[a.id]||{d:0,c:0}; return x.d-x.c; };      // للفترة: الحركة بس (ob مش داخل)
+  const cogsGrp=(A.find(a=>a.sys_key==='cogs')||{}).parent_id; const rev=A.filter(a=>a.kind==='revenue'&&!a.is_group), cogs=A.filter(a=>!a.is_group&&a.kind==='expense'&&a.parent_id===cogsGrp), opx=A.filter(a=>!a.is_group&&a.kind==='expense'&&a.parent_id!==cogsGrp);
+  const line=(a,v,neg)=>Math.abs(v)<0.005?'':`<tr><td style="text-align:right;padding-inline-start:24px"><a href="#" onclick="erAcS().led.from='${I.from}';erAcS().led.to='${I.to}';erAcLedGo(${a.id});return false">${erEsc(a.code)} — ${erEsc(a.name)}</a></td><td dir="ltr" style="text-align:left">${erMoney(neg?-v:v,2)}</td></tr>`;
+  const tRev=rev.reduce((s,a)=>s-net(a),0), tCogs=cogs.reduce((s,a)=>s+net(a),0), tOpx=opx.reduce((s,a)=>s+net(a),0), gp=tRev-tCogs, np=gp-tOpx;
+  const T=(l,v,big)=>`<tr style="font-weight:900;background:${big?'rgba(201,168,76,.15)':'var(--dark3)'}"><td style="text-align:right">${l}</td><td dir="ltr" style="text-align:left;color:${v<0?'var(--error)':'inherit'}">${erMoney(v,2)}</td></tr>`;
+  el.innerHTML=erAcBanner()+`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center">${erAcDates('is',I,'erAcIsLoad')}<div style="flex:1"></div><button class="qt-btn ghost sm" onclick="erAcPrint('قائمة الدخل','من ${I.from} لـ ${I.to}',document.getElementById('erac-is-t').outerHTML)">🖨️ طباعة</button></div>
+  <div class="qt-scroll" style="max-width:760px"><table class="qt-tbl" id="erac-is-t"><tbody>
+    <tr><td colspan="2" style="text-align:right;color:var(--gold);font-weight:900">💰 الإيرادات</td></tr>${rev.map(a=>line(a,-net(a))).join('')}${T('صافى الإيرادات',tRev)}
+    <tr><td colspan="2" style="text-align:right;color:var(--gold);font-weight:900">📦 تكلفة المبيعات</td></tr>${cogs.map(a=>line(a,net(a))).join('')}${T('إجمالى تكلفة المبيعات',tCogs)}
+    ${T('📊 مجمل الربح'+(tRev?` (${(gp/tRev*100).toFixed(1)}%)`:''),gp,true)}
+    <tr><td colspan="2" style="text-align:right;color:var(--gold);font-weight:900">🧾 مصروفات التشغيل</td></tr>${opx.map(a=>line(a,net(a))).join('')}${T('إجمالى المصروفات',tOpx)}
+    ${T(np>=0?'✅ صافى الربح':'🔻 صافى الخسارة',np,true)}
+  </tbody></table></div><div class="qt-sub" style="margin-top:8px">💡 تكلفة المبيعات بتتحسب من مستندات التسليم بمتوسط تكلفة الصنف من الشحنات المعتمدة. المصروفات بتيجى من «سندات الصرف» والقيود اليدوية.</div>`; }
+
+// 🏛️ الميزانية (المركز المالى)
+async function erAcBsLoad(){ const S=erAcS(), B=S.bs; if(!B.to) B.to=erToday(); try{ B.data=await rpcSecure('acc_trial',{p:{to:B.to}}); }catch(e){ erPaneErr('erac-pane-bs',e); return; } erRenderAcBs(); }
+function erRenderAcBs(){ const el=document.getElementById('erac-pane-bs'); if(!el) return; const S=erAcS(), B=S.bs, {A,kids}=erAcM(), R=erAcRoll(B.data);
+  const bal=a=>{ const x=R[a.id]||{ob:0,d:0,c:0}; return x.ob+x.d-x.c; };
+  const roots=kids[0]||[], root=k=>roots.filter(a=>a.kind===k);
+  const profit=-(A.filter(a=>!a.is_group&&(a.kind==='revenue'||a.kind==='expense')).reduce((s,a)=>s+bal(a),0));
+  const sec=(k,sign)=>{ const out=[]; const walk=(pid,d)=>{ (kids[pid]||[]).forEach(a=>{ const v=sign*bal(a); if(Math.abs(v)>0.004||a.is_group&&d===0){ out.push(`<tr style="${a.is_group?'font-weight:700':''}"><td style="text-align:right;padding-inline-start:${10+d*18}px">${a.is_group?'':`<a href="#" onclick="erAcS().led.from='';erAcS().led.to='${B.to}';erAcLedGo(${a.id});return false">`}${erEsc(a.code)} — ${erEsc(a.name)}${a.is_group?'':'</a>'}</td><td dir="ltr" style="text-align:left">${erMoney(v,2)}</td></tr>`); } if(a.is_group) walk(a.id,d+1); }); }; root(k).forEach(r=>{ out.push(''); walk(r.id,0); }); return out.join(''); };
+  const tA=root('asset').reduce((s,a)=>s+bal(a),0), tL=-root('liability').reduce((s,a)=>s+bal(a),0), tE=-root('equity').reduce((s,a)=>s+bal(a),0);
+  const T=(l,v)=>`<tr style="font-weight:900;background:var(--dark3)"><td style="text-align:right">${l}</td><td dir="ltr" style="text-align:left">${erMoney(v,2)}</td></tr>`, ok=Math.abs(tA-(tL+tE+profit))<0.01;
+  el.innerHTML=erAcBanner()+`<div class="qt-row" style="gap:8px;margin-bottom:10px;align-items:center"><span class="qt-sub">فى تاريخ</span><input class="qt-inp" type="date" style="width:160px" value="${erEsc(B.to)}" onchange="erAcS().bs.to=this.value;erAcBsLoad()"><div style="flex:1"></div>
+    <span style="font-weight:800;color:${ok?'var(--success)':'var(--error)'}">${ok?'✅ الأصول = الخصوم + حقوق الملكية':'⚠️ فيه فرق '+erMoney(tA-(tL+tE+profit),2)}</span><button class="qt-btn ghost sm" onclick="erAcPrint('الميزانية (المركز المالى)','فى ${B.to}',document.getElementById('erac-bs-t').outerHTML)">🖨️ طباعة</button></div>
+  <div class="qt-scroll" style="max-width:820px"><table class="qt-tbl" id="erac-bs-t"><tbody>
+    <tr><td colspan="2" style="text-align:right;color:var(--gold);font-weight:900">🏢 الأصول</td></tr>${sec('asset',1)}${T('إجمالى الأصول',tA)}
+    <tr><td colspan="2" style="text-align:right;color:var(--gold);font-weight:900">📉 الخصوم</td></tr>${sec('liability',-1)}${T('إجمالى الخصوم',tL)}
+    <tr><td colspan="2" style="text-align:right;color:var(--gold);font-weight:900">🏛️ حقوق الملكية</td></tr>${sec('equity',-1)}
+    <tr><td style="text-align:right;padding-inline-start:28px">${profit>=0?'صافى ربح الفترة (لسه متقفلش)':'صافى خسارة الفترة'}</td><td dir="ltr" style="text-align:left">${erMoney(profit,2)}</td></tr>${T('إجمالى حقوق الملكية',tE+profit)}
+    ${T('إجمالى الخصوم وحقوق الملكية',tL+tE+profit)}
+  </tbody></table></div>`; }
+
+// ⚙️ التشغيل والإعدادات
+function erRenderAcSet(){ const el=document.getElementById('erac-pane-set'); if(!el) return; const H=erAcS().home||{}, {A}=erAcM(), isAdm=(typeof EMP_MODE==='undefined'||!EMP_MODE);
+  const keys={ ar:'العملاء (التجار)', ap:'الموردين', sales:'إيرادات المبيعات', disc:'خصم مسموح به', sret:'مردودات المبيعات', inv:'المخزون', transit:'بضاعة بالطريق', cogs:'تكلفة البضاعة المباعة', import_acc:'مستحقات تكاليف الاستيراد', vat:'ضريبة القيمة المضافة', stl_cl:'تسويات التجار', stl_sup:'تسويات الموردين', chk_endorsed:'شيكات مظهرة', opening:'أرصدة افتتاحية', cash_grp:'النقدية (الخزائن)' };
+  el.innerHTML=`<div class="qt-card" style="border-color:${H.active?'rgba(76,175,125,.6)':'rgba(240,199,94,.6)'}"><div style="font-size:16px;font-weight:900">${H.active?'✅ الحسابات متفعّلة — كل مستند بيعمل قيده لحظياً':'👁️ الحسابات لسه مش متفعّلة (وضع معاينة)'}</div>
+    <div class="qt-sub" style="margin-top:4px">التشغيل ده مستقل عن تشغيل البرنامج — ينفع البرنامج يشتغل والحسابات تتفعّل بعدين. لما تتفعّل: كل القيود بتتبنى من «تاريخ بداية الحسابات» وبعدها كل مستند بيعمل قيده لوحده.</div>
+    ${isAdm?`<div class="qt-row" style="margin-top:12px;gap:12px;align-items:end;flex-wrap:wrap">${erFld('تاريخ بداية الحسابات',`<input class="qt-inp" type="date" id="erac-start" value="${erEsc(H.start||'')}" style="width:170px">`,0)}
+      <label style="display:flex;gap:6px;align-items:center;margin-bottom:8px"><input type="checkbox" id="erac-vat" ${H.vat_split?'checked':''}> فصل ضريبة القيمة المضافة من الإيراد (من الفواتير الضريبية)</label>
+      <button class="qt-btn ghost" id="erac-save-set" onclick="erAcSetSave()">💾 حفظ الإعدادات</button>
+      ${H.active?`<button class="qt-btn red" id="erac-act" onclick="erAcActivate(false)">⏸️ إيقاف الحسابات</button>`:`<button class="qt-btn" id="erac-act" onclick="erAcActivate(true)">✅ تفعيل الحسابات</button>`}
+      <button class="qt-btn ghost" id="erac-rb" onclick="erAcRebuild()">🔄 إعادة بناء كل القيود</button></div>`:'<div class="qt-sub" style="margin-top:8px">التفعيل والإعدادات للأدمن بس.</div>'}</div>
+  <div class="qt-card" style="margin-top:12px"><b>🔗 القيود الأوتوماتيك — كل مستند بيروح فين</b>
+    <div class="qt-scroll" style="margin-top:8px"><table class="qt-tbl"><thead><tr><th>المستند</th><th>مدين</th><th>دائن</th></tr></thead><tbody>
+    ${[['🧾 فاتورة مبيعات','العملاء (+ خصم مسموح به)','إيرادات المبيعات'],['↩️ مرتجع مبيعات','مردودات المبيعات','العملاء'],['🚚 مستند تسليم','تكلفة البضاعة المباعة','المخزون (بمتوسط التكلفة)'],['💵 سند قبض','الخزينة / البنك','العملاء'],['📝 شيك','— لحد ما يتحصّل (بيبقى سند قبض) —',''],['🔁 شيك نقل تبعية','شيكات مظهرة','العملاء'],
+      ['🚢 فاتورة شراء / شحنة','بضاعة بالطريق','الموردين (بسعر الصرف)'],['💰 اعتماد تكاليف الشحنة','بضاعة بالطريق','مستحقات تكاليف الاستيراد'],['📥 استلام شحنة','المخزون (بالتكلفة الكاملة)','بضاعة بالطريق'],['💸 دفعة لمورد','الموردين','الخزينة / البنك'],['↩️ مرتجع مشتريات','الموردين','المخزون'],
+      ['⚖️ تسوية تاجر / مورد','حسب الجهة','تسويات التجار / الموردين'],['💸 سند صرف','المصروف','الخزينة'],['💵 سند قبض متنوع','الخزينة','الإيراد'],['🧾 فاتورة ضريبية (لو الفصل شغال)','إيرادات المبيعات','ضريبة القيمة المضافة'],['🏁 القيد الافتتاحى','أرصدة التجار والخزائن','أرصدة الموردين ← أرصدة افتتاحية']].map(r=>`<tr><td style="text-align:right">${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="qt-sub" style="margin-top:8px">حسابات الربط: ${Object.entries(keys).map(([k,l])=>{ const a=A.find(x=>x.sys_key===k); return `<span class="qt-chip dim" style="margin:2px">${l}: ${erEsc(a?a.code:'—')}</span>`; }).join('')}</div></div>
+  ${(H.errors||[]).length?`<div class="qt-card" style="margin-top:12px;border-color:rgba(224,85,85,.5)"><b style="color:var(--error)">⚠️ مستندات مقدرتش تعمل قيدها (${H.errors.length})</b><div class="qt-scroll" style="margin-top:6px"><table class="qt-tbl"><tbody>${H.errors.map(x=>`<tr><td>${erEsc(new Date(x.at).toLocaleString('ar-EG',{timeZone:'Africa/Cairo'}))}</td><td>${ER_AC_SRC[x.source]||x.source} #${x.id}</td><td style="text-align:right">${erEsc(x.err)}</td></tr>`).join('')}</tbody></table></div></div>`:''}`; }
+async function erAcSetSave(){ await erRun('erac-save-set', async()=>{ const r=await rpcSecure('acc_settings_save',{p:{start:document.getElementById('erac-start').value, vat_split:document.getElementById('erac-vat').checked}}); erToast(`✅ اتحفظ — اتبنى ${r.journals||0} قيد`); await erAcRefresh(); }); }
+async function erAcActivate(on){ if(on&&!confirm('تفعيل الحسابات؟\n\nكل القيود هتتبنى من تاريخ البداية وبعدها كل مستند هيعمل قيده لحظياً.')) return; if(!on&&!confirm('إيقاف الحسابات؟ المستندات الجديدة مش هتعمل قيود لحد ما تفعّلها تانى.')) return;
+  await erRun('erac-act', async()=>{ const r=await rpcSecure('acc_settings_save',{p:{active:on}}); erToast(on?`✅ الحسابات اتفعّلت — ${r.journals||0} قيد`:'⏸️ الحسابات اتوقفت'); await erAcRefresh(); }); }
+async function erAcRebuild(){ if(!confirm('إعادة بناء كل القيود الأوتوماتيك من المستندات؟ (القيود اليدوية والسندات بتتعمل تانى برضه)')) return;
+  await erRun('erac-rb', async()=>{ const r=await rpcSecure('acc_settings_save',{p:{rebuild:true}}); erToast(`✅ اتبنى ${r.journals} قيد من ${r.docs} مستند${r.errors?` — ⚠️ ${r.errors} غلط`:''}`); await erAcRefresh(); }); }
+
 </script>
 
 
