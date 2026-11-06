@@ -26756,6 +26756,17 @@ async function erEtaJson(id){ let d; try{ d=await rpcSecure('erp_eta_doc',{p_tin
     ${(d.errors||[]).length?`<div style="margin-top:8px">${d.errors.map(e=>`<div style="color:var(--error)">⛔ ${erEsc(e)}</div>`).join('')}</div>`:'<div style="color:var(--success);margin-top:8px">✅ المستند جاهز للتوقيع والإرسال</div>'}
     <pre dir="ltr" style="text-align:left;background:#0b0b0b;border:1px solid var(--border);border-radius:10px;padding:10px;margin-top:10px;max-height:56vh;overflow:auto;font-size:12px;white-space:pre-wrap">${erEsc(js)}</pre>`); }
 
+// 🐞 تشخيص مؤقت: أخطاء الجافاسكريبت + الضغط جوه شاشات المستندات (بيتسجل فى نشاط المستخدم)
+(function(){ let n=0; const d=el=>{ if(!el||!el.tagName) return String(el); return el.tagName+(el.id?'#'+el.id:'')+(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\s+/).slice(0,2).join('.'):''); };
+  const lg=(l)=>{ if(n++>60) return; try{ uaEv('click','🐞 '+l); }catch(e){} };
+  window.addEventListener('error',e=>lg('err '+String(e.message||'').slice(0,120)+' @'+String(e.filename||'').split('/').pop()+':'+e.lineno));
+  window.addEventListener('unhandledrejection',e=>lg('rej '+String((e.reason&&e.reason.message)||e.reason||'').slice(0,140)));
+  document.addEventListener('pointerdown',e=>{ const m=e.target&&e.target.closest&&e.target.closest('#er-modal'); if(!m) return; if(!e.target.closest('#er-m-body')) return;
+    const f=document.elementFromPoint(e.clientX,e.clientY); lg('pd '+d(e.target)+' efp='+d(f)+' wins='+((window.ER&&ER.wins)||[]).length+' mods='+document.querySelectorAll('.qt-modal').length+' ed='+(window.ER&&ER.edit?1:0)); },true);
+  document.addEventListener('focusin',e=>{ if(e.target&&e.target.closest&&e.target.closest('#er-m-body')) lg('focus '+d(e.target)); },true);
+  document.addEventListener('input',e=>{ if(e.target&&e.target.closest&&e.target.closest('#er-m-body')) lg('input '+d(e.target)+' len='+String(e.target.value||'').length); },true);
+})();
+
 </script>
 
 
