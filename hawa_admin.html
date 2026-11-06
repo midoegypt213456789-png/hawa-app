@@ -24215,16 +24215,19 @@ function erRcptOpen(clientId, invId){
       <label class="qt-radio ${r.mode==='account'?'er-on':''}"><input type="radio" name="er-am" ${r.mode==='account'?'checked':''} onchange="erSet('mode','account',true)"> تحت الحساب (من غير فاتورة)</label></div>
       ${r.mode!=='account'&&invs.length?`<table class="qt-tbl" style="margin-top:10px"><thead><tr><th>الفاتورة</th><th>التاريخ</th><th>الإجمالى</th><th>الباقى عليها</th><th>من السند ده</th></tr></thead><tbody>
         ${invs.map((v,i)=>`<tr><td><b>${v.inv_no}</b></td><td>${erEsc(v.inv_date)}</td><td>${erMoney(v.total,2)}</td><td>${erMoney(erInvRem(v),2)}</td>
-          <td>${r.mode==='auto'?`<b>${auto[i]?erMoney(auto[i],2):'—'}</b>`:`<input class="qt-inp" type="number" step="0.01" min="0" max="${erInvRem(v)}" style="width:120px" value="${erEsc(r.alloc[v.id]||'')}" oninput="ER.edit.alloc[${v.id}]=this.value">`}</td></tr>`).join('')}</tbody></table>
+          <td>${r.mode==='auto'?`<b>${auto[i]?erMoney(auto[i],2):'—'}</b>`:`<input class="qt-inp" type="number" step="0.01" min="0" max="${erInvRem(v)}" style="width:120px" value="${erEsc(r.alloc[v.id]||'')}" oninput="ER.edit.alloc[${v.id}]=this.value;erRcptSum()">`}</td></tr>`).join('')}</tbody></table>
         ${r.mode==='auto'&&left>0.004?`<div class="qt-sub" style="margin-top:6px">الباقى ${erMoney(left,2)} هيتسجل تحت الحساب</div>`:''}
-        ${r.mode==='manual'?`<div class="qt-sub" style="margin-top:6px">موزّع: ${erMoney(msum,2)} من ${erMoney(amt,2)} — والباقى تحت الحساب</div>`:''}`
+        ${r.mode==='manual'?`<div class="qt-sub" id="er-rc-msum" style="margin-top:6px">${erRcptSumTxt(msum,amt)}</div>`:''}`
       :(r.mode!=='account'?'<div class="qt-sub" style="margin-top:8px">مفيش فواتير مفتوحة — المبلغ هيتسجل تحت الحساب</div>':'')}</div>
     <div class="qt-card">${erFld('ملاحظات', erInp('notes',r.notes))}</div>`; };
   r.__render=()=>erModalBody(form());
   erModal('💵 سند قبض', form(), `<button class="qt-btn" id="er-save-btn" onclick="erRcptSave()">💾 حفظ السند</button><button class="qt-btn ghost" onclick="erClose()">إلغاء</button>`);
 }
 function erRcptClient(val){ if(typeof __erRendering!=='undefined' && __erRendering) return; const r=ER.edit, c=erClFromTxt(val); r.__cltxt=val; r.client_id=c?c.id:null; r.alloc={}; r.__render(); }
+function erRcptSumTxt(ms,amt){ if(ms>amt+0.004) return `<b style="color:var(--error)">⚠️ موزّع ${erMoney(ms,2)} — أكبر من مبلغ السند ${erMoney(amt,2)} بـ ${erMoney(ms-amt,2)}</b> — قلّل التوزيع أو زوّد المبلغ`; return `موزّع: <b>${erMoney(ms,2)}</b> من ${erMoney(amt,2)}${amt-ms>0.004?` — والباقى ${erMoney(amt-ms,2)} تحت الحساب`:' ✅'}`; }
+function erRcptSum(){ const r=ER.edit; if(!r) return; const ms=Object.values(r.alloc||{}).reduce((a,x)=>a+(erNum(x)||0),0), el=document.getElementById('er-rc-msum'); if(el) el.innerHTML=erRcptSumTxt(ms,erNum(r.amount)||0); }
 async function erRcptSave(){ await erRun('er-save-btn', async ()=>{ const r=ER.edit; if(!r.client_id) throw new Error('اختار التاجر من القايمة');
+  if(r.mode==='manual'){ const ms=Object.values(r.alloc||{}).reduce((a,x)=>a+(erNum(x)||0),0), amt=erNum(r.amount)||0; if(ms>amt+0.004){ erRcptSum(); throw new Error(`الموزّع على الفواتير (${erMoney(ms,2)}) أكبر من مبلغ السند (${erMoney(amt,2)}) — قلّل التوزيع أو زوّد المبلغ`); } }
   const p={ client_id:r.client_id, amount:erNum(r.amount), treasury_id:r.treasury_id||null, method:r.method, rcpt_date:r.rcpt_date, notes:r.notes, on_account:r.mode==='account',
     allocations: r.mode==='manual' ? Object.keys(r.alloc).map(k=>({invoice_id:Number(k),amount:erNum(r.alloc[k])})).filter(x=>x.amount) : [] };
   if(r.mode==='manual' && !p.allocations.length) p.on_account=true;
