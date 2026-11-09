@@ -2456,6 +2456,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .pl-h{color:var(--gold);font-weight:800;font-size:15px;margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pl-sub{color:var(--text-dim);font-size:12px;line-height:1.7}
 .pl-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pl-inp::placeholder{color:#6b6660;font-style:italic;opacity:1}
 .pl-inp{background:#1E1E1E;border:2px solid #4A4540;border-radius:8px;color:#fff;font-size:14px;padding:8px 11px;font-family:Cairo;width:auto;max-width:100%}
 .pl-combo{width:auto!important;margin:0}
 .pl-inp:focus{outline:none;border-color:var(--gold)}
@@ -3867,6 +3868,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         <button class="bl-tab" id="pl-tab-years" onclick="plTab('years')">🔤 أحرف السنة</button>
         <button class="bl-tab" id="pl-tab-rules" onclick="plTab('rules')">⚙️ قواعد الكتب</button>
         <button class="bl-tab" id="pl-tab-legacy" onclick="plTab('legacy')">📜 الكتب القديمة</button>
+        <button class="bl-tab" id="pl-tab-dev" onclick="plTab('dev')">🏛️ التنمية الصناعية</button>
       </div>
 
       <div id="bl-pane-list">
@@ -3925,6 +3927,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div id="pl-pane-years" class="pl-pane" style="display:none"></div>
       <div id="pl-pane-rules" class="pl-pane" style="display:none"></div>
       <div id="pl-pane-legacy" class="pl-pane" style="display:none"></div>
+      <div id="pl-pane-dev" class="pl-pane" style="display:none"></div>
     </div>
 
     <div class="section" id="sec-quotes">
@@ -20511,7 +20514,7 @@ else{
 // الماتور = كود ماتور الشركة (2) + نفس الـ 7 أرقام
 // ════════════════════════════════════════════════════════════════
 const PL_VTYPES = ['موتسيكل','سكوتر','تروسكل','كهرباء','باجي'];
-const PL_TABS = ['letters','reports','brands','recipients','years','rules','legacy'];
+const PL_TABS = ['letters','reports','brands','recipients','years','rules','legacy','dev'];
 const PL = { boot:null, letters:[], bulletins:[], loaded:false, tab:'letters',
   brandFilter:'all', statusFilter:'open', q:'', wiz:null, selBrand:null, modelEdit:null,
   rep:{brand:'',model:'',vtype:'',year:'',rcp:'',status:'',from:'',to:''} };
@@ -20589,7 +20592,7 @@ async function plLoad(force){
   }
 }
 function plRender(){
-  const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules,legacy:plRenderLegacy}[PL.tab];
+  const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules,legacy:plRenderLegacy,dev:plRenderDev}[PL.tab];
   if(f) f();
   const c=document.getElementById('pl-tab-count'); if(c) c.textContent = PL.letters.filter(l=>['جديد','فى التنمية','اتستلم'].includes(l.status)).length;
 }
@@ -20711,6 +20714,7 @@ function plRenderLettersTable(){
         <td>${plStChip(l.status)}${l.status==='فى التنمية'&&l.delivered_at?`<div class="pl-sub">من ${Math.round((new Date(today)-new Date(l.delivered_at))/864e5)} يوم</div>`:''}</td>
         <td style="white-space:nowrap">
           <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button>
+          ${live?`<button class="act-btn edit" onclick="plDevOpen({letter_ids:[${l.id}]})" title="طلب التنمية + المواصفات + الدلالات + صورة السجل">🏛️ ملف التنمية</button>${l.batch_id&&PL.letters.filter(x=>x.batch_id===l.batch_id&&!x.is_cancelled).length>1?`<button class="act-btn edit" onclick="plDevOpen({letter_ids:PL.letters.filter(x=>x.batch_id==='${l.batch_id}'&&!x.is_cancelled).map(x=>x.id)})" title="ملف واحد لكل كتب الدفعة">🏛️ للدفعة كلها</button>`:''}`:''}
           ${live&&ed?`<button class="act-btn edit" onclick="plEditNotes(${l.id})">📝</button>`:''}
           ${l.status==='جديد'&&plCanDel()?`<button class="act-btn delete" onclick="plCancel(${l.id})">🚫 إلغاء</button>`:''}
         </td></tr>`;
@@ -20881,7 +20885,7 @@ async function plWizRun(dry){
     const keep=r; PL.wiz=null; await plLoad(true);
     const el=document.getElementById('pl-wiz');
     if(el){ el.innerHTML=`<div class="pl-card" style="border-color:rgba(76,175,125,0.6)"><div class="pl-h">✅ الكتب اتعملت <div style="flex:1"></div><button class="pl-btn ghost sm" onclick="plWizClose()">✖ قفل</button></div>
-      ${keep.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.recipient_name||'')} — ${plN(l.qty)} رقم <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button>
+      ${keep.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.recipient_name||'')} — ${plN(l.qty)} رقم <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button> <button class="act-btn edit" onclick="plDevOpen({letter_ids:[${l.id}]})">🏛️ ملف التنمية</button>
         ${l.items.map(i=>`<div style="margin:4px 0 8px"><b>${plEsc(i.brand_name)}</b> ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>${plNums(i)}</div>`).join('')}</div>`).join('')}</div>`; }
     PL.wiz=null;
   }catch(e){
@@ -26766,6 +26770,198 @@ async function erEtaJson(id){ let d; try{ d=await rpcSecure('erp_eta_doc',{p_tin
   document.addEventListener('focusin',e=>{ if(e.target&&e.target.closest&&e.target.closest('#er-m-body')) lg('focus '+d(e.target)); },true);
   document.addEventListener('input',e=>{ if(e.target&&e.target.closest&&e.target.closest('#er-m-body')) lg('input '+d(e.target)+' len='+String(e.target.value||'').length); },true);
 })();
+
+// ═══════════ 🏛️ ملف التنمية الصناعية (طلب التنمية + المواصفات الفنية + دلالات الشاسيه + صورة السجل) ═══════════
+// البيانات: السجل الصناعى (pl_registers) — كل شركة (pl_brands) مربوطة بسجل + اسمها فى المستندات + ترتيب الدلالات (vin_layout)،
+// ومواصفات كل موديل (pl_models.specs). العدد والأنواع بتيجى من الكتاب نفسه. الطباعة على ورق أبيض والهامش فوق متساب للوجو المطبوع.
+const PL_DEV_VT={'موتسيكل':'موتوسيكل','سكوتر':'سكوتر','تروسكل':'تروسيكل','كهرباء':'موتوسيكل كهرباء','باجي':'باجى'};
+const PL_VIN_DEF=[[10,10,'سنة الصنع'],[9,9,'كود التسلسل للموديل'],[7,8,'كود مصنع التجميع'],[6,6,'قوة المحرك'],[5,5,'نوع الشاسيه'],[4,4,'كود المنتج'],[3,3,'كود المصنع'],[2,2,'كود البلد'],[1,1,'كود المنطقة الجغرافية']];
+const PL_SPEC_F=[['model_code','الموديل','HJ-200'],['title_name','الطراز فى العنوان','(فاضى = اسم الشركة)'],['style','الطراز','HJ – 200 CC'],['kind','نوع الدراجة','موتوسيكل رباعي الأشواط'],['engine','المحرك','رباعي الأشواط/ تبريد هواء / بنزين'],['cylinders','عدد الاسطوانات','اسطوانة واحدة'],['hp','قدرة المحرك','17 حصان'],['tank','خزان الوقود','12 لتر'],['length','الطول الكلى','2090مم'],['width','العرض الكلى','830مم'],['height','الارتفاع الكلى','1060مم'],['battery','البطارية','12 فولت']];
+async function plDevLoad(force){ if(PL.dev&&!force) return PL.dev; PL.dev=await plCall('pl_dev_boot'); return PL.dev; }
+function plDevBrand(id){ return ((PL.dev&&PL.dev.brands)||[]).find(b=>b.id===Number(id))||{}; }
+function plDevReg(id){ return ((PL.dev&&PL.dev.registers)||[]).find(r=>r.id===Number(id)); }
+function plDevRegFor(bid){ const b=plDevBrand(bid); return plDevReg(b.register_id)||plDevReg(PL.dev.settings.reg_default)||(PL.dev.registers||[]).find(r=>r.is_active)||null; }
+function plDevName(bid){ const b=plBrand(bid); return plDevBrand(bid).dev_name||(b&&b.name)||''; }
+function plDevSpecs(mid){ return (PL.dev&&PL.dev.specs&&PL.dev.specs[String(mid)])||{}; }
+function plDevDate(d){ if(!d) return '........'; const s=String(d).slice(0,10).split('-'); return `${s[2]}-${s[1]}-${s[0]}`; }
+function plDevExp(r){ if(!r||!r.expires_at) return null; const days=Math.round((new Date(r.expires_at)-new Date(plToday()))/864e5); return days; }
+function plDevCcNum(m){ return String(m.cc||'').replace(/[^\d.]/g,'')||String(m.cc||''); }
+function plDevCcTxt(m){ const c=String(m.cc||''); return /وات/.test(c)?c:`${plDevCcNum(m)} سم`; }
+function plDevLayout(bid){ const l=plDevBrand(bid).vin_layout; return Array.isArray(l)&&l.length?l:PL_VIN_DEF; }
+// يجمّع الأصناف من كتاب/كتب أو من سطور يدوى
+function plDevCollect(src){ let items=[], year=PL.boot.settings.model_year, docs=[];
+  if(src.letter_ids){ const L=PL.letters.filter(l=>src.letter_ids.includes(l.id)); if(L.length){ year=L[0].model_year; docs=L.map(l=>l.doc_no); } L.forEach(l=>(l.items||[]).forEach(i=>items.push({model_id:i.model_id,qty:Number(i.qty)||0}))); }
+  else (src.lines||[]).forEach(x=>{ if(x.model_id&&Number(x.qty)>0) items.push({model_id:Number(x.model_id),qty:Number(x.qty)}); });
+  if(src.model_year) year=src.model_year;
+  const by=new Map(); items.forEach(i=>by.set(i.model_id,(by.get(i.model_id)||0)+i.qty));
+  const rows=[...by.entries()].map(([mid,qty])=>{ const m=plModel(mid)||{}; return {m, mid, qty, bid:m.brand_id}; }).filter(r=>r.m.id);
+  return {rows, year, yl:plYearLetter(year), docs}; }
+const PL_DEV_CSS=`@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap');
+*{box-sizing:border-box} html,body{margin:0;padding:0;background:#e9e9e9} body{font-family:'Noto Naskh Arabic','Amiri','Traditional Arabic',serif;color:#000;direction:rtl}
+.pg{background:#fff;width:210mm;min-height:297mm;margin:10px auto;padding:var(--top) var(--side) var(--bottom);position:relative;box-shadow:0 2px 12px rgba(0,0,0,.25);page-break-after:always;break-after:page;font-size:15pt;line-height:1.8;overflow:hidden}
+.pg:last-child{page-break-after:auto;break-after:auto}
+.lh{position:absolute;top:0;left:0;right:0;height:var(--top);border-bottom:1.5px dashed #c9a84c;background:repeating-linear-gradient(135deg,#fbf6ea,#fbf6ea 8px,#fff 8px,#fff 16px);color:#b59a52;font:600 11pt 'Noto Naskh Arabic';display:flex;align-items:center;justify-content:center}
+.to{font-family:'Amiri',serif;font-weight:700;font-size:17pt;text-decoration:underline;text-underline-offset:6px;text-align:center;margin:0 0 6mm}
+.greet{font-family:'Amiri',serif;font-weight:700;text-align:center;font-size:15pt;margin:0 0 4mm}
+p{margin:0 0 3mm;text-align:justify}
+ul.items{list-style:none;padding:0;margin:1mm 8mm 3mm 0} ul.items li{margin:1mm 0}
+.thanks{text-align:center;margin-top:5mm;font-family:'Amiri',serif;font-size:15pt}
+.sign{margin-top:8mm;margin-left:0;width:105mm;margin-right:auto;text-align:center;line-height:1.8;font-size:14pt} .sign b{font-family:'Amiri',serif;font-size:15pt}
+.sign .ln{margin-top:9mm;border-top:1px dotted #555;padding-top:1mm;font-size:12pt;color:#333}
+.date{font-size:11.5pt;color:#222;margin-top:5mm}
+h2{font-family:'Amiri',serif;font-size:15pt;font-weight:700;margin:0 0 5mm;line-height:1.8}
+table{border-collapse:collapse;width:100%} td,th{border:1.2px solid #000;padding:2.2mm 3mm;vertical-align:middle}
+table.spec th{background:#f2f2f2;font-weight:700;font-size:13pt} table.spec td{font-size:13.5pt} table.spec td.no{width:10mm;text-align:center;font-weight:700} table.spec td.k{width:52mm;font-weight:700} table.spec td.v{text-align:center;font-weight:600}
+table.vin td{text-align:center;font-size:12pt;line-height:1.6;padding:2mm 1.5mm} table.vin tr.c td{font:700 14pt 'Noto Naskh Arabic';direction:ltr;background:#f6f6f6} table.vin tr.l td{vertical-align:top}
+.vin .lg{direction:ltr;font-size:10.5pt;font-weight:700;margin-top:1mm;white-space:nowrap}
+.decl{margin-top:12mm;font-family:'Amiri',serif;font-size:16pt;font-weight:700}
+.miss{color:#c00;border-bottom:1px dashed #c00}
+.img{display:flex;align-items:center;justify-content:center;height:calc(297mm - var(--top) - var(--bottom) - 12mm)} .img img{max-width:100%;max-height:100%;object-fit:contain}
+[contenteditable]:focus{outline:2px solid #4a90d9;outline-offset:2px}
+@page{size:A4;margin:0}
+@media print{html,body{background:#fff}.pg{margin:0;box-shadow:none;width:210mm;min-height:297mm}.lh{display:none}.miss{color:#000;border:0}.noprint{display:none!important}}`;
+function plDevLtr(v){ return `<bdi dir="ltr" style="white-space:nowrap">${plEsc(v)}</bdi>`; }
+function plDevMiss(v){ return v?plEsc(v):'<span class="miss">..........</span>'; }
+function plDevRequestPage(reg, rows, P){ const S=PL.dev.settings, total=rows.reduce((a,r)=>a+r.qty,0);
+  return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div>
+    <div class="to">${plEsc(S.to||'السيد رئيس / الإدارة المركزية للشئون الفنية')}</div><div class="greet">بعد التحية ،،،</div>
+    <p>مقدمه لسيادتكم من <b>${plDevMiss(reg&&reg.company_name)}</b> والمسجلة بسجل صناعى رقم <b>${reg&&reg.reg_no?plDevLtr(reg.reg_no):plDevMiss('')}</b> لسنة <b>${plDevMiss(reg&&reg.reg_year)}</b> وينتهى فى <b>${reg&&reg.expires_at?plDevLtr(plDevDate(reg.expires_at)):plDevMiss('')}</b> نرجو من سيادتكم التكرم باتخاذ اللازم نحو ترخيص عدد <b>${plN(total)}</b> دراجة نارية :</p>
+    <ul class="items">${rows.map(r=>`<li>- عدد <b>${plN(r.qty)}</b> ${plEsc(PL_DEV_VT[r.m.vtype]||r.m.vtype)} ماركة <b>${plEsc(plDevName(r.bid))}</b> ${plEsc(plDevCcTxt(r.m))} موديل ${P.year}</li>`).join('')}</ul>
+    <p>من إنتاج مصانعنا .</p><div class="thanks">وشكراً على حسن تعاونكم معنا ،،،</div>
+    <div class="sign"><b>مقدمه لسيادتكم</b><div>${plEsc((reg&&reg.company_name)||'')}</div>${reg&&reg.manager_name?`<div>${plEsc(reg.manager_name)} — ${plEsc(reg.manager_title||'مدير الشركة')}</div>`:''}<div class="ln">التوقيع والختم</div></div>
+    <div class="date">تحريراً فى : ${plDevLtr(plDevDate(plToday()))}${P.docs.length?` — كتاب رقم ${P.docs.join(' / ')}`:''}</div></div>`; }
+function plDevSpecPage(r, P){ const s=plDevSpecs(r.mid), m=r.m, cc=plDevCcNum(m), tri=m.vtype==='تروسكل', kind=s.kind||(m.vtype==='كهرباء'?'موتوسيكل كهربائى':'موتوسيكل رباعي الأشواط'), tn=s.title_name||plDevName(r.bid);
+  const row=(n,k,v,rs)=>`<tr>${n!==''?`<td class="no" ${rs?`rowspan="${rs}"`:''}>${n}</td>`:''}<td class="k">${k}</td><td class="v">${plDevMiss(v)}</td></tr>`;
+  return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div>
+    <h2>المواصفات الفنية الخاصة للدراجة النارية (${plEsc(kind)}) ${tri?'ذات الثلاث عجلات':'ذو العجلتين'} طراز ${plEsc(tn)} السعة ${plEsc(cc)} ${/وات/.test(m.cc)?'وات':'سم'} موديل ${P.year} :</h2>
+    <table class="spec"><thead><tr><th>م</th><th>البيان</th><th>المواصفات الفنية</th></tr></thead><tbody>
+    <tr><td class="no"></td><td class="k"></td><td class="v">دراجة نارية (${plEsc(kind)}) طراز ${plEsc(tn)} سعة ${plEsc(cc)} ${/وات/.test(m.cc)?'وات':'سم3'}</td></tr>
+    ${row(1,'الموديل',s.model_code)}${row(2,'المحرك',s.engine)}${row(3,`الطراز<br><span style="font-weight:400;font-size:11pt">(${plEsc(kind)})</span>`,s.style)}${row(4,'عدد الاسطوانات',s.cylinders)}
+    ${row(5,'سعة المحرك',/وات/.test(m.cc)?m.cc:`${cc} سم3`)}${row(6,'قدرة المحرك',s.hp)}${row(7,'سعة خزان الوقود',s.tank)}
+    ${row(8,'أبعاد الدراجة النارية :<br>الطول الكلى',s.length,3)}${row('','العرض الكلى',s.width)}${row('','الارتفاع الكلى',s.height)}${row(9,'البطارية',s.battery)}
+    </tbody></table></div>`; }
+function plDevVinPage(bid, rows, reg, P){ const lay=plDevLayout(bid), fps=rows.map(r=>String(r.m.fingerprint||'').toUpperCase()).filter(Boolean), vt=[...new Set(rows.map(r=>PL_DEV_VT[r.m.vtype]||r.m.vtype))].join(' / ');
+  const cell=seg=>{ const [a,b,lab]=seg; if(a===10) return {c:P.yl||'—', l:`${plEsc(lab)}<div class="lg">${P.year}</div>`};
+    const vals=[...new Set(fps.map(f=>f.slice(a-1,b)).filter(Boolean))]; let lg='';
+    if(a===6&&b===6){ const mp=new Map(); rows.forEach(r=>{ const ch=String(r.m.fingerprint||'').toUpperCase().charAt(5); if(ch&&!mp.has(ch)) mp.set(ch,/وات/.test(r.m.cc)?r.m.cc:plDevCcNum(r.m)+' CC'); }); lg=[...mp.entries()].map(([k,v])=>`<div>${plEsc(k)}:${plEsc(v)}</div>`).join(''); }
+    return {c:vals.join(b>a?' - ':'/')||'—', l:`${plEsc(lab)}${lg?`<div class="lg">${lg}</div>`:''}`}; };
+  const C=lay.map(cell);
+  return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div>
+    <div class="to">${plEsc(PL.dev.settings.to||'السيد رئيس / الإدارة المركزية للشئون الفنية')}</div><div class="greet">بعد التحية</div>
+    <p>مقدمه لسيادتكم من <b>${plDevMiss(reg&&reg.company_name)}</b> والمسجلة بسجل صناعى رقم <b>${reg&&reg.reg_no?plDevLtr(reg.reg_no):plDevMiss('')}</b> لسنة <b>${plDevMiss(reg&&reg.reg_year)}</b> وينتهى فى <b>${reg&&reg.expires_at?plDevLtr(plDevDate(reg.expires_at)):plDevMiss('')}</b> نرجو من سيادتكم التكرم باتخاذ اللازم نحو ترخيص الدراجة النارية ${plEsc(vt)} <b>${plEsc(plDevName(bid))}</b> من إنتاج مصانعنا</p>
+    <p>وتلك دلالات رموز أرقام الشاسيه :</p>
+    <table class="vin"><tr class="c">${C.map(x=>`<td>${plEsc(x.c)}</td>`).join('')}</tr><tr class="l">${C.map(x=>`<td>${x.l}</td>`).join('')}</tr></table>
+    <div class="decl">أقر أنا / ${plDevMiss(reg&&reg.manager_name)} بصفتى ${plEsc((reg&&reg.manager_title)||'مدير الشركة')} بصحة البيانات الواردة عاليه الخاصة بدلالات رقم الشاسيه</div>
+    <div class="sign" style="margin-top:10mm"><b style="text-decoration:underline">المقر بما فيه /</b><div class="ln">التوقيع والختم</div></div></div>`; }
+function plDevImgPage(reg){ return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div><div class="img"><img src="${plEsc(reg.image_url)}" alt="السجل الصناعى"></div></div>`; }
+function plDevBuild(P, opt){ // بيرجع الصفحات + التحذيرات
+  const warn=[], pages=[], groups=new Map();
+  P.rows.forEach(r=>{ const reg=plDevRegFor(r.bid), k=reg?reg.id:0; if(!groups.has(k)) groups.set(k,{reg,rows:[]}); groups.get(k).rows.push(r); });
+  groups.forEach(g=>{ const reg=g.reg;
+    if(!reg) warn.push('⛔ فيه شركات مش مربوطة بسجل صناعى — اربطها من تاب «🏛️ التنمية الصناعية»');
+    else { const d=plDevExp(reg); if(d!=null&&d<0) warn.push(`⛔ السجل الصناعى ${reg.reg_no} منتهى من ${-d} يوم (${plDevDate(reg.expires_at)}) — جدّده قبل ما تبعت`); else if(d!=null&&d<=60) warn.push(`⚠️ السجل الصناعى ${reg.reg_no} هينتهى بعد ${d} يوم`); if(opt.img&&!reg.image_url) warn.push(`⚠️ السجل ${reg.reg_no} مالوش صورة مرفوعة`); }
+    if(opt.req) pages.push(plDevRequestPage(reg,g.rows,P));
+    const brands=[...new Set(g.rows.map(r=>r.bid))];
+    brands.forEach(bid=>{ const br=g.rows.filter(r=>r.bid===bid);
+      if(opt.vin) pages.push(plDevVinPage(bid,br,reg,P));
+      if(opt.spec) br.forEach(r=>{ const s=plDevSpecs(r.mid), miss=PL_SPEC_F.filter(f=>!['title_name','kind'].includes(f[0])&&!s[f[0]]).map(f=>f[1]); if(miss.length) warn.push(`✏️ ${plDevName(bid)} ${r.m.label||plDevCcTxt(r.m)}: ناقص ${miss.join('، ')} (المكان هيطلع فاضى بنقط — كمّله من تاب التنمية أو اكتبه فى المعاينة)`); pages.push(plDevSpecPage(r,P)); }); });
+    if(opt.img&&reg&&reg.image_url&&!/\.pdf(\?|$)/i.test(reg.image_url)) pages.push(plDevImgPage(reg));
+  });
+  return {pages, warn:[...new Set(warn)]}; }
+async function plDevOpen(src){ try{ await plDevLoad(); }catch(e){ plToast(plErr(e),false); return; }
+  const P=plDevCollect(src); if(!P.rows.length){ plToast('مفيش أصناف',false); return; }
+  PL.devPack={src,P,opt:PL.devOpt||{req:true,vin:true,spec:true,img:true}}; plDevRender(); }
+function plDevRender(){ const D=PL.devPack; if(!D) return; const S=PL.dev.settings, B=plDevBuild(D.P,D.opt);
+  let ov=document.getElementById('pl-dev-ov'); if(!ov){ ov=document.createElement('div'); ov.id='pl-dev-ov'; ov.style.cssText='position:fixed;inset:0;z-index:9850;background:rgba(0,0,0,.75);display:flex;flex-direction:column'; document.body.appendChild(ov); }
+  const ck=(k,l)=>`<label style="display:inline-flex;gap:5px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto;margin:0" ${D.opt[k]?'checked':''} onchange="PL.devPack.opt.${k}=this.checked;PL.devOpt=PL.devPack.opt;plDevRender()"> ${l}</label>`;
+  ov.innerHTML=`<div style="background:var(--dark2);border-bottom:2px solid var(--gold);padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14px">
+    <b style="color:var(--gold);font-size:16px">🏛️ ملف التنمية الصناعية</b><span class="pl-sub">موديل ${D.P.year} — ${plN(D.P.rows.reduce((a,r)=>a+r.qty,0))} دراجة${D.P.docs.length?' — كتاب '+D.P.docs.join(' / '):''}</span>
+    ${ck('req','📄 طلب التنمية')}${ck('vin','🔤 الدلالات')}${ck('spec','📐 المواصفات')}${ck('img','🪪 صورة السجل')}
+    <div style="flex:1"></div><span class="pl-sub">✏️ تقدر تعدّل أى كلمة فى الورق قبل الطباعة</span>
+    <button class="pl-btn" onclick="plDevPrint()">🖨️ اطبع ${B.pages.length} ورقة</button><button class="pl-btn ghost" onclick="document.getElementById('pl-dev-ov').remove()">✖ قفل</button></div>
+    ${B.warn.length?`<div style="background:#2a1414;border-bottom:1px solid #5a2a2a;padding:6px 14px;font-size:13px;line-height:1.9;color:#f2b3b3">${B.warn.map(plEsc).join('<br>')}</div>`:''}
+    <iframe id="pl-dev-fr" style="flex:1;border:0;background:#e9e9e9"></iframe>`;
+  const fr=document.getElementById('pl-dev-fr');
+  fr.srcdoc=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>ملف التنمية الصناعية</title><style>:root{--top:${Number(S.top)||45}mm;--bottom:${Number(S.bottom)||25}mm;--side:${Number(S.side)||20}mm}${PL_DEV_CSS}</style></head><body contenteditable="true" spellcheck="false">${B.pages.join('')||'<div class="pg">اختار حاجة تتطبع</div>'}</body></html>`; }
+async function plDevPrint(){ const fr=document.getElementById('pl-dev-fr'); if(!fr) return; const w=fr.contentWindow; try{ await w.document.fonts.ready; }catch(e){} const imgs=[...w.document.images]; await Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{ i.onload=i.onerror=r; }))); w.focus(); w.print(); }
+
+// ═══ تاب 🏛️ التنمية الصناعية ═══
+async function plRenderDev(){ const el=document.getElementById('pl-pane-dev'); if(!el) return; try{ await plDevLoad(); }catch(e){ el.innerHTML=`<div class="pl-card" style="color:var(--error)">❌ ${plEsc(plErr(e))}</div>`; return; }
+  const D=PL.dev, S=D.settings, ed=plCanEdit(), regs=D.registers||[], brands=(PL.boot.brands||[]).filter(b=>b.active), sb=PL.devBrand||(brands[0]&&brands[0].id);
+  const expChip=r=>{ const d=plDevExp(r); if(d==null) return '<span class="pl-chip" style="background:#333">بدون تاريخ</span>'; return d<0?`<span class="pl-chip" style="background:rgba(224,85,85,.2);color:#f19a9a">⛔ منتهى من ${-d} يوم</span>`:d<=60?`<span class="pl-chip" style="background:rgba(201,168,76,.2);color:var(--gold-light)">⚠️ باقى ${d} يوم</span>`:`<span class="pl-chip" style="background:rgba(76,175,125,.2);color:#8fe0b5">✅ سارى</span>`; };
+  const regOpts=v=>`<option value="">— السجل الافتراضى —</option>${regs.map(r=>`<option value="${r.id}" ${String(v)===String(r.id)?'selected':''}>${plEsc(r.reg_no)} — ${plEsc(r.company_name)}</option>`).join('')}`;
+  const E=PL.devRegEdit;
+  el.innerHTML=`<div class="pl-card"><div class="pl-h">🏛️ ملف التنمية الصناعية <span class="pl-sub">— بيطلع من «📖 الكتب» (زرار 🏛️ ملف التنمية فى كل كتاب) أو من «🖨️ ملف يدوى» تحت. 3 ورقات أساسية: طلب التنمية + دلالات الشاسيه لكل شركة + المواصفات الفنية لكل موديل، وصورة السجل الصناعى.</span></div>
+    <div class="pl-row" style="gap:10px;align-items:end;flex-wrap:wrap">
+      <label class="pl-sub" style="flex:2;min-width:260px">الطلب موجّه لـ<br><input class="pl-inp" id="pld-to" style="width:100%" value="${plEsc(S.to)}" ${ed?'':'disabled'}></label>
+      <label class="pl-sub">هامش فوق للوجو (مم)<br><input class="pl-inp" id="pld-top" type="number" style="width:90px" value="${plEsc(S.top)}" ${ed?'':'disabled'}></label>
+      <label class="pl-sub">تحت (مم)<br><input class="pl-inp" id="pld-bottom" type="number" style="width:80px" value="${plEsc(S.bottom)}" ${ed?'':'disabled'}></label>
+      <label class="pl-sub">الجناب (مم)<br><input class="pl-inp" id="pld-side" type="number" style="width:80px" value="${plEsc(S.side)}" ${ed?'':'disabled'}></label>
+      <label class="pl-sub">السجل الافتراضى<br><select class="pl-inp" id="pld-regdef" ${ed?'':'disabled'}>${regOpts(S.reg_default)}</select></label>
+      ${ed?`<button class="pl-btn" onclick="plDevSettingsSave()">💾 حفظ</button>`:''}</div>
+    <div class="pl-sub" style="margin-top:6px">💡 الورق بيتطبع أبيض من غير لوجو — حط الورق المطبوع عليه اللوجو فى الطابعة، وظبط «هامش فوق» على مساحة اللوجو.</div></div>
+
+  <div class="pl-card"><div class="pl-h">🪪 السجلات الصناعية ${ed?`<button class="pl-btn ghost sm" onclick="PL.devRegEdit={is_active:true,manager_title:'مدير الشركة'};plRenderDev()">➕ سجل جديد</button>`:''}</div>
+    ${E?`<div class="pl-card" style="background:var(--dark3);border-color:rgba(201,168,76,.5)"><div class="pl-row" style="gap:10px;flex-wrap:wrap;align-items:end">
+      <label class="pl-sub" style="flex:2;min-width:240px">اسم الشركة زى السجل<br><input class="pl-inp" id="plr-company" style="width:100%" value="${plEsc(E.company_name||'')}"></label>
+      <label class="pl-sub">رقم السجل الصناعى<br><input class="pl-inp" id="plr-no" dir="ltr" style="width:200px" value="${plEsc(E.reg_no||'')}"></label>
+      <label class="pl-sub">لسنة<br><input class="pl-inp" id="plr-year" type="number" style="width:90px" value="${plEsc(E.reg_year||'')}"></label>
+      <label class="pl-sub">ينتهى فى<br><input class="pl-inp" id="plr-exp" type="date" value="${plEsc(E.expires_at||'')}"></label>
+      <label class="pl-sub">المدير (للإقرار)<br><input class="pl-inp" id="plr-mgr" value="${plEsc(E.manager_name||'')}"></label>
+      <label class="pl-sub">بصفته<br><input class="pl-inp" id="plr-title" style="width:120px" value="${plEsc(E.manager_title||'مدير الشركة')}"></label>
+      <label class="pl-sub" style="flex:1;min-width:160px">ملاحظات<br><input class="pl-inp" id="plr-notes" style="width:100%" value="${plEsc(E.notes||'')}"></label>
+      <label class="pl-sub"><input type="checkbox" id="plr-act" style="width:auto" ${E.is_active!==false?'checked':''}> شغّال</label>
+      <button class="pl-btn" id="plr-save" onclick="plDevRegSave()">💾 حفظ</button><button class="pl-btn ghost" onclick="PL.devRegEdit=null;plRenderDev()">إلغاء</button></div></div>`:''}
+    <div class="pl-scroll"><table class="pl-tbl"><thead><tr><th>الشركة</th><th>رقم السجل</th><th>لسنة</th><th>ينتهى فى</th><th>المدير</th><th>الشركات المربوطة</th><th>صورة السجل</th><th></th></tr></thead><tbody>
+    ${regs.map(r=>{ const bs=brands.filter(b=>{ const rid=plDevBrand(b.id).register_id; return rid?String(rid)===String(r.id):String(S.reg_default)===String(r.id); }).map(b=>b.name);
+      return `<tr style="${r.is_active?'':'opacity:.5'}"><td style="text-align:right"><b>${plEsc(r.company_name)}</b>${r.notes?`<div class="pl-sub">${plEsc(r.notes)}</div>`:''}</td><td dir="ltr"><b>${plEsc(r.reg_no)}</b></td><td>${plEsc(r.reg_year||'—')}</td>
+        <td style="white-space:nowrap">${plDevDate(r.expires_at)}<div>${expChip(r)}</div></td><td>${plEsc(r.manager_name||'—')}<div class="pl-sub">${plEsc(r.manager_title||'')}</div></td>
+        <td style="max-width:220px">${bs.map(plEsc).join('، ')||'<span class="pl-sub">—</span>'}${String(S.reg_default)===String(r.id)?'<div class="pl-sub">⭐ الافتراضى (لأى شركة مش مربوطة)</div>':''}</td>
+        <td>${r.image_url?`<a href="${plEsc(r.image_url)}" target="_blank" rel="noopener">${/\.pdf(\?|$)/i.test(r.image_url)?'📄 PDF':`<img src="${plEsc(r.image_url)}" style="width:70px;height:50px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">`}</a>`:'<span class="pl-sub">مفيش</span>'}
+          ${ed?`<div><label class="pl-btn ghost sm" style="display:inline-block;margin-top:4px;cursor:pointer">⬆️ ${r.image_url?'غيّر':'ارفع'} صورة<input type="file" accept="image/*,application/pdf" style="display:none" onchange="plDevRegImg(${r.id},this)"></label></div>`:''}</td>
+        <td>${ed?`<button class="act-btn edit" onclick="PL.devRegEdit=JSON.parse(JSON.stringify(plDevReg(${r.id})));plRenderDev()">✏️</button>`:''}</td></tr>`; }).join('')}
+    </tbody></table></div>${regs.length?'':'<div class="pl-sub" style="padding:8px">مفيش سجلات لسه</div>'}</div>
+
+  <div class="pl-card"><div class="pl-h">🏭 الشركات — السجل واسمها فى المستندات ودلالات الشاسيه
+      <select class="pl-inp" style="margin-right:auto" onchange="PL.devBrand=Number(this.value);plRenderDev()">${brands.map(b=>`<option value="${b.id}" ${b.id===sb?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select></div>
+    ${plDevBrandEditor(sb, ed, regOpts)}</div>
+
+  <div class="pl-card"><div class="pl-h">🖨️ ملف يدوى <span class="pl-sub">— لو عاوز تطلع الورق قبل ما الكتاب يتعمل</span></div>
+    ${(PL.devMan=PL.devMan||[{model_id:'',qty:''}]).map((x,j)=>`<div class="pl-row" style="margin-bottom:6px"><select class="pl-inp" style="min-width:260px" onchange="PL.devMan[${j}].model_id=this.value"><option value="">— الشركة / الموديل —</option>${(PL.boot.models||[]).filter(m=>m.active).map(m=>{ const b=plBrand(m.brand_id); return `<option value="${m.id}" ${String(x.model_id)===String(m.id)?'selected':''}>${plEsc((b?b.name:'')+' — '+m.label)}</option>`; }).join('')}</select>
+      <input class="pl-inp" type="number" min="1" style="width:120px" placeholder="العدد" value="${plEsc(x.qty)}" oninput="PL.devMan[${j}].qty=this.value">${PL.devMan.length>1?`<button class="act-btn delete" onclick="PL.devMan.splice(${j},1);plRenderDev()">✖</button>`:''}</div>`).join('')}
+    <div class="pl-row"><button class="pl-btn ghost sm" onclick="PL.devMan.push({model_id:'',qty:''});plRenderDev()">➕ سطر</button><button class="pl-btn" onclick="plDevOpen({lines:PL.devMan})">👁️ معاينة وطباعة</button></div></div>`; }
+function plDevBrandEditor(bid, ed, regOpts){ if(!bid) return ''; const b=plBrand(bid)||{}, d=plDevBrand(bid), lay=plDevLayout(bid), models=(PL.boot.models||[]).filter(m=>m.brand_id===bid&&m.active);
+  const fp=(models[0]&&String(models[0].fingerprint||'').toUpperCase())||'';
+  const layTxt=lay.map(s=>`${s[0]===s[1]?s[0]:s[0]+'-'+s[1]}: ${s[2]}`).join('\n');
+  return `<div class="pl-row" style="gap:10px;flex-wrap:wrap;align-items:end">
+      <label class="pl-sub">اسمها فى المستندات<br><input class="pl-inp" id="plb-name" value="${plEsc(d.dev_name||'')}" placeholder="${plEsc(b.name||'')}" ${ed?'':'disabled'}></label>
+      <label class="pl-sub">السجل الصناعى<br><select class="pl-inp" id="plb-reg" ${ed?'':'disabled'}>${regOpts(d.register_id)}</select></label></div>
+    <div class="pl-row" style="gap:14px;margin-top:10px;align-items:flex-start;flex-wrap:wrap">
+      <label class="pl-sub" style="min-width:260px">ترتيب خانات الدلالات (من اليمين للشمال — «مواقع: الاسم»، المواقع من 1 لـ 10)<br><textarea class="pl-inp" id="plb-lay" rows="9" style="width:300px;font-size:13px;line-height:1.7" ${ed?'':'disabled'}>${plEsc(layTxt)}</textarea>
+        ${ed?`<div><button class="pl-btn ghost sm" onclick="document.getElementById('plb-lay').value=${plEsc(JSON.stringify(PL_VIN_DEF.map(s=>`${s[0]===s[1]?s[0]:s[0]+'-'+s[1]}: ${s[2]}`).join('\n')))};">↺ الترتيب العادى</button></div>`:''}</label>
+      <div style="flex:1;min-width:280px"><div class="pl-sub">بصمة أول موديل: <b dir="ltr" style="letter-spacing:2px;color:var(--gold-light)">${plEsc(fp)}</b> — المعاينة:</div>
+        <div class="pl-scroll"><table class="pl-tbl" style="margin-top:6px"><tr>${lay.map(s=>`<td style="text-align:center;direction:ltr;font-weight:800;color:var(--gold-light)">${s[0]===10?plEsc(plYearLetter(PL.boot.settings.model_year)):plEsc(fp.slice(s[0]-1,s[1])||'—')}</td>`).join('')}</tr><tr>${lay.map(s=>`<td class="pl-sub" style="text-align:center">${plEsc(s[2])}</td>`).join('')}</tr></table></div></div></div>
+    ${ed?`<div class="pl-row" style="margin-top:8px"><button class="pl-btn" id="plb-save" onclick="plDevBrandSave(${bid})">💾 حفظ بيانات الشركة</button></div>`:''}
+    <div class="pl-h" style="margin-top:14px">📐 المواصفات الفنية لموديلات ${plEsc(b.name||'')}</div>
+    <div class="pl-scroll"><table class="pl-tbl"><thead><tr><th>الموديل</th>${PL_SPEC_F.map(f=>`<th>${f[1]}</th>`).join('')}<th></th></tr></thead><tbody>
+    ${models.map(m=>{ const s=plDevSpecs(m.id); return `<tr data-plm="${m.id}"><td style="white-space:nowrap"><b>${plEsc(m.vtype)} ${plEsc(m.cc)}</b><div class="pl-sub" dir="ltr">${plEsc(m.fingerprint||'')}</div></td>
+      ${PL_SPEC_F.map(f=>`<td><input class="pl-inp" data-k="${f[0]}" style="width:${['engine','kind'].includes(f[0])?'190':['length','width','height','tank','battery','hp','cylinders'].includes(f[0])?'95':'125'}px;padding:5px 7px;font-size:12px" value="${plEsc(s[f[0]]||'')}" placeholder="${plEsc(f[0]==='title_name'?f[2]:'مثلاً '+f[2])}" ${ed?'':'disabled'}></td>`).join('')}
+      <td>${ed?`<button class="act-btn edit" onclick="plDevSpecSave(${m.id},this)">💾</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>
+    <div class="pl-sub">💡 الخانات الفاضية هتطلع فى الورقة نقط تتكتب بإيد — أو تكتبها فى المعاينة قبل الطباعة.</div>`; }
+async function plDevSettingsSave(){ const g=id=>document.getElementById(id).value; try{ await plCall('pl_dev_settings_save',{p:{to:g('pld-to'),top:g('pld-top'),bottom:g('pld-bottom'),side:g('pld-side'),reg_default:g('pld-regdef')}}); plToast('✅ اتحفظ'); await plDevLoad(true); plRenderDev(); }catch(e){ plToast(plErr(e),false); } }
+async function plDevRegSave(){ const g=id=>document.getElementById(id), E=PL.devRegEdit||{};
+  const p={id:E.id||null,company_name:g('plr-company').value,reg_no:g('plr-no').value,reg_year:g('plr-year').value,expires_at:g('plr-exp').value,manager_name:g('plr-mgr').value,manager_title:g('plr-title').value,notes:g('plr-notes').value,is_active:g('plr-act').checked};
+  try{ await plCall('pl_register_save',{p}); PL.devRegEdit=null; plToast('✅ اتحفظ'); await plDevLoad(true); plRenderDev(); }catch(e){ plToast(plErr(e),false); } }
+async function plDevRegImg(id, inp){ const f=inp.files&&inp.files[0]; if(!f) return; if(f.size>10*1024*1024){ plToast('الملف أكبر من 10 ميجا',false); return; }
+  const ext=(f.name.split('.').pop()||'jpg').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,5), rnd=(crypto.randomUUID?crypto.randomUUID():Date.now()+''+Math.random()).replace(/[^a-z0-9]/gi,'').slice(0,24), path=`plreg/${id}/${rnd}.${ext}`;
+  plToast('⏳ بنرفع الصورة...'); const r=await sbUploadX(`erp_files/${path}`, f, f.type||'application/octet-stream');
+  if(!r.ok){ plToast('❌ الرفع فشل: '+(await r.text()).slice(0,120),false); return; }
+  const reg=plDevReg(id); try{ await plCall('pl_register_save',{p:Object.assign({},reg,{image_url:`${SB}/storage/v1/object/public/erp_files/${path}`})}); plToast('✅ اترفعت'); await plDevLoad(true); plRenderDev(); }catch(e){ plToast(plErr(e),false); } }
+async function plDevBrandSave(bid){ const txt=document.getElementById('plb-lay').value, lay=[];
+  for(const ln of txt.split('\n')){ const t=ln.trim(); if(!t) continue; const m=t.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).match(/^(\d{1,2})\s*(?:-\s*(\d{1,2}))?\s*[:：]\s*(.+)$/); if(!m){ plToast('السطر «'+t+'» مش مظبوط — اكتبه كده: 7-8: كود مصنع التجميع',false); return; } const a=Number(m[1]), b=Number(m[2]||m[1]); lay.push([a,b,m[3].trim()]); }
+  try{ await plCall('pl_brand_dev_save',{p:{id:bid,dev_name:document.getElementById('plb-name').value,register_id:document.getElementById('plb-reg').value,vin_layout:lay}}); plToast('✅ اتحفظ'); await plDevLoad(true); plRenderDev(); }catch(e){ plToast(plErr(e),false); } }
+async function plDevSpecSave(mid, btn){ const tr=btn.closest('tr'), specs={}; tr.querySelectorAll('input[data-k]').forEach(i=>specs[i.dataset.k]=i.value.trim());
+  try{ await plCall('pl_model_specs_save',{p:{id:mid,specs}}); plToast('✅ مواصفات الموديل اتحفظت'); await plDevLoad(true); }catch(e){ plToast(plErr(e),false); } }
 
 </script>
 
