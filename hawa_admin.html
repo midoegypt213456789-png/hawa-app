@@ -16435,12 +16435,23 @@ async function loadWarehouses(){
     const r = await fetch(`${SB}/rest/v1/warehouses?select=*&order=id.asc`, {headers: HDR});
     if (!r.ok) throw new Error('فشل الاتصال بقاعدة البيانات');
     allWarehousesData = await r.json();
+    try{ const rr = await fetch(`${SB}/rest/v1/rpc/wh_readiness`, {method:'POST', headers: HDR, body:'{}'}); const d = await rr.json(); window._whReady = {}; (Array.isArray(d)?d:[]).forEach(x=>window._whReady[x.id]=x); }catch(e){ window._whReady = {}; }
     renderWarehouses();
+    if(typeof whNamesLoad==='function') whNamesLoad(true);
   } catch(e) {
     c.innerHTML = `<div class="loading-txt" style="color:var(--error)">❌ ${e.message}</div>`;
   }
 }
 
+// ✅ جاهزية المخزن: الحاجات اللى لازم تتظبط لكل مخزن جديد عشان يشتغل زى الباقى
+function whReadyHtml(id){ const x=(window._whReady||{})[id]; if(!x) return '';
+  const row=(ok,t,fix)=>`<div style="font-size:12.5px;line-height:1.9;color:${ok?'var(--success)':'var(--error)'}">${ok?'✅':'⚠️'} ${t}${ok||!fix?'':` <span style="color:var(--text-dim)">— ${fix}</span>`}</div>`;
+  return `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin:8px 0">
+    ${row(x.types.length>0, x.types.length?'أنواع العربيات: '+x.types.map(whEscape).join('، '):'مفيش أنواع عربيات — التاجر مش هيعرف يحجز', 'ضيفها من «أنواع العربيات» للمخزن')}
+    ${row(x.patterns.length>0, x.patterns.length?'اسمه على الإذن: '+x.patterns.map(whEscape).join('، '):'مش مربوط باسم مخزن على الإذن — تصوير الإذن مش هيتعرف عليه', 'من «الأذونات ← الإعدادات ← ربط المخازن»')}
+    ${row(x.employees>0, x.employees?x.employees+' موظف مخزن':'مفيش موظف صلاحيته المخزن ده (الموظف العام بس اللى هيشوفه)', 'من «الموظفين»')}
+    ${row(x.email, x.email?'ليه إيميل للتقارير':'مفيش إيميل — مش هيوصله تقرير يومى ولا تنبيه الحضور', '')}
+  </div>`; }
 function renderWarehouses(){
   const c = document.getElementById('wh-list');
   if (!allWarehousesData.length) {
@@ -16457,6 +16468,7 @@ function renderWarehouses(){
       <input type="text" class="wh-name" value="${whEscape(w.name || '')}" placeholder="اسم المخزن" maxlength="100">
       <label>📧 الإيميل</label>
       <input type="email" class="wh-email" value="${whEscape(w.email || '')}" placeholder="example@gmail.com" maxlength="200">
+      ${whReadyHtml(w.id)}
       <div class="wh-actions">
         <button class="wh-save" onclick="saveWarehouse(${w.id})">💾 حفظ التغييرات</button>
         <button class="wh-test" onclick="testWarehouseEmail(${w.id})">📧 اختبار الإيميل</button>
