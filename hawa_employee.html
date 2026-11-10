@@ -699,6 +699,8 @@ function goReport(){
   window.location.href = 'hawa_report.html';
 }
 
+function whIcon(n){ return n==='قليوب'?'🏭':n==='السادات'?'🏗️':'📦'; }
+function whTint(n){ return n==='قليوب'?['74,144,217','#4A90D9']:n==='السادات'?['180,140,40','#E0B040']:['76,175,125','#6FD3A0']; }
 function enterMain(){
   document.getElementById('loginView').classList.add('hide');
   document.getElementById('mainView').classList.add('show');
@@ -710,16 +712,17 @@ function enterMain(){
     // الموظف العام: 3 tabs (الكل، قليوب، السادات) — يقدر يـ filter لو حب
     tabsEl.style.display='';
     tabsEl.className='wh-tabs three';
-    tabsEl.innerHTML=
-      '<button class="wh-btn active" id="wh-ALL"     onclick="selectWarehouse(\'ALL\')">🌐 الكل</button>'+
-      '<button class="wh-btn"        id="wh-قليوب"  onclick="selectWarehouse(\'قليوب\')">🏭 قليوب</button>'+
-      '<button class="wh-btn"        id="wh-السادات" onclick="selectWarehouse(\'السادات\')">🏗️ السادات</button>';
-    warehouse='ALL';
+    // 🏬 التابات من جدول المخازن — أى مخزن جديد بيظهر لوحده
+    const drawTabs=names=>{ tabsEl.style.gridTemplateColumns='repeat('+Math.min(names.length+1,4)+',1fr)';
+      tabsEl.innerHTML='<button class="wh-btn'+(warehouse==='ALL'?' active':'')+'" id="wh-ALL" onclick="selectWarehouse(\'ALL\')">🌐 الكل</button>'+
+        names.map(n=>'<button class="wh-btn'+(warehouse===n?' active':'')+'" id="wh-'+n+'" data-wh="'+n.replace(/"/g,'&quot;')+'" onclick="selectWarehouse(this.dataset.wh)">'+whIcon(n)+' '+n+'</button>').join(''); };
+    warehouse='ALL'; drawTabs(['قليوب','السادات']);
+    fetch(`${SB}/rest/v1/warehouses?select=name&order=id.asc`,{headers:HDR}).then(r=>r.json()).then(d=>{ if(Array.isArray(d)&&d.length) drawTabs(d.map(x=>x.name)); }).catch(()=>{});
   }else{
     // موظف مخزن معين: tab واحد لمخزنه فقط (مايقدرش يشوف الباقى)
     tabsEl.style.display='';
     tabsEl.className='wh-tabs one';
-    tabsEl.innerHTML='<button class="wh-btn active">'+(emp.role==='قليوب'?'🏭':'🏗️')+' '+emp.role+'</button>';
+    tabsEl.innerHTML='<button class="wh-btn active">'+whIcon(emp.role)+' '+emp.role+'</button>';
     warehouse=emp.role;
   }
   startRefreshIndicator();
@@ -1261,7 +1264,7 @@ function renderBookings(){
       const code=b._client?.company_code||'-';
       // فى ALL mode، اعرض badge للمخزن
       const whBadge = isAllMode
-        ? `<span style="background:${b.warehouse==='قليوب'?'rgba(74,144,217,0.15)':'rgba(180,140,40,0.15)'};border:1px solid ${b.warehouse==='قليوب'?'rgba(74,144,217,0.5)':'rgba(180,140,40,0.5)'};color:${b.warehouse==='قليوب'?'#4A90D9':'#E0B040'};padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;margin-right:6px">${b.warehouse==='قليوب'?'🏭':'🏗️'} ${b.warehouse}</span>`
+        ? `<span style="background:rgba(${whTint(b.warehouse)[0]},0.15);border:1px solid rgba(${whTint(b.warehouse)[0]},0.5);color:${whTint(b.warehouse)[1]};padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;margin-right:6px">${whIcon(b.warehouse)} ${b.warehouse}</span>`
         : '';
       html+=`<div class="bk-card ${isDone?'done':isNoshow?'noshow':''}" id="card-${b.id}">
         <button class="check-btn ${isDone?'checked':isNoshow?'noshowed':''}"

@@ -303,15 +303,14 @@ document.getElementById('empName').textContent = '👤 ' + (emp ? emp.name : '')
 
 // قيّد المخزن حسب الصلاحية
 const whFilter = document.getElementById('filterWarehouse');
-if (empRole === 'قليوب') {
-  whFilter.value = 'قليوب';
+// 🏬 أى موظف مخزن (مش «عام») متقيد بمخزنه — أياً كان اسم المخزن
+const _whAdd = n => { if (n && ![...whFilter.options].some(o => o.value === n)) { const o = document.createElement('option'); o.value = n; o.textContent = n; whFilter.appendChild(o); } };
+const _urlWh = new URLSearchParams(location.search).get('warehouse');
+if (empRole !== 'عام') {
+  _whAdd(empRole); whFilter.value = empRole;
   whFilter.disabled = true;
   whFilter.closest('.filter-group').style.display = 'none';
-} else if (empRole === 'السادات') {
-  whFilter.value = 'السادات';
-  whFilter.disabled = true;
-  whFilter.closest('.filter-group').style.display = 'none';
-}
+} else if (_urlWh) { _whAdd(_urlWh); whFilter.value = _urlWh; }
 
 function logout() {
   sessionStorage.removeItem('hawa_emp');
@@ -347,6 +346,7 @@ async function loadWarehouseVehicleTypes(){
     const [warehouses, vehicleTypes, mappings] = await Promise.all([whResp.json(), vtResp.json(), mapResp.json()]);
 
     const whMap = {}; (warehouses || []).forEach(w => whMap[w.id] = w.name);
+    (warehouses || []).slice().sort((a, b) => a.id - b.id).forEach(w => _whAdd(w.name));
     const vtMap = {}; (vehicleTypes || []).forEach(v => vtMap[v.id] = v.name);
 
     // ⏰ cache ساعات العمل لكل مخزن (شامل الـ pending)

@@ -9889,7 +9889,7 @@ async function loadEmployees(){
       // 🏭 صلاحية المخزن تظهر بس لموظفين المخازن — وظيفة لوحة التحكم = «—»
       const whCell = (jr && jr.landing==='admin')
         ? '<span style="color:var(--text-dim);font-size:11px">—</span>'
-        : (roleBadge[e.role]||e.role);
+        : (roleBadge[e.role]||`<span class="badge general">${e.role} 📦</span>`);
       const rBadge = (ratingAvg[e.id]!=null)
         ? ` <span title="متوسط التقييم" style="background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.35);color:var(--gold);border-radius:6px;padding:1px 7px;font-size:11px;font-weight:700">⭐ ${ratingAvg[e.id]}%</span>`
         : '';
@@ -12748,7 +12748,7 @@ function renderClientProfile(c){
       <input type="date" id="pf-from" onchange="filterProfileBookings()" placeholder="من تاريخ">
       <input type="date" id="pf-to" onchange="filterProfileBookings()" placeholder="إلى تاريخ">
       <select id="pf-wh" onchange="filterProfileBookings()">
-        <option value="">كل المخازن</option><option value="قليوب">🏭 قليوب</option><option value="السادات">🏗️ السادات</option>
+        <option value="">كل المخازن</option>${(window.WH_NAMES||['قليوب','السادات']).map(n=>`<option value="${n}">${whIcon(n)} ${n}</option>`).join('')}
       </select>
       <select id="pf-vt" onchange="filterProfileBookings()">
         <option value="">كل الأنواع</option><option value="موتسيكل">🏍️ موتسيكل</option><option value="تروسكل">🛺 تروسكل</option><option value="كهرباء">⚡ كهرباء</option>
@@ -16341,10 +16341,8 @@ async function loadReports(){
       repCard('red', blockedR.length, 'محظورين', "goTo('blocked')");
 
     // تقرير لكل مخزن
-    const [qR,sR]=await Promise.all([
-      fetch(`${SB}/rest/v1/bookings?loading_date=eq.${today}&warehouse=eq.قليوب&select=count,status,vehicle_type,time_slot`,{headers:HDR}).then(r=>r.json()),
-      fetch(`${SB}/rest/v1/bookings?loading_date=eq.${today}&warehouse=eq.السادات&select=count,status,vehicle_type,time_slot`,{headers:HDR}).then(r=>r.json()),
-    ]);
+    const _whN = await whNamesLoad();
+    const _whR = await Promise.all(_whN.map(n=>fetch(`${SB}/rest/v1/bookings?loading_date=eq.${today}&warehouse=eq.${encodeURIComponent(n)}&select=count,status,vehicle_type,time_slot`,{headers:HDR}).then(r=>r.json()).then(x=>Array.isArray(x)?x:[]).catch(()=>[])));
 
     const whCard=(name,data,whName)=>{
       const total=data.length;
@@ -16362,7 +16360,7 @@ async function loadReports(){
         </div>
       </div>`;
     };
-    document.getElementById('rep-wh').innerHTML=whCard('🏭 قليوب — اليوم',qR,'قليوب')+whCard('🏗️ السادات — اليوم',sR,'السادات');
+    document.getElementById('rep-wh').innerHTML=_whN.map((n,i)=>whCard(`${whIcon(n)} ${n} — اليوم`,_whR[i],n)).join('');
 
     // 🗺️ Region breakdown — توزيع العملاء حسب القطاع
     await loadRegionBreakdown();
@@ -26988,6 +26986,19 @@ async function plDevBrandSave(bid){ const txt=document.getElementById('plb-lay')
 async function plDevSpecSave(mid, btn){ const tr=btn.closest('tr'), specs={}; tr.querySelectorAll('input[data-k]').forEach(i=>specs[i.dataset.k]=i.value.trim());
   try{ await plCall('pl_model_specs_save',{p:{id:mid,specs}}); plToast('✅ مواصفات الموديل اتحفظت'); await plDevLoad(true); }catch(e){ plToast(plErr(e),false); } }
 
+
+// ═══ 🏬 المخازن ديناميك — أى مخزن جديد يتضاف من «المخازن» يظهر فى كل القوايم (فلاتر / صلاحية الموظف / أمين المخزن / التقارير) ═══
+function whIcon(n){ return n==='قليوب'?'🏭':n==='السادات'?'🏗️':'📦'; }
+async function whNamesLoad(force){ if(window.WH_NAMES&&!force) return window.WH_NAMES;
+  try{ const r=await fetch(`${SB}/rest/v1/warehouses?select=name&order=id.asc`,{headers:HDR}); const d=await r.json(); if(Array.isArray(d)&&d.length) window.WH_NAMES=d.map(x=>x.name); }catch(e){}
+  if(!window.WH_NAMES) return ['قليوب','السادات']; whSelectsFill(); return window.WH_NAMES; }
+function whSelectsFill(){ const N=window.WH_NAMES||[];
+  [['bk-wh',n=>whIcon(n)+' '+n,null],['sh-wh',n=>n,null],['em-role',n=>'موظف '+n,'عام'],['ec-warehouse',n=>whIcon(n)+' '+n,'الكل']].forEach(([id,lab,before])=>{
+    const s=document.getElementById(id); if(!s) return; const have=[...s.options].map(o=>o.value||o.textContent);
+    const ref=before?[...s.options].find(o=>o.value===before):null;
+    N.forEach(n=>{ if(have.includes(n)) return; const o=document.createElement('option'); o.value=n; o.textContent=lab(n); s.insertBefore(o,ref||null); }); });
+  const all=document.querySelector('#ec-warehouse option[value="الكل"]'); if(all) all.textContent='🌐 الكل (كل المخازن)'; }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>whNamesLoad()); else whNamesLoad();
 </script>
 
 
