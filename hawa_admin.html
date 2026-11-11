@@ -27236,7 +27236,16 @@ async function baOpen(id){ const r=id?BA.rules.find(x=>x.id===id):null; const t=
     if(!BA.vts.length){ const v=await (await fetch(`${SB}/rest/v1/vehicle_types?select=name&is_active=eq.true&order=display_order.asc`,{headers:HDR})).json(); BA.vts=Array.isArray(v)?v.map(x=>x.name):[]; }
     BA.whs=await whNamesLoad(); }catch(e){ o.remove(); showWHToast('❌ '+e.message,'error'); return; }
   baDraw(); }
-function baRows(upto){ const E=BA.ed; return BA.opts.filter(x=>BA_LV.slice(0,upto).every(([k,f])=>!E[k].length||E[k].includes(x[f]))); }
+function baSets(){ const E=BA.ed; return {R:new Set(E.regions),G:new Set(E.governorates),C:new Set(E.cities),D:new Set(E.districts)}; }
+// اختيار شجرى: قطاع كامل + محافظات من قطاعات تانية... واختيار حاجة من تحت بيضيّق اللى فوقها بس
+function baMatch(x,S){ const O=BA.opts;
+  return S.D.has(x.d) || (S.C.has(x.c)&&!O.some(k=>k.g===x.g&&k.c===x.c&&S.D.has(k.d)))
+    || (S.G.has(x.g)&&!O.some(k=>k.g===x.g&&(S.C.has(k.c)||S.D.has(k.d))))
+    || (S.R.has(x.r)&&!O.some(k=>k.r===x.r&&(S.G.has(k.g)||S.C.has(k.c)||S.D.has(k.d)))); }
+// القايمة فى كل مستوى: المحافظات كلها دايماً — المدن/الأحياء بتاعة اللى مختاره فوق (ولو مفيش اختيار فوق: الكل)
+function baScope(i){ const S=baSets(); if(i<=1) return BA.opts;
+  const up=i===2?(x=>S.G.has(x.g)||S.R.has(x.r)):(x=>S.C.has(x.c)||S.G.has(x.g)||S.R.has(x.r));
+  const any=i===2?(S.G.size||S.R.size):(S.C.size||S.G.size||S.R.size); return any?BA.opts.filter(up):BA.opts; }
 function baDraw(){ const E=BA.ed, o=document.getElementById('ba-ov'); if(!E||!o) return;
   const chip=(k,v)=>`<label style="display:inline-flex;gap:6px;align-items:center;background:var(--dark3);border:1px solid ${E[k].includes(v)?'var(--gold)':'var(--border)'};border-radius:9px;padding:6px 11px;cursor:pointer;font-size:13px"><input type="checkbox" style="width:auto;flex:none;margin:0" ${E[k].includes(v)?'checked':''} onchange="baTog('${k}',this.dataset.v,this.checked)" data-v="${baE(v)}"> ${baE(v)}</label>`;
   o.firstElementChild.innerHTML=`
@@ -27248,24 +27257,25 @@ function baDraw(){ const E=BA.ed, o=document.getElementById('ba-ov'); if(!E||!o)
       <label class="ba-f" style="flex:1;min-width:200px">اسم القاعدة (اختيارى)<input class="ba-inp" value="${baE(E.title)}" placeholder="مثلاً: أسبوع الوجه القبلى" oninput="BA.ed.title=this.value"></label></div>
     <div class="ba-h">📦 المخازن <span>— فاضى = كل المخازن</span></div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">${(BA.whs||[]).map(w=>chip('warehouses',w)).join('')}</div>
     <div class="ba-h">🚛 الأقسام <span>— فاضى = كل الأقسام</span></div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">${BA.vts.map(w=>chip('vehicle_types',w)).join('')}</div>
-    <div class="ba-h">✅ مين اللى مسموحله يحجز؟ <span>— ابدأ من القطاع وانزل (محافظة ← مدينة ← حى). كل ما تحدد أكتر الدايرة بتضيق.</span></div>
+    <div class="ba-h">✅ مين اللى مسموحله يحجز؟ <span>— تقدر تختار أكتر من قطاع وأكتر من محافظة مع بعض (حتى من قطاعات مختلفة). لو اخترت قطاع ومعاه محافظات منه = المحافظات دى بس من القطاع، ونفس الكلام فى المدينة والحى.</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px" id="ba-lv"></div>
-    <div id="ba-cnt" style="margin:12px 0;padding:10px 14px;border-radius:10px;background:var(--dark3);border:1px solid var(--border);font-size:14px"></div>
+    <div id="ba-cnt" style="margin:12px 0;padding:10px 14px;border-radius:10px;background:var(--dark3);border:1px solid var(--border);font-size:14px;line-height:1.9"></div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">
       <label class="ba-f">🔓 يفتح للكل من (اختيارى)<input type="datetime-local" class="ba-inp" value="${E.open_all_at}" onchange="BA.ed.open_all_at=this.value"><span style="font-size:11px;color:var(--text-dim)">لو فضل مكان: بعد الوقت ده أى تاجر يقدر يحجز</span></label>
       <label class="ba-f" style="flex:1;min-width:240px">رسالة للى مش مسموحلهم (اختيارى)<input class="ba-inp" value="${baE(E.msg)}" placeholder="لو سبتها فاضية: «الحجز يوم كذا مخصص لـ قطاع ... بس»" oninput="BA.ed.msg=this.value"></label></div>
     <div style="display:flex;justify-content:flex-end;gap:8px"><button class="act-btn delete" onclick="document.getElementById('ba-ov').remove()">إلغاء</button><button class="add-btn" onclick="baSave()">💾 حفظ القاعدة</button></div>`;
   baLists(); }
-function baLists(){ const E=BA.ed, box=document.getElementById('ba-lv'); if(!box) return;
-  // شيل أى اختيار تحت بقى بره الدايرة
-  BA_LV.forEach(([k,f],i)=>{ if(i===0) return; const ok=new Set(baRows(i).map(x=>x[f])); E[k]=E[k].filter(v=>ok.has(v)); });
-  box.innerHTML=BA_LV.map(([k,f,lab],i)=>{ const m={}; baRows(i).forEach(x=>{ if(x[f]) m[x[f]]=(m[x[f]]||0)+x.n; });
+function baLists(){ const E=BA.ed, box=document.getElementById('ba-lv'); if(!box) return; const S=baSets();
+  const up={}; BA.opts.forEach(x=>{ if(x.g) up['g|'+x.g]=x.r; if(x.c) up['c|'+x.c]=x.g; if(x.d) up['d|'+x.d]=x.c; });
+  box.innerHTML=BA_LV.map(([k,f,lab],i)=>{ const m={}; baScope(i).forEach(x=>{ if(x[f]) m[x[f]]=(m[x[f]]||0)+x.n; });
+    E[k].forEach(v=>{ if(!(v in m)) m[v]=BA.opts.filter(x=>x[f]===v).reduce((a,x)=>a+x.n,0); });   // المختار يفضل ظاهر حتى لو بره الدايرة
     const keep=(BA._q&&BA._q[k])||'';
-    return `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:8px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">${lab} ${E[k].length?`<span style="color:var(--gold)">(${E[k].length})</span> <a style="font-size:11px;cursor:pointer;color:var(--error)" onclick="BA.ed.${k}=[];baLists()">مسح</a>`:'<span style="color:var(--text-dim);font-size:11px">الكل</span>'}</div>
+    return `<div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:8px"><div style="font-weight:700;font-size:13px;margin-bottom:6px">${lab} ${E[k].length?`<span style="color:var(--gold)">(${E[k].length})</span> <a style="font-size:11px;cursor:pointer;color:var(--error)" onclick="BA.ed.${k}=[];baLists()">مسح</a>`:'<span style="color:var(--text-dim);font-size:11px">—</span>'}</div>
       <input class="ba-inp" style="width:100%;padding:5px 8px;font-size:12px;margin-bottom:6px" placeholder="🔎 بحث..." value="${baE(keep)}" oninput="baQ('${k}',this.value)">
-      <div id="ba-l-${k}" style="max-height:210px;overflow:auto">${Object.entries(m).sort((a,b)=>(E[k].includes(b[0])-E[k].includes(a[0]))||b[1]-a[1]).map(([v,n])=>`<label data-t="${baE(v)}" style="display:${keep&&!v.includes(keep)?'none':'flex'};gap:6px;align-items:center;padding:4px 2px;font-size:13px;cursor:pointer"><input type="checkbox" style="width:auto;flex:none;margin:0" ${E[k].includes(v)?'checked':''} data-v="${baE(v)}" onchange="baTog('${k}',this.dataset.v,this.checked)"> <span style="flex:1">${baE(v)}</span><span style="color:var(--text-dim);font-size:11px">${n}</span></label>`).join('')||'<div style="color:var(--text-dim);font-size:12px">—</div>'}</div></div>`; }).join('');
-  const any=BA_LV.some(([k])=>E[k].length), n=baRows(4).reduce((a,x)=>a+x.n,0), tot=BA.opts.reduce((a,x)=>a+x.n,0);
-  document.getElementById('ba-cnt').innerHTML=any?`✅ المسموح لهم: <b style="color:var(--success);font-size:17px">${n}</b> تاجر — 🔒 هيتقفل على: <b style="color:var(--error)">${tot-n}</b> تاجر`:'⚠️ اختار قطاع أو محافظة أو مدينة أو حى واحد على الأقل'; }
+      <div id="ba-l-${k}" style="max-height:230px;overflow:auto">${Object.entries(m).sort((a,b)=>(E[k].includes(b[0])-E[k].includes(a[0]))||b[1]-a[1]).map(([v,n])=>{ const par=i?up[f+'|'+v]:''; return `<label data-t="${baE(v+' '+(par||''))}" style="display:${keep&&!(v+' '+(par||'')).includes(keep)?'none':'flex'};gap:6px;align-items:center;padding:4px 2px;font-size:13px;cursor:pointer"><input type="checkbox" style="width:auto;flex:none;margin:0" ${E[k].includes(v)?'checked':''} data-v="${baE(v)}" onchange="baTog('${k}',this.dataset.v,this.checked)"> <span style="flex:1">${baE(v)}${par?` <span style="color:var(--text-dim);font-size:10.5px">· ${baE(par)}</span>`:''}</span><span style="color:var(--text-dim);font-size:11px">${n}</span></label>`; }).join('')||'<div style="color:var(--text-dim);font-size:12px">—</div>'}</div></div>`; }).join('');
+  const any=S.R.size||S.G.size||S.C.size||S.D.size, ok=BA.opts.filter(x=>baMatch(x,S)), n=ok.reduce((a,x)=>a+x.n,0), tot=BA.opts.reduce((a,x)=>a+x.n,0);
+  const byG={}; ok.forEach(x=>byG[x.g]=(byG[x.g]||0)+x.n);
+  document.getElementById('ba-cnt').innerHTML=any?`✅ المسموح لهم: <b style="color:var(--success);font-size:17px">${n}</b> تاجر — 🔒 هيتقفل على: <b style="color:var(--error)">${tot-n}</b> تاجر<div style="font-size:12px;color:var(--text-dim)">${Object.entries(byG).sort((a,b)=>b[1]-a[1]).map(([g,c])=>baE(g||'—')+' ('+c+')').join(' · ')}</div>`:'⚠️ اختار قطاع أو محافظة أو مدينة أو حى واحد على الأقل'; }
 function baQ(k,v){ BA._q=BA._q||{}; BA._q[k]=v; document.querySelectorAll('#ba-l-'+k+' label').forEach(l=>{ l.style.display=!v||l.dataset.t.includes(v)?'flex':'none'; }); }
 function baTog(k,v,on){ const a=BA.ed[k], i=a.indexOf(v); if(on&&i<0) a.push(v); if(!on&&i>=0) a.splice(i,1); if(k==='warehouses'||k==='vehicle_types') baDraw(); else baLists(); }
 async function baSave(){ const E=BA.ed; if(!E.start_date||!E.end_date||E.end_date<E.start_date){ showWHToast('❌ راجع التواريخ','error'); return; }
