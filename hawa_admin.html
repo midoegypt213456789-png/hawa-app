@@ -20837,6 +20837,10 @@ function plWizRegrid(){
 function plWizNewModel(j){ const ln=PL.wiz&&PL.wiz.lines[j]; if(!ln) return; if(!ln.brand_id){ plToast('اختار الشركة الأول',false); return; }
   PL.wizBack={j}; PL.selBrand=Number(ln.brand_id); PL.modelEdit=null; plTab('brands');
   setTimeout(()=>{ const f=document.getElementById('pl-m-cc'); if(f){ f.scrollIntoView({behavior:'smooth',block:'center'}); f.focus(); } plToast('➕ اكتب بيانات الموديل واحفظ — هترجع للكتاب لوحدك'); },250); }
+// ➕ مستلم جديد من جوه الكتاب — بيتضاف ويتختار على طول
+async function plWizNewRcp(){ if(!PL.wiz) return; const n=(prompt('اسم المستلم الجديد')||'').trim(); if(!n) return;
+  try{ const id=await plCall('pl_recipient_save',{p_id:null,p_name:n,p_active:true}); await plLoad(true); if(PL.wiz){ PL.wiz.recipient_id=String(id); plWizRender(); } plToast('✅ المستلم «'+n+'» اتضاف واتختار'); }
+  catch(e){ plToast(plErr(e),false); } }
 function plWizSet(j,key,val){
   const w=PL.wiz, ln=w.lines[j]; ln[key]=val;
   if(key==='brand_id') ln.model_id='';
@@ -20898,6 +20902,7 @@ function plWizRender(){
       <label class="pl-sub" style="margin-right:12px">الكتاب لمين؟</label>
       <select class="pl-inp" onchange="PL.wiz.recipient_id=this.value"><option value="">— المستلم —</option>
         ${rcps.map(r=>`<option value="${r.id}" ${String(w.recipient_id)===String(r.id)?'selected':''}>${plEsc(r.name)}</option>`).join('')}</select>
+      <button class="pl-btn ghost sm" onclick="plWizNewRcp()" title="ضيف مستلم جديد ويتختار على طول">➕ مستلم</button>
       <input class="pl-inp" style="flex:1;min-width:160px" placeholder="ملاحظات (اختيارى)" value="${plEsc(w.notes)}" oninput="PL.wiz.notes=this.value">
     </div>
     ${grid}
