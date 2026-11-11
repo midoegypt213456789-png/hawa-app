@@ -20833,6 +20833,10 @@ function plWizRegrid(){
     for(let i=0;i<n;i++) w.grid[i][j]=base+(i<r?1:0); });
   w.preview=null;
 }
+// ➕ موديل جديد من جوه الكتاب: يفتح شاشة الشركة على فورم الإضافة، وبعد الحفظ يرجع للكتاب والموديل متختار
+function plWizNewModel(j){ const ln=PL.wiz&&PL.wiz.lines[j]; if(!ln) return; if(!ln.brand_id){ plToast('اختار الشركة الأول',false); return; }
+  PL.wizBack={j}; PL.selBrand=Number(ln.brand_id); PL.modelEdit=null; plTab('brands');
+  setTimeout(()=>{ const f=document.getElementById('pl-m-cc'); if(f){ f.scrollIntoView({behavior:'smooth',block:'center'}); f.focus(); } plToast('➕ اكتب بيانات الموديل واحفظ — هترجع للكتاب لوحدك'); },250); }
 function plWizSet(j,key,val){
   const w=PL.wiz, ln=w.lines[j]; ln[key]=val;
   if(key==='brand_id') ln.model_id='';
@@ -20871,6 +20875,7 @@ function plWizRender(){
         ${brands.map(b=>`<option value="${b.id}" ${String(ln.brand_id)===String(b.id)?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select>
       <select class="pl-inp" style="min-width:200px" onchange="plWizSet(${j},'model_id',this.value)" ${ln.brand_id?'':'disabled'}><option value="">— الموديل —</option>
         ${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(x.label)}</option>`).join('')}</select>
+      <button class="pl-btn ghost sm" onclick="plWizNewModel(${j})" title="ضيف موديل جديد للشركة دى — وبعد الحفظ بترجع للكتاب والموديل متختار">➕ موديل</button>
       <input class="pl-inp" type="number" min="1" style="width:120px" placeholder="العدد" value="${plEsc(ln.qty)}" onchange="plWizSet(${j},'qty',this.value)">
       ${m?`<span class="pl-chip vt">${plEsc(m.vtype)}</span><span class="pl-sub">الدرج الحالى فاضل فيه ${plN(rem)} — والباقى بيفتح أدراج جديدة لوحده</span>`:''}
       ${w.lines.length>1?`<button class="act-btn delete" onclick="PL.wiz.lines.splice(${j},1);plWizRegrid();plWizRender()">✖</button>`:''}
@@ -21115,6 +21120,8 @@ async function plModelSave(confirmSame){
     const r=await plCall('pl_model_save',{p});
     if(r && r.need_confirm){ if(confirm('⚠️ '+r.message+'\n\nتكمّل؟')) return plModelSave(true); return; }
     plToast(me?'✅ اتعدّل':`✅ الموديل اتضاف — أول درج ${r.code}`); PL.modelEdit=null; await plLoad(true);
+    if(!me && PL.wizBack && PL.wiz){ const ln=PL.wiz.lines[PL.wizBack.j]; PL.wizBack=null;
+      if(ln && String(ln.brand_id)===String(p.brand_id) && r && r.id){ ln.model_id=String(r.id); plTab('letters'); try{ plWizRegrid(); plWizRender(); }catch(e){} } }
   }catch(e){ plToast(plErr(e),false); }
 }
 async function plModelToggle(id){
