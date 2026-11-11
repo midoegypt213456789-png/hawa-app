@@ -27060,7 +27060,7 @@ function plPrintHtml(l, o){
     parts.forEach(pt=>{ const pre=pt==='ch'?fp:ep, pages=Math.ceil(n/per), ttl=(pt==='ch'?'شاسيه':'ماتور')+' '+i.brand_name+' '+i.model_label;
       for(let pg=0; pg<pages; pg++){ const base=pg*per, cnt=Math.min(per,n-base); let tb='';
         for(let r=0;r<rows;r++){ tb+='<tr>'; for(let c=0;c<cols;c++){ const k=c*rows+r; tb+= k<cnt ? `<td class="s">${base+k+1}</td><td class="n">${pre}${String(s0+base+k).padStart(7,'0')}</td>` : '<td class="s"></td><td class="n"></td>'; } tb+='</tr>'; }
-        out.push(`<div class="pg">${header?`<div class="hd"><b>${plEsc(ttl)}</b><br>عدد ${n} موديل ${l.model_year} — مستند ${l.doc_no}</div>`:''}<table>${tb}</table><div class="ft">صفحة ${pg+1} من ${pages}</div></div>`); } }); });
+        out.push(`<div class="pg">${header?`<div class="hd"><b>${plEsc(ttl)}</b><br>عدد ${n} موديل ${l.model_year}</div>`:''}<table>${tb}</table><div class="ft">صفحة ${pg+1} من ${pages}</div></div>`); } }); });
   return {pages:out.length, html:`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>أرقام مستند ${l.doc_no}</title><style>
 @page{size:A4 portrait;margin:0} *{box-sizing:border-box} html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}
 .pg{width:210mm;height:296.5mm;padding:${TOP}mm 9mm 0 9mm;page-break-after:always;break-after:page;overflow:hidden;position:relative}
