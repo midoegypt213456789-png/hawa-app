@@ -1058,7 +1058,7 @@ const user = JSON.parse(localStorage.getItem('hawa_user') || '{}');
 // 🔐 خطة C: كتابة التاجر بتتم عبر RPC بتوكن جلسة (session_token) — الجلسة القديمة (من غير توكن) بتكمل بالطريقة القديمة لحد ما يعمل دخول تانى
 async function clRpc(fn, args){ const r=await fetch(`${SB}/rest/v1/rpc/${fn}`,{method:'POST',headers:{...HDR,'Content-Type':'application/json'},body:JSON.stringify({p_token:user.session_token||null, ...(args||{})})});
   const t=await r.text(); let j=null; try{ j=t?JSON.parse(t):null; }catch(e){} if(!r.ok) throw new Error((j&&(j.message||j.error))||('HTTP '+r.status)); return j; }
-function clErr(m, dflt){ m=String(m||''); const hit=m.match(/(?:PERMIT|CAPACITY|DUPLICATE)_[A-Z_]+:\s*(.+)$/); if(hit) return '⛔ '+hit[1].trim(); if(m==='session'){ try{ delete user.session_token; localStorage.setItem('hawa_user', JSON.stringify(user)); }catch(e){} return '⛔ الجلسة انتهت — سجّل الدخول تانى'; } if(/[\u0600-\u06FF]/.test(m)) return '⛔ '+m.replace(/^[A-Z_]+:\s*/,'').trim(); return dflt||('⛔ '+m); }
+function clErr(m, dflt){ m=String(m||''); const hit=m.match(/(?:PERMIT|CAPACITY|DUPLICATE|ALLOW)_[A-Z_]+:\s*(.+)$/); if(hit) return '⛔ '+hit[1].trim(); if(m==='session'){ try{ delete user.session_token; localStorage.setItem('hawa_user', JSON.stringify(user)); }catch(e){} return '⛔ الجلسة انتهت — سجّل الدخول تانى'; } if(/[\u0600-\u06FF]/.test(m)) return '⛔ '+m.replace(/^[A-Z_]+:\s*/,'').trim(); return dflt||('⛔ '+m); }
 function clHasTok(){ return !!(user && user.session_token); }
 
 // 🔐 خطة الأمان: الجلسة القديمة (من غير توكن) بتطلب دخول مرة واحدة — بعدها الحساب بيشتغل بالتوكن بس
@@ -4646,7 +4646,9 @@ async function buildCal() {
 
   // ⚡ Parallel fetch: schedule_rules + bookings for the next 7 days + booking_limits (tier-aware)
   let rules = [];
+  let allowBlocked = {};   // ✅ «مسموح الحجز»: أيام مخصصة لقطاع/محافظة تانية — بتظهر مقفولة للتاجر ده
   const bookingsByDate = {};
+  try { if (clHasTok()) allowBlocked = (await clRpc('cl_allow_days', { p_warehouse: bk.warehouse, p_vtype: bk.vehicle })) || {}; } catch(e) { allowBlocked = {}; }
   try {
     const [rulesRes, bookingsRes, limitsFiltered] = await Promise.all([
       fetch(`${SB}/rest/v1/schedule_rules?is_active=eq.true&select=*`, { headers: HDR }),
@@ -4668,6 +4670,7 @@ async function buildCal() {
   } catch(e) {}
 
   function isDayClosed(dt, ds) {
+    if (allowBlocked[ds]) return true;
     const dow = dt.getDay();
     for (const rule of rules) {
       // ✨ قواعد ساعات معيّنة مش بتقفل اليوم — بس بتحجب slots
@@ -4773,7 +4776,8 @@ async function buildCal() {
       }
 
       let label = String(d);
-      if (isCutoff)    label += '<div style="font-size:9px;margin-top:1px">انتهى الدور</div>';
+      if (!isPast && !isFuture && allowBlocked[ds]) label += '<div style="font-size:9px;margin-top:1px">مخصص</div>';
+      else if (isCutoff)    label += '<div style="font-size:9px;margin-top:1px">انتهى الدور</div>';
       else if (isFull) label += '<div style="font-size:9px;margin-top:1px">مكتمل</div>';
 
       const click = !isDisabled ? `onclick="pickDay('${ds}',this)"` : '';
@@ -4791,7 +4795,10 @@ async function buildCal() {
     allHtml += buildMonthSection(maxD.getFullYear(), maxD.getMonth());
   }
 
+  const _allowMsgs = [...new Set(Object.values(allowBlocked))];
+  if (_allowMsgs.length) allHtml += `<div style="margin-top:12px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.35);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.8;color:var(--text)">🔒 ${_allowMsgs.map(m => String(m).replace(/[<>&]/g, '')).join('<br>🔒 ')}</div>`;
   document.getElementById('calContainer').innerHTML = allHtml;
+  if (bk.dateStr && allowBlocked[bk.dateStr]) bk.dateStr = '';
   if (bk.dateStr) document.getElementById('b3').disabled = false;
 }
 
@@ -5148,7 +5155,7 @@ async function permitErrText(res, dflt) {
   try {
     const j = await res.json();
     const m = String((j && (j.message || j.details || j.hint)) || '');
-    const hit = m.match(/(?:PERMIT|CAPACITY|DUPLICATE)_[A-Z_]+:\s*(.+)$/);
+    const hit = m.match(/(?:PERMIT|CAPACITY|DUPLICATE|ALLOW)_[A-Z_]+:\s*(.+)$/);
     if (hit) return '⛔ ' + hit[1].trim();
     // أى رسالة عربية من السيرفر (تريجرات الحجز) تتعرض زى ما هى بدل الرسالة العامة
     if (/[\u0600-\u06FF]/.test(m)) return '⛔ ' + m.replace(/^[A-Z_]+:\s*/, '').trim();
