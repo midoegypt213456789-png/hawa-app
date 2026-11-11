@@ -20746,7 +20746,7 @@ function plRenderLettersTable(){
         <td>${dIn}</td><td>${rIn}</td><td>${bIn}${plBulletinLink(l.bulletin_no)}</td>
         <td>${plStChip(l.status)}${l.status==='فى التنمية'&&l.delivered_at?`<div class="pl-sub">من ${Math.round((new Date(today)-new Date(l.delivered_at))/864e5)} يوم</div>`:''}</td>
         <td style="white-space:nowrap">
-          <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button>
+          <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button> <button class="act-btn edit" onclick="plPrintAsk(${l.id})">🖨️ طباعة</button>
           ${live?`<button class="act-btn edit" onclick="plDevOpen({letter_ids:[${l.id}]})" title="طلب التنمية + المواصفات + الدلالات + صورة السجل">🏛️ ملف التنمية</button>${l.batch_id&&PL.letters.filter(x=>x.batch_id===l.batch_id&&!x.is_cancelled).length>1?`<button class="act-btn edit" onclick="plDevOpen({letter_ids:PL.letters.filter(x=>x.batch_id==='${l.batch_id}'&&!x.is_cancelled).map(x=>x.id)})" title="ملف واحد لكل كتب الدفعة">🏛️ للدفعة كلها</button>`:''}`:''}
           ${live&&ed?`<button class="act-btn edit" onclick="plEditNotes(${l.id})">📝</button>`:''}
           ${l.status==='جديد'&&plCanDel()?`<button class="act-btn delete" onclick="plCancel(${l.id})">🚫 إلغاء</button>`:''}
@@ -20928,7 +20928,7 @@ async function plWizRun(dry){
     const keep=r; PL.wiz=null; await plLoad(true);
     const el=document.getElementById('pl-wiz');
     if(el){ el.innerHTML=`<div class="pl-card" style="border-color:rgba(76,175,125,0.6)"><div class="pl-h">✅ الكتب اتعملت <div style="flex:1"></div><button class="pl-btn ghost sm" onclick="plWizClose()">✖ قفل</button></div>
-      ${keep.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.recipient_name||'')} — ${plN(l.qty)} رقم <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button> <button class="act-btn edit" onclick="plDevOpen({letter_ids:[${l.id}]})">🏛️ ملف التنمية</button>
+      ${keep.letters.map(l=>`<div class="pl-it"><b>مستند ${l.doc_no}</b> — ${plEsc(l.recipient_name||'')} — ${plN(l.qty)} رقم <button class="act-btn edit" onclick="plExportLetter(${l.id})">⬇️ الأرقام</button> <button class="act-btn edit" onclick="plPrintAsk(${l.id})">🖨️ طباعة</button> <button class="act-btn edit" onclick="plDevOpen({letter_ids:[${l.id}]})">🏛️ ملف التنمية</button>
         ${l.items.map(i=>`<div style="margin:4px 0 8px"><b>${plEsc(i.brand_name)}</b> ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>${plNums(i)}</div>`).join('')}</div>`).join('')}</div>`; }
     PL.wiz=null;
   }catch(e){
@@ -27050,6 +27050,52 @@ function whSelectsFill(){ const N=window.WH_NAMES||[];
     N.forEach(n=>{ if(have.includes(n)) return; const o=document.createElement('option'); o.value=n; o.textContent=lab(n); s.insertBefore(o,ref||null); }); });
   const all=document.querySelector('#ec-warehouse option[value="الكل"]'); if(all) all.textContent='🌐 الكل (كل المخازن)'; }
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>whNamesLoad()); else whNamesLoad();
+
+// ═══ 🖨️ طباعة أرقام الكتاب — ورقة عدّ: عدد ثابت فى الصفحة (الافتراضى 152 = 4 أعمدة × 38) + هيدر اختيارى ═══
+function plPrintPrefs(){ let p={}; try{ p=JSON.parse(localStorage.getItem('pl_print_prefs')||'{}'); }catch(e){} return {per:Number(p.per)>0?Number(p.per):152, cols:Number(p.cols)>0?Number(p.cols):4, header:p.header!==false, what:p.what||'ch'}; }
+function plPrintAsk(id){ const l=PL.letters.find(x=>x.id===id); if(!l) return; const p=plPrintPrefs();
+  let o=document.getElementById('pl-print-ov'); if(o) o.remove(); o=document.createElement('div'); o.id='pl-print-ov';
+  o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99990;display:flex;align-items:center;justify-content:center;padding:16px';
+  o.innerHTML=`<div style="background:var(--dark2);border:1px solid var(--gold);border-radius:14px;padding:20px;width:min(460px,100%);direction:rtl">
+    <div style="font-size:16px;font-weight:800;color:var(--gold);margin-bottom:4px">🖨️ طباعة أرقام مستند ${l.doc_no}</div>
+    <div class="pl-sub" style="margin-bottom:14px">${l.items.map(i=>plEsc(i.brand_name+' '+i.model_label)+' × '+plN(i.qty)).join(' + ')}</div>
+    <div class="pl-row" style="margin-bottom:12px"><label class="pl-sub" style="min-width:110px">أطبع إيه؟</label>
+      <select class="pl-inp" id="plp-what"><option value="ch">🔩 الشاسيهات</option><option value="en">⚙️ المواتير</option><option value="both">الاتنين (كل واحد ملف)</option></select></div>
+    <div class="pl-row" style="margin-bottom:12px"><label class="pl-sub" style="min-width:110px">العدد فى الصفحة</label>
+      <input class="pl-inp" id="plp-per" type="number" min="4" max="400" style="width:100px" value="${p.per}">
+      <label class="pl-sub">على</label><input class="pl-inp" id="plp-cols" type="number" min="1" max="8" style="width:70px" value="${p.cols}"><label class="pl-sub">أعمدة</label></div>
+    <label class="pl-row" style="margin-bottom:6px;cursor:pointer;gap:8px"><input type="checkbox" id="plp-hd" ${p.header?'checked':''} style="width:18px;height:18px"> <span>بالهيدر (الاسم + العدد + الموديل فوق كل صفحة)</span></label>
+    <div class="pl-sub" id="plp-info" style="margin:8px 0 14px"></div>
+    <div class="pl-row" style="justify-content:flex-end;gap:8px"><button class="pl-btn ghost" onclick="document.getElementById('pl-print-ov').remove()">إلغاء</button><button class="pl-btn" onclick="plPrintGo(${l.id})">🖨️ اطبع</button></div></div>`;
+  o.addEventListener('mousedown',e=>{ if(e.target===o) o.remove(); }); document.body.appendChild(o);
+  document.getElementById('plp-what').value=p.what;
+  const info=()=>{ const per=Math.max(4,Number(document.getElementById('plp-per').value)||152), w=document.getElementById('plp-what').value; const pages=l.items.reduce((a,i)=>a+Math.ceil(Number(i.qty)/per),0)*(w==='both'?2:1);
+    document.getElementById('plp-info').textContent=`كل صفحة فيها ${per} رقم بالظبط (ما عدا آخر صفحة) — إجمالى ${plN(pages)} صفحة`+(pages>400?' ⚠️ عدد كبير: الطباعة هتاخد وقت':''); };
+  ['plp-per','plp-what','plp-cols'].forEach(i=>document.getElementById(i).addEventListener('input',info)); info(); }
+function plPrintGo(id){ const l=PL.letters.find(x=>x.id===id); if(!l) return;
+  const per=Math.min(400,Math.max(4,Math.round(Number(document.getElementById('plp-per').value)||152))), cols=Math.min(8,Math.max(1,Math.round(Number(document.getElementById('plp-cols').value)||4)));
+  const header=document.getElementById('plp-hd').checked, what=document.getElementById('plp-what').value;
+  try{ localStorage.setItem('pl_print_prefs',JSON.stringify({per,cols,header,what})); }catch(e){}
+  document.getElementById('pl-print-ov').remove();
+  const rows=Math.ceil(per/cols), TOP=8, BOT=9, HD=header?13:0, rowH=(297-TOP-BOT-HD)/rows, fs=Math.min(9.5, rowH*2.835*0.62, (192*0.78/cols)*2.835/(17*0.76));
+  const parts=what==='both'?['ch','en']:[what]; const out=[];
+  l.items.forEach(i=>{ const fp=i.chassis_from.slice(0,10), ep=i.engine_from.slice(0,2), s0=Number(i.serial_from), n=Number(i.serial_to)-s0+1;
+    parts.forEach(pt=>{ const pre=pt==='ch'?fp:ep, pages=Math.ceil(n/per), ttl=(pt==='ch'?'شاسيه':'ماتور')+' '+i.brand_name+' '+i.model_label;
+      for(let pg=0; pg<pages; pg++){ const base=pg*per, cnt=Math.min(per,n-base); let tb='';
+        for(let r=0;r<rows;r++){ tb+='<tr>'; for(let c=0;c<cols;c++){ const k=c*rows+r; tb+= k<cnt ? `<td class="s">${base+k+1}</td><td class="n">${pre}${String(s0+base+k).padStart(7,'0')}</td>` : '<td class="s"></td><td class="n"></td>'; } tb+='</tr>'; }
+        out.push(`<div class="pg">${header?`<div class="hd"><b>${plEsc(ttl)}</b><br>عدد ${n} موديل ${l.model_year} — مستند ${l.doc_no}</div>`:''}<table>${tb}</table><div class="ft">صفحة ${pg+1} من ${pages}</div></div>`); } }); });
+  const w=window.open('','_blank'); if(!w){ plToast('المتصفح قافل النوافذ المنبثقة — اسمح بيها للموقع',false); return; }
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>أرقام مستند ${l.doc_no}</title><style>
+@page{size:A4 portrait;margin:0} *{box-sizing:border-box} html,body{margin:0;padding:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}
+.pg{width:210mm;height:296.5mm;padding:${TOP}mm 9mm 0 9mm;page-break-after:always;break-after:page;overflow:hidden;position:relative}
+.pg:last-child{page-break-after:auto;break-after:auto}
+.hd{height:${HD}mm;text-align:center;font-size:11pt;line-height:1.35;overflow:hidden}
+table{width:100%;border-collapse:collapse;table-layout:fixed;direction:rtl}
+td{border:1px solid #000;height:${rowH.toFixed(3)}mm;padding:0 1px;text-align:center;font-size:${fs.toFixed(2)}pt;white-space:nowrap;overflow:hidden;line-height:1}
+td.s{width:${(22/cols*4/4).toFixed(2)}%;font-size:${(fs*0.92).toFixed(2)}pt} td.n{direction:ltr;letter-spacing:.2px}
+.ft{position:absolute;bottom:2.5mm;left:0;right:0;text-align:center;font-size:8pt}
+@media screen{body{background:#777}.pg{margin:8px auto;background:#fff}}
+</style></head><body>${out.join('')}<script>window.onload=function(){setTimeout(function(){window.print();},300);}<\/script></body></html>`); w.document.close(); }
 </script>
 
 
