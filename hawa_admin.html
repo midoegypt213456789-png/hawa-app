@@ -20729,7 +20729,8 @@ function plRenderLettersTable(){
     <th>التسليم للتنمية</th><th>الاستلام من التنمية</th><th>رقم المنشور</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${rows.map(l=>{
       const live=!l.is_cancelled;
-      const items=l.items.map(i=>`<div class="pl-it"><b>${plEsc(i.brand_name)}</b> — ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>
+      const shown=l.items.length?l.items:(l.cancelled_items||[]);
+      const items=shown.map(i=>`<div class="pl-it"><b>${plEsc(i.brand_name)}</b> — ${plEsc(i.model_label)} <span class="pl-chip code">درج <bdi dir="ltr">${i.code}${i.code_to&&i.code_to!==i.code?'→'+i.code_to:''}</bdi></span> × <b>${plN(i.qty)}</b>
         ${plNums(i)}</div>`).join('');
       const dIn = live&&ed ? `<input type="date" class="pl-inp" style="padding:4px 6px;font-size:12px" value="${l.delivered_at||''}" max="${today}" onchange="plUpd(${l.id},{delivered_at:this.value})">
           ${!l.delivered_at?`<div><button class="pl-btn ghost sm" style="margin-top:4px" onclick="plUpd(${l.id},{delivered_at:'${today}'})">📤 اتسلم النهارده</button></div>`:''}` : plD(l.delivered_at);
@@ -20740,8 +20741,8 @@ function plRenderLettersTable(){
         <td><b style="font-size:15px">${l.doc_no}</b><div class="pl-sub">موديل ${l.model_year} (${plEsc(l.year_letter)})</div></td>
         <td style="white-space:nowrap">${plD(l.letter_date)}</td>
         <td style="min-width:330px"><div class="pl-sub" style="margin-bottom:2px">${plEsc(l.vtypes)}</div>${items}
-          ${l.notes?`<div class="pl-sub">📝 ${plEsc(l.notes)}</div>`:''}${l.is_cancelled?`<div style="color:var(--error);font-size:12px;text-decoration:none">🚫 ${plEsc(l.cancel_reason||'')}</div>`:''}</td>
-        <td><b>${plN(l.qty)}</b></td>
+          ${l.notes?`<div class="pl-sub">📝 ${plEsc(l.notes)}</div>`:''}${l.is_cancelled?`<div style="color:var(--error);font-size:12px;text-decoration:none">🚫 ${plEsc(l.cancel_reason||'')}${l.cancelled_items?' — ↩️ أرقامه رجعت وبتتصرف فى الكتب الجاية':''}</div>`:''}</td>
+        <td><b>${plN(l.is_cancelled&&l.cancelled_items?l.cancelled_items.reduce((a,i)=>a+Number(i.qty),0):l.qty)}</b></td>
         <td>${plEsc(l.recipient_name||'—')}</td>
         <td>${dIn}</td><td>${rIn}</td><td>${bIn}${plBulletinLink(l.bulletin_no)}</td>
         <td>${plStChip(l.status)}${l.status==='فى التنمية'&&l.delivered_at?`<div class="pl-sub">من ${Math.round((new Date(today)-new Date(l.delivered_at))/864e5)} يوم</div>`:''}</td>
@@ -20767,8 +20768,8 @@ async function plEditNotes(id){
 }
 async function plCancel(id){
   const l=PL.letters.find(x=>x.id===id); if(!l) return;
-  const why=prompt(`إلغاء كتاب ${l.doc_no}؟\n⚠️ أرقامه مش هترجع تانى (محروقة) عشان ميحصلش تكرار.\nاكتب سبب الإلغاء:`); if(!why) return;
-  try{ await plCall('pl_letter_cancel',{p_id:id,p_reason:why}); plToast('🚫 اتلغى'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
+  const why=prompt(`إلغاء كتاب ${l.doc_no}؟\n↩️ أرقامه (${plN(l.qty)}) هترجع وتتصرف فى أول كتاب جاى لنفس الموديل.\nاكتب سبب الإلغاء:`); if(!why) return;
+  try{ await plCall('pl_letter_cancel',{p_id:id,p_reason:why}); plToast('🚫 اتلغى — والأرقام رجعت للكتب الجاية'); await plLoad(true); }catch(e){ plToast(plErr(e),false); }
 }
 
 // 🔍 البحث
