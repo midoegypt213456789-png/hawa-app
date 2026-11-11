@@ -27242,10 +27242,11 @@ function baMatch(x,S){ const O=BA.opts;
   return S.D.has(x.d) || (S.C.has(x.c)&&!O.some(k=>k.g===x.g&&k.c===x.c&&S.D.has(k.d)))
     || (S.G.has(x.g)&&!O.some(k=>k.g===x.g&&(S.C.has(k.c)||S.D.has(k.d))))
     || (S.R.has(x.r)&&!O.some(k=>k.r===x.r&&(S.G.has(k.g)||S.C.has(k.c)||S.D.has(k.d)))); }
-// القايمة فى كل مستوى: المحافظات كلها دايماً — المدن/الأحياء بتاعة اللى مختاره فوق (ولو مفيش اختيار فوق: الكل)
-function baScope(i){ const S=baSets(); if(i<=1) return BA.opts;
-  const up=i===2?(x=>S.G.has(x.g)||S.R.has(x.r)):(x=>S.C.has(x.c)||S.G.has(x.g)||S.R.has(x.r));
-  const any=i===2?(S.G.size||S.R.size):(S.C.size||S.G.size||S.R.size); return any?BA.opts.filter(up):BA.opts; }
+// القايمة فى كل مستوى بتتفلتر على أقرب اختيار فوقها: قطاع ← محافظاته بس، محافظة ← مدنها بس، مدينة ← أحياءها بس (ولو مفيش اختيار فوق: الكل)
+function baScope(i){ const S=baSets(), O=BA.opts; if(i===0) return O;
+  if(i===1) return S.R.size?O.filter(x=>S.R.has(x.r)):O;
+  if(i===2) return S.G.size?O.filter(x=>S.G.has(x.g)):S.R.size?O.filter(x=>S.R.has(x.r)):O;
+  return S.C.size?O.filter(x=>S.C.has(x.c)&&(!S.G.size||S.G.has(x.g))):S.G.size?O.filter(x=>S.G.has(x.g)):S.R.size?O.filter(x=>S.R.has(x.r)):O; }
 function baDraw(){ const E=BA.ed, o=document.getElementById('ba-ov'); if(!E||!o) return;
   const chip=(k,v)=>`<label style="display:inline-flex;gap:6px;align-items:center;background:var(--dark3);border:1px solid ${E[k].includes(v)?'var(--gold)':'var(--border)'};border-radius:9px;padding:6px 11px;cursor:pointer;font-size:13px"><input type="checkbox" style="width:auto;flex:none;margin:0" ${E[k].includes(v)?'checked':''} onchange="baTog('${k}',this.dataset.v,this.checked)" data-v="${baE(v)}"> ${baE(v)}</label>`;
   o.firstElementChild.innerHTML=`
@@ -27257,7 +27258,7 @@ function baDraw(){ const E=BA.ed, o=document.getElementById('ba-ov'); if(!E||!o)
       <label class="ba-f" style="flex:1;min-width:200px">اسم القاعدة (اختيارى)<input class="ba-inp" value="${baE(E.title)}" placeholder="مثلاً: أسبوع الوجه القبلى" oninput="BA.ed.title=this.value"></label></div>
     <div class="ba-h">📦 المخازن <span>— فاضى = كل المخازن</span></div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">${(BA.whs||[]).map(w=>chip('warehouses',w)).join('')}</div>
     <div class="ba-h">🚛 الأقسام <span>— فاضى = كل الأقسام</span></div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">${BA.vts.map(w=>chip('vehicle_types',w)).join('')}</div>
-    <div class="ba-h">✅ مين اللى مسموحله يحجز؟ <span>— تقدر تختار أكتر من قطاع وأكتر من محافظة مع بعض (حتى من قطاعات مختلفة). لو اخترت قطاع ومعاه محافظات منه = المحافظات دى بس من القطاع، ونفس الكلام فى المدينة والحى.</span></div>
+    <div class="ba-h">✅ مين اللى مسموحله يحجز؟ <span>— اختار قطاع (أو أكتر) تظهرلك محافظاته بس، اختار محافظة تظهرلك مدنها بس، واختار مدينة تظهرلك أحياءها. لو اخترت قطاع ومعاه محافظات منه = المحافظات دى بس من القطاع (والقطاع التانى اللى مخترتش منه حاجة يفضل كامل).</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px" id="ba-lv"></div>
     <div id="ba-cnt" style="margin:12px 0;padding:10px 14px;border-radius:10px;background:var(--dark3);border:1px solid var(--border);font-size:14px;line-height:1.9"></div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:12px">
