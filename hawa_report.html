@@ -339,7 +339,7 @@ async function loadWarehouseVehicleTypes(){
   try {
     // 3 fetches منفصلة (أكثر reliability من الـ embed)
     const [whResp, vtResp, mapResp] = await Promise.all([
-      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end&order=sort_order.asc,id.asc`, { headers: HDR }),
       fetch(`${SB}/rest/v1/vehicle_types?select=id,name`, { headers: HDR }),
       fetch(`${SB}/rest/v1/warehouse_vehicle_types?is_active=eq.true&select=warehouse_id,vehicle_type_id,display_order&order=display_order.asc`, { headers: HDR })
     ]);

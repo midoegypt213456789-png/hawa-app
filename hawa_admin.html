@@ -7083,7 +7083,7 @@ async function loadWarehouseVehicleTypes(){
   if(vehicleTypesByWarehouse) return; // cached
   try {
     const [whResp, vtResp, mapResp] = await Promise.all([
-      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end,pending_effective_from`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end,pending_effective_from&order=sort_order.asc,id.asc`, { headers: HDR }),
       fetch(`${SB}/rest/v1/vehicle_types?select=id,name`, { headers: HDR }),
       fetch(`${SB}/rest/v1/warehouse_vehicle_types?is_active=eq.true&select=warehouse_id,vehicle_type_id,display_order&order=display_order.asc`, { headers: HDR })
     ]);
@@ -12068,7 +12068,7 @@ function formatOrphansMessage(warehouseName, orphans, fromDate, action){
 async function loadWarehouseHours(){
   const container = document.getElementById('warehouse-hours-container');
   try{
-    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=id.asc`,{headers:HDR});
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=sort_order.asc,id.asc`,{headers:HDR});
     let data = await r.json();
 
     // 🚀 Auto-promote: أى pending وصل تاريخ تطبيقه → ينقل للقيم الحالية ويتمسح
@@ -12094,7 +12094,7 @@ async function loadWarehouseHours(){
         })
       ));
       // Re-fetch بعد الترقية
-      const r2 = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=id.asc`,{headers:HDR});
+      const r2 = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=sort_order.asc,id.asc`,{headers:HDR});
       data = await r2.json();
     }
 
@@ -12111,6 +12111,18 @@ async function loadWarehouseHours(){
   }
 }
 
+// ↕️ ترتيب ظهور المخازن (للتاجر وفى كل القوايم) — بيتحفظ فوراً
+async function whMove(id, dir){
+  const L=(_warehouseHoursCache||[]).slice(); const i=L.findIndex(w=>w.id===id), j=i+dir; if(i<0||j<0||j>=L.length) return;
+  [L[i],L[j]]=[L[j],L[i]];
+  try{
+    const rs=await Promise.all(L.map((w,k)=>fetch(`${SB}/rest/v1/warehouses?id=eq.${w.id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify({sort_order:k+1})})));
+    if(rs.some(r=>!r.ok)) throw new Error('save');
+    if(typeof logActivity==='function') try{ logActivity('wh_reorder','↕️ غيّر ترتيب ظهور المخازن',{order:L.map(w=>w.name)}); }catch(e){}
+    await loadWarehouseHours(); if(typeof whNamesLoad==='function') whNamesLoad(true);
+    if(typeof showWHToast==='function') showWHToast('✅ اتحفظ الترتيب: '+L.map(w=>w.name).join(' ← '));
+  }catch(e){ alert('❌ الترتيب متحفظش — جرّب تانى'); }
+}
 function renderWarehouseHoursCard(w){
   const icon = w.name === 'قليوب' ? '🏭' : w.name === 'السادات' ? '🏗️' : '📦';
   const today = new Date().toISOString().slice(0,10);
@@ -12138,6 +12150,11 @@ function renderWarehouseHoursCard(w){
       <div class="wh-card__head">
         <div class="wh-card__icon">${icon}</div>
         <div class="wh-card__name">${w.name}</div>
+        <div style="margin-inline-start:auto;display:flex;gap:6px;align-items:center" title="ترتيب ظهور المخزن للتاجر فى صفحة الحجز وفى كل القوايم">
+          <span style="font-size:12px;color:var(--text-dim)">ترتيب الظهور</span>
+          <button class="act-btn edit" style="padding:4px 10px" onclick="whMove(${w.id},-1)" title="طلّعه فوق">▲</button>
+          <button class="act-btn edit" style="padding:4px 10px" onclick="whMove(${w.id},1)" title="نزّله تحت">▼</button>
+        </div>
       </div>
       ${banner}
       <div class="wh-card__body">
@@ -15212,7 +15229,7 @@ async function loadVehicleTypes(){
   document.getElementById('vt-tab-body').innerHTML = '';
   try{
     const [r1, r2, r3, r4] = await Promise.all([
-      fetch(`${SB}/rest/v1/warehouses?select=id,name&order=id.asc`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name&order=sort_order.asc,id.asc`, {headers:HDR}),
       fetch(`${SB}/rest/v1/vehicle_types?select=id,name,icon,is_active&order=id.asc`, {headers:HDR}),
       fetch(`${SB}/rest/v1/warehouse_vehicle_types?select=*&order=display_order.asc`, {headers:HDR}),
       fetch(`${SB}/rest/v1/bookings?select=warehouse,vehicle_type&status=neq.${encodeURIComponent('ملغي')}`, {headers:{...HDR,'Range':'0-9999'}})
@@ -15908,7 +15925,7 @@ async function loadRuleScopeOptions(selectedWarehouses, selectedVTypes){
   // المخازن
   let warehouses = [];
   try {
-    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name&order=id.asc`, {headers:HDR});
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name&order=sort_order.asc,id.asc`, {headers:HDR});
     if (r.ok) warehouses = await r.json();
   } catch(e){}
 
@@ -16432,7 +16449,7 @@ async function loadWarehouses(){
   const c = document.getElementById('wh-list');
   c.innerHTML = '<div class="loading-txt">⏳ جاري التحميل...</div>';
   try {
-    const r = await fetch(`${SB}/rest/v1/warehouses?select=*&order=id.asc`, {headers: HDR});
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=*&order=sort_order.asc,id.asc`, {headers: HDR});
     if (!r.ok) throw new Error('فشل الاتصال بقاعدة البيانات');
     allWarehousesData = await r.json();
     try{ const rr = await fetch(`${SB}/rest/v1/rpc/wh_readiness`, {method:'POST', headers: HDR, body:'{}'}); const d = await rr.json(); window._whReady = {}; (Array.isArray(d)?d:[]).forEach(x=>window._whReady[x.id]=x); }catch(e){ window._whReady = {}; }
@@ -27002,7 +27019,7 @@ async function plDevSpecSave(mid, btn){ const tr=btn.closest('tr'), specs={}; tr
 // ═══ 🏬 المخازن ديناميك — أى مخزن جديد يتضاف من «المخازن» يظهر فى كل القوايم (فلاتر / صلاحية الموظف / أمين المخزن / التقارير) ═══
 function whIcon(n){ return n==='قليوب'?'🏭':n==='السادات'?'🏗️':'📦'; }
 async function whNamesLoad(force){ if(window.WH_NAMES&&!force) return window.WH_NAMES;
-  try{ const r=await fetch(`${SB}/rest/v1/warehouses?select=name&order=id.asc`,{headers:HDR}); const d=await r.json(); if(Array.isArray(d)&&d.length) window.WH_NAMES=d.map(x=>x.name); }catch(e){}
+  try{ const r=await fetch(`${SB}/rest/v1/warehouses?select=name&order=sort_order.asc,id.asc`,{headers:HDR}); const d=await r.json(); if(Array.isArray(d)&&d.length) window.WH_NAMES=d.map(x=>x.name); }catch(e){}
   if(!window.WH_NAMES) return ['قليوب','السادات']; whSelectsFill(); return window.WH_NAMES; }
 function whSelectsFill(){ const N=window.WH_NAMES||[];
   [['bk-wh',n=>whIcon(n)+' '+n,null],['sh-wh',n=>n,null],['em-role',n=>'موظف '+n,'عام'],['ec-warehouse',n=>whIcon(n)+' '+n,'الكل']].forEach(([id,lab,before])=>{

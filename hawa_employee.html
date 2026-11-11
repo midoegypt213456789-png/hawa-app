@@ -387,7 +387,7 @@ function generateSlotsRange(ws, we){
 async function loadFilterMeta(){
   if(warehouseHoursByName) return;
   try{
-    const whR = await fetch(`${SB}/rest/v1/warehouses?select=name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end`,{headers:HDR});
+    const whR = await fetch(`${SB}/rest/v1/warehouses?select=name,working_hour_start,working_hour_end,pending_working_hour_start,pending_working_hour_end&order=sort_order.asc,id.asc`,{headers:HDR});
     const whs = await whR.json();
     warehouseHoursByName = {};
     (Array.isArray(whs)?whs:[]).forEach(w=>{
@@ -537,7 +537,7 @@ async function loadWarehouseVehicleTypes(){
   try {
     // 3 fetches منفصلة (أكثر reliability من الـ embed)
     const [whResp, vtResp, mapResp] = await Promise.all([
-      fetch(`${SB}/rest/v1/warehouses?select=id,name`, { headers: HDR }),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name&order=sort_order.asc,id.asc`, { headers: HDR }),
       fetch(`${SB}/rest/v1/vehicle_types?select=id,name`, { headers: HDR }),
       fetch(`${SB}/rest/v1/warehouse_vehicle_types?is_active=eq.true&select=warehouse_id,vehicle_type_id,display_order&order=display_order.asc`, { headers: HDR })
     ]);
@@ -717,7 +717,7 @@ function enterMain(){
       tabsEl.innerHTML='<button class="wh-btn'+(warehouse==='ALL'?' active':'')+'" id="wh-ALL" onclick="selectWarehouse(\'ALL\')">🌐 الكل</button>'+
         names.map(n=>'<button class="wh-btn'+(warehouse===n?' active':'')+'" id="wh-'+n+'" data-wh="'+n.replace(/"/g,'&quot;')+'" onclick="selectWarehouse(this.dataset.wh)">'+whIcon(n)+' '+n+'</button>').join(''); };
     warehouse='ALL'; drawTabs(['قليوب','السادات']);
-    fetch(`${SB}/rest/v1/warehouses?select=name&order=id.asc`,{headers:HDR}).then(r=>r.json()).then(d=>{ if(Array.isArray(d)&&d.length) drawTabs(d.map(x=>x.name)); }).catch(()=>{});
+    fetch(`${SB}/rest/v1/warehouses?select=name&order=sort_order.asc,id.asc`,{headers:HDR}).then(r=>r.json()).then(d=>{ if(Array.isArray(d)&&d.length) drawTabs(d.map(x=>x.name)); }).catch(()=>{});
   }else{
     // موظف مخزن معين: tab واحد لمخزنه فقط (مايقدرش يشوف الباقى)
     tabsEl.style.display='';

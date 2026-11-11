@@ -2977,7 +2977,7 @@ async function ensureSettingsLoaded(force=false){
     // Parallel: app_settings + warehouses
     const [r1, r2] = await Promise.all([
       fetch(`${SB}/rest/v1/app_settings?select=key,value`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from`, { headers: HDR })
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=sort_order.asc,id.asc`, { headers: HDR })
     ]);
     const settingsData = await r1.json();
     cachedAppSettings = {};
@@ -5861,7 +5861,7 @@ let chLastUnreadStaff = null; // لتحديث علامات ✓✓ لما الف�
 async function chWarehouses(){
   if(chWhList) return chWhList;
   try{
-    const r = await fetch(`${SB}/rest/v1/warehouses?select=name&order=id`, { headers: HDR });
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=name&order=sort_order.asc,id.asc`, { headers: HDR });
     const d = await r.json();
     chWhList = (Array.isArray(d)?d:[]).map(w=>w.name).filter(Boolean);
   }catch(e){ chWhList = []; }
