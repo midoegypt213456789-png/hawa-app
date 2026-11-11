@@ -2750,6 +2750,12 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
   .section table th,.section table td{font-size:12.5px}
 }
 /* تابلت (901–1180px): القائمة الجانبية مضغوطة (أيقونات) تلقائياً — بتتفتح بزرارها */
+
+.sb-search{display:flex;align-items:center;gap:8px;width:calc(100% - 16px);margin:6px 8px 10px;padding:9px 12px;background:var(--dark3);border:1px solid var(--border);border-radius:10px;color:var(--text-dim);font-family:inherit;font-size:13px;cursor:pointer;text-align:right}
+.sb-search:hover{border-color:var(--gold);color:var(--text)}
+.sidebar.collapsed .sb-search{justify-content:center;padding:9px 0}.sidebar.collapsed .sb-search .sb-search-t,.sidebar.collapsed .sb-search kbd{display:none}
+.sb-search .sb-search-t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-search kbd{font-family:inherit;font-size:10px;border:1px solid var(--border);border-radius:5px;padding:1px 5px;color:var(--text-dim);direction:ltr}
 </style>
 </head>
 <body>
@@ -19198,7 +19204,7 @@ function renderSidebar(){
   const container = document.getElementById('sb-nav-container');
   if (!container) return;
 
-  let html = '';
+  let html = `<button type="button" class="sb-search" onclick="erCmdOpen()" title="ابحث عن أى شاشة بالاسم (Ctrl + K)"><span>🔎</span><span class="sb-search-t">بحث عن أى شاشة...</span><kbd>Ctrl K</kbd></button>`;
 
   // Favorites (always rendered, even if empty — drop zone) — للموظف: تتخفى لو فاضية
   const visibleFavs = EMP_MODE ? sidebarLayout.favorites.filter(id => can(id,'view')) : sidebarLayout.favorites;
@@ -26718,10 +26724,14 @@ function erWinRestoreParked(){ if(ER.__winRest) return; ER.__winRest=1; let st=n
 (function(){ const f=()=>setTimeout(()=>{ try{ if(typeof admin!=='undefined'&&admin&&document.getElementById('app')&&document.getElementById('app').classList.contains('show')) erWinRestoreParked(); }catch(e){} },1500); if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',f); else f(); })();
 
 // ═══ 🔎 بحث الأوامر (Ctrl+K) — اكتب اسم أى شاشة أو مستند وافتحه ═══
-function erCmdItems(){ const L=[]; (typeof ERM!=='undefined'?ERM:[]).forEach(m=>m.items.forEach((it,k)=>{ if(typeof ermOk==="function" && !ermOk(it)) return; L.push({t:`${it.i} ${it.l}`, m:`${m.icon} ${m.title}`, run:()=>erMenuGo(m.id,k), q:(it.l+' '+m.title).toLowerCase()}); }));
+function erCmdItems(){ const L=[];
+  // 📋 شاشات القايمة الجانبية (الحجوزات / العملاء / الإعدادات ...) — بالصلاحيات
+  try{ const seen=new Set(); (sidebarLayout.categories||[]).forEach(cat=>(cat.items||[]).forEach(id=>{ const meta=NAV_META[id]; if(!meta||seen.has(id)||ERP_HUB.includes(id)) return; if(EMP_MODE && !can(id,'view')) return; seen.add(id);
+    L.push({t:`${meta.icon} ${meta.label}`, m:`${cat.icon||'📁'} ${cat.title||''}`, run:()=>goTo(id), q:(meta.label+' '+(cat.title||'')+' '+(meta.kw||'')+' '+id).toLowerCase()}); })); }catch(e){}
+  (typeof ERM!=='undefined'?ERM:[]).forEach(m=>m.items.forEach((it,k)=>{ if(typeof ermOk==="function" && !ermOk(it)) return; L.push({t:`${it.i} ${it.l}`, m:`${m.icon} ${m.title}`, run:()=>erMenuGo(m.id,k), q:(it.l+' '+m.title).toLowerCase()}); }));
   (ER.wins||[]).forEach((w,i)=>L.unshift({t:'🪟 '+w.title.replace(/<[^>]+>/g,''), m:'نافذة مفتوحة', run:()=>erWinOpen(i), q:w.title.replace(/<[^>]+>/g,'').toLowerCase()}));
   L.push({t:'⌨️ اختصارات الكيبورد', m:'مساعدة', run:()=>erKeysHelp(), q:'اختصارات كيبورد مساعدة keys help'}); return L; }
-function erCmdOpen(){ let o=document.getElementById('er-cmdk'); if(!o){ o=document.createElement('div'); o.id='er-cmdk'; o.innerHTML=`<div class="box"><input id="er-cmdk-q" placeholder="🔎 اكتب اسم الشاشة أو المستند... (مثلاً: سند قبض / فاتورة / جرد)" autocomplete="off"><div class="ls" id="er-cmdk-ls"></div><div class="ft">↑↓ للتنقل · Enter للفتح · Esc للقفل</div></div>`;
+function erCmdOpen(){ let o=document.getElementById('er-cmdk'); if(!o){ o=document.createElement('div'); o.id='er-cmdk'; o.innerHTML=`<div class="box"><input id="er-cmdk-q" placeholder="🔎 اكتب اسم أى شاشة أو مستند... (مثلاً: حجوزات / عملاء / سند قبض / جرد)" autocomplete="off"><div class="ls" id="er-cmdk-ls"></div><div class="ft">↑↓ للتنقل · Enter للفتح · Esc للقفل</div></div>`;
     o.addEventListener('mousedown',e=>{ if(e.target===o) erCmdClose(); }); document.body.appendChild(o);
     const q=o.querySelector('#er-cmdk-q'); q.addEventListener('input',()=>{ ER.__cmd.sel=0; erCmdRender(); });
     q.addEventListener('keydown',e=>{ const C=ER.__cmd; if(e.key==='ArrowDown'){ e.preventDefault(); C.sel=Math.min(C.sel+1,C.res.length-1); erCmdRender(); } else if(e.key==='ArrowUp'){ e.preventDefault(); C.sel=Math.max(C.sel-1,0); erCmdRender(); } else if(e.key==='Enter'){ e.preventDefault(); erCmdRun(C.sel); } else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); erCmdClose(); } }); }
