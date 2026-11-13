@@ -4494,7 +4494,7 @@ function permitFileToBase64(file) {
 function permitScanRequest(payload, onPct) {
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${SB}/functions/v1/permit-scan`);
+    xhr.open('POST', `${SB}/functions/v1/permit-scan-next`);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.timeout = 180000;
     xhr.upload.onprogress = e => { if (e.lengthComputable && onPct) onPct(Math.min(100, Math.round(e.loaded / e.total * 100))); };
@@ -4598,6 +4598,16 @@ async function processPermitFile(f, pages) {
     permitBar(0, false);
     const pgs = pages && pages.length ? pages : [await permitFileToBase64(f)];
     const lbl = pgs.length > 1 ? `الإذن (${pgs.length} صفحات)` : 'الإذن';
+    // 🧭 لو الورقة متصورة ملفوفة على جنبها بنعدلها قبل القراءة (لو الخطوة دى فشلت بنكمّل عادى)
+    try {
+      prog.textContent = '🧭 بنتأكد إن الورقة معدولة...';
+      const ctl = new AbortController(); const tmo = setTimeout(() => ctl.abort(), 45000);
+      const orr = await fetch(`${SB}/functions/v1/permit-orient`, { method: 'POST', signal: ctl.signal, headers: { 'Content-Type': 'application/json', apikey: KEY, Authorization: 'Bearer ' + KEY },
+        body: JSON.stringify({ client_id: user.id, username: user.username || '', pages: pgs.map(p => ({ image_base64: p.b64, mime: p.mime })) }) });
+      clearTimeout(tmo);
+      const oj = await orr.json();
+      if (oj && oj.ok && Array.isArray(oj.pages)) oj.pages.forEach((x, i) => { if (x && x.deg && x.image_base64 && pgs[i]) { pgs[i].b64 = x.image_base64; pgs[i].mime = x.mime || 'image/jpeg'; } });
+    } catch (e) {}
     prog.textContent = `⬆️ بنرفع ${lbl}... 0%`;
     const res = await permitScanRequest(
       pgs.length > 1

@@ -8566,15 +8566,18 @@ async function pmAddAllow(pid){
 }
 async function pmRescan(pid){
   const msg = document.getElementById('pm-rescan-msg');
-  if (msg) { msg.textContent = '⏳ بنعيد القراءة بالموديل الدقيق... (لحد 30 ثانية)'; msg.style.color = 'var(--text-dim)'; }
+  if (msg) { msg.textContent = '⏳ بنعيد القراءة من الصور المحفوظة وبنتأكد من المخازن... (لحد دقيقة)'; msg.style.color = 'var(--text-dim)'; }
   try{
-    const r = await fetch(`${SB}/functions/v1/permit-rescan`, { method:'POST', headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ token: SESSION_TOKEN, permit_id: pid }) });
+    // v19: نفس قارئ التاجر (كل الصفحات + تعديل الصورة الملفوفة + قراءة تأكيد للمخازن والأنواع)
+    // 1) لو صورة الإذن محفوظة ملفوفة على جنبها بتتعدل وتتحفظ معدولة  2) القراءة بنفس قارئ التاجر الجديد
+    try { await fetch(`${SB}/functions/v1/permit-orient`, { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ admin_token: SESSION_TOKEN, permit_id: pid, apply: true }) }); } catch(e) {}
+    const r = await fetch(`${SB}/functions/v1/permit-scan-next`, { method:'POST', headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ admin_token: SESSION_TOKEN, permit_id: pid }) });
     const j = await r.json();
     if (!j || !j.ok) { if (msg) { msg.textContent = '⚠️ ' + ((j && (j.message || j.error)) || 'فشلت إعادة القراءة'); msg.style.color = 'var(--error)'; } return; }
-    const sum = (j.allowances||[]).map(a => `${a.warehouse} ${a.vehicle_type}: ${a.vehicles_max} عربية (${a.qty_net})`).join(' · ') || 'مفيش رصيد';
-    if (msg) { msg.textContent = '✅ ' + sum + ((j.unknown||[]).length ? ` — مخازن مجهولة: ${j.unknown.join('، ')}` : ''); msg.style.color = 'var(--success)'; }
-    setTimeout(()=>{ pmOpen(pid); pmLoad(); }, 1200);
+    const sum = (j.allowances||[]).filter(a => Number(a.vehicles_max) > 0 || Number(a.qty_net) > 0).map(a => `${a.warehouse} ${a.vehicle_type}: ${a.vehicles_max} عربية${a.qty_net != null ? ' (' + a.qty_net + ')' : ''}`).join(' · ') || 'مفيش رصيد';
+    if (msg) { msg.textContent = (j.unchanged ? '✅ القراءة زى المتسجل بالظبط — ' : '✅ الرصيد اتحدّث — ') + sum; msg.style.color = 'var(--success)'; }
+    setTimeout(()=>{ pmOpen(pid); pmLoad(); }, 1500);
   }catch(e){ if (msg) { msg.textContent = '⚠️ مشكلة فى الاتصال'; msg.style.color='var(--error)'; } }
 }
 function pmUnlock(pid){
