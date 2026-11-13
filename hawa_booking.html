@@ -4483,6 +4483,42 @@ function permitFileToBase64(file) {
         c.getContext('2d').drawImage(img, 0, 0, w, h);
         const dataUrl = c.toDataURL('image/jpeg', 0.78);
         URL.revokeObjectURL(url);
+        resolve({ b64: dataUrl.split(',')[1], mime: 'image/jpeg', file: file });
+      } catch (e) { reject(e); }
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img')); };
+    img.src = url;
+  });
+}
+
+// ✂️ قص الجزء المطبوع من الصورة الأصلية (بجودتها الكاملة) + لفّها لو كانت على جنبها — عشان الأرقام تبقى كبيرة وواضحة للقارئ
+// box = [شمال، فوق، يمين، تحت] نسب مئوية من الصورة الأصلية · deg = 0 / 90 (مع عقارب الساعة) / 270
+function permitRecrop(file, box, deg) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      try {
+        const W = img.naturalWidth, H = img.naturalHeight;
+        let sx = 0, sy = 0, sw = W, sh = H;
+        if (box) {
+          const M = 3;
+          const l = Math.max(0, box[0] - M), t = Math.max(0, box[1] - M), r = Math.min(100, box[2] + M), b = Math.min(100, box[3] + M);
+          sx = Math.round(W * l / 100); sy = Math.round(H * t / 100);
+          sw = Math.max(1, Math.round(W * (r - l) / 100)); sh = Math.max(1, Math.round(H * (b - t) / 100));
+        }
+        const MAX = 1568;
+        const sc = Math.min(2, MAX / Math.max(sw, sh));
+        const dw = Math.max(1, Math.round(sw * sc)), dh = Math.max(1, Math.round(sh * sc));
+        const side = deg === 90 || deg === 270;
+        const c = document.createElement('canvas'); c.width = side ? dh : dw; c.height = side ? dw : dh;
+        const ctx = c.getContext('2d');
+        ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+        if (deg === 90) { ctx.translate(c.width, 0); ctx.rotate(Math.PI / 2); }
+        else if (deg === 270) { ctx.translate(0, c.height); ctx.rotate(-Math.PI / 2); }
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, dw, dh);
+        const dataUrl = c.toDataURL('image/jpeg', 0.85);
+        URL.revokeObjectURL(url);
         resolve({ b64: dataUrl.split(',')[1], mime: 'image/jpeg' });
       } catch (e) { reject(e); }
     };
@@ -4606,7 +4642,20 @@ async function processPermitFile(f, pages) {
         body: JSON.stringify({ client_id: user.id, username: user.username || '', pages: pgs.map(p => ({ image_base64: p.b64, mime: p.mime })) }) });
       clearTimeout(tmo);
       const oj = await orr.json();
-      if (oj && oj.ok && Array.isArray(oj.pages)) oj.pages.forEach((x, i) => { if (x && x.deg && x.image_base64 && pgs[i]) { pgs[i].b64 = x.image_base64; pgs[i].mime = x.mime || 'image/jpeg'; } });
+      if (oj && oj.ok && Array.isArray(oj.pages)) {
+        for (let i = 0; i < oj.pages.length; i++) {
+          const x = oj.pages[i]; const pg = pgs[i];
+          if (!x || !pg || pg.mime !== 'image/jpeg') continue;
+          const bx = Array.isArray(x.box) && x.box.length === 4 ? x.box.map(Number) : null;
+          // القص بس لو الجزء المطبوع صغير فى الصورة (الورقة متصورة من بعيد) والمستطيل منطقى
+          const okBox = !!bx && bx.every(v => isFinite(v)) && (bx[2] - bx[0]) >= 25 && (bx[3] - bx[1]) >= 12 && ((bx[2] - bx[0]) * (bx[3] - bx[1])) <= 6000;
+          const deg = (x.deg === 90 || x.deg === 270) ? x.deg : 0;
+          if (!okBox && !deg) continue;
+          let done = false;
+          if (pg.file) { try { const r = await permitRecrop(pg.file, okBox ? bx : null, deg); pg.b64 = r.b64; pg.mime = r.mime; done = true; } catch (e) {} }
+          if (!done && deg && x.image_base64) { pg.b64 = x.image_base64; pg.mime = x.mime || 'image/jpeg'; }
+        }
+      }
     } catch (e) {}
     prog.textContent = `⬆️ بنرفع ${lbl}... 0%`;
     const res = await permitScanRequest(
