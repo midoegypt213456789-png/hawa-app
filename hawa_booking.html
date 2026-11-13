@@ -4130,13 +4130,36 @@ function pickVehicle(v, cap, el) {
     const left = a ? Number(a.left) : 0;
     bk.permitLeft = left;
     if (left <= 0) {
-      if (m) { m.textContent = `⛔ الإذن ${bk.permit} ملوش رصيد ${v} فى ${bk.warehouse} — اختار نوع تانى أو صوّر إذن جديد`; m.style.color = 'var(--error)'; }
+      const _here = bk.permitAllow.filter(x => x.warehouse === bk.warehouse && Number(x.left) > 0).map(x => `${x.vehicle_type} (${x.left})`);
+      const _else = pmElsewhere(bk.permitAllow, v) || pmElsewhere(bk.permitAllow);
+      try { if (typeof logActivity === 'function') logActivity('cl_permit_no_stock', '⛔ الإذن ملوش رصيد للنوع فى المخزن المختار', { permit: bk.permit, warehouse: bk.warehouse, vehicle: v, here: _here }); } catch (_) {}
+      if (m) { m.innerHTML = `⛔ الإذن ${bk.permit} ملوش رصيد ${v} فى ${bk.warehouse}` + (_here.length ? `<br><span style="color:var(--text)">المتاح فى ${bk.warehouse}: <b>${_here.join(' · ')}</b> — اختاره من فوق</span>` : '') + (_else ? `<div style="color:var(--text);margin-top:6px">${v} بتاع الإذن ده موجود فى مخزن تانى:</div>${_else}` : (_here.length ? '' : '<br>صوّر الإذن تانى لو اتعدل')); m.style.color = 'var(--error)'; }
       document.getElementById('b2').disabled = true;
       return;
     }
     if (m) { m.textContent = `✅ باقى على الإذن ${left} عربية ${v} فى ${bk.warehouse}`; m.style.color = 'var(--success)'; }
   } else if (m) { m.textContent = ''; }
   document.getElementById('b2').disabled = false;
+}
+
+// 📍 الإذن رصيده فى مخزن تانى؟ نقول للتاجر فين ونوديه بضغطة (أكتر سبب لشكوى «مفيش رصيد» بعد فتح مخزن جديد)
+function pmElsewhere(allow, vt) {
+  const byWh = {};
+  (allow || []).forEach(a => { if (a.warehouse !== bk.warehouse && Number(a.left) > 0 && (!vt || a.vehicle_type === vt)) (byWh[a.warehouse] = byWh[a.warehouse] || []).push(a); });
+  const whs = Object.keys(byWh); if (!whs.length) return '';
+  return `<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;align-items:stretch">` + whs.map(w =>
+    `<button type="button" data-wh="${w.replace(/"/g,'&quot;')}" onclick="pmSwitchWh(this.dataset.wh)" style="background:rgba(76,175,125,.12);border:1.5px solid var(--success);color:var(--text);border-radius:12px;padding:10px 12px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;line-height:1.7">📍 احجز من <span style="color:var(--gold)">${w}</span> ←<br><span style="font-weight:400;font-size:12px;color:var(--success)">${byWh[w].map(a => `${a.vehicle_type}: ${a.left} عربية`).join(' · ')}</span></button>`).join('') + `</div>`;
+}
+function pmSwitchWh(name) {
+  const permit = bk.permit; if (!name || !permit) return;
+  const el = [...document.querySelectorAll('#warehouseOpts .opt')].find(o => o.dataset.name === name);
+  if (!el) { const _m = document.getElementById('permitMsg'); if (_m) { _m.textContent = 'المخزن ده مش متاح للحجز دلوقتى'; _m.style.color = 'var(--error)'; } return; }
+  try { if (typeof logActivity === 'function') logActivity('cl_permit_switch_wh', '📍 حوّل الحجز لمخزن الرصيد', { permit, from: bk.warehouse, to: name }); } catch (_) {}
+  document.querySelectorAll('#s1 .opt').forEach(o => o.classList.remove('sel')); el.classList.add('sel');
+  bk.warehouse = name; bk.vehicle = null; bk.cap = 0; bk.permitLeft = null;
+  go(1); bk.permit = permit;
+  const inp = document.getElementById('permitInput'); if (inp && !inp.value) inp.value = permit;
+  goStep2();
 }
 
 // ===================== 🧾 نظام أذونات الصرف =====================
@@ -4162,8 +4185,8 @@ function renderPermitAllow(lk) {
     <div style="font-size:12px;color:var(--text-dim);margin-bottom:6px">🧾 إذن رقم <b style="color:var(--gold)">${lk.permit.permit_no}</b>${lk.permit.permit_date ? ' — ' + lk.permit.permit_date : ''}</div>
     ${Object.keys(byWh).map(wh => {
       const cur = wh === bk.warehouse;
-      return `<div style="padding:6px 0;border-top:1px solid var(--border);${cur ? '' : 'opacity:.6'}">
-        <div style="font-weight:800;margin-bottom:3px">${cur ? '📍 ' : ''}${wh}</div>
+      return `<div style="padding:6px 0;border-top:1px solid var(--border);${cur ? '' : 'opacity:.85'}">
+        <div style="font-weight:800;margin-bottom:3px;display:flex;align-items:center;gap:8px">${cur ? '📍 ' : ''}${wh}${!cur && byWh[wh].some(a => Number(a.left) > 0) ? `<button type="button" data-wh="${wh.replace(/"/g,'&quot;')}" onclick="pmSwitchWh(this.dataset.wh)" style="margin-inline-start:auto;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:8px;padding:2px 10px;font-family:inherit;font-size:11.5px;cursor:pointer">احجز من هنا ←</button>` : ''}</div>
         ${byWh[wh].map(a => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:2px 0 2px 8px">
           <span>${a.vehicle_type}</span>
           <span style="color:${a.left > 0 ? 'var(--success)' : 'var(--error)'}">باقى ${a.left} من ${a.vehicles_max} عربية</span>
@@ -4200,7 +4223,10 @@ async function permitFlowNew(lk, permit) {
   showPermitRescanRow();
   const here = (lk.allowances || []).filter(x => x.warehouse === bk.warehouse && Number(x.left) > 0);
   if (!here.length) {
-    fail(`❌ الإذن ${permit} خلص رصيده فى ${bk.warehouse}<br><span style="font-size:11px;font-weight:400">اكتب رقم إذن تانى وصوّره لو مش متسجل</span>`);
+    const _else = pmElsewhere(lk.allowances);
+    try { if (typeof logActivity === 'function') logActivity('cl_permit_no_stock', '⛔ الإذن ملوش رصيد فى المخزن المختار', { permit, warehouse: bk.warehouse, elsewhere: (lk.allowances || []).filter(x => Number(x.left) > 0).map(x => x.warehouse + ' ' + x.vehicle_type + ' ' + x.left) }); } catch (_) {}
+    if (_else) fail(`📍 بضاعة الإذن ${permit} مش فى مخزن ${bk.warehouse} — رصيده موجود فى:${_else}`);
+    else fail(`❌ الإذن ${permit} خلص رصيده فى ${bk.warehouse}<br><span style="font-size:11px;font-weight:400">لو الإذن اتعدل أو لسه عليه بضاعة: علّم «الإذن اتعدل» تحت وصوّره تانى — أو اكتب رقم إذن تانى</span>`);
     return;
   }
   bk.permitId = lk.permit.id; bk.permitAllow = lk.allowances || []; bk.permitLeft = null;
