@@ -4446,7 +4446,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
         <button class="act-btn edit rep-tab sel" data-tab="sum" onclick="repTab('sum')">📊 الملخص العام</button>
         <button class="act-btn edit rep-tab" data-tab="trader" onclick="repTab('trader')">👤 تقرير تاجر</button>
-        <button class="act-btn edit rep-tab" data-tab="loaded" onclick="repTab('loaded')">🚚 العربيات المحملة</button>
+        <button class="act-btn edit rep-tab" data-tab="loaded" id="rep-tab-loaded" onclick="repTab('loaded')">🚚 العربيات المحملة</button>
       </div>
       <div id="rep-pane-trader" style="display:none"><div id="trBox"></div></div>
       <div id="rep-pane-loaded" style="display:none"><div id="lvBox"></div></div>
@@ -10617,6 +10617,8 @@ function repTab(t){
   document.getElementById('rep-pane-sum').style.display = t === 'sum' ? '' : 'none';
   document.getElementById('rep-pane-trader').style.display = t === 'trader' ? '' : 'none';
   { const lp = document.getElementById('rep-pane-loaded'); if (lp) lp.style.display = t === 'loaded' ? '' : 'none'; }
+  { const lb = document.getElementById('rep-tab-loaded'); if (lb) lb.style.display = can('rep-loaded', 'view') ? '' : 'none'; }
+  if (t === 'loaded' && !can('rep-loaded', 'view')) return repTab('sum');
   if (t === 'loaded') lvMount();
   if (t === 'trader' && !document.getElementById('trQ')) trMount('trBox');
   if (t === 'trader') setTimeout(() => { const q = document.getElementById('trQ'); if (q && !_tr.data) q.focus(); }, 50);
@@ -10645,8 +10647,8 @@ function lvMount(){
       <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">الصنف</div><select id="lvType" ${fs}><option value="">كل الأصناف</option>${types.map(t => `<option>${hcEsc(t)}</option>`).join('')}</select></div>
       <div style="flex:1;min-width:170px"><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">التاجر (اسم / كود / رقم حجز / رقم إذن)</div><input type="text" id="lvQ" placeholder="🔎 اكتب للبحث" style="padding:9px 12px;font-size:13px" onkeydown="if(event.key==='Enter')lvRun()"></div>
       <button class="act-btn edit" style="padding:10px 18px" onclick="lvRun()">📊 اعرض</button>
-      <button class="act-btn" style="padding:10px 14px" onclick="lvExcel()">📥 Excel</button>
-      <button class="act-btn" style="padding:10px 14px" onclick="lvPrint()">🖨️ طباعة</button>
+      ${can('rep-loaded', 'print') ? `<button class="act-btn" style="padding:10px 14px" onclick="lvExcel()">📥 Excel</button>
+      <button class="act-btn" style="padding:10px 14px" onclick="lvPrint()">🖨️ طباعة</button>` : ''}
     </div>
   </div>
   <div id="lvOut"><div style="padding:30px;text-align:center;color:var(--text-dim)">اختار الفترة والفلاتر واضغط «اعرض»</div></div>`;
@@ -10686,6 +10688,7 @@ function lvHtml(j, f){
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', j.by_type, 'type')}${sumTbl('🏭 حسب المخزن', j.by_wh, 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>`;
 }
 function lvExcel(){
+  if (!can('rep-loaded', 'print')) { alert('معندكش صلاحية الطباعة والتصدير للتقرير ده'); return; }
   const j = _lv.data; if (!j || !(j.rows || []).length) { alert('اعرض التقرير الأول'); return; }
   const rows = j.rows.map((r, i) => ({ '#': i + 1, 'رقم الحجز': r.seq != null ? r.seq : r.id, 'التاجر': r.client || '', 'الكود': r.code || '', 'المخزن': r.wh || '', 'الصنف': r.type || '', 'عدد العربيات': r.vehicles, 'عدد القطع': r.units,
     'تاريخ الحجز': r.booked || '', 'ميعاد الحجز': r.sched || '', 'التحميل الفعلى': r.status === 'تم التنفيذ' ? (r.exec || (r.sched + ' (تقديرى)')) : '', 'نفّذه': r.by || (r.auto ? 'تلقائى من الإذن' : ''), 'الحالة': (LV_ST[r.status] || [r.status])[0], 'رقم الإذن': r.permit || '' }));
@@ -10696,6 +10699,7 @@ function lvExcel(){
   XLSX.writeFile(wb, `العربيات_المحملة_${_lv.f.p_from}_${_lv.f.p_to}.xlsx`);
 }
 function lvPrint(){
+  if (!can('rep-loaded', 'print')) { alert('معندكش صلاحية الطباعة والتصدير للتقرير ده'); return; }
   const j = _lv.data; if (!j || !(j.rows || []).length) { alert('اعرض التقرير الأول'); return; }
   const w = window.open('', '_blank'); if (!w) { alert('المتصفح منع نافذة الطباعة — اسمح بالنوافذ المنبثقة'); return; }
   w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>تقرير العربيات المحملة</title><style>body{font-family:Cairo,Tahoma,sans-serif;color:#000;margin:14px;font-size:11px}h2{margin:0 0 6px;font-size:16px}table{border-collapse:collapse;width:100%;margin-bottom:10px}th,td{border:1px solid #777;padding:3px 5px;text-align:center}th{background:#eee}.tbl-wrap{padding:0!important;margin:0 0 10px!important}div{color:#000!important}b{color:#000!important}td,tr{color:#000!important}@page{size:A4 landscape;margin:8mm}</style></head><body><h2>🚚 تقرير العربيات المحملة</h2>${lvHtml(j, _lv.f)}<div style="font-size:9px;margin-top:6px">اتطبع ${lvD(new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 16).replace('T', ' '))}</div></body></html>`);
@@ -11121,6 +11125,7 @@ function ctConfetti(){
 setInterval(()=>{ if(typeof currentSection!=='undefined' && currentSection==='contests' && _ct.cur && _ct.d && _ct.d.contest.is_open && document.getElementById('ctDraw').style.display!=='block' && !document.getElementById('ctFormModal').classList.contains('show') && document.activeElement?.id!=='ct-q') ctOpen(_ct.cur, true); }, 20000);
 
 const EXTRA_PERMS = {
+  'rep-loaded':        { icon: '🚚', label: 'تقرير العربيات المحملة (جوه التقارير) — دخول = يشوف التقرير، طباعة = Excel وطباعة' },
   'shortage-chassis':  { icon: '🔩', label: 'تسليم الشاسيهات (شاشة المخازن)' },
   'shortage-motor':    { icon: '⚙️', label: 'تسليم المواتير (شاشة المخازن)' },
   'warehouse-checkin': { icon: '✅', label: 'حضور الحجوزات (مع التسليم)' },
@@ -16560,6 +16565,7 @@ async function loadBlocked(){
 
 // =================== REPORTS ===================
 async function loadReports(){
+  try { const lb = document.getElementById('rep-tab-loaded'); if (lb) lb.style.display = can('rep-loaded', 'view') ? '' : 'none'; } catch (e) {}
   const today=fmtDate(new Date());
   const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay());
   const ws=fmtDate(weekStart);
