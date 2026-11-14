@@ -2796,7 +2796,7 @@ if (bioIsInTelegram()) {
 async function checkTelegramLink(){
   try {
     // 🏆 نجيب tier_id + approval status عشان نطبق الـ booking_limits الصحيحة والبصمة
-    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id,tier_id,approval_status,is_blocked,is_active`, { headers: HDR });
+    const r = await fetch(`${SB}/rest/v1/clients?id=eq.${user.id}&select=telegram_id,tier_id,approval_status,is_blocked,is_active,name,company_code`, { headers: HDR });
     const d = await r.json();
     const tgId = d[0]?.telegram_id || null;
     const tierId = d[0]?.tier_id || null;
@@ -2805,6 +2805,14 @@ async function checkTelegramLink(){
     user.approval_status = d[0]?.approval_status || 'pending';
     user.is_blocked = d[0]?.is_blocked || false;
     user.is_active = d[0]?.is_active !== false;
+    // 🔄 لو الإدارة عدّلت اسم العميل أو كوده → يتحدّث عنده فوراً (من غير ما يسجل خروج ودخول)
+    if (d[0]) {
+      if (d[0].company_code != null && String(d[0].company_code) !== '') user.company_code = d[0].company_code;
+      if (d[0].name) user.name = d[0].name;
+      const _un = document.getElementById('uname'); if (_un) _un.textContent = user.name || 'العميل';
+      const _uc = document.getElementById('ucode'); if (_uc) _uc.textContent = user.company_code || '';
+      const _sc = document.getElementById('sCode'); if (_sc && _sc.textContent && _sc.textContent !== '-') _sc.textContent = user.company_code || '-';
+    }
     localStorage.setItem('hawa_user', JSON.stringify(user));
 
     // 🔐 بعد ما البيانات وصلت، حدّث الـ biometric UI (يظهر فقط للمعتمدين)
