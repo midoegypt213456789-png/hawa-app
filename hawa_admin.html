@@ -10689,13 +10689,17 @@ function lvHtml(j, f){
     const st = LV_ST[r.status] || [r.status, 'var(--text-dim)'];
     const ex = r.status !== 'تم التنفيذ' ? '—' : (r.exec ? lvD(r.exec) + (r.by ? `<div style="font-size:10px;color:var(--text-dim)">${hcEsc(r.by)}</div>` : (r.auto ? '<div style="font-size:10px;color:var(--text-dim)">تلقائى من الإذن</div>' : '')) : `${lvD(r.sched)}<div style="font-size:10px;color:var(--text-dim)">تقديرى (الميعاد)</div>`);
     return pre + `<tr><td>${i + 1}</td><td>${r.seq != null ? r.seq : r.id}</td><td style="text-align:right">${hcEsc(r.client || '—')}</td><td>${hcEsc(r.code || '')}</td><td>${hcEsc(r.wh || '')}</td><td>${hcEsc(r.type || '')}</td><td><b>${r.vehicles}</b></td><td><b>${r.units}</b></td><td>${lvD(r.booked)}</td><td>${lvD(r.sched)}</td><td>${ex}</td><td style="color:${st[1]};font-weight:700">${st[0]}</td><td>${hcEsc(r.permit || '')}</td></tr>`;
-  }).join('') + (rows.length ? whFoot() : '');
+  }).join('') + (rows.length ? whFoot() : '') + `<tr style="font-weight:800;color:var(--gold);border-top:2px solid var(--gold)"><td colspan="6" style="text-align:right">الإجمالى الكلى — ${t.bookings} حجز · ${t.clients} تاجر</td><td>${t.vehicles}</td><td>${t.units}</td><td colspan="5"></td></tr>`;
+  const cov = j.items_cov || {}; const bi = j.by_item || [];
+  const itemTbl = `<div class="tbl-wrap" style="padding:12px;margin-top:12px"><div style="font-weight:700;color:var(--gold);margin-bottom:4px">🏍️ تفاصيل القطع بالموديل</div>
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">من قراءة أذونات الصرف — نفس الموديل ممكن يظهر فى أكتر من سطر لو اسمه اتكتب بأكتر من شكل${Number(cov.bookings_without) ? ` · <b>${cov.units_without} قطعة فى ${cov.bookings_without} حجز من غير تفاصيل موديل</b> (مش داخلة فى الجدول ده)` : ''}</div>
+    ${bi.length ? `<table style="width:100%"><thead><tr><th>#</th><th style="text-align:right">الموديل</th><th>الصنف</th><th>حجوزات</th><th>قطع</th></tr></thead><tbody>${bi.map((x, i) => `<tr><td>${i + 1}</td><td style="text-align:right">${hcEsc(x.name)}</td><td>${hcEsc(x.type || '')}</td><td>${x.bookings}</td><td><b>${x.units}</b></td></tr>`).join('')}
+      <tr style="font-weight:800"><td colspan="4" style="text-align:right">إجمالى القطع المفصّلة</td><td>${bi.reduce((a, x) => a + (Number(x.units) || 0), 0)}</td></tr></tbody></table>` : '<div style="color:var(--text-dim);padding:8px">مفيش تفاصيل موديلات للحجوزات دى</div>'}</div>`;
   const more = (j.count > rows.length) ? `<div style="padding:10px;color:var(--error);font-size:12px">ظاهر أول ${rows.length} من ${j.count} حجز — ضيّق الفترة أو الفلاتر. الإجماليات تحت محسوبة على الكل.</div>` : '';
   const sumRow = (arr, key, lbl) => (arr || []).map(x => `<tr><td style="text-align:right">${hcEsc(x[key] || '—')}</td><td>${x.bookings}</td><td><b>${x.vehicles}</b></td><td><b>${x.units}</b></td></tr>`).join('') || `<tr><td colspan="4">—</td></tr>`;
   const sumTbl = (title, arr, key) => `<div class="tbl-wrap" style="padding:12px;flex:1;min-width:260px"><div style="font-weight:700;color:var(--gold);margin-bottom:8px">${title}</div><table style="width:100%"><thead><tr><th style="text-align:right">${key === 'type' ? 'الصنف' : key === 'wh' ? 'المخزن' : 'الحالة'}</th><th>حجوزات</th><th>عربيات</th><th>قطع</th></tr></thead><tbody>${sumRow(key === 'status' ? (arr || []).map(x => ({ ...x, status: (LV_ST[x.status] || [x.status])[0] })) : arr, key)}</tbody></table></div>`;
-  return head + `<div class="tbl-wrap" style="overflow-x:auto"><table id="lvTbl"><thead><tr>${th.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${body}</tbody>
-    <tfoot><tr style="font-weight:800;color:var(--gold)"><td colspan="6" style="text-align:right">الإجمالى — ${t.bookings} حجز · ${t.clients} تاجر</td><td>${t.vehicles}</td><td>${t.units}</td><td colspan="5"></td></tr></tfoot></table></div>${more}
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', j.by_type, 'type')}${sumTbl('🏭 حسب المخزن', j.by_wh, 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>`;
+  return head + `<div class="tbl-wrap" style="overflow-x:auto"><table id="lvTbl"><thead><tr>${th.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>${more}
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', j.by_type, 'type')}${sumTbl('🏭 حسب المخزن', j.by_wh, 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>${itemTbl}`;
 }
 function lvExcel(){
   if (!can('rep-loaded', 'print')) { alert('معندكش صلاحية الطباعة والتصدير للتقرير ده'); return; }
@@ -10707,6 +10711,7 @@ function lvExcel(){
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'العربيات المحملة');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_type || []).map(x => ({ 'الصنف': x.type, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'الأصناف');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_wh || []).map(x => ({ 'المخزن': x.wh, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'المخازن');
+  if ((j.by_item || []).length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(j.by_item.map(x => ({ 'الموديل': x.name, 'الصنف': x.type || '', 'حجوزات': x.bookings, 'قطع': x.units }))), 'الموديلات');
   XLSX.writeFile(wb, `العربيات_المحملة_${_lv.f.p_from}_${_lv.f.p_to}.xlsx`);
 }
 function lvPrint(){
