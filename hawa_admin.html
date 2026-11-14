@@ -10613,6 +10613,7 @@ async function trPdf(btn, mode){
 
 function trRpc(fn, args){ return rpcSecure(fn, args); }
 function repTab(t){
+  try { if (typeof ER !== 'undefined') { ER.tab = ER.tab || {}; ER.tab.rep = t; } } catch (e) {}
   document.querySelectorAll('.rep-tab').forEach(b => b.classList.toggle('sel', b.dataset.tab === t));
   document.getElementById('rep-pane-sum').style.display = t === 'sum' ? '' : 'none';
   document.getElementById('rep-pane-trader').style.display = t === 'trader' ? '' : 'none';
@@ -16566,6 +16567,7 @@ async function loadBlocked(){
 // =================== REPORTS ===================
 async function loadReports(){
   try { const lb = document.getElementById('rep-tab-loaded'); if (lb) lb.style.display = can('rep-loaded', 'view') ? '' : 'none'; } catch (e) {}
+  try { const _rt = (typeof ER !== 'undefined' && ER.tab && ER.tab.rep) || ''; if (_rt && _rt !== 'sum') setTimeout(() => repTab(_rt), 0); } catch (e) {}
   const today=fmtDate(new Date());
   const weekStart=new Date();weekStart.setDate(weekStart.getDate()-weekStart.getDay());
   const ws=fmtDate(weekStart);
@@ -19172,7 +19174,7 @@ function erHubGo(){ let last=''; try{ last=localStorage.getItem('erp_hub_last')|
 // 🗂️ قوائم السيستم الجديد زى SAP — شريط أبواب فوق (كل باب قايمة منسدلة) + نفس الأبواب فى القايمة الجانبية
 //    كل باب له لون وأيقونة — والرفرش بيرجّع نفس الشاشة / التبويب / المستند المفتوح (والجديد بنفس اللى اتكتب)
 // ═══════════════════════════════════════════════════════════
-var ERM_TABK = { 'erp-warranty':['wr','erWrTab'], 'erp-acc':['ac','erAcTab'], 'erp-sales':['sl','erSalesTab'], 'erp-delivery':['dl','erDelTab'], 'erp-cash':['cash','erCashTab'], 'erp-purchases':['pu','erPuTab'], 'erp-stock':['st','erStockTab'],
+var ERM_TABK = { 'reports':['rep','repTab'], 'erp-warranty':['wr','erWrTab'], 'erp-acc':['ac','erAcTab'], 'erp-sales':['sl','erSalesTab'], 'erp-delivery':['dl','erDelTab'], 'erp-cash':['cash','erCashTab'], 'erp-purchases':['pu','erPuTab'], 'erp-stock':['st','erStockTab'],
   'erp-regs':['rg','erRegTab'], 'erp-letters':['lt','erLtTab'], 'erp-items':['items','erItemsTab'], 'erp-suppliers':['suppliers','erSupTab'], 'erp-setup':['setup','erSetupTab'] };
 var ERM = [
   { id:'sales', title:'المبيعات', icon:'🧾', c:'#4A90D9', items:[
@@ -19259,6 +19261,8 @@ var ERM = [
   { id:'rep', title:'التقارير', icon:'📈', c:'#E05577', items:[
     { l:'لوحة المؤشرات', i:'📊', s:'erp-dash' },
     { l:'كل التقارير', i:'📈', s:'erp-reports' },
+    { l:'العربيات المحملة', i:'🚚', s:'reports', t:'loaded', c:'rep-loaded' },
+    { l:'ملخص الحجوزات وتقرير تاجر', i:'📊', s:'reports', t:'sum' },
     { l:'كشف حساب تاجر', i:'📒', s:'erp-sales', t:'stmt' },
     { l:'كشف حساب مورد', i:'📒', s:'erp-purchases', t:'stmt' },
     { l:'أرصدة المخازن', i:'📊', s:'erp-stock', t:'main' },
@@ -19273,7 +19277,7 @@ var ERM = [
     { l:'الفاتورة الإلكترونية (ETA)', i:'🧾', s:'erp-setup', t:'eta' } ]}
 ];
 function ermOk(it){ if(it.s && !document.getElementById('sec-'+it.s)) return false;
-  if(EMP_MODE && !can(it.s,'view')) return false; if(it.p && !erCan(it.p,'view')) return false; if(it.e && !erCan(it.e,'edit')) return false; return true; }
+  if(EMP_MODE && !can(it.s,'view')) return false; if(it.c && !can(it.c,'view')) return false; if(it.p && !erCan(it.p,'view')) return false; if(it.e && !erCan(it.e,'edit')) return false; return true; }
 function ermMods(){ return ERM.map(m=>({...m, list:m.items.map((it,k)=>({...it,k})).filter(ermOk)})).filter(m=>m.list.length); }
 function ermCurTab(sec){ const k=ERM_TABK[sec]; return k?((ER.tab||{})[k[0]]||null):null; }
 // الباب + البند الحالى (شاشة + تبويب)
