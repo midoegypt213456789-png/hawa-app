@@ -10671,16 +10671,25 @@ async function lvRun(){
   finally { _lv.busy = false; }
 }
 function lvHtml(j, f){
-  const rows = j.rows || []; const t = j.totals || {};
+  const t = j.totals || {};
+  // 🏭 الترتيب مخزن مخزن (قليوب ← الصحراوى الجديد ← السادات ← أى مخزن تانى) وجوه كل مخزن بالتاريخ ثم التاجر
+  const LV_WH = ['قليوب', 'الصحراوى الجديد', 'السادات'];
+  const whIdx = w => { const i = LV_WH.indexOf(w); return i < 0 ? 99 : i; };
+  const rows = (j.rows || []).slice().sort((a, b) => (whIdx(a.wh) - whIdx(b.wh)) || String(a.wh || '').localeCompare(String(b.wh || ''), 'ar') || String(a.eff || '').localeCompare(String(b.eff || '')) || String(a.client || '').localeCompare(String(b.client || ''), 'ar') || (a.id - b.id));
   const stTxt = { done: 'محمل', wait: 'منتظر', noshow: 'مجاش', notdone: 'غير محمل', cancel: 'ملغى', all: 'كل الحالات' }[f.p_status] || '';
   const head = `<div style="font-size:13px;color:var(--text-dim);margin-bottom:10px">الفترة من <b style="color:var(--text)">${lvD(f.p_from)}</b> إلى <b style="color:var(--text)">${lvD(f.p_to)}</b> (على ${f.p_mode === 'book' ? 'يوم الحجز' : 'يوم التحميل'}) · ${stTxt}${f.p_wh ? ' · ' + hcEsc(f.p_wh) : ''}${f.p_type ? ' · ' + hcEsc(f.p_type) : ''}${f.p_q ? ' · «' + hcEsc(f.p_q) + '»' : ''}</div>`;
   if (!rows.length) return head + '<div class="tbl-wrap" style="padding:30px;text-align:center;color:var(--text-dim)">مفيش حجوزات بالفلاتر دى</div>';
   const th = ['#', 'رقم الحجز', 'التاجر', 'الكود', 'المخزن', 'الصنف', 'عربيات', 'قطع', 'تاريخ الحجز', 'ميعاد الحجز', 'التحميل الفعلى', 'الحالة', 'الإذن'];
+  let _wh = null, _wv = 0, _wu = 0, _wn = 0;
+  const whFoot = () => `<tr style="font-weight:800;background:rgba(201,168,76,.10)"><td colspan="6" style="text-align:right">إجمالى ${hcEsc(_wh || '—')} — ${_wn} حجز</td><td>${_wv}</td><td>${_wu}</td><td colspan="5"></td></tr>`;
   const body = rows.map((r, i) => {
+    let pre = '';
+    if (r.wh !== _wh) { if (_wh !== null) pre += whFoot(); _wh = r.wh; _wv = 0; _wu = 0; _wn = 0; pre += `<tr style="font-weight:800;background:rgba(201,168,76,.18)"><td colspan="13" style="text-align:right;font-size:14px">🏭 مخزن ${hcEsc(r.wh || '—')}</td></tr>`; }
+    _wv += Number(r.vehicles) || 0; _wu += Number(r.units) || 0; _wn++;
     const st = LV_ST[r.status] || [r.status, 'var(--text-dim)'];
     const ex = r.status !== 'تم التنفيذ' ? '—' : (r.exec ? lvD(r.exec) + (r.by ? `<div style="font-size:10px;color:var(--text-dim)">${hcEsc(r.by)}</div>` : (r.auto ? '<div style="font-size:10px;color:var(--text-dim)">تلقائى من الإذن</div>' : '')) : `${lvD(r.sched)}<div style="font-size:10px;color:var(--text-dim)">تقديرى (الميعاد)</div>`);
-    return `<tr><td>${i + 1}</td><td>${r.seq != null ? r.seq : r.id}</td><td style="text-align:right">${hcEsc(r.client || '—')}</td><td>${hcEsc(r.code || '')}</td><td>${hcEsc(r.wh || '')}</td><td>${hcEsc(r.type || '')}</td><td><b>${r.vehicles}</b></td><td><b>${r.units}</b></td><td>${lvD(r.booked)}</td><td>${lvD(r.sched)}</td><td>${ex}</td><td style="color:${st[1]};font-weight:700">${st[0]}</td><td>${hcEsc(r.permit || '')}</td></tr>`;
-  }).join('');
+    return pre + `<tr><td>${i + 1}</td><td>${r.seq != null ? r.seq : r.id}</td><td style="text-align:right">${hcEsc(r.client || '—')}</td><td>${hcEsc(r.code || '')}</td><td>${hcEsc(r.wh || '')}</td><td>${hcEsc(r.type || '')}</td><td><b>${r.vehicles}</b></td><td><b>${r.units}</b></td><td>${lvD(r.booked)}</td><td>${lvD(r.sched)}</td><td>${ex}</td><td style="color:${st[1]};font-weight:700">${st[0]}</td><td>${hcEsc(r.permit || '')}</td></tr>`;
+  }).join('') + (rows.length ? whFoot() : '');
   const more = (j.count > rows.length) ? `<div style="padding:10px;color:var(--error);font-size:12px">ظاهر أول ${rows.length} من ${j.count} حجز — ضيّق الفترة أو الفلاتر. الإجماليات تحت محسوبة على الكل.</div>` : '';
   const sumRow = (arr, key, lbl) => (arr || []).map(x => `<tr><td style="text-align:right">${hcEsc(x[key] || '—')}</td><td>${x.bookings}</td><td><b>${x.vehicles}</b></td><td><b>${x.units}</b></td></tr>`).join('') || `<tr><td colspan="4">—</td></tr>`;
   const sumTbl = (title, arr, key) => `<div class="tbl-wrap" style="padding:12px;flex:1;min-width:260px"><div style="font-weight:700;color:var(--gold);margin-bottom:8px">${title}</div><table style="width:100%"><thead><tr><th style="text-align:right">${key === 'type' ? 'الصنف' : key === 'wh' ? 'المخزن' : 'الحالة'}</th><th>حجوزات</th><th>عربيات</th><th>قطع</th></tr></thead><tbody>${sumRow(key === 'status' ? (arr || []).map(x => ({ ...x, status: (LV_ST[x.status] || [x.status])[0] })) : arr, key)}</tbody></table></div>`;
@@ -10691,7 +10700,8 @@ function lvHtml(j, f){
 function lvExcel(){
   if (!can('rep-loaded', 'print')) { alert('معندكش صلاحية الطباعة والتصدير للتقرير ده'); return; }
   const j = _lv.data; if (!j || !(j.rows || []).length) { alert('اعرض التقرير الأول'); return; }
-  const rows = j.rows.map((r, i) => ({ '#': i + 1, 'رقم الحجز': r.seq != null ? r.seq : r.id, 'التاجر': r.client || '', 'الكود': r.code || '', 'المخزن': r.wh || '', 'الصنف': r.type || '', 'عدد العربيات': r.vehicles, 'عدد القطع': r.units,
+  const _LW = ['قليوب', 'الصحراوى الجديد', 'السادات']; const _wi = w => { const i = _LW.indexOf(w); return i < 0 ? 99 : i; };
+  const rows = j.rows.slice().sort((a, b) => (_wi(a.wh) - _wi(b.wh)) || String(a.wh || '').localeCompare(String(b.wh || ''), 'ar') || String(a.eff || '').localeCompare(String(b.eff || '')) || String(a.client || '').localeCompare(String(b.client || ''), 'ar') || (a.id - b.id)).map((r, i) => ({ '#': i + 1, 'رقم الحجز': r.seq != null ? r.seq : r.id, 'التاجر': r.client || '', 'الكود': r.code || '', 'المخزن': r.wh || '', 'الصنف': r.type || '', 'عدد العربيات': r.vehicles, 'عدد القطع': r.units,
     'تاريخ الحجز': r.booked || '', 'ميعاد الحجز': r.sched || '', 'التحميل الفعلى': r.status === 'تم التنفيذ' ? (r.exec || (r.sched + ' (تقديرى)')) : '', 'نفّذه': r.by || (r.auto ? 'تلقائى من الإذن' : ''), 'الحالة': (LV_ST[r.status] || [r.status])[0], 'رقم الإذن': r.permit || '' }));
   const t = j.totals || {}; rows.push({ '#': '', 'رقم الحجز': 'الإجمالى', 'التاجر': `${t.bookings} حجز · ${t.clients} تاجر`, 'عدد العربيات': t.vehicles, 'عدد القطع': t.units });
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'العربيات المحملة');
