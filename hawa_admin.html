@@ -4446,8 +4446,10 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
         <button class="act-btn edit rep-tab sel" data-tab="sum" onclick="repTab('sum')">📊 الملخص العام</button>
         <button class="act-btn edit rep-tab" data-tab="trader" onclick="repTab('trader')">👤 تقرير تاجر</button>
+        <button class="act-btn edit rep-tab" data-tab="loaded" onclick="repTab('loaded')">🚚 العربيات المحملة</button>
       </div>
       <div id="rep-pane-trader" style="display:none"><div id="trBox"></div></div>
+      <div id="rep-pane-loaded" style="display:none"><div id="lvBox"></div></div>
       <div id="rep-pane-sum">
       <div class="stat-grid" id="rep-stats"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="rep-wh"></div>
@@ -10614,8 +10616,90 @@ function repTab(t){
   document.querySelectorAll('.rep-tab').forEach(b => b.classList.toggle('sel', b.dataset.tab === t));
   document.getElementById('rep-pane-sum').style.display = t === 'sum' ? '' : 'none';
   document.getElementById('rep-pane-trader').style.display = t === 'trader' ? '' : 'none';
+  { const lp = document.getElementById('rep-pane-loaded'); if (lp) lp.style.display = t === 'loaded' ? '' : 'none'; }
+  if (t === 'loaded') lvMount();
   if (t === 'trader' && !document.getElementById('trQ')) trMount('trBox');
   if (t === 'trader') setTimeout(() => { const q = document.getElementById('trQ'); if (q && !_tr.data) q.focus(); }, 50);
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🚚 تقرير العربيات المحملة — من تاريخ لتاريخ (بيوم التحميل الفعلى أو يوم الحجز)
+// ═══════════════════════════════════════════════════════════
+const _lv = { data: null, busy: false };
+const LV_ST = { 'تم التنفيذ': ['محمل', '#4CAF7D'], 'قيد الانتظار': ['منتظر', '#E8C97A'], 'no-show': ['مجاش', '#E0884A'], 'ملغي': ['ملغى', '#E05555'] };
+function lvToday(off){ const d = new Date(Date.now() + 2 * 3600e3 + (off || 0) * 86400e3); return d.toISOString().slice(0, 10); }
+function lvD(x){ if (!x) return '—'; const m = String(x).match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}:\d{2}))?/); return m ? `${m[3]}/${m[2]}/${m[1]}` + (m[4] ? ' ' + m[4] : '') : String(x); }
+function lvMount(){
+  const box = document.getElementById('lvBox'); if (!box || box.dataset.ready) return; box.dataset.ready = '1';
+  const whs = ['قليوب', 'الصحراوى الجديد', 'السادات'];
+  const types = (typeof allVehicleTypes !== 'undefined' && Array.isArray(allVehicleTypes) && allVehicleTypes.length ? allVehicleTypes.map(t => t.name || t) : ['موتسيكل', 'تروسكل', 'كهرباء', 'ZONTOS']);
+  const fs = 'style="width:auto;min-width:130px;padding:9px 12px;font-size:13px"';
+  box.innerHTML = `
+  <div class="tbl-wrap" style="padding:14px;margin-bottom:12px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">من تاريخ</div><input type="date" id="lvFrom" value="${lvToday(-6)}" ${fs}></div>
+      <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">إلى تاريخ</div><input type="date" id="lvTo" value="${lvToday(0)}" ${fs}></div>
+      <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">الفترة على</div><select id="lvMode" ${fs}><option value="load">يوم التحميل</option><option value="book">يوم الحجز</option></select></div>
+      <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">الحالة</div><select id="lvStatus" ${fs}><option value="done">✅ محمل</option><option value="wait">⏳ منتظر</option><option value="noshow">🚫 مجاش</option><option value="notdone">غير محمل (منتظر + مجاش)</option><option value="cancel">❌ ملغى</option><option value="all">الكل</option></select></div>
+      <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">المخزن</div><select id="lvWh" ${fs}><option value="">كل المخازن</option>${whs.map(w => `<option>${w}</option>`).join('')}</select></div>
+      <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">الصنف</div><select id="lvType" ${fs}><option value="">كل الأصناف</option>${types.map(t => `<option>${hcEsc(t)}</option>`).join('')}</select></div>
+      <div style="flex:1;min-width:170px"><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">التاجر (اسم / كود / رقم حجز / رقم إذن)</div><input type="text" id="lvQ" placeholder="🔎 اكتب للبحث" style="padding:9px 12px;font-size:13px" onkeydown="if(event.key==='Enter')lvRun()"></div>
+      <button class="act-btn edit" style="padding:10px 18px" onclick="lvRun()">📊 اعرض</button>
+      <button class="act-btn" style="padding:10px 14px" onclick="lvExcel()">📥 Excel</button>
+      <button class="act-btn" style="padding:10px 14px" onclick="lvPrint()">🖨️ طباعة</button>
+    </div>
+  </div>
+  <div id="lvOut"><div style="padding:30px;text-align:center;color:var(--text-dim)">اختار الفترة والفلاتر واضغط «اعرض»</div></div>`;
+}
+function lvFilters(){
+  const g = id => (document.getElementById(id) || {}).value || '';
+  return { p_from: g('lvFrom'), p_to: g('lvTo'), p_mode: g('lvMode') || 'load', p_wh: g('lvWh') || null, p_q: g('lvQ').trim() || null, p_type: g('lvType') || null, p_status: g('lvStatus') || 'done' };
+}
+async function lvRun(){
+  if (_lv.busy) return; const out = document.getElementById('lvOut'); const f = lvFilters();
+  if (!f.p_from || !f.p_to) { out.innerHTML = '<div style="padding:20px;color:var(--error)">اختار من تاريخ وإلى تاريخ</div>'; return; }
+  _lv.busy = true; out.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-dim)">⏳ بنجهّز التقرير...</div>';
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/report_loaded_vehicles`, { method: 'POST', headers: HDR, body: JSON.stringify({ p_token: SESSION_TOKEN, ...f }) });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || !j.ok) { out.innerHTML = `<div style="padding:20px;color:var(--error)">${hcEsc((j && (j.message || j.hint)) || 'مقدرتش أجيب التقرير')}</div>`; return; }
+    _lv.data = j; _lv.f = f; out.innerHTML = lvHtml(j, f);
+  } catch (e) { out.innerHTML = '<div style="padding:20px;color:var(--error)">حصل خطأ فى الاتصال — جرّب تانى</div>'; }
+  finally { _lv.busy = false; }
+}
+function lvHtml(j, f){
+  const rows = j.rows || []; const t = j.totals || {};
+  const stTxt = { done: 'محمل', wait: 'منتظر', noshow: 'مجاش', notdone: 'غير محمل', cancel: 'ملغى', all: 'كل الحالات' }[f.p_status] || '';
+  const head = `<div style="font-size:13px;color:var(--text-dim);margin-bottom:10px">الفترة من <b style="color:var(--text)">${lvD(f.p_from)}</b> إلى <b style="color:var(--text)">${lvD(f.p_to)}</b> (على ${f.p_mode === 'book' ? 'يوم الحجز' : 'يوم التحميل'}) · ${stTxt}${f.p_wh ? ' · ' + hcEsc(f.p_wh) : ''}${f.p_type ? ' · ' + hcEsc(f.p_type) : ''}${f.p_q ? ' · «' + hcEsc(f.p_q) + '»' : ''}</div>`;
+  if (!rows.length) return head + '<div class="tbl-wrap" style="padding:30px;text-align:center;color:var(--text-dim)">مفيش حجوزات بالفلاتر دى</div>';
+  const th = ['#', 'رقم الحجز', 'التاجر', 'الكود', 'المخزن', 'الصنف', 'عربيات', 'قطع', 'تاريخ الحجز', 'ميعاد الحجز', 'التحميل الفعلى', 'الحالة', 'الإذن'];
+  const body = rows.map((r, i) => {
+    const st = LV_ST[r.status] || [r.status, 'var(--text-dim)'];
+    const ex = r.status !== 'تم التنفيذ' ? '—' : (r.exec ? lvD(r.exec) + (r.by ? `<div style="font-size:10px;color:var(--text-dim)">${hcEsc(r.by)}</div>` : (r.auto ? '<div style="font-size:10px;color:var(--text-dim)">تلقائى من الإذن</div>' : '')) : `${lvD(r.sched)}<div style="font-size:10px;color:var(--text-dim)">تقديرى (الميعاد)</div>`);
+    return `<tr><td>${i + 1}</td><td>${r.seq != null ? r.seq : r.id}</td><td style="text-align:right">${hcEsc(r.client || '—')}</td><td>${hcEsc(r.code || '')}</td><td>${hcEsc(r.wh || '')}</td><td>${hcEsc(r.type || '')}</td><td><b>${r.vehicles}</b></td><td><b>${r.units}</b></td><td>${lvD(r.booked)}</td><td>${lvD(r.sched)}</td><td>${ex}</td><td style="color:${st[1]};font-weight:700">${st[0]}</td><td>${hcEsc(r.permit || '')}</td></tr>`;
+  }).join('');
+  const more = (j.count > rows.length) ? `<div style="padding:10px;color:var(--error);font-size:12px">ظاهر أول ${rows.length} من ${j.count} حجز — ضيّق الفترة أو الفلاتر. الإجماليات تحت محسوبة على الكل.</div>` : '';
+  const sumRow = (arr, key, lbl) => (arr || []).map(x => `<tr><td style="text-align:right">${hcEsc(x[key] || '—')}</td><td>${x.bookings}</td><td><b>${x.vehicles}</b></td><td><b>${x.units}</b></td></tr>`).join('') || `<tr><td colspan="4">—</td></tr>`;
+  const sumTbl = (title, arr, key) => `<div class="tbl-wrap" style="padding:12px;flex:1;min-width:260px"><div style="font-weight:700;color:var(--gold);margin-bottom:8px">${title}</div><table style="width:100%"><thead><tr><th style="text-align:right">${key === 'type' ? 'الصنف' : key === 'wh' ? 'المخزن' : 'الحالة'}</th><th>حجوزات</th><th>عربيات</th><th>قطع</th></tr></thead><tbody>${sumRow(key === 'status' ? (arr || []).map(x => ({ ...x, status: (LV_ST[x.status] || [x.status])[0] })) : arr, key)}</tbody></table></div>`;
+  return head + `<div class="tbl-wrap" style="overflow-x:auto"><table id="lvTbl"><thead><tr>${th.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${body}</tbody>
+    <tfoot><tr style="font-weight:800;color:var(--gold)"><td colspan="6" style="text-align:right">الإجمالى — ${t.bookings} حجز · ${t.clients} تاجر</td><td>${t.vehicles}</td><td>${t.units}</td><td colspan="5"></td></tr></tfoot></table></div>${more}
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', j.by_type, 'type')}${sumTbl('🏭 حسب المخزن', j.by_wh, 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>`;
+}
+function lvExcel(){
+  const j = _lv.data; if (!j || !(j.rows || []).length) { alert('اعرض التقرير الأول'); return; }
+  const rows = j.rows.map((r, i) => ({ '#': i + 1, 'رقم الحجز': r.seq != null ? r.seq : r.id, 'التاجر': r.client || '', 'الكود': r.code || '', 'المخزن': r.wh || '', 'الصنف': r.type || '', 'عدد العربيات': r.vehicles, 'عدد القطع': r.units,
+    'تاريخ الحجز': r.booked || '', 'ميعاد الحجز': r.sched || '', 'التحميل الفعلى': r.status === 'تم التنفيذ' ? (r.exec || (r.sched + ' (تقديرى)')) : '', 'نفّذه': r.by || (r.auto ? 'تلقائى من الإذن' : ''), 'الحالة': (LV_ST[r.status] || [r.status])[0], 'رقم الإذن': r.permit || '' }));
+  const t = j.totals || {}; rows.push({ '#': '', 'رقم الحجز': 'الإجمالى', 'التاجر': `${t.bookings} حجز · ${t.clients} تاجر`, 'عدد العربيات': t.vehicles, 'عدد القطع': t.units });
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'العربيات المحملة');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_type || []).map(x => ({ 'الصنف': x.type, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'الأصناف');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_wh || []).map(x => ({ 'المخزن': x.wh, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'المخازن');
+  XLSX.writeFile(wb, `العربيات_المحملة_${_lv.f.p_from}_${_lv.f.p_to}.xlsx`);
+}
+function lvPrint(){
+  const j = _lv.data; if (!j || !(j.rows || []).length) { alert('اعرض التقرير الأول'); return; }
+  const w = window.open('', '_blank'); if (!w) { alert('المتصفح منع نافذة الطباعة — اسمح بالنوافذ المنبثقة'); return; }
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>تقرير العربيات المحملة</title><style>body{font-family:Cairo,Tahoma,sans-serif;color:#000;margin:14px;font-size:11px}h2{margin:0 0 6px;font-size:16px}table{border-collapse:collapse;width:100%;margin-bottom:10px}th,td{border:1px solid #777;padding:3px 5px;text-align:center}th{background:#eee}.tbl-wrap{padding:0!important;margin:0 0 10px!important}div{color:#000!important}b{color:#000!important}td,tr{color:#000!important}@page{size:A4 landscape;margin:8mm}</style></head><body><h2>🚚 تقرير العربيات المحملة</h2>${lvHtml(j, _lv.f)}<div style="font-size:9px;margin-top:6px">اتطبع ${lvD(new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 16).replace('T', ' '))}</div></body></html>`);
+  w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 400);
 }
 
 // ═══════════════════════════════════════════════════════════
