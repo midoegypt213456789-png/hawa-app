@@ -10647,6 +10647,7 @@ function lvMount(){
       <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">المخزن</div><select id="lvWh" ${fs}><option value="">كل المخازن</option>${whs.map(w => `<option>${w}</option>`).join('')}</select></div>
       <div><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">الصنف</div><select id="lvType" ${fs}><option value="">كل الأصناف</option>${types.map(t => `<option>${hcEsc(t)}</option>`).join('')}</select></div>
       <div style="flex:1;min-width:170px"><div style="font-size:11px;color:var(--text-dim);margin-bottom:4px">التاجر (اسم / كود / رقم حجز / رقم إذن)</div><input type="text" id="lvQ" placeholder="🔎 اكتب للبحث" style="padding:9px 12px;font-size:13px" onkeydown="if(event.key==='Enter')lvRun()"></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;padding:9px 4px;white-space:nowrap"><input type="checkbox" id="lvDet" style="width:auto;padding:0" onchange="if(_lv.data){_lv.f.det=this.checked;document.getElementById('lvOut').innerHTML=lvHtml(_lv.data,_lv.f);}"> تفاصيل الأصناف (الموديلات)</label>
       <button class="act-btn edit" style="padding:10px 18px" onclick="lvRun()">📊 اعرض</button>
       ${can('rep-loaded', 'print') ? `<button class="act-btn" style="padding:10px 14px" onclick="lvExcel()">📥 Excel</button>
       <button class="act-btn" style="padding:10px 14px" onclick="lvPrint()">🖨️ طباعة</button>` : ''}
@@ -10658,15 +10659,16 @@ function lvFilters(){
   const g = id => (document.getElementById(id) || {}).value || '';
   return { p_from: g('lvFrom'), p_to: g('lvTo'), p_mode: g('lvMode') || 'load', p_wh: g('lvWh') || null, p_q: g('lvQ').trim() || null, p_type: g('lvType') || null, p_status: g('lvStatus') || 'done' };
 }
+function lvDetOn(){ const e = document.getElementById('lvDet'); return !!(e && e.checked); }
 async function lvRun(){
   if (_lv.busy) return; const out = document.getElementById('lvOut'); const f = lvFilters();
   if (!f.p_from || !f.p_to) { out.innerHTML = '<div style="padding:20px;color:var(--error)">اختار من تاريخ وإلى تاريخ</div>'; return; }
   _lv.busy = true; out.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text-dim)">⏳ بنجهّز التقرير...</div>';
   try {
-    const r = await fetch(`${SB}/rest/v1/rpc/report_loaded_vehicles`, { method: 'POST', headers: HDR, body: JSON.stringify({ p_token: SESSION_TOKEN, ...f }) });
+    const r = await fetch(`${SB}/rest/v1/rpc/report_loaded_vehicles`, { method: 'POST', headers: HDR, body: JSON.stringify({ p_token: SESSION_TOKEN, p_from: f.p_from, p_to: f.p_to, p_mode: f.p_mode, p_wh: f.p_wh, p_q: f.p_q, p_type: f.p_type, p_status: f.p_status }) });
     const j = await r.json().catch(() => null);
     if (!r.ok || !j || !j.ok) { out.innerHTML = `<div style="padding:20px;color:var(--error)">${hcEsc((j && (j.message || j.hint)) || 'مقدرتش أجيب التقرير')}</div>`; return; }
-    _lv.data = j; _lv.f = f; out.innerHTML = lvHtml(j, f);
+    f.det = lvDetOn(); _lv.data = j; _lv.f = f; out.innerHTML = lvHtml(j, f);
   } catch (e) { out.innerHTML = '<div style="padding:20px;color:var(--error)">حصل خطأ فى الاتصال — جرّب تانى</div>'; }
   finally { _lv.busy = false; }
 }
@@ -10694,12 +10696,15 @@ function lvHtml(j, f){
   const itemTbl = `<div class="tbl-wrap" style="padding:12px;margin-top:12px"><div style="font-weight:700;color:var(--gold);margin-bottom:4px">🏍️ تفاصيل القطع بالموديل</div>
     <div style="font-size:11px;color:var(--text-dim);margin-bottom:8px">من قراءة أذونات الصرف — نفس الموديل ممكن يظهر فى أكتر من سطر لو اسمه اتكتب بأكتر من شكل${Number(cov.bookings_without) ? ` · <b>${cov.units_without} قطعة فى ${cov.bookings_without} حجز من غير تفاصيل موديل</b> (مش داخلة فى الجدول ده)` : ''}</div>
     ${bi.length ? `<table style="width:100%"><thead><tr><th>#</th><th style="text-align:right">الموديل</th><th>الصنف</th><th>حجوزات</th><th>قطع</th></tr></thead><tbody>${bi.map((x, i) => `<tr><td>${i + 1}</td><td style="text-align:right">${hcEsc(x.name)}</td><td>${hcEsc(x.type || '')}</td><td>${x.bookings}</td><td><b>${x.units}</b></td></tr>`).join('')}
-      <tr style="font-weight:800"><td colspan="4" style="text-align:right">إجمالى القطع المفصّلة</td><td>${bi.reduce((a, x) => a + (Number(x.units) || 0), 0)}</td></tr></tbody></table>` : '<div style="color:var(--text-dim);padding:8px">مفيش تفاصيل موديلات للحجوزات دى</div>'}</div>`;
+      <tr style="font-weight:800"><td colspan="4" style="text-align:right">إجمالى القطع المفصّلة</td><td>${bi.reduce((a, x) => a + (Number(x.units) || 0), 0)}</td></tr>
+      <tr><td colspan="3" style="text-align:right">قطع من غير تفاصيل موديل (فرق بين المحجوز والمفصّل فى الإذن)</td><td>${Number(cov.bookings_without) || 0}</td><td>${(Number(t.units) || 0) - bi.reduce((a, x) => a + (Number(x.units) || 0), 0)}</td></tr>
+      <tr style="font-weight:800;border-top:2px solid var(--gold)"><td colspan="4" style="text-align:right">الإجمالى (= إجمالى القطع فى التقرير)</td><td>${Number(t.units) || 0}</td></tr></tbody></table>` : '<div style="color:var(--text-dim);padding:8px">مفيش تفاصيل موديلات للحجوزات دى</div>'}</div>`;
   const more = (j.count > rows.length) ? `<div style="padding:10px;color:var(--error);font-size:12px">ظاهر أول ${rows.length} من ${j.count} حجز — ضيّق الفترة أو الفلاتر. الإجماليات تحت محسوبة على الكل.</div>` : '';
   const sumRow = (arr, key, lbl) => (arr || []).map(x => `<tr><td style="text-align:right">${hcEsc(x[key] || '—')}</td><td>${x.bookings}</td><td><b>${x.vehicles}</b></td><td><b>${x.units}</b></td></tr>`).join('') || `<tr><td colspan="4">—</td></tr>`;
-  const sumTbl = (title, arr, key) => `<div class="tbl-wrap" style="padding:12px;flex:1;min-width:260px"><div style="font-weight:700;color:var(--gold);margin-bottom:8px">${title}</div><table style="width:100%"><thead><tr><th style="text-align:right">${key === 'type' ? 'الصنف' : key === 'wh' ? 'المخزن' : 'الحالة'}</th><th>حجوزات</th><th>عربيات</th><th>قطع</th></tr></thead><tbody>${sumRow(key === 'status' ? (arr || []).map(x => ({ ...x, status: (LV_ST[x.status] || [x.status])[0] })) : arr, key)}</tbody></table></div>`;
+  const sumTbl = (title, arr, key) => `<div class="tbl-wrap" style="padding:12px;flex:1;min-width:260px"><div style="font-weight:700;color:var(--gold);margin-bottom:8px">${title}</div><table style="width:100%"><thead><tr><th style="text-align:right">${key === 'type' ? 'الصنف' : key === 'wh' ? 'المخزن' : 'الحالة'}</th><th>حجوزات</th><th>عربيات</th><th>قطع</th></tr></thead><tbody>${sumRow(key === 'status' ? (arr || []).map(x => ({ ...x, status: (LV_ST[x.status] || [x.status])[0] })) : arr, key)}
+      <tr style="font-weight:800;border-top:2px solid var(--gold)"><td style="text-align:right">الإجمالى</td><td>${(arr || []).reduce((a, x) => a + (Number(x.bookings) || 0), 0)}</td><td>${(arr || []).reduce((a, x) => a + (Number(x.vehicles) || 0), 0)}</td><td>${(arr || []).reduce((a, x) => a + (Number(x.units) || 0), 0)}</td></tr></tbody></table></div>`;
   return head + `<div class="tbl-wrap" style="overflow-x:auto"><table id="lvTbl"><thead><tr>${th.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>${more}
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', (j.by_type || []).slice().sort((a, b) => (Number(b.units) || 0) - (Number(a.units) || 0) || (Number(b.vehicles) || 0) - (Number(a.vehicles) || 0)), 'type')}${sumTbl('🏭 حسب المخزن', (j.by_wh || []).slice().sort((a, b) => (whIdx(a.wh) - whIdx(b.wh)) || String(a.wh || '').localeCompare(String(b.wh || ''), 'ar')), 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>${itemTbl}`;
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', (j.by_type || []).slice().sort((a, b) => (Number(b.units) || 0) - (Number(a.units) || 0) || (Number(b.vehicles) || 0) - (Number(a.vehicles) || 0)), 'type')}${sumTbl('🏭 حسب المخزن', (j.by_wh || []).slice().sort((a, b) => (whIdx(a.wh) - whIdx(b.wh)) || String(a.wh || '').localeCompare(String(b.wh || ''), 'ar')), 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>${f.det ? itemTbl : ''}`;
 }
 function lvExcel(){
   if (!can('rep-loaded', 'print')) { alert('معندكش صلاحية الطباعة والتصدير للتقرير ده'); return; }
@@ -10711,7 +10716,7 @@ function lvExcel(){
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'العربيات المحملة');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_type || []).slice().sort((a, b) => (Number(b.units) || 0) - (Number(a.units) || 0)).map(x => ({ 'الصنف': x.type, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'الأصناف');
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_wh || []).slice().sort((a, b) => _wi(a.wh) - _wi(b.wh)).map(x => ({ 'المخزن': x.wh, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'المخازن');
-  if ((j.by_item || []).length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(j.by_item.map(x => ({ 'الموديل': x.name, 'الصنف': x.type || '', 'حجوزات': x.bookings, 'قطع': x.units }))), 'الموديلات');
+  if (_lv.f.det && (j.by_item || []).length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(j.by_item.map(x => ({ 'الموديل': x.name, 'الصنف': x.type || '', 'حجوزات': x.bookings, 'قطع': x.units }))), 'الموديلات');
   XLSX.writeFile(wb, `العربيات_المحملة_${_lv.f.p_from}_${_lv.f.p_to}.xlsx`);
 }
 function lvPrint(){
@@ -10719,7 +10724,8 @@ function lvPrint(){
   const j = _lv.data; if (!j || !(j.rows || []).length) { alert('اعرض التقرير الأول'); return; }
   const w = window.open('', '_blank'); if (!w) { alert('المتصفح منع نافذة الطباعة — اسمح بالنوافذ المنبثقة'); return; }
   w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>تقرير العربيات المحملة</title><style>body{font-family:Cairo,Tahoma,sans-serif;color:#000;margin:14px;font-size:11px}h2{margin:0 0 6px;font-size:16px}table{border-collapse:collapse;width:100%;margin-bottom:10px}th,td{border:1px solid #777;padding:3px 5px;text-align:center}th{background:#eee}.tbl-wrap{padding:0!important;margin:0 0 10px!important}div{color:#000!important}b{color:#000!important}td,tr{color:#000!important}@page{size:A4 landscape;margin:8mm}</style></head><body><h2>🚚 تقرير العربيات المحملة</h2>${lvHtml(j, _lv.f)}</body></html>`);
-  w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 400);
+  w.document.close(); try { hrvWatch(w); } catch (e) {}
+  setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 700);
 }
 
 // ═══════════════════════════════════════════════════════════
