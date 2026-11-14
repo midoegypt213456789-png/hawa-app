@@ -11275,7 +11275,6 @@ const EGYPT = {
 };
 
 // 🗺️ القائمة الكاملة (مراكز / أقسام / أحياء / مدن / قرى) من جدول geo_places — بتتدمج على القائمة الأساسية، والأدمن يقدر يضيف أى مكان مستحدث
-const GEO_ADD = '__geo_add__';
 async function geoLoadPlaces(force){
   try {
     let data = null;
@@ -11294,35 +11293,108 @@ async function geoLoadPlaces(force){
   } catch (e) { console.warn('[geo]', e); }
 }
 geoLoadPlaces();
-document.addEventListener('focusin', e => {
-  const s = e.target;
-  if (!s || s.tagName !== 'SELECT' || (s.id !== 'ac-city' && s.id !== 'ce-city')) return;
-  if (s.querySelector('option[value="' + GEO_ADD + '"]')) return;
-  const o = document.createElement('option'); o.value = GEO_ADD; o.textContent = '➕ المكان مش موجود؟ ضيفه';
-  s.insertBefore(o, s.options[1] || null);
-});
-document.addEventListener('change', async e => {
-  const s = e.target;
-  if (!s || s.tagName !== 'SELECT' || s.value !== GEO_ADD) return;
-  s.value = '';
-  const govEl = document.getElementById(s.id === 'ac-city' ? 'ac-gov' : 'ce-gov');
-  const gov = govEl ? govEl.value : '';
-  if (!gov) { alert('اختار المحافظة الأول'); return; }
-  const name = (prompt('اسم المدينة / الحى / القرية الجديدة فى ' + gov + ':') || '').replace(/\s+/g, ' ').trim();
-  if (!name) return;
+// ➕ إضافة مكان مستحدث (أدمن) — بيتسجل فى geo_places ويظهر للكل
+async function geoAddPlace(gov, name){
+  name = String(name || '').replace(/\s+/g, ' ').trim();
+  if (!gov) { alert('اختار المحافظة الأول'); return null; }
+  if (name.length < 2) return null;
   try {
     const r = await fetch(`${SB}/rest/v1/rpc/geo_place_add`, { method: 'POST', headers: HDR, body: JSON.stringify({ p_token: SESSION_TOKEN, p_gov: gov, p_name: name }) });
     const j = await r.json().catch(() => null);
-    if (!r.ok || !j || !j.ok) { alert((j && j.message) || 'مقدرتش أضيف المكان'); return; }
+    if (!r.ok || !j || !j.ok) { alert((j && j.message) || 'مقدرتش أضيف المكان'); return null; }
     const nm = j.name || name;
     if (!EGYPT[gov]) EGYPT[gov] = [];
     if (!EGYPT[gov].includes(nm)) EGYPT[gov].push(nm);
     try { localStorage.removeItem('hawa_geo_v1'); } catch (_) {}
-    if (![...s.options].some(o => o.value === nm)) { const o = document.createElement('option'); o.value = nm; o.textContent = nm; s.appendChild(o); }
-    s.value = nm;
-  } catch (err) { alert('مقدرتش أضيف المكان — جرّب تانى'); }
-});
+    return nm;
+  } catch (err) { alert('مقدرتش أضيف المكان — جرّب تانى'); return null; }
+}
 
+// 🔎 كومبوبوكس البحث الموحّد (ستاندرد السيستم): اكتب يفلتر، أو اختار من القايمة.
+// بيركب على أى <select> موجود من غير ما يغيّر الكود اللى بيقرا/يكتب قيمته: hcomboEnhance('id', { onCreate })
+const HCOMBO_MAX = 60;
+function hcNorm(x){ return String(x == null ? '' : x).toLowerCase().replace(/[ً-ْـ]/g, '').replace(/[أإآٱ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/ؤ/g, 'و').replace(/ئ/g, 'ي').replace(/\s+/g, ' ').trim(); }
+function hcEsc(x){ return String(x == null ? '' : x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function hcomboEnhance(id, opts){
+  const sel = document.getElementById(id);
+  if (!sel || sel.__hc) return;
+  opts = opts || {};
+  if (!document.getElementById('hcombo-css')) {
+    const st = document.createElement('style'); st.id = 'hcombo-css';
+    st.textContent = '.hcombo{position:relative}.hcombo-list{display:none;position:absolute;top:calc(100% + 4px);right:0;left:0;z-index:400;background:var(--dark2);border:1px solid var(--border);border-radius:10px;max-height:260px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}.hcombo-item{padding:9px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(42,42,42,.5)}.hcombo-item:last-child{border-bottom:none}.hcombo-item:hover,.hcombo-item.on{background:rgba(201,168,76,.12);color:var(--gold)}.hcombo-note{padding:8px 12px;font-size:11px;color:var(--text-dim)}.hcombo-add{color:var(--gold);font-weight:700}';
+    document.head.appendChild(st);
+  }
+  const wrap = document.createElement('div'); wrap.className = 'hcombo';
+  const inp = document.createElement('input'); inp.type = 'text'; inp.autocomplete = 'off'; inp.className = sel.className || '';
+  const list = document.createElement('div'); list.className = 'hcombo-list';
+  sel.parentNode.insertBefore(wrap, sel); wrap.appendChild(inp); wrap.appendChild(list); wrap.appendChild(sel);
+  sel.style.display = 'none';
+  let shown = []; let cur = -1;
+  const real = () => [...sel.options].filter(o => o.value !== '');
+  const sync = () => {
+    const o = sel.options[sel.selectedIndex];
+    inp.value = (o && o.value !== '') ? o.textContent : '';
+    const ph = sel.options[0] && sel.options[0].value === '' ? sel.options[0].textContent : '';
+    inp.placeholder = real().length ? '🔎 اكتب للبحث أو اختار' : (ph || '-- اختر --');
+    inp.disabled = sel.disabled;
+  };
+  const close = () => { list.style.display = 'none'; cur = -1; };
+  const pick = v => { sel.value = v; close(); sel.dispatchEvent(new Event('change', { bubbles: true })); };
+  const render = () => {
+    const t = hcNorm(inp.value); const all = real();
+    const selTxt = sel.options[sel.selectedIndex] && sel.value !== '' ? hcNorm(sel.options[sel.selectedIndex].textContent) : null;
+    const q = (selTxt !== null && t === selTxt) ? '' : t;   // لو المكتوب هو المختار → اعرض الكل
+    const m = q ? all.filter(o => hcNorm(o.textContent).includes(q)) : all;
+    m.sort((a, b) => q ? (hcNorm(b.textContent).startsWith(q) - hcNorm(a.textContent).startsWith(q)) : 0);
+    shown = m.slice(0, HCOMBO_MAX); cur = -1;
+    let h = shown.map((o, i) => `<div class="hcombo-item" data-i="${i}">${hcEsc(o.textContent)}</div>`).join('');
+    if (m.length > shown.length) h += `<div class="hcombo-note">ظاهر ${shown.length} من ${m.length} — اكتب حروف أكتر عشان تضيّق البحث</div>`;
+    if (!all.length) h = `<div class="hcombo-note">${hcEsc((sel.options[0] && sel.options[0].textContent) || 'مفيش اختيارات')}</div>`;
+    else if (q && !m.length) h = `<div class="hcombo-note">مفيش نتيجة بالاسم ده</div>`;
+    const typed = inp.value.replace(/\s+/g, ' ').trim();
+    if (opts.onCreate && typed.length >= 2 && q && !all.some(o => hcNorm(o.textContent) === q)) h += `<div class="hcombo-item hcombo-add" data-add="1">➕ ضيف «${hcEsc(typed)}» كمكان جديد</div>`;
+    list.innerHTML = h; list.style.display = 'block';
+  };
+  const create = async () => {
+    const typed = inp.value.replace(/\s+/g, ' ').trim(); close();
+    const nm = await opts.onCreate(typed, sel);
+    if (!nm) { sync(); return; }
+    if (![...sel.options].some(o => o.value === nm)) { const o = document.createElement('option'); o.value = nm; o.textContent = nm; sel.appendChild(o); }
+    pick(nm);
+  };
+  inp.addEventListener('focus', () => { inp.select(); render(); });
+  inp.addEventListener('input', render);
+  inp.addEventListener('keydown', ev => {
+    const items = list.querySelectorAll('.hcombo-item');
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      ev.preventDefault(); if (list.style.display !== 'block') { render(); return; }
+      if (!items.length) return;
+      cur = (cur + (ev.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length;
+      items.forEach((el, i) => el.classList.toggle('on', i === cur)); items[cur].scrollIntoView({ block: 'nearest' });
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault(); const el = items[cur >= 0 ? cur : 0]; if (el && list.style.display === 'block') el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    } else if (ev.key === 'Escape') { close(); sync(); }
+  });
+  inp.addEventListener('blur', () => setTimeout(() => { close(); sync(); }, 150));
+  list.addEventListener('mousedown', ev => {
+    const el = ev.target.closest('.hcombo-item'); if (!el) return; ev.preventDefault();
+    if (el.dataset.add) { create(); return; }
+    const o = shown[Number(el.dataset.i)]; if (o) pick(o.value);
+  });
+  // أى كود قديم بيعمل sel.value = x أو بيعيد بناء الاختيارات → الخانة تتحدّث لوحدها
+  const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  Object.defineProperty(sel, 'value', { configurable: true, get(){ return d.get.call(this); }, set(v){ d.set.call(this, v); sync(); } });
+  new MutationObserver(sync).observe(sel, { childList: true, attributes: true, attributeFilter: ['disabled'] });
+  sel.addEventListener('change', sync);
+  sel.__hc = { sync, inp };
+  sync();
+}
+function hcomboInitGeo(){
+  hcomboEnhance('ac-gov'); hcomboEnhance('ce-gov');
+  hcomboEnhance('ac-city', { onCreate: name => geoAddPlace((document.getElementById('ac-gov') || {}).value, name) });
+  hcomboEnhance('ce-city', { onCreate: name => geoAddPlace((document.getElementById('ce-gov') || {}).value, name) });
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', hcomboInitGeo); else setTimeout(hcomboInitGeo, 0);
 
 // Init admin gov dropdown — يأخد region filter (اختيارى)
 // لو activeRegion مختار → يظهر فقط محافظات الـ region
