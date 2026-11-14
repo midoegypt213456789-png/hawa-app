@@ -10699,7 +10699,7 @@ function lvHtml(j, f){
   const sumRow = (arr, key, lbl) => (arr || []).map(x => `<tr><td style="text-align:right">${hcEsc(x[key] || '—')}</td><td>${x.bookings}</td><td><b>${x.vehicles}</b></td><td><b>${x.units}</b></td></tr>`).join('') || `<tr><td colspan="4">—</td></tr>`;
   const sumTbl = (title, arr, key) => `<div class="tbl-wrap" style="padding:12px;flex:1;min-width:260px"><div style="font-weight:700;color:var(--gold);margin-bottom:8px">${title}</div><table style="width:100%"><thead><tr><th style="text-align:right">${key === 'type' ? 'الصنف' : key === 'wh' ? 'المخزن' : 'الحالة'}</th><th>حجوزات</th><th>عربيات</th><th>قطع</th></tr></thead><tbody>${sumRow(key === 'status' ? (arr || []).map(x => ({ ...x, status: (LV_ST[x.status] || [x.status])[0] })) : arr, key)}</tbody></table></div>`;
   return head + `<div class="tbl-wrap" style="overflow-x:auto"><table id="lvTbl"><thead><tr>${th.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>${more}
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', j.by_type, 'type')}${sumTbl('🏭 حسب المخزن', j.by_wh, 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>${itemTbl}`;
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">${sumTbl('📦 تفاصيل الأصناف', (j.by_type || []).slice().sort((a, b) => (Number(b.units) || 0) - (Number(a.units) || 0) || (Number(b.vehicles) || 0) - (Number(a.vehicles) || 0)), 'type')}${sumTbl('🏭 حسب المخزن', (j.by_wh || []).slice().sort((a, b) => (whIdx(a.wh) - whIdx(b.wh)) || String(a.wh || '').localeCompare(String(b.wh || ''), 'ar')), 'wh')}${f.p_status === 'all' || f.p_status === 'notdone' ? sumTbl('📌 حسب الحالة', j.by_status, 'status') : ''}</div>${itemTbl}`;
 }
 function lvExcel(){
   if (!can('rep-loaded', 'print')) { alert('معندكش صلاحية الطباعة والتصدير للتقرير ده'); return; }
@@ -10709,8 +10709,8 @@ function lvExcel(){
     'تاريخ الحجز': r.booked || '', 'ميعاد الحجز': r.sched || '', 'التحميل الفعلى': r.status === 'تم التنفيذ' ? (r.exec || (r.sched + ' (تقديرى)')) : '', 'نفّذه': r.by || (r.auto ? 'تلقائى من الإذن' : ''), 'الحالة': (LV_ST[r.status] || [r.status])[0], 'رقم الإذن': r.permit || '' }));
   const t = j.totals || {}; rows.push({ '#': '', 'رقم الحجز': 'الإجمالى', 'التاجر': `${t.bookings} حجز · ${t.clients} تاجر`, 'عدد العربيات': t.vehicles, 'عدد القطع': t.units });
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'العربيات المحملة');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_type || []).map(x => ({ 'الصنف': x.type, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'الأصناف');
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_wh || []).map(x => ({ 'المخزن': x.wh, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'المخازن');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_type || []).slice().sort((a, b) => (Number(b.units) || 0) - (Number(a.units) || 0)).map(x => ({ 'الصنف': x.type, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'الأصناف');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((j.by_wh || []).slice().sort((a, b) => _wi(a.wh) - _wi(b.wh)).map(x => ({ 'المخزن': x.wh, 'حجوزات': x.bookings, 'عربيات': x.vehicles, 'قطع': x.units }))), 'المخازن');
   if ((j.by_item || []).length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(j.by_item.map(x => ({ 'الموديل': x.name, 'الصنف': x.type || '', 'حجوزات': x.bookings, 'قطع': x.units }))), 'الموديلات');
   XLSX.writeFile(wb, `العربيات_المحملة_${_lv.f.p_from}_${_lv.f.p_to}.xlsx`);
 }
