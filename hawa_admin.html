@@ -11274,6 +11274,55 @@ const EGYPT = {
   "جنوب سيناء": ["الطور","شرم الشيخ","دهب","نويبع","طابا","أبو رديس","رأس سدر","سانت كاترين"]
 };
 
+// 🗺️ القائمة الكاملة (مراكز / أقسام / أحياء / مدن / قرى) من جدول geo_places — بتتدمج على القائمة الأساسية، والأدمن يقدر يضيف أى مكان مستحدث
+const GEO_ADD = '__geo_add__';
+async function geoLoadPlaces(force){
+  try {
+    let data = null;
+    if (!force) { try { const c = JSON.parse(localStorage.getItem('hawa_geo_v1') || 'null'); if (c && Date.now() - c.at < 6 * 3600e3) data = c.d; } catch (_) {} }
+    if (!data) {
+      const r = await fetch(`${SB}/rest/v1/rpc/geo_cities_by_gov`, { method: 'POST', headers: HDR, body: '{}' });
+      if (!r.ok) return;
+      data = await r.json();
+      try { localStorage.setItem('hawa_geo_v1', JSON.stringify({ at: Date.now(), d: data })); } catch (_) {}
+    }
+    if (!data || typeof data !== 'object') return;
+    Object.keys(data).forEach(g => {
+      const seen = new Set();
+      EGYPT[g] = (EGYPT[g] || []).concat(data[g] || []).filter(n => n && !seen.has(n) && seen.add(n));
+    });
+  } catch (e) { console.warn('[geo]', e); }
+}
+geoLoadPlaces();
+document.addEventListener('focusin', e => {
+  const s = e.target;
+  if (!s || s.tagName !== 'SELECT' || (s.id !== 'ac-city' && s.id !== 'ce-city')) return;
+  if (s.querySelector('option[value="' + GEO_ADD + '"]')) return;
+  const o = document.createElement('option'); o.value = GEO_ADD; o.textContent = '➕ المكان مش موجود؟ ضيفه';
+  s.insertBefore(o, s.options[1] || null);
+});
+document.addEventListener('change', async e => {
+  const s = e.target;
+  if (!s || s.tagName !== 'SELECT' || s.value !== GEO_ADD) return;
+  s.value = '';
+  const govEl = document.getElementById(s.id === 'ac-city' ? 'ac-gov' : 'ce-gov');
+  const gov = govEl ? govEl.value : '';
+  if (!gov) { alert('اختار المحافظة الأول'); return; }
+  const name = (prompt('اسم المدينة / الحى / القرية الجديدة فى ' + gov + ':') || '').replace(/\s+/g, ' ').trim();
+  if (!name) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/geo_place_add`, { method: 'POST', headers: HDR, body: JSON.stringify({ p_token: SESSION_TOKEN, p_gov: gov, p_name: name }) });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || !j.ok) { alert((j && j.message) || 'مقدرتش أضيف المكان'); return; }
+    const nm = j.name || name;
+    if (!EGYPT[gov]) EGYPT[gov] = [];
+    if (!EGYPT[gov].includes(nm)) EGYPT[gov].push(nm);
+    try { localStorage.removeItem('hawa_geo_v1'); } catch (_) {}
+    if (![...s.options].some(o => o.value === nm)) { const o = document.createElement('option'); o.value = nm; o.textContent = nm; s.appendChild(o); }
+    s.value = nm;
+  } catch (err) { alert('مقدرتش أضيف المكان — جرّب تانى'); }
+});
+
 
 // Init admin gov dropdown — يأخد region filter (اختيارى)
 // لو activeRegion مختار → يظهر فقط محافظات الـ region
