@@ -4025,7 +4025,7 @@ async function buildCal() {
         if (!rule.vehicle_types.includes(bk.vehicle)) continue;
       }
       // فحص التاريخ
-      if (rule.type === 'weekly' && rule.day_of_week === dow) return true;
+      if (rule.type === 'weekly' && rule.day_of_week === dow && !(rule.effective_from && ds < rule.effective_from)) return true;
       if (rule.type === 'date' && rule.start_date === ds) return true;
       if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) return true;
     }

@@ -4329,6 +4329,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
           <label>نوع الإجازة</label>
           <select id="rule-type" onchange="onRuleTypeChange()">
             <option value="weekly">📅 يوم أسبوعي ثابت (كل أسبوع)</option>
+            <option value="weekrange">🔁 أيام أسبوع متكررة (من يوم ليوم — كل أسبوع)</option>
             <option value="range">📆 فترة من تاريخ لتاريخ</option>
             <option value="date">🗓️ يوم واحد محدد</option>
           </select>
@@ -4345,6 +4346,42 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
             <option value="5">الجمعة</option>
             <option value="6">السبت</option>
           </select>
+        </div>
+
+        <div class="fg" id="rule-wr-wrap" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label>من يوم</label>
+              <select id="rule-wr-from" onchange="ruleWrPreview()">
+            <option value="0">الأحد</option>
+            <option value="1">الاثنين</option>
+            <option value="2">الثلاثاء</option>
+            <option value="3">الأربعاء</option>
+            <option value="4">الخميس</option>
+            <option value="5">الجمعة</option>
+            <option value="6">السبت</option>
+              </select>
+            </div>
+            <div>
+              <label>إلى يوم</label>
+              <select id="rule-wr-to" onchange="ruleWrPreview()">
+            <option value="0">الأحد</option>
+            <option value="1">الاثنين</option>
+            <option value="2">الثلاثاء</option>
+            <option value="3">الأربعاء</option>
+            <option value="4">الخميس</option>
+            <option value="5">الجمعة</option>
+            <option value="6">السبت</option>
+              </select>
+            </div>
+          </div>
+          <div id="rule-wr-preview" style="font-size:12px;color:#9fc7ee;margin-top:6px;line-height:1.7"></div>
+        </div>
+
+        <div class="fg" id="rule-from-wrap" style="display:none">
+          <label id="rule-from-label">يبدأ التطبيق من تاريخ</label>
+          <input type="date" id="rule-from-date" onchange="ruleWrPreview()">
+          <div style="font-size:11px;color:var(--text-dim);margin-top:4px" id="rule-from-hint">قبل التاريخ ده القاعدة مش بتتطبق</div>
         </div>
 
         <div class="fg" id="rule-start-wrap" style="display:none">
@@ -16069,7 +16106,7 @@ async function loadRules(){
     let html='<table><thead><tr><th>النوع</th><th>التفاصيل</th><th>🕐 الساعات</th><th>📦 المخازن</th><th>🚛 الأقسام</th><th>السبب</th><th>إجراءات</th></tr></thead><tbody>';
     schedRules.forEach(rule=>{
       let details='';
-      if(rule.type==='weekly') details='كل '+dayNames[rule.day_of_week];
+      if(rule.type==='weekly') details='كل '+dayNames[rule.day_of_week]+((rule.effective_from && rule.start_hour==null)?`<div style="font-size:10px;color:#9fc7ee;font-weight:400;margin-top:3px">من ${rule.effective_from}</div>`:'');
       else if(rule.type==='date') details=rule.start_date;
       else if(rule.type==='range') details=rule.start_date+' → '+rule.end_date;
 
@@ -16203,6 +16240,10 @@ async function openRuleModal(){
   document.getElementById('rule-end-hour').value='';
   document.getElementById('rule-effective-from').value='';
   document.getElementById('rule-effective-wrap').style.display='none';
+  document.getElementById('rule-wr-from').value='6';
+  document.getElementById('rule-wr-to').value='4';
+  document.getElementById('rule-from-date').value='';
+  { const o=document.querySelector('#rule-type option[value="weekrange"]'); if(o) o.disabled=false; }
   onRuleTypeChange();
   // حمّل المخازن والأنواع كـ checkboxes
   await loadRuleScopeOptions();
@@ -16235,6 +16276,8 @@ async function openEditRuleModal(ruleId){
   document.getElementById('rule-start-hour').value = rule.start_hour != null ? String(rule.start_hour) : '';
   document.getElementById('rule-end-hour').value   = rule.end_hour != null ? String(rule.end_hour) : '';
   document.getElementById('rule-effective-from').value = rule.effective_from || '';
+  document.getElementById('rule-from-date').value = rule.effective_from || '';
+  { const o=document.querySelector('#rule-type option[value="weekrange"]'); if(o) o.disabled=true; }
 
   onRuleTypeChange(); // يـ show/hide الـ wraps حسب الـ type
 
@@ -16361,15 +16404,46 @@ function syncScopeMaster(masterId, itemPrefix){
 
 function onRuleTypeChange(){
   const type=document.getElementById('rule-type').value;
+  const wr = type==='weekrange';
   document.getElementById('rule-dow-wrap').style.display=type==='weekly'?'block':'none';
-  document.getElementById('rule-start-wrap').style.display=type!=='weekly'?'block':'none';
+  document.getElementById('rule-wr-wrap').style.display=wr?'block':'none';
+  document.getElementById('rule-start-wrap').style.display=(type==='range'||type==='date')?'block':'none';
   document.getElementById('rule-end-wrap').style.display=type==='range'?'block':'none';
   document.getElementById('rule-start-label').textContent=type==='date'?'التاريخ':'من تاريخ';
+  if(wr && !document.getElementById('rule-from-date').value) document.getElementById('rule-from-date').value = new Date(Date.now()+2*3600*1000).toISOString().slice(0,10);
   recomputeRuleEffectiveFrom();
+  ruleFromWrapSync();
+  ruleWrPreview();
+}
+
+// 🔁 أيام الأسبوع من يوم ليوم (بتلف على الأسبوع: السبت→الخميس = سبت، أحد، … خميس)
+function ruleWrDays(){
+  const a=parseInt(document.getElementById('rule-wr-from').value), b=parseInt(document.getElementById('rule-wr-to').value);
+  const out=[]; let d=a;
+  for(let i=0;i<7;i++){ out.push(d); if(d===b) break; d=(d+1)%7; }
+  return out;
+}
+function ruleWrPreview(){
+  const el=document.getElementById('rule-wr-preview'); if(!el) return;
+  if(document.getElementById('rule-type').value!=='weekrange'){ el.innerHTML=''; return; }
+  const names=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const days=ruleWrDays(), from=document.getElementById('rule-from-date').value;
+  el.innerHTML = `هيتقفل كل أسبوع: <b style="color:var(--gold-light)">${days.map(d=>names[d]).join('، ')}</b> (${days.length} ${days.length>2&&days.length<11?'أيام':'يوم'})` +
+    (from?` — بداية من <b style="color:var(--gold-light)">${from}</b>`:'') +
+    (days.length===7?'<br><span style="color:#E05555">⚠️ كده الأسبوع كله مقفول</span>':'');
+}
+// خانة «يبدأ التطبيق من تاريخ»: لازمة للأيام المتكررة، واختيارية لليوم الأسبوعى (يوم كامل)
+function ruleFromWrapSync(){
+  const type=document.getElementById('rule-type').value;
+  const sh=document.getElementById('rule-start-hour').value.trim(), eh=document.getElementById('rule-end-hour').value.trim();
+  const show = type==='weekrange' || (type==='weekly' && sh==='' && eh==='');
+  document.getElementById('rule-from-wrap').style.display = show?'block':'none';
+  document.getElementById('rule-from-label').textContent = type==='weekrange' ? 'يبدأ التطبيق من تاريخ' : 'يبدأ التطبيق من تاريخ (اختيارى)';
 }
 
 // 🆕 يحسب أقرب تاريخ آمن لتطبيق قاعدة hour-range (weekly) بدون orphan bookings
 async function recomputeRuleEffectiveFrom(){
+  try{ ruleFromWrapSync(); }catch(_){}
   const wrap = document.getElementById('rule-effective-wrap');
   const dateInput = document.getElementById('rule-effective-from');
   const hint = document.getElementById('rule-effective-hint');
@@ -16462,11 +16536,20 @@ function applyAutoEffectiveFrom(){
 }
 
 async function saveRule(){
-  const type=document.getElementById('rule-type').value;
+  const uiType=document.getElementById('rule-type').value;
+  const isWR = uiType==='weekrange';
+  const type = isWR ? 'weekly' : uiType;
   const reason=document.getElementById('rule-reason').value.trim();
   const body={type,reason:reason||null};
+  const fromDate = document.getElementById('rule-from-date').value;
+  let wrDays = null;
 
-  if(type==='weekly'){
+  if(isWR){
+    if(editingRuleId != null){ alert('الأيام المتكررة بتتضاف كقاعدة جديدة — عدّل كل يوم لوحده من الجدول'); return; }
+    wrDays = ruleWrDays();
+    if(!fromDate){ alert('❌ اختار تاريخ «يبدأ التطبيق من»'); return; }
+    if(wrDays.length===7 && !confirm('كده كل أيام الأسبوع هتبقى إجازة من '+fromDate+' — متأكد؟')) return;
+  } else if(type==='weekly'){
     body.day_of_week=parseInt(document.getElementById('rule-dow').value);
   } else if(type==='date'){
     const d=document.getElementById('rule-start').value;
@@ -16506,7 +16589,7 @@ async function saveRule(){
   if(shRaw === '' && ehRaw === ''){
     body.start_hour = null;
     body.end_hour   = null;
-    body.effective_from = null;
+    body.effective_from = (type==='weekly' && fromDate) ? fromDate : null;
   } else if(shRaw === '' || ehRaw === ''){
     alert('❌ لازم تحدد الساعتين الاتنين، أو سيبهم فاضيين الاتنين');
     return;
@@ -16521,7 +16604,7 @@ async function saveRule(){
 
     // 📅 effective_from: للـ weekly+hours rules فقط
     if(body.type === 'weekly'){
-      const ef = document.getElementById('rule-effective-from').value;
+      const ef = isWR ? fromDate : document.getElementById('rule-effective-from').value;
       if(!ef){
         alert('❌ اختار "يطبق من تاريخ" أو اضغط "احسب تلقائياً"');
         return;
@@ -16534,10 +16617,33 @@ async function saveRule(){
     }
   }
 
+  // 🔁 الأيام المتكررة = قاعدة أسبوعية لكل يوم، بنفس السبب والنطاق وتاريخ البداية
+  const bodies = isWR ? wrDays.map(d => ({...body, day_of_week:d})) : [body];
+
+  // ⚠️ يوم كامل (قاعدة جديدة): نبّه لو فيه حجوزات قيد الانتظار فى الأيام اللى هتتقفل
+  if(body.start_hour == null && type==='weekly' && editingRuleId == null){
+    try{
+      const start = body.effective_from && body.effective_from > new Date().toISOString().slice(0,10) ? body.effective_from : new Date().toISOString().slice(0,10);
+      const rr = await fetch(`${SB}/rest/v1/bookings?status=eq.${encodeURIComponent('قيد الانتظار')}&loading_date=gte.${start}&select=loading_date,warehouse,vehicle_type&limit=5000`, {headers:HDR});
+      if(rr.ok){
+        const dset = new Set(bodies.map(b => b.day_of_week));
+        const hit = (await rr.json()).filter(b =>
+          dset.has(new Date(b.loading_date+'T12:00:00').getDay()) &&
+          (!body.warehouses || body.warehouses.includes(b.warehouse)) &&
+          (!body.vehicle_types || body.vehicle_types.includes(b.vehicle_type)));
+        if(hit.length){
+          const ds = [...new Set(hit.map(b => b.loading_date))].sort();
+          if(!confirm(`⚠️ فيه ${hit.length} حجز قيد الانتظار فى أيام هتتقفل (${ds.slice(0,4).join('، ')}${ds.length>4?' …':''}).\n\nالحجوزات دى هتفضل زى ما هى — القاعدة بتمنع الحجز الجديد بس.\nتكمل؟`)) return;
+        }
+      }
+    }catch(_){}
+  }
+
   // 🛡️ Orphan check: لو فيه ساعات → افحص حجوزات موجودة فى الـ slots دى
   if(body.start_hour != null){
     try{
-      const conflicts = await findRuleOrphanBookings(body);
+      let conflicts = [];
+      for(const b of bodies) conflicts = conflicts.concat(await findRuleOrphanBookings(b));
       if(conflicts.length){
         const sample = conflicts.slice(0,3).map(c => `${c.loading_date} ${c.time_slot} (${c.warehouse})`).join('، ');
         const more = conflicts.length > 3 ? ` وكمان ${conflicts.length - 3} حجز` : '';
@@ -16569,7 +16675,7 @@ async function saveRule(){
       r = await fetch(`${SB}/rest/v1/schedule_rules`, {
         method:'POST',
         headers:{...HDR,'Prefer':'return=minimal'},
-        body:JSON.stringify(body)
+        body:JSON.stringify(isWR ? bodies : body)
       });
     }
     if(!r.ok){
