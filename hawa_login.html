@@ -2499,7 +2499,7 @@ async function loadVehicleTypesData(force=false){
   try{
     // الجلب من الـ join table مع join للـ vehicle_types catalog
     const r = await fetch(
-      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
+      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,pending_capacity_per_hour,pending_effective_from,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
       {headers: HDR}
     );
     const data = await r.json();
@@ -2511,6 +2511,8 @@ async function loadVehicleTypesData(force=false){
         name: x.vehicle_types.name,
         icon: x.vehicle_types.icon,
         capacity_per_hour: x.capacity_per_hour,
+        pending_capacity_per_hour: x.pending_capacity_per_hour,
+        pending_effective_from: x.pending_effective_from,
         display_order: x.display_order,
         warehouse_name: x.warehouses.name,
         warehouse_id: x.warehouse_id
@@ -2831,6 +2833,18 @@ async function goStep2() {
   if (success) go(2);
 }
 
+// ⏱️ معدل التحميل الساعى فى تاريخ معيّن (بيحترم التغيير المجدول «يبدأ من تاريخ»)
+function bkCapOn(ds){
+  try{
+    const v = (allVehicleTypes || []).find(x => x.name === bk.vehicle && x.warehouse_name === bk.warehouse);
+    if (v) {
+      if (v.pending_capacity_per_hour != null && v.pending_effective_from && ds && ds >= v.pending_effective_from) return v.pending_capacity_per_hour;
+      return v.capacity_per_hour || bk.cap;
+    }
+  }catch(_){}
+  return bk.cap;
+}
+
 function pickVehicle(v, cap, el) {
   bk.vehicle = v; bk.cap = cap;
   document.querySelectorAll('#s2 .opt').forEach(o => o.classList.remove('sel'));
@@ -2943,7 +2957,7 @@ async function buildCal() {
     const dayData = bookingsByDate[ds] || {};
     let fullSlots = 0;
     for (const slot of availableSlots) {
-      if ((dayData[slot] || 0) >= bk.cap) fullSlots++;
+      if ((dayData[slot] || 0) >= bkCapOn(ds)) fullSlots++;
     }
     return fullSlots >= availableSlots.length;
   }
@@ -3077,7 +3091,7 @@ async function loadSlots() {
     let availableCount = 0;
     slots.forEach(sl => {
       const used = totals[sl] || 0;
-      const rem  = bk.cap - used;
+      const rem  = bkCapOn(bk.dateStr) - used;
       // 🚫 Hide full slots completely (used to show "ممتلئ ❌")
       if (rem <= 0) return;
       availableCount++;

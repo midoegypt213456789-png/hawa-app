@@ -5903,6 +5903,14 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
     <div class="fg">
       <label>⏱️ معدل التحميل ساعى</label>
       <div class="iw"><span class="ic">⏱️</span><input type="number" id="editWVT-capacity" min="1" max="50"></div>
+      <div id="editWVT-cur" style="font-size:11px;color:var(--text-dim);margin-top:5px"></div>
+    </div>
+
+    <div class="fg">
+      <label>📅 التعديل يبدأ من تاريخ</label>
+      <div class="iw"><span class="ic">📅</span><input type="date" id="editWVT-from"></div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:5px;line-height:1.7">تاريخ النهارده = يتطبق فوراً. تاريخ بعد كده = المعدل الحالى يفضل شغال لحد التاريخ ده، والأيام من بعده تتحسب بالمعدل الجديد.</div>
+      <div id="editWVT-pend" style="display:none;margin-top:8px;padding:8px 10px;border:1px solid rgba(74,144,217,0.35);border-radius:9px;background:rgba(74,144,217,0.08);font-size:12px;color:#9fc7ee"></div>
     </div>
 
     <div class="fg">
@@ -15612,6 +15620,17 @@ async function loadVehicleTypes(){
     _vtState.warehouses = await r1.json();
     _vtState.types      = await r2.json();
     _vtState.wvts       = await r3.json();
+    // 📅 تغيير مجدول وصل تاريخه → يبقى هو المعدل الحالى
+    try{
+      const tdy = wvtToday();
+      for(const x of _vtState.wvts){
+        if(x.pending_capacity_per_hour != null && x.pending_effective_from && x.pending_effective_from <= tdy){
+          const pr = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${x.id}`, {method:'PATCH', headers:{...HDR,'Prefer':'return=minimal'},
+            body: JSON.stringify({capacity_per_hour: x.pending_capacity_per_hour, pending_capacity_per_hour: null, pending_effective_from: null})});
+          if(pr.ok){ x.capacity_per_hour = x.pending_capacity_per_hour; x.pending_capacity_per_hour = null; x.pending_effective_from = null; }
+        }
+      }
+    }catch(_){}
     const bookings      = await r4.json();
 
     // Build (warehouse_name|vehicle_type_name) → count
@@ -15710,6 +15729,7 @@ function renderVTTabBody(){
           <div class="vt-card__name">${r.type.name}</div>
           <div class="vt-card__meta">
             <span>⏱️ <b>${r.capacity_per_hour}</b> عربية/ساعة</span>
+            ${(r.pending_capacity_per_hour != null && r.pending_effective_from) ? `<span style="color:#9fc7ee">📅 من ${r.pending_effective_from}: <b>${r.pending_capacity_per_hour}</b> عربية/ساعة</span>` : ''}
             <span>🔢 ترتيب: <b>${r.display_order || 0}</b></span>
             ${!r.is_active ? '<span style="color:#e88080">🚫 معطّل</span>' : ''}
             ${usage}
@@ -15856,6 +15876,17 @@ async function confirmAddToWarehouse(){
   }
 }
 
+function wvtToday(){ return new Date(Date.now() + 2*3600*1000).toISOString().slice(0,10); }
+async function cancelWVTPending(){
+  if(_editWVTId == null) return;
+  if(!confirm('تلغى التغيير المجدول وتسيب المعدل الحالى زى ما هو؟')) return;
+  const res = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${_editWVTId}`, {method:'PATCH', headers:{...HDR,'Prefer':'return=minimal'},
+    body: JSON.stringify({pending_capacity_per_hour: null, pending_effective_from: null})});
+  if(!res.ok){ alert('❌ فشل الإلغاء'); return; }
+  closeModal('editWVTModal');
+  await loadVehicleTypes();
+}
+
 // ─── Edit modal ───
 function openEditWVTModal(wvtId){
   const wvt = _vtState.wvts.find(x => x.id === wvtId);
@@ -15866,7 +15897,15 @@ function openEditWVTModal(wvtId){
   document.getElementById('editWVT-icon').textContent = type.icon || '🚛';
   document.getElementById('editWVT-name').textContent = type.name;
   document.getElementById('editWVT-wh').textContent   = `فى مخزن: ${w.name}`;
-  document.getElementById('editWVT-capacity').value   = wvt.capacity_per_hour;
+  const hasPend = wvt.pending_capacity_per_hour != null && wvt.pending_effective_from;
+  document.getElementById('editWVT-capacity').value   = hasPend ? wvt.pending_capacity_per_hour : wvt.capacity_per_hour;
+  document.getElementById('editWVT-cur').innerHTML    = `المعدل الشغال دلوقتى: <b style="color:var(--gold-light)">${wvt.capacity_per_hour}</b> عربية/ساعة`;
+  const fromEl = document.getElementById('editWVT-from');
+  fromEl.min = wvtToday();
+  fromEl.value = hasPend ? wvt.pending_effective_from : wvtToday();
+  const pendEl = document.getElementById('editWVT-pend');
+  pendEl.style.display = hasPend ? 'block' : 'none';
+  pendEl.innerHTML = hasPend ? `📅 فيه تغيير مجدول: <b>${wvt.pending_capacity_per_hour}</b> عربية/ساعة من <b>${wvt.pending_effective_from}</b> <button type="button" onclick="cancelWVTPending()" style="margin-inline-start:8px;background:none;border:1px solid rgba(224,85,85,0.5);color:#E05555;border-radius:7px;padding:2px 9px;cursor:pointer;font-family:inherit;font-size:11px">إلغاء التغيير</button>` : '';
   document.getElementById('editWVT-order').value      = wvt.display_order || 0;
   document.getElementById('editWVTModal').classList.add('show');
 }
@@ -15876,16 +15915,34 @@ async function confirmEditWVT(){
   const capacity = parseInt(document.getElementById('editWVT-capacity').value);
   const order    = parseInt(document.getElementById('editWVT-order').value) || 0;
   if(isNaN(capacity) || capacity < 1){ alert('❌ معدل التحميل لازم رقم >= 1'); return; }
+  const wvt = _vtState.wvts.find(x => x.id === _editWVTId);
+  const from = document.getElementById('editWVT-from').value;
+  const today = wvtToday();
+  if(!from){ alert('❌ اكتب تاريخ «التعديل يبدأ من»'); return; }
+  if(from < today){ alert('❌ تاريخ البداية لازم يكون النهارده أو بعده'); return; }
+  const patch = {display_order: order};
+  let msg = '✅ تم التعديل';
+  if(from > today && wvt && capacity !== wvt.capacity_per_hour){
+    // 📅 تغيير مجدول — المعدل الحالى يفضل شغال لحد التاريخ
+    patch.pending_capacity_per_hour = capacity;
+    patch.pending_effective_from = from;
+    msg = `✅ اتسجل: المعدل هيبقى ${capacity} عربية/ساعة من ${from}\nلحد التاريخ ده شغال ${wvt.capacity_per_hour}`;
+  } else {
+    patch.capacity_per_hour = capacity;
+    patch.pending_capacity_per_hour = null;
+    patch.pending_effective_from = null;
+  }
   try{
     const res = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${_editWVTId}`, {
       method: 'PATCH',
       headers: {...HDR, 'Prefer': 'return=minimal'},
-      body: JSON.stringify({capacity_per_hour: capacity, display_order: order})
+      body: JSON.stringify(patch)
     });
     if(!res.ok) throw new Error('فشل الحفظ');
+    try{ if(typeof logActivity === 'function') logActivity('admin_wvt_capacity', `⏱️ معدل التحميل ${wvt ? '#'+wvt.id : ''}: ${JSON.stringify(patch)}`, patch); }catch(_){}
     closeModal('editWVTModal');
     await loadVehicleTypes();
-    alert('✅ تم التعديل');
+    alert(msg);
   }catch(e){
     alert('❌ خطأ: ' + e.message);
   }
