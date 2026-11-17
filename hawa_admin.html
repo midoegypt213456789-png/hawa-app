@@ -7836,8 +7836,17 @@ function renderBookingsTable(data){
   });
   html+=`</tbody></table>
   <div style="padding:10px 16px;font-size:12px;color:var(--text-dim);border-top:1px solid var(--border)">
-    إجمالي النتائج: <b style="color:var(--gold)">${data.length}</b> حجز |
-    إجمالي العربيات: <b style="color:var(--gold)">${data.reduce((s,b)=>s+(b.count||0),0)}</b>
+    ${(()=>{
+      // الملغى مش بيتحسب فى الإجمالى — وكل نوع عربيات لوحده (كل نوع له معدل تحميل خاص)
+      const live = data.filter(b => b.status !== 'ملغي'), canc = data.filter(b => b.status === 'ملغي');
+      const sum = a => a.reduce((s,b)=>s+(b.count||0),0);
+      const byT = {}; live.forEach(b => { const k=b.vehicle_type||'—'; byT[k]=(byT[k]||0)+(b.count||0); });
+      const parts = Object.entries(byT).sort((a,b)=>b[1]-a[1]).map(([k,v]) => `${k}: <b style="color:var(--gold-light)">${v}</b>`).join(' · ');
+      return `إجمالي النتائج: <b style="color:var(--gold)">${live.length}</b> حجز |
+        إجمالي العربيات: <b style="color:var(--gold)">${sum(live)}</b>` +
+        (Object.keys(byT).length > 1 ? ` (${parts})` : '') +
+        (canc.length ? ` | <span style="color:#E05555">ملغى: ${canc.length} حجز / ${sum(canc)} عربية (مش محسوبين)</span>` : '');
+    })()}
   </div>`;
   document.getElementById('bk-table').innerHTML=html;
 }
