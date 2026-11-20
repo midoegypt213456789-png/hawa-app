@@ -27386,6 +27386,11 @@ function plDevRegFor(bid){ const b=plDevBrand(bid); return plDevReg(b.register_i
 function plDevName(bid){ const b=plBrand(bid); return plDevBrand(bid).dev_name||(b&&b.name)||''; }
 // 🏷️ ورق التنمية بيمشى ورا «رأس الكتاب»: لو الرأس اسم شركة عندنا ← اسمها فى المستندات (كى واى ← KEEWAY)، غير كده ← الرأس زى ما هو
 function plDevHeadName(h){ if(!h) return ''; const b=(PL.boot.brands||[]).find(x=>x.name===h); return b?(plDevBrand(b.id).dev_name||b.name):h; }
+// السجل + ترتيب الدلالات + المرفقات برضه من شركة رأس الكتاب (ولو مش متسجلين عليها ← من شركة الموديل)
+function plDevHeadBid(r){ const b=r&&r.head&&(PL.boot.brands||[]).find(x=>x.name===r.head); return b?b.id:null; }
+function plDevRowReg(r){ const hb=plDevHeadBid(r), hr=hb&&plDevReg(plDevBrand(hb).register_id); return hr||plDevRegFor(r.bid); }
+function plDevRowLayout(r){ const hb=plDevHeadBid(r), l=hb&&hb!==r.bid&&plDevBrand(hb).vin_layout; return Array.isArray(l)&&l.length?l:plDevLayout(r.bid, r.mid); }
+function plDevRowAtts(r){ const hb=plDevHeadBid(r), a=hb&&plDevBrand(hb).dev_atts; return Array.isArray(a)&&a.length?a:(plDevBrand(r.bid).dev_atts||[]); }
 function plDevRowName(r){ return (r&&r.head&&plDevHeadName(r.head))||plDevName(r.bid); }
 function plDevHeadOver(r){ const o=plBrand(r.bid); return r&&r.head&&(!o||o.name!==r.head)?plDevHeadName(r.head):''; }
 function plDevSpecs(mid){ return (PL.dev&&PL.dev.specs&&PL.dev.specs[String(mid)])||{}; }
@@ -27446,7 +27451,7 @@ function plDevSpecPage(r, P){ const s=plDevSpecs(r.mid), m=r.m, cc=plDevCcNum(m)
     ${row(5,'سعة المحرك',/وات/.test(m.cc)?m.cc:`${cc} سم3`)}${row(6,'قدرة المحرك',s.hp)}${row(7,'سعة خزان الوقود',s.tank)}
     ${row(8,'أبعاد الدراجة النارية :<br>الطول الكلى',s.length,3)}${row('','العرض الكلى',s.width)}${row('','الارتفاع الكلى',s.height)}${row(9,'البطارية',s.battery)}
     </tbody></table></div>`; }
-function plDevVinPage(bid, rows, reg, P){ const lay=plDevLayout(bid, rows[0]&&rows[0].mid), vt0=rows[0]&&rows[0].m.vtype, fps=rows.map(r=>String(r.m.fingerprint||'').toUpperCase()).filter(Boolean), vt=[...new Set(rows.map(r=>PL_DEV_VT[r.m.vtype]||r.m.vtype))].join(' / ');
+function plDevVinPage(bid, rows, reg, P){ const lay=rows[0]?plDevRowLayout(rows[0]):plDevLayout(bid), vt0=rows[0]&&rows[0].m.vtype, fps=rows.map(r=>String(r.m.fingerprint||'').toUpperCase()).filter(Boolean), vt=[...new Set(rows.map(r=>PL_DEV_VT[r.m.vtype]||r.m.vtype))].join(' / ');
   const cell=seg=>{ const [a,b,lab]=seg; if(a===10) return {c:P.yl||'—', l:`${plEsc(lab)}<div class="lg">${P.year}</div>`};
     const vals=[...new Set(fps.map(f=>f.slice(a-1,b)).filter(Boolean))]; let lg='';
     if(a===b&&/قو[ةه]\s*(ال)?(محرك|موتور)/.test(lab)){ const mp=new Map(); rows.forEach(r=>{ const ch=String(r.m.fingerprint||'').toUpperCase().charAt(a-1); if(ch&&!mp.has(ch)) mp.set(ch,/وات/.test(r.m.cc)?r.m.cc:plDevCcNum(r.m)+' CC'); }); lg=[...mp.entries()].map(([k,v])=>`<div>${plEsc(k)}:${plEsc(v)}</div>`).join(''); }
@@ -27469,16 +27474,16 @@ function plDevAttPage(a){ return `<div class="pg"><div class="lh noprint">مكا
 function plDevImgPage(reg){ return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div><div class="img"><img src="${plEsc(reg.image_url)}" alt="السجل الصناعى"></div></div>`; }
 function plDevBuild(P, opt){ // بيرجع الصفحات + التحذيرات
   const warn=[], pages=[], groups=new Map();
-  P.rows.forEach(r=>{ const reg=plDevRegFor(r.bid), k=reg?reg.id:0; if(!groups.has(k)) groups.set(k,{reg,rows:[]}); groups.get(k).rows.push(r); });
+  P.rows.forEach(r=>{ const reg=plDevRowReg(r), k=reg?reg.id:0; if(!groups.has(k)) groups.set(k,{reg,rows:[]}); groups.get(k).rows.push(r); });
   groups.forEach(g=>{ const reg=g.reg;
     if(!reg) warn.push('⛔ فيه شركات مش مربوطة بسجل صناعى — اربطها من تاب «🏛️ التنمية الصناعية»');
     else { const d=plDevExp(reg); if(d!=null&&d<0) warn.push(`⛔ السجل الصناعى ${reg.reg_no} منتهى من ${-d} يوم (${plDevDate(reg.expires_at)}) — جدّده قبل ما تبعت`); else if(d!=null&&d<=60) warn.push(`⚠️ السجل الصناعى ${reg.reg_no} هينتهى بعد ${d} يوم`); if(opt.img&&!reg.image_url) warn.push(`⚠️ السجل ${reg.reg_no} مالوش صورة مرفوعة`); }
     if(opt.req){ const cap=Number(PL.dev.settings.req_max)||0, ch=plDevChunks(g.rows,cap); if(ch.length>1) warn.push(`ℹ️ طلب التنمية${reg?' للسجل '+reg.reg_no:''} اتقسم ${ch.length} طلبات (أقصى ${plN(cap)} للطلب — تتغير من تاب التنمية)`); ch.forEach(c=>pages.push(plDevRequestPage(reg,c,P))); }
-    const brands=[...new Set(g.rows.map(r=>r.bid+'|'+(r.head||'')))];
-    brands.forEach(bk=>{ const br=g.rows.filter(r=>r.bid+'|'+(r.head||'')===bk), bid=br[0].bid;
+    const gk=r=>(plDevHeadBid(r)||r.bid)+'|'+(r.head||''), brands=[...new Set(g.rows.map(gk))];
+    brands.forEach(bk=>{ const br=g.rows.filter(r=>gk(r)===bk), bid=br[0].bid;
       if(opt.vin) [...new Set(br.map(r=>r.m.vtype))].forEach(vt=>pages.push(plDevVinPage(bid,br.filter(r=>r.m.vtype===vt),reg,P)));
       if(opt.spec) br.forEach(r=>{ const s=plDevSpecs(r.mid), miss=plDevSpecF(r.m).filter(f=>!['title_name','kind','brand_txt','motor'].includes(f[0])&&!s[f[0]]).map(f=>f[1]); if(miss.length) warn.push(`✏️ ${plDevRowName(r)} ${r.m.label||plDevCcTxt(r.m)}: ناقص ${miss.join('، ')} (المكان هيطلع فاضى بنقط — كمّله من تاب التنمية أو اكتبه فى المعاينة)`); pages.push(r.m.vtype==='كهرباء'?plDevSpecPageE(r,P):plDevSpecPage(r,P)); });
-      if(opt.att!==false) (plDevBrand(bid).dev_atts||[]).forEach(a=>{ if(/\.pdf(\?|$)/i.test(a.url)) warn.push(`📎 مرفق ${plDevName(bid)} «${a.name||'PDF'}» ملف PDF — اطبعه لوحده (أو ارفعه صورة عشان يدخل فى الملف)`); else pages.push(plDevAttPage(a)); }); });
+      if(opt.att!==false) plDevRowAtts(br[0]).forEach(a=>{ if(/\.pdf(\?|$)/i.test(a.url)) warn.push(`📎 مرفق ${plDevRowName(br[0])} «${a.name||'PDF'}» ملف PDF — اطبعه لوحده (أو ارفعه صورة عشان يدخل فى الملف)`); else pages.push(plDevAttPage(a)); }); });
     if(opt.img&&reg&&reg.image_url&&!/\.pdf(\?|$)/i.test(reg.image_url)) pages.push(plDevImgPage(reg));
   });
   return {pages, warn:[...new Set(warn)]}; }
