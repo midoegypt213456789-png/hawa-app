@@ -27391,7 +27391,7 @@ function plDevChunks(rows, cap){ if(!(cap>0)) return [rows]; const out=[]; let c
 async function plDevLoad(force){ if(PL.dev&&!force) return PL.dev; PL.dev=await plCall('pl_dev_boot'); return PL.dev; }
 function plDevBrand(id){ return ((PL.dev&&PL.dev.brands)||[]).find(b=>b.id===Number(id))||{}; }
 function plDevReg(id){ return ((PL.dev&&PL.dev.registers)||[]).find(r=>r.id===Number(id)); }
-function plDevRegFor(bid){ const b=plDevBrand(bid); return plDevReg(b.register_id)||plDevReg(PL.dev.settings.reg_default)||(PL.dev.registers||[]).find(r=>r.is_active)||null; }
+function plDevRegFor(bid){ const b=plDevBrand(bid), pb=plBrand(bid), par=pb&&pb.parent_id?plDevBrand(pb.parent_id):{}; return plDevReg(b.register_id)||plDevReg(par.register_id)||plDevReg(PL.dev.settings.reg_default)||(PL.dev.registers||[]).find(r=>r.is_active)||null; }
 function plDevName(bid){ const b=plBrand(bid); return plDevBrand(bid).dev_name||(b&&b.name)||''; }
 // 🏷️ ورق التنمية بيمشى ورا «رأس الكتاب»: لو الرأس اسم شركة عندنا ← اسمها فى المستندات (كى واى ← KEEWAY)، غير كده ← الرأس زى ما هو
 function plDevHeadName(h){ if(!h) return ''; const b=(PL.boot.brands||[]).find(x=>x.name===h); return b?(plDevBrand(b.id).dev_name||b.name):h; }
@@ -27726,7 +27726,7 @@ async function plRcpReport(){ const f=PL.rep; try{ await plDevLoad(); }catch(e){
   const years=[...new Set(ls.map(l=>l.model_year))].sort().join(' / '), dates=ls.map(l=>l.letter_date).sort();
   const rcp=f.rcp?((PL.boot.recipients||[]).find(r=>String(r.id)===String(f.rcp))||{}).name:[...new Set(ls.map(l=>l.recipient_name).filter(Boolean))].join(' / ');
   const sm={}; rows.forEach(r=>{ const k=r.b+'|'+(r.k||r.vt); const o=sm[k]||(sm[k]={b:r.b,t:r.k||r.vt,q:0}); o.q+=r.z-r.a+1; });
-  const lab=r=>{ const s=(typeof plDevSpecs==='function'?plDevSpecs(r.mid):{})||{}; return s.model_code?plEsc(String(s.model_code).replace(/[-\s]/g,'')):plEsc(r.b+' '+r.m); };
+  const lab=r=>{ const s=(typeof plDevSpecs==='function'?plDevSpecs(r.mid):{})||{}; return s.model_code?plEsc(String(s.model_code).replace(/[-\s]/g,'')+(r.vt&&r.vt!=='موتسيكل'?' '+r.vt:'')+(r.k?' — '+r.k:'')):plEsc(r.b+' '+r.m); };
   const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>ENGINE & FRAME NO ${years}</title><style>
 @page{size:A4 landscape;margin:12mm} *{box-sizing:border-box} html,body{margin:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}
 .pg{padding:2mm} .rc{display:inline-block;border:1.5px solid #000;background:#ddd;padding:2mm 10mm;font-size:15pt;font-weight:700;min-width:60mm;text-align:center;direction:rtl}
