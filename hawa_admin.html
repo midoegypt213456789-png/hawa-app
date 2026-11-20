@@ -21101,6 +21101,15 @@ function plRowCls(st){ return {'فى التنمية':'pl-st-dev','اتستلم':
 function plYearLetter(y){ const r=(PL.boot&&PL.boot.year_letters||[]).find(x=>x.year===Number(y)); return r?r.letter:'?'; }
 function plBrand(id){ return (PL.boot&&PL.boot.brands||[]).find(b=>b.id===Number(id)); }
 function plModel(id){ return (PL.boot&&PL.boot.models||[]).find(m=>m.id===Number(id)); }
+// 🏭 شركة أم + شركات فرعية: الفرعية بتشارك الأم فى الموديلات والأرقام وكود الماتور — وبتفرق فى رأس الكتاب بس
+function plRoot(bid){ const b=plBrand(bid); return b&&b.parent_id?Number(b.parent_id):Number(bid); }
+function plParents(all){ return (PL.boot&&PL.boot.brands||[]).filter(b=>!b.parent_id&&(all||b.active)); }
+function plSubs(pid,all){ return (PL.boot&&PL.boot.brands||[]).filter(b=>Number(b.parent_id)===Number(pid)&&(all||(b.active&&!b.hidden))); }
+function plGroupModels(pid){ return (PL.boot&&PL.boot.models||[]).filter(m=>plRoot(m.brand_id)===Number(pid)); }
+function plMLabel(m){ const o=plBrand(m.brand_id); return m.label+' — '+m.fingerprint+(o&&o.parent_id&&!o.hidden?' ('+o.name+')':''); }
+function plNormL(l){ if(l&&Array.isArray(l.items)) l.items.forEach(i=>{ if(i.kind&&!i._k){ i._k=1; i.model_base=i.model_label; i.model_label=i.model_label+' — '+i.kind; } }); return l; }
+function plKinds(){ const s=new Set(['تروسكل بصندوق خلفى','مجهز معاقين']); (PL.letters||[]).forEach(l=>l.items.forEach(i=>{ if(i.kind) s.add(i.kind); })); return [...s]; }
+function plHeads(){ const s=new Set((PL.boot&&PL.boot.brands||[]).filter(b=>b.active&&!b.hidden).map(b=>b.name)); (PL.letters||[]).forEach(l=>l.items.forEach(i=>s.add(i.brand_name))); return [...s]; }
 
 // ── التبويبات
 function plHideAll(){
@@ -21124,9 +21133,9 @@ async function plLoad(force){
         plCall('pl_list'),
         fetch(`${SB}/rest/v1/bulletins?select=id,title,bulletin_no&is_active=eq.true`,{headers:HDR}).then(r=>r.ok?r.json():[]).catch(()=>[])
       ]);
-      PL.boot = boot; PL.letters = Array.isArray(letters)?letters:[]; PL.bulletins = Array.isArray(bl)?bl:[];
+      PL.boot = boot; PL.letters = (Array.isArray(letters)?letters:[]).map(plNormL); PL.bulletins = Array.isArray(bl)?bl:[];
       PL.loaded = true;
-      if(PL.selBrand==null && PL.boot.brands.length) PL.selBrand = PL.boot.brands[0].id;
+      if(PL.selBrand==null && PL.boot.brands.length) PL.selBrand = (plParents(true)[0]||PL.boot.brands[0]).id;
     }
     plRender();
   }catch(e){
@@ -21162,7 +21171,7 @@ async function plLockYear(){
 function plFilteredLetters(ignoreStatus){
   const q=(PL.q||'').trim();
   return PL.letters.filter(l=>{
-    if(PL.brandFilter!=='all' && !l.items.some(i=>i.brand_id===Number(PL.brandFilter))) return false;
+    if(PL.brandFilter!=='all' && !l.items.some(i=>plRoot(i.brand_id)===Number(PL.brandFilter))) return false;
     if(!ignoreStatus){
       if(PL.statusFilter==='open' && !['جديد','فى التنمية','اتستلم'].includes(l.status)) return false;
       if(PL.statusFilter!=='open' && PL.statusFilter!=='all' && l.status!==PL.statusFilter) return false;
@@ -21179,7 +21188,7 @@ function plRenderLetters(){
   const all=plFilteredLetters(true), rows=plFilteredLetters(false);
   const cnt=st=>all.filter(l=>l.status===st).length;
   const nums=all.filter(l=>!l.is_cancelled).reduce((a,l)=>a+Number(l.qty||0),0);
-  const brandsUsed=(PL.boot.brands||[]);
+  const brandsUsed=plParents(true);
   el.innerHTML = `
   <div class="pl-card">
     <div class="pl-row" style="justify-content:space-between">
@@ -21215,7 +21224,7 @@ function plRenderLetters(){
     <div id="pl-letters-tbl"></div>
     <div class="pl-tabs-b">
       <button class="pl-tab-b ${PL.brandFilter==='all'?'active':''}" onclick="PL.brandFilter='all';plRenderLetters()">الكل</button>
-      ${brandsUsed.map(b=>{ const n=PL.letters.filter(l=>l.items.some(i=>i.brand_id===b.id)).length;
+      ${brandsUsed.map(b=>{ const n=PL.letters.filter(l=>l.items.some(i=>plRoot(i.brand_id)===b.id)).length;
         return `<button class="pl-tab-b ${String(PL.brandFilter)===String(b.id)?'active':''}" onclick="PL.brandFilter=${b.id};plRenderLetters()">${plEsc(b.name)} <span style="opacity:.7">(${n})</span></button>`; }).join('')}
     </div>
   </div>`;
@@ -21355,7 +21364,8 @@ async function plWizNewRcp(){ if(!PL.wiz) return; const n=(prompt('اسم الم
   catch(e){ plToast(plErr(e),false); } }
 function plWizSet(j,key,val){
   const w=PL.wiz, ln=w.lines[j]; ln[key]=val;
-  if(key==='brand_id') ln.model_id='';
+  if(key==='brand_id'){ ln.model_id=''; ln.sub_id=''; const b=plBrand(val); ln.head=b?b.name:''; }
+  if(key==='sub_id'){ const b=plBrand(val||ln.brand_id); ln.head=b?b.name:''; }
   plWizRegrid(); plWizRender();
 }
 function plWizCell(i,j,val){
@@ -21376,28 +21386,33 @@ function plWizCheck(){
 }
 function plWizPayload(){
   const w=PL.wiz;
-  return w.grid.map(r=>{ const m={}; r.forEach((q,j)=>{ if(q>0){ const id=Number(w.lines[j].model_id); m[id]=(m[id]||0)+q; } });
-    return {items:Object.keys(m).map(id=>({model_id:Number(id),qty:m[id]}))}; });
+  return w.grid.map(r=>{ const m={}; r.forEach((q,j)=>{ if(q>0){ const ln=w.lines[j], k=[ln.model_id,ln.sub_id||'',(ln.head||'').trim(),(ln.kind||'').trim()].join('|');
+      const o=m[k]||(m[k]={model_id:Number(ln.model_id),qty:0,sub_id:ln.sub_id?Number(ln.sub_id):null,head:(ln.head||'').trim()||null,kind:(ln.kind||'').trim()||null}); o.qty+=q; } });
+    return {items:Object.values(m)}; });
 }
 function plWizRender(){
   const el=document.getElementById('pl-wiz'), w=PL.wiz; if(!el||!w) return;
-  const brands=(PL.boot.brands||[]).filter(b=>b.active), rcps=(PL.boot.recipients||[]).filter(r=>r.active);
+  const brands=plParents(), rcps=(PL.boot.recipients||[]).filter(r=>r.active);
   const s=PL.boot.settings, errs=plWizCheck();
   const lineRows=w.lines.map((ln,j)=>{
-    const models=(PL.boot.models||[]).filter(m=>m.active&&String(m.brand_id)===String(ln.brand_id));
+    const models=ln.brand_id?plGroupModels(ln.brand_id).filter(m=>m.active):[], pb=plBrand(ln.brand_id), subs=ln.brand_id?plSubs(ln.brand_id):[];
     const m=plModel(ln.model_id); const rem=m?m.codes.filter(c=>c.status==='مفتوح').reduce((a,c)=>a+c.remaining,0):0;
     return `<div class="pl-row" style="margin-bottom:8px">
       <select class="pl-inp" onchange="plWizSet(${j},'brand_id',this.value)"><option value="">— الشركة —</option>
         ${brands.map(b=>`<option value="${b.id}" ${String(ln.brand_id)===String(b.id)?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select>
+      ${subs.length?`<select class="pl-inp" title="الشركة الفرعية — نفس موديلات وأرقام الأم" onchange="plWizSet(${j},'sub_id',this.value)"><option value="">${plEsc(pb.name)}</option>
+        ${subs.map(x=>`<option value="${x.id}" ${String(ln.sub_id)===String(x.id)?'selected':''}>${plEsc(x.name)}</option>`).join('')}</select>`:''}
       <select class="pl-inp" style="min-width:200px" onchange="plWizSet(${j},'model_id',this.value)" ${ln.brand_id?'':'disabled'}><option value="">— الموديل —</option>
-        ${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(x.label)}</option>`).join('')}</select>
+        ${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(plMLabel(x))}</option>`).join('')}</select>
       <button class="pl-btn ghost sm" onclick="plWizNewModel(${j})" title="ضيف موديل جديد للشركة دى — وبعد الحفظ بترجع للكتاب والموديل متختار">➕ موديل</button>
       <input class="pl-inp" type="number" min="1" style="width:120px" placeholder="العدد" value="${plEsc(ln.qty)}" onchange="plWizSet(${j},'qty',this.value)">
+      ${ln.brand_id?`<input class="pl-inp" list="pl-heads" style="width:150px" placeholder="رأس الكتاب" title="الاسم اللى هيطلع فى رأس الكتاب — بييجى باسم الشركة الفرعية وتقدر تغيره لأى اسم" value="${plEsc(ln.head||'')}" onchange="PL.wiz.lines[${j}].head=this.value;PL.wiz.preview=null;plWizRender()">
+      <input class="pl-inp" list="pl-kinds" style="width:200px" placeholder="النوع (مثلاً: تروسكل بصندوق خلفى)" title="وصف النوع — بيطلع جنب رأس الكتاب وتقدر تفلتر بيه" value="${plEsc(ln.kind||'')}" onchange="PL.wiz.lines[${j}].kind=this.value;PL.wiz.preview=null;plWizRender()">`:''}
       ${m?`<span class="pl-chip vt">${plEsc(m.vtype)}</span><span class="pl-sub">الدرج الحالى فاضل فيه ${plN(rem)} — والباقى بيفتح أدراج جديدة لوحده</span>`:''}
       ${w.lines.length>1?`<button class="act-btn delete" onclick="PL.wiz.lines.splice(${j},1);plWizRegrid();plWizRender()">✖</button>`:''}
     </div>`; }).join('');
   const grid = w.n>1 || w.lines.length>1 ? `<div style="overflow:auto;margin:10px 0"><table class="pl-grid"><thead><tr><th>الكتاب</th>
-      ${w.lines.map((ln,j)=>{ const m=plModel(ln.model_id); const b=m&&plBrand(m.brand_id); return `<th>${m?plEsc(b.name+' '+m.label):'سطر '+(j+1)}</th>`; }).join('')}<th>الإجمالى</th></tr></thead><tbody>
+      ${w.lines.map((ln,j)=>{ const m=plModel(ln.model_id); const b=m&&plBrand(m.brand_id); return `<th>${m?plEsc((ln.head||b.name)+' '+m.label+(ln.kind?' — '+ln.kind:'')):'سطر '+(j+1)}</th>`; }).join('')}<th>الإجمالى</th></tr></thead><tbody>
       ${w.grid.map((r,i)=>`<tr><td>كتاب ${i+1} <span class="pl-sub">(مستند ${s.next_doc+i})</span></td>${r.map((q,j)=>`<td><input class="pl-inp" type="number" min="0" value="${q}" onchange="plWizCell(${i},${j},this.value)"></td>`).join('')}<td><b>${plN(r.reduce((a,b)=>a+b,0))}</b></td></tr>`).join('')}
       </tbody></table></div>` : '';
   const prev = w.preview ? `<div class="pl-card" style="background:var(--dark3);margin-top:10px"><div class="pl-h">👁️ معاينة — ${w.preview.dry?'لسه متحفظش':'✅ اتعمل'}</div>
@@ -21425,6 +21440,8 @@ function plWizRender(){
       <span class="pl-sub">الأرقام بتتحجز على السيرفر لحظة الحفظ — مستحيل تتكرر حتى لو اتنين بيعملوا كتب فى نفس الوقت</span>
     </div>
     ${prev}
+    <datalist id="pl-heads">${plHeads().map(h=>`<option value="${plEsc(h)}">`).join('')}</datalist>
+    <datalist id="pl-kinds">${plKinds().map(h=>`<option value="${plEsc(h)}">`).join('')}</datalist>
   </div>`;
 }
 async function plWizRun(dry){
@@ -21435,6 +21452,7 @@ async function plWizRun(dry){
   try{
     const r=await plCall('pl_create_letters',{p_letters:plWizPayload(), p_recipient_id:w.recipient_id?Number(w.recipient_id):null, p_notes:w.notes||null, p_dry:dry});
     w.busy=false;
+    (r.letters||[]).forEach(plNormL);
     if(dry){ w.preview=r; plWizRender(); return; }
     plToast(`✅ اتعمل ${r.letters.length} ${r.letters.length>1?'كتب':'كتاب'}`);
     const keep=r; PL.wiz=null; await plLoad(true);
@@ -21461,11 +21479,11 @@ async function plWizRun(dry){
 // ════════════════ 📊 التقارير ════════════════
 function plRenderReports(){
   const el=document.getElementById('pl-pane-reports'); if(!el) return;
-  const f=PL.rep, brands=PL.boot.brands||[], models=(PL.boot.models||[]).filter(m=>!f.brand||String(m.brand_id)===f.brand);
+  const f=PL.rep, brands=plParents(true), models=(PL.boot.models||[]).filter(m=>!f.brand||String(plRoot(m.brand_id))===f.brand);
   const years=[...new Set(PL.letters.map(l=>l.model_year))].sort();
   const rcps=PL.boot.recipients||[];
   const sel=(k,opts,ph)=>`<select class="pl-inp" onchange="PL.rep.${k}=this.value;${k==='brand'?"PL.rep.model='';":''}plRenderReports()"><option value="">${ph}</option>${opts.map(o=>`<option value="${plEsc(o[0])}" ${String(f[k])===String(o[0])?'selected':''}>${plEsc(o[1])}</option>`).join('')}</select>`;
-  const itemOk=i=>(!f.brand||String(i.brand_id)===f.brand)&&(!f.model||String(i.model_id)===f.model)&&(!f.vtype||i.vtype===f.vtype);
+  const itemOk=i=>(!f.brand||String(plRoot(i.brand_id))===f.brand)&&(!f.head||i.brand_name===f.head)&&(!f.kind||(i.kind||'')===f.kind)&&(!f.model||String(i.model_id)===f.model)&&(!f.vtype||i.vtype===f.vtype);
   const ls=PL.letters.filter(l=>(!f.year||String(l.model_year)===f.year)&&(!f.rcp||String(l.recipient_id)===f.rcp)&&(!f.status||l.status===f.status)
      &&(!f.from||l.letter_date>=f.from)&&(!f.to||l.letter_date<=f.to)&&l.items.some(itemOk));
   const qtyOf=l=>l.items.filter(itemOk).reduce((a,i)=>a+i.qty,0);
@@ -21477,6 +21495,8 @@ function plRenderReports(){
   el.innerHTML=`<div class="pl-card"><div class="pl-h">📊 التقارير</div>
     <div class="pl-row">
       ${sel('brand',brands.map(b=>[b.id,b.name]),'كل الشركات')}
+      ${sel('head',plHeads().map(h=>[h,h]),'كل الماركات (رأس الكتاب)')}
+      ${sel('kind',plKinds().map(k=>[k,k]),'كل الأوصاف (النوع)')}
       ${sel('model',models.map(m=>[m.id,(plBrand(m.brand_id)||{}).name+' '+m.label]),'كل الموديلات')}
       ${sel('vtype',PL_VTYPES.map(v=>[v,v]),'كل الأنواع')}
       ${sel('year',years.map(y=>[y,'موديل '+y]),'كل الموديلات (السنين)')}
@@ -21548,14 +21568,15 @@ function plFpPreview(){
 }
 function plRenderBrands(){
   const el=document.getElementById('pl-pane-brands'); if(!el) return;
-  const brands=PL.boot.brands||[], ed=plCanEdit();
+  const brands=plParents(true), ed=plCanEdit();
+  if(PL.selBrand!=null) PL.selBrand=plRoot(PL.selBrand);
   if(PL.selBrand!=null && !brands.some(b=>b.id===PL.selBrand)) PL.selBrand=brands.length?brands[0].id:null;
   const b=plBrand(PL.selBrand);
-  const models=(PL.boot.models||[]).filter(m=>b&&m.brand_id===b.id);
+  const models=b?plGroupModels(b.id):[];
   const y=plYearLetter(PL.boot.settings.model_year), me=PL.modelEdit;
   el.innerHTML=`<div class="pl-card"><div class="pl-h">🏭 الشركات <span class="pl-sub">— اضغط على الشركة تشوف موديلاتها</span></div>
     <div class="pl-brands">${brands.map(x=>`<div class="pl-brand ${x.id===PL.selBrand?'sel':''} ${x.active?'':'off'}" onclick="PL.selBrand=${x.id};PL.modelEdit=null;plRenderBrands()">
-        <div class="n">${plEsc(x.name)}</div><div class="s">⚙️ كود الماتور ${plEsc(x.engine_prefix)} — ${(PL.boot.models||[]).filter(m=>m.brand_id===x.id).length} موديل${x.active?'':' — متوقفة'}</div></div>`).join('')||'<div class="pl-sub">مفيش شركات لسه</div>'}</div>
+        <div class="n">${plEsc(x.name)}</div><div class="s">⚙️ كود الماتور ${plEsc(x.engine_prefix)} — ${plGroupModels(x.id).length} موديل${x.active?'':' — متوقفة'}${plSubs(x.id).length?'<br>🏷️ '+plSubs(x.id).map(s=>plEsc(s.name)).join('، '):''}</div></div>`).join('')||'<div class="pl-sub">مفيش شركات لسه</div>'}</div>
     ${ed?`<div class="pl-row"><input id="pl-b-name" class="pl-inp" placeholder="اسم الشركة الجديدة (مثلاً: هوجان اتش جى)" style="min-width:240px">
       <input id="pl-b-ep" class="pl-inp pl-mono" style="width:90px" maxlength="2" value="${plEsc(PL.boot.free_engine_prefix||'')}" title="كود الماتور: رقمين قبل رقم الشاسيه">
       <span class="pl-sub">← كود الماتور (رقمين) — المقترح ${plEsc(PL.boot.free_engine_prefix||'')}</span>
@@ -21565,10 +21586,11 @@ function plRenderBrands(){
     <div class="pl-h">🏍️ ${plEsc(b.name)} <span class="pl-chip code">⚙️ ماتور ${plEsc(b.engine_prefix)}</span>${b.active?'':'<span class="pl-chip can">متوقفة</span>'}
       <div style="flex:1"></div>${ed?`<button class="pl-btn ghost sm" onclick="plBrandEdit()">✏️ تعديل الشركة</button>
       <button class="pl-btn ${b.active?'red':'ghost'} sm" onclick="plBrandToggle()">${b.active?'⏸️ وقّف الشركة':'▶️ شغّل الشركة'}</button>`:''}</div>
+    ${plSubsBlock(b,ed)}
     <div class="pl-scroll" style="max-height:none"><table class="pl-tbl"><thead><tr><th>النوع</th><th>السعة</th><th>البصمة (9)</th><th>شكل الشاسيه / الماتور</th><th>الأدراج والمتبقى</th><th>اتصرف</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${models.map(m=>{ const open=m.codes.filter(c=>c.status==='مفتوح'); const rem=open.reduce((a,c)=>a+c.remaining,0); const c0=m.codes[0];
       return `<tr style="${m.active?'':'opacity:.55'}"><td><span class="pl-chip vt">${plEsc(m.vtype)}</span></td><td><b>${plEsc(m.cc)}</b></td>
-      <td class="pl-mono"><b>${plEsc(m.fingerprint)}</b></td>
+      <td class="pl-mono"><b>${plEsc(m.fingerprint)}</b>${(o=>o&&o.id!==b.id?`<div class="pl-sub" style="font-family:inherit">${plEsc(o.name)}</div>`:'')(plBrand(m.brand_id))}</td>
       <td class="pl-mono" style="font-size:12px">${plEsc(m.fingerprint)}<b style="color:var(--gold)">${plEsc(y)}</b><b style="color:#7fb4ea">${c0?c0.code:'___'}</b>0000<br><span style="color:var(--text-dim)">${plEsc(b.engine_prefix)}${c0?c0.code:'___'}0000</span></td>
       <td>${(()=>{ const cs=m.codes, cur=cs.find(c=>c.status==='مفتوح'), full=cs.filter(c=>c.status==='مليان').length;
           return `<div><span class="pl-chip code">درج ${cur?cur.code:'—'}</span> ${cur?`<span class="pl-sub">فاضل ${plN(cur.remaining)}</span><div class="pl-bar"><i style="width:${Math.round((10000-cur.remaining)/100)}%"></i></div>`:''}</div>
@@ -21598,6 +21620,16 @@ function plRenderBrands(){
   ${plCodesMap()}`;
   const fp=document.getElementById('pl-m-fp'); if(fp&&fp.value) plFpInput(fp); else plFpPreview();
 }
+function plSubsBlock(b,ed){ const subs=plSubs(b.id,true);
+  return `<div class="pl-row" style="margin:0 0 12px;align-items:center"><span class="pl-sub">🏷️ الشركات الفرعية <span style="opacity:.8">(نفس الموديلات والأرقام وكود الماتور — بتفرق فى رأس الكتاب بس)</span>:</span>
+    ${subs.map(s=>`<span class="pl-chip ${s.hidden?'can':'code'}" style="display:inline-flex;gap:6px;align-items:center">${plEsc(s.name)}${s.hidden?' (مخفية)':''}${ed?` <a href="#" style="text-decoration:none" onclick="plSubEdit(${s.id});return false" title="تعديل الاسم">✏️</a><a href="#" style="text-decoration:none" onclick="plSubToggle(${s.id});return false" title="${s.hidden?'رجّعها للاختيار':'اخفيها من الاختيار'}">${s.hidden?'▶️':'⏸️'}</a>`:''}</span>`).join('')||'<span class="pl-sub">مفيش</span>'}
+    ${ed?`<input id="pl-sub-name" class="pl-inp" placeholder="اسم شركة فرعية جديدة" style="width:200px"><button class="pl-btn ghost sm" onclick="plSubAdd()">➕ شركة فرعية</button>`:''}</div>`; }
+async function plSubAdd(){ const n=(document.getElementById('pl-sub-name').value||'').trim(); if(!n){ plToast('اكتب اسم الشركة الفرعية',false); return; }
+  try{ await plCall('pl_sub_save',{p:{parent_id:PL.selBrand,name:n}}); plToast('✅ الشركة الفرعية اتضافت'); await plLoad(true); }catch(e){ plToast(plErr(e),false); } }
+async function plSubEdit(id){ const s=plBrand(id); if(!s) return; const n=prompt('اسم الشركة الفرعية', s.name); if(n===null) return;
+  try{ await plCall('pl_sub_save',{p:{id,name:n}}); plToast('✅ اتحفظ'); await plLoad(true); }catch(e){ plToast(plErr(e),false); } }
+async function plSubToggle(id){ const s=plBrand(id); if(!s) return;
+  try{ await plCall('pl_sub_save',{p:{id,name:s.name,active:!!s.hidden}}); await plLoad(true); }catch(e){ plToast(plErr(e),false); } }
 function plCodesMap(){
   const codes=PL.boot.codes||[], map={}; codes.forEach(c=>map[c.code]=c);
   let cells=''; for(let k=100;k<=999;k++){ const c=map[k];
@@ -21631,7 +21663,7 @@ async function plBrandToggle(){
 function plModelEditStart(id){ PL.modelEdit=plModel(id); plRenderBrands(); const f=document.getElementById('pl-m-cc'); if(f) f.scrollIntoView({behavior:'smooth',block:'center'}); }
 async function plModelSave(confirmSame){
   const me=PL.modelEdit;
-  const p={ id: me?me.id:null, brand_id: PL.selBrand, vtype: document.getElementById('pl-m-vt').value, cc: document.getElementById('pl-m-cc').value,
+  const p={ id: me?me.id:null, brand_id: me?me.brand_id:PL.selBrand, vtype: document.getElementById('pl-m-vt').value, cc: document.getElementById('pl-m-cc').value,
     fingerprint: document.getElementById('pl-m-fp').value, note: document.getElementById('pl-m-note').value, active: me?me.active:true, confirm: !!confirmSame };
   const ce=document.getElementById('pl-m-code'); if(ce) p.code=ce.value;
   try{
@@ -27620,22 +27652,24 @@ function plPrintGo(){ const fr=document.getElementById('plp-fr'); if(!fr) return
 function plEditOpen(id){ const l=PL.letters.find(x=>x.id===id); if(!l) return; PL.ed={id, cut:{}, add:[{brand_id:'',model_id:'',qty:''}], prev:null, busy:false}; plEditRender(); }
 function plEditClose(){ PL.ed=null; const o=document.getElementById('pl-edit-ov'); if(o) o.remove(); }
 function plEditPayload(){ const E=PL.ed, l=PL.letters.find(x=>x.id===E.id), cur={}; (l?l.items:[]).forEach(i=>cur[i.model_id]=(cur[i.model_id]||0)+Number(i.qty));
-  const add=E.add.filter(x=>x.model_id&&Number(x.qty)>0).map(x=>({model_id:Number(x.model_id),qty:Number(x.qty)})), cut=[];
+  const add=E.add.filter(x=>x.model_id&&Number(x.qty)>0).map(x=>({model_id:Number(x.model_id),qty:Number(x.qty),head:(x.head||'').trim()||null,kind:(x.kind||'').trim()||null})), cut=[];
   // العدد الجديد لكل موديل: أقل = شيل الفرق من الآخر — أكتر = زوّد الفرق
   Object.entries(E.cut).forEach(([k,v])=>{ if(v===''||v==null) return; const n=Math.round(Number(v)), c=cur[k]||0; if(!(n>=0)||n===c) return; if(n<c) cut.push({model_id:Number(k),qty:c-n}); else add.push({model_id:Number(k),qty:n-c}); });
   return { p_id:E.id, p_add:add, p_cut:cut }; }
 function plEditRender(){ const E=PL.ed; if(!E) return; const l=PL.letters.find(x=>x.id===E.id); if(!l){ plEditClose(); return; }
   let o=document.getElementById('pl-edit-ov'); if(!o){ o=document.createElement('div'); o.id='pl-edit-ov'; o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99980;display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;direction:rtl'; document.body.appendChild(o); }
   const byM={}; l.items.forEach(i=>{ const g=byM[i.model_id]||(byM[i.model_id]={id:i.model_id,name:i.brand_name+' — '+i.model_label,qty:0}); g.qty+=Number(i.qty); });
-  const brands=(PL.boot.brands||[]).filter(b=>b.active);
+  const brands=plParents();
   const cur=Object.values(byM).map(g=>`<tr><td><b>${plEsc(g.name)}</b></td><td>${plN(g.qty)}</td>
     <td><input class="pl-inp" type="number" min="0" style="width:130px;padding:5px 8px" placeholder="${g.qty}" value="${plEsc(E.cut[g.id]??'')}" onchange="PL.ed.cut[${g.id}]=this.value;PL.ed.prev=null;plEditRender()">
       ${(v=>v===''||v==null||Number(v)===g.qty?'':Number(v)<g.qty?`<span class="pl-sub" style="color:var(--error)">➖ هيتشال ${plN(g.qty-Number(v))} من الآخر</span>`:`<span class="pl-sub" style="color:var(--success)">➕ هيزيد ${plN(Number(v)-g.qty)}</span>`)(E.cut[g.id])}</td></tr>`).join('');
-  const adds=E.add.map((ln,j)=>{ const models=(PL.boot.models||[]).filter(m=>m.active&&String(m.brand_id)===String(ln.brand_id));
+  const adds=E.add.map((ln,j)=>{ const models=ln.brand_id?plGroupModels(ln.brand_id).filter(m=>m.active):[];
     return `<div class="pl-row" style="margin-bottom:8px">
-      <select class="pl-inp" onchange="PL.ed.add[${j}].brand_id=this.value;PL.ed.add[${j}].model_id='';PL.ed.prev=null;plEditRender()"><option value="">— الشركة —</option>${brands.map(b=>`<option value="${b.id}" ${String(ln.brand_id)===String(b.id)?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select>
-      <select class="pl-inp" style="min-width:190px" ${ln.brand_id?'':'disabled'} onchange="PL.ed.add[${j}].model_id=this.value;PL.ed.prev=null;plEditRender()"><option value="">— الموديل —</option>${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(x.label)}</option>`).join('')}</select>
+      <select class="pl-inp" onchange="PL.ed.add[${j}].brand_id=this.value;PL.ed.add[${j}].model_id='';PL.ed.add[${j}].head=(plBrand(this.value)||{}).name||'';PL.ed.prev=null;plEditRender()"><option value="">— الشركة —</option>${brands.map(b=>`<option value="${b.id}" ${String(ln.brand_id)===String(b.id)?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select>
+      <select class="pl-inp" style="min-width:190px" ${ln.brand_id?'':'disabled'} onchange="PL.ed.add[${j}].model_id=this.value;PL.ed.prev=null;plEditRender()"><option value="">— الموديل —</option>${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(plMLabel(x))}</option>`).join('')}</select>
       <input class="pl-inp" type="number" min="1" style="width:110px" placeholder="العدد" value="${plEsc(ln.qty)}" onchange="PL.ed.add[${j}].qty=this.value;PL.ed.prev=null;plEditRender()">
+      ${ln.brand_id?`<input class="pl-inp" style="width:140px" placeholder="رأس الكتاب" value="${plEsc(ln.head||'')}" onchange="PL.ed.add[${j}].head=this.value;PL.ed.prev=null">
+      <input class="pl-inp" style="width:180px" placeholder="النوع (اختيارى)" value="${plEsc(ln.kind||'')}" onchange="PL.ed.add[${j}].kind=this.value;PL.ed.prev=null">`:''}
       ${E.add.length>1?`<button class="act-btn delete" onclick="PL.ed.add.splice(${j},1);PL.ed.prev=null;plEditRender()">✖</button>`:''}</div>`; }).join('');
   const P=E.prev, pay=plEditPayload(), has=pay.p_add.length||pay.p_cut.length;
   const prev = P ? `<div class="pl-card" style="border-color:var(--gold);margin-top:12px"><div class="pl-h">👁 الكتاب بعد التعديل — ${plN(P.letter.qty)} رقم <span class="pl-sub">(لسه متحفظش)</span></div>
@@ -27656,23 +27690,24 @@ async function plEditRun(dry){ const E=PL.ed; if(!E||E.busy) return; const pay=p
   if(!dry){ const n=pay.p_cut.reduce((a,x)=>a+x.qty,0), m=pay.p_add.reduce((a,x)=>a+x.qty,0); if(!confirm(`تأكيد تعديل الكتاب؟\n${m?'➕ إضافة '+m+' رقم\n':''}${n?'➖ شيل '+n+' رقم\n':''}`)) return; }
   E.busy=true; plEditRender();
   try{ const r=await plCall('pl_letter_edit',{...pay,p_dry:!!dry});
-    if(dry){ E.prev=r; E.busy=false; plEditRender(); }
+    if(dry){ plNormL(r.letter); E.prev=r; E.busy=false; plEditRender(); }
     else{ plToast('✅ الكتاب اتعدّل'+(r.returned?` — ${plN(r.returned)} رقم رجعوا للكتاب الجاى`:'')); plEditClose(); await plLoad(true); } }
   catch(e){ E.busy=false; plEditRender(); plToast(plErr(e),false); } }
 
 // ═══ 📨 تقرير المستلم — ENGINE & FRAME NO: من/إلى لكل موديل فى الفترة (بفلاتر شاشة التقارير) ═══
 async function plRcpReport(){ const f=PL.rep; try{ await plDevLoad(); }catch(e){}
-  const itemOk=i=>(!f.brand||String(i.brand_id)===f.brand)&&(!f.model||String(i.model_id)===f.model)&&(!f.vtype||i.vtype===f.vtype);
+  const itemOk=i=>(!f.brand||String(plRoot(i.brand_id))===f.brand)&&(!f.head||i.brand_name===f.head)&&(!f.kind||(i.kind||'')===f.kind)&&(!f.model||String(i.model_id)===f.model)&&(!f.vtype||i.vtype===f.vtype);
   const ls=PL.letters.filter(l=>!l.is_cancelled&&(!f.year||String(l.model_year)===f.year)&&(!f.rcp||String(l.recipient_id)===f.rcp)&&(!f.status||l.status===f.status)
      &&(!f.from||l.letter_date>=f.from)&&(!f.to||l.letter_date<=f.to)&&l.items.some(itemOk));
   if(!ls.length){ plToast('مفيش كتب بالفلاتر دى',false); return; }
   // كل موديل: المدى المتصل (حتى لو على كذا كتاب) = سطر واحد
-  const runs=[]; ls.forEach(l=>l.items.filter(itemOk).forEach(i=>runs.push({mid:i.model_id,b:i.brand_name,m:i.model_label,fp:i.chassis_from.slice(0,10),ep:i.engine_from.slice(0,2),a:Number(i.serial_from),z:Number(i.serial_to)})));
+  const runs=[]; ls.forEach(l=>l.items.filter(itemOk).forEach(i=>runs.push({mid:i.model_id,b:i.brand_name,k:i.kind||'',vt:i.vtype,m:i.model_label,fp:i.chassis_from.slice(0,10),ep:i.engine_from.slice(0,2),a:Number(i.serial_from),z:Number(i.serial_to)})));
   runs.sort((x,y)=>x.mid-y.mid||x.fp.localeCompare(y.fp)||x.a-y.a); const rows=[];
-  runs.forEach(r=>{ const p=rows[rows.length-1]; if(p&&p.mid===r.mid&&p.fp===r.fp&&p.z+1===r.a) p.z=r.z; else rows.push({...r}); });
+  runs.forEach(r=>{ const p=rows[rows.length-1]; if(p&&p.mid===r.mid&&p.fp===r.fp&&p.b===r.b&&p.k===r.k&&p.z+1===r.a) p.z=r.z; else rows.push({...r}); });
   const S=n=>String(n).padStart(7,'0'), tot=rows.reduce((a,r)=>a+(r.z-r.a+1),0);
   const years=[...new Set(ls.map(l=>l.model_year))].sort().join(' / '), dates=ls.map(l=>l.letter_date).sort();
   const rcp=f.rcp?((PL.boot.recipients||[]).find(r=>String(r.id)===String(f.rcp))||{}).name:[...new Set(ls.map(l=>l.recipient_name).filter(Boolean))].join(' / ');
+  const sm={}; rows.forEach(r=>{ const k=r.b+'|'+(r.k||r.vt); const o=sm[k]||(sm[k]={b:r.b,t:r.k||r.vt,q:0}); o.q+=r.z-r.a+1; });
   const lab=r=>{ const s=(typeof plDevSpecs==='function'?plDevSpecs(r.mid):{})||{}; return s.model_code?plEsc(String(s.model_code).replace(/[-\s]/g,'')):plEsc(r.b+' '+r.m); };
   const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><title>ENGINE & FRAME NO ${years}</title><style>
 @page{size:A4 landscape;margin:12mm} *{box-sizing:border-box} html,body{margin:0;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif}
@@ -27687,7 +27722,8 @@ th{font-style:italic;font-weight:400} td.l{font-weight:700;font-style:italic;tex
 <h1>ENGINE &amp; FRAME NO ${years}</h1>
 <table><thead><tr><th rowspan="2"></th><th colspan="3">ENGINE</th><th colspan="3">FRAME</th></tr><tr><th>FROM</th><th>TO</th><th>QTY</th><th>FROM</th><th>TO</th><th>QTY</th></tr></thead><tbody>
 ${rows.map(r=>{ const q=r.z-r.a+1; return `<tr><td class="l">${lab(r)}</td><td>${r.ep}${S(r.a)}</td><td>${r.ep}${S(r.z)}</td><td>${q.toLocaleString('en')}</td><td>${r.fp}${S(r.a)}</td><td>${r.fp}${S(r.z)}</td><td>${q.toLocaleString('en')}</td></tr>`; }).join('')}
-<tr class="t"><td></td><td></td><td></td><td>${tot.toLocaleString('en')}</td><td></td><td></td><td>${tot.toLocaleString('en')}</td></tr></tbody></table></div></body></html>`;
+<tr class="t"><td></td><td></td><td></td><td>${tot.toLocaleString('en')}</td><td></td><td></td><td>${tot.toLocaleString('en')}</td></tr></tbody></table>
+<div style="direction:rtl;text-align:right;margin-top:7mm;font-size:13pt;line-height:2"><b>استلم:</b><br>${Object.values(sm).map(o=>`${plEsc(o.b)} — ماركة ${plEsc(o.t)} — العدد <b>${o.q.toLocaleString('en')}</b>`).join('<br>')}</div></div></body></html>`;
   let o=document.getElementById('pl-print-ov'); if(o) o.remove(); o=document.createElement('div'); o.id='pl-print-ov';
   o.style.cssText='position:fixed;inset:0;background:var(--dark);z-index:99990;display:flex;flex-direction:column;direction:rtl';
   o.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--gold);background:var(--dark2)">
