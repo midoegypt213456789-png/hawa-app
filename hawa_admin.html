@@ -21102,6 +21102,11 @@ function plYearLetter(y){ const r=(PL.boot&&PL.boot.year_letters||[]).find(x=>x.
 function plBrand(id){ return (PL.boot&&PL.boot.brands||[]).find(b=>b.id===Number(id)); }
 function plModel(id){ return (PL.boot&&PL.boot.models||[]).find(m=>m.id===Number(id)); }
 // 🏭 شركة أم + شركات فرعية: الفرعية بتشارك الأم فى الموديلات والأرقام وكود الماتور — وبتفرق فى رأس الكتاب بس
+// 🔎 القوايم بتاعت الكتب الدورية بنظام البحث الموحد (اكتب للبحث أو اختار)
+function plCombo(root){ try{ if(!root||typeof hcomboEnhance!=='function') return; PL._cid=PL._cid||0;
+  root.querySelectorAll('select.pl-inp').forEach(sel=>{ if(sel.__hc) return; if(!sel.id) sel.id='plc-'+(++PL._cid);
+    const mw=sel.style.minWidth, w0=sel.style.width; hcomboEnhance(sel.id);
+    const w=sel.parentNode; if(w&&w.classList.contains('hcombo')){ w.style.minWidth=mw||w0||'170px'; if(sel.style.marginRight) w.style.marginRight=sel.style.marginRight; const i=w.querySelector('input'); if(i){ i.style.width='100%'; i.title=sel.title||''; } } }); }catch(e){} }
 function plRoot(bid){ const b=plBrand(bid); return b&&b.parent_id?Number(b.parent_id):Number(bid); }
 function plParents(all){ return (PL.boot&&PL.boot.brands||[]).filter(b=>!b.parent_id&&(all||b.active)); }
 function plSubs(pid,all){ return (PL.boot&&PL.boot.brands||[]).filter(b=>Number(b.parent_id)===Number(pid)&&(all||(b.active&&!b.hidden))); }
@@ -21365,7 +21370,7 @@ async function plWizNewRcp(){ if(!PL.wiz) return; const n=(prompt('اسم الم
 function plWizSet(j,key,val){
   const w=PL.wiz, ln=w.lines[j]; ln[key]=val;
   if(key==='brand_id'){ ln.model_id=''; ln.sub_id=''; const b=plBrand(val); ln.head=b?b.name:''; }
-  if(key==='sub_id'){ const b=plBrand(val||ln.brand_id); ln.head=b?b.name:''; }
+  if(key==='sub_id'){ if(String(val)===String(ln.brand_id)) ln.sub_id=''; const b=plBrand(ln.sub_id||ln.brand_id); ln.head=b?b.name:''; }
   plWizRegrid(); plWizRender();
 }
 function plWizCell(i,j,val){
@@ -21400,9 +21405,9 @@ function plWizRender(){
     return `<div class="pl-row" style="margin-bottom:8px">
       <select class="pl-inp" onchange="plWizSet(${j},'brand_id',this.value)"><option value="">— الشركة —</option>
         ${brands.map(b=>`<option value="${b.id}" ${String(ln.brand_id)===String(b.id)?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select>
-      ${subs.length?`<select class="pl-inp" title="الشركة الفرعية — نفس موديلات وأرقام الأم" onchange="plWizSet(${j},'sub_id',this.value)"><option value="">${plEsc(pb.name)}</option>
+      ${subs.length?`<select class="pl-inp" title="الشركة الفرعية — نفس موديلات وأرقام الأم" onchange="plWizSet(${j},'sub_id',this.value)"><option value="${pb.id}" ${ln.sub_id?'':'selected'}>${plEsc(pb.name)}</option>
         ${subs.map(x=>`<option value="${x.id}" ${String(ln.sub_id)===String(x.id)?'selected':''}>${plEsc(x.name)}</option>`).join('')}</select>`:''}
-      <select class="pl-inp" style="min-width:200px" onchange="plWizSet(${j},'model_id',this.value)" ${ln.brand_id?'':'disabled'}><option value="">— الموديل —</option>
+      <select class="pl-inp" style="min-width:300px" onchange="plWizSet(${j},'model_id',this.value)" ${ln.brand_id?'':'disabled'}><option value="">— الموديل —</option>
         ${models.map(x=>`<option value="${x.id}" ${String(ln.model_id)===String(x.id)?'selected':''}>${plEsc(plMLabel(x))}</option>`).join('')}</select>
       <button class="pl-btn ghost sm" onclick="plWizNewModel(${j})" title="ضيف موديل جديد للشركة دى — وبعد الحفظ بترجع للكتاب والموديل متختار">➕ موديل</button>
       <input class="pl-inp" type="number" min="1" style="width:120px" placeholder="العدد" value="${plEsc(ln.qty)}" onchange="plWizSet(${j},'qty',this.value)">
@@ -21443,6 +21448,7 @@ function plWizRender(){
     <datalist id="pl-heads">${plHeads().map(h=>`<option value="${plEsc(h)}">`).join('')}</datalist>
     <datalist id="pl-kinds">${plKinds().map(h=>`<option value="${plEsc(h)}">`).join('')}</datalist>
   </div>`;
+  plCombo(el);
 }
 async function plWizRun(dry){
   const w=PL.wiz; if(!w) return;
@@ -21566,6 +21572,7 @@ function plFpPreview(){
   const b=plBrand(PL.selBrand), y=plYearLetter(PL.boot.settings.model_year), e=document.getElementById('pl-m-prev');
   if(e) e.innerHTML = `شكل أول شاسيه: <b class="pl-mono">${plEsc((fp||'_________').padEnd(9,'_'))}${plEsc(y)}${plEsc(String(cd||'___').padStart(3,'_'))}0000</b> &nbsp; أول ماتور: <b class="pl-mono">${plEsc(b?b.engine_prefix:'__')}${plEsc(String(cd||'___'))}0000</b>`;
 }
+(function(){ const f=plRenderReports; window.plRenderReports=function(){ f.apply(this,arguments); plCombo(document.getElementById('pl-pane-reports')); }; })();
 function plRenderBrands(){
   const el=document.getElementById('pl-pane-brands'); if(!el) return;
   const brands=plParents(true), ed=plCanEdit();
@@ -27694,7 +27701,7 @@ function plEditRender(){ const E=PL.ed; if(!E) return; const l=PL.letters.find(x
     <div class="pl-row" style="margin-top:14px;justify-content:flex-end;gap:8px">
       <span class="pl-sub" style="flex:1">الزيادة بتاخد من بعد آخر رقم اتصرف (مفيش تكرار) — والأرقام اللى بتتشال بتتصرف فى أول كتاب جاى. متاح طول ما الكتاب متسلمش للتنمية.</span>
       <button class="pl-btn ghost" ${has&&!E.busy?'':'disabled'} onclick="plEditRun(true)">👁 معاينة</button>
-      <button class="pl-btn" ${has&&!E.busy?'':'disabled'} onclick="plEditRun(false)">💾 احفظ التعديل</button></div></div>`; }
+      <button class="pl-btn" ${has&&!E.busy?'':'disabled'} onclick="plEditRun(false)">💾 احفظ التعديل</button></div></div>`; plCombo(o); }
 async function plEditRun(dry){ const E=PL.ed; if(!E||E.busy) return; const pay=plEditPayload(); if(!pay.p_add.length&&!pay.p_cut.length) return;
   if(!dry){ const n=pay.p_cut.reduce((a,x)=>a+x.qty,0), m=pay.p_add.reduce((a,x)=>a+x.qty,0); if(!confirm(`تأكيد تعديل الكتاب؟\n${m?'➕ إضافة '+m+' رقم\n':''}${n?'➖ شيل '+n+' رقم\n':''}`)) return; }
   E.busy=true; plEditRender();
