@@ -21555,9 +21555,9 @@ function plFpCheck(v){
   if(/[IOQ]/.test(s)) return {s, ok:false, msg:'⛔ I و O و Q ممنوعين عالمياً فى الشاسيه — غالباً قصدك 1 أو 0'};
   if(!/^[A-HJ-NPR-Z0-9]*$/.test(s)) return {s, ok:false, msg:'⛔ حروف إنجليزى وأرقام بس'};
   if(s.length!==9) return {s, ok:false, msg:`${s.length}/9 حروف`};
-  const other=(PL.boot.models||[]).find(m=>m.fingerprint===s && String(m.brand_id)!==String(PL.selBrand) && (!PL.modelEdit||m.id!==PL.modelEdit.id));
+  const other=(PL.boot.models||[]).find(m=>m.fingerprint===s && plRoot(m.brand_id)!==plRoot(PL.selBrand) && (!PL.modelEdit||m.id!==PL.modelEdit.id));
   if(other) return {s, ok:false, msg:`⛔ البصمة دى بتاعة «${(plBrand(other.brand_id)||{}).name} — ${other.label}»`};
-  const same=(PL.boot.models||[]).find(m=>m.fingerprint===s && String(m.brand_id)===String(PL.selBrand) && (!PL.modelEdit||m.id!==PL.modelEdit.id));
+  const same=(PL.boot.models||[]).find(m=>m.fingerprint===s && plRoot(m.brand_id)===plRoot(PL.selBrand) && (!PL.modelEdit||m.id!==PL.modelEdit.id));
   return {s, ok:true, msg: same?`⚠️ نفس بصمة «${same.label}» فى نفس الشركة — هتتأكد منك وقت الحفظ`:'✅ 9/9'};
 }
 function plFpInput(inp){
@@ -21609,8 +21609,9 @@ function plRenderBrands(){
         <button class="act-btn ${m.active?'delete':'toggle'}" onclick="plModelToggle(${m.id})">${m.active?'⏸️':'▶️'}</button>`:''}</td></tr>`; }).join('')||'<tr><td colspan="8" class="pl-sub" style="text-align:center;padding:16px">مفيش موديلات — ضيف أول موديل تحت</td></tr>'}
     </tbody></table></div>
     ${ed?`<div class="pl-card" style="background:var(--dark3);margin:12px 0 0">
-      <div class="pl-h">${me?'✏️ تعديل موديل':'➕ موديل جديد لـ '+plEsc(b.name)}</div>
+      <div class="pl-h">${me?'✏️ تعديل موديل':'➕ موديل جديد لـ '+plEsc(b.name)}${plSubs(b.id,true).length?' <span class="pl-sub">— اختار الشركة (الأم أو فرعية) وبعدين النوع والسعة</span>':''}</div>
       <div class="pl-row">
+        ${plSubs(b.id,true).length?`<select id="pl-m-sub" class="pl-inp" title="الموديل ده بتاع أنهى شركة فى المجموعة">${[b,...plSubs(b.id,true)].map(x=>`<option value="${x.id}" ${(me?me.brand_id:(PL.modelSub||b.id))===x.id?'selected':''}>${plEsc(x.name)}</option>`).join('')}</select>`:''}
         <select id="pl-m-vt" class="pl-inp">${PL_VTYPES.map(v=>`<option ${me&&me.vtype===v?'selected':''}>${v}</option>`).join('')}</select>
         <input id="pl-m-cc" class="pl-inp" style="width:120px" placeholder="السعة (150)" value="${plEsc(me?me.cc:'')}">
         <input id="pl-m-fp" class="pl-inp pl-mono" style="width:170px" maxlength="12" placeholder="البصمة 9 حروف" value="${plEsc(me?me.fingerprint:'')}" oninput="plFpInput(this)">
@@ -21670,7 +21671,8 @@ async function plBrandToggle(){
 function plModelEditStart(id){ PL.modelEdit=plModel(id); plRenderBrands(); const f=document.getElementById('pl-m-cc'); if(f) f.scrollIntoView({behavior:'smooth',block:'center'}); }
 async function plModelSave(confirmSame){
   const me=PL.modelEdit;
-  const p={ id: me?me.id:null, brand_id: me?me.brand_id:PL.selBrand, vtype: document.getElementById('pl-m-vt').value, cc: document.getElementById('pl-m-cc').value,
+  const se=document.getElementById('pl-m-sub'); if(se) PL.modelSub=Number(se.value);
+  const p={ id: me?me.id:null, brand_id: se?Number(se.value):(me?me.brand_id:PL.selBrand), vtype: document.getElementById('pl-m-vt').value, cc: document.getElementById('pl-m-cc').value,
     fingerprint: document.getElementById('pl-m-fp').value, note: document.getElementById('pl-m-note').value, active: me?me.active:true, confirm: !!confirmSame };
   const ce=document.getElementById('pl-m-code'); if(ce) p.code=ce.value;
   try{
@@ -21678,7 +21680,7 @@ async function plModelSave(confirmSame){
     if(r && r.need_confirm){ if(confirm('⚠️ '+r.message+'\n\nتكمّل؟')) return plModelSave(true); return; }
     plToast(me?'✅ اتعدّل':`✅ الموديل اتضاف — أول درج ${r.code}`); PL.modelEdit=null; await plLoad(true);
     if(!me && PL.wizBack && PL.wiz){ const ln=PL.wiz.lines[PL.wizBack.j]; PL.wizBack=null;
-      if(ln && String(ln.brand_id)===String(p.brand_id) && r && r.id){ ln.model_id=String(r.id); plTab('letters'); try{ plWizRegrid(); plWizRender(); }catch(e){} } }
+      if(ln && String(ln.brand_id)===String(plRoot(p.brand_id)) && r && r.id){ ln.model_id=String(r.id); plTab('letters'); try{ plWizRegrid(); plWizRender(); }catch(e){} } }
   }catch(e){ plToast(plErr(e),false); }
 }
 async function plModelToggle(id){
