@@ -8052,6 +8052,7 @@ function blTab(which){
 }
 
 async function loadBulletins(){
+  try{ if(typeof plCountRefresh==='function') plCountRefresh(); }catch(_){}
   loadBulletinSearchMode();
   const el = document.getElementById('bl-list');
   if(!el) return;
@@ -21147,6 +21148,13 @@ async function plLoad(force){
     const p=document.getElementById('pl-pane-'+PL.tab);
     if(p) p.innerHTML = `<div class="pl-card" style="color:var(--error)">❌ ${plEsc(plErr(e))}</div>`;
   }
+}
+// عدد الكتب المفتوحة على تاب «📖 الكتب» أول ما صفحة المنشورات تفتح (من غير ما تدوس على التاب)
+async function plCountRefresh(){
+  const c=document.getElementById('pl-tab-count'); if(!c) return;
+  const open=a=>a.filter(l=>['جديد','فى التنمية','اتستلم'].includes(l.status)).length;
+  if(PL.loaded){ c.textContent=open(PL.letters); return; }
+  try{ const l=await plCall('pl_list'); if(Array.isArray(l)&&!PL.loaded) c.textContent=open(l); }catch(_){}
 }
 function plRender(){
   const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules,legacy:plRenderLegacy,dev:plRenderDev}[PL.tab];
