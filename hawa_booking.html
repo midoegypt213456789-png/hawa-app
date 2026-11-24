@@ -732,6 +732,7 @@
           style="width:100%;padding:12px 16px;background:var(--dark3);border:2px solid var(--border);border-radius:12px;
           color:var(--text);font-family:Cairo,sans-serif;font-size:15px;font-weight:700;outline:none;text-align:center"
           oninput="onPermitInput()" />
+        <button type="button" id="permitQrBtn" onclick="openPermitQr()" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;cursor:pointer;padding:12px;border:1.5px solid var(--gold);border-radius:12px;background:rgba(201,168,76,.10);color:var(--gold);font-weight:800;font-size:14.5px;font-family:inherit">📱 امسح QR الإذن <span style="font-size:11px;font-weight:600;color:var(--text-dim)">— أسرع وأدق</span></button>
         <div id="permitMsg" style="text-align:center;font-size:12px;margin-top:8px;min-height:18px"></div>
         <div id="permitAllow" style="display:none;margin-top:10px"></div>
         <label id="permitRescanRow" style="display:none;margin-top:10px;background:var(--dark3);border:1.5px dashed rgba(201,168,76,.55);border-radius:12px;padding:10px 12px;cursor:pointer;align-items:flex-start;gap:10px;font-size:12.5px;line-height:1.7">
@@ -741,7 +742,9 @@
         <div id="qtyPanel" style="display:none;margin-top:12px"></div>
         <div id="permitScanBox" style="display:none;margin-top:10px">
           <div id="permitScanHint" style="text-align:center;font-size:12px;color:var(--text-dim);margin-bottom:8px;line-height:1.7">الإذن ده لسه متسجلش عندنا — صوّره مرة واحدة بس، وبعدها هيتقبل بالرقم على طول.<br><b style="color:var(--gold)">لو الإذن على أكتر من صفحة، صوّر كل الصفحات بالترتيب</b> (مكتوب تحت كل ورقة «صفحه ١ من ٢»)</div>
-          <button type="button" id="permitCamBtn" onclick="openPermitCamera()" style="display:block;width:100%;text-align:center;cursor:pointer;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:15px;font-family:inherit">📷 صوّر الإذن</button>
+          <button type="button" id="permitQrBtn2" onclick="openPermitQr()" style="display:block;width:100%;text-align:center;cursor:pointer;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--gold-light),var(--gold));color:#0A0A0A;font-weight:800;font-size:15px;font-family:inherit">📱 امسح QR الإذن</button>
+          <div style="text-align:center;font-size:11.5px;color:var(--text-dim);margin:9px 0 7px">الإذن مفيهوش QR؟ صوّره 👇</div>
+          <button type="button" id="permitCamBtn" onclick="openPermitCamera()" style="display:block;width:100%;text-align:center;cursor:pointer;padding:12px;border:1.5px solid rgba(201,168,76,.55);border-radius:12px;background:transparent;color:var(--gold);font-weight:800;font-size:14px;font-family:inherit">📷 صوّر الإذن</button>
           <input type="file" id="permitFile" accept="image/*" capture="environment" style="display:none" onchange="onPermitFile(this)">
           <div style="text-align:center;margin-top:7px"><label for="permitFileAny" style="font-size:11.5px;color:var(--text-dim);cursor:pointer;text-decoration:underline">أو اختار صور الصفحات / PDF من الجهاز</label></div>
           <input type="file" id="permitFileAny" accept="image/*,application/pdf" multiple style="display:none" onchange="onPermitFile(this)">
@@ -4549,10 +4552,10 @@ function permitRecrop(file, box, deg) {
   });
 }
 
-function permitScanRequest(payload, onPct) {
+function permitScanRequest(payload, onPct, fn) {
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${SB}/functions/v1/permit-scan-next`);
+    xhr.open('POST', `${SB}/functions/v1/${fn || 'permit-scan-next'}`);
     xhr.setRequestHeader('Content-Type', 'application/json');
     xhr.timeout = 180000;
     xhr.upload.onprogress = e => { if (e.lengthComputable && onPct) onPct(Math.min(100, Math.round(e.loaded / e.total * 100))); };
@@ -4729,6 +4732,140 @@ async function processPermitFile(f, pages) {
     permitBar(null);
     prog.style.color = 'var(--error)';
     prog.textContent = '❌ حصل خطأ فى قراءة الملف — حاول تانى';
+  }
+}
+
+// ===================== 📱 تسجيل الإذن بالـQR =====================
+// الـQR المطبوع على الإذن = لينك صفحة الإذن على النظام الأساسى → السيرفر بيقراها مباشرة (من غير تصوير ولا قراءة آلية)
+const PM_QR_RE = /^https:\/\/makanerp\.softgoegypt\.com\/i\/\d{1,12}\/[0-9a-f]{8,64}\/?$/i;
+let _pmQrStream = null, _pmQrTimer = null, _pmQrBusy = false, _pmQrDet = null, _pmQrBad = 0;
+function pmQrLib() {
+  if (window.jsQR) return Promise.resolve();
+  return new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.min.js'; s.onload = ok; s.onerror = () => no(new Error('lib')); document.head.appendChild(s); });
+}
+async function pmQrDecodeCanvas(c) {
+  if (_pmQrDet) { try { const r = await _pmQrDet.detect(c); if (r && r.length) return String(r[0].rawValue || ''); } catch (_) {} }
+  if (window.jsQR) {
+    try { const ctx = c.getContext('2d', { willReadFrequently: true }); const d = ctx.getImageData(0, 0, c.width, c.height); const r = window.jsQR(d.data, c.width, c.height, { inversionAttempts: 'dontInvert' }); if (r && r.data) return String(r.data); } catch (_) {}
+  }
+  return '';
+}
+function pmQrMsg(t, color) { const m = document.getElementById('permitMsg'); if (m) { m.innerHTML = t; m.style.color = color || 'var(--text-dim)'; } }
+async function openPermitQr() {
+  if (_pmQrBusy) return;
+  // جوه تليجرام على الموبايل: ماسح تليجرام نفسه (أسرع وأثبت)
+  const tw = window.Telegram && window.Telegram.WebApp;
+  try {
+    if (tw && tw.initData && typeof tw.showScanQrPopup === 'function' && tw.isVersionAtLeast && tw.isVersionAtLeast('6.4') && /^(android|ios)$/i.test(String(tw.platform || ''))) {
+      tw.showScanQrPopup({ text: 'وجّه الكاميرا على QR الإذن' }, (txt) => {
+        const u = String(txt || '').trim();
+        if (!PM_QR_RE.test(u)) return false; // يفضل مستنى QR الإذن
+        setTimeout(() => submitPermitQr(u), 50);
+        return true;
+      });
+      return;
+    }
+  } catch (_) {}
+  const ov = document.getElementById('pmQr'), v = document.getElementById('pmQrVideo'), note = document.getElementById('pmQrNote');
+  note.textContent = '';
+  _pmQrDet = null; _pmQrBad = 0;
+  try { if ('BarcodeDetector' in window) { const fm = await BarcodeDetector.getSupportedFormats(); if (fm.includes('qr_code')) _pmQrDet = new BarcodeDetector({ formats: ['qr_code'] }); } } catch (_) { _pmQrDet = null; }
+  pmQrLib().catch(() => {});
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { document.getElementById('permitQrFile').click(); return; }
+  try {
+    _pmQrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    v.srcObject = _pmQrStream; ov.style.display = 'flex';
+    try { await v.play(); } catch (_) {}
+  } catch (e) { closePermitQr(); document.getElementById('permitQrFile').click(); return; }
+  const c = document.createElement('canvas'); let busy = false; const t0 = Date.now();
+  _pmQrTimer = setInterval(async () => {
+    if (busy || !v.videoWidth) return; busy = true;
+    try {
+      // بنقص مربع من نص الكادر (مكان الإطار) ونكبّره — الـQR المطبوع صغير
+      const side = Math.round(Math.min(v.videoWidth, v.videoHeight) * 0.8);
+      const sx = Math.round((v.videoWidth - side) / 2), sy = Math.round((v.videoHeight - side) / 2);
+      const out = Math.min(900, side); c.width = out; c.height = out;
+      c.getContext('2d', { willReadFrequently: true }).drawImage(v, sx, sy, side, side, 0, 0, out, out);
+      const txt = (await pmQrDecodeCanvas(c)).trim();
+      if (txt) {
+        if (PM_QR_RE.test(txt)) { closePermitQr(); submitPermitQr(txt); }
+        else if (++_pmQrBad >= 3) note.textContent = 'ده مش QR إذن صرف — وجّه على المربع المطبوع على الإذن نفسه';
+      } else if (Date.now() - t0 > 12000 && !note.textContent) note.textContent = 'قرّب الموبايل من الـQR وخلّيه فى نور كويس — أو اضغط «مفيش QR — صوّر»';
+    } catch (_) {}
+    busy = false;
+  }, 220);
+}
+function closePermitQr() {
+  if (_pmQrTimer) { clearInterval(_pmQrTimer); _pmQrTimer = null; }
+  const ov = document.getElementById('pmQr'), v = document.getElementById('pmQrVideo');
+  if (_pmQrStream) { try { _pmQrStream.getTracks().forEach(t => t.stop()); } catch (_) {} _pmQrStream = null; }
+  if (v) v.srcObject = null;
+  if (ov) ov.style.display = 'none';
+}
+function permitQrToPhoto() {
+  closePermitQr();
+  const box = document.getElementById('permitScanBox'); if (box) box.style.display = '';
+  openPermitCamera();
+}
+async function onPermitQrFile(input) {
+  const f = (input.files || [])[0]; input.value = '';
+  if (!f) return;
+  closePermitQr();
+  pmQrMsg('⏳ بندوّر على الـQR فى الصورة...');
+  try {
+    await pmQrLib().catch(() => {});
+    if (!_pmQrDet) { try { if ('BarcodeDetector' in window) _pmQrDet = new BarcodeDetector({ formats: ['qr_code'] }); } catch (_) {} }
+    const img = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = URL.createObjectURL(f); });
+    let found = '';
+    // الصورة كاملة بأكتر من مقاس، وبعدين أرباعها (الـQR صغير فى الورقة)
+    const tries = [];
+    for (const mx of [1600, 1000, 2400]) tries.push([0, 0, 1, 1, mx]);
+    for (const [x, y] of [[0, 0], [.5, 0], [0, .5], [.5, .5], [.25, 0], [.25, .5], [0, .25], [.5, .25], [.25, .25]]) tries.push([x, y, .5, .5, 1400]);
+    const c = document.createElement('canvas');
+    for (const [fx, fy, fw, fh, mx] of tries) {
+      const sw = img.naturalWidth * fw, sh = img.naturalHeight * fh; const k = Math.min(1, mx / Math.max(sw, sh)) || 1;
+      c.width = Math.max(1, Math.round(sw * k)); c.height = Math.max(1, Math.round(sh * k));
+      c.getContext('2d', { willReadFrequently: true }).drawImage(img, img.naturalWidth * fx, img.naturalHeight * fy, sw, sh, 0, 0, c.width, c.height);
+      const t = (await pmQrDecodeCanvas(c)).trim();
+      if (t && PM_QR_RE.test(t)) { found = t; break; }
+    }
+    try { URL.revokeObjectURL(img.src); } catch (_) {}
+    if (!found) { pmQrMsg('❌ مش لاقى QR إذن فى الصورة — جرّب تمسحه بالكاميرا من قريب، أو صوّر الإذن', 'var(--error)'); const box = document.getElementById('permitScanBox'); if (box) box.style.display = ''; return; }
+    await submitPermitQr(found);
+  } catch (e) { pmQrMsg('❌ مقدرتش أفتح الصورة — حاول تانى', 'var(--error)'); }
+}
+async function submitPermitQr(url) {
+  if (_pmQrBusy) return; _pmQrBusy = true;
+  const b1 = document.getElementById('b1'); const qb = [document.getElementById('permitQrBtn'), document.getElementById('permitQrBtn2')];
+  b1.disabled = true; qb.forEach(x => { if (x) x.disabled = true; });
+  const prog = document.getElementById('permitScanProg'); if (prog) prog.textContent = '';
+  pmQrMsg('⏳ بنجيب بيانات الإذن من نظام الشركة...', 'var(--gold)');
+  try {
+    const res = await permitScanRequest({ client_id: user.id, username: user.username || '', qr_url: url }, null, 'permit-qr');
+    if (!res || !res.ok) {
+      const map = { network: 'النت قطع — حاول تانى', timeout: 'خد وقت طويل — حاول تانى', legacy: 'تم تحميل الإذن ده بالكامل قبل تشغيل النظام الجديد — لو عندك ملاحظة كلم الإدارة', void: 'الإذن ده ملغى — راجع الإدارة', bad_request: 'حدّث الصفحة وجرّب تانى' };
+      pmQrMsg('❌ ' + ((res && (res.message || map[res.error])) || 'فشل — حاول تانى'), 'var(--error)');
+      try { if (typeof logActivity === 'function') logActivity('cl_permit_qr_fail', '📱 مسح QR إذن — فشل', { error: res && res.error }); } catch (_) {}
+      // النظام الأساسى واقع أو الصفحة مش مقروءة → التصوير متاح زى ما هو
+      if (res && /^(qr_down|qr_parse|qr_bad|qr_not_found|qr_not_sale|network|timeout|bad_response|save_fail)$/.test(String(res.error || ''))) { const box = document.getElementById('permitScanBox'); if (box) box.style.display = ''; }
+      return;
+    }
+    const no = String((res.permit && res.permit.permit_no) || '');
+    if (!no) { pmQrMsg('❌ فشل — حاول تانى', 'var(--error)'); return; }
+    const wasRescan = !!res.rescanned;
+    if (wasRescan && typeof editMode !== 'undefined' && editMode) editMode.permitShown = null;
+    hidePermitExtras();
+    _pmPages = []; renderPermitPages();
+    document.getElementById('permitInput').value = no; bk.permit = no;
+    try { if (typeof logActivity === 'function') logActivity('cl_permit_qr', '📱 سجّل/حدّث إذن بالـQR', { permit: no, existing: !!res.existing, rescanned: wasRescan }); } catch (_) {}
+    await goStep2();
+    const pa = document.getElementById('permitAllow');
+    const t = wasRescan ? '🔁 رصيد الإذن اتحدّث من نظام الشركة' : res.existing ? '✅ الإذن متسجل — الرصيد مطابق لنظام الشركة' : '✅ الإذن اتسجل بالـQR';
+    if (pa && pa.style.display !== 'none') pa.insertAdjacentHTML('afterbegin', `<div style="text-align:center;font-size:12.5px;font-weight:800;color:var(--success);margin-bottom:8px">${t}</div>`);
+  } catch (e) {
+    pmQrMsg('❌ حصل خطأ — حاول تانى', 'var(--error)');
+  } finally {
+    _pmQrBusy = false; qb.forEach(x => { if (x) x.disabled = false; });
   }
 }
 
@@ -6249,6 +6386,18 @@ chBadge();
 
 </script>
 
+<div id="pmQr" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column">
+  <video id="pmQrVideo" autoplay playsinline muted style="flex:1;width:100%;object-fit:cover;background:#000"></video>
+  <div style="position:absolute;top:0;left:0;right:0;padding:14px 12px 26px;text-align:center;color:#fff;font-size:13.5px;font-weight:700;background:linear-gradient(rgba(0,0,0,.7),transparent)">وجّه الكاميرا على الـQR (المربع) المطبوع على الإذن</div>
+  <div style="position:absolute;top:50%;left:50%;width:min(68vw,300px);aspect-ratio:1;transform:translate(-50%,-58%);border:3px solid #C9A84C;border-radius:18px;box-shadow:0 0 0 2000px rgba(0,0,0,.45);pointer-events:none"></div>
+  <div id="pmQrNote" style="position:absolute;left:0;right:0;bottom:104px;text-align:center;color:#E8C97A;font-size:12.5px;padding:0 16px;min-height:18px"></div>
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:18px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:linear-gradient(transparent,rgba(0,0,0,.8))">
+    <button type="button" onclick="closePermitQr()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:10px 16px;font-size:13.5px;font-family:inherit">✕ إلغاء</button>
+    <button type="button" onclick="document.getElementById('permitQrFile').click()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:20px;padding:10px 14px;font-size:13px;font-family:inherit">🖼️ من صورة</button>
+    <button type="button" onclick="permitQrToPhoto()" style="background:rgba(201,168,76,.22);border:1px solid #C9A84C;color:#E8C97A;border-radius:20px;padding:10px 14px;font-size:13px;font-weight:800;font-family:inherit">مفيش QR — صوّر</button>
+  </div>
+</div>
+<input type="file" id="permitQrFile" accept="image/*" style="display:none" onchange="onPermitQrFile(this)">
 <div id="pmCam" style="display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column">
   <video id="pmCamVideo" autoplay playsinline muted style="flex:1;width:100%;object-fit:cover;background:#000"></video>
   <div style="position:absolute;top:0;left:0;right:0;padding:12px;text-align:center;color:#fff;font-size:13px;background:linear-gradient(rgba(0,0,0,.6),transparent)">خلّى ورقة الإذن كلها جوه الكادر وفى نور كويس</div>

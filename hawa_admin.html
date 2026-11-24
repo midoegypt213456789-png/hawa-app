@@ -8561,7 +8561,7 @@ async function pmOpen(id){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
           ${p.image_url ? `<a href="${PM_IMG(p.image_url)}" target="_blank"><img src="${PM_IMG(p.image_url)}" style="width:100%;max-height:340px;object-fit:contain;background:#000;border-radius:10px;border:1px solid var(--border)"></a>
-            <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:4px">اضغط الصورة تفتح بالحجم الكامل</div>` : emptyBox('مفيش صورة (إذن يدوى)')}
+            <div style="text-align:center;font-size:11px;color:var(--text-dim);margin-top:4px">اضغط الصورة تفتح بالحجم الكامل</div>` : emptyBox(p.source==='qr' ? '📱 متسجل بالـQR من نظام الشركة — البيانات جاية من النظام مباشرة (مفيش صورة)' : 'مفيش صورة (إذن يدوى)')}
         </div>
         <div>
           <div style="background:rgba(201,168,76,.08);border:1px solid var(--gold);border-radius:10px;padding:10px;font-size:12.5px;line-height:1.9;white-space:pre-line">${escAttr(d.explain||'')}</div>
