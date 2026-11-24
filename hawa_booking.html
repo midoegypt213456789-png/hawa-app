@@ -4031,6 +4031,9 @@ async function goStep2() {
   msgEl.style.color = 'var(--text-dim)';
   document.getElementById('b1').disabled = true;
 
+  // 📱 إذن متسجل بالـQR → بنراجعه على نظام الشركة قبل الحجز (تعديل / صرف). أى مشكلة هنا متوقفش الحجز.
+  try { await Promise.race([permitScanRequest({ client_id: user.id, username: user.username || '', refresh: true, permit_no: String(permit) }, null, 'permit-qr'), new Promise(r => setTimeout(r, 9000))]); } catch (_) {}
+
   // 🧾 نظام الأذونات الجديد — بيشتغل بس لما القاعدة تتفعل من الإعدادات، غير كده المسار القديم
   // القاعدة شغالة على السيرفر: لو الاستعلام فشل (نت ضعيف) منكملش بالمسار القديم — نطلب منه يحاول تانى
   let lk = null;
