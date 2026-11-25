@@ -11015,6 +11015,7 @@ async function vpLoad(){
     return `<div onclick="vpOpen(${k.id})" style="cursor:pointer;background:var(--dark3);border:1px solid ${open?'rgba(76,175,125,.45)':'var(--border)'};border-radius:12px;padding:12px 14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px"><b style="font-size:15px;color:var(--gold)">❓ ${escAttr(k.question)}</b>${open?pill('🟢 شغال — باقى '+vpLeft(k.ends_at),'#4CAF7D'):pill('🔒 مقفول','#8A8580')}</div>
       ${vpBars(k.summary,false)}
+      ${open||k.notified_at?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">${vpCanEdit()&&open?`<button class="act-btn edit" onclick="event.stopPropagation();vpNotify(${k.id})">${k.notified_at?'🔔 ابعت تذكير للى مصوّتش':'📣 ابعت الرسالة للتجار'}</button>`:''}<span style="font-size:11.5px">${vpSendTxt(k, k.send)}</span></div>`:''}
       <div style="font-size:11.5px;color:var(--text-dim);margin-top:6px">👥 صوّت ${k.summary.total} من ${k.summary.eligible} · 💬 ${k.summary.comments} تعليق · ${escAttr(vpTargetTxt(k.target))} · بدأ ${arDT(k.created_at)} · ${open?'يقفل':'اتقفل'} ${arDT(open?k.ends_at:(k.closed_at||k.ends_at))}</div>
     </div>`; }).join('');
 }
@@ -11041,7 +11042,7 @@ function vpRender(){
       <button class="act-btn edit" onclick="vpBack()">➡️ رجوع</button>
       ${open?pill('🟢 شغال — باقى '+vpLeft(p.ends_at, D.now)+' · تحديث لحظى','#4CAF7D'):pill('🔒 مقفول'+(p.closed_by&&p.closed_by!=='auto'?' (بإيد '+escAttr(p.closed_by)+')':''),'#8A8580')}
       <span style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap">
-        ${vpCanEdit()&&open&&!p.notified_at?`<button class="act-btn edit" onclick="vpNotify()">📣 ابعت الرسالة الجماعية للتجار</button>`:''}
+        ${vpCanEdit()&&open?`<button class="act-btn edit" onclick="vpNotify()">${p.notified_at?'🔔 ابعت تذكير للى مصوّتش':'📣 ابعت الرسالة للتجار'}</button>`:''}
         ${vpCanEdit()?`<button class="act-btn edit" onclick="vpExtend()">⏱️ ${open?'مدّ الوقت':'افتحه تانى'}</button>`:''}
         ${vpCanEdit()&&open?`<button class="act-btn del" onclick="vpClose()">🔒 اقفل دلوقتى</button>`:''}
         <button class="act-btn edit" onclick="vpPrint()">🖨️ طباعة</button>
@@ -11051,7 +11052,7 @@ function vpRender(){
       <div style="font-size:18px;font-weight:800;color:var(--gold-light);margin-bottom:14px">❓ ${escAttr(p.question)}</div>
       ${vpBars(s,true)}
       <div style="font-size:12.5px;color:var(--text-dim);margin-top:10px;line-height:1.9">👥 صوّت <b style="color:var(--text)">${s.total}</b> من ${s.eligible} تاجر (${s.eligible?Math.round(s.total*100/s.eligible):0}%) · 💬 ${s.comments} تعليق · 🎯 ${escAttr(vpTargetTxt(p.target))}<br>
-        بدأ ${arDT(p.created_at)}${p.created_by?' ('+escAttr(p.created_by)+')':''} · ${open?'يقفل':'اتقفل'} ${arDT(open?p.ends_at:(p.closed_at||p.ends_at))}${p.notified_at?` · 📣 الإشعار اتبعت لـ ${p.notified_count} تاجر`:''}${p.allow_comment?'':' · التعليق مقفول'}</div>
+        بدأ ${arDT(p.created_at)}${p.created_by?' ('+escAttr(p.created_by)+')':''} · ${open?'يقفل':'اتقفل'} ${arDT(open?p.ends_at:(p.closed_at||p.ends_at))} · ${vpSendTxt(p, D.send)}${p.allow_comment?'':' · التعليق مقفول'}</div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${fb('','الكل ('+(D.votes||[]).length+')')}${opts.map((t,i)=>fb(String(i+1),escAttr(t)+' ('+((s.counts[i]||{}).n||0)+')')).join('')}${fb('c','💬 التعليقات ('+s.comments+')')}</div>
     ${v.length?`<table style="width:100%;font-size:13px;border-collapse:collapse"><tr style="color:var(--text-dim);text-align:right"><th style="padding:7px">الكود</th><th>التاجر</th><th>المحافظة</th><th>الرأى</th><th>التعليق</th><th>الوقت</th></tr>
@@ -11090,7 +11091,7 @@ function vpOpenForm(){
       ${types.length?`<div style="font-size:12px;color:var(--text-dim);margin:4px 0">نوع العميل</div><div style="display:flex;gap:6px;flex-wrap:wrap">${types.map(t=>`<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer"><input type="checkbox" class="vpF-ct" value="${escAttr(t)}"> ${escAttr(t)}</label>`).join('')}</div>`:''}
       <div style="font-size:12px;color:var(--text-dim);margin:8px 0 4px">المحافظة</div><div style="display:flex;gap:6px;flex-wrap:wrap;max-height:120px;overflow:auto">${govs.map(g=>`<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer"><input type="checkbox" class="vpF-gv" value="${escAttr(g)}"> ${escAttr(g)}</label>`).join('')}</div>
     </div>
-    <div style="font-size:11.5px;color:var(--text-dim);line-height:1.8">الاقتراع بيظهر للتجار فى صفحة الحجز أول ما تبدأه، والرسالة الجماعية بتوصلهم على تليجرام بزرار يفتح التصويت على طول (بتتبعت على دفعات — حوالى 25 تاجر فى الدقيقة). النتيجة والتعليقات ليك انت بس.</div>`;
+    <div style="font-size:11.5px;color:var(--text-dim);line-height:1.8">الاقتراع بيظهر للتجار فى صفحة الحجز أول ما تبدأه، والرسالة الجماعية بتوصلهم على تليجرام بزرار يفتح التصويت على طول (بتتبعت لكل التجار مرة واحدة — بتوصل فى ثوانى). النتيجة والتعليقات ليك انت بس.</div>`;
   ['أوافق','لا أوافق','رأى تالت'].forEach(vpAddOpt);
   document.getElementById('vpModal').classList.add('show');
 }
@@ -11127,10 +11128,19 @@ async function vpExtend(){
   const m = Math.round(parseFloat(h) * 60); if(!(m >= 1)){ alert('❌ رقم غلط'); return; }
   try { await rpcSecure('admin_poll_set', { p_id:_vp.cur, p_action:'extend', p_minutes:m }); await vpOpen(_vp.cur, true); } catch(e){ alert('❌ '+e.message); }
 }
-async function vpNotify(){
-  const s = _vp.d.summary;
-  if(!confirm(`هتتبعت رسالة جماعية على تليجرام (السؤال + الاختيارات + زرار التصويت) لكل تاجر لسه مصوّتش — حوالى ${Math.max(0,s.eligible - s.total)} تاجر، مرة واحدة بس للاقتراع ده.\n\nتبعت؟`)) return;
-  try { const r = await rpcSecure('admin_poll_notify', { p_id:_vp.cur }); alert('✅ اتبعت لـ '+r.sent+' تاجر'); await vpOpen(_vp.cur, true); } catch(e){ alert('❌ '+e.message); }
+function vpSendTxt(p, st){
+  if(!p.notified_at) return p.status==='open' ? '<span style="color:var(--error)">⚠️ الرسالة لسه متبعتتش للتجار</span>' : '<span style="color:var(--text-dim)">الرسالة متبعتتش</span>';
+  st = st || {}; const w = st.waiting||0, f = st.failed||0;
+  return `<span style="color:${w?'var(--gold)':'var(--success)'}">📣 الرسالة ${w?'بتتبعت دلوقتى':'اتبعتت'} — وصلت ${st.sent||0}${w?' · باقى '+w:''}${f?' · فشل '+f+' (قافلين البوت)':''}</span> <span style="color:var(--text-dim)">· ${arDT(p.notified_at)}</span>`;
+}
+async function vpNotify(id){
+  const fromList = !!id; id = id || _vp.cur;
+  const k = fromList ? (_vp.list||[]).find(x => x.id===id) : null;
+  const s = fromList ? (k||{}).summary : _vp.d.summary, rem = fromList ? !!(k||{}).notified_at : !!_vp.d.poll.notified_at;
+  const n = s ? Math.max(0, s.eligible - s.total) : 0;
+  if(!confirm(`${rem?'هيتبعت تذكير':'هتتبعت رسالة جماعية'} على تليجرام (السؤال + الاختيارات + زرار التصويت) لكل تاجر لسه مصوّتش — حوالى ${n} تاجر، كلهم مرة واحدة.\n\nتبعت؟`)) return;
+  try { const r = await rpcSecure('admin_poll_notify', { p_id:id }); alert('✅ '+(r.reminder?'التذكير':'الرسالة')+' بتتبعت دلوقتى لـ '+r.sent+' تاجر — هتوصلهم كلهم فى ثوانى');
+    if(fromList){ _vp.cur = null; await vpLoad(); } else await vpOpen(id, true); } catch(e){ alert('❌ '+e.message); }
 }
 function vpPrint(){
   const D = _vp.d; if(!D) return; const p = D.poll, s = D.summary, opts = p.options||[]; const v = vpVotesRows();
