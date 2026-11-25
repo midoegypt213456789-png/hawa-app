@@ -11016,6 +11016,7 @@ async function vpLoad(){
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px"><b style="font-size:15px;color:var(--gold)">❓ ${escAttr(k.question)}</b>${open?pill('🟢 شغال — باقى '+vpLeft(k.ends_at),'#4CAF7D'):pill('🔒 مقفول','#8A8580')}</div>
       ${vpBars(k.summary,false)}
       ${open||k.notified_at?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px">${vpCanEdit()&&open?`<button class="act-btn edit" onclick="event.stopPropagation();vpNotify(${k.id})">${k.notified_at?'🔔 ابعت تذكير للى مصوّتش':'📣 ابعت الرسالة للتجار'}</button>`:''}<span style="font-size:11.5px">${vpSendTxt(k, k.send)}</span></div>`:''}
+      <div style="margin-top:8px"><button class="act-btn edit" onclick="event.stopPropagation();vpOpen(${k.id})">👁️ مين صوّت والتعليقات (${k.summary.total} صوت · ${k.summary.comments} تعليق)</button></div>
       <div style="font-size:11.5px;color:var(--text-dim);margin-top:6px">👥 صوّت ${k.summary.total} من ${k.summary.eligible} · 💬 ${k.summary.comments} تعليق · ${escAttr(vpTargetTxt(k.target))} · بدأ ${arDT(k.created_at)} · ${open?'يقفل':'اتقفل'} ${arDT(open?k.ends_at:(k.closed_at||k.ends_at))}</div>
     </div>`; }).join('');
 }
