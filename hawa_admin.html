@@ -5922,6 +5922,14 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
     </div>
 
     <div class="fg">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:11px 12px;border:1px solid rgba(201,168,76,.45);border-radius:11px;background:rgba(201,168,76,.06)">
+        <input type="checkbox" id="editWVT-s2on" style="width:20px;height:20px;accent-color:#C9A84C" onchange="document.getElementById('editWVT-s2wrap').style.opacity=this.checked?1:.45">
+        <span style="font-weight:800;color:var(--gold-light)">🌙 النوع ده شغال فى الشيفت التانى</span>
+      </label>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:5px">معلّم = مواعيد الشيفت التانى تظهر للتاجر فى النوع ده · مش معلّم = النوع ده شيفت أول بس (لازم كمان الشيفت التانى يكون مفتوح للمخزن)</div>
+    </div>
+
+    <div class="fg" id="editWVT-s2wrap">
       <label>🌙 معدل التحميل ساعى — الشيفت التانى</label>
       <div class="iw"><span class="ic">🌙</span><input type="number" id="editWVT-s2cap" min="1" max="50" placeholder="فاضى = نفس معدل الشيفت الأول"></div>
       <div id="editWVT-s2cur" style="font-size:11px;color:var(--text-dim);margin-top:5px"></div>
@@ -15852,7 +15860,7 @@ function renderVTTabBody(){
           <div class="vt-card__name">${r.type.name}</div>
           <div class="vt-card__meta">
             <span>⏱️ <b>${r.capacity_per_hour}</b> عربية/ساعة</span>
-            ${r.s2_capacity_per_hour != null ? `<span>🌙 شيفت 2: <b>${r.s2_capacity_per_hour}</b> عربية/ساعة</span>` : ''}
+            ${r.s2_active ? `<span style="color:var(--gold-light)">🌙 شيفت 2: <b>${r.s2_capacity_per_hour != null ? r.s2_capacity_per_hour : r.capacity_per_hour}</b> عربية/ساعة</span>` : '<span style="color:var(--text-dim)">🌙 شيفت 2: مش شغال</span>'}
             ${(r.s2_pending_capacity_per_hour != null && r.s2_pending_effective_from) ? `<span style="color:#9fc7ee">🌙📅 من ${r.s2_pending_effective_from}: <b>${r.s2_pending_capacity_per_hour}</b></span>` : ''}
             ${(r.pending_capacity_per_hour != null && r.pending_effective_from) ? `<span style="color:#9fc7ee">📅 من ${r.pending_effective_from}: <b>${r.pending_capacity_per_hour}</b> عربية/ساعة</span>` : ''}
             <span>🔢 ترتيب: <b>${r.display_order || 0}</b></span>
@@ -16025,6 +16033,8 @@ function openEditWVTModal(wvtId){
   const hasPend = wvt.pending_capacity_per_hour != null && wvt.pending_effective_from;
   document.getElementById('editWVT-capacity').value   = hasPend ? wvt.pending_capacity_per_hour : wvt.capacity_per_hour;
   document.getElementById('editWVT-cur').innerHTML    = `المعدل الشغال دلوقتى: <b style="color:var(--gold-light)">${wvt.capacity_per_hour}</b> عربية/ساعة`;
+  document.getElementById('editWVT-s2on').checked = !!wvt.s2_active;
+  document.getElementById('editWVT-s2wrap').style.opacity = wvt.s2_active ? 1 : .45;
   const hasPend2 = wvt.s2_pending_capacity_per_hour != null && wvt.s2_pending_effective_from;
   document.getElementById('editWVT-s2cap').value = hasPend2 ? wvt.s2_pending_capacity_per_hour : (wvt.s2_capacity_per_hour ?? '');
   document.getElementById('editWVT-s2cur').innerHTML = (wvt.s2_capacity_per_hour != null ? `شغال دلوقتى فى الشيفت التانى: <b style="color:var(--gold-light)">${wvt.s2_capacity_per_hour}</b> عربية/ساعة` : `الشيفت التانى واخد نفس معدل الشيفت الأول (${wvt.capacity_per_hour})`) + (hasPend2 ? ` — 📅 مجدول <b>${wvt.s2_pending_capacity_per_hour}</b> من ${wvt.s2_pending_effective_from}` : '') + ' · نفس تاريخ «يبدأ من» اللى تحت';
@@ -16061,6 +16071,7 @@ async function confirmEditWVT(){
     patch.pending_effective_from = null;
   }
   // 🌙 معدل الشيفت التانى (فاضى = نفس الشيفت الأول) — بنفس تاريخ البداية
+  patch.s2_active = !!document.getElementById('editWVT-s2on').checked;
   const s2raw = document.getElementById('editWVT-s2cap').value.trim();
   const s2cap = s2raw === '' ? null : parseInt(s2raw);
   if(s2raw !== '' && (isNaN(s2cap) || s2cap < 1)){ alert('❌ معدل الشيفت التانى لازم رقم >= 1 (أو سيبه فاضى)'); return; }
