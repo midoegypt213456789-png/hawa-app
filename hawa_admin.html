@@ -2909,6 +2909,11 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
             <option value="كهرباء">⚡ كهرباء</option>
             <option value="ZONTOS">🚗 ZONTOS</option>
           </select>
+          <select class="filter-inp" id="bk-shift" onchange="loadBookings()" style="width:130px" title="الشيفت">
+            <option value="">🌗 كل الشيفتات</option>
+            <option value="1">☀️ الشيفت الأول</option>
+            <option value="2">🌙 الشيفت التانى</option>
+          </select>
           <select class="filter-inp" id="bk-slot" onchange="loadBookings()" style="width:150px">
             <option value="">⏰ كل المواعيد</option>
           </select>
@@ -4333,6 +4338,15 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
             <option value="weekrange">🔁 أيام أسبوع متكررة (من يوم ليوم — كل أسبوع)</option>
             <option value="range">📆 فترة من تاريخ لتاريخ</option>
             <option value="date">🗓️ يوم واحد محدد</option>
+          </select>
+        </div>
+
+        <div class="fg">
+          <label>الإجازة على</label>
+          <select id="rule-shift">
+            <option value="">🌗 اليوم كله (الشيفتين)</option>
+            <option value="1">☀️ الشيفت الأول بس</option>
+            <option value="2">🌙 الشيفت التانى بس</option>
           </select>
         </div>
 
@@ -5908,6 +5922,12 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
     </div>
 
     <div class="fg">
+      <label>🌙 معدل التحميل ساعى — الشيفت التانى</label>
+      <div class="iw"><span class="ic">🌙</span><input type="number" id="editWVT-s2cap" min="1" max="50" placeholder="فاضى = نفس معدل الشيفت الأول"></div>
+      <div id="editWVT-s2cur" style="font-size:11px;color:var(--text-dim);margin-top:5px"></div>
+    </div>
+
+    <div class="fg">
       <label>📅 التعديل يبدأ من تاريخ</label>
       <div class="iw"><span class="ic">📅</span><input type="date" id="editWVT-from"></div>
       <div style="font-size:11px;color:var(--text-dim);margin-top:5px;line-height:1.7">تاريخ النهارده = يتطبق فوراً. تاريخ بعد كده = المعدل الحالى يفضل شغال لحد التاريخ ده، والأيام من بعده تتحسب بالمعدل الجديد.</div>
@@ -7229,10 +7249,19 @@ async function onBkWarehouseChange(){
 
 // ⏰ ============ فلتر المواعيد الديناميكي ============
 // يحوّل "8:00 - 9:00" لساعة 24 للترتيب الصحيح
+// 🌙 الشيفت التانى: الميعاد بعلامة «م» (مسائى) أو «ص» (بعد منتصف الليل)
+function isS2Slot(slot){ return /[مص]\s*$/.test(String(slot||'')); }
+function s2SlotLabel(h){
+  if(h >= 24) return `${h === 24 ? 12 : h - 24}:00 - ${h - 23}:00 ص`;
+  return `${h === 12 ? 12 : h - 12}:00 - ${h + 1 === 24 ? 12 : (h === 12 ? 1 : h - 11)}:00 م`;
+}
+function s2HourTxt(h){ const x = ((h % 24) + 24) % 24; const n = x % 12 === 0 ? 12 : x % 12; return n + (h >= 24 ? ' ص' : x >= 12 ? ' م' : ' ص'); }
 function slotStartHour24(slot){
   const m = String(slot||'').match(/^(\d{1,2}):/);
   if(!m) return 99;
   const h = parseInt(m[1],10);
+  if(/ص\s*$/.test(String(slot))) return h === 12 ? 24 : h + 24;
+  if(/م\s*$/.test(String(slot))) return h === 12 ? 12 : h + 12;
   if(h === 12) return 12;          // 12 ظهراً
   if(h >= 1 && h <= 7) return h + 12; // 1-7 = بعد الظهر
   return h;                         // 8-11 صباحاً
@@ -7301,6 +7330,10 @@ async function loadBookings(){
   if(vehicle)url+=`&vehicle_type=eq.${encodeURIComponent(vehicle)}`;
   if(slot)url+=`&time_slot=eq.${encodeURIComponent(slot)}`;
   if(status)url+=`&status=eq.${encodeURIComponent(status)}`;
+  // 🌙 الشيفت: مواعيد الشيفت التانى بتنتهى بـ «م» أو «ص»
+  const shiftF=(document.getElementById('bk-shift')||{}).value||'';
+  if(shiftF==='2')url+=`&or=(time_slot.like.${encodeURIComponent('*م')},time_slot.like.${encodeURIComponent('*ص')})`;
+  else if(shiftF==='1')url+=`&time_slot=not.like.${encodeURIComponent('*م')}&time_slot=not.like.${encodeURIComponent('*ص')}`;
 
   try{
     const r=await fetch(url,{headers:{...HDR,'Range':'0-499'}});
@@ -8700,7 +8733,7 @@ async function pmLoadCapacity(){
         const pct = h.cap_units ? Math.min(100, Math.round(h.used_units/h.cap_units*100)) : 0;
         const col = pct>=100?'var(--error)':pct>=75?'var(--gold)':'var(--success)';
         return `<tr style="border-top:1px solid var(--border)">
-          <td style="padding:6px;font-weight:700">${fmt(h.hour)}:00 - ${fmt(h.hour+1)}:00 ${h.is_checkpoint?'<span title="ساعة ترحيل" style="font-size:10px;color:var(--gold)">⟳</span>':''}</td>
+          <td style="padding:6px;font-weight:700">${h.shift===2?'🌙 ':''}${h.label ? escAttr(h.label) : `${fmt(h.hour)}:00 - ${fmt(h.hour+1)}:00`} ${h.is_checkpoint?'<span title="ساعة ترحيل" style="font-size:10px;color:var(--gold)">⟳</span>':''}</td>
           <td style="text-align:center">${h.cap_units}</td>
           <td style="text-align:center"><b style="color:${col}">${h.used_units}</b> <span style="color:var(--text-dim);font-size:11px">(${pct}%)</span></td>
           <td style="text-align:center">${h.vehicles}</td>
@@ -12462,7 +12495,7 @@ function formatOrphansMessage(warehouseName, orphans, fromDate, action){
 async function loadWarehouseHours(){
   const container = document.getElementById('warehouse-hours-container');
   try{
-    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=sort_order.asc,id.asc`,{headers:HDR});
+    const r = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from,s2_enabled,s2_start,s2_end,s2_cutoff&order=sort_order.asc,id.asc`,{headers:HDR});
     let data = await r.json();
 
     // 🚀 Auto-promote: أى pending وصل تاريخ تطبيقه → ينقل للقيم الحالية ويتمسح
@@ -12488,7 +12521,7 @@ async function loadWarehouseHours(){
         })
       ));
       // Re-fetch بعد الترقية
-      const r2 = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=sort_order.asc,id.asc`,{headers:HDR});
+      const r2 = await fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from,s2_enabled,s2_start,s2_end,s2_cutoff&order=sort_order.asc,id.asc`,{headers:HDR});
       data = await r2.json();
     }
 
@@ -12499,7 +12532,7 @@ async function loadWarehouseHours(){
     }
     container.innerHTML = data.map(w => renderWarehouseHoursCard(w)).join('');
     // Update slots preview لكل مخزن
-    data.forEach(w => updateWarehouseSlotsPreview(w.id));
+    data.forEach(w => { updateWarehouseSlotsPreview(w.id); whS2Preview(w.id); });
   }catch(e){
     container.innerHTML = '<div class="empty-txt">❌ خطأ في تحميل ساعات المخازن</div>';
   }
@@ -12578,7 +12611,74 @@ function renderWarehouseHoursCard(w){
       <div class="wh-card__slots-preview">
         📋 <b>المواعيد:</b> <span id="slots-preview-${w.id}" class="slots-val">—</span>
       </div>
+      <div style="margin:0 14px 14px;padding:12px;border:1px solid ${w.s2_enabled ? 'rgba(201,168,76,.55)' : 'var(--border)'};border-radius:12px;background:${w.s2_enabled ? 'rgba(201,168,76,.06)' : 'rgba(255,255,255,.02)'}">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+          <b style="font-size:14px;color:var(--gold-light)">🌙 الشيفت التانى</b>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px"><input type="checkbox" id="wh-s2on-${w.id}" ${w.s2_enabled ? 'checked' : ''} onchange="whS2Preview(${w.id})"> <span id="wh-s2lbl-${w.id}">${w.s2_enabled ? 'مفتوح' : 'مقفول'}</span></label>
+          <button class="act-btn edit" style="margin-inline-start:auto;padding:6px 14px" onclick="whS2Save(${w.id})">💾 حفظ الشيفت التانى</button>
+        </div>
+        <div class="wh-card__grid">
+          <div class="wh-field">
+            <label>بداية الشيفت</label>
+            <input type="number" id="wh-s2s-${w.id}" value="${w.s2_start ?? 17}" min="12" max="29" oninput="whS2Preview(${w.id})">
+            <div class="hint">17 = 5 مساءً</div>
+          </div>
+          <div class="wh-field">
+            <label>نهاية الشيفت</label>
+            <input type="number" id="wh-s2e-${w.id}" value="${w.s2_end ?? 25}" min="13" max="30" oninput="whS2Preview(${w.id})">
+            <div class="hint">24 = 12 بالليل · 25 = 1 ص</div>
+          </div>
+          <div class="wh-field">
+            <label>قفل حجز الشيفت نفس اليوم</label>
+            <input type="number" id="wh-s2c-${w.id}" value="${w.s2_cutoff ?? 23}" min="0" max="23">
+            <div class="hint">23 = 11 مساءً</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text-dim);margin-top:8px;line-height:1.8">📋 <b>مواعيد الشيفت التانى:</b> <span id="wh-s2prev-${w.id}" class="slots-val">—</span></div>
+      </div>
     </div>`;
+}
+// 🌙 الشيفت التانى لكل مخزن — بيتحفظ فوراً (لوحده، مش مع زرار حفظ الساعات)
+function whS2Calc(id){
+  const w=(_warehouseHoursCache||[]).find(x=>x.id===id)||{};
+  const we=parseInt(document.getElementById('wh-we-'+id)?.value); const weOk=isNaN(we)?(w.working_hour_end??16):we;
+  const s=parseInt(document.getElementById('wh-s2s-'+id)?.value), e=parseInt(document.getElementById('wh-s2e-'+id)?.value), c=parseInt(document.getElementById('wh-s2c-'+id)?.value);
+  const on=!!document.getElementById('wh-s2on-'+id)?.checked;
+  const first=Math.max(s, weOk+1); const slots=[];
+  if(!isNaN(s)&&!isNaN(e)) for(let h=first;h<e&&h<30;h++) slots.push(s2SlotLabel(h));
+  return {w,we:weOk,s,e,c,on,first,slots};
+}
+function whS2Preview(id){
+  const x=whS2Calc(id); const out=document.getElementById('wh-s2prev-'+id); const lbl=document.getElementById('wh-s2lbl-'+id);
+  if(lbl) lbl.textContent=x.on?'مفتوح':'مقفول';
+  if(!out) return;
+  if(isNaN(x.s)||isNaN(x.e)||x.e<=x.s){ out.textContent='— أدخل أرقام صحيحة'; return; }
+  if(!x.slots.length){ out.textContent='— مفيش مواعيد (البداية لازم بعد نهاية الشيفت الأول)'; return; }
+  out.innerHTML=`${x.slots.length} مواعيد: ${x.slots.map(t=>t.replace(':00 - ','–').replace(':00','')).join(' / ')}`+(x.first>x.s?` <span style="color:#e8c97a">— أول ميعاد ${s2HourTxt(x.first)} (الشيفت الأول واخد لحد ${s2HourTxt(x.first)})</span>`:'')+(x.on?'':' <span style="color:#e88080">— الشيفت مقفول، مش ظاهر للتجار</span>');
+}
+async function whS2Save(id){
+  const x=whS2Calc(id); const name=x.w.name||'';
+  if(isNaN(x.s)||x.s<12||x.s>29){ alert('❌ بداية الشيفت التانى غلط (من 12 لـ 29)'); return; }
+  if(isNaN(x.e)||x.e<=x.s||x.e>30){ alert('❌ نهاية الشيفت التانى لازم تكون بعد البداية (أقصى حاجة 30 = 6 ص)'); return; }
+  if(isNaN(x.c)||x.c<0||x.c>23){ alert('❌ ساعة قفل حجز الشيفت التانى غلط (من 0 لـ 23)'); return; }
+  if(x.on && !x.slots.length){ alert('❌ مفيش مواعيد فى الشيفت التانى — البداية لازم تكون بعد نهاية الشيفت الأول'); return; }
+  // حجوزات جاية هتبقى بره المواعيد الجديدة؟
+  try{
+    const today=new Date().toISOString().slice(0,10);
+    const r=await fetch(`${SB}/rest/v1/bookings?select=id,time_slot,loading_date&warehouse=eq.${encodeURIComponent(name)}&loading_date=gte.${today}&status=eq.${encodeURIComponent('قيد الانتظار')}&or=(time_slot.like.${encodeURIComponent('*م')},time_slot.like.${encodeURIComponent('*ص')})`,{headers:{...HDR,'Range':'0-999'}});
+    const rows=await r.json(); const keep=new Set(x.on?x.slots:[]);
+    const out=(Array.isArray(rows)?rows:[]).filter(b=>!keep.has(b.time_slot));
+    if(out.length && !confirm(`⚠️ فيه ${out.length} حجز قيد الانتظار فى مواعيد الشيفت التانى هتبقى بره المواعيد الجديدة فى ${name} (الحجوزات مش هتتلغى — بس راجعها).\n\nتكمل الحفظ؟`)) return;
+  }catch(_){}
+  if(!confirm(`${x.on?'فتح':'قفل'} الشيفت التانى فى ${name}${x.on?`\nالمواعيد: ${x.slots[0]} ← ${x.slots[x.slots.length-1]}\nقفل الحجز نفس اليوم: ${s2HourTxt(x.c)}`:''}\n\nتأكيد؟`)) return;
+  try{
+    const body={s2_enabled:x.on,s2_start:x.s,s2_end:x.e,s2_cutoff:x.c};
+    const r=await fetch(`${SB}/rest/v1/warehouses?id=eq.${id}`,{method:'PATCH',headers:{...HDR,'Prefer':'return=minimal'},body:JSON.stringify(body)});
+    if(!r.ok) throw new Error('save');
+    try{ if(typeof logActivity==='function') logActivity('wh_shift2',`🌙 الشيفت التانى — ${name}: ${x.on?'مفتوح':'مقفول'} ${x.s}→${x.e} قفل ${x.c}`,body); }catch(_){}
+    await loadWarehouseHours();
+    if(typeof showWHToast==='function') showWHToast(`✅ الشيفت التانى فى ${name}: ${x.on?'مفتوح':'مقفول'}`); else alert('✅ اتحفظ');
+  }catch(e){ alert('❌ الحفظ فشل — جرّب تانى'); }
 }
 
 async function cancelPendingHours(id){
@@ -15640,6 +15740,11 @@ async function loadVehicleTypes(){
             body: JSON.stringify({capacity_per_hour: x.pending_capacity_per_hour, pending_capacity_per_hour: null, pending_effective_from: null})});
           if(pr.ok){ x.capacity_per_hour = x.pending_capacity_per_hour; x.pending_capacity_per_hour = null; x.pending_effective_from = null; }
         }
+        if(x.s2_pending_capacity_per_hour != null && x.s2_pending_effective_from && x.s2_pending_effective_from <= tdy){
+          const pr2 = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${x.id}`, {method:'PATCH', headers:{...HDR,'Prefer':'return=minimal'},
+            body: JSON.stringify({s2_capacity_per_hour: x.s2_pending_capacity_per_hour, s2_pending_capacity_per_hour: null, s2_pending_effective_from: null})});
+          if(pr2.ok){ x.s2_capacity_per_hour = x.s2_pending_capacity_per_hour; x.s2_pending_capacity_per_hour = null; x.s2_pending_effective_from = null; }
+        }
       }
     }catch(_){}
     const bookings      = await r4.json();
@@ -15740,6 +15845,8 @@ function renderVTTabBody(){
           <div class="vt-card__name">${r.type.name}</div>
           <div class="vt-card__meta">
             <span>⏱️ <b>${r.capacity_per_hour}</b> عربية/ساعة</span>
+            ${r.s2_capacity_per_hour != null ? `<span>🌙 شيفت 2: <b>${r.s2_capacity_per_hour}</b> عربية/ساعة</span>` : ''}
+            ${(r.s2_pending_capacity_per_hour != null && r.s2_pending_effective_from) ? `<span style="color:#9fc7ee">🌙📅 من ${r.s2_pending_effective_from}: <b>${r.s2_pending_capacity_per_hour}</b></span>` : ''}
             ${(r.pending_capacity_per_hour != null && r.pending_effective_from) ? `<span style="color:#9fc7ee">📅 من ${r.pending_effective_from}: <b>${r.pending_capacity_per_hour}</b> عربية/ساعة</span>` : ''}
             <span>🔢 ترتيب: <b>${r.display_order || 0}</b></span>
             ${!r.is_active ? '<span style="color:#e88080">🚫 معطّل</span>' : ''}
@@ -15911,6 +16018,9 @@ function openEditWVTModal(wvtId){
   const hasPend = wvt.pending_capacity_per_hour != null && wvt.pending_effective_from;
   document.getElementById('editWVT-capacity').value   = hasPend ? wvt.pending_capacity_per_hour : wvt.capacity_per_hour;
   document.getElementById('editWVT-cur').innerHTML    = `المعدل الشغال دلوقتى: <b style="color:var(--gold-light)">${wvt.capacity_per_hour}</b> عربية/ساعة`;
+  const hasPend2 = wvt.s2_pending_capacity_per_hour != null && wvt.s2_pending_effective_from;
+  document.getElementById('editWVT-s2cap').value = hasPend2 ? wvt.s2_pending_capacity_per_hour : (wvt.s2_capacity_per_hour ?? '');
+  document.getElementById('editWVT-s2cur').innerHTML = (wvt.s2_capacity_per_hour != null ? `شغال دلوقتى فى الشيفت التانى: <b style="color:var(--gold-light)">${wvt.s2_capacity_per_hour}</b> عربية/ساعة` : `الشيفت التانى واخد نفس معدل الشيفت الأول (${wvt.capacity_per_hour})`) + (hasPend2 ? ` — 📅 مجدول <b>${wvt.s2_pending_capacity_per_hour}</b> من ${wvt.s2_pending_effective_from}` : '') + ' · نفس تاريخ «يبدأ من» اللى تحت';
   const fromEl = document.getElementById('editWVT-from');
   fromEl.min = wvtToday();
   fromEl.value = hasPend ? wvt.pending_effective_from : wvtToday();
@@ -15942,6 +16052,16 @@ async function confirmEditWVT(){
     patch.capacity_per_hour = capacity;
     patch.pending_capacity_per_hour = null;
     patch.pending_effective_from = null;
+  }
+  // 🌙 معدل الشيفت التانى (فاضى = نفس الشيفت الأول) — بنفس تاريخ البداية
+  const s2raw = document.getElementById('editWVT-s2cap').value.trim();
+  const s2cap = s2raw === '' ? null : parseInt(s2raw);
+  if(s2raw !== '' && (isNaN(s2cap) || s2cap < 1)){ alert('❌ معدل الشيفت التانى لازم رقم >= 1 (أو سيبه فاضى)'); return; }
+  if(from > today && wvt && s2cap != null && s2cap !== wvt.s2_capacity_per_hour){
+    patch.s2_pending_capacity_per_hour = s2cap; patch.s2_pending_effective_from = from;
+    msg += `\n🌙 الشيفت التانى هيبقى ${s2cap} عربية/ساعة من ${from}`;
+  } else {
+    patch.s2_capacity_per_hour = s2cap; patch.s2_pending_capacity_per_hour = null; patch.s2_pending_effective_from = null;
   }
   try{
     const res = await fetch(`${SB}/rest/v1/warehouse_vehicle_types?id=eq.${_editWVTId}`, {
@@ -16204,7 +16324,7 @@ async function loadRules(){
         <td>${hoursText}</td>
         <td>${whText}</td>
         <td>${vtText}</td>
-        <td>${rule.reason||'-'}</td>
+        <td>${rule.shift===1?'<span class="badge pending">☀️ شيفت 1</span> ':rule.shift===2?'<span class="badge pending">🌙 شيفت 2</span> ':''}${rule.reason||'-'}</td>
         <td style="white-space:nowrap">
           <button class="act-btn" style="background:rgba(74,144,217,0.12);color:#7fb8e8;border:1px solid rgba(74,144,217,0.35);margin-left:4px" onclick="openEditRuleModal(${rule.id})">✏️ تعديل</button>
           <button class="act-btn del" onclick="deleteRule(${rule.id})">🗑️ حذف</button>
@@ -16300,6 +16420,7 @@ async function openRuleModal(){
   document.getElementById('rule-modal-save-btn').innerHTML = '💾 حفظ القاعدة';
 
   document.getElementById('rule-type').value='weekly';
+  document.getElementById('rule-shift').value='';
   document.getElementById('rule-dow').value='5';
   document.getElementById('rule-start').value='';
   document.getElementById('rule-end').value='';
@@ -16337,6 +16458,7 @@ async function openEditRuleModal(ruleId){
 
   // 📋 Pre-fill الفيلدز
   document.getElementById('rule-type').value = rule.type;
+  document.getElementById('rule-shift').value = rule.shift ? String(rule.shift) : '';
   document.getElementById('rule-dow').value = rule.day_of_week != null ? String(rule.day_of_week) : '5';
   document.getElementById('rule-start').value = rule.start_date || '';
   document.getElementById('rule-end').value   = rule.end_date || '';
@@ -16654,6 +16776,10 @@ async function saveRule(){
   // 🕐 ساعات معيّنة (اختيارى) — XOR: الاتنين أو ولا واحد
   const shRaw = document.getElementById('rule-start-hour').value.trim();
   const ehRaw = document.getElementById('rule-end-hour').value.trim();
+  // 🌙 إجازة شيفت واحد (لو فيه ساعات محددة، الساعات هى اللى بتتحسب)
+  const shiftV = document.getElementById('rule-shift').value;
+  body.shift = (shiftV && shRaw === '' && ehRaw === '') ? parseInt(shiftV) : null;
+  if(shiftV && (shRaw !== '' || ehRaw !== '')){ alert('❌ اختار «شيفت» أو «ساعات معيّنة» — مش الاتنين مع بعض'); return; }
   if(shRaw === '' && ehRaw === ''){
     body.start_hour = null;
     body.end_hour   = null;

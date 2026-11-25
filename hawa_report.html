@@ -237,10 +237,23 @@ let SLOTS  = ['8:00 - 9:00','9:00 - 10:00','10:00 - 11:00','11:00 - 12:00',
 let warehouseHoursByName = null;
 
 // يحوّل "8:00 - 9:00" لساعة 24 للترتيب الصحيح (8-11 صباحاً، 12 ظهراً، 1-7 بعد الظهر)
+function isS2Slot(slot){ return /[مص]\s*$/.test(String(slot||'')); }
+// فلتر الميعاد: ميعاد محدد أو شيفت كامل (__S1 / __S2)
+function slotFilterMatch(f, slot){ return !f || (f === '__S2' ? isS2Slot(slot) : f === '__S1' ? !isS2Slot(slot) : slot === f); }
+function slotFilterLabel(f){ return f === '__S1' ? 'الشيفت الأول' : f === '__S2' ? 'الشيفت التانى' : f; }
+function slotFilterOptions(slots){
+  let html = '<option value="">⏰ كل المواعيد</option>';
+  if(slots.some(isS2Slot)) html += '<option value="__S1">☀️ الشيفت الأول كله</option><option value="__S2">🌙 الشيفت التانى كله</option>';
+  slots.forEach(s=>html+=`<option value="${s}">⏰ ${s}</option>`);
+  return html;
+}
 function slotStartHour24(slot){
   const m = String(slot||'').match(/^(\d{1,2}):/);
   if(!m) return 99;
   const h = parseInt(m[1],10);
+  // 🌙 الشيفت التانى: «م» مسائى · «ص» بعد منتصف الليل
+  if(/ص\s*$/.test(String(slot))) return h === 12 ? 24 : h + 24;
+  if(/م\s*$/.test(String(slot))) return h === 12 ? 12 : h + 12;
   if(h === 12) return 12;
   if(h >= 1 && h <= 7) return h + 12;
   return h;
@@ -273,10 +286,8 @@ function rebuildSlotsReport(bookings){
   const sel = document.getElementById('filterSlot');
   if(sel){
     const cur = sel.value;
-    let html = '<option value="">كل المواعيد</option>';
-    SLOTS.forEach(s=>html+=`<option value="${s}">${s}</option>`);
-    sel.innerHTML = html;
-    sel.value = SLOTS.includes(cur) ? cur : '';
+    sel.innerHTML = slotFilterOptions(SLOTS);
+    sel.value = (SLOTS.includes(cur) || (/^__S[12]$/.test(cur) && SLOTS.some(isS2Slot))) ? cur : '';
   }
 }
 
@@ -435,7 +446,9 @@ async function loadReport() {
     let query = `${SB}/rest/v1/bookings?select=*&loading_date=gte.${dateFrom}&loading_date=lte.${dateTo}&order=loading_date.asc,time_slot.asc`;
     if (warehouse) query += `&warehouse=eq.${encodeURIComponent(warehouse)}`;
     if (vtype)     query += `&vehicle_type=eq.${encodeURIComponent(vtype)}`;
-    if (slot)      query += `&time_slot=eq.${encodeURIComponent(slot)}`;
+    if (slot === '__S2') query += `&or=(time_slot.like.${encodeURIComponent('*م')},time_slot.like.${encodeURIComponent('*ص')})`;
+    else if (slot === '__S1') query += `&time_slot=not.like.${encodeURIComponent('*م')}&time_slot=not.like.${encodeURIComponent('*ص')}`;
+    else if (slot) query += `&time_slot=eq.${encodeURIComponent(slot)}`;
     if (status)    query += `&status=eq.${encodeURIComponent(status)}`;
     else           query += `&status=neq.${encodeURIComponent('ملغي')}`;
 
