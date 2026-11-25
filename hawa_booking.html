@@ -4674,14 +4674,19 @@ async function onPermitFile(input) {
   // PDF = ملف واحد فيه كل الصفحات → يتبعت لوحده على طول
   const pdf = files.find(f => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name || ''));
   if (pdf) { _pmPages = []; renderPermitPages(); await processPermitFile(pdf); return; }
-  for (const f of files) await addPermitPage(f, files.length > 1);
+  for (const f of files) { if ((await addPermitPage(f, files.length > 1)) === false) break; }
 }
 async function addPermitPage(f, silent) {
   const prog = document.getElementById('permitScanProg');
   try {
     if (!silent) { prog.style.color = 'var(--text-dim)'; prog.textContent = '⏳ بنجهّز الصورة...'; }
+    if (Date.now() - _pmQrDownAt > 15 * 60000 && !/pdf/i.test(f.type || '')) {
+      let qr = ''; try { qr = await pmQrFindInFile(f, true); } catch (_) {}
+      if (qr) { permitPhotoHasQrBlock(); return false; }
+    }
     const pg = await permitFileToBase64(f);
     _pmPages.push(pg);
+    { const m = document.getElementById('permitMsg'); if (m && m.textContent.indexOf('🚫') === 0) m.innerHTML = ''; }
     renderPermitPages();
     prog.style.color = 'var(--text-dim)';
     prog.textContent = _pmPages.length === 1 ? 'لو الإذن فيه صفحة تانية صوّرها — أو اضغط «اقرأ الإذن»' : `📄 ${_pmPages.length} صفحات جاهزة — فيه صفحة كمان؟ ولا نقرأ؟`;
@@ -4943,6 +4948,35 @@ function permitQrToPhoto() {
   const box = document.getElementById('permitScanBox'); if (box) box.style.display = '';
   openPermitCamera();
 }
+// بيدوّر على QR إذن جوه صورة (الصورة كاملة بأكتر من مقاس، وبعدين أجزاءها — الـQR صغير فى الورقة)
+async function pmQrFindInFile(f, quick) {
+  await pmQrLib().catch(() => {});
+  if (!_pmQrDet) { try { if ('BarcodeDetector' in window) _pmQrDet = new BarcodeDetector({ formats: ['qr_code'] }); } catch (_) {} }
+  const img = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = URL.createObjectURL(f); });
+  let found = '';
+  const tries = [];
+  for (const mx of (quick ? [1600, 2400] : [1600, 1000, 2400])) tries.push([0, 0, 1, 1, mx]);
+  for (const [x, y] of [[0, 0], [.5, 0], [0, .5], [.5, .5], [.25, 0], [.25, .5], [0, .25], [.5, .25], [.25, .25]]) tries.push([x, y, .5, .5, 1400]);
+  const c = document.createElement('canvas');
+  for (const [fx, fy, fw, fh, mx] of tries) {
+    const sw = img.naturalWidth * fw, sh = img.naturalHeight * fh; const k = Math.min(1, mx / Math.max(sw, sh)) || 1;
+    c.width = Math.max(1, Math.round(sw * k)); c.height = Math.max(1, Math.round(sh * k));
+    c.getContext('2d', { willReadFrequently: true }).drawImage(img, img.naturalWidth * fx, img.naturalHeight * fy, sw, sh, 0, 0, c.width, c.height);
+    const t = (await pmQrDecodeCanvas(c)).trim();
+    if (t && PM_QR_RE.test(t)) { found = t; break; }
+  }
+  try { URL.revokeObjectURL(img.src); } catch (_) {}
+  return found;
+}
+// 🚫 إذن عليه QR ماينفعش يتصوّر — لازم يتسجل بالـQR (إلا لو نظام الشركة واقع والـQR لسه فاشل حالاً)
+let _pmQrDownAt = 0;
+function permitPhotoHasQrBlock() {
+  _pmPages = []; renderPermitPages();
+  const prog = document.getElementById('permitScanProg'); if (prog) prog.textContent = '';
+  pmQrMsg('🚫 <b>الإذن ده عليه QR — ماينفعش يتصوّر.</b><br>ارجع وامسح الـQR اللى على الإذن (الزرار «📱 امسح QR الإذن»). التصوير للأذونات اللى مفيهاش QR بس.', 'var(--error)');
+  try { if (typeof logActivity === 'function') logActivity('cl_permit_photo_blocked_qr', '🚫 حاول يصوّر إذن عليه QR — اترفض', {}); } catch (_) {}
+  try { const b = document.getElementById('permitQrBtn2') || document.getElementById('permitQrBtn'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch (_) {}
+}
 async function onPermitQrFile(input) {
   const f = (input.files || [])[0]; input.value = '';
   if (!f) return;
@@ -4951,21 +4985,7 @@ async function onPermitQrFile(input) {
   try {
     await pmQrLib().catch(() => {});
     if (!_pmQrDet) { try { if ('BarcodeDetector' in window) _pmQrDet = new BarcodeDetector({ formats: ['qr_code'] }); } catch (_) {} }
-    const img = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = URL.createObjectURL(f); });
-    let found = '';
-    // الصورة كاملة بأكتر من مقاس، وبعدين أرباعها (الـQR صغير فى الورقة)
-    const tries = [];
-    for (const mx of [1600, 1000, 2400]) tries.push([0, 0, 1, 1, mx]);
-    for (const [x, y] of [[0, 0], [.5, 0], [0, .5], [.5, .5], [.25, 0], [.25, .5], [0, .25], [.5, .25], [.25, .25]]) tries.push([x, y, .5, .5, 1400]);
-    const c = document.createElement('canvas');
-    for (const [fx, fy, fw, fh, mx] of tries) {
-      const sw = img.naturalWidth * fw, sh = img.naturalHeight * fh; const k = Math.min(1, mx / Math.max(sw, sh)) || 1;
-      c.width = Math.max(1, Math.round(sw * k)); c.height = Math.max(1, Math.round(sh * k));
-      c.getContext('2d', { willReadFrequently: true }).drawImage(img, img.naturalWidth * fx, img.naturalHeight * fy, sw, sh, 0, 0, c.width, c.height);
-      const t = (await pmQrDecodeCanvas(c)).trim();
-      if (t && PM_QR_RE.test(t)) { found = t; break; }
-    }
-    try { URL.revokeObjectURL(img.src); } catch (_) {}
+    const found = await pmQrFindInFile(f);
     if (!found) { pmQrMsg('❌ مش لاقى QR إذن فى الصورة — جرّب تمسحه بالكاميرا من قريب، أو صوّر الإذن', 'var(--error)'); const box = document.getElementById('permitScanBox'); if (box) box.style.display = ''; return; }
     await submitPermitQr(found);
   } catch (e) { pmQrMsg('❌ مقدرتش أفتح الصورة — حاول تانى', 'var(--error)'); }
@@ -4983,7 +5003,7 @@ async function submitPermitQr(url) {
       pmQrMsg('❌ ' + ((res && (res.message || map[res.error])) || 'فشل — حاول تانى'), 'var(--error)');
       try { if (typeof logActivity === 'function') logActivity('cl_permit_qr_fail', '📱 مسح QR إذن — فشل', { error: res && res.error }); } catch (_) {}
       // النظام الأساسى واقع أو الصفحة مش مقروءة → التصوير متاح زى ما هو
-      if (res && /^(qr_down|qr_parse|qr_bad|qr_not_found|qr_not_sale|network|timeout|bad_response|save_fail)$/.test(String(res.error || ''))) { const box = document.getElementById('permitScanBox'); if (box) box.style.display = ''; }
+      if (res && /^(qr_down|qr_parse|qr_bad|qr_not_found|qr_not_sale|network|timeout|bad_response|save_fail)$/.test(String(res.error || ''))) { _pmQrDownAt = Date.now(); const box = document.getElementById('permitScanBox'); if (box) box.style.display = ''; }
       return;
     }
     const no = String((res.permit && res.permit.permit_no) || '');
