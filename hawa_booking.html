@@ -4726,7 +4726,7 @@ async function processPermitFile(f, pages) {
     const pgs = pages && pages.length ? pages : [await permitFileToBase64(f)];
     const lbl = pgs.length > 1 ? `الإذن (${pgs.length} صفحات)` : 'الإذن';
     // 🧭 لو الورقة متصورة ملفوفة على جنبها بنعدلها قبل القراءة (لو الخطوة دى فشلت بنكمّل عادى)
-    let srvQr = false;
+    let srvQr = false, srvCut = '';
     try {
       prog.textContent = '🧭 بنتأكد إن الورقة معدولة...';
       const ctl = new AbortController(); const tmo = setTimeout(() => ctl.abort(), 45000);
@@ -4735,6 +4735,7 @@ async function processPermitFile(f, pages) {
       clearTimeout(tmo);
       const oj = await orr.json();
       if (oj && oj.ok && oj.has_qr === true) srvQr = true;
+      if (oj && oj.ok && /^(cropped|cut|covered)$/.test(String(oj.not_full || ''))) srvCut = String(oj.not_full);
       if (oj && oj.ok && Array.isArray(oj.pages)) {
         for (let i = 0; i < oj.pages.length; i++) {
           const x = oj.pages[i]; const pg = pgs[i];
@@ -4752,6 +4753,15 @@ async function processPermitFile(f, pages) {
     } catch (e) {}
     // 🚫 السيرفر شاف QR على الورقة (حتى لو مهزوز) → التصوير مرفوض، إلا لو نظام الشركة لسه واقع حالاً
     if (srvQr && Date.now() - _pmQrDownAt > 15 * 60000) { permitBar(null); if (sendBtn) sendBtn.disabled = false; permitPhotoHasQrBlock(); return; }
+    // ✂️ الورقة مقصوصة / ناقصة فى الصورة / متغطى جزء منها → مرفوضة (لازم الإذن كله يبان بالأربع حواف)
+    if (srvCut) {
+      permitBar(null); if (sendBtn) sendBtn.disabled = false;
+      _pmPages = []; renderPermitPages(); prog.textContent = '';
+      const why = { cut: 'الورقة مقصوصة أو ناقص منها جزء', cropped: 'الورقة مش ظاهرة كاملة فى الصورة', covered: 'فيه جزء من الورقة متغطى' }[srvCut];
+      pmQrMsg(`🚫 <b>${why} — الصورة مرفوضة.</b><br>صوّر الإذن كله: الأربع حواف والأربع أركان ظاهرين، من غير قص ولا تغطية لأى جزء.`, 'var(--error)');
+      try { if (typeof logActivity === 'function') logActivity('cl_permit_photo_blocked_cut', '✂️ صورة إذن ناقصة/مقصوصة — اترفضت', { why: srvCut }); } catch (_) {}
+      return;
+    }
     prog.textContent = `⬆️ بنرفع ${lbl}... 0%`;
     const res = await permitScanRequest(
       pgs.length > 1
