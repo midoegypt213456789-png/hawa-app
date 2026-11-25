@@ -11041,7 +11041,7 @@ function vpRender(){
       <button class="act-btn edit" onclick="vpBack()">➡️ رجوع</button>
       ${open?pill('🟢 شغال — باقى '+vpLeft(p.ends_at, D.now)+' · تحديث لحظى','#4CAF7D'):pill('🔒 مقفول'+(p.closed_by&&p.closed_by!=='auto'?' (بإيد '+escAttr(p.closed_by)+')':''),'#8A8580')}
       <span style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap">
-        ${vpCanEdit()&&open&&!p.notified_at?`<button class="act-btn edit" onclick="vpNotify()">📣 ابعت إشعار للتجار على تليجرام</button>`:''}
+        ${vpCanEdit()&&open&&!p.notified_at?`<button class="act-btn edit" onclick="vpNotify()">📣 ابعت الرسالة الجماعية للتجار</button>`:''}
         ${vpCanEdit()?`<button class="act-btn edit" onclick="vpExtend()">⏱️ ${open?'مدّ الوقت':'افتحه تانى'}</button>`:''}
         ${vpCanEdit()&&open?`<button class="act-btn del" onclick="vpClose()">🔒 اقفل دلوقتى</button>`:''}
         <button class="act-btn edit" onclick="vpPrint()">🖨️ طباعة</button>
@@ -11085,11 +11085,12 @@ function vpOpenForm(){
       <div id="vpF-endw" style="display:none;margin-top:6px"><input type="datetime-local" class="filter-inp" id="vpF-end" style="width:100%"></div>
     </div>
     <div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="vpF-cm" checked style="width:18px;height:18px"> 💬 اسمح للتاجر يكتب تعليق</label></div>
+    <div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="vpF-nt" checked style="width:18px;height:18px"> 📣 ابعت رسالة جماعية للتجار على تليجرام مع بداية الاقتراع (فيها السؤال وزرار التصويت)</label></div>
     <div class="fg"><label>🎯 لمين؟ <span style="color:var(--text-dim);font-weight:400">(سيبه فاضى = كل التجار)</span></label>
       ${types.length?`<div style="font-size:12px;color:var(--text-dim);margin:4px 0">نوع العميل</div><div style="display:flex;gap:6px;flex-wrap:wrap">${types.map(t=>`<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer"><input type="checkbox" class="vpF-ct" value="${escAttr(t)}"> ${escAttr(t)}</label>`).join('')}</div>`:''}
       <div style="font-size:12px;color:var(--text-dim);margin:8px 0 4px">المحافظة</div><div style="display:flex;gap:6px;flex-wrap:wrap;max-height:120px;overflow:auto">${govs.map(g=>`<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer"><input type="checkbox" class="vpF-gv" value="${escAttr(g)}"> ${escAttr(g)}</label>`).join('')}</div>
     </div>
-    <div style="font-size:11.5px;color:var(--text-dim);line-height:1.8">الاقتراع بيظهر للتجار فى صفحة الحجز أول ما تبدأه. مفيش رسالة بتتبعتلهم إلا لو دوست «📣 ابعت إشعار» من صفحة الاقتراع. النتيجة والتعليقات ليك انت بس.</div>`;
+    <div style="font-size:11.5px;color:var(--text-dim);line-height:1.8">الاقتراع بيظهر للتجار فى صفحة الحجز أول ما تبدأه، والرسالة الجماعية بتوصلهم على تليجرام بزرار يفتح التصويت على طول (بتتبعت على دفعات — حوالى 25 تاجر فى الدقيقة). النتيجة والتعليقات ليك انت بس.</div>`;
   ['أوافق','لا أوافق','رأى تالت'].forEach(vpAddOpt);
   document.getElementById('vpModal').classList.add('show');
 }
@@ -11105,7 +11106,8 @@ async function vpSave(){
   const options = [...document.querySelectorAll('.vpF-o')].map(i=>i.value.trim()).filter(Boolean);
   if(q.length < 3){ alert('❌ اكتب السؤال'); return; }
   if(options.length < 2){ alert('❌ لازم اختيارين على الأقل'); return; }
-  const dur = document.getElementById('vpF-dur').value; const body = { question:q, options, allow_comment: document.getElementById('vpF-cm').checked,
+  if(document.getElementById('vpF-nt').checked && !confirm('الاقتراع هيبدأ، ورسالة جماعية هتتبعت على تليجرام للتجار اللى الاقتراع ليهم.\n\nتبدأ؟')) return;
+  const dur = document.getElementById('vpF-dur').value; const body = { question:q, options, allow_comment: document.getElementById('vpF-cm').checked, notify: document.getElementById('vpF-nt').checked,
     target: { client_types:[...document.querySelectorAll('.vpF-ct:checked')].map(x=>x.value), governorates:[...document.querySelectorAll('.vpF-gv:checked')].map(x=>x.value) } };
   if(dur === 'x'){ const e = document.getElementById('vpF-end').value; if(!e){ alert('❌ اختار تاريخ ووقت القفل'); return; } body.ends_at = new Date(e).toISOString(); }
   else body.minutes = parseInt(dur);
@@ -11127,7 +11129,7 @@ async function vpExtend(){
 }
 async function vpNotify(){
   const s = _vp.d.summary;
-  if(!confirm(`هيتبعت إشعار على تليجرام لكل تاجر لسه مصوّتش (حوالى ${Math.max(0,s.eligible - s.total)} تاجر) — مرة واحدة بس للاقتراع ده.\n\nتبعت؟`)) return;
+  if(!confirm(`هتتبعت رسالة جماعية على تليجرام (السؤال + الاختيارات + زرار التصويت) لكل تاجر لسه مصوّتش — حوالى ${Math.max(0,s.eligible - s.total)} تاجر، مرة واحدة بس للاقتراع ده.\n\nتبعت؟`)) return;
   try { const r = await rpcSecure('admin_poll_notify', { p_id:_vp.cur }); alert('✅ اتبعت لـ '+r.sent+' تاجر'); await vpOpen(_vp.cur, true); } catch(e){ alert('❌ '+e.message); }
 }
 function vpPrint(){
