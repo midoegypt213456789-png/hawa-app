@@ -4726,6 +4726,7 @@ async function processPermitFile(f, pages) {
     const pgs = pages && pages.length ? pages : [await permitFileToBase64(f)];
     const lbl = pgs.length > 1 ? `الإذن (${pgs.length} صفحات)` : 'الإذن';
     // 🧭 لو الورقة متصورة ملفوفة على جنبها بنعدلها قبل القراءة (لو الخطوة دى فشلت بنكمّل عادى)
+    let srvQr = false;
     try {
       prog.textContent = '🧭 بنتأكد إن الورقة معدولة...';
       const ctl = new AbortController(); const tmo = setTimeout(() => ctl.abort(), 45000);
@@ -4733,6 +4734,7 @@ async function processPermitFile(f, pages) {
         body: JSON.stringify({ client_id: user.id, username: user.username || '', pages: pgs.map(p => ({ image_base64: p.b64, mime: p.mime })) }) });
       clearTimeout(tmo);
       const oj = await orr.json();
+      if (oj && oj.ok && oj.has_qr === true) srvQr = true;
       if (oj && oj.ok && Array.isArray(oj.pages)) {
         for (let i = 0; i < oj.pages.length; i++) {
           const x = oj.pages[i]; const pg = pgs[i];
@@ -4748,6 +4750,8 @@ async function processPermitFile(f, pages) {
         }
       }
     } catch (e) {}
+    // 🚫 السيرفر شاف QR على الورقة (حتى لو مهزوز) → التصوير مرفوض، إلا لو نظام الشركة لسه واقع حالاً
+    if (srvQr && Date.now() - _pmQrDownAt > 15 * 60000) { permitBar(null); if (sendBtn) sendBtn.disabled = false; permitPhotoHasQrBlock(); return; }
     prog.textContent = `⬆️ بنرفع ${lbl}... 0%`;
     const res = await permitScanRequest(
       pgs.length > 1
