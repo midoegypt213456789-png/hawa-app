@@ -3003,7 +3003,7 @@ function applyWarehouseHours(dateStr, warehouseName){
   let s2 = null, s2slots = [];
   // النوع نفسه لازم يكون معلّم «شغال فى الشيفت التانى» فى المخزن ده
   let vtS2 = false;
-  try { const v = (allVehicleTypes || []).find(x => x.warehouse_name === warehouseName && x.name === bk.vehicle); vtS2 = !!(v && v.s2_active); } catch(_){}
+  try { const v = (allVehicleTypes || []).find(x => x.warehouse_name === warehouseName && x.name === bk.vehicle); vtS2 = !!(v && v.s2_active && (!v.s2_from || dateStr >= v.s2_from) && (!v.s2_off_from || dateStr < v.s2_off_from)); } catch(_){}
   if (w.s2_enabled && vtS2 && w.s2_start != null && w.s2_end != null) {
     const st = Math.max(Number(w.s2_start), we + 1), en = Math.min(Number(w.s2_end), 30);
     for (let h = st; h < en; h++) s2slots.push(s2SlotLabel(h));
@@ -3091,7 +3091,7 @@ async function loadVehicleTypesData(force=false){
   try{
     // الجلب من الـ join table مع join للـ vehicle_types catalog
     const r = await fetch(
-      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,pending_capacity_per_hour,pending_effective_from,s2_active,s2_capacity_per_hour,s2_pending_capacity_per_hour,s2_pending_effective_from,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
+      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,pending_capacity_per_hour,pending_effective_from,s2_active,s2_from,s2_off_from,s2_capacity_per_hour,s2_pending_capacity_per_hour,s2_pending_effective_from,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
       {headers: HDR}
     );
     const data = await r.json();
@@ -3105,7 +3105,7 @@ async function loadVehicleTypesData(force=false){
         capacity_per_hour: x.capacity_per_hour,
         pending_capacity_per_hour: x.pending_capacity_per_hour,
         pending_effective_from: x.pending_effective_from,
-        s2_active: !!x.s2_active,
+        s2_active: !!x.s2_active, s2_from: x.s2_from, s2_off_from: x.s2_off_from,
         s2_capacity_per_hour: x.s2_capacity_per_hour,
         s2_pending_capacity_per_hour: x.s2_pending_capacity_per_hour,
         s2_pending_effective_from: x.s2_pending_effective_from,

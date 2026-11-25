@@ -3746,6 +3746,33 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
       </div>
     </div>
 
+    <div class="section" id="sec-polls">
+      <div class="page-hd">
+        <div class="page-hd-titles">
+          <div class="page-title">🗳️ <span>الاقتراع</span></div>
+          <div class="page-sub">خد رأى التجار فى موضوع — اختيارات وتعليق ولمدة محددة · النتيجة بتتحدّث لحظى هنا وكل 5 دقايق على تليجرام</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="add-btn" style="background:transparent;border:1.5px solid rgba(201,168,76,0.4);color:var(--gold)" onclick="vpBack()">🔄 تحديث</button>
+          <button class="add-btn" id="vpNewBtn" onclick="vpOpenForm()">➕ اقتراع جديد</button>
+        </div>
+      </div>
+      <div class="tbl-wrap scrollable">
+        <div class="tbl-scroll-body" id="vp-body"></div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="vpModal">
+      <div class="modal" style="max-width:560px">
+        <div class="modal-title"><span>🗳️ اقتراع جديد</span><button class="modal-close" onclick="closeModal('vpModal')">✕</button></div>
+        <div id="vpFormBody"></div>
+        <div class="modal-btns">
+          <button class="modal-save" id="vpSaveBtn" onclick="vpSave()">🚀 ابدأ الاقتراع</button>
+          <button class="modal-cancel" onclick="closeModal('vpModal')">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
     <div class="section" id="sec-shortages">
       <div class="page-hd">
         <div class="page-hd-titles">
@@ -5938,7 +5965,7 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         <input type="checkbox" id="editWVT-s2on" style="width:20px;height:20px;accent-color:#C9A84C" onchange="document.getElementById('editWVT-s2wrap').style.opacity=this.checked?1:.45">
         <span style="font-weight:800;color:var(--gold-light)">🌙 النوع ده شغال فى الشيفت التانى</span>
       </label>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:5px">معلّم = مواعيد الشيفت التانى تظهر للتاجر فى النوع ده · مش معلّم = النوع ده شيفت أول بس</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:5px">معلّم = مواعيد الشيفت التانى تظهر للتاجر فى النوع ده · مش معلّم = النوع ده شيفت أول بس · العلامة بتتطبق من تاريخ «التعديل يبدأ من» اللى تحت</div>
       <div id="editWVT-s2times" style="font-size:11px;color:#9fc7ee;margin-top:3px"></div>
     </div>
 
@@ -6566,6 +6593,7 @@ function autoRefreshTick(){
     else if(sec==='consumers' && typeof cnLoad === 'function') cnLoad();
     else if(sec==='fb-comments' && typeof fbcLoad === 'function') fbcLoad();
     else if(sec==='contests' && typeof ctLoad === 'function') ctLoad();
+    else if(sec==='polls' && typeof vpLoad === 'function') vpLoad();
     else if(sec==='inbox' && typeof ibLoad === 'function') ibLoad(true);
     else if(sec==='clients' && typeof loadClients === 'function') loadClients();
     else if(sec==='client-types' && typeof loadClientTypes === 'function') loadClientTypes();
@@ -6711,6 +6739,7 @@ function goTo(sec){
   else if(sec==='chat')loadChat();
   else if(sec==='fb-comments')fbcLoad();
   else if(sec==='contests')ctLoad();
+  else if(sec==='polls')vpLoad();
   else if(sec==='inbox')ibLoad(true);
   else if(sec==='bulletins')loadBulletins();
   else if(sec==='catalog')mcLoad();
@@ -10953,6 +10982,163 @@ function ctNotifyLine(k){
   if(k.winner_phone) s += ` · 📱 <b style="color:var(--success)">${escAttr(k.winner_phone)}</b>`;
   else if(k.notify_status==='sent') s += ' · ⏳ مستنيين رقمه';
   return s;
+}
+
+// ════════════════════════════════════════════════════════════════
+// 🗳️ الاقتراع — رأى التجار (اختيارات + تعليق) لمدة محددة
+// ════════════════════════════════════════════════════════════════
+const _vp = { list: [], cur: null, d: null, f: '', busy: false };
+const vpCanEdit = () => (typeof can !== 'function') || can('polls','edit');
+const VP_COL = ['#4CAF7D','#E05555','#C9A84C','#4A90D9','#B07CE8','#E8915A'];
+function vpLeft(endsAt, nowIso){
+  const ms = new Date(endsAt).getTime() - (nowIso ? new Date(nowIso).getTime() : Date.now());
+  if (ms <= 0) return 'خلص';
+  const m = Math.floor(ms/60000), d = Math.floor(m/1440), h = Math.floor((m%1440)/60), mm = m%60;
+  return d ? `${d} يوم${h?` و${h} س`:''}` : h ? `${h} س${mm?` و${mm} د`:''}` : m ? `${m} دقيقة` : 'أقل من دقيقة';
+}
+function vpBars(sum, big){
+  const tot = sum.total || 0;
+  return (sum.counts||[]).map((o,i) => { const pct = tot ? Math.round(o.n*100/tot) : 0; const c = VP_COL[i % VP_COL.length];
+    return `<div style="margin-bottom:${big?12:6}px"><div style="display:flex;justify-content:space-between;gap:8px;font-size:${big?14:12.5}px;margin-bottom:3px"><span><b style="color:${c}">${o.k})</b> ${escAttr(o.t)}</span><span><b style="color:${c};font-size:${big?17:13}px">${o.n}</b> <span style="color:var(--text-dim)">(${pct}%)</span></span></div>
+      <div style="height:${big?14:8}px;background:var(--dark2);border-radius:20px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${c};border-radius:20px;transition:width .5s"></div></div></div>`; }).join('');
+}
+function vpTargetTxt(t){ if(!t) return 'كل التجار'; const a=[]; if((t.client_types||[]).length) a.push('نوع: '+t.client_types.join('، ')); if((t.governorates||[]).length) a.push('محافظة: '+t.governorates.join('، ')); return a.join(' · ') || 'كل التجار'; }
+async function vpLoad(){
+  const el = document.getElementById('vp-body'); if(!el) return;
+  const nb = document.getElementById('vpNewBtn'); if(nb) nb.style.display = vpCanEdit() ? '' : 'none';
+  if(_vp.cur) return vpOpen(_vp.cur, true);
+  el.innerHTML = emptyBox('⏳ جارى التحميل...');
+  try { _vp.list = await rpcSecure('admin_polls_list', {}) || []; }
+  catch(e){ el.innerHTML = emptyBox('❌ '+escAttr(e.message)); return; }
+  if(!_vp.list.length){ el.innerHTML = emptyBox('مفيش اقتراعات لسه — اضغط «➕ اقتراع جديد» واكتب السؤال والاختيارات والمدة'); return; }
+  el.innerHTML = _vp.list.map(k => { const open = k.status==='open';
+    return `<div onclick="vpOpen(${k.id})" style="cursor:pointer;background:var(--dark3);border:1px solid ${open?'rgba(76,175,125,.45)':'var(--border)'};border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px"><b style="font-size:15px;color:var(--gold)">❓ ${escAttr(k.question)}</b>${open?pill('🟢 شغال — باقى '+vpLeft(k.ends_at),'#4CAF7D'):pill('🔒 مقفول','#8A8580')}</div>
+      ${vpBars(k.summary,false)}
+      <div style="font-size:11.5px;color:var(--text-dim);margin-top:6px">👥 صوّت ${k.summary.total} من ${k.summary.eligible} · 💬 ${k.summary.comments} تعليق · ${escAttr(vpTargetTxt(k.target))} · بدأ ${arDT(k.created_at)} · ${open?'يقفل':'اتقفل'} ${arDT(open?k.ends_at:(k.closed_at||k.ends_at))}</div>
+    </div>`; }).join('');
+}
+function vpBack(){ _vp.cur = null; _vp.d = null; _vp.f = ''; vpLoad(); }
+async function vpOpen(id, silent){
+  _vp.cur = id; const el = document.getElementById('vp-body'); if(!el) return;
+  if(!silent) el.innerHTML = emptyBox('⏳ جارى التحميل...');
+  try { _vp.d = await rpcSecure('admin_poll_detail', { p_id: id }); }
+  catch(e){ if(!silent) el.innerHTML = emptyBox('❌ '+escAttr(e.message)); return; }
+  vpRender();
+}
+function vpVotesRows(){
+  const D=_vp.d, opts=D.poll.options||[]; let v=D.votes||[];
+  if(_vp.f==='c') v=v.filter(x=>x.comment); else if(_vp.f) v=v.filter(x=>String(x.k)===_vp.f);
+  return v;
+}
+function vpRender(){
+  const el = document.getElementById('vp-body'); const D = _vp.d; if(!el || !D) return;
+  const p = D.poll, s = D.summary, open = p.status==='open' && new Date(p.ends_at) > new Date(D.now), opts = p.options||[];
+  const keepScroll = el.scrollTop; const v = vpVotesRows();
+  const fb = (val,lab) => `<button class="act-btn edit" style="padding:5px 11px;${_vp.f===val?'background:var(--gold);color:#000':''}" onclick="_vp.f='${val}';vpRender()">${lab}</button>`;
+  el.innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+      <button class="act-btn edit" onclick="vpBack()">➡️ رجوع</button>
+      ${open?pill('🟢 شغال — باقى '+vpLeft(p.ends_at, D.now)+' · تحديث لحظى','#4CAF7D'):pill('🔒 مقفول'+(p.closed_by&&p.closed_by!=='auto'?' (بإيد '+escAttr(p.closed_by)+')':''),'#8A8580')}
+      <span style="margin-inline-start:auto;display:flex;gap:6px;flex-wrap:wrap">
+        ${vpCanEdit()&&open&&!p.notified_at?`<button class="act-btn edit" onclick="vpNotify()">📣 ابعت إشعار للتجار على تليجرام</button>`:''}
+        ${vpCanEdit()?`<button class="act-btn edit" onclick="vpExtend()">⏱️ ${open?'مدّ الوقت':'افتحه تانى'}</button>`:''}
+        ${vpCanEdit()&&open?`<button class="act-btn del" onclick="vpClose()">🔒 اقفل دلوقتى</button>`:''}
+        <button class="act-btn edit" onclick="vpPrint()">🖨️ طباعة</button>
+      </span>
+    </div>
+    <div style="background:var(--dark3);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px">
+      <div style="font-size:18px;font-weight:800;color:var(--gold-light);margin-bottom:14px">❓ ${escAttr(p.question)}</div>
+      ${vpBars(s,true)}
+      <div style="font-size:12.5px;color:var(--text-dim);margin-top:10px;line-height:1.9">👥 صوّت <b style="color:var(--text)">${s.total}</b> من ${s.eligible} تاجر (${s.eligible?Math.round(s.total*100/s.eligible):0}%) · 💬 ${s.comments} تعليق · 🎯 ${escAttr(vpTargetTxt(p.target))}<br>
+        بدأ ${arDT(p.created_at)}${p.created_by?' ('+escAttr(p.created_by)+')':''} · ${open?'يقفل':'اتقفل'} ${arDT(open?p.ends_at:(p.closed_at||p.ends_at))}${p.notified_at?` · 📣 الإشعار اتبعت لـ ${p.notified_count} تاجر`:''}${p.allow_comment?'':' · التعليق مقفول'}</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${fb('','الكل ('+(D.votes||[]).length+')')}${opts.map((t,i)=>fb(String(i+1),escAttr(t)+' ('+((s.counts[i]||{}).n||0)+')')).join('')}${fb('c','💬 التعليقات ('+s.comments+')')}</div>
+    ${v.length?`<table style="width:100%;font-size:13px;border-collapse:collapse"><tr style="color:var(--text-dim);text-align:right"><th style="padding:7px">الكود</th><th>التاجر</th><th>المحافظة</th><th>الرأى</th><th>التعليق</th><th>الوقت</th></tr>
+      ${v.map(x=>`<tr style="border-top:1px solid var(--border)"><td style="padding:7px;font-weight:800;color:var(--gold)">${escAttr(x.code||'')}</td><td>${escAttr(x.name||'')}</td><td style="color:var(--text-dim)">${escAttr(x.governorate||'')}</td>
+        <td><b style="color:${VP_COL[(x.k-1)%VP_COL.length]}">${escAttr(opts[x.k-1]||x.k)}</b>${x.changed?' <span title="غيّر رأيه" style="font-size:10px;color:var(--text-dim)">✎</span>':''}</td><td style="max-width:340px;white-space:pre-wrap">${escAttr(x.comment||'')}</td><td style="color:var(--text-dim);white-space:nowrap">${arDT(x.at)}</td></tr>`).join('')}</table>`:emptyBox(_vp.f?'مفيش أصوات بالفلتر ده':'لسه محدش صوّت')}`;
+  el.scrollTop = keepScroll;
+}
+// ⚡ تحديث لحظى لصفحة الاقتراع المفتوح (كل 4 ثوانى)
+setInterval(async () => {
+  try {
+    if (typeof currentSection === 'undefined' || currentSection !== 'polls' || !_vp.cur || !_vp.d || _vp.busy || document.hidden) return;
+    const p = _vp.d.poll; if (p.status !== 'open') return;
+    if (document.getElementById('vpModal').classList.contains('show')) return;
+    _vp.busy = true;
+    const d = await rpcSecure('admin_poll_detail', { p_id: _vp.cur });
+    if (_vp.cur === d.poll.id) { _vp.d = d; vpRender(); }
+  } catch (e) {} finally { _vp.busy = false; }
+}, 4000);
+function vpOpenForm(){
+  if(!vpCanEdit()){ alert('معندكش صلاحية'); return; }
+  const types = (typeof allClientTypes !== 'undefined' && Array.isArray(allClientTypes)) ? allClientTypes.map(t=>t.name||t) : [];
+  const govs = ['القاهرة','الجيزة','القليوبية','الإسكندرية','البحيرة','الدقهلية','الشرقية','الغربية','المنوفية','كفر الشيخ','دمياط','بورسعيد','الإسماعيلية','السويس','الفيوم','بني سويف','المنيا','أسيوط','سوهاج','قنا','الأقصر','أسوان','البحر الأحمر','الوادي الجديد','مطروح'];
+  document.getElementById('vpFormBody').innerHTML = `
+    <div class="fg"><label>❓ السؤال</label><textarea class="filter-inp" id="vpF-q" rows="2" style="width:100%;resize:vertical" placeholder="مثلاً: إيه رأيكم نبيع صنف كذا الأسبوع ده؟"></textarea></div>
+    <div class="fg"><label>الاختيارات (من 2 لـ 6)</label><div id="vpF-opts"></div>
+      <button type="button" class="act-btn edit" style="margin-top:6px" onclick="vpAddOpt('')">➕ اختيار</button></div>
+    <div class="fg"><label>⏱️ المدة</label>
+      <select class="filter-inp" id="vpF-dur" style="width:100%" onchange="document.getElementById('vpF-endw').style.display=this.value==='x'?'':'none'">
+        <option value="60">ساعة</option><option value="120">ساعتين</option><option value="360">6 ساعات</option><option value="1440" selected>يوم</option><option value="2880">يومين</option><option value="4320">3 أيام</option><option value="10080">أسبوع</option><option value="x">📅 تاريخ ووقت محدد...</option>
+      </select>
+      <div id="vpF-endw" style="display:none;margin-top:6px"><input type="datetime-local" class="filter-inp" id="vpF-end" style="width:100%"></div>
+    </div>
+    <div class="fg"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="vpF-cm" checked style="width:18px;height:18px"> 💬 اسمح للتاجر يكتب تعليق</label></div>
+    <div class="fg"><label>🎯 لمين؟ <span style="color:var(--text-dim);font-weight:400">(سيبه فاضى = كل التجار)</span></label>
+      ${types.length?`<div style="font-size:12px;color:var(--text-dim);margin:4px 0">نوع العميل</div><div style="display:flex;gap:6px;flex-wrap:wrap">${types.map(t=>`<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer"><input type="checkbox" class="vpF-ct" value="${escAttr(t)}"> ${escAttr(t)}</label>`).join('')}</div>`:''}
+      <div style="font-size:12px;color:var(--text-dim);margin:8px 0 4px">المحافظة</div><div style="display:flex;gap:6px;flex-wrap:wrap;max-height:120px;overflow:auto">${govs.map(g=>`<label style="display:flex;align-items:center;gap:5px;font-size:12.5px;border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer"><input type="checkbox" class="vpF-gv" value="${escAttr(g)}"> ${escAttr(g)}</label>`).join('')}</div>
+    </div>
+    <div style="font-size:11.5px;color:var(--text-dim);line-height:1.8">الاقتراع بيظهر للتجار فى صفحة الحجز أول ما تبدأه. مفيش رسالة بتتبعتلهم إلا لو دوست «📣 ابعت إشعار» من صفحة الاقتراع. النتيجة والتعليقات ليك انت بس.</div>`;
+  ['أوافق','لا أوافق','رأى تالت'].forEach(vpAddOpt);
+  document.getElementById('vpModal').classList.add('show');
+}
+function vpAddOpt(val){
+  const box = document.getElementById('vpF-opts'); if(!box) return;
+  if(box.children.length >= 6){ alert('أقصى عدد 6 اختيارات'); return; }
+  const d = document.createElement('div'); d.style.cssText='display:flex;gap:6px;margin-bottom:6px';
+  d.innerHTML = `<input class="filter-inp vpF-o" style="flex:1" placeholder="نص الاختيار"><button type="button" class="act-btn del" style="padding:4px 10px" onclick="this.parentElement.remove()">✕</button>`;
+  d.querySelector('input').value = val || ''; box.appendChild(d);
+}
+async function vpSave(){
+  const q = document.getElementById('vpF-q').value.trim();
+  const options = [...document.querySelectorAll('.vpF-o')].map(i=>i.value.trim()).filter(Boolean);
+  if(q.length < 3){ alert('❌ اكتب السؤال'); return; }
+  if(options.length < 2){ alert('❌ لازم اختيارين على الأقل'); return; }
+  const dur = document.getElementById('vpF-dur').value; const body = { question:q, options, allow_comment: document.getElementById('vpF-cm').checked,
+    target: { client_types:[...document.querySelectorAll('.vpF-ct:checked')].map(x=>x.value), governorates:[...document.querySelectorAll('.vpF-gv:checked')].map(x=>x.value) } };
+  if(dur === 'x'){ const e = document.getElementById('vpF-end').value; if(!e){ alert('❌ اختار تاريخ ووقت القفل'); return; } body.ends_at = new Date(e).toISOString(); }
+  else body.minutes = parseInt(dur);
+  const btn = document.getElementById('vpSaveBtn'); btn.disabled = true;
+  try {
+    const r = await rpcSecure('admin_poll_save', { p: body });
+    try{ if(typeof logActivity==='function') logActivity('poll_create','🗳️ اقتراع جديد: '+q.slice(0,80),{id:r.id}); }catch(_){}
+    closeModal('vpModal'); _vp.f=''; await vpOpen(r.id);
+  } catch(e){ alert('❌ '+e.message); } finally { btn.disabled = false; }
+}
+async function vpClose(){
+  if(!confirm('تقفل الاقتراع دلوقتى؟ التجار مش هيقدروا يصوّتوا بعد كده.')) return;
+  try { await rpcSecure('admin_poll_set', { p_id:_vp.cur, p_action:'close' }); await vpOpen(_vp.cur, true); } catch(e){ alert('❌ '+e.message); }
+}
+async function vpExtend(){
+  const h = prompt('تمدّ الاقتراع كام ساعة؟ (مثلاً 1 أو 24)', '1'); if(h == null) return;
+  const m = Math.round(parseFloat(h) * 60); if(!(m >= 1)){ alert('❌ رقم غلط'); return; }
+  try { await rpcSecure('admin_poll_set', { p_id:_vp.cur, p_action:'extend', p_minutes:m }); await vpOpen(_vp.cur, true); } catch(e){ alert('❌ '+e.message); }
+}
+async function vpNotify(){
+  const s = _vp.d.summary;
+  if(!confirm(`هيتبعت إشعار على تليجرام لكل تاجر لسه مصوّتش (حوالى ${Math.max(0,s.eligible - s.total)} تاجر) — مرة واحدة بس للاقتراع ده.\n\nتبعت؟`)) return;
+  try { const r = await rpcSecure('admin_poll_notify', { p_id:_vp.cur }); alert('✅ اتبعت لـ '+r.sent+' تاجر'); await vpOpen(_vp.cur, true); } catch(e){ alert('❌ '+e.message); }
+}
+function vpPrint(){
+  const D = _vp.d; if(!D) return; const p = D.poll, s = D.summary, opts = p.options||[]; const v = vpVotesRows();
+  const w = window.open('', '_blank'); if(!w){ alert('المتصفح منع نافذة الطباعة — اسمح بالنوافذ المنبثقة'); return; }
+  const tot = s.total||0;
+  w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>نتيجة الاقتراع</title><style>body{font-family:Cairo,Tahoma,sans-serif;color:#000;margin:14px;font-size:12px}h2{margin:0 0 4px;font-size:17px}table{border-collapse:collapse;width:100%;margin:8px 0 12px}th,td{border:1px solid #777;padding:4px 6px;text-align:right}th{background:#eee}.m{color:#444;margin-bottom:8px;line-height:1.8}</style></head><body>
+    <h2>🗳️ نتيجة الاقتراع</h2><div class="m"><b>السؤال:</b> ${escAttr(p.question)}<br>الحالة: ${p.status==='open'?'شغال':'مقفول'} · بدأ ${arDT(p.created_at)} · ${p.status==='open'?'يقفل':'اتقفل'} ${arDT(p.status==='open'?p.ends_at:(p.closed_at||p.ends_at))} · لمين: ${escAttr(vpTargetTxt(p.target))}<br>صوّت ${tot} من ${s.eligible} تاجر · ${s.comments} تعليق</div>
+    <table><tr><th>#</th><th>الاختيار</th><th>العدد</th><th>النسبة</th></tr>${(s.counts||[]).map(o=>`<tr><td>${o.k}</td><td>${escAttr(o.t)}</td><td>${o.n}</td><td>${tot?Math.round(o.n*100/tot):0}%</td></tr>`).join('')}</table>
+    <table><tr><th>الكود</th><th>التاجر</th><th>المحافظة</th><th>الرأى</th><th>التعليق</th><th>الوقت</th></tr>${v.map(x=>`<tr><td>${escAttr(x.code||'')}</td><td>${escAttr(x.name||'')}</td><td>${escAttr(x.governorate||'')}</td><td>${escAttr(opts[x.k-1]||x.k)}</td><td>${escAttr(x.comment||'')}</td><td>${arDT(x.at)}</td></tr>`).join('')}</table></body></html>`);
+  w.document.close(); setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 700);
 }
 
 async function ctLoad(){
@@ -15872,10 +16058,8 @@ function renderVTTabBody(){
         <div class="vt-card__info">
           <div class="vt-card__name">${r.type.name}</div>
           <div class="vt-card__meta">
-            <span>⏱️ <b>${r.capacity_per_hour}</b> عربية/ساعة</span>
-            ${r.s2_active ? `<span style="color:var(--gold-light)">🌙 شيفت 2: <b>${r.s2_capacity_per_hour != null ? r.s2_capacity_per_hour : r.capacity_per_hour}</b> عربية/ساعة</span>` : '<span style="color:var(--text-dim)">🌙 شيفت 2: مش شغال</span>'}
-            ${(r.s2_pending_capacity_per_hour != null && r.s2_pending_effective_from) ? `<span style="color:#9fc7ee">🌙📅 من ${r.s2_pending_effective_from}: <b>${r.s2_pending_capacity_per_hour}</b></span>` : ''}
-            ${(r.pending_capacity_per_hour != null && r.pending_effective_from) ? `<span style="color:#9fc7ee">📅 من ${r.pending_effective_from}: <b>${r.pending_capacity_per_hour}</b> عربية/ساعة</span>` : ''}
+            <span>☀️ شيفت 1: <b>${r.capacity_per_hour}</b> عربية/ساعة${(r.pending_capacity_per_hour != null && r.pending_effective_from) ? ` <span style="color:#9fc7ee">(من ${r.pending_effective_from}: <b>${r.pending_capacity_per_hour}</b>)</span>` : ''}</span>
+            ${vtS2CardTxt(r)}
             <span>🔢 ترتيب: <b>${r.display_order || 0}</b></span>
             ${!r.is_active ? '<span style="color:#e88080">🚫 معطّل</span>' : ''}
             ${usage}
@@ -15962,6 +16146,17 @@ function updateAddHint(){
   }
 }
 
+// 🌙 حالة النوع فى الشيفت التانى: مخطط له يشتغل؟ (معلّم ومفيش تاريخ إيقاف)
+function vtS2Planned(r){ return !!r.s2_active && !r.s2_off_from; }
+function vtS2CardTxt(r){
+  const tdy = wvtToday();
+  if(!r.s2_active || (r.s2_off_from && r.s2_off_from <= tdy)) return '<span style="color:var(--text-dim)">🌙 شيفت 2: مش شغال</span>';
+  const rate = r.s2_capacity_per_hour != null ? `<b>${r.s2_capacity_per_hour}</b> عربية/ساعة` : 'نفس معدل شيفت 1';
+  const pend = (r.s2_pending_capacity_per_hour != null && r.s2_pending_effective_from) ? ` <span style="color:#9fc7ee">(من ${r.s2_pending_effective_from}: <b>${r.s2_pending_capacity_per_hour}</b>)</span>` : '';
+  const from = (r.s2_from && r.s2_from > tdy) ? ` <span style="color:#9fc7ee">— يبدأ ${r.s2_from}</span>` : '';
+  const off = r.s2_off_from ? ` <span style="color:#e88080">— يقف من ${r.s2_off_from}</span>` : '';
+  return `<span style="color:var(--gold-light)">🌙 شيفت 2: ${(r.s2_from && r.s2_from > tdy) ? 'هيشتغل' : 'شغال'} — ${rate}${pend}${from}${off}</span>`;
+}
 // 🌗 مواعيد الشيفتين للمخزن المفتوح (المواعيد بتتحدد من «ساعات المخازن» لكل مخزن)
 function vtShiftInfo(){
   const w=(_vtState.warehouses||[]).find(x=>x.id===_currentVTTab)||{};
@@ -16064,8 +16259,8 @@ function openEditWVTModal(wvtId){
   const hasPend = wvt.pending_capacity_per_hour != null && wvt.pending_effective_from;
   document.getElementById('editWVT-capacity').value   = hasPend ? wvt.pending_capacity_per_hour : wvt.capacity_per_hour;
   document.getElementById('editWVT-cur').innerHTML    = `المعدل الشغال دلوقتى: <b style="color:var(--gold-light)">${wvt.capacity_per_hour}</b> عربية/ساعة`;
-  document.getElementById('editWVT-s2on').checked = !!wvt.s2_active;
-  document.getElementById('editWVT-s2wrap').style.opacity = wvt.s2_active ? 1 : .45;
+  document.getElementById('editWVT-s2on').checked = vtS2Planned(wvt);
+  document.getElementById('editWVT-s2wrap').style.opacity = vtS2Planned(wvt) ? 1 : .45;
   const hasPend2 = wvt.s2_pending_capacity_per_hour != null && wvt.s2_pending_effective_from;
   document.getElementById('editWVT-s2cap').value = hasPend2 ? wvt.s2_pending_capacity_per_hour : (wvt.s2_capacity_per_hour ?? '');
   document.getElementById('editWVT-s2cur').innerHTML = (wvt.s2_capacity_per_hour != null ? `شغال دلوقتى فى الشيفت التانى: <b style="color:var(--gold-light)">${wvt.s2_capacity_per_hour}</b> عربية/ساعة` : `الشيفت التانى واخد نفس معدل الشيفت الأول (${wvt.capacity_per_hour})`) + (hasPend2 ? ` — 📅 مجدول <b>${wvt.s2_pending_capacity_per_hour}</b> من ${wvt.s2_pending_effective_from}` : '') + ' · نفس تاريخ «يبدأ من» اللى تحت';
@@ -16103,7 +16298,13 @@ async function confirmEditWVT(){
     patch.pending_effective_from = null;
   }
   // 🌙 معدل الشيفت التانى (فاضى = نفس الشيفت الأول) — بنفس تاريخ البداية
-  patch.s2_active = !!document.getElementById('editWVT-s2on').checked;
+  // 🌙 العلامة بتبدأ/تقف من تاريخ «التعديل يبدأ من» — وبتتغير بس لو العلامة نفسها اتغيرت
+  const s2want = !!document.getElementById('editWVT-s2on').checked;
+  if(wvt && s2want !== vtS2Planned(wvt)){
+    if(s2want){ patch.s2_active = true; patch.s2_from = from > today ? from : null; patch.s2_off_from = null; msg += from > today ? `\n🌙 الشيفت التانى هيشتغل للنوع ده من ${from}` : '\n🌙 الشيفت التانى اشتغل للنوع ده'; }
+    else if(from > today && wvt.s2_active && !(wvt.s2_from && wvt.s2_from >= from)){ patch.s2_off_from = from; msg += `\n🌙 الشيفت التانى هيقف للنوع ده من ${from}`; }
+    else { patch.s2_active = false; patch.s2_from = null; patch.s2_off_from = null; msg += '\n🌙 الشيفت التانى اتقفل للنوع ده'; }
+  }
   const s2raw = document.getElementById('editWVT-s2cap').value.trim();
   const s2cap = s2raw === '' ? null : parseInt(s2raw);
   if(s2raw !== '' && (isNaN(s2cap) || s2cap < 1)){ alert('❌ معدل الشيفت التانى لازم رقم >= 1 (أو سيبه فاضى)'); return; }
@@ -19448,6 +19649,7 @@ const NAV_META = {
   'consumers':        { icon: '👥',  label: 'العملاء' },
   'fb-comments':      { icon: '💭',  label: 'كومنتات فيسبوك', badge: { id: 'fbcBadge', cls: 'pending-badge' } },
   'contests':         { icon: '🎁',  label: 'مسابقات الكومنتات' },
+  'polls':            { icon: '🗳️',  label: 'الاقتراع' },
   'inbox':            { icon: '📨',  label: 'الرسايل (واتساب + ماسنجر)', badge: { id: 'inboxBadge', cls: 'pending-badge' } },
 
   'erp-items':        { icon: '📦',  label: 'الأصناف (السيستم الجديد)' },
@@ -19474,7 +19676,7 @@ const DEFAULT_SIDEBAR_LAYOUT = {
   categories: [
     { id: 'booking',       icon: '📋', title: 'الحجز',     items: ['bookings', 'pending-clients', 'permits', 'shortages', 'permit-alerts', 'blocked', 'booking-limits'] },
     { id: 'clients',       icon: '👥', title: 'العملاء',   items: ['clients', 'clients-map', 'bdays', 'client-types', 'client-tiers', 'extra-contacts', 'unlinked'] },
-    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
+    { id: 'communication', icon: '📢', title: 'التواصل',   items: ['chat', 'inbox', 'fb-comments', 'contests', 'polls', 'bulletins', 'ai-assistant', 'broadcast', 'broadcast-logs', 'feedback', 'templates'] },
     { id: 'sales',         icon: '🏍️', title: 'المبيعات',  items: ['catalog', 'leads', 'waitlist', 'parts', 'purchases', 'quotes', 'consumers'] },
     { id: 'erp',           icon: '🏭', title: 'السيستم الجديد', items: ['erp-dash', 'erp-warranty', 'erp-targets', 'erp-acc', 'erp-items', 'erp-suppliers', 'erp-purchases', 'erp-stock', 'erp-sales', 'erp-delivery', 'erp-regs', 'erp-letters', 'erp-cash', 'erp-reports', 'erp-traders', 'erp-setup'] },
     { id: 'system',        icon: '⚙️', title: 'النظام',    items: ['employees', 'roles', 'vehicle-types', 'schedule', 'reports', 'warehouses', 'activity-log', 'settings'] }
@@ -19501,6 +19703,7 @@ const NAV_PREFERRED_CAT = {
   'consumers': { id: 'sales', icon: '🏍️', title: 'المبيعات', index: 3 },
   'fb-comments': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
   'contests': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
+  'polls': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
   'inbox': { id: 'communication', icon: '📢', title: 'التواصل', index: 2 },
   'erp-items': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
   'erp-suppliers': { id: 'erp', icon: '🏭', title: 'السيستم الجديد', index: 4 },
