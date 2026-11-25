@@ -1021,8 +1021,21 @@ const HDR = { 'apikey': KEY, 'Authorization': `Bearer ${KEY}`, 'Content-Type': '
 const fmtDate = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 
 // 🕐 يرجّع ساعة بداية السلوت بنظام 24 ساعة (يعتمد على ساعات عمل المخزن لتفادي لبس ص/م)
+// 🌙 الشيفت التانى: الميعاد بيتكتب بعلامة «م» (مسائى) أو «ص» (بعد منتصف الليل) — الشيفت الأول من غير علامة زى ما هو
+const S2_RE = /[مص]\s*$/;
+function isS2Slot(slot){ return S2_RE.test(String(slot || '')); }
+function s2SlotLabel(h){
+  if (h >= 24) return `${h === 24 ? 12 : h - 24}:00 - ${h - 23}:00 ص`;
+  return `${h === 12 ? 12 : h - 12}:00 - ${h + 1 === 24 ? 12 : (h === 12 ? 1 : h - 11)}:00 م`;
+}
+function s2SlotHour(slot){
+  const m = String(slot || '').match(/^\s*(\d{1,2}):/); if (!m) return null;
+  const n = parseInt(m[1], 10);
+  return /ص\s*$/.test(slot) ? (n === 12 ? 24 : n + 24) : (n === 12 ? 12 : n + 12);
+}
 function slotStartHour24(slot, ws, we){
   if(!slot) return null;
+  if (isS2Slot(slot)) return s2SlotHour(slot);
   const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
   const s = parseInt(ws, 10), e = parseInt(we, 10);
   if(Number.isFinite(s) && Number.isFinite(e)){
@@ -1041,7 +1054,13 @@ function slotStartHour24(slot, ws, we){
 function isBookingTimePassed(loadingDate, slot, warehouseName){
   const t = new Date(); t.setHours(0,0,0,0);
   const todayStr = fmtDate(t);
-  if(loadingDate < todayStr) return true;
+  if(loadingDate < todayStr){
+    // ميعاد بعد منتصف الليل (12-1 ص) تابع ليوم الشيفت: لسه ماعدّاش لو ساعته لسه ماجتش
+    const y = new Date(t); y.setDate(y.getDate() - 1);
+    const sh = isS2Slot(slot) ? s2SlotHour(slot) : null;
+    if (loadingDate === fmtDate(y) && sh != null && sh >= 24 && (sh - 24) > new Date().getHours()) return false;
+    return true;
+  }
   if(loadingDate > todayStr) return false;
   const h = (typeof applyWarehouseHours === 'function')
     ? applyWarehouseHours(loadingDate, warehouseName) : null;
@@ -2979,7 +2998,34 @@ function applyWarehouseHours(dateStr, warehouseName){
   const we = (usePending ? w.pending_working_hour_end   : w.working_hour_end)   ?? 16;
   const co = (usePending ? w.pending_daily_cutoff_hour  : w.daily_cutoff_hour)  ?? 15;
 
-  return { ws, we, co, slots: generateSlots(ws, we), source: usePending ? 'pending' : 'current' };
+  // 🌙 الشيفت التانى (لو مفتوح للمخزن): مواعيده بتتضاف ورا مواعيد الشيفت الأول
+  const s1 = generateSlots(ws, we);
+  let s2 = null, s2slots = [];
+  if (w.s2_enabled && w.s2_start != null && w.s2_end != null) {
+    const st = Math.max(Number(w.s2_start), we + 1), en = Math.min(Number(w.s2_end), 30);
+    for (let h = st; h < en; h++) s2slots.push(s2SlotLabel(h));
+    if (s2slots.length) s2 = { s: st, e: en, co: (w.s2_cutoff ?? 23) };
+  }
+  return { ws, we, co, s2, s1slots: s1, s2slots, slots: s1.concat(s2slots), source: usePending ? 'pending' : 'current' };
+}
+// 🕐 قواعد الإجازات/الساعات → المواعيد المقفولة ليوم معيّن (بتدعم إجازة شيفت واحد)
+function ruleBlockedSlots(rules, ds, dow, wh, vt, hours){
+  const out = new Set();
+  for (const rule of (rules || [])) {
+    if (rule.warehouses && rule.warehouses.length && !rule.warehouses.includes(wh)) continue;
+    if (rule.vehicle_types && rule.vehicle_types.length && !rule.vehicle_types.includes(vt)) continue;
+    if (rule.effective_from && ds < rule.effective_from) continue;
+    let applies = false;
+    if (rule.type === 'weekly' && rule.day_of_week === dow && !(rule.end_date && ds > rule.end_date)) applies = true;
+    else if (rule.type === 'date' && rule.start_date === ds) applies = true;
+    else if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) applies = true;
+    if (!applies) continue;
+    if (rule.start_hour != null) {
+      hours.slots.forEach(sl => { const h = slotStartHour24(sl, hours.ws, hours.we); if (h != null && h >= rule.start_hour && h < rule.end_hour) out.add(sl); });
+    } else if (rule.shift === 1) (hours.s1slots || []).forEach(sl => out.add(sl));
+    else if (rule.shift === 2) (hours.s2slots || []).forEach(sl => out.add(sl));
+  }
+  return out;
 }
 
 async function ensureSettingsLoaded(force=false){
@@ -2988,7 +3034,7 @@ async function ensureSettingsLoaded(force=false){
     // Parallel: app_settings + warehouses
     const [r1, r2] = await Promise.all([
       fetch(`${SB}/rest/v1/app_settings?select=key,value`, { headers: HDR }),
-      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from&order=sort_order.asc,id.asc`, { headers: HDR })
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,daily_cutoff_hour,pending_working_hour_start,pending_working_hour_end,pending_daily_cutoff_hour,pending_effective_from,s2_enabled,s2_start,s2_end,s2_cutoff&order=sort_order.asc,id.asc`, { headers: HDR })
     ]);
     const settingsData = await r1.json();
     cachedAppSettings = {};
@@ -3042,7 +3088,7 @@ async function loadVehicleTypesData(force=false){
   try{
     // الجلب من الـ join table مع join للـ vehicle_types catalog
     const r = await fetch(
-      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,pending_capacity_per_hour,pending_effective_from,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
+      `${SB}/rest/v1/warehouse_vehicle_types?select=warehouse_id,vehicle_type_id,capacity_per_hour,pending_capacity_per_hour,pending_effective_from,s2_capacity_per_hour,s2_pending_capacity_per_hour,s2_pending_effective_from,display_order,is_active,vehicle_types(id,name,icon,is_active),warehouses(id,name)&is_active=eq.true&order=display_order.asc`,
       {headers: HDR}
     );
     const data = await r.json();
@@ -3056,6 +3102,9 @@ async function loadVehicleTypesData(force=false){
         capacity_per_hour: x.capacity_per_hour,
         pending_capacity_per_hour: x.pending_capacity_per_hour,
         pending_effective_from: x.pending_effective_from,
+        s2_capacity_per_hour: x.s2_capacity_per_hour,
+        s2_pending_capacity_per_hour: x.s2_pending_capacity_per_hour,
+        s2_pending_effective_from: x.s2_pending_effective_from,
         display_order: x.display_order,
         warehouse_name: x.warehouses.name,
         warehouse_id: x.warehouse_id
@@ -4137,9 +4186,14 @@ async function goStep2() {
 }
 
 // ⏱️ معدل التحميل الساعى فى تاريخ معيّن (بيحترم التغيير المجدول «يبدأ من تاريخ»)
-function bkCapOn(ds){
+function bkCapOn(ds, slot){
   try{
     const v = (allVehicleTypes || []).find(x => x.name === bk.vehicle && x.warehouse_name === bk.warehouse);
+    if (v && slot && isS2Slot(slot)) {
+      // 🌙 الشيفت التانى له معدّله (ولو مش متحدد بياخد معدّل الشيفت الأول)
+      const c2 = (v.s2_pending_capacity_per_hour != null && v.s2_pending_effective_from && ds && ds >= v.s2_pending_effective_from) ? v.s2_pending_capacity_per_hour : v.s2_capacity_per_hour;
+      if (c2 != null) return c2;
+    }
     if (v) {
       if (v.pending_capacity_per_hour != null && v.pending_effective_from && ds && ds >= v.pending_effective_from) return v.pending_capacity_per_hour;
       return v.capacity_per_hour || bk.cap;
@@ -4280,7 +4334,7 @@ async function permitFlowNew(lk, permit) {
 // ===================== 📦 الكميات + اقتراح الميعاد =====================
 let _qty = { rows: [], items: [], perMax: 10, suggest: null, options: [] };
 const AR_DAYS = ['الأحد','الاتنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
-function fmtSlotHour(h){ const f = x => x > 12 ? x - 12 : x; return `${f(h)}:00 - ${f(h+1)}:00`; }
+function fmtSlotHour(h){ try { const w = (cachedWarehouses || []).find(x => x.name === bk.warehouse); if (w && w.s2_enabled && h > (w.working_hour_end ?? 16) && h >= w.s2_start && h < w.s2_end) return s2SlotLabel(h); } catch(_){} const f = x => x > 12 ? x - 12 : x; return `${f(h)}:00 - ${f(h+1)}:00`; }
 function fmtDayAr(ds){ const d = new Date(ds + 'T12:00:00'); return `${AR_DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth()+1}`; }
 async function qtyLoad(){
   const panel = document.getElementById('qtyPanel'); if (!panel) return;
@@ -4889,7 +4943,8 @@ async function buildCal() {
   const todayHours = applyWarehouseHours(todayStr, bk.warehouse);
   const cutoffHour = todayHours.co;
   const now = new Date();
-  const isCutoffPassedToday = now.getHours() >= cutoffHour;
+  // 🌙 لو الشيفت التانى مفتوح ولسه ميعاد حجزه ماخلصش → النهاردة لسه متاح
+  const isCutoffPassedToday = now.getHours() >= cutoffHour && !(todayHours.s2 && now.getHours() < todayHours.s2.co);
 
   // ⚡ Parallel fetch: schedule_rules + bookings for the next 7 days + booking_limits (tier-aware)
   let rules = [];
@@ -4922,6 +4977,8 @@ async function buildCal() {
     for (const rule of rules) {
       // ✨ قواعد ساعات معيّنة مش بتقفل اليوم — بس بتحجب slots
       if (rule.start_hour != null) continue;
+      // 🌙 إجازة شيفت واحد مش بتقفل اليوم كله — بتحجب مواعيد الشيفت ده بس
+      if (rule.shift === 1 || rule.shift === 2) continue;
       // ✨ احترم فلتر المخازن (لو مش متعرّف، يتطبّق على الكل)
       if (rule.warehouses && rule.warehouses.length > 0) {
         if (!rule.warehouses.includes(bk.warehouse)) continue;
@@ -4940,31 +4997,7 @@ async function buildCal() {
 
   // 🕐 الحصول على الـ slots المقفولة بقواعد hour-range لتاريخ معيّن
   function getBlockedSlots(dt, ds) {
-    const dow = dt.getDay();
-    const blockedHours = new Set();
-    for (const rule of rules) {
-      if (rule.start_hour == null) continue;  // skip whole-day rules
-      // 📅 احترم effective_from لو موجود
-      if (rule.effective_from && ds < rule.effective_from) continue;
-      if (rule.warehouses && rule.warehouses.length > 0) {
-        if (!rule.warehouses.includes(bk.warehouse)) continue;
-      }
-      if (rule.vehicle_types && rule.vehicle_types.length > 0) {
-        if (!rule.vehicle_types.includes(bk.vehicle)) continue;
-      }
-      let applies = false;
-      if (rule.type === 'weekly' && rule.day_of_week === dow) applies = true;
-      else if (rule.type === 'date' && rule.start_date === ds) applies = true;
-      else if (rule.type === 'range' && ds >= rule.start_date && ds <= rule.end_date) applies = true;
-      if (applies) {
-        for (let h = rule.start_hour; h < rule.end_hour; h++) blockedHours.add(h);
-      }
-    }
-    // Convert hours → slot strings (نفس fmt اللى فى generateSlots)
-    const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
-    const blockedSlots = new Set();
-    blockedHours.forEach(h => blockedSlots.add(`${fmt(h)}:00 - ${fmt(h+1)}:00`));
-    return blockedSlots;
+    return ruleBlockedSlots(rules, ds, dt.getDay(), bk.warehouse, bk.vehicle, applyWarehouseHours(ds, bk.warehouse));
   }
 
   // 🏭 Per-day fullness (per-warehouse hours قد تختلف عبر الأيام لو فيه pending change)
@@ -4975,12 +5008,22 @@ async function buildCal() {
     if (!slots.length) return false;
     // 🕐 استبعد الـ slots المقفولة بقواعد ساعات
     const blocked = getBlockedSlots(dt, ds);
-    const availableSlots = slots.filter(s => !blocked.has(s));
+    let availableSlots = slots.filter(s => !blocked.has(s));
+    if (ds === todayStr) {
+      // النهاردة: المتاح = الشيفتات اللى ميعاد حجزها لسه ماخلصش والمواعيد اللى لسه ماجتش
+      const nh = now.getHours();
+      availableSlots = availableSlots.filter(sl => {
+        const two = isS2Slot(sl);
+        if (two ? (hours.s2 && nh >= hours.s2.co) : nh >= hours.co) return false;
+        const sh = slotStartHour24(sl, hours.ws, hours.we);
+        return sh == null ? true : sh > nh;
+      });
+    }
     if (!availableSlots.length) return true;  // كل الـ slots مقفولة = اليوم mut
     const dayData = bookingsByDate[ds] || {};
     let fullSlots = 0;
     for (const slot of availableSlots) {
-      if ((dayData[slot] || 0) >= bkCapOn(ds)) fullSlots++;
+      if ((dayData[slot] || 0) >= bkCapOn(ds, slot)) fullSlots++;
     }
     return fullSlots >= availableSlots.length;
   }
@@ -5082,27 +5125,9 @@ async function loadSlots() {
     const data = await rBookings.json();
     const rules = await rRules.json();
 
-    // 🕐 احسب الـ slots المقفولة بقواعد ساعات معيّنة لليوم ده
+    // 🕐 المواعيد المقفولة بقواعد الساعات / إجازة شيفت لليوم ده
     const dt = new Date(bk.dateStr + 'T12:00:00');
-    const dow = dt.getDay();
-    const blockedHours = new Set();
-    for(const rule of rules){
-      if(rule.start_hour == null) continue;  // skip whole-day rules
-      // 📅 احترم effective_from
-      if(rule.effective_from && bk.dateStr < rule.effective_from) continue;
-      if(rule.warehouses && rule.warehouses.length && !rule.warehouses.includes(bk.warehouse)) continue;
-      if(rule.vehicle_types && rule.vehicle_types.length && !rule.vehicle_types.includes(bk.vehicle)) continue;
-      let applies = false;
-      if(rule.type === 'weekly' && rule.day_of_week === dow) applies = true;
-      else if(rule.type === 'date' && rule.start_date === bk.dateStr) applies = true;
-      else if(rule.type === 'range' && bk.dateStr >= rule.start_date && bk.dateStr <= rule.end_date) applies = true;
-      if(applies){
-        for(let h = rule.start_hour; h < rule.end_hour; h++) blockedHours.add(h);
-      }
-    }
-    const fmt = h => h === 0 ? '12' : h > 12 ? String(h - 12) : String(h);
-    const blockedSlots = new Set();
-    blockedHours.forEach(h => blockedSlots.add(`${fmt(h)}:00 - ${fmt(h+1)}:00`));
+    const blockedSlots = ruleBlockedSlots(rules, bk.dateStr, dt.getDay(), bk.warehouse, bk.vehicle, hours);
 
     // Final visible slots = warehouse slots − blocked slots
     let slots = allSlots.filter(s => !blockedSlots.has(s));
@@ -5112,6 +5137,8 @@ async function loadSlots() {
     if (bk.dateStr === _todayStr) {
       const nowH = new Date().getHours();
       slots = slots.filter(sl => {
+        // 🌙 كل شيفت بآخر ميعاد حجز خاص بيه
+        if (isS2Slot(sl) ? (hours.s2 && nowH >= hours.s2.co) : nowH >= hours.co) return false;
         const sh = slotStartHour24(sl, hours.ws, hours.we);
         return sh == null ? true : sh > nowH;   // يفضل بس السلوتس اللي لسه ماجتش
       });
@@ -5144,7 +5171,7 @@ async function loadSlots() {
     let availableCount = 0;
     slots.forEach(sl => {
       const used = totals[sl] || 0;
-      let rem  = bkCapOn(bk.dateStr) - used;
+      let rem  = bkCapOn(bk.dateStr, sl) - used;
       if (bk.slotMax) {
         const sh = slotStartHour24(sl, hours.ws, hours.we);
         if (sh != null && bk.slotMax[sh] != null) rem = bk.slotMax[sh];   // السيرفر هو المرجع
@@ -5155,7 +5182,7 @@ async function loadSlots() {
       const sel = sl === bk.slot;
       html += `<div class="slot ${sel?'sel':''}"
         onclick="pickSlot('${sl}',this,${rem})">
-        <div class="st">${sl}</div>
+        <div class="st">${sl}</div>${/ص\s*$/.test(sl) ? '<div style="font-size:10px;color:var(--gold);margin-top:1px">🌙 بعد منتصف الليل</div>' : ''}
         <div class="av">متاح: ${rem} ✅</div>
       </div>`;
     });
