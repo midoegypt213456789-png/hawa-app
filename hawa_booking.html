@@ -4796,6 +4796,81 @@ async function processPermitFile(f, pages) {
   }
 }
 
+// ===================== 🗳️ الاقتراع — رأى التاجر =====================
+// الاقتراع المفتوح بيظهر كزرار عايم + نافذة: اختيار واحد + تعليق (لو مسموح). النتيجة للإدارة بس.
+const _vp = { polls: [], cur: null, pick: null, busy: false };
+function vpAuth(){ return { p_token: (user && user.session_token) || null, p_client_id: (user && user.id) || null, p_username: (user && user.username) || '' }; }
+function vpLeftTxt(endsAt){
+  const ms = new Date(endsAt).getTime() - Date.now(); if (ms <= 0) return 'خلص';
+  const m = Math.floor(ms/60000), d = Math.floor(m/1440), h = Math.floor((m%1440)/60), mm = m%60;
+  return d ? `${d} يوم${h?` و${h} ساعة`:''}` : h ? `${h} ساعة${mm?` و${mm} دقيقة`:''}` : m ? `${m} دقيقة` : 'أقل من دقيقة';
+}
+async function vpFetch(){
+  if (!user || !user.id) return;
+  try {
+    const r = await fetch(`${SB}/rest/v1/rpc/cl_polls`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' }, body: JSON.stringify(vpAuth()) });
+    const j = await r.json(); if (!j || !j.ok) return;
+    _vp.polls = (j.polls || []).filter(p => new Date(p.ends_at) > new Date());
+  } catch (_) { return; }
+  vpPill();
+  const want = parseInt((location.search.match(/[?&]poll=(\d+)/) || [])[1] || '0', 10);
+  let seen = {}; try { seen = JSON.parse(sessionStorage.getItem('vp_seen') || '{}'); } catch (_) {}
+  const pick = _vp.polls.find(p => p.id === want && !seen['w'+p.id]) || _vp.polls.find(p => !p.my && !seen[p.id]);
+  if (pick && !document.getElementById('vpOv')) { seen[pick.id] = 1; if (pick.id === want) seen['w'+pick.id] = 1; try { sessionStorage.setItem('vp_seen', JSON.stringify(seen)); } catch (_) {} vpOpen(pick.id); }
+}
+function vpPill(){
+  let b = document.getElementById('vpPill');
+  if (!_vp.polls.length) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement('button'); b.id = 'vpPill'; b.type = 'button';
+    b.style.cssText = 'position:fixed;left:14px;bottom:86px;z-index:900;border:1.5px solid #C9A84C;background:#111;color:#E8C97A;border-radius:24px;padding:9px 14px;font-family:inherit;font-weight:800;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.5);cursor:pointer';
+    b.onclick = () => vpOpen((_vp.polls.find(p => !p.my) || _vp.polls[0]).id); document.body.appendChild(b); }
+  const todo = _vp.polls.filter(p => !p.my).length;
+  b.innerHTML = todo ? `🗳️ رأيك يهمنا <span style="background:#E05555;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-inline-start:4px">${todo}</span>` : '🗳️ الاقتراع ✅';
+}
+function vpClose(){ const o = document.getElementById('vpOv'); if (o) o.remove(); _vp.cur = null; }
+function vpOpen(id){
+  const p = _vp.polls.find(x => x.id === id); if (!p) return;
+  _vp.cur = id; _vp.pick = p.my ? p.my.k : null; vpClose(); _vp.cur = id;
+  const o = document.createElement('div'); o.id = 'vpOv';
+  o.style.cssText = 'position:fixed;inset:0;z-index:9990;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center';
+  o.onclick = e => { if (e.target === o) vpClose(); };
+  const others = _vp.polls.filter(x => x.id !== id);
+  o.innerHTML = `<div style="width:100%;max-width:520px;max-height:92vh;overflow:auto;background:#111;border:1px solid #2A2A2A;border-bottom:none;border-radius:20px 20px 0 0;padding:18px 16px 22px;font-family:inherit;color:#F0EDE8" dir="rtl">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><b style="color:#E8C97A;font-size:15px">🗳️ رأيك يهمنا</b><button type="button" onclick="vpClose()" style="background:none;border:none;color:#8A8580;font-size:20px;cursor:pointer">✕</button></div>
+    <div style="font-size:17px;font-weight:800;line-height:1.7;margin-bottom:6px">${esc(p.question)}</div>
+    <div style="font-size:11.5px;color:#8A8580;margin-bottom:14px">⏰ باقى ${vpLeftTxt(p.ends_at)} على قفل الاقتراع</div>
+    <div id="vpOpts">${(p.options || []).map((t, i) => `<button type="button" class="vp-opt" data-k="${i+1}" onclick="vpPick(${i+1})" style="display:block;width:100%;text-align:right;margin-bottom:8px;padding:13px 14px;border-radius:12px;border:1.5px solid #2A2A2A;background:#1A1A1A;color:#F0EDE8;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer">${esc(t)}</button>`).join('')}</div>
+    ${p.allow_comment ? `<textarea id="vpCm" rows="3" maxlength="500" placeholder="عندك تعليق؟ اكتبه هنا (اختيارى)" style="width:100%;box-sizing:border-box;margin-top:4px;padding:11px 12px;border-radius:12px;border:1.5px solid #2A2A2A;background:#1A1A1A;color:#F0EDE8;font-family:inherit;font-size:14px;resize:vertical">${esc((p.my && p.my.comment) || '')}</textarea>` : ''}
+    <div id="vpMsg" style="min-height:18px;font-size:12.5px;text-align:center;margin:8px 0">${p.my ? '<span style="color:#4CAF7D">✅ صوتك متسجل — تقدر تغيّره لحد ما الاقتراع يقفل</span>' : ''}</div>
+    <button type="button" id="vpSend" onclick="vpSend()" style="width:100%;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,#E8C97A,#C9A84C);color:#0A0A0A;font-family:inherit;font-weight:800;font-size:15px;cursor:pointer">${p.my ? '💾 حدّث رأيى' : '✅ ابعت رأيى'}</button>
+    ${others.length ? `<div style="text-align:center;margin-top:12px;font-size:12.5px;color:#8A8580">فيه ${others.length} اقتراع تانى: ${others.map(x => `<a href="#" onclick="vpOpen(${x.id});return false" style="color:#E8C97A">${x.my ? '✅' : '🗳️'} ${esc(String(x.question).slice(0, 28))}${String(x.question).length > 28 ? '…' : ''}</a>`).join(' · ')}</div>` : ''}
+  </div>`;
+  document.body.appendChild(o); vpPick(_vp.pick, true);
+}
+function vpPick(k, silent){
+  _vp.pick = k || null;
+  document.querySelectorAll('#vpOpts .vp-opt').forEach(b => { const on = Number(b.dataset.k) === _vp.pick; b.style.borderColor = on ? '#C9A84C' : '#2A2A2A'; b.style.background = on ? 'rgba(201,168,76,.16)' : '#1A1A1A'; b.style.color = on ? '#E8C97A' : '#F0EDE8'; });
+  if (!silent) { const m = document.getElementById('vpMsg'); if (m) m.textContent = ''; }
+}
+async function vpSend(){
+  if (_vp.busy) return; const m = document.getElementById('vpMsg'); const p = _vp.polls.find(x => x.id === _vp.cur); if (!p) return;
+  if (!_vp.pick) { m.innerHTML = '<span style="color:#E05555">اختار رأيك الأول</span>'; return; }
+  _vp.busy = true; const btn = document.getElementById('vpSend'); btn.disabled = true; btn.textContent = '⏳ بنسجل...';
+  try {
+    const cm = (document.getElementById('vpCm') || {}).value || '';
+    const r = await fetch(`${SB}/rest/v1/rpc/cl_poll_vote`, { method:'POST', headers:{ ...HDR, 'Content-Type':'application/json' }, body: JSON.stringify({ p_poll: p.id, p_option: _vp.pick, p_comment: cm, ...vpAuth() }) });
+    const j = await r.json();
+    if (!j || !j.ok) { m.innerHTML = `<span style="color:#E05555">❌ ${esc((j && j.message) || 'حصل خطأ — حاول تانى')}</span>`; if (j && j.error === 'closed') { _vp.polls = _vp.polls.filter(x => x.id !== p.id); vpPill(); } return; }
+    p.my = { k: _vp.pick, comment: cm.trim() || null }; vpPill();
+    try { if (typeof logActivity === 'function') logActivity('cl_poll_vote', '🗳️ صوّت فى اقتراع', { poll: p.id, option: _vp.pick }); } catch (_) {}
+    m.innerHTML = '<span style="color:#4CAF7D;font-weight:800">✅ صوتك اتسجل — شكراً لرأيك</span>';
+    const next = _vp.polls.find(x => !x.my);
+    setTimeout(() => { if (_vp.cur === p.id) { if (next) vpOpen(next.id); else vpClose(); } }, 1300);
+  } catch (e) { m.innerHTML = '<span style="color:#E05555">❌ النت قطع — حاول تانى</span>'; }
+  finally { _vp.busy = false; const b2 = document.getElementById('vpSend'); if (b2) { b2.disabled = false; const pp = _vp.polls.find(x => x.id === _vp.cur); b2.textContent = (pp && pp.my) ? '💾 حدّث رأيى' : '✅ ابعت رأيى'; } }
+}
+setTimeout(vpFetch, 2500); setInterval(() => { if (!document.hidden && !document.getElementById('vpOv')) vpFetch(); }, 180000);
+
 // ===================== 📱 تسجيل الإذن بالـQR =====================
 // الـQR المطبوع على الإذن = لينك صفحة الإذن على النظام الأساسى → السيرفر بيقراها مباشرة (من غير تصوير ولا قراءة آلية)
 const PM_QR_RE = /^https:\/\/makanerp\.softgoegypt\.com\/i\/\d{1,12}\/[0-9a-f]{8,64}\/?$/i;
