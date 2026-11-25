@@ -12654,7 +12654,7 @@ function whS2Preview(id){
   if(!out) return;
   if(isNaN(x.s)||isNaN(x.e)||x.e<=x.s){ out.textContent='— أدخل أرقام صحيحة'; return; }
   if(!x.slots.length){ out.textContent='— مفيش مواعيد (البداية لازم بعد نهاية الشيفت الأول)'; return; }
-  out.innerHTML=`${x.slots.length} مواعيد: ${x.slots.map(t=>t.replace(':00 - ','–').replace(':00','')).join(' / ')}`+(x.first>x.s?` <span style="color:#e8c97a">— أول ميعاد ${s2HourTxt(x.first)} (الشيفت الأول واخد لحد ${s2HourTxt(x.first)})</span>`:'')+(x.on?'':' <span style="color:#e88080">— الشيفت مقفول، مش ظاهر للتجار</span>');
+  out.innerHTML=`${x.slots.length} مواعيد: ${x.slots.map(t=>t.replace(':00 - ','–').replace(':00','')).join(' / ')}`+` <span style="color:#9fc7ee">— 🔄 ساعة تبديل الشيفت: ${s2HourTxt(x.we)} → ${s2HourTxt(x.first)} فاضية</span>`+(x.first>x.s?` <span style="color:#e8c97a">— أول ميعاد ${s2HourTxt(x.first)} (لازم ساعة فاضية بعد نهاية الشيفت الأول)</span>`:'')+(x.on?'':' <span style="color:#e88080">— الشيفت مقفول، مش ظاهر للتجار</span>');
 }
 async function whS2Save(id){
   const x=whS2Calc(id); const name=x.w.name||'';
@@ -12669,6 +12669,13 @@ async function whS2Save(id){
     const rows=await r.json(); const keep=new Set(x.on?x.slots:[]);
     const out=(Array.isArray(rows)?rows:[]).filter(b=>!keep.has(b.time_slot));
     if(out.length && !confirm(`⚠️ فيه ${out.length} حجز قيد الانتظار فى مواعيد الشيفت التانى هتبقى بره المواعيد الجديدة فى ${name} (الحجوزات مش هتتلغى — بس راجعها).\n\nتكمل الحفظ؟`)) return;
+    // 🔄 ساعة التبديل (بعد نهاية الشيفت الأول) بتبقى فاضية — فيه حجوزات جاية فيها؟
+    if(x.on){
+      const f=h=>h>12?h-12:h; const gap=`${f(x.we)}:00 - ${f(x.we+1)}:00`;
+      const rg=await fetch(`${SB}/rest/v1/bookings?select=id&warehouse=eq.${encodeURIComponent(name)}&loading_date=gte.${today}&status=eq.${encodeURIComponent('قيد الانتظار')}&time_slot=eq.${encodeURIComponent(gap)}`,{headers:{...HDR,'Range':'0-999'}});
+      const g=await rg.json();
+      if(Array.isArray(g) && g.length && !confirm(`⚠️ فيه ${g.length} حجز قيد الانتظار فى ميعاد ${gap} فى ${name} — ده هيبقى ساعة تبديل الشيفت (مفيش حجز جديد فيه). الحجوزات دى مش هتتلغى، راجعها.\n\nتكمل؟`)) return;
+    }
   }catch(_){}
   if(!confirm(`${x.on?'فتح':'قفل'} الشيفت التانى فى ${name}${x.on?`\nالمواعيد: ${x.slots[0]} ← ${x.slots[x.slots.length-1]}\nقفل الحجز نفس اليوم: ${s2HourTxt(x.c)}`:''}\n\nتأكيد؟`)) return;
   try{
