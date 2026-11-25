@@ -5881,9 +5881,21 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
     </div>
 
     <div class="fg">
-      <label>⏱️ معدل التحميل ساعى للمخزن ده</label>
+      <label>☀️ الشيفت الأول — معدل التحميل ساعى</label>
       <div class="iw"><span class="ic">⏱️</span><input type="number" id="addToWh-capacity" min="1" max="50" value="5" placeholder="5"></div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:4px">كم عربية فى الساعة فى المخزن ده تحديداً</div>
+      <div id="addToWh-s1info" style="font-size:11px;color:var(--text-dim);margin-top:4px">كم عربية فى الساعة فى المخزن ده تحديداً</div>
+    </div>
+
+    <div class="fg" style="padding:11px 12px;border:1px solid rgba(201,168,76,.45);border-radius:11px;background:rgba(201,168,76,.06)">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0">
+        <input type="checkbox" id="addToWh-s2on" style="width:20px;height:20px;accent-color:#C9A84C" onchange="document.getElementById('addToWh-s2wrap').style.display=this.checked?'':'none'">
+        <span style="font-weight:800;color:var(--gold-light)">🌙 شغال فى الشيفت التانى</span>
+      </label>
+      <div id="addToWh-s2info" style="font-size:11px;color:var(--text-dim);margin-top:6px"></div>
+      <div id="addToWh-s2wrap" style="display:none;margin-top:10px">
+        <label>🌙 الشيفت التانى — معدل التحميل ساعى</label>
+        <div class="iw"><span class="ic">🌙</span><input type="number" id="addToWh-s2cap" min="1" max="50" placeholder="فاضى = نفس معدل الشيفت الأول"></div>
+      </div>
     </div>
 
     <div class="fg">
@@ -5926,7 +5938,8 @@ textarea.qt-inp{line-height:1.8;resize:vertical}
         <input type="checkbox" id="editWVT-s2on" style="width:20px;height:20px;accent-color:#C9A84C" onchange="document.getElementById('editWVT-s2wrap').style.opacity=this.checked?1:.45">
         <span style="font-weight:800;color:var(--gold-light)">🌙 النوع ده شغال فى الشيفت التانى</span>
       </label>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:5px">معلّم = مواعيد الشيفت التانى تظهر للتاجر فى النوع ده · مش معلّم = النوع ده شيفت أول بس (لازم كمان الشيفت التانى يكون مفتوح للمخزن)</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:5px">معلّم = مواعيد الشيفت التانى تظهر للتاجر فى النوع ده · مش معلّم = النوع ده شيفت أول بس</div>
+      <div id="editWVT-s2times" style="font-size:11px;color:#9fc7ee;margin-top:3px"></div>
     </div>
 
     <div class="fg" id="editWVT-s2wrap">
@@ -15738,7 +15751,7 @@ async function loadVehicleTypes(){
   document.getElementById('vt-tab-body').innerHTML = '';
   try{
     const [r1, r2, r3, r4] = await Promise.all([
-      fetch(`${SB}/rest/v1/warehouses?select=id,name&order=sort_order.asc,id.asc`, {headers:HDR}),
+      fetch(`${SB}/rest/v1/warehouses?select=id,name,working_hour_start,working_hour_end,s2_enabled,s2_start,s2_end&order=sort_order.asc,id.asc`, {headers:HDR}),
       fetch(`${SB}/rest/v1/vehicle_types?select=id,name,icon,is_active&order=id.asc`, {headers:HDR}),
       fetch(`${SB}/rest/v1/warehouse_vehicle_types?select=*&order=display_order.asc`, {headers:HDR}),
       fetch(`${SB}/rest/v1/bookings?select=warehouse,vehicle_type&status=neq.${encodeURIComponent('ملغي')}`, {headers:{...HDR,'Range':'0-9999'}})
@@ -15895,6 +15908,7 @@ function openAddToWarehouseModal(){
   const maxOrder = Math.max(0, ...inThisWh.map(x => x.display_order || 0));
   document.getElementById('addToWh-order').value = String(maxOrder + 1);
   renderAddExistingGrid();
+  vtShiftInfoFill();
   document.getElementById('addToWarehouseModal').classList.add('show');
 }
 
@@ -15948,6 +15962,21 @@ function updateAddHint(){
   }
 }
 
+// 🌗 مواعيد الشيفتين للمخزن المفتوح (المواعيد بتتحدد من «ساعات المخازن» لكل مخزن)
+function vtShiftInfo(){
+  const w=(_vtState.warehouses||[]).find(x=>x.id===_currentVTTab)||{};
+  const ws=w.working_hour_start??8, we=w.working_hour_end??16, st=Math.max(w.s2_start??17, we+1), en=w.s2_end??25;
+  return { s1:`مواعيد الشيفت الأول فى ${w.name||''}: من ${s2HourTxt(ws)} لـ ${s2HourTxt(we)}`,
+           s2:`مواعيد الشيفت التانى فى ${w.name||''}: من ${s2HourTxt(st)} لـ ${s2HourTxt(en)}`+(w.s2_enabled?'':' — ⚠️ الشيفت التانى مقفول للمخزن ده دلوقتى (افتحه من «ساعات المخازن»)')+' · المواعيد بتتعدل من «ساعات المخازن»' };
+}
+function vtShiftInfoFill(){
+  try{ const i=vtShiftInfo();
+    const a=document.getElementById('addToWh-s1info'); if(a) a.textContent=i.s1;
+    const b=document.getElementById('addToWh-s2info'); if(b) b.textContent=i.s2;
+    const c=document.getElementById('addToWh-s2on'); if(c){ c.checked=false; document.getElementById('addToWh-s2wrap').style.display='none'; document.getElementById('addToWh-s2cap').value=''; }
+    const e=document.getElementById('editWVT-s2times'); if(e) e.textContent=i.s2;
+  }catch(_){}
+}
 async function confirmAddToWarehouse(){
   if(_currentVTTab == null) return;
   const capacity = parseInt(document.getElementById('addToWh-capacity').value);
@@ -15992,6 +16021,8 @@ async function confirmAddToWarehouse(){
         warehouse_id: _currentVTTab,
         vehicle_type_id: typeId,
         capacity_per_hour: capacity,
+        s2_active: !!document.getElementById('addToWh-s2on').checked,
+        s2_capacity_per_hour: (document.getElementById('addToWh-s2on').checked && parseInt(document.getElementById('addToWh-s2cap').value) >= 1) ? parseInt(document.getElementById('addToWh-s2cap').value) : null,
         display_order: order,
         is_active: true
       })
@@ -16045,6 +16076,7 @@ function openEditWVTModal(wvtId){
   pendEl.style.display = hasPend ? 'block' : 'none';
   pendEl.innerHTML = hasPend ? `📅 فيه تغيير مجدول: <b>${wvt.pending_capacity_per_hour}</b> عربية/ساعة من <b>${wvt.pending_effective_from}</b> <button type="button" onclick="cancelWVTPending()" style="margin-inline-start:8px;background:none;border:1px solid rgba(224,85,85,0.5);color:#E05555;border-radius:7px;padding:2px 9px;cursor:pointer;font-family:inherit;font-size:11px">إلغاء التغيير</button>` : '';
   document.getElementById('editWVT-order').value      = wvt.display_order || 0;
+  vtShiftInfoFill();
   document.getElementById('editWVTModal').classList.add('show');
 }
 
