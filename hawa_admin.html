@@ -21550,7 +21550,7 @@ async function plCountRefresh(){
   try{ const l=await plCall('pl_list'); if(Array.isArray(l)&&!PL.loaded) c.textContent=open(l); }catch(_){}
 }
 function plRender(){
-  const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules,legacy:plRenderLegacy,dev:plRenderDev}[PL.tab];
+  const f={letters:plRenderLetters,reports:plRenderReports,brands:plRenderBrands,recipients:plRenderRecipients,years:plRenderYears,rules:plRenderRules,legacy:plRenderLegacy,dev:()=>{ if(typeof plRenderDev==='function') return plRenderDev(); setTimeout(plRender,400); }}[PL.tab]; // dev متعرّفة فى آخر سكريبت — لو الصفحة لسه بتحمّل نستنى
   if(f) f();
   const c=document.getElementById('pl-tab-count'); if(c) c.textContent = PL.letters.filter(l=>['جديد','فى التنمية','اتستلم'].includes(l.status)).length;
 }
