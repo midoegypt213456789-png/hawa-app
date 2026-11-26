@@ -28092,7 +28092,8 @@ function plEditRender(){ const E=PL.ed; if(!E) return; const l=PL.letters.find(x
   const brands=plParents();
   const cur=Object.values(byM).map(g=>`<tr><td><b>${plEsc(g.name)}</b></td><td>${plN(g.qty)}</td>
     <td><input class="pl-inp" type="number" min="0" style="width:130px;padding:5px 8px" placeholder="${g.qty}" value="${plEsc(E.cut[g.id]??'')}" onchange="PL.ed.cut[${g.id}]=this.value;PL.ed.prev=null;plEditRender()">
-      ${(v=>v===''||v==null||Number(v)===g.qty?'':Number(v)<g.qty?`<span class="pl-sub" style="color:var(--error)">➖ هيتشال ${plN(g.qty-Number(v))} من الآخر</span>`:`<span class="pl-sub" style="color:var(--success)">➕ هيزيد ${plN(Number(v)-g.qty)}</span>`)(E.cut[g.id])}</td></tr>`).join('');
+      ${(v=>v===''||v==null||Number(v)===g.qty?'':Number(v)<g.qty?`<span class="pl-sub" style="color:var(--error)">➖ هيتشال ${plN(g.qty-Number(v))} من الآخر</span>`:`<span class="pl-sub" style="color:var(--success)">➕ هيزيد ${plN(Number(v)-g.qty)}</span>`)(E.cut[g.id])}
+      <button class="pl-btn ghost sm" style="margin-inline-start:8px" onclick="plEditSwap(${g.id})" title="الموديل ده غلط؟ يتشال من الكتاب ويتحط مكانه موديل تانى بنفس العدد — أرقامه بترجع لدرجه">🔁 بدّل الموديل</button></td></tr>`).join('');
   const adds=E.add.map((ln,j)=>{ const models=ln.brand_id?plGroupModels(ln.brand_id).filter(m=>m.active):[];
     return `<div class="pl-row" style="margin-bottom:8px">
       <select class="pl-inp" onchange="PL.ed.add[${j}].brand_id=this.value;PL.ed.add[${j}].model_id='';PL.ed.add[${j}].head=(plBrand(this.value)||{}).name||'';PL.ed.prev=null;plEditRender()"><option value="">— الشركة —</option>${brands.map(b=>`<option value="${b.id}" ${String(ln.brand_id)===String(b.id)?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select>
@@ -28116,6 +28117,12 @@ function plEditRender(){ const E=PL.ed; if(!E) return; const l=PL.letters.find(x
       <span class="pl-sub" style="flex:1">الزيادة بتاخد من بعد آخر رقم اتصرف (مفيش تكرار) — والأرقام اللى بتتشال بتتصرف فى أول كتاب جاى. متاح طول ما الكتاب متسلمش للتنمية.</span>
       <button class="pl-btn ghost" ${has&&!E.busy?'':'disabled'} onclick="plEditRun(true)">👁 معاينة</button>
       <button class="pl-btn" ${has&&!E.busy?'':'disabled'} onclick="plEditRun(false)">💾 احفظ التعديل</button></div></div>`; plCombo(o); }
+// 🔁 بدّل الموديل: يشيل الموديل الغلط (العدد = 0) ويجهّز سطر إضافة بنفس الشركة والعدد — تختار الموديل الصح وتحفظ مرة واحدة
+function plEditSwap(mid){ const E=PL.ed; if(!E) return; const l=PL.letters.find(x=>x.id===E.id); if(!l) return;
+  const its=l.items.filter(i=>String(i.model_id)===String(mid)); if(!its.length) return;
+  const qty=its.reduce((a,i)=>a+Number(i.qty),0), row={brand_id:String(plRoot(its[0].brand_id)), model_id:'', qty:String(qty), head:its[0].brand_name||'', kind:its[0].kind||''};
+  E.cut[mid]='0'; const j=E.add.findIndex(x=>!x.brand_id&&!x.model_id&&!x.qty); if(j>=0) E.add[j]=row; else E.add.push(row);
+  E.prev=null; plEditRender(); plToast('اختار الموديل الصح من تحت واضغط «احفظ التعديل»'); }
 async function plEditRun(dry){ const E=PL.ed; if(!E||E.busy) return; const pay=plEditPayload(); if(!pay.p_add.length&&!pay.p_cut.length) return;
   if(!dry){ const n=pay.p_cut.reduce((a,x)=>a+x.qty,0), m=pay.p_add.reduce((a,x)=>a+x.qty,0); if(!confirm(`تأكيد تعديل الكتاب؟\n${m?'➕ إضافة '+m+' رقم\n':''}${n?'➖ شيل '+n+' رقم\n':''}`)) return; }
   E.busy=true; plEditRender();
