@@ -2474,6 +2474,7 @@ tr:hover td{background:rgba(201,168,76,0.03);}
 .pl-kpi .v{font-size:22px;font-weight:800;color:var(--text)}
 .pl-kpi .l{font-size:12px;color:var(--text-dim)}
 .pl-kpi.red .v{color:#ff7b7b}.pl-kpi.yel .v{color:#f0c75e}.pl-kpi.grn .v{color:#6dc49a}.pl-kpi.gold .v{color:var(--gold)}
+.pl-topbar{overflow-x:auto;overflow-y:hidden;height:16px;margin-bottom:4px}.pl-topbar>div{height:1px}
 .pl-scroll{overflow:auto;max-height:calc(100vh - 330px);border:1px solid var(--border);border-radius:12px}
 .pl-tbl{width:100%;border-collapse:collapse;font-size:13px}
 .pl-tbl th{position:sticky;top:0;z-index:2}
@@ -21626,12 +21627,12 @@ function plRenderLetters(){
       <div style="flex:1"></div>
       <div class="pl-sub">🔴 فى التنمية &nbsp; 🟡 اتستلم ومستنى منشور &nbsp; 🟢 له منشور (بيستخبى من «المفتوح»)</div>
     </div>
-    <div id="pl-letters-tbl"></div>
-    <div class="pl-tabs-b">
+    <div class="pl-tabs-b" style="margin:0 0 10px">
       <button class="pl-tab-b ${PL.brandFilter==='all'?'active':''}" onclick="PL.brandFilter='all';plRenderLetters()">الكل</button>
       ${brandsUsed.map(b=>{ const n=PL.letters.filter(l=>l.items.some(i=>plRoot(i.brand_id)===b.id)).length;
         return `<button class="pl-tab-b ${String(PL.brandFilter)===String(b.id)?'active':''}" onclick="PL.brandFilter=${b.id};plRenderLetters()">${plEsc(b.name)} <span style="opacity:.7">(${n})</span></button>`; }).join('')}
     </div>
+    <div id="pl-letters-tbl"></div>
   </div>`;
   plRenderLettersTable();
   if(PL.wiz) plWizRender();
@@ -21648,7 +21649,7 @@ function plRenderLettersTable(){
   if(!PL.letters.length){ el.innerHTML=`<div class="pl-sub" style="text-align:center;padding:30px">مفيش كتب لسه — سجّل الشركات والموديلات من «🏭 الشركات» وبعدين «➕ كتاب جديد»</div>`; return; }
   if(!rows.length){ el.innerHTML=`<div class="pl-sub" style="text-align:center;padding:24px">مفيش كتب بالفلتر ده</div>`; return; }
   const ed=plCanEdit(), today=plToday();
-  el.innerHTML = `<div class="pl-scroll"><table class="pl-tbl"><thead><tr>
+  el.innerHTML = `<div class="pl-topbar" id="pl-let-top"><div></div></div><div class="pl-scroll" id="pl-let-sc"><table class="pl-tbl"><thead><tr>
     <th>المستند</th><th>التاريخ</th><th>الشركات والأرقام</th><th>العدد</th><th>المستلم</th>
     <th>التسليم للتنمية</th><th>الاستلام من التنمية</th><th>رقم المنشور</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${rows.map(l=>{
@@ -21678,6 +21679,17 @@ function plRenderLettersTable(){
           ${l.status==='جديد'&&plCanDel()?`<button class="act-btn delete" onclick="plCancel(${l.id})">🚫 إلغاء</button>`:''}
         </td></tr>`;
     }).join('')}</tbody></table></div>`;
+  plTopScroll();
+}
+// 📏 مسطرة التمرير بالعرض فوق الجدول (متزامنة مع اللى تحت)
+function plTopScroll(){
+  const top=document.getElementById('pl-let-top'), sc=document.getElementById('pl-let-sc'); if(!top||!sc) return;
+  const fit=()=>{ top.firstElementChild.style.width=sc.scrollWidth+'px'; top.style.display=sc.scrollWidth>sc.clientWidth+2?'':'none'; top.scrollLeft=sc.scrollLeft; };
+  let lock=false;
+  top.onscroll=()=>{ if(lock) return; lock=true; sc.scrollLeft=top.scrollLeft; lock=false; };
+  sc.onscroll=()=>{ if(lock) return; lock=true; top.scrollLeft=sc.scrollLeft; lock=false; };
+  fit(); setTimeout(fit,300);
+  if(!window._plTopRz){ window._plTopRz=true; window.addEventListener('resize',()=>{ try{ plTopScroll(); }catch(e){} }); }
 }
 async function plUpd(id, patch){
   try{
