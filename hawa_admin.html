@@ -11012,7 +11012,13 @@ async function vpLoad(){
   try { _vp.list = await rpcSecure('admin_polls_list', {}) || []; }
   catch(e){ el.innerHTML = emptyBox('❌ '+escAttr(e.message)); return; }
   if(!_vp.list.length){ el.innerHTML = emptyBox('مفيش اقتراعات لسه — اضغط «➕ اقتراع جديد» واكتب السؤال والاختيارات والمدة'); return; }
-  el.innerHTML = _vp.list.map(k => { const open = k.status==='open';
+  el.innerHTML = `<div style="margin-bottom:10px"><input class="filter-inp" type="text" style="max-width:340px" placeholder="🔍 بحث فى الاقتراعات: السؤال / الاختيارات" value="${escAttr(_vp.q||'')}" oninput="_vp.q=this.value;document.getElementById('vp-list').innerHTML=vpListHtml()"></div><div id="vp-list">${vpListHtml()}</div>`;
+}
+function vpListHtml(){
+  const q = String(_vp.q||'').trim().toLowerCase();
+  const list = (_vp.list||[]).filter(k => !q || (k.question+' '+(k.options||[]).join(' ')).toLowerCase().includes(q));
+  if(!list.length) return emptyBox('مفيش اقتراع بالكلام ده');
+  return list.map(k => { const open = k.status==='open';
     return `<div onclick="vpOpen(${k.id})" style="cursor:pointer;background:var(--dark3);border:1px solid ${open?'rgba(76,175,125,.45)':'var(--border)'};border-radius:12px;padding:12px 14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:8px"><b style="font-size:15px;color:var(--gold)">❓ ${escAttr(k.question)}</b>${open?pill('🟢 شغال — باقى '+vpLeft(k.ends_at),'#4CAF7D'):pill('🔒 مقفول','#8A8580')}</div>
       ${vpBars(k.summary,false)}
@@ -27950,9 +27956,11 @@ async function plDevSaveTyped(){ const fr=document.getElementById('pl-dev-fr'); 
 // 📐 كشف المواصفات: كل الموديلات — المعمول والناقص
 const PL_SPEC_OPT=['title_name','kind','brand_txt','motor'], PL_SPEC_NAME=['model_code','title_name','style','brand_txt'];
 function plDevSpecMiss(m){ const s=plDevSpecs(m.id); return plDevSpecF(m).filter(f=>!PL_SPEC_OPT.includes(f[0])&&!s[f[0]]).map(f=>f[1]); }
-function plDevSpecOverview(ed){ const brandsA=(PL.boot.brands||[]).filter(b=>b.active), actB=new Set(brandsA.map(b=>b.id));
+function plDevSpecOverview(ed, bodyOnly){ const brandsA=(PL.boot.brands||[]).filter(b=>b.active), actB=new Set(brandsA.map(b=>b.id));
   const rows=(PL.boot.models||[]).filter(m=>m.active&&actB.has(m.brand_id)).map(m=>{ const miss=plDevSpecMiss(m), tot=plDevSpecF(m).filter(f=>!PL_SPEC_OPT.includes(f[0])).length; return {m,miss,tot}; });
-  const done=rows.filter(x=>!x.miss.length).length, only=!!PL.devOnlyMiss, open=PL.devOpenB=PL.devOpenB||{};
+  const done=rows.filter(x=>!x.miss.length).length, total=rows.length, only=!!PL.devOnlyMiss, q=String(PL.devQ||'').trim().toLowerCase();
+  const open=q?new Proxy({}, {get:()=>true}):(PL.devOpenB=PL.devOpenB||{});
+  if(q){ const hit=x=>{ const b=plBrand(x.m.brand_id)||{}, r=plBrand(plRoot(x.m.brand_id))||{}; return [b.name,r.name,x.m.vtype,x.m.cc,x.m.fingerprint,x.m.vtype+' '+x.m.cc].join(' ').toLowerCase().includes(q); }; for(let i=rows.length-1;i>=0;i--) if(!hit(rows[i])) rows.splice(i,1); }
   const srt=l=>l.sort((a,b)=>String(a.m.vtype).localeCompare(String(b.m.vtype),'ar')||String(a.m.cc).localeCompare(String(b.m.cc),'ar',{numeric:true}));
   // الشركة الأم ← جواها موديلاتها + شركاتها الفرعية (كل فرعية جواها موديلاتها)
   const roots=brandsA.filter(b=>!b.parent_id||!actB.has(Number(b.parent_id))).map(r=>{ const subs=brandsA.filter(b=>b.parent_id&&Number(b.parent_id)===r.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar'));
@@ -27967,7 +27975,7 @@ function plDevSpecOverview(ed){ const brandsA=(PL.boot.brands||[]).filter(b=>b.a
       </tbody></table></div>`; };
   const tog=k=>`(PL.devOpenB=PL.devOpenB||{})['${k}']=!PL.devOpenB['${k}'];plRenderDev()`;
   const shownG=roots.filter(g=>!only||g.all.some(x=>x.miss.length)), keys=[]; shownG.forEach(g=>{ keys.push('r'+g.r.id); g.subs.forEach(x=>{ if(x.rows.length) keys.push('s'+x.b.id); }); });
-  const body=shownG.map(g=>{ const bad=g.all.some(x=>x.miss.length), isOpen=!!open['r'+g.r.id], noModelSubs=g.subs.filter(x=>!x.rows.length).map(x=>x.b.name);
+  const body=shownG.map(g=>{ const bad=g.all.some(x=>x.miss.length), isOpen=!!open['r'+g.r.id], noModelSubs=q?[]:g.subs.filter(x=>!x.rows.length).map(x=>x.b.name);
     const subsHtml=g.subs.filter(x=>x.rows.length&&(!only||x.rows.some(y=>y.miss.length))).map(x=>{ const so=!!open['s'+x.b.id];
       return `<div style="border-top:1px solid var(--border)"><div onclick="${tog('s'+x.b.id)}" style="cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 14px 8px 14px;padding-inline-start:34px;background:rgba(255,255,255,.03)">
         <span style="font-size:12px;color:var(--text-dim)">${so?'▼':'◀'}</span><b style="font-size:14px;color:var(--gold-light)">🏷️ ${plEsc(x.b.name)}</b><span class="pl-sub">شركة فرعية — ${x.rows.length} موديل</span><span style="margin-right:auto;display:flex;gap:6px">${cnt(x.rows)}</span></div>
@@ -27977,11 +27985,12 @@ function plDevSpecOverview(ed){ const brandsA=(PL.boot.brands||[]).filter(b=>b.a
         <span style="font-size:13px;color:var(--text-dim)">${isOpen?'▼':'◀'}</span><b style="font-size:15px;color:var(--gold)">🏭 ${plEsc(g.r.name)}</b><span class="pl-sub">${g.all.length} موديل${g.subs.length?` · ${g.subs.length} شركة فرعية`:''}</span>
         <span style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap">${cnt(g.all)}</span></div>
       ${isOpen?`${g.own.length&&g.subs.some(x=>x.rows.length)?`<div class="pl-sub" style="padding:6px 14px 0">موديلات ${plEsc(g.r.name)} نفسها:</div>`:''}${tbl(g.own)}${subsHtml}${noModelSubs.length?`<div class="pl-sub" style="padding:8px 14px;border-top:1px solid var(--border)">🏷️ ${noModelSubs.map(plEsc).join('، ')} — من غير موديلات خاصة (بتطلع بموديلات ${plEsc(g.r.name)})</div>`:''}`:''}</div>`; }).join('');
-  const anyClosed=keys.some(k=>!open[k]);
-  return `<div class="pl-card"><div class="pl-h">📐 كشف المواصفات الفنية <span class="pl-sub">— ${done} موديل كامل من ${rows.length} · ${rows.length-done} ناقص (الناقص بيقفل طباعة ملف التنمية) — دوس على الشركة الأم تفتح موديلاتها وشركاتها الفرعية</span>
-      <span style="margin-right:auto;display:inline-flex;gap:10px;align-items:center;font-size:13px"><button class="pl-btn ghost sm" onclick='PL.devOpenB={};${JSON.stringify(keys)}.forEach(k=>PL.devOpenB[k]=${anyClosed});plRenderDev()'>${anyClosed?'⤵️ افتح الكل':'⤴️ اقفل الكل'}</button>
+  const anyClosed=keys.some(k=>!open[k]), bodyHtml=body||`<div class="pl-sub" style="text-align:center;padding:14px">${q?'مفيش شركة أو موديل بالاسم ده':'✅ كل الموديلات مواصفاتها كاملة'}</div>`;
+  if(bodyOnly) return bodyHtml;
+  return `<div class="pl-card"><div class="pl-h">📐 كشف المواصفات الفنية <span class="pl-sub">— ${done} موديل كامل من ${total} · ${total-done} ناقص (الناقص بيقفل طباعة ملف التنمية) — دوس على الشركة الأم تفتح موديلاتها وشركاتها الفرعية</span>
+      <span style="margin-right:auto;display:inline-flex;gap:10px;align-items:center;font-size:13px;flex-wrap:wrap"><input class="pl-inp" style="width:230px" placeholder="🔍 بحث: شركة / موديل / بصمة" value="${plEsc(PL.devQ||'')}" oninput="PL.devQ=this.value;document.getElementById('pl-ov-body').innerHTML=plDevSpecOverview(${ed?'true':'false'},true)"><button class="pl-btn ghost sm" onclick='PL.devOpenB={};${JSON.stringify(keys)}.forEach(k=>PL.devOpenB[k]=${anyClosed});plRenderDev()'>${anyClosed?'⤵️ افتح الكل':'⤴️ اقفل الكل'}</button>
       <label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto;margin:0" ${only?'checked':''} onchange="PL.devOnlyMiss=this.checked;plRenderDev()"> الناقص بس</label></span></div>
-    ${body||'<div class="pl-sub" style="text-align:center;padding:14px">✅ كل الموديلات مواصفاتها كاملة</div>'}</div>`; }
+    <div id="pl-ov-body">${bodyHtml}</div></div>`; }
 function plDevGoModel(mid){ const m=(PL.boot.models||[]).find(x=>x.id===Number(mid)); if(!m) return; PL.devBrand=m.brand_id; PL.devOpenB=PL.devOpenB||{}; PL.devOpenB['r'+plRoot(m.brand_id)]=true; PL.devOpenB['s'+m.brand_id]=true; plRenderDev().then(()=>{ const tr=document.querySelector(`#pl-pane-dev tr[data-plm="${m.id}"]`); if(tr){ tr.scrollIntoView({behavior:'smooth',block:'center'}); tr.style.outline='2px solid var(--gold)'; setTimeout(()=>{ tr.style.outline=''; },2500); } }); }
 // 📋 نسخ المواصفات من موديل لموديل (كله ما عدا الاسم: الموديل / الطراز / الماركة)
 function plDevCopyAsk(mid){ const t=(PL.boot.models||[]).find(x=>x.id===Number(mid)); if(!t) return; const SF=plDevSpecF(t);
@@ -27993,9 +28002,9 @@ function plDevCopyAsk(mid){ const t=(PL.boot.models||[]).find(x=>x.id===Number(m
   o.innerHTML=`<div style="background:var(--dark2);border:1px solid var(--gold);border-radius:14px;padding:18px;width:min(560px,100%)">
     <b style="font-size:16px;color:var(--gold)">📋 انسخ المواصفات لـ ${plEsc(tb.name||'')} — ${plEsc(t.vtype)} ${plEsc(t.cc)}</b>
     <div class="pl-sub" style="margin:8px 0">اختار الموديل اللى هتنسخ منه. بيتنسخ كل حاجة ما عدا الاسم (الموديل / الطراز${SF===PL_SPEC_E?' / الماركة':''}) — دول بيفضلوا بتوع الموديل ده وتكتبهم انت.</div>
-    <select id="pl-copy-src" class="pl-inp" style="width:100%">${srcs.map(x=>`<option value="${x.m.id}">${plEsc((x.b.name||'')+' — '+x.m.vtype+' '+x.m.cc)}${x.n?' (ناقص '+x.n+')':' ✅'}</option>`).join('')}</select>
+    <select id="pl-copy-src" class="pl-inp" style="width:100%;min-width:100%" title="اكتب اسم الشركة أو الموديل للبحث">${srcs.map(x=>`<option value="${x.m.id}">${plEsc((x.b.name||'')+' — '+x.m.vtype+' '+x.m.cc)}${x.n?' (ناقص '+x.n+')':' ✅'}</option>`).join('')}</select>
     <div class="pl-row" style="margin-top:14px;justify-content:flex-end;gap:8px"><button class="pl-btn ghost" onclick="document.getElementById('pl-copy-ov').remove()">إلغاء</button><button class="pl-btn" onclick="plDevCopyDo(${t.id})">📋 انسخ واحفظ</button></div></div>`;
-  document.body.appendChild(o); }
+  document.body.appendChild(o); plCombo(o); }
 async function plDevCopyDo(mid){ const sel=document.getElementById('pl-copy-src'); if(!sel) return; const sid=Number(sel.value), src=plDevSpecs(sid), cur=plDevSpecs(mid), out={};
   const had=Object.keys(cur).filter(k=>k!=='vin_layout'&&!PL_SPEC_NAME.includes(k)&&cur[k]).length;
   if(had&&!confirm(`الموديل ده مكتوبله ${had} خانة قبل كده — النسخ هيبدّلهم باللى فى الموديل المصدر. تكمّل؟`)) return;
