@@ -21596,6 +21596,7 @@ function plRenderLetters(){
   const nums=all.filter(l=>!l.is_cancelled).reduce((a,l)=>a+Number(l.qty||0),0);
   const brandsUsed=plParents(true);
   el.innerHTML = `
+  <div id="pl-reg-alert"></div>
   <div class="pl-card">
     <div class="pl-row" style="justify-content:space-between">
       ${plYearWidget()}
@@ -21636,7 +21637,16 @@ function plRenderLetters(){
   </div>`;
   plRenderLettersTable();
   if(PL.wiz) plWizRender();
+  plRegBanner();
 }
+// 🪪 شريط أحمر: السجل الصناعى منتهى أو هينتهى خلال 30 يوم
+function plRegBanner(tries){ const fill=()=>{ const el=document.getElementById('pl-reg-alert'); if(!el||!PL.dev) return;
+    const rs=(PL.dev.registers||[]).filter(r=>r.is_active).map(r=>({r,d:plDevExp(r)})).filter(x=>x.d!=null&&x.d<=30).sort((a,b)=>a.d-b.d);
+    el.innerHTML = rs.length ? `<div style="background:#3a1010;border:2px solid var(--error);border-radius:12px;padding:10px 14px;margin-bottom:12px;color:#ffd0d0;font-size:14px;line-height:1.9">
+      ${rs.map(x=>`${x.d<0?'⛔':'⚠️'} <b>السجل الصناعى <bdi dir="ltr">${plEsc(x.r.reg_no||'')}</bdi></b> — ${plEsc(x.r.company_name||'')} — ${x.d<0?`<b style="color:#ff8f8f">منتهى من ${-x.d} يوم</b> (ملف التنمية مش هيتطبع)`:x.d===0?'<b style="color:#ff8f8f">بينتهى النهارده</b>':`هينتهى بعد <b>${x.d} يوم</b>`} — ${plDevDate(x.r.expires_at)}`).join('<br>')}
+      <div style="margin-top:4px"><button class="pl-btn ghost sm" onclick="plTab('dev')">🏛️ جدّد السجل من «التنمية الصناعية»</button></div></div>` : ''; };
+  if(typeof plDevLoad!=='function'||typeof plDevExp!=='function'){ if((tries||0)<8) setTimeout(()=>plRegBanner((tries||0)+1),700); return; }
+  if(PL.dev) fill(); else plDevLoad().then(fill).catch(()=>{}); }
 function plBulletinLink(no){
   if(!no) return '';
   const b=PL.bulletins.find(x=>String(x.bulletin_no||'').trim()===String(no).trim());
@@ -27863,14 +27873,14 @@ function plDevRequestPage(reg, rows, P){ const S=PL.dev.settings, total=rows.red
     <div class="sign"><b>مقدمه لسيادتكم</b><div>${plEsc((reg&&reg.company_name)||'')}</div>${reg&&reg.manager_name?`<div>${plEsc(reg.manager_name)} — ${plEsc(reg.manager_title||'مدير الشركة')}</div>`:''}<div class="ln">التوقيع والختم</div></div>
     <div class="date">تحريراً فى : ${plDevLtr(plDevDate(plToday()))}${P.docs.length?` — كتاب رقم ${P.docs.join(' / ')}`:''}</div></div>`; }
 function plDevSpecPage(r, P){ const s=plDevSpecs(r.mid), m=r.m, cc=plDevCcNum(m), tri=m.vtype==='تروسكل', kind=s.kind||(m.vtype==='كهرباء'?'موتوسيكل كهربائى':'موتوسيكل رباعي الأشواط'), tn=plDevHeadOver(r)||s.title_name||plDevName(r.bid);
-  const row=(n,k,v,rs)=>`<tr>${n!==''?`<td class="no" ${rs?`rowspan="${rs}"`:''}>${n}</td>`:''}<td class="k">${k}</td><td class="v">${plDevMiss(v)}</td></tr>`;
+  const row=(n,k,v,rs,key)=>`<tr>${n!==''?`<td class="no" ${rs?`rowspan="${rs}"`:''}>${n}</td>`:''}<td class="k">${k}</td><td class="v"${key?` data-mid="${r.mid}" data-k="${key}" data-o="${plEsc(v||'')}"`:''}>${plDevMiss(v)}</td></tr>`;
   return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div>
     <h2>المواصفات الفنية الخاصة للدراجة النارية (${plEsc(kind)}) ${tri?'ذات الثلاث عجلات':'ذو العجلتين'} طراز ${plEsc(tn)} السعة ${plEsc(cc)} ${/وات/.test(m.cc)?'وات':'سم'} موديل ${P.year} :</h2>
     <table class="spec"><thead><tr><th>م</th><th>البيان</th><th>المواصفات الفنية</th></tr></thead><tbody>
     <tr><td class="no"></td><td class="k"></td><td class="v">دراجة نارية (${plEsc(kind)}) طراز ${plEsc(tn)} سعة ${plEsc(cc)} ${/وات/.test(m.cc)?'وات':'سم3'}</td></tr>
-    ${row(1,'الموديل',s.model_code)}${row(2,'المحرك',s.engine)}${row(3,`الطراز<br><span style="font-weight:400;font-size:11pt">(${plEsc(kind)})</span>`,s.style)}${row(4,'عدد الاسطوانات',s.cylinders)}
-    ${row(5,'سعة المحرك',/وات/.test(m.cc)?m.cc:`${cc} سم3`)}${row(6,'قدرة المحرك',s.hp)}${row(7,'سعة خزان الوقود',s.tank)}
-    ${row(8,'أبعاد الدراجة النارية :<br>الطول الكلى',s.length,3)}${row('','العرض الكلى',s.width)}${row('','الارتفاع الكلى',s.height)}${row(9,'البطارية',s.battery)}
+    ${row(1,'الموديل',s.model_code,0,'model_code')}${row(2,'المحرك',s.engine,0,'engine')}${row(3,`الطراز<br><span style="font-weight:400;font-size:11pt">(${plEsc(kind)})</span>`,s.style,0,'style')}${row(4,'عدد الاسطوانات',s.cylinders,0,'cylinders')}
+    ${row(5,'سعة المحرك',/وات/.test(m.cc)?m.cc:`${cc} سم3`)}${row(6,'قدرة المحرك',s.hp,0,'hp')}${row(7,'سعة خزان الوقود',s.tank,0,'tank')}
+    ${row(8,'أبعاد الدراجة النارية :<br>الطول الكلى',s.length,3,'length')}${row('','العرض الكلى',s.width,0,'width')}${row('','الارتفاع الكلى',s.height,0,'height')}${row(9,'البطارية',s.battery,0,'battery')}
     </tbody></table></div>`; }
 function plDevVinPage(bid, rows, reg, P){ const lay=rows[0]?plDevRowLayout(rows[0]):plDevLayout(bid), vt0=rows[0]&&rows[0].m.vtype, fps=rows.map(r=>String(r.m.fingerprint||'').toUpperCase()).filter(Boolean), vt=[...new Set(rows.map(r=>PL_DEV_VT[r.m.vtype]||r.m.vtype))].join(' / ');
   const cell=seg=>{ const [a,b,lab]=seg; if(a===10) return {c:P.yl||'—', l:`${plEsc(lab)}<div class="lg">${P.year}</div>`};
@@ -27890,24 +27900,25 @@ function plDevSpecPageE(r, P){ const s=plDevSpecs(r.mid), m=r.m, bn=plDevHeadOve
   return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div>
     <h2 style="text-align:center;margin-top:6mm">المواصفات الفنية<br>${plEsc(s.kind||'سكوتر عجلتين يعمل بالطاقة الكهربية')} ماركة ${plEsc(bn)}</h2>
     <table class="spec spec-e"><thead><tr><th>البند</th><th>الوحدة</th><th>القيمة</th></tr></thead><tbody>
-    ${PL_SPEC_E.map(f=>`<tr><td class="k">${plEsc(f[1])}</td><td class="u">${plEsc(f[2])}</td><td class="v">${plDevMiss(val(f))}</td></tr>`).join('')}</tbody></table></div>`; }
+    ${PL_SPEC_E.map(f=>`<tr><td class="k">${plEsc(f[1])}</td><td class="u">${plEsc(f[2])}</td><td class="v" data-mid="${r.mid}" data-k="${f[0]}" data-o="${plEsc(val(f)||'')}">${plDevMiss(val(f))}</td></tr>`).join('')}</tbody></table></div>`; }
 function plDevAttPage(a){ return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div><div class="img"><img src="${plEsc(a.url)}" alt="${plEsc(a.name||'مرفق')}"></div></div>`; }
 function plDevImgPage(reg){ return `<div class="pg"><div class="lh noprint">مكان اللوجو المطبوع على الورق</div><div class="img"><img src="${plEsc(reg.image_url)}" alt="السجل الصناعى"></div></div>`; }
 function plDevBuild(P, opt){ // بيرجع الصفحات + التحذيرات
-  const warn=[], pages=[], groups=new Map();
+  const warn=[], block=[], pages=[], groups=new Map();
   P.rows.forEach(r=>{ const reg=plDevRowReg(r), k=reg?reg.id:0; if(!groups.has(k)) groups.set(k,{reg,rows:[]}); groups.get(k).rows.push(r); });
   groups.forEach(g=>{ const reg=g.reg;
-    if(!reg) warn.push('⛔ فيه شركات مش مربوطة بسجل صناعى — اربطها من تاب «🏛️ التنمية الصناعية»');
-    else { const d=plDevExp(reg); if(d!=null&&d<0) warn.push(`⛔ السجل الصناعى ${reg.reg_no} منتهى من ${-d} يوم (${plDevDate(reg.expires_at)}) — جدّده قبل ما تبعت`); else if(d!=null&&d<=60) warn.push(`⚠️ السجل الصناعى ${reg.reg_no} هينتهى بعد ${d} يوم`); if(opt.img&&!reg.image_url) warn.push(`⚠️ السجل ${reg.reg_no} مالوش صورة مرفوعة`); }
+    if(!reg) block.push('⛔ فيه شركات مش مربوطة بسجل صناعى — اربطها من تاب «🏛️ التنمية الصناعية»');
+    else { const d=plDevExp(reg); const rm=[['company_name','اسم الشركة'],['reg_no','رقم السجل'],['reg_year','سنة السجل'],['expires_at','تاريخ الانتهاء']].filter(f=>!reg[f[0]]).map(f=>f[1]); if(rm.length) block.push(`🪪 السجل الصناعى ${reg.reg_no||reg.company_name||''}: ناقص ${rm.join('، ')} — كمّله من تاب «🏛️ التنمية الصناعية»`);
+      if(d!=null&&d<0) block.push(`⛔ السجل الصناعى ${reg.reg_no} منتهى من ${-d} يوم (${plDevDate(reg.expires_at)}) — جدّده وسجّل التاريخ الجديد من تاب «🏛️ التنمية الصناعية»`); else if(d!=null&&d<=60) warn.push(`⚠️ السجل الصناعى ${reg.reg_no} هينتهى بعد ${d} يوم`); if(opt.img&&!reg.image_url) warn.push(`⚠️ السجل ${reg.reg_no} مالوش صورة مرفوعة`); }
     if(opt.req){ const cap=Number(PL.dev.settings.req_max)||0, ch=plDevChunks(g.rows,cap); if(ch.length>1) warn.push(`ℹ️ طلب التنمية${reg?' للسجل '+reg.reg_no:''} اتقسم ${ch.length} طلبات (أقصى ${plN(cap)} للطلب — تتغير من تاب التنمية)`); ch.forEach(c=>pages.push(plDevRequestPage(reg,c,P))); }
     const gk=r=>(plDevHeadBid(r)||r.bid)+'|'+(r.head||''), brands=[...new Set(g.rows.map(gk))];
     brands.forEach(bk=>{ const br=g.rows.filter(r=>gk(r)===bk), bid=br[0].bid;
       if(opt.vin) [...new Set(br.map(r=>r.m.vtype))].forEach(vt=>pages.push(plDevVinPage(bid,br.filter(r=>r.m.vtype===vt),reg,P)));
-      if(opt.spec) br.forEach(r=>{ const s=plDevSpecs(r.mid), miss=plDevSpecF(r.m).filter(f=>!['title_name','kind','brand_txt','motor'].includes(f[0])&&!s[f[0]]).map(f=>f[1]); if(miss.length) warn.push(`✏️ ${plDevRowName(r)} ${r.m.label||plDevCcTxt(r.m)}: ناقص ${miss.join('، ')} (المكان هيطلع فاضى بنقط — كمّله من تاب التنمية أو اكتبه فى المعاينة)`); pages.push(r.m.vtype==='كهرباء'?plDevSpecPageE(r,P):plDevSpecPage(r,P)); });
+      if(opt.spec) br.forEach(r=>{ const s=plDevSpecs(r.mid), miss=plDevSpecF(r.m).filter(f=>!['title_name','kind','brand_txt','motor'].includes(f[0])&&!s[f[0]]).map(f=>f[1]); if(miss.length) block.push(`📐 ${plDevRowName(r)} ${r.m.label||plDevCcTxt(r.m)}: ناقص ${miss.join('، ')}`); pages.push(r.m.vtype==='كهرباء'?plDevSpecPageE(r,P):plDevSpecPage(r,P)); });
       if(opt.att!==false) plDevRowAtts(br[0]).forEach(a=>{ if(/\.pdf(\?|$)/i.test(a.url)) warn.push(`📎 مرفق ${plDevRowName(br[0])} «${a.name||'PDF'}» ملف PDF — اطبعه لوحده (أو ارفعه صورة عشان يدخل فى الملف)`); else pages.push(plDevAttPage(a)); }); });
     if(opt.img&&reg&&reg.image_url&&!/\.pdf(\?|$)/i.test(reg.image_url)) pages.push(plDevImgPage(reg));
   });
-  return {pages, warn:[...new Set(warn)]}; }
+  return {pages, warn:[...new Set(warn)], block:[...new Set(block)]}; }
 async function plDevOpen(src){ try{ await plDevLoad(); }catch(e){ plToast(plErr(e),false); return; }
   const P=plDevCollect(src); if(!P.rows.length){ plToast('مفيش أصناف',false); return; }
   PL.devPack={src,P,opt:Object.assign({req:true,vin:true,spec:true,img:true,att:true},PL.devOpt||{})}; plDevRender(); }
@@ -27918,17 +27929,65 @@ function plDevRender(){ const D=PL.devPack; if(!D) return; const S=PL.dev.settin
     <b style="color:var(--gold);font-size:16px">🏛️ ملف التنمية الصناعية</b><span class="pl-sub">موديل ${D.P.year} — ${plN(D.P.rows.reduce((a,r)=>a+r.qty,0))} دراجة${D.P.docs.length?' — كتاب '+D.P.docs.join(' / '):''}</span>
     ${ck('req','📄 طلب التنمية')}${ck('vin','🔤 الدلالات')}${ck('spec','📐 المواصفات')}${ck('img','🪪 صورة السجل')}${ck('att','📎 المرفقات')}
     <div style="flex:1"></div><span class="pl-sub">✏️ تقدر تعدّل أى كلمة فى الورق قبل الطباعة</span>
-    <button class="pl-btn" onclick="plDevPrint()">🖨️ اطبع ${B.pages.length} ورقة</button><button class="pl-btn ghost" onclick="document.getElementById('pl-dev-ov').remove()">✖ قفل</button></div>
+    ${D.opt.spec&&plCanEdit()?`<button class="pl-btn ghost" onclick="plDevSaveTyped()" title="اللى كتبته بإيدك فى خانات المواصفات يتحفظ فى الموديل — ميتكتبش تانى">💾 احفظ اللى كتبته فى المواصفات</button>`:''}
+    <button class="pl-btn" ${B.block.length?'disabled style="opacity:.45;cursor:not-allowed"':''} onclick="plDevPrint()">🖨️ ${B.block.length?'الطباعة مقفولة':'اطبع '+B.pages.length+' ورقة'}</button><button class="pl-btn ghost" onclick="document.getElementById('pl-dev-ov').remove()">✖ قفل</button></div>
+    ${B.block.length?`<div style="background:#3a1010;border-bottom:2px solid var(--error);padding:8px 14px;font-size:13.5px;line-height:1.95;color:#ffd0d0"><b style="color:#ff8f8f;font-size:14.5px">🚫 الملف مش هيتطبع — كمّل الآتى الأول (${B.block.length}):</b><br>${B.block.map(plEsc).join('<br>')}
+      <div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span style="color:#f2b3b3">📐 المواصفات الناقصة: اكتبها فى الخانات الفاضية فى الورق تحت واضغط «💾 احفظ اللى كتبته» — أو</span><button class="pl-btn ghost sm" onclick="document.getElementById('pl-dev-ov').remove();plTab('dev')">🏛️ افتح تاب التنمية الصناعية</button></div></div>`:''}
     ${B.warn.length?`<div style="background:#2a1414;border-bottom:1px solid #5a2a2a;padding:6px 14px;font-size:13px;line-height:1.9;color:#f2b3b3">${B.warn.map(plEsc).join('<br>')}</div>`:''}
     <iframe id="pl-dev-fr" style="flex:1;border:0;background:#e9e9e9"></iframe>`;
   const fr=document.getElementById('pl-dev-fr');
   fr.srcdoc=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>ملف التنمية الصناعية</title><style>:root{--top:${Number(S.top)||45}mm;--bottom:${Number(S.bottom)||25}mm;--side:${Number(S.side)||20}mm}${PL_DEV_CSS}</style></head><body contenteditable="true" spellcheck="false">${B.pages.join('')||'<div class="pg">اختار حاجة تتطبع</div>'}</body></html>`; }
-async function plDevPrint(){ const fr=document.getElementById('pl-dev-fr'); if(!fr) return; const w=fr.contentWindow; try{ await w.document.fonts.ready; }catch(e){} const imgs=[...w.document.images]; await Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{ i.onload=i.onerror=r; }))); w.focus(); w.print(); }
+async function plDevPrint(){ const fr=document.getElementById('pl-dev-fr'); if(!fr) return; const w=fr.contentWindow;
+  const D0=PL.devPack; if(D0){ const B0=plDevBuild(D0.P,D0.opt); if(B0.block.length){ plToast('🚫 الطباعة مقفولة — كمّل الناقص الأول ('+B0.block.length+')',false); return; } } try{ await w.document.fonts.ready; }catch(e){} const imgs=[...w.document.images]; await Promise.all(imgs.map(i=>i.complete?1:new Promise(r=>{ i.onload=i.onerror=r; }))); w.focus(); w.print(); }
+
+// 💾 اللى اتكتب بالإيد فى خانات المواصفات فى المعاينة يتحفظ فى الموديل
+async function plDevSaveTyped(){ const fr=document.getElementById('pl-dev-fr'); if(!fr||!fr.contentDocument) return; const by={};
+  fr.contentDocument.querySelectorAll('td[data-k][data-mid]').forEach(td=>{ const t=td.textContent.replace(/[.\u2026]{3,}/g,' ').replace(/\s+/g,' ').trim(), o=(td.getAttribute('data-o')||'').replace(/\s+/g,' ').trim(); if(t===o) return; (by[td.dataset.mid]=by[td.dataset.mid]||{})[td.dataset.k]=t; });
+  const ids=Object.keys(by); if(!ids.length){ plToast('مفيش حاجة جديدة مكتوبة فى خانات المواصفات'); return; }
+  try{ for(const mid of ids){ const cur=Object.assign({},plDevSpecs(mid)); delete cur.vin_layout; await plCall('pl_model_specs_save',{p:{id:Number(mid),specs:Object.assign(cur,by[mid])}}); }
+    await plDevLoad(true); plToast(`✅ اتحفظت مواصفات ${ids.length} موديل`); plDevRender(); if(PL.tab==='dev') plRenderDev(); }
+  catch(e){ plToast(plErr(e),false); } }
+// 📐 كشف المواصفات: كل الموديلات — المعمول والناقص
+const PL_SPEC_OPT=['title_name','kind','brand_txt','motor'], PL_SPEC_NAME=['model_code','title_name','style','brand_txt'];
+function plDevSpecMiss(m){ const s=plDevSpecs(m.id); return plDevSpecF(m).filter(f=>!PL_SPEC_OPT.includes(f[0])&&!s[f[0]]).map(f=>f[1]); }
+function plDevSpecOverview(ed){ const actB=new Set((PL.boot.brands||[]).filter(b=>b.active).map(b=>b.id));
+  const rows=(PL.boot.models||[]).filter(m=>m.active&&actB.has(m.brand_id)).map(m=>{ const miss=plDevSpecMiss(m), tot=plDevSpecF(m).filter(f=>!PL_SPEC_OPT.includes(f[0])).length; return {m,miss,tot,b:plBrand(m.brand_id)||{}}; })
+    .sort((a,b)=>String(a.b.name||'').localeCompare(String(b.b.name||''),'ar')||String(a.m.cc).localeCompare(String(b.m.cc),'ar',{numeric:true}));
+  const done=rows.filter(x=>!x.miss.length).length, only=!!PL.devOnlyMiss, shown=rows.filter(x=>!only||x.miss.length);
+  const chip=x=>!x.miss.length?'<span class="pl-chip" style="background:rgba(76,175,125,.2);color:#8fe0b5">✅ كاملة</span>':x.miss.length>=x.tot?'<span class="pl-chip" style="background:rgba(224,85,85,.2);color:#f19a9a">❌ فاضية</span>':`<span class="pl-chip" style="background:rgba(201,168,76,.2);color:var(--gold-light)">⚠️ ناقص ${x.miss.length} من ${x.tot}</span>`;
+  return `<div class="pl-card"><div class="pl-h">📐 كشف المواصفات الفنية <span class="pl-sub">— ${done} موديل كامل من ${rows.length} · ${rows.length-done} ناقص (الناقص بيقفل طباعة ملف التنمية)</span>
+      <label style="margin-right:auto;display:inline-flex;gap:6px;align-items:center;cursor:pointer;font-size:13px"><input type="checkbox" style="width:auto;margin:0" ${only?'checked':''} onchange="PL.devOnlyMiss=this.checked;plRenderDev()"> الناقص بس</label></div>
+    <div class="pl-scroll" style="max-height:340px"><table class="pl-tbl"><thead><tr><th>الشركة</th><th>الموديل</th><th>الحالة</th><th>الناقص</th><th></th></tr></thead><tbody>
+    ${shown.map(x=>`<tr><td><b>${plEsc(x.b.name||'')}</b></td><td style="white-space:nowrap">${plEsc(x.m.vtype)} ${plEsc(x.m.cc)}<div class="pl-sub" dir="ltr">${plEsc(x.m.fingerprint||'')}</div></td><td>${chip(x)}</td>
+      <td class="pl-sub" style="text-align:right;max-width:380px">${plEsc(x.miss.join('، '))||'—'}</td>
+      <td style="white-space:nowrap"><button class="act-btn edit" onclick="plDevGoModel(${x.m.id})">✏️ ${x.miss.length?'كمّل':'افتح'}</button>${ed?` <button class="act-btn edit" onclick="plDevCopyAsk(${x.m.id})" title="انسخ مواصفات موديل تانى هنا — كله ما عدا الاسم">📋 انسخ من موديل</button>`:''}</td></tr>`).join('')||'<tr><td colspan="5" class="pl-sub" style="text-align:center;padding:14px">✅ كل الموديلات مواصفاتها كاملة</td></tr>'}
+    </tbody></table></div></div>`; }
+function plDevGoModel(mid){ const m=(PL.boot.models||[]).find(x=>x.id===Number(mid)); if(!m) return; PL.devBrand=m.brand_id; plRenderDev().then(()=>{ const tr=document.querySelector(`#pl-pane-dev tr[data-plm="${m.id}"]`); if(tr){ tr.scrollIntoView({behavior:'smooth',block:'center'}); tr.style.outline='2px solid var(--gold)'; setTimeout(()=>{ tr.style.outline=''; },2500); } }); }
+// 📋 نسخ المواصفات من موديل لموديل (كله ما عدا الاسم: الموديل / الطراز / الماركة)
+function plDevCopyAsk(mid){ const t=(PL.boot.models||[]).find(x=>x.id===Number(mid)); if(!t) return; const SF=plDevSpecF(t);
+  const srcs=(PL.boot.models||[]).filter(m=>m.id!==t.id&&plDevSpecF(m)===SF&&Object.keys(plDevSpecs(m.id)).some(k=>k!=='vin_layout'&&!PL_SPEC_NAME.includes(k)))
+    .map(m=>({m,b:plBrand(m.brand_id)||{},n:plDevSpecMiss(m).length})).sort((a,b)=>a.n-b.n||String(a.b.name||'').localeCompare(String(b.b.name||''),'ar'));
+  if(!srcs.length){ plToast('مفيش موديل تانى من نفس النوع مكتوب مواصفاته عشان تنسخ منه',false); return; }
+  let o=document.getElementById('pl-copy-ov'); if(o) o.remove(); o=document.createElement('div'); o.id='pl-copy-ov'; o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99985;display:flex;align-items:center;justify-content:center;padding:16px;direction:rtl';
+  const tb=plBrand(t.brand_id)||{};
+  o.innerHTML=`<div style="background:var(--dark2);border:1px solid var(--gold);border-radius:14px;padding:18px;width:min(560px,100%)">
+    <b style="font-size:16px;color:var(--gold)">📋 انسخ المواصفات لـ ${plEsc(tb.name||'')} — ${plEsc(t.vtype)} ${plEsc(t.cc)}</b>
+    <div class="pl-sub" style="margin:8px 0">اختار الموديل اللى هتنسخ منه. بيتنسخ كل حاجة ما عدا الاسم (الموديل / الطراز${SF===PL_SPEC_E?' / الماركة':''}) — دول بيفضلوا بتوع الموديل ده وتكتبهم انت.</div>
+    <select id="pl-copy-src" class="pl-inp" style="width:100%">${srcs.map(x=>`<option value="${x.m.id}">${plEsc((x.b.name||'')+' — '+x.m.vtype+' '+x.m.cc)}${x.n?' (ناقص '+x.n+')':' ✅'}</option>`).join('')}</select>
+    <div class="pl-row" style="margin-top:14px;justify-content:flex-end;gap:8px"><button class="pl-btn ghost" onclick="document.getElementById('pl-copy-ov').remove()">إلغاء</button><button class="pl-btn" onclick="plDevCopyDo(${t.id})">📋 انسخ واحفظ</button></div></div>`;
+  document.body.appendChild(o); }
+async function plDevCopyDo(mid){ const sel=document.getElementById('pl-copy-src'); if(!sel) return; const sid=Number(sel.value), src=plDevSpecs(sid), cur=plDevSpecs(mid), out={};
+  const had=Object.keys(cur).filter(k=>k!=='vin_layout'&&!PL_SPEC_NAME.includes(k)&&cur[k]).length;
+  if(had&&!confirm(`الموديل ده مكتوبله ${had} خانة قبل كده — النسخ هيبدّلهم باللى فى الموديل المصدر. تكمّل؟`)) return;
+  Object.keys(src).forEach(k=>{ if(k!=='vin_layout'&&!PL_SPEC_NAME.includes(k)&&src[k]) out[k]=src[k]; }); PL_SPEC_NAME.forEach(k=>{ if(cur[k]) out[k]=cur[k]; });
+  try{ await plCall('pl_model_specs_save',{p:{id:Number(mid),specs:out}}); await plDevLoad(true); const o=document.getElementById('pl-copy-ov'); if(o) o.remove();
+    plToast('✅ المواصفات اتنسخت — اكتب اسم الموديل والطراز واحفظ'); if(document.getElementById('pl-dev-ov')) plDevRender(); plDevGoModel(mid); }
+  catch(e){ plToast(plErr(e),false); } }
 
 // ═══ تاب 🏛️ التنمية الصناعية ═══
 async function plRenderDev(){ const el=document.getElementById('pl-pane-dev'); if(!el) return; try{ await plDevLoad(); }catch(e){ el.innerHTML=`<div class="pl-card" style="color:var(--error)">❌ ${plEsc(plErr(e))}</div>`; return; }
   const D=PL.dev, S=D.settings, ed=plCanEdit(), regs=D.registers||[], brands=(PL.boot.brands||[]).filter(b=>b.active), sb=PL.devBrand||(brands[0]&&brands[0].id);
-  const expChip=r=>{ const d=plDevExp(r); if(d==null) return '<span class="pl-chip" style="background:#333">بدون تاريخ</span>'; return d<0?`<span class="pl-chip" style="background:rgba(224,85,85,.2);color:#f19a9a">⛔ منتهى من ${-d} يوم</span>`:d<=60?`<span class="pl-chip" style="background:rgba(201,168,76,.2);color:var(--gold-light)">⚠️ باقى ${d} يوم</span>`:`<span class="pl-chip" style="background:rgba(76,175,125,.2);color:#8fe0b5">✅ سارى</span>`; };
+  const expChip=r=>{ const d=plDevExp(r); if(d==null) return '<span class="pl-chip" style="background:#333">بدون تاريخ</span>'; return d<0?`<span class="pl-chip" style="background:rgba(224,85,85,.2);color:#f19a9a">⛔ منتهى من ${-d} يوم</span>`:d<=60?`<span class="pl-chip" style="background:rgba(201,168,76,.2);color:var(--gold-light)">⚠️ باقى ${d} يوم${d<=30?' — جدّد السجل':''}</span>`:`<span class="pl-chip" style="background:rgba(76,175,125,.2);color:#8fe0b5">✅ سارى</span>`; };
   const regOpts=v=>`<option value="">— السجل الافتراضى —</option>${regs.map(r=>`<option value="${r.id}" ${String(v)===String(r.id)?'selected':''}>${plEsc(r.reg_no)} — ${plEsc(r.company_name)}</option>`).join('')}`;
   const E=PL.devRegEdit;
   el.innerHTML=`<div class="pl-card"><div class="pl-h">🏛️ ملف التنمية الصناعية <span class="pl-sub">— بيطلع من «📖 الكتب» (زرار 🏛️ ملف التنمية فى كل كتاب) أو من «🖨️ ملف يدوى» تحت. 3 ورقات أساسية: طلب التنمية + دلالات الشاسيه لكل شركة + المواصفات الفنية لكل موديل، وصورة السجل الصناعى.</span></div>
@@ -27963,6 +28022,8 @@ async function plRenderDev(){ const el=document.getElementById('pl-pane-dev'); i
         <td>${ed?`<button class="act-btn edit" onclick="PL.devRegEdit=JSON.parse(JSON.stringify(plDevReg(${r.id})));plRenderDev()">✏️</button>`:''}</td></tr>`; }).join('')}
     </tbody></table></div>${regs.length?'':'<div class="pl-sub" style="padding:8px">مفيش سجلات لسه</div>'}</div>
 
+  ${plDevSpecOverview(ed)}
+
   <div class="pl-card"><div class="pl-h">🏭 الشركات — السجل واسمها فى المستندات ودلالات الشاسيه
       <select class="pl-inp" style="margin-right:auto" onchange="PL.devBrand=Number(this.value);plRenderDev()">${brands.map(b=>`<option value="${b.id}" ${b.id===sb?'selected':''}>${plEsc(b.name)}</option>`).join('')}</select></div>
     ${plDevBrandEditor(sb, ed, regOpts)}</div>
@@ -27987,7 +28048,7 @@ function plDevBrandEditor(bid, ed, regOpts){ if(!bid) return ''; const b=plBrand
     ${[...new Set(models.map(m=>plDevSpecF(m)))].map(SF=>`<div class="pl-scroll"><table class="pl-tbl"><thead><tr><th>الموديل</th>${SF.map(f=>`<th>${f[1]}${f[2]&&SF===PL_SPEC_E?` <span dir="ltr">(${plEsc(f[2])})</span>`:''}</th>`).join('')}<th></th></tr></thead><tbody>
     ${models.filter(m=>plDevSpecF(m)===SF).map(m=>{ const s=plDevSpecs(m.id); return `<tr data-plm="${m.id}"><td style="white-space:nowrap"><b>${plEsc(m.vtype)} ${plEsc(m.cc)}</b><div class="pl-sub" dir="ltr">${plEsc(m.fingerprint||'')}</div></td>
       ${SF.map(f=>{ const ph=SF===PL_SPEC_E?f[3]:f[2]; return `<td><input class="pl-inp" data-k="${f[0]}" style="width:${['engine','kind'].includes(f[0])||(SF===PL_SPEC_E&&f[0]==='battery')?'190':['length','width','height','tank','battery','hp','cylinders','motor','speed','wheelbase','weight','load'].includes(f[0])?'95':'125'}px;padding:5px 7px;font-size:12px" value="${plEsc(s[f[0]]||'')}" placeholder="${plEsc(f[0]==='title_name'?ph:'مثلاً '+ph)}" ${ed?'':'disabled'}></td>`; }).join('')}
-      <td>${ed?`<button class="act-btn edit" onclick="plDevSpecSave(${m.id},this)">💾</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`).join('')}
+      <td style="white-space:nowrap">${ed?`<button class="act-btn edit" onclick="plDevSpecSave(${m.id},this)">💾</button> <button class="act-btn edit" onclick="plDevCopyAsk(${m.id})" title="انسخ مواصفات موديل تانى هنا — كله ما عدا الاسم">📋</button>`:''}</td></tr>`; }).join('')}</tbody></table></div>`).join('')}
     <div class="pl-sub">💡 الخانات الفاضية هتطلع فى الورقة نقط تتكتب بإيد — أو تكتبها فى المعاينة قبل الطباعة.</div>
     <div class="pl-h" style="margin-top:14px">📎 مرفقات ${plEsc(b.name||'')} فى ملف التنمية <span class="pl-sub">— شهادة الهيئة / e-mark / اعتماد التصميم... (صور بتتطبع ورقة لكل مرفق بعد المواصفات)</span></div>
     <div class="pl-row" style="gap:10px;flex-wrap:wrap">${(d.dev_atts||[]).map((a,k)=>`<div style="border:1px solid var(--border);border-radius:8px;padding:6px;text-align:center;width:130px"><a href="${plEsc(a.url)}" target="_blank" rel="noopener">${/\.pdf(\?|$)/i.test(a.url)?'<div style="font-size:34px">📄</div>':`<img src="${plEsc(a.url)}" style="width:116px;height:90px;object-fit:cover;border-radius:6px">`}</a><div class="pl-sub" style="word-break:break-word">${plEsc(a.name||'')}</div>${ed?`<button class="act-btn delete" onclick="plDevAttDel(${bid},${k})">✖ شيل</button>`:''}</div>`).join('')||'<span class="pl-sub">مفيش مرفقات</span>'}
@@ -28013,7 +28074,7 @@ async function plDevBrandSave(bid){ const txt=document.getElementById('plb-lay')
   for(const ln of txt.split('\n')){ const t=ln.trim(); if(!t) continue; const m=t.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).match(/^(\d{1,2})\s*(?:-\s*(\d{1,2}))?\s*[:：]\s*(.+)$/); if(!m){ plToast('السطر «'+t+'» مش مظبوط — اكتبه كده: 7-8: كود مصنع التجميع',false); return; } const a=Number(m[1]), b=Number(m[2]||m[1]); lay.push([a,b,m[3].trim()]); }
   try{ await plCall('pl_brand_dev_save',{p:{id:bid,dev_name:document.getElementById('plb-name').value,register_id:document.getElementById('plb-reg').value,vin_layout:lay}}); plToast('✅ اتحفظ'); await plDevLoad(true); plRenderDev(); }catch(e){ plToast(plErr(e),false); } }
 async function plDevSpecSave(mid, btn){ const tr=btn.closest('tr'), specs={}; tr.querySelectorAll('input[data-k]').forEach(i=>specs[i.dataset.k]=i.value.trim());
-  try{ await plCall('pl_model_specs_save',{p:{id:mid,specs}}); plToast('✅ مواصفات الموديل اتحفظت'); await plDevLoad(true); }catch(e){ plToast(plErr(e),false); } }
+  try{ await plCall('pl_model_specs_save',{p:{id:mid,specs}}); plToast('✅ مواصفات الموديل اتحفظت'); await plDevLoad(true); plRenderDev(); }catch(e){ plToast(plErr(e),false); } }
 
 
 // ═══ 🏬 المخازن ديناميك — أى مخزن جديد يتضاف من «المخازن» يظهر فى كل القوايم (فلاتر / صلاحية الموظف / أمين المخزن / التقارير) ═══
