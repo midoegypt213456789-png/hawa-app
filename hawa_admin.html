@@ -27950,28 +27950,39 @@ async function plDevSaveTyped(){ const fr=document.getElementById('pl-dev-fr'); 
 // 📐 كشف المواصفات: كل الموديلات — المعمول والناقص
 const PL_SPEC_OPT=['title_name','kind','brand_txt','motor'], PL_SPEC_NAME=['model_code','title_name','style','brand_txt'];
 function plDevSpecMiss(m){ const s=plDevSpecs(m.id); return plDevSpecF(m).filter(f=>!PL_SPEC_OPT.includes(f[0])&&!s[f[0]]).map(f=>f[1]); }
-function plDevSpecOverview(ed){ const actB=new Set((PL.boot.brands||[]).filter(b=>b.active).map(b=>b.id));
-  const rows=(PL.boot.models||[]).filter(m=>m.active&&actB.has(m.brand_id)).map(m=>{ const miss=plDevSpecMiss(m), tot=plDevSpecF(m).filter(f=>!PL_SPEC_OPT.includes(f[0])).length; return {m,miss,tot,b:plBrand(m.brand_id)||{}}; });
+function plDevSpecOverview(ed){ const brandsA=(PL.boot.brands||[]).filter(b=>b.active), actB=new Set(brandsA.map(b=>b.id));
+  const rows=(PL.boot.models||[]).filter(m=>m.active&&actB.has(m.brand_id)).map(m=>{ const miss=plDevSpecMiss(m), tot=plDevSpecF(m).filter(f=>!PL_SPEC_OPT.includes(f[0])).length; return {m,miss,tot}; });
   const done=rows.filter(x=>!x.miss.length).length, only=!!PL.devOnlyMiss, open=PL.devOpenB=PL.devOpenB||{};
-  const groups=[]; rows.forEach(x=>{ let g=groups.find(y=>y.id===x.m.brand_id); if(!g){ g={id:x.m.brand_id,name:x.b.name||'',rows:[]}; groups.push(g); } g.rows.push(x); });
-  groups.sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar')); groups.forEach(g=>g.rows.sort((a,b)=>String(a.m.vtype).localeCompare(String(b.m.vtype),'ar')||String(a.m.cc).localeCompare(String(b.m.cc),'ar',{numeric:true})));
+  const srt=l=>l.sort((a,b)=>String(a.m.vtype).localeCompare(String(b.m.vtype),'ar')||String(a.m.cc).localeCompare(String(b.m.cc),'ar',{numeric:true}));
+  // الشركة الأم ← جواها موديلاتها + شركاتها الفرعية (كل فرعية جواها موديلاتها)
+  const roots=brandsA.filter(b=>!b.parent_id||!actB.has(Number(b.parent_id))).map(r=>{ const subs=brandsA.filter(b=>b.parent_id&&Number(b.parent_id)===r.id).sort((a,b)=>String(a.name).localeCompare(String(b.name),'ar'));
+    return {r, own:srt(rows.filter(x=>x.m.brand_id===r.id)), subs:subs.map(sb=>({b:sb,rows:srt(rows.filter(x=>x.m.brand_id===sb.id))}))}; })
+    .map(g=>Object.assign(g,{all:[...g.own,...g.subs.flatMap(x=>x.rows)]})).filter(g=>g.all.length).sort((a,b)=>String(a.r.name).localeCompare(String(b.r.name),'ar'));
   const chip=x=>!x.miss.length?'<span class="pl-chip" style="background:rgba(76,175,125,.2);color:#8fe0b5">✅ كاملة</span>':x.miss.length>=x.tot?'<span class="pl-chip" style="background:rgba(224,85,85,.2);color:#f19a9a">❌ فاضية</span>':`<span class="pl-chip" style="background:rgba(201,168,76,.2);color:var(--gold-light)">⚠️ ناقص ${x.miss.length} من ${x.tot}</span>`;
-  const shownG=groups.filter(g=>!only||g.rows.some(x=>x.miss.length));
-  const body=shownG.map(g=>{ const ok=g.rows.filter(x=>!x.miss.length).length, bad=g.rows.length-ok, isOpen=!!open[g.id], list=g.rows.filter(x=>!only||x.miss.length);
+  const cnt=l=>{ const ok=l.filter(x=>!x.miss.length).length, bad=l.length-ok; return `${ok?`<span class="pl-chip" style="background:rgba(76,175,125,.2);color:#8fe0b5">✅ ${ok} كامل</span>`:''}${bad?`<span class="pl-chip" style="background:rgba(224,85,85,.2);color:#f19a9a">⚠️ ${bad} ناقص</span>`:''}`; };
+  const tbl=l=>{ const list=l.filter(x=>!only||x.miss.length); if(!list.length) return ''; return `<div class="pl-scroll" style="max-height:none;border:0;border-radius:0"><table class="pl-tbl"><thead><tr><th>الموديل</th><th>الحالة</th><th>الناقص</th><th></th></tr></thead><tbody>
+      ${list.map(x=>`<tr><td style="white-space:nowrap"><b>${plEsc(x.m.vtype)} ${plEsc(x.m.cc)}</b><div class="pl-sub" dir="ltr">${plEsc(x.m.fingerprint||'')}</div></td><td>${chip(x)}</td>
+        <td class="pl-sub" style="text-align:right;max-width:420px">${plEsc(x.miss.join('، '))||'—'}</td>
+        <td style="white-space:nowrap"><button class="act-btn edit" onclick="plDevGoModel(${x.m.id})">✏️ ${x.miss.length?'كمّل':'افتح'}</button>${ed?` <button class="act-btn edit" onclick="plDevCopyAsk(${x.m.id})" title="انسخ مواصفات موديل تانى هنا — كله ما عدا الاسم">📋 انسخ من موديل</button>`:''}</td></tr>`).join('')}
+      </tbody></table></div>`; };
+  const tog=k=>`(PL.devOpenB=PL.devOpenB||{})['${k}']=!PL.devOpenB['${k}'];plRenderDev()`;
+  const shownG=roots.filter(g=>!only||g.all.some(x=>x.miss.length)), keys=[]; shownG.forEach(g=>{ keys.push('r'+g.r.id); g.subs.forEach(x=>{ if(x.rows.length) keys.push('s'+x.b.id); }); });
+  const body=shownG.map(g=>{ const bad=g.all.some(x=>x.miss.length), isOpen=!!open['r'+g.r.id], noModelSubs=g.subs.filter(x=>!x.rows.length).map(x=>x.b.name);
+    const subsHtml=g.subs.filter(x=>x.rows.length&&(!only||x.rows.some(y=>y.miss.length))).map(x=>{ const so=!!open['s'+x.b.id];
+      return `<div style="border-top:1px solid var(--border)"><div onclick="${tog('s'+x.b.id)}" style="cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 14px 8px 14px;padding-inline-start:34px;background:rgba(255,255,255,.03)">
+        <span style="font-size:12px;color:var(--text-dim)">${so?'▼':'◀'}</span><b style="font-size:14px;color:var(--gold-light)">🏷️ ${plEsc(x.b.name)}</b><span class="pl-sub">شركة فرعية — ${x.rows.length} موديل</span><span style="margin-right:auto;display:flex;gap:6px">${cnt(x.rows)}</span></div>
+        ${so?`<div style="padding-inline-start:20px">${tbl(x.rows)}</div>`:''}</div>`; }).join('');
     return `<div style="border:1px solid ${bad?'rgba(224,85,85,.35)':'rgba(76,175,125,.35)'};border-radius:10px;margin-bottom:8px;overflow:hidden">
-      <div onclick="(PL.devOpenB=PL.devOpenB||{})[${g.id}]=!PL.devOpenB[${g.id}];plRenderDev()" style="cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--dark3)">
-        <span style="font-size:13px;color:var(--text-dim)">${isOpen?'▼':'◀'}</span><b style="font-size:15px;color:var(--gold)">🏭 ${plEsc(g.name)}</b><span class="pl-sub">${g.rows.length} موديل</span>
-        <span style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap">${ok?`<span class="pl-chip" style="background:rgba(76,175,125,.2);color:#8fe0b5">✅ ${ok} كامل</span>`:''}${bad?`<span class="pl-chip" style="background:rgba(224,85,85,.2);color:#f19a9a">⚠️ ${bad} ناقص</span>`:''}</span></div>
-      ${isOpen?`<div class="pl-scroll" style="max-height:none;border:0;border-radius:0"><table class="pl-tbl"><thead><tr><th>الموديل</th><th>الحالة</th><th>الناقص</th><th></th></tr></thead><tbody>
-        ${list.map(x=>`<tr><td style="white-space:nowrap"><b>${plEsc(x.m.vtype)} ${plEsc(x.m.cc)}</b><div class="pl-sub" dir="ltr">${plEsc(x.m.fingerprint||'')}</div></td><td>${chip(x)}</td>
-          <td class="pl-sub" style="text-align:right;max-width:420px">${plEsc(x.miss.join('، '))||'—'}</td>
-          <td style="white-space:nowrap"><button class="act-btn edit" onclick="plDevGoModel(${x.m.id})">✏️ ${x.miss.length?'كمّل':'افتح'}</button>${ed?` <button class="act-btn edit" onclick="plDevCopyAsk(${x.m.id})" title="انسخ مواصفات موديل تانى هنا — كله ما عدا الاسم">📋 انسخ من موديل</button>`:''}</td></tr>`).join('')}
-        </tbody></table></div>`:''}</div>`; }).join('');
-  return `<div class="pl-card"><div class="pl-h">📐 كشف المواصفات الفنية <span class="pl-sub">— ${done} موديل كامل من ${rows.length} · ${rows.length-done} ناقص (الناقص بيقفل طباعة ملف التنمية) — دوس على الشركة تفتح موديلاتها</span>
-      <span style="margin-right:auto;display:inline-flex;gap:10px;align-items:center;font-size:13px"><button class="pl-btn ghost sm" onclick="PL.devOpenB={};${JSON.stringify(shownG.map(g=>g.id))}.forEach(i=>PL.devOpenB[i]=${shownG.some(g=>!open[g.id])});plRenderDev()">${shownG.some(g=>!open[g.id])?'⤵️ افتح الكل':'⤴️ اقفل الكل'}</button>
+      <div onclick="${tog('r'+g.r.id)}" style="cursor:pointer;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;background:var(--dark3)">
+        <span style="font-size:13px;color:var(--text-dim)">${isOpen?'▼':'◀'}</span><b style="font-size:15px;color:var(--gold)">🏭 ${plEsc(g.r.name)}</b><span class="pl-sub">${g.all.length} موديل${g.subs.length?` · ${g.subs.length} شركة فرعية`:''}</span>
+        <span style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap">${cnt(g.all)}</span></div>
+      ${isOpen?`${g.own.length&&g.subs.some(x=>x.rows.length)?`<div class="pl-sub" style="padding:6px 14px 0">موديلات ${plEsc(g.r.name)} نفسها:</div>`:''}${tbl(g.own)}${subsHtml}${noModelSubs.length?`<div class="pl-sub" style="padding:8px 14px;border-top:1px solid var(--border)">🏷️ ${noModelSubs.map(plEsc).join('، ')} — من غير موديلات خاصة (بتطلع بموديلات ${plEsc(g.r.name)})</div>`:''}`:''}</div>`; }).join('');
+  const anyClosed=keys.some(k=>!open[k]);
+  return `<div class="pl-card"><div class="pl-h">📐 كشف المواصفات الفنية <span class="pl-sub">— ${done} موديل كامل من ${rows.length} · ${rows.length-done} ناقص (الناقص بيقفل طباعة ملف التنمية) — دوس على الشركة الأم تفتح موديلاتها وشركاتها الفرعية</span>
+      <span style="margin-right:auto;display:inline-flex;gap:10px;align-items:center;font-size:13px"><button class="pl-btn ghost sm" onclick='PL.devOpenB={};${JSON.stringify(keys)}.forEach(k=>PL.devOpenB[k]=${anyClosed});plRenderDev()'>${anyClosed?'⤵️ افتح الكل':'⤴️ اقفل الكل'}</button>
       <label style="display:inline-flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" style="width:auto;margin:0" ${only?'checked':''} onchange="PL.devOnlyMiss=this.checked;plRenderDev()"> الناقص بس</label></span></div>
     ${body||'<div class="pl-sub" style="text-align:center;padding:14px">✅ كل الموديلات مواصفاتها كاملة</div>'}</div>`; }
-function plDevGoModel(mid){ const m=(PL.boot.models||[]).find(x=>x.id===Number(mid)); if(!m) return; PL.devBrand=m.brand_id; (PL.devOpenB=PL.devOpenB||{})[m.brand_id]=true; plRenderDev().then(()=>{ const tr=document.querySelector(`#pl-pane-dev tr[data-plm="${m.id}"]`); if(tr){ tr.scrollIntoView({behavior:'smooth',block:'center'}); tr.style.outline='2px solid var(--gold)'; setTimeout(()=>{ tr.style.outline=''; },2500); } }); }
+function plDevGoModel(mid){ const m=(PL.boot.models||[]).find(x=>x.id===Number(mid)); if(!m) return; PL.devBrand=m.brand_id; PL.devOpenB=PL.devOpenB||{}; PL.devOpenB['r'+plRoot(m.brand_id)]=true; PL.devOpenB['s'+m.brand_id]=true; plRenderDev().then(()=>{ const tr=document.querySelector(`#pl-pane-dev tr[data-plm="${m.id}"]`); if(tr){ tr.scrollIntoView({behavior:'smooth',block:'center'}); tr.style.outline='2px solid var(--gold)'; setTimeout(()=>{ tr.style.outline=''; },2500); } }); }
 // 📋 نسخ المواصفات من موديل لموديل (كله ما عدا الاسم: الموديل / الطراز / الماركة)
 function plDevCopyAsk(mid){ const t=(PL.boot.models||[]).find(x=>x.id===Number(mid)); if(!t) return; const SF=plDevSpecF(t);
   const srcs=(PL.boot.models||[]).filter(m=>m.id!==t.id&&plDevSpecF(m)===SF&&Object.keys(plDevSpecs(m.id)).some(k=>k!=='vin_layout'&&!PL_SPEC_NAME.includes(k)))
